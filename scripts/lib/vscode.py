@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import json
+import sys
 import warnings
 from pathlib import Path
 
 
 def setup_debug_launch(sts2_dir: Path) -> None:
+    if sys.platform != "win32":
+        return
+
     app_id = sts2_dir / "steam_appid.txt"
     debug_bat = sts2_dir / "launch_debug.bat"
     try:
@@ -21,7 +25,6 @@ def setup_debug_launch(sts2_dir: Path) -> None:
 def write_vscode_files(root: Path, sts2_dir: Path) -> None:
     vscode_dir = root / ".vscode"
     vscode_dir.mkdir(parents=True, exist_ok=True)
-    debug_bat = str((sts2_dir / "launch_debug.bat").resolve())
 
     tasks = {
         "version": "2.0.0",
@@ -71,6 +74,12 @@ def write_vscode_files(root: Path, sts2_dir: Path) -> None:
                 "dependsOn": ["build", "deploy"],
                 "dependsOrder": "sequence",
             },
+        ],
+    }
+
+    if sys.platform == "win32":
+        debug_bat = str((sts2_dir / "launch_debug.bat").resolve())
+        tasks["tasks"].append(
             {
                 "label": "launch-sts2",
                 "type": "shell",
@@ -82,27 +91,58 @@ def write_vscode_files(root: Path, sts2_dir: Path) -> None:
                     "clear": True,
                 },
                 "isBackground": True,
-            },
-            {
-                "label": "sync-launch",
-                "dependsOn": ["sync", "launch-sts2"],
-                "dependsOrder": "sequence",
-            },
-        ],
-    }
-
-    launch = {
-        "version": "0.2.0",
-        "configurations": [
-            {
-                "name": "STS2: sync -> launch -> attach",
-                "type": "coreclr",
-                "request": "attach",
-                "processName": "SlayTheSpire2",
-                "preLaunchTask": "sync-launch",
             }
-        ],
+        )
+    elif sys.platform == "darwin":
+        tasks["tasks"].append(
+            {
+                "label": "launch-sts2",
+                "type": "shell",
+                "command": "open",
+                "args": ["steam://run/2868840"],
+                "presentation": {
+                    "reveal": "always",
+                    "panel": "dedicated",
+                    "clear": True,
+                },
+                "isBackground": True,
+            }
+        )
+    else:
+        tasks["tasks"].append(
+            {
+                "label": "launch-sts2",
+                "type": "shell",
+                "command": "xdg-open",
+                "args": ["steam://run/2868840"],
+                "presentation": {
+                    "reveal": "always",
+                    "panel": "dedicated",
+                    "clear": True,
+                },
+                "isBackground": True,
+            }
+        )
+
+    tasks["tasks"].append(
+        {
+            "label": "sync-launch",
+            "dependsOn": ["sync", "launch-sts2"],
+            "dependsOrder": "sequence",
+        }
+    )
+
+    cfg = {
+        "name": "STS2: sync -> launch -> attach",
+        "type": "coreclr",
+        "request": "attach",
+        "processName": "SlayTheSpire2",
+        "preLaunchTask": "sync-launch",
     }
+    if sys.platform == "darwin":
+        cfg["osx"] = {"processName": "Slay the Spire 2"}
+
+    launch = {"version": "0.2.0", "configurations": [cfg]}
 
     text_tasks = json.dumps(tasks, indent=2) + "\n"
     text_launch = json.dumps(launch, indent=2) + "\n"

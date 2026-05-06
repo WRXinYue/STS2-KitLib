@@ -105,13 +105,18 @@ def _steam_apps_dirs() -> list[Path]:
 
 
 def _sts2_game_root_valid(game_root: Path) -> bool:
-    """True if .../Slay the Spire 2 has data_sts2_*/sts2.dll (Windows/Linux/macOS data folder names)."""
+    """True if game root looks like a valid STS2 install on any OS."""
     if not game_root.is_dir():
         return False
+
+    # macOS app bundle layout.
+    if (game_root / "SlayTheSpire2.app" / "Contents" / "MacOS" / "Slay the Spire 2").is_file():
+        return True
+
     try:
         for child in game_root.iterdir():
             if child.is_dir() and child.name.startswith("data_sts2_"):
-                if (child / "sts2.dll").is_file():
+                if (child / "sts2.dll").is_file() or (child / "sts2.dylib").is_file():
                     return True
     except OSError:
         return False
@@ -122,7 +127,7 @@ def resolve_sts2_dir() -> Path | None:
     env = os.environ.get("STS2_DIR", "").strip()
     if env:
         p = Path(os.path.expandvars(env)).expanduser()
-        if p.is_dir():
+        if _sts2_game_root_valid(p):
             return p.resolve()
 
     for steamapps in _steam_apps_dirs():

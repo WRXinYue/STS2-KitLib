@@ -7,7 +7,7 @@
 DOTNET ?= dotnet
 
 # Read version from DevMode.json
-PYTHON ?= python
+PYTHON ?= python3
 VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('DevMode.json',encoding='utf-8'))['version'])")
 
 MOD_MAIN := DevMode.csproj
@@ -77,10 +77,10 @@ zip: build
 	@mkdir "$(DIST_DIR)\editor"
 	@mkdir "$(DIST_DIR)\scripts"
 	@copy /y build\DevMode\DevMode.dll "$(DIST_DIR)\" >nul
-	@copy /y DevMode.json "$(DIST_DIR)\" >nul
+	@copy /y build\DevMode\mod_manifest.json "$(DIST_DIR)\" >nul
 	@xcopy /s /y /q editor\* "$(DIST_DIR)\editor\" >nul
 	@if exist "$(ZIP_NAME)" del "$(ZIP_NAME)"
-	python -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build\\dist'),f)) for r,_,fs in os.walk('build\\dist\\DevMode') for f in fs];z.close()"
+	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build\\dist'),f)) for r,_,fs in os.walk('build\\dist\\DevMode') for f in fs];z.close()"
 	@echo.
 	@echo Done: $(ZIP_NAME)
 	@echo Install: extract into "Slay the Spire 2\mods\"
