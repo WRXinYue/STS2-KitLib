@@ -433,13 +433,16 @@ internal static class CardEditActions {
     private static string GetLocText(LocString? value) {
         if (value == null || value.IsEmpty) return string.Empty;
         try {
-            var text = value.GetFormattedText();
-            if (!string.IsNullOrWhiteSpace(text)) return text.Trim();
+            // DevMode UI frequently reads card text outside full gameplay context.
+            // Prefer raw text to avoid triggering localization formatter errors when
+            // dynamic placeholders (e.g. {StaminaDamage:diff()}) lack variables.
+            var raw = value.GetRawText();
+            if (!string.IsNullOrWhiteSpace(raw)) return raw.Trim();
         }
         catch { }
         try {
-            var raw = value.GetRawText();
-            if (!string.IsNullOrWhiteSpace(raw)) return raw.Trim();
+            var text = value.GetFormattedText();
+            if (!string.IsNullOrWhiteSpace(text)) return text.Trim();
         }
         catch { }
         return value.LocEntryKey ?? string.Empty;
