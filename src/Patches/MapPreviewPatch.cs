@@ -340,8 +340,22 @@ public static class MapPointUnhoverPatch {
 [HarmonyPatch(typeof(NClickableControl), nameof(NClickableControl._GuiInput))]
 public static class MapPointRightClickPatch {
     public static bool Prefix(NClickableControl __instance, InputEvent inputEvent) {
-        if (!DevModeState.InDevRun) return true;
         if (__instance is not NMapPoint mapPoint) return true;
+
+        if (!DevModeState.InDevRun) return true;
+
+        if (inputEvent is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true } &&
+            DevModeState.CheatsInRun &&
+            DevModeState.MapCheats.FreeTravelFromDevRoomMap) {
+            var point = mapPoint.Point;
+            if (point == null) return true;
+
+            bool ok = RoomActions.TryEnterMapPoint(point.coord, point.PointType);
+            if (ok) {
+                MainFile.Logger.Info($"MapPreview: Jumped to map point {point.PointType} at floor {point.coord.row + 1}");
+                return false; // consume default path-restricted click
+            }
+        }
 
         if (inputEvent is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true }) {
             var point = mapPoint.Point;

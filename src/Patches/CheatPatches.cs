@@ -11,6 +11,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Hooks;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Odds;
 using MegaCrit.Sts2.Core.Rooms;
@@ -182,6 +183,50 @@ public static class UnknownMapTreasurePatch {
     public static void Postfix(ref RoomType __result) {
         if (!DevModeState.CheatsInRun || !DevModeState.MapCheats.UnknownMapAlwaysTreasure) return;
         __result = RoomType.Treasure;
+    }
+}
+
+/// <summary>
+/// Allow free map travel when map rewrite is enabled.
+/// This unlocks all next-row nodes in map UI travelability checks.
+/// </summary>
+[HarmonyPatch(typeof(Hook), nameof(Hook.ShouldAllowFreeTravel))]
+public static class MapFreeTravelPatch {
+    public static bool Prefix(ref bool __result) {
+        if (!DevModeState.CheatsInRun || !DevModeState.MapCheats.FreeTravelFromDevRoomMap) return true;
+        __result = true;
+        return false;
+    }
+}
+
+/// <summary>
+/// When map rewrite is enabled, force all currently untravelable map points
+/// into travelable state after vanilla travelability recalculation.
+/// </summary>
+[HarmonyPatch(typeof(NMapScreen), "RecalculateTravelability")]
+public static class MapTravelabilityRewritePatch {
+    private static readonly AccessTools.FieldRef<NMapScreen, Dictionary<MapCoord, NMapPoint>> _mapPointDictionaryRef =
+        AccessTools.FieldRefAccess<NMapScreen, Dictionary<MapCoord, NMapPoint>>("_mapPointDictionary");
+
+    public static void Postfix(NMapScreen __instance) {
+        if (!DevModeState.CheatsInRun || !DevModeState.MapCheats.FreeTravelFromDevRoomMap) return;
+
+        Dictionary<MapCoord, NMapPoint>? dict;
+        try {
+            dict = _mapPointDictionaryRef(__instance);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"[DevMode] MapTravelabilityRewritePatch: failed to access map points: {ex.Message}");
+            return;
+        }
+
+        if (dict == null || dict.Count == 0) return;
+
+        foreach (NMapPoint point in dict.Values) {
+            if (point.State == MapPointState.Untravelable) {
+                point.State = MapPointState.Travelable;
+            }
+        }
     }
 }
 
