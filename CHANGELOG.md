@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Card browser (full library): set **base energy cost** before you add a card — the value applies to the new copy you receive, not the catalog entry.
+- Card browser **remembers** type/rarity/cost/pool filters, sort, search text, and **View upgrades** between sessions.
+- Clearer **upgrade preview** when browsing library cards with View upgrades enabled.
+- Dev **map** entry from the dev room: on that map screen, **more nodes stay selectable** for movement (normally greyed-out paths unlock) so you can hop around faster while testing.
+
+### Changed
+
+- Card browser **pool filter** defaults to the **current character** instead of all pools.
+- Card **number and text** fields in the browser apply as you edit (on change or when leaving the field), without a separate apply step.
+
+### Fixed
+
+- Cards whose description text uses **dynamic placeholders** no longer trigger formatter errors in the dev card UI or preset flows.
+- **Energy cost** edits on cards you already own (deck or combat piles) apply more reliably; the library list itself stays read-only for cost, so cost is applied when you add the card.
+
 ## [0.5.0] - 2026-04-26
 
 ### Added
