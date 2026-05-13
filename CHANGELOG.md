@@ -18,9 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Card browser **pool filter** defaults to the **current character** instead of all pools.
 - Card **number and text** fields in the browser apply as you edit (on change or when leaving the field), without a separate apply step.
+- Dev **save / load snapshot** overlay (main menu and dev panel) now follows your **DevMode appearance theme** — backdrop, panels, separators, buttons, name field, and stat chips stay in sync with Dark / OLED / Light / Warm.
 
 ### Fixed
 
+- Dev save/load snapshot list: clicking the **same slot again** no longer makes the right-hand detail area **flash**.
 - Cards whose description text uses **dynamic placeholders** no longer trigger formatter errors in the dev card UI or preset flows.
 - **Energy cost** edits on cards you already own (deck or combat piles) apply more reliably; the library list itself stays read-only for cost, so cost is applied when you add the card.
 
