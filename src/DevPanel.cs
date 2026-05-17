@@ -134,6 +134,7 @@ internal static class DevPanel {
         DevPanelRegistry.Register("devmode.events", MdiIcon.CalendarStar, I18N.T("panel.events", "Events"), 600, DevPanelTabGroup.Primary, _ => OpenEvents());
         DevPanelRegistry.Register("devmode.rooms", MdiIcon.MapMarker, I18N.T("panel.rooms", "Rooms"), 650, DevPanelTabGroup.Primary, _ => OpenRooms());
         DevPanelRegistry.Register("devmode.console", MdiIcon.Console, I18N.T("panel.console", "Console"), 700, DevPanelTabGroup.Primary, _ => OpenConsole());
+        DevPanelRegistry.Register("devmode.cheats", MdiIcon.Star, I18N.T("panel.cheats", "Cheats"), 750, DevPanelTabGroup.Primary, gui => DevPanelUI.ShowCheatsOverlay(gui, actions));
         DevPanelRegistry.Register("devmode.presets", MdiIcon.From("book-open-variant"), I18N.T("panel.presets", "Presets"), 800, DevPanelTabGroup.Primary, _ => OpenPresets());
         DevPanelRegistry.Register("devmode.hooks", MdiIcon.LightningBolt, I18N.T("panel.hooks", "Hooks"), 900, DevPanelTabGroup.Primary, _ => OpenHooks());
         DevPanelRegistry.Register("devmode.scripts", MdiIcon.PuzzleOutline, I18N.T("panel.scripts", "Scripts"), 950, DevPanelTabGroup.Primary, _ => OpenScripts());
@@ -148,7 +149,7 @@ internal static class DevPanel {
 
         // Utility group — settings / tools
         DevPanelRegistry.Register("devmode.save", MdiIcon.ContentSave, I18N.T("panel.save", "Save / Load"), 100, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSaveLoadOverlay(gui, actions));
-        DevPanelRegistry.Register("devmode.settings", MdiIcon.Cog, I18N.T("panel.settings", "Settings"), 200, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowCheatsOverlay(gui, actions));
+        DevPanelRegistry.Register("devmode.settings", MdiIcon.Cog, I18N.T("panel.settings", "Settings"), 200, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSettingsOverlay(gui, actions));
 
     }
 
