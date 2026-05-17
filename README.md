@@ -4,6 +4,8 @@
 
 A developer mode mod for Slay the Spire 2.
 
+![DevMode](./assets/devmode.png)
+
 ## Features
 
 - Developer panel accessible from the main menu and during runs

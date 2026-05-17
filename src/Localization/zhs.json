@@ -603,6 +603,9 @@
   "harmony.smart.col.tr": "tr",
   "harmony.smart.col.fi": "fi",
   "harmony.smart.col.owners": "owners",
+  "harmony.filter.label": "排除 owner：",
+  "harmony.filter.placeholder": "逗号分隔的 owner id…",
+  "harmony.filter.hint": "（回车应用）",
 
   "log.title": "日志查看器",
   "log.clear": "清空",

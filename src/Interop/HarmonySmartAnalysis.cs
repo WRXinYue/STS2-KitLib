@@ -85,52 +85,80 @@ public static class HarmonySmartAnalysis {
         IReadOnlyList<HeavyHookRisk> HeavyHookRisks,
         IReadOnlyList<DeclaringTypePatchInfo> PatchesByDeclaringType);
 
-    /// <summary>Aggregates patch graph; <paramref name="error"/> set on failure.</summary>
-    public static SmartAnalysisResult? Analyze(out string? error) {
+    /// <summary>
+    /// Default patterns excluded from analysis (DevMode itself and its framework dependency).
+    /// Patterns ending with <c>*</c> match any owner that starts with the prefix before the asterisk.
+    /// </summary>
+    public static readonly IReadOnlyList<string> DefaultExcludedOwners = ["DevMode", "com.ritsukage.sts2-RitsuLib.*"];
+
+    private static SmartAnalysisResult? _cachedResult;
+    private static string? _cachedFormattedReport;
+    private static string _cachedPatternsKey = "";
+
+    /// <summary>Discard the cached analysis and formatted report so the next calls re-scan Harmony.</summary>
+    public static void InvalidateCache() {
+        _cachedResult = null;
+        _cachedFormattedReport = null;
+        _cachedPatternsKey = "";
+    }
+
+    private static string PatternsKey(IReadOnlyList<string>? patterns) =>
+        patterns == null || patterns.Count == 0 ? "" : string.Join(",", patterns);
+
+    /// <summary>
+    /// Aggregates patch graph; <paramref name="error"/> set on failure.
+    /// Patches whose owner matches any pattern in <paramref name="excludedPatterns"/> are invisible to all
+    /// statistics and risk checks. Methods where every patch is excluded are omitted entirely.
+    /// Patterns ending with <c>*</c> match by prefix; all others are exact matches.
+    /// </summary>
+    public static SmartAnalysisResult? Analyze(out string? error, IReadOnlyList<string>? excludedPatterns = null) {
         error = null;
+        var key = PatternsKey(excludedPatterns);
+        if (_cachedResult != null && _cachedPatternsKey == key)
+            return _cachedResult;
+
         try {
-            var methods = Harmony.GetAllPatchedMethods()
+            var allMethods = Harmony.GetAllPatchedMethods()
                 .OrderBy(m => m.DeclaringType?.FullName ?? "")
                 .ThenBy(m => m.Name)
                 .ToList();
 
             var byOwner = new Dictionary<string, int>(StringComparer.Ordinal);
             var perMethod = new List<(MethodBase Method, MethodHotspot Stats, HashSet<string> Owners)>();
-
             var totalOps = 0;
 
-            foreach (var m in methods) {
+            // Methods that survive the owner filter (have ≥1 non-excluded patch).
+            var includedMethods = new List<MethodBase>();
+
+            foreach (var m in allMethods) {
                 var info = Harmony.GetPatchInfo(m);
                 if (info == null) continue;
 
                 var owners = new HashSet<string>(StringComparer.Ordinal);
+                var px = 0; var po = 0; var tr = 0; var fi = 0;
 
-                void CountPatches(IReadOnlyCollection<Patch> patches) {
+                void Accumulate(IReadOnlyCollection<Patch> patches, ref int counter) {
                     foreach (var p in patches) {
                         var o = p.owner ?? "?";
+                        if (IsExcluded(o, excludedPatterns)) continue;
                         owners.Add(o);
                         byOwner[o] = byOwner.GetValueOrDefault(o) + 1;
                         totalOps++;
+                        counter++;
                     }
                 }
 
-                CountPatches(info.Prefixes);
-                CountPatches(info.Postfixes);
-                CountPatches(info.Transpilers);
-                CountPatches(info.Finalizers);
+                Accumulate(info.Prefixes, ref px);
+                Accumulate(info.Postfixes, ref po);
+                Accumulate(info.Transpilers, ref tr);
+                Accumulate(info.Finalizers, ref fi);
 
+                if (px + po + tr + fi == 0) continue; // all patches from excluded owners
+
+                includedMethods.Add(m);
                 var dt = m.DeclaringType?.FullName ?? "Unknown";
                 var sig = GetMethodSignature(m);
-                var stats = new MethodHotspot(
-                    dt,
-                    sig,
-                    info.Prefixes.Count + info.Postfixes.Count + info.Transpilers.Count + info.Finalizers.Count,
-                    info.Prefixes.Count,
-                    info.Postfixes.Count,
-                    info.Transpilers.Count,
-                    info.Finalizers.Count);
-
-                perMethod.Add((m, stats, owners));
+                perMethod.Add((m, new MethodHotspot(dt, sig, px + po + tr + fi, px, po, tr, fi), owners));
             }
 
             var busiest = perMethod
@@ -163,43 +191,48 @@ public static class HarmonySmartAnalysis {
             var samePriRisks = new List<SamePriorityRisk>();
             var heavyRisks = new List<HeavyHookRisk>();
 
-            foreach (var m in methods) {
+            foreach (var m in includedMethods) {
                 var info = Harmony.GetPatchInfo(m);
                 if (info == null) continue;
+
+                var fPrefixes = FilteredPatches(info.Prefixes, excludedPatterns);
+                var fPostfixes = FilteredPatches(info.Postfixes, excludedPatterns);
+                var fTranspilers = FilteredPatches(info.Transpilers, excludedPatterns);
+                var fFinalizers = FilteredPatches(info.Finalizers, excludedPatterns);
 
                 var dt = m.DeclaringType?.FullName ?? "Unknown";
                 var sig = GetMethodSignature(m);
 
-                if (info.Transpilers.Count >= 2) {
-                    var lines = info.Transpilers
+                if (fTranspilers.Count >= 2) {
+                    var lines = fTranspilers
                         .OrderBy(p => p.priority)
                         .ThenBy(p => p.owner)
                         .Select(FormatPatchLine)
                         .ToList();
-                    transpilerRisks.Add(new TranspilerStackRisk(dt, sig, info.Transpilers.Count, lines));
+                    transpilerRisks.Add(new TranspilerStackRisk(dt, sig, fTranspilers.Count, lines));
                 }
 
-                AddSamePriorityRisks(info.Prefixes, "Prefix", dt, sig, samePriRisks);
-                AddSamePriorityRisks(info.Postfixes, "Postfix", dt, sig, samePriRisks);
-                AddSamePriorityRisks(info.Transpilers, "Transpiler", dt, sig, samePriRisks);
-                AddSamePriorityRisks(info.Finalizers, "Finalizer", dt, sig, samePriRisks);
+                AddSamePriorityRisks(fPrefixes, "Prefix", dt, sig, samePriRisks);
+                AddSamePriorityRisks(fPostfixes, "Postfix", dt, sig, samePriRisks);
+                AddSamePriorityRisks(fTranspilers, "Transpiler", dt, sig, samePriRisks);
+                AddSamePriorityRisks(fFinalizers, "Finalizer", dt, sig, samePriRisks);
 
-                if (info.Prefixes.Count >= HeavyPrefixThreshold) {
-                    var lines = info.Prefixes
+                if (fPrefixes.Count >= HeavyPrefixThreshold) {
+                    var lines = fPrefixes
                         .OrderBy(p => p.priority)
                         .ThenBy(p => p.owner)
                         .Select(FormatPatchLine)
                         .ToList();
-                    heavyRisks.Add(new HeavyHookRisk("Prefix", info.Prefixes.Count, dt, sig, lines));
+                    heavyRisks.Add(new HeavyHookRisk("Prefix", fPrefixes.Count, dt, sig, lines));
                 }
 
-                if (info.Postfixes.Count >= HeavyPostfixThreshold) {
-                    var lines = info.Postfixes
+                if (fPostfixes.Count >= HeavyPostfixThreshold) {
+                    var lines = fPostfixes
                         .OrderBy(p => p.priority)
                         .ThenBy(p => p.owner)
                         .Select(FormatPatchLine)
                         .ToList();
-                    heavyRisks.Add(new HeavyHookRisk("Postfix", info.Postfixes.Count, dt, sig, lines));
+                    heavyRisks.Add(new HeavyHookRisk("Postfix", fPostfixes.Count, dt, sig, lines));
                 }
             }
 
@@ -221,10 +254,10 @@ public static class HarmonySmartAnalysis {
                 .Take(MaxHeavyHookRows)
                 .ToList();
 
-            var byDeclaringType = BuildPatchesByDeclaringType(methods);
+            var byDeclaringType = BuildPatchesByDeclaringType(includedMethods, excludedPatterns);
 
-            return new SmartAnalysisResult(
-                methods.Count,
+            _cachedResult = new SmartAnalysisResult(
+                includedMethods.Count,
                 totalOps,
                 byOwner.Count,
                 byOwnerList,
@@ -234,11 +267,36 @@ public static class HarmonySmartAnalysis {
                 samePriRisks,
                 heavyRisks,
                 byDeclaringType);
+            _cachedPatternsKey = key;
+            return _cachedResult;
         }
         catch (Exception ex) {
             error = ex.Message;
             return null;
         }
+    }
+
+    private static List<Patch> FilteredPatches(IReadOnlyCollection<Patch> patches, IReadOnlyList<string>? excluded) {
+        if (excluded == null || excluded.Count == 0) return [.. patches];
+        return patches.Where(p => !IsExcluded(p.owner ?? "?", excluded)).ToList();
+    }
+
+    /// <summary>
+    /// Returns true when <paramref name="owner"/> matches any pattern in <paramref name="patterns"/>.
+    /// Patterns ending with <c>*</c> are prefix-matched; others require exact equality.
+    /// </summary>
+    private static bool IsExcluded(string owner, IReadOnlyList<string>? patterns) {
+        if (patterns == null) return false;
+        foreach (var p in patterns) {
+            if (p.EndsWith('*')) {
+                if (owner.StartsWith(p[..^1], StringComparison.Ordinal)) return true;
+            }
+            else {
+                if (owner.Equals(p, StringComparison.Ordinal)) return true;
+            }
+        }
+
+        return false;
     }
 
     private static void AddSamePriorityRisks(
@@ -273,7 +331,8 @@ public static class HarmonySmartAnalysis {
         return $"{cls}.{pm.Name}";
     }
 
-    private static IReadOnlyList<DeclaringTypePatchInfo> BuildPatchesByDeclaringType(List<MethodBase> methods) {
+    private static IReadOnlyList<DeclaringTypePatchInfo> BuildPatchesByDeclaringType(
+        List<MethodBase> methods, IReadOnlyList<string>? excludedOwners = null) {
         var groups = new Dictionary<string, List<MethodBase>>(StringComparer.Ordinal);
         foreach (var m in methods) {
             var key = m.DeclaringType?.FullName ?? "Unknown";
@@ -302,6 +361,7 @@ public static class HarmonySmartAnalysis {
                 void AddPatches(IReadOnlyCollection<Patch> patches, string hookKind) {
                     foreach (var p in patches.OrderBy(x => x.priority).ThenBy(x => x.owner)) {
                         var o = p.owner ?? "?";
+                        if (IsExcluded(o, excludedOwners)) continue;
                         owners.Add(o);
                         totalOps++;
                         lines.Add(new PatchLine(hookKind, o, p.priority, PatchMethodRef(p)));
@@ -317,7 +377,8 @@ public static class HarmonySmartAnalysis {
                     methodDetails.Add(new MethodPatchDetail(GetMethodSignature(m), lines));
             }
 
-            result.Add(new DeclaringTypePatchInfo(typeName, totalOps, owners.Count, methodDetails));
+            if (methodDetails.Count > 0)
+                result.Add(new DeclaringTypePatchInfo(typeName, totalOps, owners.Count, methodDetails));
         }
 
         return result;
@@ -356,78 +417,97 @@ public static class HarmonySmartAnalysis {
         string? patchDocsIntro = null,
         string? patchDocsMissing = null) {
         var sb = new StringBuilder();
-        sb.AppendLine(title);
-        sb.AppendLine($"Patched methods: {r.PatchedMethodCount}  |  Total patch ops: {r.TotalPatchOperations}  |  Distinct owners: {r.DistinctOwnerCount}");
-        sb.AppendLine(new string('─', 56));
+        const int W = 62;      // section header total width
+        const int Sep = 2;     // column gap
+        const int CHk = 5;     // "hooks" column width
+        const int CSub = 4;    // px/po/tr/fi column width
+
+        // ═══ HEADER ═══════════════════════════════════════════════
+        sb.AppendLine(new string('═', W));
+        sb.AppendLine($"  {title}");
+        sb.AppendLine($"  {r.PatchedMethodCount} patched methods  |  {r.TotalPatchOperations} ops  |  {r.DistinctOwnerCount} owners");
+        sb.AppendLine(new string('═', W));
         sb.AppendLine();
 
-        sb.AppendLine(secRisk);
-        sb.AppendLine(riskIntro);
+        // ── RISK FLAGS ─────────────────────────────────────────────
+        AppendSectionHeader(sb, secRisk, W);
+        sb.AppendLine($"  {riskIntro}");
         sb.AppendLine();
+
+        // A) Transpiler stacks
+        if (r.TranspilerStackRisks.Count == 0) {
+            sb.AppendLine($"  ✓  {riskSubTranspiler}");
+            sb.AppendLine();
+        }
+        else {
+            sb.AppendLine($"  ⚠  {riskSubTranspiler}");
+            foreach (var row in r.TranspilerStackRisks) {
+                sb.AppendLine($"       {ShortType(row.DeclaringType)}.{row.MethodSignature}  (×{row.TranspilerCount})");
+                sb.AppendLine($"       └ {row.DeclaringType}");
+                foreach (var line in row.PatchLines)
+                    sb.AppendLine($"         • {line}");
+                sb.AppendLine();
+            }
+        }
+
+        // B) Same-priority multi-owner
+        if (r.SamePriorityRisks.Count == 0) {
+            sb.AppendLine($"  ✓  {riskSubSamePri}");
+            sb.AppendLine();
+        }
+        else {
+            sb.AppendLine($"  ⚠  {riskSubSamePri}");
+            foreach (var row in r.SamePriorityRisks) {
+                sb.AppendLine($"       {row.HookKind}  pri={row.Priority}  {ShortType(row.DeclaringType)}.{row.MethodSignature}");
+                sb.AppendLine($"       └ {row.DeclaringType}");
+                foreach (var line in row.PatchLines)
+                    sb.AppendLine($"         • {line}");
+                sb.AppendLine();
+            }
+        }
+
+        // C) Heavy Prefix/Postfix stacks
+        if (r.HeavyHookRisks.Count == 0) {
+            sb.AppendLine($"  ✓  {riskSubHeavy}");
+            sb.AppendLine();
+        }
+        else {
+            sb.AppendLine($"  ⚠  {riskSubHeavy}");
+            foreach (var row in r.HeavyHookRisks) {
+                sb.AppendLine($"       {row.HookKind} ×{row.Count}  {ShortType(row.DeclaringType)}.{row.MethodSignature}");
+                sb.AppendLine($"       └ {row.DeclaringType}");
+                foreach (var line in row.PatchLines)
+                    sb.AppendLine($"         • {line}");
+                sb.AppendLine();
+            }
+        }
 
         var anyRisk = r.TranspilerStackRisks.Count > 0 || r.SamePriorityRisks.Count > 0 || r.HeavyHookRisks.Count > 0;
-        if (!anyRisk)
-            sb.AppendLine($"  {riskNone}");
-        else {
-            if (r.TranspilerStackRisks.Count > 0) {
-                sb.AppendLine(riskSubTranspiler);
-                foreach (var row in r.TranspilerStackRisks) {
-                    sb.AppendLine($"  [{row.DeclaringType}]");
-                    sb.AppendLine($"    {row.MethodSignature}");
-                    sb.AppendLine($"    ({row.TranspilerCount} transpilers — IL rewrite order can break mods)");
-                    foreach (var line in row.PatchLines)
-                        sb.AppendLine($"      {line}");
-                    sb.AppendLine();
-                }
-            }
-
-            if (r.SamePriorityRisks.Count > 0) {
-                sb.AppendLine(riskSubSamePri);
-                foreach (var row in r.SamePriorityRisks) {
-                    sb.AppendLine($"  [{row.DeclaringType}]");
-                    sb.AppendLine($"    {row.MethodSignature}");
-                    sb.AppendLine($"    {row.HookKind}  pri={row.Priority}  (multiple owners — execution order vs other same-priority patches may be unclear)");
-                    foreach (var line in row.PatchLines)
-                        sb.AppendLine($"      {line}");
-                    sb.AppendLine();
-                }
-            }
-
-            if (r.HeavyHookRisks.Count > 0) {
-                sb.AppendLine(riskSubHeavy);
-                foreach (var row in r.HeavyHookRisks) {
-                    sb.AppendLine($"  [{row.DeclaringType}]");
-                    sb.AppendLine($"    {row.MethodSignature}");
-                    sb.AppendLine($"    {row.HookKind} count={row.Count}  (deep stack — harder to reason about)");
-                    foreach (var line in row.PatchLines)
-                        sb.AppendLine($"      {line}");
-                    sb.AppendLine();
-                }
-            }
-        }
-
-        sb.AppendLine(riskHintFooter);
-        sb.AppendLine();
-        sb.AppendLine(new string('─', 56));
+        if (anyRisk)
+            sb.AppendLine($"  → {riskHintFooter}");
         sb.AppendLine();
 
-        sb.AppendLine(secOwners);
+        // ── OWNERS ─────────────────────────────────────────────────
+        AppendSectionHeader(sb, secOwners, W);
+        sb.AppendLine($"  {"count",6}  owner");
+        sb.AppendLine($"  ──────  {"─────────────────────────────────────────────"}");
         foreach (var (owner, n) in r.PatchesByOwner) {
-            if (patchRegistry != null && patchRegistry.Count > 0 && patchRegistry.TryGet(owner, out var doc)) {
-                var cat = doc.Category ?? "?";
-                sb.AppendLine($"  {n,5}  {owner}  [{cat}]");
+            if (patchRegistry != null && patchRegistry.Count > 0 && patchRegistry.TryGet(owner, out var ownerDoc)) {
+                var cat = ownerDoc.Category ?? "?";
+                sb.AppendLine($"  {n,6}  {owner}  [{cat}]");
             }
             else {
-                sb.AppendLine($"  {n,5}  {owner}");
+                sb.AppendLine($"  {n,6}  {owner}");
             }
         }
 
         sb.AppendLine();
 
+        // ── REGISTRY DOCS ──────────────────────────────────────────
         if (patchRegistry != null && patchRegistry.Count > 0 && !string.IsNullOrEmpty(secPatchDocs)) {
-            sb.AppendLine(secPatchDocs);
+            AppendSectionHeader(sb, secPatchDocs, W);
             if (!string.IsNullOrEmpty(patchDocsIntro))
-                sb.AppendLine(patchDocsIntro);
+                sb.AppendLine($"  {patchDocsIntro}");
             sb.AppendLine();
 
             var anyDoc = false;
@@ -436,7 +516,7 @@ public static class HarmonySmartAnalysis {
                     continue;
                 anyDoc = true;
                 var docTitle = doc.DisplayName ?? owner;
-                sb.AppendLine($"  {docTitle}  [{doc.Category ?? "?"}]  — {n} patch ops");
+                sb.AppendLine($"  {docTitle}  [{doc.Category ?? "?"}]  — {n} ops");
                 if (!string.IsNullOrEmpty(doc.Summary))
                     sb.AppendLine($"    {doc.Summary}");
                 if (!string.IsNullOrEmpty(doc.DocUrl))
@@ -445,34 +525,58 @@ public static class HarmonySmartAnalysis {
             }
 
             if (!anyDoc && !string.IsNullOrEmpty(patchDocsMissing))
-                sb.AppendLine(patchDocsMissing);
-            else
-                sb.AppendLine();
-        }
-
-        sb.AppendLine(secBusiest);
-        foreach (var h in r.BusiestMethods) {
-            sb.AppendLine($"  [{h.DeclaringType}]");
-            sb.AppendLine($"    {h.MethodSignature}");
-            sb.AppendLine(
-                $"    {colHooks} {h.TotalHooks}  ({colPx} {h.Prefix}, {colPo} {h.Postfix}, {colTr} {h.Transpiler}, {colFi} {h.Finalizer})");
+                sb.AppendLine($"  {patchDocsMissing}");
             sb.AppendLine();
         }
 
-        sb.AppendLine(secMulti);
-        if (r.MultiOwnerMethods.Count == 0)
+        // ── BUSIEST METHODS (table) ─────────────────────────────────
+        // Layout: 2(pad) + (CHk+Sep) + (CSub+Sep)*4 = 2+7+24 = 33 chars before "method" col
+        AppendSectionHeader(sb, secBusiest, W);
+        var bIndent = new string(' ', 2 + (CHk + Sep) + (CSub + Sep) * 4);
+        sb.AppendLine($"  {colHooks,CHk}  {colPx,CSub}  {colPo,CSub}  {colTr,CSub}  {colFi,CSub}  method");
+        sb.AppendLine($"  {new string('─', CHk)}  {new string('─', CSub)}  {new string('─', CSub)}  {new string('─', CSub)}  {new string('─', CSub)}  {new string('─', 36)}");
+        foreach (var h in r.BusiestMethods) {
+            var shortName = $"{ShortType(h.DeclaringType)}.{h.MethodSignature}";
+            sb.AppendLine($"  {h.TotalHooks,CHk}  {h.Prefix,CSub}  {h.Postfix,CSub}  {h.Transpiler,CSub}  {h.Finalizer,CSub}  {shortName}");
+            sb.AppendLine($"{bIndent}  └ {h.DeclaringType}");
+        }
+
+        sb.AppendLine();
+
+        // ── MULTI-OWNER METHODS (table) ─────────────────────────────
+        // Layout: 2(pad) + (COw+Sep) + (CHk+Sep) = 2+8+7 = 17 chars before "method" col
+        AppendSectionHeader(sb, secMulti, W);
+        if (r.MultiOwnerMethods.Count == 0) {
             sb.AppendLine($"  ({noneMulti})");
+        }
         else {
+            const int COw = 6;
+            var mIndent = new string(' ', 2 + (COw + Sep) + (CHk + Sep));
+            sb.AppendLine($"  {colOwners,COw}  {colHooks,CHk}  method");
+            sb.AppendLine($"  {new string('─', COw)}  {new string('─', CHk)}  {new string('─', 36)}");
             foreach (var row in r.MultiOwnerMethods) {
-                sb.AppendLine($"  [{row.DeclaringType}]");
-                sb.AppendLine($"    {row.MethodSignature}");
-                sb.AppendLine($"    {colOwners} {row.DistinctOwners}  |  {colHooks} {row.TotalHooks}");
-                sb.AppendLine($"    → {string.Join(", ", row.OwnersSorted)}");
-                sb.AppendLine();
+                var shortName = $"{ShortType(row.DeclaringType)}.{row.MethodSignature}";
+                sb.AppendLine($"  {row.DistinctOwners,COw}  {row.TotalHooks,CHk}  {shortName}");
+                sb.AppendLine($"{mIndent}  └ {row.DeclaringType}");
+                sb.AppendLine($"{mIndent}  → {string.Join(", ", row.OwnersSorted)}");
             }
         }
 
-        sb.AppendLine(disclaimer);
+        sb.AppendLine();
+        sb.AppendLine($"  {disclaimer}");
         return sb.ToString();
+    }
+
+    private static void AppendSectionHeader(StringBuilder sb, string title, int totalWidth) {
+        const string Prefix = "── ";
+        const string Suffix = " ";
+        var dashCount = totalWidth - Prefix.Length - title.Length - Suffix.Length;
+        if (dashCount < 2) dashCount = 2;
+        sb.AppendLine($"{Prefix}{title}{Suffix}{new string('─', dashCount)}");
+    }
+
+    private static string ShortType(string fullName) {
+        var dot = fullName.LastIndexOf('.');
+        return dot >= 0 ? fullName[(dot + 1)..] : fullName;
     }
 }

@@ -15,7 +15,8 @@ internal static class HarmonyAnalysisUI {
     private const float PanelW = 1120f;
     private const double AutoRefreshIntervalSec = 3.0;
     private const int SmartMainSplitInitial = 820;
-    private const int TypeListSplitInitial = 300;
+    private const int TypeListSplitInitial = 320;
+    private const int TypeListMinWidth = 220;
 
     public static void Show(NGlobalUi globalUi) {
         Remove(globalUi);
@@ -46,6 +47,38 @@ internal static class HarmonyAnalysisUI {
         vbox.AddChild(selectHint);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
 
+        // ── Exclude-owner filter bar ───────────────────────────────
+        var filterRow = new HBoxContainer();
+        filterRow.AddThemeConstantOverride("separation", 6);
+
+        var filterLabel = new Label {
+            Text = I18N.T("harmony.filter.label", "Exclude owners:"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        filterLabel.AddThemeFontSizeOverride("font_size", 11);
+        filterLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        filterRow.AddChild(filterLabel);
+
+        var excludeEdit = new LineEdit {
+            Text = string.Join(", ", HarmonySmartAnalysis.DefaultExcludedOwners),
+            PlaceholderText = I18N.T("harmony.filter.placeholder", "Comma-separated owner ids…"),
+            ClearButtonEnabled = true,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            CustomMinimumSize = new Vector2(0, 26)
+        };
+        excludeEdit.AddThemeFontSizeOverride("font_size", 11);
+        filterRow.AddChild(excludeEdit);
+
+        var filterHint = new Label {
+            Text = I18N.T("harmony.filter.hint", "(Enter to apply)"),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        filterHint.AddThemeFontSizeOverride("font_size", 10);
+        filterHint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        filterRow.AddChild(filterHint);
+
+        vbox.AddChild(filterRow);
+
         var errLbl = new Label {
             Visible = false,
             AutowrapMode = TextServer.AutowrapMode.WordSmart
@@ -67,7 +100,7 @@ internal static class HarmonyAnalysisUI {
         var typeList = new HarmonyDeclaringTypeVirtualList {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(120, 200)
+            CustomMinimumSize = new Vector2(TypeListMinWidth, 200)
         };
         var typeScroll = new VScrollBar {
             CustomMinimumSize = new Vector2(16, 0)
@@ -82,7 +115,7 @@ internal static class HarmonyAnalysisUI {
         listRow.AddChild(typeScroll);
 
         var listCol = new VBoxContainer {
-            CustomMinimumSize = new Vector2(260, 0),
+            CustomMinimumSize = new Vector2(TypeListMinWidth + 20, 0),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill
         };
@@ -91,6 +124,7 @@ internal static class HarmonyAnalysisUI {
         listCol.AddChild(listRow);
 
         var detailByType = CreateReportTextEdit();
+        detailByType.CustomMinimumSize = new Vector2(320, 0);
 
         var typeBrowseSplit = new HSplitContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -199,6 +233,18 @@ internal static class HarmonyAnalysisUI {
             ApplyTypeSelection(typeList.GetSelected(), lastRegistry);
         };
 
+        HarmonySmartAnalysis.SmartAnalysisResult? lastAppliedSmart = null;
+        string? lastSmartText = null;
+
+        IReadOnlyList<string> ParseExcluded() {
+            var result = new List<string>();
+            foreach (var part in excludeEdit.Text.Split(',', StringSplitOptions.RemoveEmptyEntries)) {
+                var id = part.Trim();
+                if (id.Length > 0) result.Add(id);
+            }
+            return result;
+        }
+
         void Rebuild() {
             var parts = new List<string>();
             var patchRegistry = HarmonyPatchRegistry.Load(out var regErr);
@@ -215,7 +261,7 @@ internal static class HarmonyAnalysisUI {
                 bodyDump.Text = fullText;
             }
 
-            var smart = HarmonySmartAnalysis.Analyze(out var errSmart);
+            var smart = HarmonySmartAnalysis.Analyze(out var errSmart, ParseExcluded());
             if (!string.IsNullOrEmpty(errSmart)) {
                 parts.Add(string.Format(I18N.T("harmony.error.smart", "Smart analysis: {0}"), errSmart));
                 fullSmartReport.Text = "";
@@ -227,41 +273,47 @@ internal static class HarmonyAnalysisUI {
             }
             else if (smart != null) {
                 lastByType = smart.PatchesByDeclaringType;
-                fullSmartReport.Text = HarmonySmartAnalysis.FormatReport(
-                    smart,
-                    I18N.T("harmony.smart.heading", "=== Smart analysis (DevMode) ==="),
-                    I18N.T("harmony.smart.section.risk", "Likely problem spots (heuristic)"),
-                    I18N.T("harmony.smart.riskIntro",
-                        "These patterns often correlate with mod conflicts or fragile ordering — not proof. Use owner + patch method names to find the mod DLL."),
-                    I18N.T("harmony.smart.riskNone", "No transpiler stacks, same-priority multi-owner rows, or heavy prefix/postfix stacks matched the thresholds."),
-                    I18N.T("harmony.smart.risk.transpiler",
-                        "A) Multiple transpilers on one original method (high risk — IL rewrite order)"),
-                    I18N.T("harmony.smart.risk.samePriority",
-                        "B) Same hook kind + same priority + different owners (order vs other same-priority patches can be subtle)"),
-                    string.Format(I18N.T("harmony.smart.risk.heavy",
-                            "C) Many prefixes/postfixes on one method (threshold: ≥{0} / ≥{1})"),
-                        HarmonySmartAnalysis.HeavyPrefixThreshold,
-                        HarmonySmartAnalysis.HeavyPostfixThreshold),
-                    I18N.T("harmony.smart.riskHintFooter",
-                        "If something breaks, try disabling mods whose owner id appears above, or compare load order."),
-                    I18N.T("harmony.smart.section.owners", "Patches by owner (Harmony id) — most active first"),
-                    I18N.T("harmony.smart.section.busiest", "Busiest patched methods (most hooks)"),
-                    I18N.T("harmony.smart.section.multi", "Same method, multiple distinct owners — review for interactions"),
-                    I18N.T("harmony.smart.noneMulti", "No methods with 2+ distinct owners in this snapshot."),
-                    I18N.T("harmony.smart.disclaimer",
-                        "Heuristics only: multi-owner does not imply a bug; it flags overlap worth eyeballing."),
-                    I18N.T("harmony.smart.col.hooks", "hooks"),
-                    I18N.T("harmony.smart.col.px", "px"),
-                    I18N.T("harmony.smart.col.po", "po"),
-                    I18N.T("harmony.smart.col.tr", "tr"),
-                    I18N.T("harmony.smart.col.fi", "fi"),
-                    I18N.T("harmony.smart.col.owners", "owners"),
-                    patchRegistry,
-                    I18N.T("harmony.registry.section", "=== Patch documentation (shared registry) ==="),
-                    I18N.T("harmony.registry.intro",
-                        "Matched by Harmony owner id. Defaults are embedded; override by placing harmony-patch-registry.json next to DevMode.dll (same folder as DevMode.dll)."),
-                    I18N.T("harmony.registry.noneMatched",
-                        "No owners in this snapshot appear in the registry — add or fix \"owner\" strings in harmony-patch-registry.json."));
+
+                // FormatReport is expensive — skip if the analysis result hasn't changed.
+                if (!ReferenceEquals(smart, lastAppliedSmart) || lastSmartText == null) {
+                    lastSmartText = HarmonySmartAnalysis.FormatReport(
+                        smart,
+                        I18N.T("harmony.smart.heading", "=== Smart analysis (DevMode) ==="),
+                        I18N.T("harmony.smart.section.risk", "Likely problem spots (heuristic)"),
+                        I18N.T("harmony.smart.riskIntro",
+                            "These patterns often correlate with mod conflicts or fragile ordering — not proof. Use owner + patch method names to find the mod DLL."),
+                        I18N.T("harmony.smart.riskNone", "No transpiler stacks, same-priority multi-owner rows, or heavy prefix/postfix stacks matched the thresholds."),
+                        I18N.T("harmony.smart.risk.transpiler",
+                            "A) Multiple transpilers on one original method (high risk — IL rewrite order)"),
+                        I18N.T("harmony.smart.risk.samePriority",
+                            "B) Same hook kind + same priority + different owners (order vs other same-priority patches can be subtle)"),
+                        string.Format(I18N.T("harmony.smart.risk.heavy",
+                                "C) Many prefixes/postfixes on one method (threshold: ≥{0} / ≥{1})"),
+                            HarmonySmartAnalysis.HeavyPrefixThreshold,
+                            HarmonySmartAnalysis.HeavyPostfixThreshold),
+                        I18N.T("harmony.smart.riskHintFooter",
+                            "If something breaks, try disabling mods whose owner id appears above, or compare load order."),
+                        I18N.T("harmony.smart.section.owners", "Patches by owner (Harmony id) — most active first"),
+                        I18N.T("harmony.smart.section.busiest", "Busiest patched methods (most hooks)"),
+                        I18N.T("harmony.smart.section.multi", "Same method, multiple distinct owners — review for interactions"),
+                        I18N.T("harmony.smart.noneMulti", "No methods with 2+ distinct owners in this snapshot."),
+                        I18N.T("harmony.smart.disclaimer",
+                            "Heuristics only: multi-owner does not imply a bug; it flags overlap worth eyeballing."),
+                        I18N.T("harmony.smart.col.hooks", "hooks"),
+                        I18N.T("harmony.smart.col.px", "px"),
+                        I18N.T("harmony.smart.col.po", "po"),
+                        I18N.T("harmony.smart.col.tr", "tr"),
+                        I18N.T("harmony.smart.col.fi", "fi"),
+                        I18N.T("harmony.smart.col.owners", "owners"),
+                        patchRegistry,
+                        I18N.T("harmony.registry.section", "=== Patch documentation (shared registry) ==="),
+                        I18N.T("harmony.registry.intro",
+                            "Matched by Harmony owner id. Defaults are embedded; override by placing harmony-patch-registry.json next to DevMode.dll (same folder as DevMode.dll)."),
+                        I18N.T("harmony.registry.noneMatched",
+                            "No owners in this snapshot appear in the registry — add or fix \"owner\" strings in harmony-patch-registry.json."));
+                    lastAppliedSmart = smart;
+                }
+                fullSmartReport.Text = lastSmartText;
 
                 pieChart.SetData(smart.PatchesByOwner);
                 legend.Text = BuildOwnerLegend(smart.PatchesByOwner, patchRegistry);
@@ -340,6 +392,21 @@ internal static class HarmonyAnalysisUI {
             return sb.ToString().TrimEnd();
         }
 
+        var appliedExcludeText = excludeEdit.Text;
+        excludeEdit.TextSubmitted += _ => {
+            appliedExcludeText = excludeEdit.Text;
+            HarmonySmartAnalysis.InvalidateCache();
+            Rebuild();
+        };
+        excludeEdit.FocusExited += () => {
+            // Only rebuild if the text actually changed; avoids spurious rebuilds
+            // every time focus moves to another control in the same panel.
+            if (excludeEdit.Text == appliedExcludeText) return;
+            appliedExcludeText = excludeEdit.Text;
+            HarmonySmartAnalysis.InvalidateCache();
+            Rebuild();
+        };
+
         var btnRow = new HBoxContainer();
         btnRow.AddThemeConstantOverride("separation", 8);
         var autoRefresh = new CheckButton {
@@ -354,7 +421,12 @@ internal static class HarmonyAnalysisUI {
             Text = I18N.T("bridge.refresh", "Refresh"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        refresh.Pressed += Rebuild;
+        refresh.Pressed += () => {
+            HarmonyPatchRegistry.InvalidateCache();
+            HarmonyPatchReportBuilder.InvalidateCache();
+            HarmonySmartAnalysis.InvalidateCache();
+            Rebuild();
+        };
         btnRow.AddChild(refresh);
 
         var copySelBtn = new Button {
@@ -401,11 +473,12 @@ internal static class HarmonyAnalysisUI {
     private static TextEdit CreateReportTextEdit() {
         var te = new TextEdit {
             Editable = false,
-            WrapMode = TextEdit.LineWrappingMode.Boundary,
+            WrapMode = TextEdit.LineWrappingMode.None,
             ContextMenuEnabled = true,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            VirtualKeyboardEnabled = false
+            VirtualKeyboardEnabled = false,
+            ScrollFitContentHeight = false
         };
         te.AddThemeFontSizeOverride("font_size", 11);
         te.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);

@@ -12,13 +12,27 @@ namespace DevMode.Interop;
 /// Builds a UTF-8 text report of per-method Harmony hooks (owner, priority), matching common mod-framework dump layouts.
 /// </summary>
 public static class HarmonyPatchReportBuilder {
-    /// <summary>Full report text, or empty with <paramref name="error"/> set on failure.</summary>
+    private static string? _cachedReport;
+
+    /// <summary>Discard the cached full report so the next <see cref="BuildReport"/> call re-scans Harmony.</summary>
+    public static void InvalidateCache() => _cachedReport = null;
+
+    /// <summary>
+    /// Full report text, or empty with <paramref name="error"/> set on failure.
+    /// Result is cached until <see cref="InvalidateCache"/> is called.
+    /// </summary>
     public static string BuildReport(out string? error) {
+        if (_cachedReport != null) {
+            error = null;
+            return _cachedReport;
+        }
+
         error = null;
         try {
             using var sw = new StringWriter();
             WriteReport(sw);
-            return sw.ToString();
+            _cachedReport = sw.ToString();
+            return _cachedReport;
         }
         catch (Exception ex) {
             error = ex.Message;

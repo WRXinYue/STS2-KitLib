@@ -572,6 +572,9 @@
   "harmony.smart.col.tr": "tr",
   "harmony.smart.col.fi": "fi",
   "harmony.smart.col.owners": "owners",
+  "harmony.filter.label": "Exclude owners:",
+  "harmony.filter.placeholder": "Comma-separated owner ids…",
+  "harmony.filter.hint": "(Enter to apply)",
 
   "log.title": "Log Viewer",
   "log.clear": "Clear",

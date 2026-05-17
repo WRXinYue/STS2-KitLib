@@ -35,8 +35,31 @@ public sealed class HarmonyPatchRegistry {
         return false;
     }
 
-    /// <summary>Loads registry; on failure returns <see cref="Empty"/> and sets <paramref name="error"/>.</summary>
+    private static HarmonyPatchRegistry? _cached;
+    private static string? _cachedError;
+    private static bool _cacheValid;
+
+    /// <summary>Discard the cached registry so the next <see cref="Load"/> call re-reads the file.</summary>
+    public static void InvalidateCache() => _cacheValid = false;
+
+    /// <summary>
+    /// Loads registry; on failure returns <see cref="Empty"/> and sets <paramref name="error"/>.
+    /// Result is cached until <see cref="InvalidateCache"/> is called.
+    /// </summary>
     public static HarmonyPatchRegistry Load(out string? error) {
+        if (_cacheValid) {
+            error = _cachedError;
+            return _cached!;
+        }
+
+        var result = LoadUncached(out error);
+        _cached = result;
+        _cachedError = error;
+        _cacheValid = true;
+        return result;
+    }
+
+    private static HarmonyPatchRegistry LoadUncached(out string? error) {
         error = null;
         var modDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
         var externalPath = Path.Combine(modDir, FileName);
