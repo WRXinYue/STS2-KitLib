@@ -14,13 +14,6 @@ internal static partial class DevPanelUI {
         return tab.Kind == DevPanelTabKind.Developer;
     }
 
-    private static string FormatRailTooltip(IDevPanelTab tab) {
-        var tag = tab.Kind == DevPanelTabKind.Developer
-            ? I18N.T("panel.rail.kind.developer", "Dev")
-            : I18N.T("panel.rail.kind.cheat", "Cheat");
-        return $"{tab.DisplayName} ({tag})";
-    }
-
     private const string RootName = "DevModeRailRoot";
     private const string TopBarName = "DevModeTopBar";
     private const string OverlayName = "DevModeOverlay";
@@ -227,7 +220,7 @@ internal static partial class DevPanelUI {
         // ── Primary group: from registry ──
         foreach (var tab in DevPanelRegistry.GetTabs(DevPanelTabGroup.Primary).Where(IsRailTabVisible)) {
             var t = tab;
-            var btn = CreateRailIcon(t.Icon, FormatRailTooltip(t));
+            var btn = CreateRailIcon(t.Icon, t.DisplayName);
             int btnIdx = railButtons.Count;
             btn.Pressed += () => {
                 if (_activePrimaryTabId == t.Id)
@@ -261,7 +254,7 @@ internal static partial class DevPanelUI {
         // ── Utility group: from registry ──
         foreach (var tab in DevPanelRegistry.GetTabs(DevPanelTabGroup.Utility).Where(IsRailTabVisible)) {
             var t = tab;
-            var btn = CreateRailIcon(t.Icon, FormatRailTooltip(t));
+            var btn = CreateRailIcon(t.Icon, t.DisplayName);
             int btnIdx = railButtons.Count;
             btn.Pressed += () => {
                 MoveRailIndicator(btnIdx, true);
