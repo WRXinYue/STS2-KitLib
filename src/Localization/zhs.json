@@ -634,5 +634,22 @@
   "script.status": "已加载 {0} 个脚本 — 上次刷新: {1}",
   "script.empty": "未找到脚本。打开编辑器创建一个。",
   "script.variables": "脚本变量",
-  "script.migrate": "迁移钩子规则 ({0})"
+  "script.migrate": "迁移钩子规则 ({0})",
+  "panel.feedback": "Mod 反馈",
+  "feedback.title": "Mod 反馈 / Bug 报告",
+  "feedback.subtitle": "填写标题和描述，导出 ZIP 包发给任意 Mod 作者。包含降噪日志、已加载 Mod 列表、Harmony 补丁信息和框架快照。",
+  "feedback.field.title": "标题（一行简述）",
+  "feedback.field.title.placeholder": "",
+  "feedback.field.desc": "描述 / 复现步骤",
+  "feedback.field.desc.placeholder": "",
+  "feedback.contents.title": "ZIP 内容",
+  "feedback.contents.report": "标题、描述、系统信息、DevMode 版本",
+  "feedback.contents.mods": "已加载 Mod 列表（id / 名称 / 版本）",
+  "feedback.contents.logs": "内存日志快照，已过滤噪音",
+  "feedback.contents.harmony": "完整 Harmony 补丁转储",
+  "feedback.contents.bridge": "RitsuLib 与 Harmony 摘要快照",
+  "feedback.export": "导出报告 ZIP",
+  "feedback.exporting": "生成中…",
+  "feedback.success": "已保存：{0}",
+  "feedback.error": "导出失败：{0}"
 }

@@ -603,5 +603,22 @@
   "script.status": "{0} script(s) loaded — last reload: {1}",
   "script.empty": "No scripts found. Open the editor to create one.",
   "script.variables": "Script Variables",
-  "script.migrate": "Migrate Hooks ({0})"
+  "script.migrate": "Migrate Hooks ({0})",
+  "panel.feedback": "Mod Feedback",
+  "feedback.title": "Mod Feedback / Bug Report",
+  "feedback.subtitle": "Fill in a title and description, then export a ZIP package to share with any mod author. Includes filtered logs, loaded mod list, Harmony patches, and framework info.",
+  "feedback.field.title": "Title (one-line summary)",
+  "feedback.field.title.placeholder": "",
+  "feedback.field.desc": "Description / Steps to reproduce",
+  "feedback.field.desc.placeholder": "",
+  "feedback.contents.title": "ZIP contents",
+  "feedback.contents.report": "Title, description, OS info, DevMode version",
+  "feedback.contents.mods": "Loaded mod list (id / name / version)",
+  "feedback.contents.logs": "In-memory log snapshot with noise suppressed",
+  "feedback.contents.harmony": "Full Harmony patch dump",
+  "feedback.contents.bridge": "RitsuLib & Harmony summary snapshot",
+  "feedback.export": "Export report ZIP",
+  "feedback.exporting": "Generating…",
+  "feedback.success": "Saved: {0}",
+  "feedback.error": "Export failed: {0}"
 }

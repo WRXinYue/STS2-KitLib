@@ -142,6 +142,8 @@ internal static class DevPanel {
             _ => OpenHarmonyAnalysis(), null, DevPanelTabKind.Developer);
         DevPanelRegistry.Register("devmode.frameworks", MdiIcon.FilterVariant, I18N.T("panel.frameworks", "Frameworks"), 965, DevPanelTabGroup.Primary,
             _ => OpenFrameworks(), null, DevPanelTabKind.Developer);
+        DevPanelRegistry.Register("devmode.feedback", MdiIcon.BugOutline, I18N.T("panel.feedback", "Mod Feedback"), 970, DevPanelTabGroup.Primary,
+            _ => OpenFeedback(), null, DevPanelTabKind.Developer);
 
         // Utility group — settings / tools
         DevPanelRegistry.Register("devmode.save", MdiIcon.ContentSave, I18N.T("panel.save", "Save / Load"), 100, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSaveLoadOverlay(gui, actions));
@@ -335,6 +337,15 @@ internal static class DevPanel {
         FrameworkBridgeUI.Show(_globalUi);
     }
 
+    private static void OpenFeedback() {
+        if (_globalUi == null) return;
+        TryDismissCurrent();
+        DevModeState.ActivePanel = ActivePanel.Feedback;
+        UpdateTopBar();
+
+        FeedbackReportUI.Show(_globalUi);
+    }
+
     private static void StartNewTest() {
         try {
             var game = NGame.Instance;
@@ -376,6 +387,7 @@ internal static class DevPanel {
             case ActivePanel.Logs: OpenLogs(); break;
             case ActivePanel.HarmonyAnalysis: OpenHarmonyAnalysis(); break;
             case ActivePanel.Frameworks: OpenFrameworks(); break;
+            case ActivePanel.Feedback: OpenFeedback(); break;
             case ActivePanel.CardEdit: break;
         }
     }

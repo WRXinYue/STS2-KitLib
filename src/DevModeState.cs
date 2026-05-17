@@ -35,7 +35,8 @@ public enum ActivePanel {
     Scripts,
     Logs,
     HarmonyAnalysis,
-    Frameworks
+    Frameworks,
+    Feedback
 }
 
 public enum PowerTarget {

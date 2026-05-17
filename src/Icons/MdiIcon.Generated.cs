@@ -4,6 +4,7 @@ namespace DevMode.Icons;
 public readonly partial struct MdiIcon
 {
     public static readonly MdiIcon AnimationPlay = new("animation-play");
+    public static readonly MdiIcon BugOutline = new("bug-outline");
     public static readonly MdiIcon CalendarStar = new("calendar-star");
     public static readonly MdiIcon Cards = new("cards");
     public static readonly MdiIcon Check = new("check");
@@ -33,4 +34,5 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon TreasureChest = new("treasure-chest");
     public static readonly MdiIcon WeatherNight = new("weather-night");
     public static readonly MdiIcon WeatherSunny = new("weather-sunny");
+    public static readonly MdiIcon ZipBox = new("zip-box");
 }
