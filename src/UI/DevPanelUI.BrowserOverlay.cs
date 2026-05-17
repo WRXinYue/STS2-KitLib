@@ -182,7 +182,14 @@ internal static partial class DevPanelUI {
         return content;
     }
 
-    private static void PlayBrowserPanelOpenAnimation(PanelContainer panel) {
+    private static void PlayBrowserPanelOpenAnimation(PanelContainer panel) =>
+        PlayBrowserPanelSlideInFromLeft(panel, 0.82f);
+
+    /// <summary>Second column in a flush join (e.g. save slots): same motion as the main browser — enters from the left.</summary>
+    internal static void PlayBrowserPanelOpenFromLeft(PanelContainer panel) =>
+        PlayBrowserPanelSlideInFromLeft(panel, 0.82f);
+
+    private static void PlayBrowserPanelSlideInFromLeft(PanelContainer panel, float durationSec) {
         if (!panel.IsInsideTree())
             return;
 
@@ -198,7 +205,7 @@ internal static partial class DevPanelUI {
         var t = panel.CreateTween();
         t.SetTrans(Tween.TransitionType.Quint);
         t.SetEase(Tween.EaseType.Out);
-        t.TweenProperty(panel, "position:x", targetX, 0.82f);
+        t.TweenProperty(panel, "position:x", targetX, durationSec);
         t.Chain()
             .TweenCallback(Callable.From(() => {
                 panel.SetMeta(BrowserPanelAnimatingMetaKey, false);
@@ -247,6 +254,9 @@ internal static partial class DevPanelUI {
     }
 
     internal static bool TryAnimateBrowserOverlayClose(Node parent, Control root) {
+        if (root.HasMeta("dm_dual_save_load") && root.GetMeta("dm_dual_save_load").AsBool())
+            return TryAnimateDualSaveLoadClose(parent, root);
+
         var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
         var panel = clipHost?.GetNodeOrNull<PanelContainer>("BrowserPanel");
         if (panel == null)
@@ -277,6 +287,64 @@ internal static partial class DevPanelUI {
         }));
 
         return true;
+    }
+
+    private static bool TryAnimateDualSaveLoadClose(Node parent, Control root) {
+        var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
+        var mover = clipHost?.GetNodeOrNull<Control>("SaveLoadDualCarrier");
+        if (mover == null)
+            return false;
+
+        if (root.HasMeta(BrowserPanelClosingMetaKey) && root.GetMeta(BrowserPanelClosingMetaKey).AsBool())
+            return true;
+
+        root.SetMeta(BrowserPanelClosingMetaKey, true);
+        root.SetMeta(BrowserPanelAnimatingMetaKey, true);
+        root.MouseFilter = Control.MouseFilterEnum.Ignore;
+        root.GetNodeOrNull<BrowserPanelWidthGrip>("PanelWidthGrip")?.Hide();
+
+        float startX = mover.Position.X;
+        float w = Mathf.Max(1f, mover.GetRect().Size.X);
+        float endX = startX - w;
+
+        var tween = mover.CreateTween();
+        tween.SetTrans(Tween.TransitionType.Cubic);
+        tween.SetEase(Tween.EaseType.In);
+        tween.TweenProperty(mover, "position:x", endX, 0.26f);
+        tween.Chain().TweenCallback(Callable.From(() => {
+            root.SetMeta(BrowserPanelAnimatingMetaKey, false);
+            if (root.IsInsideTree()) {
+                var p = root.GetParent();
+                p?.RemoveChild(root);
+                root.QueueFree();
+            }
+        }));
+
+        return true;
+    }
+
+    internal static void PlaySubPanelSlideOpenFromLeft(Control mover) {
+        if (!mover.IsInsideTree())
+            return;
+
+        float w = Mathf.Max(1f, mover.GetRect().Size.X);
+        if (w < 2f)
+            return;
+
+        mover.SetMeta(BrowserPanelAnimatingMetaKey, true);
+        float targetX = mover.Position.X;
+        float startX = targetX - w;
+        mover.Position = new Vector2(startX, mover.Position.Y);
+
+        var t = mover.CreateTween();
+        t.SetTrans(Tween.TransitionType.Quint);
+        t.SetEase(Tween.EaseType.Out);
+        t.TweenProperty(mover, "position:x", targetX, 0.82f);
+        t.Chain()
+            .TweenCallback(Callable.From(() => {
+                mover.SetMeta(BrowserPanelAnimatingMetaKey, false);
+                mover.GetParent()?.GetParent()?.GetNodeOrNull<BrowserPanelWidthGrip>("PanelWidthGrip")?.Sync();
+            }));
     }
 
     #endregion

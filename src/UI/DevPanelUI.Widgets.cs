@@ -67,6 +67,60 @@ internal static partial class DevPanelUI {
     }
 
     /// <summary>
+    /// Same chrome as <see cref="CreateBrowserPanel"/> for a fixed pixel width, but horizontal
+    /// offsets are <c>0 … width</c> (parent must already account for <see cref="BrowserPanelLeft"/>).
+    /// Used for stacked browser columns inside one clip host (e.g. Save / Load + extension).
+    /// </summary>
+    /// <param name="joinFlushOnRight">
+    /// When another column sits immediately to the right, square this panel's right vertical corners
+    /// so the seam has no inner rounding (reads as one split surface).
+    /// </param>
+    public static PanelContainer CreateBrowserPanelInner(float fixedWidth, bool joinFlushOnRight = false) {
+        var panel = new PanelContainer {
+            Name = "BrowserPanel",
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            AnchorTop = 0.15f,
+            AnchorBottom = 0.85f,
+            OffsetTop = 0,
+            OffsetBottom = 0,
+            AnchorLeft = 0,
+            AnchorRight = 0,
+            OffsetLeft = 0,
+            OffsetRight = fixedWidth,
+        };
+
+        int rr = joinFlushOnRight ? 0 : BrowserRailRadius;
+        var style = new StyleBoxFlat {
+            BgColor = ColOverlayBg,
+            CornerRadiusTopLeft = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusTopRight = rr,
+            CornerRadiusBottomRight = rr,
+            ContentMarginLeft = 20,
+            ContentMarginRight = 20,
+            ContentMarginTop = 14,
+            ContentMarginBottom = 16,
+            BorderWidthLeft = 0,
+            BorderWidthTop = 1,
+            BorderWidthBottom = 1,
+            BorderWidthRight = 1,
+            BorderColor = ColOverlayBorder,
+            ShadowColor = new Color(0, 0, 0, 0.40f),
+            ShadowSize = 20,
+            ShadowOffset = new Vector2(20, 0)
+        };
+        panel.AddThemeStyleboxOverride("panel", style);
+
+        var content = new VBoxContainer { Name = "Content" };
+        content.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        content.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        content.AddThemeConstantOverride("separation", 10);
+        panel.AddChild(content);
+
+        return panel;
+    }
+
+    /// <summary>
     /// Transparent full-area backdrop that closes the panel when clicking anywhere outside
     /// the rail (to the right of the rail, full height). Add this as the FIRST child of the
     /// panel root so the panel itself sits on top and receives clicks first.

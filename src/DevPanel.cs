@@ -87,10 +87,6 @@ internal static class DevPanel {
             _globalUi = globalUi;
 
             var actions = new DevPanelActions {
-                OnOpenSave = () => SaveSlotUI.Show(globalUi, saveMode: true,
-                                    slot => SaveSlotManager.SaveToSlot(slot)),
-                OnOpenLoad = () => SaveSlotUI.Show(globalUi, saveMode: false,
-                                    slot => SaveSlotManager.LoadFromSlot(slot)),
                 OnNewTest = StartNewTest,
                 OnRefreshPanel = RefreshPanel,
                 OnCycleGameSpeed = SpeedControl.CycleSpeed,

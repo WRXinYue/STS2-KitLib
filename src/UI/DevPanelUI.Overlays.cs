@@ -1,4 +1,5 @@
 using System;
+using DevMode;
 using DevMode.Icons;
 using DevMode.Presets;
 using DevMode.Settings;
@@ -11,19 +12,21 @@ namespace DevMode.UI;
 internal static partial class DevPanelUI {
     private const string SettingsRootName = "DevModeSettings";
     private const string SaveLoadRootName = "DevModeSaveLoad";
+    private const string SaveLoadMenuHostName = "SaveLoadMenuHost";
+    private const string SaveLoadExtensionWidthKey = "DevModeSaveLoad_ext";
     private const string RestartSeedRootName = "DevModeRestartSeed";
 
     // ── Helper: build the standard browser-panel root ──────────────────────
 
-    private static (Control root, VBoxContainer vbox) CreateOverlayRoot(
+    private static (Control root, PanelContainer panel, VBoxContainer vbox) CreateOverlayRoot(
         NGlobalUi globalUi, string rootName, float panelWidth = 0f, int contentSeparation = 10) {
-        var (root, _, vbox) = CreateBrowserOverlayShell(
+        var (root, panel, vbox) = CreateBrowserOverlayShell(
             globalUi,
             rootName,
             panelWidth,
             () => ((Node)globalUi).GetNodeOrNull<Control>(rootName)?.QueueFree(),
             contentSeparation);
-        return (root, vbox);
+        return (root, panel, vbox);
     }
 
     // ── Settings (Cheats) ──────────────────────────────────────────────────
@@ -35,7 +38,7 @@ internal static partial class DevPanelUI {
             existing.QueueFree();
         }
 
-        var (root, vbox) = CreateOverlayRoot(globalUi, SettingsRootName, 640f);
+        var (root, _, vbox) = CreateOverlayRoot(globalUi, SettingsRootName, 640f);
 
         // Nav tab header
         AddBrowserNavTab(vbox, I18N.T("panel.settings", "Settings"));
@@ -267,44 +270,204 @@ internal static partial class DevPanelUI {
         return col;
     }
 
-    // ── Save / Load ────────────────────────────────────────────────────────
+    // ── Save / Load (rail | main browser panel | extension browser panel) ───
 
     internal static void ShowSaveLoadOverlay(NGlobalUi globalUi, DevPanelActions actions) {
         ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree();
 
-        var (root, vbox) = CreateOverlayRoot(globalUi, SaveLoadRootName, 520f);
+        const float defaultExtWidth = 600f;
+        const float extSlideOutSec = 0.28f;
 
-        AddBrowserNavTab(vbox, I18N.T("panel.section.save", "Save / Load"));
+        var root = CreateAndSetupRoot(globalUi, SaveLoadRootName, 1250);
+        root.SetMeta("dm_dual_save_load", true);
 
-        var btnBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        btnBox.AddThemeConstantOverride("separation", 6);
+        void FallbackClose() => ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree();
+        root.AddChild(CreateBrowserBackdrop(() => RequestCloseBrowserOverlay(globalUi, SaveLoadRootName, FallbackClose)));
+
+        float mainW = ResolveBrowserPanelWidth(SaveLoadRootName, 520f, (Node)globalUi);
+        float extW = ResolveBrowserPanelWidth(SaveLoadExtensionWidthKey, defaultExtWidth, (Node)globalUi);
+
+        var clipHost = CreateBrowserPanelClipHost();
+
+        var mover = new Control {
+            Name = "SaveLoadDualCarrier",
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            ClipContents = true,
+        };
+        mover.AnchorLeft = 0;
+        mover.AnchorRight = 0;
+        // Same vertical band as `Rail` and `CreateBrowserPanel` (0.15–0.85 of clip host).
+        // Full-height mover + FullRect inner panels made columns taller than the rail.
+        mover.AnchorTop = 0.15f;
+        mover.AnchorBottom = 0.85f;
+        mover.OffsetTop = 0;
+        mover.OffsetBottom = 0;
+
+        var row = new HBoxContainer {
+            Name = "SaveLoadDualRow",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        row.AddThemeConstantOverride("separation", 0);
+        // Parent `mover` is a plain Control; without full-rect anchors the row only uses minimum
+        // height and sits at the top — middle column looks detached / "floating" upward.
+        row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+
+        var mainSlot = new Control {
+            CustomMinimumSize = new Vector2(mainW, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+
+        var mainPanel = CreateBrowserPanelInner(mainW, joinFlushOnRight: true);
+        mainPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        mainSlot.AddChild(mainPanel);
+
+        var mainVbox = mainPanel.GetNodeOrNull<VBoxContainer>("Content")
+            ?? throw new InvalidOperationException("Save/Load main panel missing Content");
+
+        AddBrowserNavTab(mainVbox, I18N.T("panel.section.save", "Save / Load"));
+
+        var menuHost = new VBoxContainer {
+            Name = SaveLoadMenuHostName,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        menuHost.AddThemeConstantOverride("separation", 6);
 
         var newTestBtn = CreateListItemButton(I18N.T("panel.newTest", "New Test"));
         newTestBtn.Icon = MdiIcon.Plus.Texture(16);
         newTestBtn.Alignment = HorizontalAlignment.Left;
         newTestBtn.Pressed += () => { ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree(); actions.OnNewTest(); };
-        btnBox.AddChild(newTestBtn);
+        menuHost.AddChild(newTestBtn);
 
         var restartSeedBtn = CreateListItemButton(I18N.T("panel.restartWithSeed", "Restart with Seed"));
         restartSeedBtn.Icon = MdiIcon.Refresh.Texture(16);
         restartSeedBtn.Alignment = HorizontalAlignment.Left;
         restartSeedBtn.Pressed += () => ShowRestartSeedOverlay(globalUi, actions);
-        btnBox.AddChild(restartSeedBtn);
+        menuHost.AddChild(restartSeedBtn);
 
         var saveBtn = CreateListItemButton(I18N.T("panel.save", "Save"));
         saveBtn.Icon = MdiIcon.ContentSave.Texture(16);
         saveBtn.Alignment = HorizontalAlignment.Left;
-        saveBtn.Pressed += () => { ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree(); actions.OnOpenSave(); };
-        btnBox.AddChild(saveBtn);
+        menuHost.AddChild(saveBtn);
 
         var loadBtn = CreateListItemButton(I18N.T("panel.load", "Load"));
         loadBtn.Icon = MdiIcon.FolderOpen.Texture(16);
         loadBtn.Alignment = HorizontalAlignment.Left;
-        loadBtn.Pressed += () => { ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree(); actions.OnOpenLoad(); };
-        btnBox.AddChild(loadBtn);
+        menuHost.AddChild(loadBtn);
 
-        vbox.AddChild(btnBox);
-        vbox.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
+        mainVbox.AddChild(menuHost);
+
+        var extSlot = new Control {
+            CustomMinimumSize = new Vector2(extW, 0),
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            Visible = false,
+            ClipContents = true,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+
+        var extPanel = CreateBrowserPanelInner(extW);
+        extPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        extSlot.AddChild(extPanel);
+
+        var extVbox = extPanel.GetNodeOrNull<VBoxContainer>("Content")
+            ?? throw new InvalidOperationException("Save/Load extension panel missing Content");
+
+        var slotHost = new Control {
+            Name = "SaveLoadSlotHost",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        slotHost.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        extVbox.AddChild(slotHost);
+
+        row.AddChild(mainSlot);
+        row.AddChild(extSlot);
+        mover.AddChild(row);
+        clipHost.AddChild(mover);
+        root.AddChild(clipHost);
+
+        Tween? extCloseTween = null;
+
+        void KillExtCloseTween() {
+            extCloseTween?.Kill();
+            extCloseTween = null;
+        }
+
+        void SyncMoverWidth() {
+            float totalW = mainSlot.CustomMinimumSize.X + (extSlot.Visible ? extSlot.CustomMinimumSize.X : 0f);
+            mover.OffsetLeft = 0;
+            mover.OffsetRight = Mathf.Max(1f, totalW);
+        }
+
+        void CloseExtensionPanel() {
+            if (!extSlot.Visible) return;
+            KillExtCloseTween();
+            float w = Mathf.Max(1f, extPanel.GetRect().Size.X);
+            extCloseTween = extPanel.CreateTween();
+            extCloseTween.SetTrans(Tween.TransitionType.Cubic);
+            extCloseTween.SetEase(Tween.EaseType.In);
+            extCloseTween.TweenProperty(extPanel, "position:x", w, extSlideOutSec);
+            extCloseTween.TweenCallback(Callable.From(() => {
+                extCloseTween = null;
+                SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost);
+                extPanel.Position = Vector2.Zero;
+                extSlot.Visible = false;
+                SyncMoverWidth();
+            }));
+        }
+
+        void OpenPicker(bool saveMode) {
+            Callable.From(() => {
+                KillExtCloseTween();
+                if (extSlot.Visible)
+                    SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost);
+                extPanel.Position = Vector2.Zero;
+                extSlot.Visible = true;
+                SyncMoverWidth();
+                SaveSlotUI.Show(
+                    slotHost,
+                    saveMode: saveMode,
+                    onConfirm: slot => {
+                        if (saveMode)
+                            SaveSlotManager.SaveToSlot(slot);
+                        else
+                            SaveSlotManager.LoadFromSlot(slot);
+                    },
+                    host: SaveSlotUiHost.EmbeddedInDevPanel,
+                    onEmbeddedCancel: CloseExtensionPanel,
+                    onEmbeddedAfterLoadClose: saveMode
+                        ? null
+                        : () => {
+                            KillExtCloseTween();
+                            SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost);
+                            extPanel.Position = Vector2.Zero;
+                            extSlot.Visible = false;
+                            SyncMoverWidth();
+                            RequestCloseBrowserOverlay(globalUi, SaveLoadRootName, FallbackClose);
+                        });
+                Callable.From(() => PlayBrowserPanelOpenFromLeft(extPanel)).CallDeferred();
+            }).CallDeferred();
+        }
+
+        saveBtn.Pressed += () => OpenPicker(saveMode: true);
+        loadBtn.Pressed += () => OpenPicker(saveMode: false);
+
+        clipHost.Resized += () => SyncMoverWidth();
+
+        bool opened = false;
+        clipHost.TreeEntered += () => {
+            if (opened) return;
+            opened = true;
+            Callable.From(() => {
+                SyncMoverWidth();
+                PlaySubPanelSlideOpenFromLeft(mover);
+            }).CallDeferred();
+        };
 
         ((Node)globalUi).AddChild(root);
     }
@@ -315,7 +478,7 @@ internal static partial class DevPanelUI {
         ((Node)globalUi).GetNodeOrNull<Control>(RestartSeedRootName)?.QueueFree();
         ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree();
 
-        var (root, vbox) = CreateOverlayRoot(globalUi, RestartSeedRootName, 520f);
+        var (root, _, vbox) = CreateOverlayRoot(globalUi, RestartSeedRootName, 520f);
 
         AddBrowserNavTab(vbox, I18N.T("restart.title", "Restart with Seed"));
 

@@ -7,9 +7,7 @@ namespace DevMode.UI;
 /// Panel-open actions have moved to <see cref="DevPanelRegistry"/>.
 /// </summary>
 internal sealed class DevPanelActions {
-    // Save / Load overlay
-    public required Action OnOpenSave { get; init; }
-    public required Action OnOpenLoad { get; init; }
+    // Save / Load overlay (slot picker is embedded in the same browser panel)
     public required Action OnNewTest { get; init; }
 
     // UI coordination
