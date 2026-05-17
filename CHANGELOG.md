@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Mod Feedback** panel — describe an issue and export a **ZIP report** for any mod author: filtered in-game logs, loaded mod list, Harmony patch dump, and framework bridge snapshot. Attach a **game log** from the `logs` folder (defaults to the current session’s `godot.log`, last 512 KB). **Privacy mode** (on by default) replaces your user-data path with `<user-data>` in the package.
+- **Harmony analysis** — exclude patch owners by id (wildcards supported; DevMode and RitsuLib excluded by default), clearer smart-report layout, and smoother handling of large dumps (type list + detail panes, less stutter when refreshing).
+- In-game **log viewer** — new default **noise rules** hide routine background/foreground FPS limit messages.
 - The in-game **mod list** now shows a **preview image** for DevMode.
 - Card browser (full library): set **base energy cost** before you add a card — the value applies to the new copy you receive, not the catalog entry.
 - Card browser **remembers** type/rarity/cost/pool filters, sort, search text, and **View upgrades** between sessions.
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Dev panel **rail tooltips** show the tab name only (no extra Dev/Cheat suffix).
 - Card browser **pool filter** defaults to the **current character** instead of all pools.
 - Card **number and text** fields in the browser apply as you edit (on change or when leaving the field), without a separate apply step.
 - Dev **save / load snapshot** overlay (main menu and dev panel) now follows your **DevMode appearance theme** — backdrop, panels, separators, buttons, name field, and stat chips stay in sync with Dark / OLED / Light / Warm.
@@ -29,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- DevMode now appears under the correct **display name** in the game’s mod list manifest.
 - Dev save/load snapshot list: clicking the **same slot again** no longer makes the right-hand detail area **flash**.
 - In-run snapshot picker no longer appears as a **thin strip** at the top of the extension column — it now fills the panel height.
 - Cards whose description text uses **dynamic placeholders** no longer trigger formatter errors in the dev card UI or preset flows.

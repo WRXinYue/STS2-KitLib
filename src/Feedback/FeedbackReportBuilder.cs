@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using DevMode.Interop;
 using DevMode.Modding;
@@ -16,9 +18,36 @@ namespace DevMode.Feedback;
 /// </summary>
 internal static class FeedbackReportBuilder {
     private const string ReportsDir = "devmode-reports";
-    private const int MaxLogEntries = 2000;
+    /// <summary>Maximum bytes read from the tail of a game log file (512 KB).</summary>
+    private const int LogTailBytes = 512 * 1024;
 
-    public readonly record struct BuildRequest(string Title, string Description);
+    public readonly record struct BuildRequest(
+        string Title,
+        string Description,
+        /// <summary>Absolute path of the game log file to attach, or null to skip.</summary>
+        string? LogFilePath,
+        /// <summary>When true, replaces the user data dir path with &lt;user-data&gt; in all text.</summary>
+        bool PrivacyMode);
+
+    /// <summary>
+    /// Scans <c>user://logs/</c> for game log files, sorted newest first.
+    /// Returns (display name, absolute path) pairs. Safe to call on any thread.
+    /// </summary>
+    public static IReadOnlyList<(string DisplayName, string AbsPath)> ScanLogFiles() {
+        try {
+            var logsDir = Path.Combine(OS.GetUserDataDir(), "logs");
+            if (!Directory.Exists(logsDir))
+                return Array.Empty<(string, string)>();
+
+            return Directory.GetFiles(logsDir)
+                .OrderByDescending(File.GetLastWriteTime)
+                .Select(p => (Path.GetFileName(p), p))
+                .ToList();
+        }
+        catch {
+            return Array.Empty<(string, string)>();
+        }
+    }
 
     /// <summary>
     /// Build the report ZIP synchronously. Run this on a background thread.
@@ -35,24 +64,32 @@ internal static class FeedbackReportBuilder {
         using var stream = new FileStream(zipPath, FileMode.CreateNew, System.IO.FileAccess.Write);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: false);
 
-        WriteEntry(archive, "report.txt", BuildReportHeader(req));
-        WriteEntry(archive, "mods.txt", BuildModList());
-        WriteEntry(archive, "logs-filtered.txt", BuildFilteredLog());
-        WriteEntry(archive, "harmony-patches.txt", BuildHarmonyDump());
-        WriteEntry(archive, "framework-bridge.txt", BuildFrameworkBridge());
+        WriteEntry(archive, "report.txt", BuildReportHeader(req, userDataDir), req, userDataDir);
+        WriteEntry(archive, "mods.txt", BuildModList(), req, userDataDir);
+        WriteEntry(archive, "logs-filtered.txt", BuildFilteredLog(), req, userDataDir);
+        WriteEntry(archive, "harmony-patches.txt", BuildHarmonyDump(), req, userDataDir);
+        WriteEntry(archive, "framework-bridge.txt", BuildFrameworkBridge(), req, userDataDir);
+
+        if (req.LogFilePath != null && File.Exists(req.LogFilePath)) {
+            var logName = Path.GetFileName(req.LogFilePath);
+            WriteEntry(archive, $"game-logs/{logName}", ReadLogTail(req.LogFilePath), req, userDataDir);
+        }
 
         return zipPath;
     }
 
     // ── Section builders ─────────────────────────────────────────────────
 
-    private static string BuildReportHeader(BuildRequest req) {
+    private static string BuildReportHeader(BuildRequest req, string userDataDir) {
         var sb = new StringBuilder();
         sb.AppendLine("=== DevMode Feedback Report ===");
         sb.AppendLine($"Generated : {DateTime.Now:O}");
         sb.AppendLine($"DevMode   : {MainFile.ModID}");
         sb.AppendLine($"OS        : {OS.GetName()} {OS.GetVersion()}");
-        sb.AppendLine($"User data : {OS.GetUserDataDir()}");
+        // Always redact path in header regardless of privacy mode — it's shown to user in the UI anyway
+        sb.AppendLine($"User data : {(req.PrivacyMode ? "<user-data>" : userDataDir)}");
+        sb.AppendLine($"Log file  : {(req.LogFilePath != null ? Path.GetFileName(req.LogFilePath) : "(none)")}");
+        sb.AppendLine($"Privacy   : {(req.PrivacyMode ? "on (paths redacted)" : "off")}");
         sb.AppendLine();
         sb.AppendLine("--- Title ---");
         sb.AppendLine(string.IsNullOrWhiteSpace(req.Title) ? "(no title)" : req.Title);
@@ -140,9 +177,57 @@ internal static class FeedbackReportBuilder {
         }
     }
 
+    /// <summary>
+    /// Reads the tail of a game log file (last <see cref="LogTailBytes"/> bytes),
+    /// starting from a clean line boundary. Uses <see cref="FileShare.ReadWrite"/>
+    /// so the game's open handle doesn't block us.
+    /// </summary>
+    private static string ReadLogTail(string path) {
+        try {
+            using var fs = new FileStream(path, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
+            var truncated = fs.Length > LogTailBytes;
+            if (truncated)
+                fs.Seek(-LogTailBytes, SeekOrigin.End);
+
+            using var reader = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            if (truncated)
+                reader.ReadLine(); // skip possibly-incomplete first line
+
+            var content = reader.ReadToEnd();
+            var sb = new StringBuilder();
+            if (truncated)
+                sb.AppendLine($"(showing last {LogTailBytes / 1024} KB of file — {fs.Length / 1024} KB total)");
+            sb.Append(content);
+            return sb.ToString();
+        }
+        catch (Exception ex) {
+            return $"(error reading log file: {ex.Message})";
+        }
+    }
+
+    // ── Privacy ───────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Replaces occurrences of the user data directory path with &lt;user-data&gt;.
+    /// Handles both forward-slash and backslash variants.
+    /// </summary>
+    private static string Redact(string text, string userDataDir) {
+        // Normalize to forward slashes for matching, then replace both variants
+        var fwd = userDataDir.Replace('\\', '/');
+        var bwd = userDataDir.Replace('/', '\\');
+        text = text.Replace(fwd, "<user-data>", StringComparison.OrdinalIgnoreCase);
+        if (bwd != fwd)
+            text = text.Replace(bwd, "<user-data>", StringComparison.OrdinalIgnoreCase);
+        return text;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    private static void WriteEntry(ZipArchive archive, string name, string content) {
+    private static void WriteEntry(ZipArchive archive, string name, string content,
+        BuildRequest req, string userDataDir) {
+        if (req.PrivacyMode)
+            content = Redact(content, userDataDir);
+
         var entry = archive.CreateEntry(name, CompressionLevel.Optimal);
         using var writer = new StreamWriter(entry.Open(), Encoding.UTF8);
         writer.Write(content);
