@@ -2,40 +2,34 @@
 
 **English** | [中文](./README.zh-CN.md)
 
-A developer mode mod for Slay the Spire 2.
+All-in-one in-game toolkit for Slay the Spire 2 — test builds, cheat, script, and debug mods without leaving the game.
 
-![DevMode](./assets/devmode.png)
+![DevMode](https://raw.githubusercontent.com/WRXinYue/STS2-DevMode/main/assets/devmode.png)
 
-## Features
+## Panels
 
-- Developer panel accessible from the main menu and during runs
-- Configurable relics, cards, gold, and encounters for repeatable test setups
-- Enemy encounter system with unified select UI, combat spawning, and idle animation preview
-- SpireScratch script runner with live reload, event hooks, and in-game log viewer
-- i18n support with English and Simplified Chinese localization
-- Extensible panel registry — other mods can add custom tabs to the DevMode rail
-
-## Extending DevMode
-
-Other mods can register custom rail tabs via `DevPanelRegistry`. See **[Developer → Dev panel registry](docs/pages/developer/extending/panel-registry.md)** for the full API reference, code examples, and icon usage.
-
-## Documentation site
-
-The **[docs/](docs/)** folder is a **[Valaxy](https://valaxy.site/)** site. Use **pnpm** (via Corepack):
-
-```bash
-cd docs
-corepack enable && corepack prepare pnpm@10.24.0 --activate
-pnpm install && pnpm dev
-```
+- **Cheats** — God mode, infinite energy/block, damage multipliers, enemy freeze, stat locks, map overrides, reward tweaks — all gameplay modifiers in one place
+- **Card Browser** — Browse the full card library, filter by type/rarity/cost/pool/character, edit cost/damage/block, add to any pile (Hand, Draw, Discard, Deck, Exhaust), view upgrade previews; filters and search remembered across sessions
+- **Relic Browser** — Browse and add relics
+- **Power Browser** — Browse and apply powers with 4 target modes (self, all enemies, specific, allies); one-click Auto-Apply hook creation
+- **Potion Browser** — Visual grid browser; one-click Auto-Apply hook creation
+- **Enemy Encounter** — Replace any encounter by room or map node; preview encounter content per node; idle animation preview
+- **Hooks** — Define automated Trigger → Condition → Action rules (e.g. add a card every combat start, apply a power on draw)
+- **Scripts** — SpireScratch visual block scripting (Blockly); scripts live-reload via WebSocket without restarting the game
+- **Save Manager** — Named save slots with dynamic add/delete; carry cards/relics/gold into a new seed run; full slot detail view
+- **Console** — Searchable reference for all native and DevMode console commands
+- **Log Viewer** — In-game log stream with configurable noise-filter rules
+- **Mod Feedback** — Export a ZIP bug report (filtered logs, mod list, Harmony dump, framework snapshot) for any mod author; privacy mode strips user paths
+- **Harmony Analysis** — Inspect all active Harmony patches; filter by owner ID; smart summary layout
+- **Settings** — Appearance theme (Dark / OLED / Light / Warm), game speed, skip animations
 
 ## Contributing
 
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** for collaboration norms, K&R brace style, formatting commands, and localization.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for collaboration norms, K&R brace style, formatting commands, and localization, or open an issue / PR on [GitHub](https://github.com/WRXinYue/STS2-DevMode).
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for version history.
+See [CHANGELOG.md](https://github.com/WRXinYue/STS2-DevMode/blob/main/CHANGELOG.md) for version history.
 
 ## Acknowledgments
 
@@ -43,4 +37,4 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## License
 
-MIT
+[MIT](https://github.com/WRXinYue/STS2-DevMode/blob/main/LICENSE)

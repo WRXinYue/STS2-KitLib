@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
 
 
 def _escape_html(text: str) -> str:
@@ -27,6 +28,7 @@ def convert_inline(text: str) -> str:
     text = re.sub(r"(?<!_)_(?!_)(.+?)(?<!_)_(?!_)", r"[i]\1[/i]", text)
     # Inline code: Nexus has no inline code tag — use [i] for visual distinction
     text = re.sub(r"`([^`]+)`", r"[i]\1[/i]", text)
+    text = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", r"[img]\2[/img]", text)
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"[url=\2]\1[/url]", text)
     return text
 
@@ -150,10 +152,47 @@ def convert_markdown(text: str) -> str:
     return result
 
 
+def convert_files(paths: list[str], separator: str = "\n\n[line]\n\n") -> str:
+    """Convert and merge multiple Markdown files into one BBCode string."""
+    parts: list[str] = []
+    for p in paths:
+        content = Path(p).read_text(encoding="utf-8")
+        converted = convert_markdown(content)
+        if converted:
+            parts.append(converted)
+    return separator.join(parts)
+
+
 def main() -> None:
-    text = sys.stdin.read()
-    if text:
-        sys.stdout.write(convert_markdown(text))
+    import argparse
+
+    ap = argparse.ArgumentParser(
+        description="Convert Markdown to Nexus Mods BBCode.",
+        epilog="With no FILE args, reads from stdin.",
+    )
+    ap.add_argument("files", nargs="*", help="Markdown files to convert and merge")
+    ap.add_argument("-o", "--output", help="Write output to this file instead of stdout")
+    ap.add_argument(
+        "--separator",
+        default="\n\n[line]\n\n",
+        help="String placed between merged files (default: [line])",
+    )
+    args = ap.parse_args()
+
+    if args.files:
+        result = convert_files(args.files, separator=args.separator)
+    else:
+        text = sys.stdin.read()
+        result = convert_markdown(text) if text else ""
+
+    if not result:
+        return
+
+    if args.output:
+        Path(args.output).write_text(result, encoding="utf-8")
+        print(f"Written to {args.output}")
+    else:
+        sys.stdout.write(result)
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ MOD_MAIN := DevMode.csproj
 
 DEPLOY_TO_GAME := /p:DeployToGame=true
 
-.PHONY: help init icons format deps build deploy sync compile pck publish nexus zip clean docs docs-build
+.PHONY: help init icons format deps build deploy sync compile pck publish nexus readme-nexus zip clean docs docs-build
 
 help:
 	@echo DevMode — targets
@@ -30,6 +30,7 @@ help:
 	@echo   pck        dotnet publish to game mods + .pck
 	@echo   publish    build + create GitHub Release (requires gh CLI)
 	@echo   nexus      build + upload to Nexus Mods (requires NEXUS_API_KEY + NEXUS_FILE_GROUP_ID)
+	@echo   readme-nexus  merge README.md + README.zh-CN.md into assets/readme.nexus.txt (Nexus BBCode, strips title + lang switcher)
 	@echo   zip        build + package into build/DevMode-vX.X.X.zip
 	@echo   clean      remove build/ + dotnet clean
 
@@ -66,6 +67,9 @@ publish:
 
 nexus:
 	$(PYTHON) scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
+
+readme-nexus:
+	$(PYTHON) scripts/readme_to_nexus.py
 
 # ── zip: build + package into build/DevMode-vX.X.X.zip ──
 ZIP_NAME := build/DevMode-v$(VERSION).zip
