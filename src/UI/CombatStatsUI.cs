@@ -133,17 +133,6 @@ internal static partial class CombatStatsUI {
             SyncMultiplayerOverlayState(globalUi);
         };
 
-        var monsterIntentToggle = new CheckButton {
-            Text = I18N.T("combatStats.monsterIntent.enabled", "Show enemy intent panel"),
-            ButtonPressed = SettingsStore.Current.CombatStatsMonsterIntentOverlayEnabled,
-        };
-        monsterIntentToggle.AddThemeFontSizeOverride("font_size", 11);
-        monsterIntentToggle.Pressed += () => {
-            SettingsStore.SetCombatStatsMonsterIntentOverlayEnabled(monsterIntentToggle.ButtonPressed);
-            MonsterIntentOverlayUI.SyncState(globalUi);
-        };
-
-        vbox.AddChild(monsterIntentToggle);
         vbox.AddChild(mpOverlayToggle);
         vbox.AddChild(exportRow);
 

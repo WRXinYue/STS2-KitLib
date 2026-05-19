@@ -37,7 +37,8 @@ public enum ActivePanel {
     HarmonyAnalysis,
     Frameworks,
     Feedback,
-    CombatStats
+    CombatStats,
+    EnemyIntent
 }
 
 public enum PowerTarget {

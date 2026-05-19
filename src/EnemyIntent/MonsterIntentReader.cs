@@ -52,6 +52,37 @@ internal static class MonsterIntentReader {
         return entries;
     }
 
+    /// <summary>Predicted intent for the enemy turn after the one currently shown.</summary>
+    public static IReadOnlyList<MonsterIntentEntry> CaptureNextTurn(CombatState? state) {
+        if (state == null || !CombatManager.Instance.IsInProgress)
+            return Array.Empty<MonsterIntentEntry>();
+
+        var targets = state.PlayerCreatures;
+        var entries = new List<MonsterIntentEntry>();
+
+        foreach (Creature enemy in state.HittableEnemies) {
+            if (!enemy.IsAlive || enemy.Monster is not { } monster)
+                continue;
+
+            List<MonsterIntentStep> steps = PredictSteps(monster, enemy);
+            if (steps.Count < 2)
+                continue;
+
+            MonsterIntentStep nextStep = steps[1];
+            if (nextStep.Intents.Count == 0)
+                continue;
+
+            entries.Add(new MonsterIntentEntry(
+                BuildEnemyKey(enemy, monster),
+                monster.Title.GetFormattedText(),
+                enemy,
+                targets,
+                new[] { nextStep }));
+        }
+
+        return entries;
+    }
+
     private static List<MonsterIntentStep> PredictSteps(
         MonsterModel monster,
         Creature enemy) {

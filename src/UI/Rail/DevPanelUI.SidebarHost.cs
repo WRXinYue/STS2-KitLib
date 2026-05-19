@@ -19,8 +19,8 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
     private readonly Label _hint;
     private readonly VBoxContainer _content;
     private readonly Dictionary<string, IDevPanelSidebarProvider> _providers = new();
+    private readonly List<string> _activeIds = new();
     private readonly bool _railCompact;
-    private string? _activeId;
 
     public DevPanelSidebarHost(string name, bool railCompact = false) {
         Name = name;
@@ -53,16 +53,24 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
         _providers[id] = provider;
     }
 
-    public void SetActive(string id) {
-        if (!_providers.ContainsKey(id))
+    public void SetActive(string id) => SetActiveMany(id);
+
+    public void SetActiveMany(params string[] ids) {
+        _activeIds.Clear();
+        foreach (string id in ids) {
+            if (_providers.ContainsKey(id))
+                _activeIds.Add(id);
+        }
+        if (_activeIds.Count == 0)
             return;
-        _activeId = id;
-        MountActiveProvider();
+        MountActiveProviders();
         RefreshChrome();
     }
 
     public void RefreshChrome() {
-        if (_activeId == null || !_providers.TryGetValue(_activeId, out var active))
+        if (_activeIds.Count == 0)
+            return;
+        if (!_providers.TryGetValue(_activeIds[0], out var active))
             return;
         if (!_railCompact) {
             _title.Text = active.Title;
@@ -75,28 +83,46 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
     }
 
     public void RefreshActive() {
-        if (_activeId == null || !_providers.TryGetValue(_activeId, out var active))
-            return;
-        active.Refresh();
+        foreach (string id in _activeIds) {
+            if (_providers.TryGetValue(id, out var provider))
+                provider.Refresh();
+        }
+        MountActiveProviders();
         RefreshChrome();
     }
 
-    public bool ActiveHasContent =>
-        _activeId != null
-        && _providers.TryGetValue(_activeId, out var active)
-        && active.HasContent;
+    public bool ActiveHasContent {
+        get {
+            foreach (string id in _activeIds) {
+                if (_providers.TryGetValue(id, out var provider) && provider.HasContent)
+                    return true;
+            }
+            return false;
+        }
+    }
 
-    private void MountActiveProvider() {
+    public IReadOnlyList<string> ActiveIds => _activeIds;
+
+    private void MountActiveProviders() {
         while (_content.GetChildCount() > 0) {
             var child = _content.GetChild(0);
             _content.RemoveChild(child);
         }
-        if (_activeId == null || !_providers.TryGetValue(_activeId, out var active))
-            return;
 
-        active.Root.SizeFlagsVertical = SizeFlags.ExpandFill;
-        active.Root.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        active.Root.Visible = true;
-        _content.AddChild(active.Root);
+        var visible = new List<IDevPanelSidebarProvider>(_activeIds.Count);
+        foreach (string id in _activeIds) {
+            if (_providers.TryGetValue(id, out var provider) && provider.HasContent)
+                visible.Add(provider);
+        }
+
+        for (int i = 0; i < visible.Count; i++) {
+            var active = visible[i];
+            active.Root.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            active.Root.SizeFlagsVertical = i < visible.Count - 1
+                ? SizeFlags.ShrinkBegin
+                : SizeFlags.ExpandFill;
+            active.Root.Visible = true;
+            _content.AddChild(active.Root);
+        }
     }
 }

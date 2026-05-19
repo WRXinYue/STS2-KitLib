@@ -13,6 +13,8 @@ internal static partial class CombatStatsUI {
     private static DevPanelSidebarHost? _gameHost;
     private static bool _panelOpen;
 
+    internal static bool IsPanelOpen => _panelOpen;
+
     internal static void EnsureGameContextPane(DevPanelSidebarHost host) {
         if (_gameHost == host && _gamePlayers != null)
             return;
@@ -21,7 +23,7 @@ internal static partial class CombatStatsUI {
         _gamePlayers = new PlayerContributionSidebarPanel(railCompact: true);
         _gamePie = new CategoryPieSidebarPanel("game.stats.pie", railCompact: true);
 
-        DevPanelUI.SetDefaultContextId(DefaultContextId);
+        DevPanelUI.SetDefaultContextIds(EnemyIntentUI.PanelContextId, DefaultContextId);
         DevPanelUI.RegisterContextProvider(DefaultContextId, _gamePlayers);
         DevPanelUI.RegisterContextProvider(PanelPlayersContextId, _gamePlayers);
         DevPanelUI.RegisterContextProvider(PanelPieContextId, _gamePie);
@@ -42,7 +44,16 @@ internal static partial class CombatStatsUI {
     internal static void RefreshDefaultGameContext() {
         SyncMultiplayerOverlayState();
         MonsterIntentOverlayUI.SyncState();
+        RefreshDefaultGameStats();
+        EnemyIntentUI.RefreshDefaultContext();
 
+        if (!EnemyIntentUI.IsPanelOpen && !IsPanelOpen)
+            DevPanelUI.SetContextPaneActiveMany(EnemyIntentUI.PanelContextId, DefaultContextId);
+
+        DevPanelUI.RefreshContextPane();
+    }
+
+    private static void RefreshDefaultGameStats() {
         if (CanShowMultiplayerOverlay()) {
             if (_gamePlayers != null) {
                 _gamePlayers.SetContext(
@@ -50,8 +61,6 @@ internal static partial class CombatStatsUI {
                     isRunView: false);
                 _gamePlayers.Refresh();
             }
-            DevPanelUI.RefreshContextPaneChrome();
-            DevPanelUI.UpdateContextPaneVisibility();
             return;
         }
 
@@ -62,8 +71,6 @@ internal static partial class CombatStatsUI {
             : CombatStatsTracker.Last;
         _gamePlayers.SetContext(snap, isRunView: false);
         _gamePlayers.Refresh();
-        DevPanelUI.RefreshContextPaneChrome();
-        DevPanelUI.UpdateContextPaneVisibility();
     }
 
     private static void SyncGameContextPane(
@@ -79,7 +86,7 @@ internal static partial class CombatStatsUI {
         _gamePie.PrepareForViewMode(mode);
 
         if (!_panelOpen) {
-            DevPanelUI.SetContextPaneActive(DefaultContextId);
+            DevPanelUI.SetContextPaneActiveMany(EnemyIntentUI.PanelContextId, DefaultContextId);
             _gamePlayers.Refresh();
         }
         else if (SidebarUsesPie(mode)) {

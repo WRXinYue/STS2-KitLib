@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DevMode.CombatStats;
+using DevMode.EnemyIntent;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
@@ -23,7 +24,7 @@ internal static partial class DevPanelUI {
     private static StyleBoxFlat? _contextPaneStyle;
     private static DevPanelSidebarHost? _contextHost;
     private static readonly Dictionary<string, IDevPanelSidebarProvider> _contextProviders = new();
-    private static string _defaultContextId = "default.players";
+    private static string[] _defaultContextIds = ["default.players"];
     private static bool _contextPaneJoined;
     private static bool _contextRefreshPending;
     private static NGlobalUi? _contextGlobalUi;
@@ -67,16 +68,19 @@ internal static partial class DevPanelUI {
         root.AddChild(_contextPane);
 
         CombatStatsUI.EnsureGameContextPane(_contextHost);
+        EnemyIntentUI.EnsureGameContextPane(_contextHost);
         CombatStatsUI.AttachMultiplayerOverlay(globalUi);
         MonsterIntentOverlayUI.Attach(globalUi);
 
         CombatStatsTracker.Changed += OnContextTrackerChanged;
+        MonsterIntentOverlayTracker.Changed += OnContextTrackerChanged;
 
         _contextGlobalUi = globalUi;
         _contextPaneShown = false;
 
         root.TreeExiting += () => {
             CombatStatsTracker.Changed -= OnContextTrackerChanged;
+            MonsterIntentOverlayTracker.Changed -= OnContextTrackerChanged;
             _contextPaneTween?.Kill();
             _contextPaneTween = null;
             _contextPane = null;
@@ -89,8 +93,9 @@ internal static partial class DevPanelUI {
         };
 
         ((Node)globalUi).AddChild(root);
-        SetContextPaneActive(_defaultContextId);
+        SetContextPaneActiveMany(_defaultContextIds);
         CombatStatsUI.RefreshDefaultGameContext();
+        EnemyIntentUI.RefreshDefaultContext();
         MonsterIntentOverlayUI.SyncState(globalUi);
         UpdateContextPaneVisibility();
     }
@@ -99,6 +104,7 @@ internal static partial class DevPanelUI {
         CombatStatsUI.DetachMultiplayerOverlay(globalUi);
         MonsterIntentOverlayUI.Detach(globalUi);
         CombatStatsTracker.Changed -= OnContextTrackerChanged;
+        MonsterIntentOverlayTracker.Changed -= OnContextTrackerChanged;
         _contextPaneTween?.Kill();
         _contextPaneTween = null;
         _contextPane = null;
@@ -117,11 +123,30 @@ internal static partial class DevPanelUI {
             _contextHost.Register(id, provider);
     }
 
-    internal static void SetDefaultContextId(string id) => _defaultContextId = id;
+    internal static void SetDefaultContextIds(params string[] ids) {
+        if (ids.Length > 0)
+            _defaultContextIds = ids;
+    }
 
     internal static void SetContextPaneActive(string id) {
         _contextHost?.SetActive(id);
         UpdateContextPaneVisibility();
+    }
+
+    internal static void SetContextPaneActiveMany(params string[] ids) {
+        _contextHost?.SetActiveMany(ids);
+        UpdateContextPaneVisibility();
+    }
+
+    internal static bool IsContextPaneActive(string id) {
+        var ids = _contextHost?.ActiveIds;
+        if (ids == null)
+            return false;
+        foreach (string activeId in ids) {
+            if (activeId == id)
+                return true;
+        }
+        return false;
     }
 
     internal static void RefreshContextPaneChrome() => _contextHost?.RefreshChrome();
@@ -138,8 +163,9 @@ internal static partial class DevPanelUI {
     }
 
     internal static void ResetContextPaneToDefault() {
-        SetContextPaneActive(_defaultContextId);
+        SetContextPaneActiveMany(_defaultContextIds);
         CombatStatsUI.RefreshDefaultGameContext();
+        EnemyIntentUI.RefreshDefaultContext();
         UpdateContextPaneVisibility();
     }
 
@@ -205,6 +231,7 @@ internal static partial class DevPanelUI {
             if (!GodotObject.IsInstanceValid(_contextHost))
                 return;
             CombatStatsUI.OnGameContextTrackerChanged();
+            EnemyIntentUI.OnContextChanged();
             UpdateContextPaneVisibility();
         }).CallDeferred();
     }

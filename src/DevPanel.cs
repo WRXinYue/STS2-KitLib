@@ -135,7 +135,8 @@ internal static class DevPanel {
         DevPanelRegistry.Register("devmode.rooms", MdiIcon.MapMarker, I18N.T("panel.rooms", "Rooms"), 650, DevPanelTabGroup.Primary, _ => OpenRooms());
         DevPanelRegistry.Register("devmode.console", MdiIcon.Console, I18N.T("panel.console", "Console"), 700, DevPanelTabGroup.Primary, _ => OpenConsole());
         DevPanelRegistry.Register("devmode.cheats", MdiIcon.Star, I18N.T("panel.cheats", "Cheats"), 750, DevPanelTabGroup.Primary, gui => DevPanelUI.ShowCheatsOverlay(gui, actions));
-        DevPanelRegistry.Register("devmode.combatStats", MdiIcon.From("chart-bar"), I18N.T("panel.combatStats", "Combat Stats"), 755, DevPanelTabGroup.Primary, _ => OpenCombatStats(), kind: DevPanelTabKind.Developer);
+        DevPanelRegistry.Register("devmode.enemyIntent", MdiIcon.From("bullseye-arrow"), I18N.T("panel.enemyIntent", "Enemy intents"), 754, DevPanelTabGroup.Primary, _ => OpenEnemyIntent(), kind: DevPanelTabKind.Developer);
+        DevPanelRegistry.Register("devmode.combatStats", MdiIcon.From("chart-bar"), I18N.T("panel.combatStats", "Combat Stats"), 756, DevPanelTabGroup.Primary, _ => OpenCombatStats(), kind: DevPanelTabKind.Developer);
         DevPanelRegistry.Register("devmode.presets", MdiIcon.From("book-open-variant"), I18N.T("panel.presets", "Presets"), 800, DevPanelTabGroup.Primary, _ => OpenPresets());
         DevPanelRegistry.Register("devmode.hooks", MdiIcon.LightningBolt, I18N.T("panel.hooks", "Hooks"), 900, DevPanelTabGroup.Primary, _ => OpenHooks());
         DevPanelRegistry.Register("devmode.scripts", MdiIcon.PuzzleOutline, I18N.T("panel.scripts", "Scripts"), 950, DevPanelTabGroup.Primary, _ => OpenScripts());
@@ -331,6 +332,15 @@ internal static class DevPanel {
         CombatStatsUI.Show(_globalUi);
     }
 
+    private static void OpenEnemyIntent() {
+        if (_globalUi == null) return;
+        TryDismissCurrent();
+        DevModeState.ActivePanel = ActivePanel.EnemyIntent;
+        UpdateTopBar();
+
+        EnemyIntentUI.Show(_globalUi);
+    }
+
     private static void OpenHarmonyAnalysis() {
         if (_globalUi == null) return;
         TryDismissCurrent();
@@ -398,6 +408,7 @@ internal static class DevPanel {
             case ActivePanel.Scripts: OpenScripts(); break;
             case ActivePanel.Logs: OpenLogs(); break;
             case ActivePanel.CombatStats: OpenCombatStats(); break;
+            case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;
             case ActivePanel.HarmonyAnalysis: OpenHarmonyAnalysis(); break;
             case ActivePanel.Frameworks: OpenFrameworks(); break;
             case ActivePanel.Feedback: OpenFeedback(); break;
