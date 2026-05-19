@@ -54,9 +54,7 @@ public sealed class CardEditNamedPreset {
 }
 
 internal static class CardEditPresetManager {
-    private static string PresetsDir => Path.Combine(
-        Path.GetDirectoryName(typeof(PresetManager).Assembly.Location) ?? ".",
-        "presets");
+    private static string PresetsDir => DataPaths.PresetsDir;
 
     private static readonly System.Lazy<PresetStore<CardEditNamedPreset>> _store = new(() => {
         var store = new PresetStore<CardEditNamedPreset>(Path.Combine(PresetsDir, "card-edit-presets.json"));

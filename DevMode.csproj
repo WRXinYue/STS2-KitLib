@@ -76,7 +76,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="src\Data\harmony-patch-registry.json" CopyToOutputDirectory="PreserveNewest" Link="harmony-patch-registry.json" />
     <None Include="$(ModId).json" CopyToPublishDirectory="PreserveNewest" TargetPath="mod_manifest.json" />
   </ItemGroup>
 
@@ -131,12 +130,10 @@
     <ItemGroup>
       <DeployFiles Include="$(PublishDir)\$(ModId).dll" />
       <DeployFiles Include="$(PublishDir)\$(ModId).pck" Condition="Exists('$(PublishDir)\$(ModId).pck')" />
-      <DeployFiles Include="$(MSBuildProjectDirectory)\src\Data\harmony-patch-registry.json" Condition="Exists('$(MSBuildProjectDirectory)\src\Data\harmony-patch-registry.json')" />
       <EditorFiles Include="$(MSBuildProjectDirectory)\editor\**\*" />
     </ItemGroup>
     <MakeDir Directories="$(ModsDir)" />
     <MakeDir Directories="$(ModsDir)\editor" />
-    <MakeDir Directories="$(ModsDir)\scripts" />
     <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(ModsDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(PublishDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(PublishDir)\mod_manifest.json')" />
     <Copy SourceFiles="@(EditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
@@ -150,11 +147,9 @@
     </ItemGroup>
     <MakeDir Directories="$(ModsDir)\" />
     <MakeDir Directories="$(ModsDir)\editor" />
-    <MakeDir Directories="$(ModsDir)\scripts" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).pck" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).pck')" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\src\Data\harmony-patch-registry.json" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(MSBuildProjectDirectory)\src\Data\harmony-patch-registry.json')" />
     <Copy SourceFiles="@(RepoEditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

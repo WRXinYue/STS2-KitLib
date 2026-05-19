@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using DevMode.Hooks;
@@ -49,16 +48,7 @@ internal static class ScriptManager {
         if (_initialized) return;
         _initialized = true;
 
-        var asmDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
-        ScriptsDir = Path.Combine(asmDir, "scripts");
-
-        try {
-            if (!Directory.Exists(ScriptsDir))
-                Directory.CreateDirectory(ScriptsDir);
-        }
-        catch (Exception ex) {
-            MainFile.Logger.Warn($"[ScriptManager] Cannot create scripts dir: {ex.Message}");
-        }
+        ScriptsDir = DataPaths.ScriptsDir;
 
         Reload();
         StartWatcher();

@@ -1,13 +1,12 @@
 using System;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace DevMode.Settings;
 
 /// <summary>
-/// Loads and saves <see cref="DevModeSettings"/> to <c>settings.json</c> next to the mod assembly.
+/// Loads and saves <see cref="DevModeSettings"/> to <c>settings.json</c> in the DevMode user-data directory.
 /// </summary>
 public static class SettingsStore {
     private static readonly JsonSerializerOptions JsonOpts = new() {
@@ -15,10 +14,7 @@ public static class SettingsStore {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private static string FilePath =>
-        Path.Combine(
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "",
-            "settings.json");
+    private static string FilePath => DataPaths.SettingsFile;
 
     public static DevModeSettings Current { get; private set; } = new();
 
@@ -38,7 +34,9 @@ public static class SettingsStore {
         try {
             var dir = Path.GetDirectoryName(FilePath);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-            File.WriteAllText(FilePath, JsonSerializer.Serialize(Current, JsonOpts));
+            var tmp = FilePath + ".tmp";
+            File.WriteAllText(tmp, JsonSerializer.Serialize(Current, JsonOpts));
+            File.Move(tmp, FilePath, overwrite: true);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"SettingsStore save failed: {ex.Message}");

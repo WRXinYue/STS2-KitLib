@@ -308,9 +308,9 @@ internal static class HarmonyAnalysisUI {
                         patchRegistry,
                         I18N.T("harmony.registry.section", "=== Patch documentation (shared registry) ==="),
                         I18N.T("harmony.registry.intro",
-                            "Matched by Harmony owner id. Defaults are embedded; override by placing harmony-patch-registry.json next to DevMode.dll (same folder as DevMode.dll)."),
+                            "Matched by Harmony owner id. Registry is embedded in DevMode.dll."),
                         I18N.T("harmony.registry.noneMatched",
-                            "No owners in this snapshot appear in the registry — add or fix \"owner\" strings in harmony-patch-registry.json."));
+                            "No owners in this snapshot appear in the registry."));
                     lastAppliedSmart = smart;
                 }
                 fullSmartReport.Text = lastSmartText;

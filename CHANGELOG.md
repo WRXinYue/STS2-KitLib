@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
+
+### Fixed
+
+- **Settings, save slots, presets, and scripts** are now stored in the game's user-data directory (`SlayTheSpire2/steam/<id>/mod_data/DevMode/`) instead of inside the mod folder — they survive Steam Workshop updates without data loss.
+- Settings and save-slot files are now written atomically, preventing file corruption if the game crashes mid-save.
 
 ## [0.6.0] - 2026-05-17
 

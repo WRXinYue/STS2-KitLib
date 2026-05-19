@@ -17,9 +17,7 @@ using MegaCrit.Sts2.Core.Saves;
 namespace DevMode;
 
 internal static class SaveSlotManager {
-    private static readonly string SnapshotDir = Path.Combine(
-        Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!,
-        "snapshots");
+    private static string SnapshotDir => DataPaths.SnapshotsDir;
 
     private static readonly Regex SlotMetaPattern = new(@"^slot(\d+)_meta\.json$", RegexOptions.Compiled);
 
@@ -63,10 +61,10 @@ internal static class SaveSlotManager {
 
             var save = rm!.ToSave(state.CurrentRoom);
             var json = SaveManager.ToJson(save);
-            File.WriteAllText(SlotPath(slot), json);
+            AtomicWrite(SlotPath(slot), json);
 
             var meta = CaptureMetaFromState(state, name);
-            File.WriteAllText(MetaPath(slot), JsonSerializer.Serialize(meta));
+            AtomicWrite(MetaPath(slot), JsonSerializer.Serialize(meta));
 
             MainFile.Logger.Info($"SaveSlotManager: Saved to slot {slot}.");
             return true;
@@ -135,7 +133,7 @@ internal static class SaveSlotManager {
     public static void RenameSlot(int slot, string name) {
         var meta = LoadMeta(slot) ?? new SaveSlotMeta();
         meta.Name = name;
-        try { File.WriteAllText(MetaPath(slot), JsonSerializer.Serialize(meta)); }
+        try { AtomicWrite(MetaPath(slot), JsonSerializer.Serialize(meta)); }
         catch (Exception ex) { MainFile.Logger.Warn($"SaveSlotManager: Rename slot {slot} failed: {ex.Message}"); }
     }
 
@@ -143,6 +141,12 @@ internal static class SaveSlotManager {
 
     private static string SlotPath(int slot) => Path.Combine(SnapshotDir, $"slot{slot}.json");
     private static string MetaPath(int slot) => Path.Combine(SnapshotDir, $"slot{slot}_meta.json");
+
+    private static void AtomicWrite(string path, string content) {
+        var tmp = path + ".tmp";
+        File.WriteAllText(tmp, content);
+        File.Move(tmp, path, overwrite: true);
+    }
 
     // MissingMethodException has no blame API; stack + ModAssemblyLookup tie assemblies to manifests when possible.
     private static void LogLoadFailure(Exception ex) {

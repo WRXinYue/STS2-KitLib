@@ -18,9 +18,7 @@ namespace DevMode.Presets;
 /// Provides capture-from-run and apply-to-run operations.
 /// </summary>
 internal static class PresetManager {
-    private static string PresetsDir => Path.Combine(
-        Path.GetDirectoryName(typeof(PresetManager).Assembly.Location) ?? ".",
-        "presets");
+    private static string PresetsDir => DataPaths.PresetsDir;
 
     private static readonly Lazy<PresetStore<LoadoutPreset>> _loadouts = new(() => {
         var store = new PresetStore<LoadoutPreset>(Path.Combine(PresetsDir, "loadouts.json"));

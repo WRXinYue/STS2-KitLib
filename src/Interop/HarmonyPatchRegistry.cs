@@ -9,7 +9,8 @@ namespace DevMode.Interop;
 
 /// <summary>
 /// Single source of truth for Harmony owner → human-readable metadata (docs + in-game analysis).
-/// Load order: <c>harmony-patch-registry.json</c> next to the mod DLL, else embedded resource.
+/// Loads from the embedded resource <c>DevMode.Data.harmony-patch-registry.json</c> in the DLL,
+/// with optional override via an external <c>harmony-patch-registry.json</c> placed next to the DLL.
 /// </summary>
 public sealed class HarmonyPatchRegistry {
     public const string FileName = "harmony-patch-registry.json";
