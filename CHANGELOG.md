@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **STS2 Steam beta support** — DevMode can be used on the Steam beta branch of Slay the Spire 2, including cheats and dev tools for powers, mid-combat card adds, and enemy/combat edits. Use the beta build of the mod on the beta game install (not interchangeable with the stable/public build).
+- **Customizable dev sidebar** — In **Settings → Sidebar**, drag to reorder rail panels and uncheck any you want hidden. Your layout is saved between sessions. **Harmony analysis**, **Scripts**, and **Frameworks** start hidden; turn them on in Settings when you need them.
 
 ### Changed
 

@@ -32,6 +32,8 @@ internal static partial class DevPanelUI {
         inner.AddChild(CreateSectionHeader(I18N.T("appearance.title", "Appearance")));
         inner.AddChild(CreateAppearanceSection(() => ShowSettingsOverlay(globalUi, actions)));
 
+        inner.AddChild(CreateRailLayoutSection(globalUi, actions));
+
         // ── Section: Game ──
         inner.AddChild(CreateSectionHeader(I18N.T("panel.section.game", "Game")));
 
@@ -150,5 +152,70 @@ internal static partial class DevPanelUI {
         col.AddChild(resetWidthBtn);
 
         return col;
+    }
+
+    private static Control CreateRailLayoutSection(NGlobalUi globalUi, DevPanelActions actions) {
+        var col = new VBoxContainer();
+        col.AddThemeConstantOverride("separation", 8);
+
+        col.AddChild(CreateSectionHeader(I18N.T("rail.title", "Sidebar")));
+
+        var hint = new Label {
+            Text = I18N.T("rail.hint", "Drag to reorder. Uncheck to hide a panel from the sidebar."),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+        };
+        hint.AddThemeFontSizeOverride("font_size", 11);
+        hint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        col.AddChild(hint);
+
+        col.AddChild(CreateRailGroupEditor(
+            globalUi,
+            DevPanelTabGroup.Primary,
+            I18N.T("rail.group.primary", "Main panels")));
+
+        col.AddChild(CreateRailGroupEditor(
+            globalUi,
+            DevPanelTabGroup.Utility,
+            I18N.T("rail.group.utility", "Utility")));
+
+        var resetBtn = CreatePlainButton(I18N.T("rail.reset", "Reset sidebar layout"));
+        resetBtn.Pressed += () => {
+            RailTabPreferences.ResetGroup(DevPanelTabGroup.Primary);
+            RailTabPreferences.ResetGroup(DevPanelTabGroup.Utility);
+            RebuildRail(globalUi);
+            Callable.From(() => ShowSettingsOverlay(globalUi, actions)).CallDeferred();
+        };
+        col.AddChild(resetBtn);
+
+        return col;
+    }
+
+    private static Control CreateRailGroupEditor(
+        NGlobalUi globalUi,
+        DevPanelTabGroup group,
+        string title) {
+        var block = new VBoxContainer();
+        block.AddThemeConstantOverride("separation", 4);
+
+        var sub = new Label { Text = title };
+        sub.AddThemeFontSizeOverride("font_size", 11);
+        sub.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        block.AddChild(sub);
+
+        var list = new RailTabReorderList(
+            group,
+            RailTabPreferences.GetEditorEntries(group),
+            orderedIds => {
+                RailTabPreferences.SetOrder(group, orderedIds);
+                RebuildRail(globalUi);
+            },
+            (tabId, visible) => {
+                RailTabPreferences.SetVisible(tabId, visible);
+                RebuildRail(globalUi);
+            });
+        block.AddChild(list);
+
+        return block;
     }
 }

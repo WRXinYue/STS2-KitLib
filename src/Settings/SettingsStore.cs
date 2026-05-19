@@ -23,11 +23,20 @@ public static class SettingsStore {
             if (!File.Exists(FilePath)) return;
             var json = File.ReadAllText(FilePath);
             Current = JsonSerializer.Deserialize<DevModeSettings>(json, JsonOpts) ?? new();
+            ApplyRailLayoutDefaults();
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"SettingsStore load failed: {ex.Message}");
             Current = new();
         }
+    }
+
+    private static void ApplyRailLayoutDefaults() {
+        if (Current.RailLayoutDefaultsVersion >= 1)
+            return;
+        RailTabPreferences.ApplyDefaultHiddenTabs(Current);
+        Current.RailLayoutDefaultsVersion = 1;
+        Save();
     }
 
     public static void Save() {
@@ -43,3 +52,4 @@ public static class SettingsStore {
         }
     }
 }
+

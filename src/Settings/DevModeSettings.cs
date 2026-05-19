@@ -17,6 +17,16 @@ public sealed class DevModeSettings {
 
     /// <summary>User-defined hook rules (trigger + conditions + actions).</summary>
     public List<HookEntry> Hooks { get; set; } = [];
+
+    /// <summary>Per-rail-section tab order. Keys: <see cref="RailTabPreferences.PrimaryKey"/> / <see cref="RailTabPreferences.UtilityKey"/>.</summary>
+    public Dictionary<string, List<string>> RailTabOrder { get; set; } = new(StringComparer.Ordinal);
+
+    /// <summary>Tab ids hidden from the in-game rail (settings tab cannot be hidden).</summary>
+    public HashSet<string> RailHiddenTabIds { get; set; } =
+        new(RailTabPreferences.DefaultHiddenTabIds, StringComparer.Ordinal);
+
+    /// <summary>Whether <see cref="RailTabPreferences.DefaultHiddenTabIds"/> have been merged into saved settings.</summary>
+    public int RailLayoutDefaultsVersion { get; set; } = 1;
 }
 
 public static class ThemeNames {

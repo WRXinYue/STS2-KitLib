@@ -33,6 +33,9 @@ internal sealed class DevPanelController {
         Reset();
     }
 
+    /// <summary>Id of the tab whose panel is open, or null.</summary>
+    public string? ActiveTabId => _activeTabId;
+
     /// <summary>Unbinds the controller when the rail is detached.</summary>
     public void Detach() {
         Reset();

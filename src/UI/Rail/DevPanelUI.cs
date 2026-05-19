@@ -1,20 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using DevMode;
 using DevMode.Icons;
 using DevMode.Panels;
+using DevMode.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace DevMode.UI;
 
 internal static partial class DevPanelUI {
-    private static bool IsRailTabVisible(IDevPanelTab tab) {
-        if (DevModeState.CheatsInRun) return true;
-        return tab.Kind == DevPanelTabKind.Developer;
-    }
-
     internal const string RailRootName = "DevModeRailRoot";
     internal const string TopBarRootName = "DevModeTopBar";
     private const string RootName = RailRootName;
@@ -235,21 +230,10 @@ internal static partial class DevPanelUI {
         railVBox.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         railVBox.AddThemeConstantOverride("separation", 2);
 
-        var railButtons = new List<Button>();
+        _railVBox = railVBox;
+        _railIndicator = railIndicator;
 
-        // ── Primary group: from registry ──
-        foreach (var tab in DevPanelRegistry.GetTabs(DevPanelTabGroup.Primary).Where(IsRailTabVisible)) {
-            var t = tab;
-            var btn = CreateRailIcon(t.Icon, t.DisplayName);
-            int btnIdx = railButtons.Count;
-            btn.Pressed += () => _controller.SwitchTo(t.Id, () => {
-                MoveRailIndicator(btnIdx, true);
-                t.OnActivate(globalUi);
-            });
-            railButtons.Add(btn);
-            _railIconButtons.Add((btn, t.Icon));
-            railVBox.AddChild(btn);
-        }
+        PopulatePrimaryRailButtons(globalUi, railVBox, _railButtons);
 
         // ── Spacer ──
         railVBox.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
@@ -267,47 +251,12 @@ internal static partial class DevPanelUI {
         sep.AddThemeConstantOverride("separation", 8);
         railVBox.AddChild(sep);
 
-        // ── Utility group: from registry ──
-        foreach (var tab in DevPanelRegistry.GetTabs(DevPanelTabGroup.Utility).Where(IsRailTabVisible)) {
-            var t = tab;
-            var btn = CreateRailIcon(t.Icon, t.DisplayName);
-            int btnIdx = railButtons.Count;
-            btn.Pressed += () => _controller.SwitchTo(t.Id, () => {
-                MoveRailIndicator(btnIdx, true);
-                t.OnActivate(globalUi);
-            });
-            railButtons.Add(btn);
-            _railIconButtons.Add((btn, t.Icon));
-            railVBox.AddChild(btn);
-        }
+        PopulateUtilityRailButtons(globalUi, railVBox, _railButtons);
+        WireRailIndicator(railIndicator, _railButtons);
 
         railWrapper.AddChild(railVBox);
         rail.AddChild(railWrapper);
 
-        void MoveRailIndicator(int btnIdx, bool animate) {
-            if (btnIdx < 0 || btnIdx >= railButtons.Count) return;
-            _activeRailBtnIdx = btnIdx;
-            var btn = railButtons[btnIdx];
-            float top = btn.Position.Y;
-            float bottom = top + btn.Size.Y;
-
-            railIndicator.Visible = true;
-
-            if (animate && railIndicator.IsInsideTree()) {
-                var tw = railIndicator.CreateTween();
-                tw.SetParallel(true);
-                tw.TweenProperty(railIndicator, "offset_top", top, 0.25f)
-                  .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-                tw.TweenProperty(railIndicator, "offset_bottom", bottom, 0.25f)
-                  .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-            }
-            else {
-                railIndicator.OffsetTop = top;
-                railIndicator.OffsetBottom = bottom;
-            }
-
-            RefreshRailIconTints();
-        }
         root.AddChild(rail);
 
         // ── Peek tab (small arrow visible when rail is hidden) ──
@@ -422,6 +371,10 @@ internal static partial class DevPanelUI {
         _railIndicatorStyle = null;
         _railSepStyle = null;
         _railIconButtons.Clear();
+        _railButtons.Clear();
+        _railVBox = null;
+        _railIndicator = null;
+        _moveRailIndicator = null;
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
         RemoveTopBar(globalUi);
         _onRefreshPanel = null;

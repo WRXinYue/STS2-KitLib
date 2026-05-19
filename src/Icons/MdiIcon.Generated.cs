@@ -15,6 +15,7 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon ContentCopy = new("content-copy");
     public static readonly MdiIcon ContentSave = new("content-save");
     public static readonly MdiIcon Delete = new("delete");
+    public static readonly MdiIcon DragVertical = new("drag-vertical");
     public static readonly MdiIcon FilterVariant = new("filter-variant");
     public static readonly MdiIcon Flash = new("flash");
     public static readonly MdiIcon FolderOpen = new("folder-open");
