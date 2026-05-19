@@ -53,6 +53,17 @@ public static class SettingsStore {
         Save();
     }
 
+    public static void SetCombatStatsMonsterIntentOverlayEnabled(bool enabled) {
+        Current.CombatStatsMonsterIntentOverlayEnabled = enabled;
+        Save();
+    }
+
+    public static void SetCombatStatsMonsterIntentOverlayPosition(float x, float y) {
+        Current.CombatStatsMonsterIntentOverlayPosX = x;
+        Current.CombatStatsMonsterIntentOverlayPosY = y;
+        Save();
+    }
+
     private static void ApplyNormalRunModeFromSettings() {
         DevModeState.NormalRunMode = ParseNormalRunMode(Current.NormalRunMode);
     }

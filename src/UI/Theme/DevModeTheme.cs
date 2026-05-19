@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Godot;
 
 namespace DevMode.UI;
@@ -50,6 +51,13 @@ internal static class DevModeTheme {
     private static readonly string[] EffectOnlyTags =
         { "sine", "jitter", "fade_in", "fly_in", "thinky_dots", "ancient_banner" };
 
+    /// <summary>Removes [font_size=N] / [/font_size] tags (used on combat intent value labels).</summary>
+    public static string StripFontSizeBbcode(string text) {
+        if (string.IsNullOrEmpty(text))
+            return text;
+        return Regex.Replace(text, @"\[/?font_size(?:=\d+)?\]", string.Empty);
+    }
+
     /// <summary>
     /// Converts the game's custom BBCode tags ([gold], [blue], [red], etc.)
     /// into standard Godot [color=...] tags that RichTextLabel understands natively.
@@ -69,6 +77,29 @@ internal static class DevModeTheme {
         }
 
         return text;
+    }
+
+    /// <summary>Strips game/Godot BBCode for plain <see cref="Control.TooltipText"/>.</summary>
+    public static string ToPlainTooltipText(string text) {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        text = StripFontSizeBbcode(text);
+
+        foreach (var (tag, _) in ColorTags) {
+            text = text.Replace($"[{tag}]", string.Empty);
+            text = text.Replace($"[/{tag}]", string.Empty);
+        }
+
+        foreach (var tag in EffectOnlyTags) {
+            text = text.Replace($"[{tag}]", string.Empty);
+            text = text.Replace($"[/{tag}]", string.Empty);
+        }
+
+        text = Regex.Replace(text, @"\[color=[^\]]+\]", string.Empty);
+        text = text.Replace("[/color]", string.Empty);
+        text = Regex.Replace(text, @"\[/?(?:center|left|right|fill|b|i|u|s|code|font|url=[^\]]+)\]", string.Empty);
+        return text.Trim();
     }
 
     /// <summary>

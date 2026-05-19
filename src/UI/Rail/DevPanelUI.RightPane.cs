@@ -68,6 +68,7 @@ internal static partial class DevPanelUI {
 
         CombatStatsUI.EnsureGameContextPane(_contextHost);
         CombatStatsUI.AttachMultiplayerOverlay(globalUi);
+        MonsterIntentOverlayUI.Attach(globalUi);
 
         CombatStatsTracker.Changed += OnContextTrackerChanged;
 
@@ -90,11 +91,13 @@ internal static partial class DevPanelUI {
         ((Node)globalUi).AddChild(root);
         SetContextPaneActive(_defaultContextId);
         CombatStatsUI.RefreshDefaultGameContext();
+        MonsterIntentOverlayUI.SyncState(globalUi);
         UpdateContextPaneVisibility();
     }
 
     internal static void DetachContextPane(NGlobalUi globalUi) {
         CombatStatsUI.DetachMultiplayerOverlay(globalUi);
+        MonsterIntentOverlayUI.Detach(globalUi);
         CombatStatsTracker.Changed -= OnContextTrackerChanged;
         _contextPaneTween?.Kill();
         _contextPaneTween = null;

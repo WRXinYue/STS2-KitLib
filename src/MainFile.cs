@@ -1,4 +1,5 @@
 using DevMode.CombatStats;
+using DevMode.EnemyIntent;
 using DevMode.Interop;
 using DevMode.Patches;
 using DevMode.Scripts;
@@ -33,6 +34,7 @@ public class MainFile {
         FrameworkBridge.Initialize();
 
         CombatStatsTracker.Initialize();
+        MonsterIntentOverlayTracker.Initialize();
 
         var harmony = new Harmony(ModID);
         harmony.PatchAll();

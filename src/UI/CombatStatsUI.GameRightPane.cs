@@ -29,6 +29,7 @@ internal static partial class CombatStatsUI {
 
     internal static void OnGameContextTrackerChanged() {
         SyncMultiplayerOverlayState();
+        MonsterIntentOverlayUI.SyncState();
 
         if (_panelOpen) {
             DevPanelUI.UpdateContextPaneVisibility();
@@ -40,6 +41,7 @@ internal static partial class CombatStatsUI {
 
     internal static void RefreshDefaultGameContext() {
         SyncMultiplayerOverlayState();
+        MonsterIntentOverlayUI.SyncState();
 
         if (CanShowMultiplayerOverlay()) {
             if (_gamePlayers != null) {
@@ -91,5 +93,6 @@ internal static partial class CombatStatsUI {
         DevPanelUI.RefreshContextPaneChrome();
         DevPanelUI.UpdateContextPaneVisibility();
         SyncMultiplayerOverlayState();
+        MonsterIntentOverlayUI.SyncState();
     }
 }

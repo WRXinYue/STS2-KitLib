@@ -150,11 +150,13 @@ internal static partial class DevPanelUI {
         PinRail();
         ReconcileBrowserRail(globalUi);
         CombatStatsUI.SyncMultiplayerOverlayState(globalUi);
+        MonsterIntentOverlayUI.SyncState(globalUi);
         root.TreeExiting += () => {
             _browserOverlayCount = Math.Max(0, _browserOverlayCount - 1);
             UnpinRail();
             ReconcileBrowserRail(globalUi);
             CombatStatsUI.SyncMultiplayerOverlayState(globalUi);
+        MonsterIntentOverlayUI.SyncState(globalUi);
         };
     }
 

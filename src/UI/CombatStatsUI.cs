@@ -133,6 +133,17 @@ internal static partial class CombatStatsUI {
             SyncMultiplayerOverlayState(globalUi);
         };
 
+        var monsterIntentToggle = new CheckButton {
+            Text = I18N.T("combatStats.monsterIntent.enabled", "Show enemy intent panel"),
+            ButtonPressed = SettingsStore.Current.CombatStatsMonsterIntentOverlayEnabled,
+        };
+        monsterIntentToggle.AddThemeFontSizeOverride("font_size", 11);
+        monsterIntentToggle.Pressed += () => {
+            SettingsStore.SetCombatStatsMonsterIntentOverlayEnabled(monsterIntentToggle.ButtonPressed);
+            MonsterIntentOverlayUI.SyncState(globalUi);
+        };
+
+        vbox.AddChild(monsterIntentToggle);
         vbox.AddChild(mpOverlayToggle);
         vbox.AddChild(exportRow);
 
@@ -160,6 +171,7 @@ internal static partial class CombatStatsUI {
                 UpdateDisplay(rebuild, shouldAnimate);
                 DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
                 SyncMultiplayerOverlayState(globalUi);
+                MonsterIntentOverlayUI.SyncState(globalUi);
             }).CallDeferred();
         }
 
@@ -369,6 +381,7 @@ internal static partial class CombatStatsUI {
         ((Node)globalUi).AddChild(root);
         ScheduleUpdateDisplay(forceRebuild: true, animate: false);
         SyncMultiplayerOverlayState(globalUi);
+        MonsterIntentOverlayUI.SyncState(globalUi);
     }
 
     private static void ClearScrollContent(VBoxContainer inner) {
@@ -392,6 +405,7 @@ internal static partial class CombatStatsUI {
         DevPanelUI.ResetContextPaneToDefault();
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
         SyncMultiplayerOverlayState(globalUi);
+        MonsterIntentOverlayUI.SyncState(globalUi);
     }
 
     /// <summary>Layout-only key — value changes refresh in place to avoid QueueFree churn during combat.</summary>
