@@ -21,5 +21,5 @@ internal static class MonsterIntentOverlayTracker {
         CombatManager.Instance.CreaturesChanged += _ => NotifyChanged();
     }
 
-    private static void NotifyChanged() => Changed?.Invoke();
+    internal static void NotifyChanged() => Changed?.Invoke();
 }

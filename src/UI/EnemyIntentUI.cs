@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DevMode.EnemyIntent;
 using DevMode.Settings;
 using Godot;
@@ -28,7 +29,7 @@ internal static partial class EnemyIntentUI {
         titleBox.AddChild(DevPanelUI.CreatePanelTitle(I18N.T("enemyIntent.title", "Enemy intents")));
         var subtitle = new Label {
             Text = I18N.T("enemyIntent.subtitle",
-                "Predict enemy move sequences during combat. The right sidebar shows next-turn intents only."),
+                "Click a turn in the intent chain, then pick a move to override that turn."),
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
@@ -68,7 +69,7 @@ internal static partial class EnemyIntentUI {
         void OnIntentChanged() {
             if (!GodotObject.IsInstanceValid(root))
                 return;
-            RefreshBrowserPreview();
+            RefreshBrowserPreview(preserveSelection: true);
             MonsterIntentOverlayUI.SyncState(globalUi);
         }
 
@@ -103,7 +104,13 @@ internal static partial class EnemyIntentUI {
         MonsterIntentOverlayUI.SyncState(globalUi);
     }
 
-    private static void RefreshBrowserPreview() {
+    internal static void RefreshAfterApply(MonsterIntentEntry appliedEntry) {
+        RefreshBrowserPreview(preserveSelection: true);
+        MonsterIntentOverlayUI.SyncState(_globalUi);
+        DevPanelUI.RefreshContextPane();
+    }
+
+    private static void RefreshBrowserPreview(bool preserveSelection = false) {
         if (_browserPreviewList == null || _browserStatus == null)
             return;
 
@@ -123,7 +130,7 @@ internal static partial class EnemyIntentUI {
         }
 
         _browserStatus.Text = I18N.T("enemyIntent.status.live", "Live — {0} enemies", entries.Count);
-            IntentPreviewRows.Sync(_browserPreviewList, entries, displayedOnly: false);
+        IntentEditorRows.Sync(_browserPreviewList, entries, preserveSelection);
     }
 
     private static void ClearPreviewList(VBoxContainer list) {

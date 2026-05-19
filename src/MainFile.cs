@@ -35,6 +35,7 @@ public class MainFile {
 
         CombatStatsTracker.Initialize();
         MonsterIntentOverlayTracker.Initialize();
+        MonsterIntentOverrides.Initialize();
 
         var harmony = new Harmony(ModID);
         harmony.PatchAll();

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DevMode.UI;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Localization;
@@ -42,7 +43,7 @@ internal static class MonsterIntentReader {
                 continue;
 
             entries.Add(new MonsterIntentEntry(
-                BuildEnemyKey(enemy, monster),
+                MonsterIntentOverrides.BuildEnemyKey(enemy),
                 monster.Title.GetFormattedText(),
                 enemy,
                 targets,
@@ -73,7 +74,7 @@ internal static class MonsterIntentReader {
                 continue;
 
             entries.Add(new MonsterIntentEntry(
-                BuildEnemyKey(enemy, monster),
+                MonsterIntentOverrides.BuildEnemyKey(enemy),
                 monster.Title.GetFormattedText(),
                 enemy,
                 targets,
@@ -104,7 +105,30 @@ internal static class MonsterIntentReader {
             current = PredictNextMove(monster, enemy, current, out uncertain);
         }
 
+        MonsterIntentOverrides.Apply(
+            new MonsterIntentEntry(
+                MonsterIntentOverrides.BuildEnemyKey(enemy),
+                monster.Title.GetFormattedText(),
+                enemy,
+                Array.Empty<Creature>(),
+                steps),
+            steps);
+
         return steps;
+    }
+
+    internal static MonsterIntentStep BuildStepFromMove(
+        MonsterModel monster,
+        MoveState move,
+        int turnIndex,
+        bool isUncertain) {
+        string moveId = string.IsNullOrWhiteSpace(move.StateId) ? move.Id : move.StateId;
+        return new MonsterIntentStep(
+            moveId,
+            ResolveMoveName(monster, moveId),
+            CollectVisibleIntents(move),
+            IsCurrent: turnIndex == 0,
+            IsUncertain: isUncertain);
     }
 
     private static IReadOnlyList<AbstractIntent> CollectVisibleIntents(MoveState move) =>
@@ -218,25 +242,39 @@ internal static class MonsterIntentReader {
         return multiplier * stateWeight.GetWeight();
     }
 
-    private static string BuildEnemyKey(Creature enemy, MonsterModel monster) {
-        string slot = enemy.SlotName ?? enemy.GetHashCode().ToString();
-        return $"{monster.Id.Entry}:{slot}";
+    internal static string ResolveMoveName(MonsterModel monster, string moveId) {
+        return TryResolveMoveLoc(monster, moveId)
+            ?? FormatMoveIdFallback(moveId);
     }
 
-    private static string ResolveMoveName(MonsterModel monster, string moveId) {
+    internal static string? TryResolveMoveLoc(MonsterModel monster, string moveId) {
+        if (string.IsNullOrWhiteSpace(moveId))
+            return null;
+
+        try {
+            var loc = MonsterModel.L10NMonsterLookup($"{monster.Id.Entry}.moves.{moveId}.title");
+            string text = DevModeTheme.ToPlainTooltipText(loc.GetFormattedText());
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            string missingKey = $"{monster.Id.Entry}.moves.{moveId}.title";
+            if (string.Equals(text, missingKey, StringComparison.Ordinal))
+                return null;
+
+            return text;
+        }
+        catch {
+            return null;
+        }
+    }
+
+    internal static string FormatMoveIdFallback(string moveId) {
         if (string.IsNullOrWhiteSpace(moveId))
             return "—";
 
-        try {
-            var loc = new LocString("monsters", $"{monster.Id.Entry}.moves.{moveId}.title");
-            string text = loc.GetFormattedText();
-            if (!string.IsNullOrWhiteSpace(text))
-                return text;
-        }
-        catch {
-            // Fall back to raw move id below.
-        }
+        if (!moveId.Contains('_', StringComparison.Ordinal))
+            return moveId;
 
-        return moveId;
+        return moveId.Replace('_', ' ');
     }
 }
