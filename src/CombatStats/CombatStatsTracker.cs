@@ -268,17 +268,33 @@ internal static class CombatStatsTracker {
         int stacks) {
         if (!_current.IsActive) return;
         if (power.Type != PowerType.Buff) return;
+        if (!IsTrackablePower(power, stacks)) return;
 
         Creature? credit = applier is { IsPlayer: true } ? applier : receiver.IsPlayer ? receiver : applier;
         if (credit == null || !credit.IsPlayer) return;
 
-        int amount = Math.Max(1, stacks);
+        int amount = stacks;
         var stats = GetOrCreate(credit);
         stats.BuffsApplied += amount;
         string key = power.Id.Entry;
         RegisterPowerApplier(receiver, key, stats);
         AddEvent(stats, roundNumber, CombatStatEventKind.BuffApplied, key, amount,
             CombatScoreCalculator.BuffScore(amount));
+    }
+
+    private static bool IsTrackablePower(PowerModel power, int stacks) {
+        if (stacks <= 0)
+            return false;
+
+        // Invisible powers are usually internal meters, not combat contributions.
+        if (!power.IsVisible)
+            return false;
+
+        // None-stack powers are passive trait flags, not stackable effects.
+        if (power.StackType == PowerStackType.None)
+            return false;
+
+        return true;
     }
 
     private static void RecordDealSynergies(

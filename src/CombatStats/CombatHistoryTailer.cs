@@ -87,7 +87,10 @@ internal sealed class CombatHistoryTailer {
                     CombatStatsTracker.RecordPotionUsed(potion.Potion, entry.RoundNumber);
                     break;
                 case PowerReceivedEntry power: {
-                    int stacks = Math.Max(1, (int)Math.Round(power.Amount));
+                    int stacks = (int)Math.Round(power.Amount);
+                    if (stacks <= 0)
+                        break;
+
                     if (power.Power.Type == PowerType.Debuff) {
                         CombatStatsTracker.RecordDebuffApplied(
                             power.Power, power.Actor, power.Applier, entry.RoundNumber, stacks);
