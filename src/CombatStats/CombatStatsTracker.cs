@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Combat.History.Entries;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
@@ -63,6 +64,11 @@ internal static class CombatStatsTracker {
         };
         PendingPowerDamage = PowerDamageContext.None;
         _powerAppliers.Clear();
+
+        foreach (Player player in state.Players) {
+            if (player?.Creature != null)
+                GetOrCreate(player.Creature);
+        }
 
         _tailer.Attach(CombatManager.Instance.History, state);
         NotifyChanged();
@@ -331,8 +337,10 @@ internal static class CombatStatsTracker {
     }
 
     private static string CreatureKey(Creature creature) {
-        if (creature.IsPlayer && creature.Player != null)
+        if (creature.Player != null)
             return creature.Player.NetId.ToString();
+        if (TryResolveCombatPlayerKey(creature, out string? netKey))
+            return netKey;
         return $"c_{creature.GetHashCode()}";
     }
 
@@ -348,17 +356,125 @@ internal static class CombatStatsTracker {
     }
 
     private static PlayerCombatStats GetOrCreate(Creature creature) {
-        string key = creature.Player?.NetId.ToString() ?? creature.GetHashCode().ToString();
-        if (_current.Players.TryGetValue(key, out var existing))
+        string key = ResolvePlayerKey(creature);
+
+        if (_current.Players.TryGetValue(key, out var existing)) {
+            RefreshPlayerIdentity(existing, creature);
             return existing;
+        }
+
+        string orphanKey = CreatureKey(creature);
+        if (orphanKey != key && _current.Players.Remove(orphanKey, out var orphaned)) {
+            var merged = new PlayerCombatStats {
+                Key = key,
+                DisplayName = orphaned.DisplayName,
+                CharacterId = orphaned.CharacterId,
+                DamageDealt = orphaned.DamageDealt,
+                DamageTaken = orphaned.DamageTaken,
+                BlockGained = orphaned.BlockGained,
+                CardsPlayed = orphaned.CardsPlayed,
+                HitCount = orphaned.HitCount,
+                OverkillDealt = orphaned.OverkillDealt,
+                BlockedByTarget = orphaned.BlockedByTarget,
+                DamageBlockedOnTaken = orphaned.DamageBlockedOnTaken,
+                EnergySpent = orphaned.EnergySpent,
+                PotionsUsed = orphaned.PotionsUsed,
+                DebuffsApplied = orphaned.DebuffsApplied,
+                BuffsApplied = orphaned.BuffsApplied,
+            };
+            foreach (var (k, v) in orphaned.DamageByCard)
+                merged.DamageByCard[k] = v;
+            foreach (var (k, v) in orphaned.DamageTakenBySource)
+                merged.DamageTakenBySource[k] = v;
+            foreach (var (k, v) in orphaned.DamagePerTurn)
+                merged.DamagePerTurn[k] = v;
+            foreach (var (k, v) in orphaned.BlockByCard)
+                merged.BlockByCard[k] = v;
+            foreach (var (k, v) in orphaned.EnergySpentByCard)
+                merged.EnergySpentByCard[k] = v;
+            foreach (var (k, v) in orphaned.PotionUseCount)
+                merged.PotionUseCount[k] = v;
+            foreach (var (k, v) in orphaned.DebuffsByPower)
+                merged.DebuffsByPower[k] = v;
+            foreach (var (k, v) in orphaned.PowerDamageBySource)
+                merged.PowerDamageBySource[k] = v;
+            merged.Events.AddRange(orphaned.Events);
+            RefreshPlayerIdentity(merged, creature);
+            _current.Players[key] = merged;
+            return merged;
+        }
 
         var stats = new PlayerCombatStats {
             Key = key,
-            DisplayName = creature.Name,
+            DisplayName = ResolveCreatureDisplayName(creature),
             CharacterId = creature.Player?.Character.Id.Entry ?? "",
         };
         _current.Players[key] = stats;
         return stats;
+    }
+
+    private static string ResolvePlayerKey(Creature creature) {
+        if (creature.Player != null)
+            return creature.Player.NetId.ToString();
+
+        if (TryResolveCombatPlayerKey(creature, out string? netKey))
+            return netKey;
+
+        return CreatureKey(creature);
+    }
+
+    private static bool TryResolveCombatPlayerKey(Creature creature, out string netKey) {
+        netKey = "";
+        CombatState? state = creature.CombatState ?? CombatManager.Instance?.DebugOnlyGetState();
+        if (state == null)
+            return false;
+
+        foreach (Player player in state.Players) {
+            if (player.Creature != creature)
+                continue;
+            netKey = player.NetId.ToString();
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void RefreshPlayerIdentity(PlayerCombatStats stats, Creature creature) {
+        string name = ResolveCreatureDisplayName(creature);
+        if (!string.IsNullOrWhiteSpace(name))
+            stats.DisplayName = name;
+
+        string charId = creature.Player?.Character.Id.Entry ?? "";
+        if (!string.IsNullOrWhiteSpace(charId))
+            stats.CharacterId = charId;
+    }
+
+    private static string ResolveCreatureDisplayName(Creature creature) {
+        try {
+            string name = creature.Name;
+            if (!string.IsNullOrWhiteSpace(name))
+                return name;
+        }
+        catch {
+            // Platform name lookup can fail in some contexts.
+        }
+
+        Player? player = creature.Player;
+        if (player?.Character != null) {
+            try {
+                string title = player.Character.Title.GetFormattedText();
+                if (!string.IsNullOrWhiteSpace(title))
+                    return title;
+            }
+            catch {
+                // fall through
+            }
+        }
+
+        if (player != null)
+            return player.NetId.ToString();
+
+        return I18N.T("combatStats.player.unknown", "Player");
     }
 
     private static Creature? ResolvePrimaryPlayerCreature() {

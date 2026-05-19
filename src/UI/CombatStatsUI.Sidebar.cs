@@ -10,7 +10,6 @@ internal static partial class CombatStatsUI {
     private const float SidebarBarHeight = 72f;
     private const float SidebarBarWidth = 14f;
     private const float RailCompactBarWidth = 10f;
-    private const float RailCompactBarHeight = 52f;
     private const float RailCompactSingleBarMinHeight = 120f;
 
     private static bool SidebarUsesPie(ViewMode mode) => mode switch {
@@ -80,6 +79,38 @@ internal static partial class CombatStatsUI {
         control.MouseFilter = string.IsNullOrEmpty(tooltip)
             ? Control.MouseFilterEnum.Ignore
             : Control.MouseFilterEnum.Stop;
+    }
+
+    private static string ResolvePlayerDisplayName(PlayerCombatStats player) =>
+        string.IsNullOrWhiteSpace(player.DisplayName) ? player.Key : player.DisplayName;
+
+    private static string FormatPlayerTooltip(string name, int total, CombatScoreBreakdown bd) {
+        var sb = new System.Text.StringBuilder(128);
+        sb.Append(name).Append('\n');
+        sb.Append(I18N.T("combatStats.sidebar.total", "Total {0}", total));
+
+        AppendScoreLine(sb, "Damage", bd.Damage, total);
+        AppendScoreLine(sb, "Block", bd.Block, total);
+        AppendScoreLine(sb, "Debuff", bd.Debuff, total);
+        AppendScoreLine(sb, "Buff", bd.Buff, total);
+        AppendScoreLine(sb, "Utility", bd.Utility, total);
+        AppendScoreLine(sb, "Potion", bd.Potion, total);
+        AppendScoreLine(sb, "Synergy", bd.Synergy, total);
+
+        return sb.ToString().TrimEnd();
+    }
+
+    private static void AppendScoreLine(System.Text.StringBuilder sb, string kind, int amount, int total) {
+        if (amount <= 0)
+            return;
+        float pct = total > 0 ? 100f * amount / total : 0f;
+        sb.Append('\n')
+            .Append(LocalizeScoreKind(kind))
+            .Append(' ')
+            .Append(amount)
+            .Append(" (")
+            .Append(pct.ToString("0.#"))
+            .Append("%)");
     }
 
     /// <summary>Default sidebar: per-player vertical score stacks.</summary>
@@ -169,18 +200,19 @@ internal static partial class CombatStatsUI {
                 .ToList();
 
             if (_railCompact) {
-                if (ordered.Count == 1) {
-                    int total = CombatScoreCalculator.TotalScore(ordered[0]);
-                    _list.AddChild(MakeSinglePlayerCompactColumn(ordered[0], total));
+                if (ordered.Count != 1) {
+                    _hasContent = false;
+                    return;
                 }
-                else
-                    _list.AddChild(MakeMultiPlayerCompactRow(ordered, maxScore));
+
+                int total = CombatScoreCalculator.TotalScore(ordered[0]);
+                _list.AddChild(MakeSinglePlayerCompactColumn(ordered[0], total));
                 return;
             }
 
             foreach (var player in ordered) {
                 int total = CombatScoreCalculator.TotalScore(player);
-                _list.AddChild(MakePlayerRow(player, total, maxScore, railCompact: false));
+                _list.AddChild(MakePlayerRow(player, total, maxScore));
             }
         }
 
@@ -202,15 +234,12 @@ internal static partial class CombatStatsUI {
             }
         }
 
-        private static Control MakePlayerRow(PlayerCombatStats player, int total, int maxScore, bool railCompact) {
-            if (railCompact)
-                return MakePlayerRowCompact(player, total, maxScore, RailCompactBarWidth, showScore: true);
-
+        private static Control MakePlayerRow(PlayerCombatStats player, int total, int maxScore) {
             var row = new HBoxContainer();
             row.AddThemeConstantOverride("separation", 8);
             row.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
-            string name = string.IsNullOrWhiteSpace(player.DisplayName) ? player.Key : player.DisplayName;
+            string name = ResolvePlayerDisplayName(player);
             var nameLabel = new Label {
                 Text = name,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -248,32 +277,13 @@ internal static partial class CombatStatsUI {
             return row;
         }
 
-        private static Control MakeMultiPlayerCompactRow(
-            IReadOnlyList<PlayerCombatStats> players,
-            int maxScore) {
-            var row = new HBoxContainer();
-            row.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            row.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-            row.AddThemeConstantOverride("separation", 2);
-            row.Alignment = BoxContainer.AlignmentMode.End;
-
-            int count = players.Count;
-            const float avail = 36f;
-            float barW = Math.Clamp((avail - Math.Max(0, count - 1) * 2f) / count, 4f, 9f);
-
-            foreach (var player in players)
-                row.AddChild(MakePlayerRowCompact(player, CombatScoreCalculator.TotalScore(player), maxScore, barW, showScore: false));
-
-            return row;
-        }
-
         private static Control MakeSinglePlayerCompactColumn(PlayerCombatStats player, int total) {
             var column = new VBoxContainer();
             column.AddThemeConstantOverride("separation", 4);
             column.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             column.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
 
-            string name = string.IsNullOrWhiteSpace(player.DisplayName) ? player.Key : player.DisplayName;
+            string name = ResolvePlayerDisplayName(player);
             var bd = CombatScoreCalculator.Breakdown(player);
             string tooltip = FormatPlayerTooltip(name, total, bd);
 
@@ -299,101 +309,6 @@ internal static partial class CombatStatsUI {
 
             ApplyBarTooltip(column, tooltip);
             return column;
-        }
-
-        private static Control MakePlayerRowCompact(
-            PlayerCombatStats player,
-            int total,
-            int maxScore,
-            float barWidth,
-            bool showScore) {
-            var column = new VBoxContainer();
-            column.AddThemeConstantOverride("separation", 1);
-            column.SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter;
-            column.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-
-            string name = string.IsNullOrWhiteSpace(player.DisplayName) ? player.Key : player.DisplayName;
-            var bd = CombatScoreCalculator.Breakdown(player);
-            float barHeight = Math.Max(8f, RailCompactBarHeight * total / (float)maxScore);
-            var barWrap = new VBoxContainer {
-                CustomMinimumSize = new Vector2(barWidth + 2, RailCompactBarHeight),
-                SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
-                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            };
-            barWrap.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
-
-            var bar = new VerticalScoreStack { BarWidth = barWidth };
-            bar.CustomMinimumSize = new Vector2(barWidth + 1, barHeight);
-            bar.SetSegments(ScoreBreakdownSegments(bd), Math.Max(total, 1));
-            string tooltip = FormatPlayerTooltip(name, total, bd);
-            ApplyBarTooltip(bar, tooltip);
-            barWrap.AddChild(bar);
-
-            column.AddChild(barWrap);
-
-            if (showScore) {
-                var scoreLabel = new Label {
-                    Text = total.ToString(),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                };
-                scoreLabel.AddThemeFontSizeOverride("font_size", 8);
-                scoreLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
-                ApplyBarTooltip(scoreLabel, tooltip);
-                column.AddChild(scoreLabel);
-            }
-            else {
-                var initial = new Label {
-                    Text = PlayerInitial(name),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                };
-                initial.AddThemeFontSizeOverride("font_size", 8);
-                initial.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
-                ApplyBarTooltip(initial, tooltip);
-                column.AddChild(initial);
-            }
-
-            ApplyBarTooltip(column, tooltip);
-            ApplyBarTooltip(barWrap, tooltip);
-            return column;
-        }
-
-        private static string PlayerInitial(string name) {
-            if (string.IsNullOrWhiteSpace(name))
-                return "?";
-            foreach (char c in name) {
-                if (!char.IsWhiteSpace(c))
-                    return char.ToUpperInvariant(c).ToString();
-            }
-            return "?";
-        }
-
-        private static string FormatPlayerTooltip(string name, int total, CombatScoreBreakdown bd) {
-            var sb = new System.Text.StringBuilder(128);
-            sb.Append(name).Append('\n');
-            sb.Append(I18N.T("combatStats.sidebar.total", "Total {0}", total));
-
-            AppendScoreLine(sb, "Damage", bd.Damage, total);
-            AppendScoreLine(sb, "Block", bd.Block, total);
-            AppendScoreLine(sb, "Debuff", bd.Debuff, total);
-            AppendScoreLine(sb, "Buff", bd.Buff, total);
-            AppendScoreLine(sb, "Utility", bd.Utility, total);
-            AppendScoreLine(sb, "Potion", bd.Potion, total);
-            AppendScoreLine(sb, "Synergy", bd.Synergy, total);
-
-            return sb.ToString().TrimEnd();
-        }
-
-        private static void AppendScoreLine(System.Text.StringBuilder sb, string kind, int amount, int total) {
-            if (amount <= 0)
-                return;
-            float pct = total > 0 ? 100f * amount / total : 0f;
-            sb.Append('\n')
-                .Append(LocalizeScoreKind(kind))
-                .Append(' ')
-                .Append(amount)
-                .Append(" (")
-                .Append(pct.ToString("0.#"))
-                .Append("%)");
         }
 
         private void BuildLegend() {

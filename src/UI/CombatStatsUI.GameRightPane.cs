@@ -28,12 +28,37 @@ internal static partial class CombatStatsUI {
     }
 
     internal static void OnGameContextTrackerChanged() {
+        if (ShouldUseMultiplayerOverlay()) {
+            RefreshMultiplayerOverlay();
+            if (!_panelOpen && _gamePlayers != null) {
+                _gamePlayers.Refresh();
+                DevPanelUI.RefreshContextPaneChrome();
+            }
+            DevPanelUI.UpdateContextPaneVisibility();
+            return;
+        }
+
+        HideMultiplayerOverlay();
         if (_panelOpen)
             return;
         RefreshDefaultGameContext();
     }
 
     internal static void RefreshDefaultGameContext() {
+        if (ShouldUseMultiplayerOverlay()) {
+            RefreshMultiplayerOverlay();
+            if (_gamePlayers != null) {
+                _gamePlayers.SetContext(
+                    CombatStatsTracker.IsTracking ? CombatStatsTracker.Current : CombatStatsTracker.Last,
+                    isRunView: false);
+                _gamePlayers.Refresh();
+            }
+            DevPanelUI.RefreshContextPaneChrome();
+            DevPanelUI.UpdateContextPaneVisibility();
+            return;
+        }
+
+        HideMultiplayerOverlay();
         if (_gamePlayers == null)
             return;
         var snap = CombatStatsTracker.IsTracking

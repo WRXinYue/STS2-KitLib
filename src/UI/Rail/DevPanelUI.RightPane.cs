@@ -67,6 +67,7 @@ internal static partial class DevPanelUI {
         root.AddChild(_contextPane);
 
         CombatStatsUI.EnsureGameContextPane(_contextHost);
+        CombatStatsUI.AttachMultiplayerOverlay(globalUi);
 
         CombatStatsTracker.Changed += OnContextTrackerChanged;
 
@@ -93,6 +94,7 @@ internal static partial class DevPanelUI {
     }
 
     internal static void DetachContextPane(NGlobalUi globalUi) {
+        CombatStatsUI.DetachMultiplayerOverlay(globalUi);
         CombatStatsTracker.Changed -= OnContextTrackerChanged;
         _contextPaneTween?.Kill();
         _contextPaneTween = null;

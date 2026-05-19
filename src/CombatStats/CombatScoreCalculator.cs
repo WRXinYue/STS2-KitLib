@@ -171,6 +171,45 @@ internal static class CombatScoreCalculator {
         return bd;
     }
 
+    /// <summary>
+    /// Display breakdown: event stream plus aggregate fallbacks when events are incomplete
+    /// (can happen for the local player in multiplayer when history attribution differs).
+    /// </summary>
+    public static CombatScoreBreakdown BreakdownForDisplay(PlayerCombatStats player) {
+        var bd = Breakdown(player);
+
+        int blockFromCards = 0;
+        foreach (var (_, amount) in player.BlockByCard)
+            blockFromCards += BlockScore(amount);
+        if (blockFromCards > bd.Block)
+            bd.Block = blockFromCards;
+
+        int damageFromCards = 0;
+        foreach (var (_, amount) in player.DamageByCard)
+            damageFromCards += DamageScore(amount);
+        foreach (var (_, amount) in player.PowerDamageBySource)
+            damageFromCards += DamageScore(amount);
+        if (damageFromCards > bd.Damage)
+            bd.Damage = damageFromCards;
+
+        int debuffFromPowers = 0;
+        foreach (var (_, stacks) in player.DebuffsByPower)
+            debuffFromPowers += DebuffScore(stacks);
+        if (debuffFromPowers > bd.Debuff)
+            bd.Debuff = debuffFromPowers;
+
+        if (player.BuffsApplied > 0 && bd.Buff <= 0)
+            bd.Buff = BuffScore(player.BuffsApplied);
+
+        int potionScore = 0;
+        foreach (var (_, count) in player.PotionUseCount)
+            potionScore += PotionScore() * count;
+        if (potionScore > bd.Potion)
+            bd.Potion = potionScore;
+
+        return bd;
+    }
+
     public static string FormatTimelineLine(CombatStatEvent ev) {
         string line = $"T{ev.Turn} · {CombatStatsDisplayNames.LocalizeEventText(ev.Text)}";
         return ev.ScorePoints > 0 ? $"{line}  (+{ev.ScorePoints})" : line;

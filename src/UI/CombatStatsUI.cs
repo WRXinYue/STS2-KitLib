@@ -31,6 +31,7 @@ internal static partial class CombatStatsUI {
     public static void Show(NGlobalUi globalUi) {
         Remove(globalUi);
         _panelOpen = true;
+        HideMultiplayerOverlay();
 
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
             globalUi, RootName, PanelW, () => Remove(globalUi), contentSeparation: 10);
@@ -399,6 +400,7 @@ internal static partial class CombatStatsUI {
         _panelOpen = false;
         DevPanelUI.ResetContextPaneToDefault();
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
+        RefreshMultiplayerOverlay();
     }
 
     /// <summary>Layout-only key — value changes refresh in place to avoid QueueFree churn during combat.</summary>
