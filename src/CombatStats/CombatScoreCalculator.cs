@@ -1,7 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace DevMode.CombatStats;
+
+internal enum CombatPieCategory {
+    Overview,
+    Cards,
+    Offense,
+    Support,
+    Tank,
+}
 
 /// <summary>
 /// SW-inspired combat contribution score. Direct damage is the baseline (1 pt / 1 dmg);
@@ -44,6 +53,94 @@ internal static class CombatScoreCalculator {
     public static int TotalScore(PlayerCombatStats player) =>
         player.Events.Sum(e => e.ScorePoints);
 
+    /// <summary>Per-card combat contribution (damage, block, utility plays).</summary>
+    public static Dictionary<string, int> CardContributionByKey(PlayerCombatStats player) {
+        var map = new Dictionary<string, int>();
+        foreach (var (name, damage) in player.DamageByCard)
+            AddScore(map, name, DamageScore(damage));
+        foreach (var (name, block) in player.BlockByCard)
+            AddScore(map, name, BlockScore(block));
+        foreach (var ev in player.Events) {
+            if (ev.Kind == CombatStatEventKind.CardPlayed && ev.ScorePoints > 0)
+                AddScore(map, ev.Text, ev.ScorePoints);
+        }
+        return map;
+    }
+
+    private static void AddScore(Dictionary<string, int> map, string key, int points) {
+        if (points <= 0) return;
+        map[key] = map.GetValueOrDefault(key) + points;
+    }
+
+    public static (Dictionary<string, int> Data, int Total) GetPieCategoryData(
+        PlayerCombatStats player,
+        CombatPieCategory category) {
+        var bd = Breakdown(player);
+        if (category == CombatPieCategory.Cards) {
+            var cards = CardContributionByKey(player);
+            return (cards, Math.Max(cards.Values.Sum(), 1));
+        }
+
+        return category switch {
+            CombatPieCategory.Overview => (ScoreBreakdownByKind(bd), Math.Max(bd.Total, 1)),
+            CombatPieCategory.Offense => (OffenseContributionByKey(player), Math.Max(player.DamageDealt, 1)),
+            CombatPieCategory.Support => (SupportContributionByKey(player),
+                Math.Max(bd.Block + bd.Utility + bd.Debuff + bd.Buff + bd.Potion + bd.Synergy, 1)),
+            CombatPieCategory.Tank => (new Dictionary<string, int>(player.DamageTakenBySource),
+                Math.Max(player.DamageTaken, 1)),
+            _ => (new Dictionary<string, int>(), 1),
+        };
+    }
+
+    /// <summary>Combat score split by contribution kind (for overview pie).</summary>
+    public static Dictionary<string, int> ScoreBreakdownByKind(CombatScoreBreakdown bd) {
+        var map = new Dictionary<string, int>();
+        AddScore(map, nameof(bd.Damage), bd.Damage);
+        AddScore(map, nameof(bd.Block), bd.Block);
+        AddScore(map, nameof(bd.Debuff), bd.Debuff);
+        AddScore(map, nameof(bd.Buff), bd.Buff);
+        AddScore(map, nameof(bd.Utility), bd.Utility);
+        AddScore(map, nameof(bd.Potion), bd.Potion);
+        AddScore(map, nameof(bd.Synergy), bd.Synergy);
+        return map;
+    }
+
+    private static Dictionary<string, int> OffenseContributionByKey(PlayerCombatStats player) {
+        var map = new Dictionary<string, int>();
+        foreach (var (name, damage) in player.DamageByCard)
+            AddScore(map, name, damage);
+        foreach (var (name, damage) in player.PowerDamageBySource)
+            AddScore(map, name, damage);
+        return map;
+    }
+
+    /// <summary>Non-damage setup: block, utility, debuffs, potions, synergy credit.</summary>
+    public static Dictionary<string, int> SupportContributionByKey(PlayerCombatStats player) {
+        var map = new Dictionary<string, int>();
+        foreach (var (name, block) in player.BlockByCard)
+            AddScore(map, name, BlockScore(block));
+        foreach (var ev in player.Events) {
+            switch (ev.Kind) {
+                case CombatStatEventKind.CardPlayed when ev.ScorePoints > 0:
+                    AddScore(map, ev.Text, ev.ScorePoints);
+                    break;
+                case CombatStatEventKind.DebuffApplied:
+                case CombatStatEventKind.BuffApplied:
+                case CombatStatEventKind.PotionUsed:
+                    AddScore(map, ev.Text, ev.ScorePoints);
+                    break;
+                case CombatStatEventKind.PowerSynergy:
+                    string label = ev.Text;
+                    int arrow = label.IndexOf(" → ", StringComparison.Ordinal);
+                    if (arrow > 0)
+                        label = label[..arrow];
+                    AddScore(map, label, ev.ScorePoints);
+                    break;
+            }
+        }
+        return map;
+    }
+
     public static CombatScoreBreakdown Breakdown(PlayerCombatStats player) {
         var bd = new CombatScoreBreakdown();
         foreach (var ev in player.Events) {
@@ -75,7 +172,7 @@ internal static class CombatScoreCalculator {
     }
 
     public static string FormatTimelineLine(CombatStatEvent ev) {
-        string line = $"T{ev.Turn} · {ev.Text}";
+        string line = $"T{ev.Turn} · {CombatStatsDisplayNames.LocalizeEventText(ev.Text)}";
         return ev.ScorePoints > 0 ? $"{line}  (+{ev.ScorePoints})" : line;
     }
 }

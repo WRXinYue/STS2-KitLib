@@ -11,7 +11,9 @@ namespace DevMode.UI;
 /// <summary>DevPanel overlay for per-combat damage statistics (MVP).</summary>
 internal static partial class CombatStatsUI {
     private const string RootName = "DevModeCombatStats";
-    private const float PanelW = 720f;
+    private const float PanelW = 960f;
+    private const int PieSplitInitialRight = 280;
+    private const int PieSplitMinRight = 220;
     private const double AutoRefreshIntervalSec = 0.5;
     private const float BarAnimDuration = 0.22f;
     private const float ValueAnimDuration = 0.18f;
@@ -89,7 +91,37 @@ internal static partial class CombatStatsUI {
         };
         inner.AddThemeConstantOverride("separation", 8);
         scroll.AddChild(inner);
-        vbox.AddChild(scroll);
+
+        var bodySplit = new HSplitContainer {
+            Name = "stats.body.split",
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SplitOffset = (int)Math.Max(PanelW - PieSplitInitialRight, 480),
+        };
+        bodySplit.AddChild(scroll);
+
+        var pieScroll = new ScrollContainer {
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            CustomMinimumSize = new Vector2(PieSplitMinRight, 0),
+        };
+        var pieSidebar = MakePieSidebar();
+        pieScroll.AddChild(pieSidebar);
+        bodySplit.AddChild(pieScroll);
+        vbox.AddChild(bodySplit);
+
+        bool splitInitialized = false;
+        void InitSplitOnce() {
+            if (!GodotObject.IsInstanceValid(bodySplit))
+                return;
+            if (splitInitialized || bodySplit.Size.X < PieSplitMinRight + 320)
+                return;
+            splitInitialized = true;
+            int right = Math.Clamp(PieSplitInitialRight, PieSplitMinRight, (int)bodySplit.Size.X - 320);
+            bodySplit.SplitOffset = (int)bodySplit.Size.X - right;
+        }
+        bodySplit.Resized += InitSplitOnce;
 
         var playerRow = new HBoxContainer();
         playerRow.AddThemeConstantOverride("separation", 6);
@@ -123,6 +155,26 @@ internal static partial class CombatStatsUI {
         string? selectedPlayerKey = null;
         var playerChips = new List<(string Key, Button Chip)>();
 
+        bool displayPending = false;
+        bool pendingForceRebuild = false;
+        void ScheduleUpdateDisplay(bool forceRebuild, bool animate) {
+            if (!GodotObject.IsInstanceValid(root))
+                return;
+            pendingForceRebuild |= forceRebuild;
+            if (displayPending)
+                return;
+            displayPending = true;
+            bool shouldAnimate = animate;
+            Callable.From(() => {
+                displayPending = false;
+                if (!GodotObject.IsInstanceValid(root))
+                    return;
+                bool rebuild = pendingForceRebuild;
+                pendingForceRebuild = false;
+                UpdateDisplay(rebuild, shouldAnimate);
+            }).CallDeferred();
+        }
+
         void SetMode(ViewMode next) {
             mode = next;
             contentFingerprint = null;
@@ -133,7 +185,7 @@ internal static partial class CombatStatsUI {
             chipExtended.SetPressedNoSignal(next == ViewMode.Extended);
             chipTimeline.SetPressedNoSignal(next == ViewMode.Timeline);
             chipRun.SetPressedNoSignal(next == ViewMode.Run);
-            UpdateDisplay(forceRebuild: true, animate: false);
+            ScheduleUpdateDisplay(forceRebuild: true, animate: false);
         }
 
         chipSummary.Pressed += () => SetMode(ViewMode.Summary);
@@ -162,8 +214,10 @@ internal static partial class CombatStatsUI {
         };
 
         void RebuildPlayerChips(CombatStatsSnapshot? snap) {
-            foreach (var (_, chip) in playerChips)
-                chip.QueueFree();
+            foreach (var (_, chip) in playerChips) {
+                playerRow.RemoveChild(chip);
+                chip.Free();
+            }
             playerChips.Clear();
             playerRow.Visible = false;
 
@@ -183,12 +237,20 @@ internal static partial class CombatStatsUI {
                     contentFingerprint = null;
                     foreach (var (k, c) in playerChips)
                         c.SetPressedNoSignal(k == captured);
-                    UpdateDisplay(forceRebuild: true, animate: false);
+                    ScheduleUpdateDisplay(forceRebuild: true, animate: false);
                 };
             }
         }
 
+        void RefreshPie(PlayerCombatStats? player) {
+            if (!GodotObject.IsInstanceValid(pieSidebar))
+                return;
+            pieSidebar.Refresh(player);
+        }
+
         void UpdateDisplay(bool forceRebuild, bool animate) {
+            if (!GodotObject.IsInstanceValid(root))
+                return;
             if (mode == ViewMode.Run) {
                 statusLabel.Text = I18N.T("combatStats.status.run",
                     "Run total — {0} combat(s)", CombatStatsTracker.RunCombatCount);
@@ -197,8 +259,10 @@ internal static partial class CombatStatsUI {
                 string runFingerprint = $"run|{CombatStatsTracker.RunCombatCount}|{CombatStatsTracker.RunTotal.PrimaryPlayer?.DamageDealt ?? 0}";
                 if (!forceRebuild && contentFingerprint == runFingerprint && inner.GetChildCount() > 0) {
                     var runPlayer = CombatStatsTracker.RunTotal.PrimaryPlayer;
-                    if (runPlayer != null)
+                    if (runPlayer != null) {
                         RefreshExtended(inner, runPlayer, CombatStatsTracker.RunTotal.MaxTurn, animate);
+                        RefreshPie(runPlayer);
+                    }
                     return;
                 }
 
@@ -206,6 +270,7 @@ internal static partial class CombatStatsUI {
                 contentFingerprint = runFingerprint;
                 BuildRunView(inner);
                 ResetScrollLayout(scroll);
+                RefreshPie(CombatStatsTracker.RunTotal.PrimaryPlayer);
                 return;
             }
 
@@ -226,6 +291,7 @@ internal static partial class CombatStatsUI {
                     inner.AddChild(MakeHintLabel(I18N.T("combatStats.emptyHint",
                         "Tracking starts automatically when Dev Mode is active and a combat begins.")));
                 ResetScrollLayout(scroll);
+                RefreshPie(null);
                 return;
             }
 
@@ -248,6 +314,7 @@ internal static partial class CombatStatsUI {
 
             if (canRefresh) {
                 RefreshContent(inner, mode, player, snap.MaxTurn, animate);
+                RefreshPie(player);
                 return;
             }
 
@@ -263,9 +330,9 @@ internal static partial class CombatStatsUI {
                         BuildCompareSection(inner, player, lastPlayer);
                     break;
                 case ViewMode.ByCard:
-                    BuildRankedList(inner, player.DamageByCard,
+                    BuildRankedList(inner, CombatScoreCalculator.CardContributionByKey(player),
                         I18N.T("combatStats.col.card", "Card"),
-                        player.DamageDealt, animate: false);
+                        CombatScoreCalculator.TotalScore(player), animate: false);
                     break;
                 case ViewMode.BySource:
                     BuildRankedList(inner, player.DamageTakenBySource,
@@ -284,35 +351,47 @@ internal static partial class CombatStatsUI {
             }
 
             ResetScrollLayout(scroll);
+            RefreshPie(player);
         }
 
         Action onStatsChanged = () => {
-            if (!GodotObject.IsInstanceValid(root)) return;
-            UpdateDisplay(forceRebuild: false, animate: true);
+            if (!GodotObject.IsInstanceValid(root))
+                return;
+            ScheduleUpdateDisplay(forceRebuild: false, animate: false);
         };
         CombatStatsTracker.Changed += onStatsChanged;
-        root.TreeExiting += () => CombatStatsTracker.Changed -= onStatsChanged;
 
         var timer = new Timer {
             WaitTime = AutoRefreshIntervalSec,
             OneShot = false,
             Autostart = true,
         };
-        timer.Timeout += () => {
-            if (autoRefresh.ButtonPressed)
-                UpdateDisplay(forceRebuild: false, animate: true);
-        };
+        void OnAutoRefreshTimeout() {
+            if (!GodotObject.IsInstanceValid(root) || !autoRefresh.ButtonPressed)
+                return;
+            ScheduleUpdateDisplay(forceRebuild: false, animate: false);
+        }
+        timer.Timeout += OnAutoRefreshTimeout;
         root.AddChild(timer);
 
-        UpdateDisplay(forceRebuild: true, animate: false);
+        root.TreeExiting += () => {
+            CombatStatsTracker.Changed -= onStatsChanged;
+            bodySplit.Resized -= InitSplitOnce;
+            if (GodotObject.IsInstanceValid(timer)) {
+                timer.Timeout -= OnAutoRefreshTimeout;
+                timer.Stop();
+            }
+        };
+
         ((Node)globalUi).AddChild(root);
+        ScheduleUpdateDisplay(forceRebuild: true, animate: false);
     }
 
     private static void ClearScrollContent(VBoxContainer inner) {
         while (inner.GetChildCount() > 0) {
             var child = inner.GetChild(0);
             inner.RemoveChild(child);
-            child.QueueFree();
+            child.Free();
         }
     }
 
@@ -328,45 +407,28 @@ internal static partial class CombatStatsUI {
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
     }
 
+    /// <summary>Layout-only key — value changes refresh in place to avoid QueueFree churn during combat.</summary>
     private static string BuildFingerprint(ViewMode mode, PlayerCombatStats player, int maxTurn) {
         var sb = new StringBuilder(128);
-        sb.Append((int)mode).Append('|');
+        sb.Append((int)mode).Append('|').Append(player.Key).Append('|');
         switch (mode) {
             case ViewMode.Summary:
-                sb.Append(maxTurn).Append('|');
-                sb.Append(CombatScoreCalculator.TotalScore(player)).Append('|');
-                AppendKeys(sb, TopEntries(player.DamageByCard, 5).Select(x => x.Name));
-                sb.Append('|');
-                AppendKeys(sb, BuildTurnSeries(player.DamagePerTurn, maxTurn, 8)
-                    .Select(p => $"{p.Turn}:{p.Amount}"));
+            case ViewMode.ByTurn:
+                sb.Append(maxTurn);
                 break;
             case ViewMode.ByCard:
-                AppendKeys(sb, TopEntries(player.DamageByCard, 24).Select(x => x.Name));
+                AppendKeys(sb, CombatScoreCalculator.CardContributionByKey(player).Keys.OrderBy(k => k));
                 break;
             case ViewMode.BySource:
-                AppendKeys(sb, TopEntries(player.DamageTakenBySource, 24).Select(x => x.Name));
-                break;
-            case ViewMode.ByTurn:
-                sb.Append(maxTurn).Append('|');
-                AppendKeys(sb, BuildTurnSeries(player.DamagePerTurn, maxTurn, null)
-                    .Select(p => $"{p.Turn}:{p.Amount}"));
+                AppendKeys(sb, player.DamageTakenBySource.Keys.OrderBy(k => k));
                 break;
             case ViewMode.Extended:
                 sb.Append(maxTurn).Append('|');
-                sb.Append(player.OverkillDealt).Append('|');
-                sb.Append(player.EnergySpent).Append('|');
                 sb.Append(player.PowerDamageBySource.Count).Append('|');
                 sb.Append(player.BlockByCard.Count).Append('|');
                 sb.Append(player.PotionUseCount.Count);
                 break;
             case ViewMode.Timeline:
-                sb.Append(CombatScoreCalculator.TotalScore(player)).Append('|');
-                sb.Append(player.Events.Count).Append('|');
-                if (player.Events.Count > 0) {
-                    var last = player.Events[^1];
-                    sb.Append(last.Turn).Append('|').Append(last.Kind).Append('|').Append(last.Text)
-                        .Append('|').Append(last.ScorePoints);
-                }
                 break;
         }
         return sb.ToString();
@@ -392,11 +454,12 @@ internal static partial class CombatStatsUI {
                 FindValueRow(inner, "stat.turns")?.SetValue(maxTurn, animate);
                 FindValueRow(inner, "stat.taken")?.SetValue(player.DamageTaken, animate);
                 FindValueRow(inner, "stat.block")?.SetValue(player.BlockGained, animate);
-                RefreshBarRows(inner, TopEntries(player.DamageByCard, 5), player.DamageDealt, animate);
                 RefreshTurnChart(inner, player.DamagePerTurn, maxTurn, animate, turnLimit: 8);
                 break;
             case ViewMode.ByCard:
-                RefreshBarRows(inner, TopEntries(player.DamageByCard, 24), player.DamageDealt, animate);
+                RefreshBarRows(inner,
+                    TopEntries(CombatScoreCalculator.CardContributionByKey(player), 24),
+                    CombatScoreCalculator.TotalScore(player), animate);
                 break;
             case ViewMode.BySource:
                 RefreshBarRows(inner, TopEntries(player.DamageTakenBySource, 24), player.DamageTaken, animate);
@@ -445,13 +508,6 @@ internal static partial class CombatStatsUI {
             section.AddChild(MakeValueRow("stat.taken", I18N.T("combatStats.taken", "Damage taken"), player.DamageTaken, animate));
             section.AddChild(MakeValueRow("stat.block", I18N.T("combatStats.block", "Block gained"), player.BlockGained, animate));
         }));
-
-        if (player.DamageByCard.Count > 0) {
-            parent.AddChild(MakeSectionCard(I18N.T("combatStats.section.topCards", "Top cards"), section => {
-                foreach (var (name, amount) in TopEntries(player.DamageByCard, 5))
-                    section.AddChild(MakeBarRow(name, amount, player.DamageDealt, animate));
-            }));
-        }
 
         if (player.DamagePerTurn.Count > 0) {
             parent.AddChild(MakeSectionCard(I18N.T("combatStats.section.topTurns", "Damage per turn"), section => {
@@ -579,10 +635,13 @@ internal static partial class CombatStatsUI {
 
             AddChild(left);
             AddChild(_valueLabel);
+            TreeExiting += () => _tween?.Kill();
             SetValue(value, animate);
         }
 
         public void SetValue(int value, bool animate) {
+            if (!GodotObject.IsInstanceValid(_valueLabel))
+                return;
             if (!animate || _displayed == value) {
                 _tween?.Kill();
                 _displayed = value;
@@ -595,11 +654,15 @@ internal static partial class CombatStatsUI {
             _tween = CreateTween();
             _tween.SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
             _tween.TweenMethod(Callable.From((float t) => {
+                if (!GodotObject.IsInstanceValid(_valueLabel))
+                    return;
                 int v = (int)Math.Round(start + (value - start) * t);
                 _displayed = v;
                 _valueLabel.Text = v.ToString();
             }), 0f, 1f, ValueAnimDuration);
             _tween.Finished += () => {
+                if (!GodotObject.IsInstanceValid(_valueLabel))
+                    return;
                 _displayed = value;
                 _valueLabel.Text = value.ToString();
             };
@@ -623,7 +686,7 @@ internal static partial class CombatStatsUI {
             top.AddThemeConstantOverride("separation", 8);
 
             _nameLabel = new Label {
-                Text = name,
+                Text = CombatStatsDisplayNames.LocalizeKey(name),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 ClipText = true,
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
@@ -647,6 +710,13 @@ internal static partial class CombatStatsUI {
             float frac = maxAmount > 0 ? Math.Clamp((float)amount / maxAmount, 0f, 1f) : 0f;
             _bar = new StatFractionBar(animate ? 0f : frac);
             AddChild(_bar);
+            TreeExiting += () => {
+                if (GodotObject.IsInstanceValid(_amountLabel) && _amountLabel.HasMeta("_dm_amount_tween")) {
+                    var existing = _amountLabel.GetMeta("_dm_amount_tween").AsGodotObject();
+                    if (existing is Tween old)
+                        old.Kill();
+                }
+            };
             _bar.SetFraction(frac, animate);
         }
 
@@ -654,12 +724,16 @@ internal static partial class CombatStatsUI {
             "bar." + key.Replace("/", "_").Replace(".", "_");
 
         public void SetData(string name, int amount, int maxAmount, bool animate) {
-            _nameLabel.Text = name;
+            if (!GodotObject.IsInstanceValid(_nameLabel))
+                return;
+            _nameLabel.Text = CombatStatsDisplayNames.LocalizeKey(name);
             AnimateAmount(_amountLabel, amount, animate);
             _bar.SetFraction(maxAmount > 0 ? Math.Clamp((float)amount / maxAmount, 0f, 1f) : 0f, animate);
         }
 
         private static void AnimateAmount(Label label, int target, bool animate) {
+            if (!GodotObject.IsInstanceValid(label))
+                return;
             if (!int.TryParse(label.Text, out int start))
                 start = target;
             if (!animate || start == target) {
@@ -667,12 +741,23 @@ internal static partial class CombatStatsUI {
                 return;
             }
 
+            if (label.HasMeta("_dm_amount_tween")) {
+                var existing = label.GetMeta("_dm_amount_tween").AsGodotObject();
+                if (existing is Tween old)
+                    old.Kill();
+            }
+
             var tween = label.CreateTween();
+            label.SetMeta("_dm_amount_tween", tween);
             tween.SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
             tween.TweenMethod(Callable.From((float t) => {
-                label.Text = ((int)Math.Round(start + (target - start) * t)).ToString();
+                if (GodotObject.IsInstanceValid(label))
+                    label.Text = ((int)Math.Round(start + (target - start) * t)).ToString();
             }), 0f, 1f, ValueAnimDuration);
-            tween.Finished += () => label.Text = target.ToString();
+            tween.Finished += () => {
+                if (GodotObject.IsInstanceValid(label))
+                    label.Text = target.ToString();
+            };
         }
     }
 
@@ -704,6 +789,7 @@ internal static partial class CombatStatsUI {
 
             AddChild(track);
             AddChild(_fill);
+            TreeExiting += () => _tween?.Kill();
             ApplyFillWidth();
         }
 

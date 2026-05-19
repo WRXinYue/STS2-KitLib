@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Combat.History.Entries;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 
@@ -110,29 +111,36 @@ internal sealed class CombatHistoryTailer {
             return;
         }
 
-        if (entry.CurrentSide == CombatSide.Enemy && dmg.Receiver.GetPower<PoisonPower>() != null) {
-            CombatStatsTracker.PendingPowerDamage = PowerDamageContext.Create(
-                null, I18N.T("combatStats.power.poison", "Poison"));
-            return;
+        if (entry.CurrentSide == CombatSide.Enemy) {
+            var poison = dmg.Receiver.GetPower<PoisonPower>();
+            if (poison != null) {
+                SetPendingPowerDamage(null, poison);
+                return;
+            }
         }
 
-        if (entry.CurrentSide == CombatSide.Player && dmg.Receiver.GetPower<StranglePower>() != null) {
-            CombatStatsTracker.PendingPowerDamage = PowerDamageContext.Create(
-                null, I18N.T("combatStats.power.strangle", "Strangle"));
-            return;
+        if (entry.CurrentSide == CombatSide.Player) {
+            var strangle = dmg.Receiver.GetPower<StranglePower>();
+            if (strangle != null) {
+                SetPendingPowerDamage(null, strangle);
+                return;
+            }
         }
 
         if (_lastCardWasSoul) {
             foreach (Player player in _combatState.Players) {
                 var haunt = player.Creature.GetPower<HauntPower>();
                 if (haunt != null) {
-                    CombatStatsTracker.PendingPowerDamage = PowerDamageContext.Create(
-                        player.Creature, I18N.T("combatStats.power.haunt", "Haunt"));
+                    SetPendingPowerDamage(player.Creature, haunt);
                     return;
                 }
             }
         }
 
         CombatStatsTracker.PendingPowerDamage = PowerDamageContext.None;
+    }
+
+    private static void SetPendingPowerDamage(Creature? owner, PowerModel power) {
+        CombatStatsTracker.PendingPowerDamage = PowerDamageContext.Create(owner, power.Id.Entry);
     }
 }

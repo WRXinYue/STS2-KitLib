@@ -119,18 +119,28 @@ internal static partial class CombatStatsUI {
         }
 
         private void RebuildXLabels(IReadOnlyList<(int Turn, int Amount)> series) {
-            while (_xLabels.GetChildCount() > 0)
-                _xLabels.GetChild(0).QueueFree();
+            while (_xLabels.GetChildCount() > series.Count) {
+                var extra = _xLabels.GetChild(_xLabels.GetChildCount() - 1);
+                _xLabels.RemoveChild(extra);
+                extra.Free();
+            }
 
-            foreach (var (turn, _) in series) {
-                var label = new Label {
-                    Text = turn.ToString(),
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
-                };
-                label.AddThemeFontSizeOverride("font_size", 9);
-                label.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
-                _xLabels.AddChild(label);
+            for (int i = 0; i < series.Count; i++) {
+                var (turn, _) = series[i];
+                Label label;
+                if (i < _xLabels.GetChildCount()) {
+                    label = (Label)_xLabels.GetChild(i);
+                }
+                else {
+                    label = new Label {
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                    };
+                    label.AddThemeFontSizeOverride("font_size", 9);
+                    label.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+                    _xLabels.AddChild(label);
+                }
+                label.Text = turn.ToString();
             }
         }
 
@@ -157,6 +167,11 @@ internal static partial class CombatStatsUI {
 
         public override void _Ready() => Resized += () => QueueRedraw();
 
+        public override void _ExitTree() {
+            _tween?.Kill();
+            base._ExitTree();
+        }
+
         public void SetSeries(IReadOnlyList<(int Turn, int Amount)> series, int scaleMax, bool animate) {
             _series = series;
             _scaleMax = Math.Max(scaleMax, 1);
@@ -174,7 +189,8 @@ internal static partial class CombatStatsUI {
             _tween.SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
             _tween.TweenMethod(Callable.From((float t) => {
                 _anim = t;
-                QueueRedraw();
+                if (IsInsideTree())
+                    QueueRedraw();
             }), 0f, 1f, BarAnimDuration);
             _tween.Finished += () => {
                 _anim = 1f;
