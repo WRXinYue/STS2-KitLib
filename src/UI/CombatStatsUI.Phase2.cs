@@ -115,6 +115,9 @@ internal static partial class CombatStatsUI {
             };
             rtl.AddThemeFontSizeOverride("normal_font_size", 10);
             rtl.AddThemeColorOverride("default_color", DevModeTheme.TextSecondary);
+            var noFocus = new StyleBoxEmpty();
+            rtl.AddThemeStyleboxOverride("normal", noFocus);
+            rtl.AddThemeStyleboxOverride("focus", noFocus);
             rtl.CustomMinimumSize = new Vector2(0, 120);
             rtl.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             section.AddChild(rtl);
