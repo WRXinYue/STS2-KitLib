@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using DevMode;
+using DevMode.Settings;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
@@ -236,12 +237,13 @@ internal static class DevMainMenuUI {
     }
 
     private static void AdvanceNormalRunMode() {
-        DevModeState.NormalRunMode = DevModeState.NormalRunMode switch {
+        var next = DevModeState.NormalRunMode switch {
             NormalRunMode.Disabled => NormalRunMode.DevPanel,
             NormalRunMode.DevPanel => NormalRunMode.Cheat,
             NormalRunMode.Cheat   => NormalRunMode.Disabled,
             _                     => NormalRunMode.Disabled,
         };
+        SettingsStore.SetNormalRunMode(next);
     }
 
     private static string GetPersistNormalRunModeLabel() {

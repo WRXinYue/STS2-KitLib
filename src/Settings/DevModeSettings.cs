@@ -27,6 +27,11 @@ public sealed class DevModeSettings {
 
     /// <summary>Whether <see cref="RailTabPreferences.DefaultHiddenTabIds"/> have been merged into saved settings.</summary>
     public int RailLayoutDefaultsVersion { get; set; } = 1;
+
+    /// <summary>
+    /// Dev overlay level for normal (non-test) runs: Disabled, DevPanel, or Cheat.
+    /// </summary>
+    public string NormalRunMode { get; set; } = "DevPanel";
 }
 
 public static class ThemeNames {

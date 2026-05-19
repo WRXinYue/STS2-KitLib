@@ -92,8 +92,8 @@ public static class DevModeState {
     /// <summary>True when this is a dev test run started from the Developer Mode menu (no save).</summary>
     public static bool InDevRun { get; set; }
 
-    /// <summary>Dev overlay level for normal runs. Cycled by the user; not reset between runs.</summary>
-    public static NormalRunMode NormalRunMode { get; set; } = NormalRunMode.Disabled;
+    /// <summary>Dev overlay level for normal runs. Cycled by the user; persisted in settings.json.</summary>
+    public static NormalRunMode NormalRunMode { get; set; } = NormalRunMode.DevPanel;
 
     /// <summary>
     /// DevMode is active in any form — the dev sidebar, hooks, and scripts are mounted.

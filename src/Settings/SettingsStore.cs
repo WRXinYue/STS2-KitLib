@@ -20,15 +20,36 @@ public static class SettingsStore {
 
     public static void Load() {
         try {
-            if (!File.Exists(FilePath)) return;
+            if (!File.Exists(FilePath)) {
+                ApplyNormalRunModeFromSettings();
+                return;
+            }
             var json = File.ReadAllText(FilePath);
             Current = JsonSerializer.Deserialize<DevModeSettings>(json, JsonOpts) ?? new();
             ApplyRailLayoutDefaults();
+            ApplyNormalRunModeFromSettings();
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"SettingsStore load failed: {ex.Message}");
             Current = new();
+            ApplyNormalRunModeFromSettings();
         }
+    }
+
+    public static void SetNormalRunMode(NormalRunMode mode) {
+        Current.NormalRunMode = mode.ToString();
+        DevModeState.NormalRunMode = mode;
+        Save();
+    }
+
+    private static void ApplyNormalRunModeFromSettings() {
+        DevModeState.NormalRunMode = ParseNormalRunMode(Current.NormalRunMode);
+    }
+
+    private static NormalRunMode ParseNormalRunMode(string? value) {
+        if (Enum.TryParse(value, ignoreCase: true, out NormalRunMode mode))
+            return mode;
+        return NormalRunMode.DevPanel;
     }
 
     private static void ApplyRailLayoutDefaults() {
