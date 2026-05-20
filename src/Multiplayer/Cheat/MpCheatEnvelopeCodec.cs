@@ -21,8 +21,12 @@ internal static class MpCheatEnvelopeCodec {
         writer.WriteULong(msg.CommandId);
         var add = msg.AddCard;
         writer.WriteBool(add != null);
-        if (add == null) return;
-        WriteAddCardPayload(writer, add);
+        if (add != null)
+            WriteAddCardPayload(writer, add);
+        var remove = msg.RemoveCard;
+        writer.WriteBool(remove != null);
+        if (remove != null)
+            WriteRemoveCardPayload(writer, remove);
     }
 
     internal static MpCheatCommandMessage ReadCommand(PacketReader reader) {
@@ -31,8 +35,10 @@ internal static class MpCheatEnvelopeCodec {
             IssuedByNetId = reader.ReadULong(),
             CommandId = reader.ReadULong(),
         };
-        if (!reader.ReadBool()) return msg;
-        msg.AddCard = ReadAddCardPayload(reader);
+        if (reader.ReadBool())
+            msg.AddCard = ReadAddCardPayload(reader);
+        if (reader.ReadBool())
+            msg.RemoveCard = ReadRemoveCardPayload(reader);
         return msg;
     }
 
@@ -100,5 +106,35 @@ internal static class MpCheatEnvelopeCodec {
             ClientRequestId = reader.ReadULong(),
             Success = reader.ReadBool(),
             Message = MpCheatPacketIO.ReadBoundedString(reader),
+        };
+
+    internal static void WriteRemoveCardPayload(PacketWriter writer, MpCheatRemoveCardPayload payload) {
+        MpCheatPacketIO.WriteBoundedString(writer, payload.CardId);
+        writer.WriteULong(payload.TargetPlayerNetId);
+        writer.WriteInt(payload.Target);
+        writer.WriteInt(payload.PileIndex);
+        writer.WriteBool(payload.RemoveFromRunState);
+    }
+
+    internal static MpCheatRemoveCardPayload ReadRemoveCardPayload(PacketReader reader) =>
+        new() {
+            CardId = MpCheatPacketIO.ReadBoundedString(reader),
+            TargetPlayerNetId = reader.ReadULong(),
+            Target = reader.ReadInt(),
+            PileIndex = reader.ReadInt(),
+            RemoveFromRunState = reader.ReadBool(),
+        };
+
+    internal static void WriteRemoveCardRequest(PacketWriter writer, MpCheatRemoveCardClientRequestMessage msg) {
+        writer.WriteULong(msg.ClientRequestId);
+        writer.WriteULong(msg.RequesterNetId);
+        WriteRemoveCardPayload(writer, msg.Payload);
+    }
+
+    internal static MpCheatRemoveCardClientRequestMessage ReadRemoveCardRequest(PacketReader reader) =>
+        new() {
+            ClientRequestId = reader.ReadULong(),
+            RequesterNetId = reader.ReadULong(),
+            Payload = ReadRemoveCardPayload(reader),
         };
 }

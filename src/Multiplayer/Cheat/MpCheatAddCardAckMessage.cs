@@ -1,6 +1,6 @@
 namespace DevMode.Multiplayer.Cheat;
 
-/// <summary>Client → host validation result for a pending add-card command.</summary>
+/// <summary>Client → host validation result for a pending add/remove-card command.</summary>
 public sealed class MpCheatAddCardAckMessage {
     public ulong CommandId { get; set; }
     public ulong PeerNetId { get; set; }

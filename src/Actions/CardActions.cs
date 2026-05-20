@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DevMode.Multiplayer.Cheat;
 using DevMode.Navigation;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
@@ -160,6 +161,144 @@ internal static class CardActions {
     internal static Player? FindPlayerByNetId(ulong netId) =>
         RunManager.Instance?.DebugOnlyGetState()?.Players.FirstOrDefault(p => p.NetId == netId);
 
+    internal static bool TryBuildRemovePayload(
+        Player player,
+        CardModel card,
+        CardTarget target,
+        bool removeFromRunState,
+        out MpCheatRemoveCardPayload payload,
+        out string error) {
+        payload = new MpCheatRemoveCardPayload();
+        error = "";
+        if (card == null) {
+            error = "card not found";
+            return false;
+        }
+
+        var pileIndex = GetPileIndex(player, target, card);
+        if (pileIndex < 0) {
+            error = "card not in target pile";
+            return false;
+        }
+
+        payload = new MpCheatRemoveCardPayload {
+            CardId = ((AbstractModel)card).Id.Entry,
+            TargetPlayerNetId = player.NetId,
+            Target = (int)target,
+            PileIndex = pileIndex,
+            RemoveFromRunState = removeFromRunState,
+        };
+        return true;
+    }
+
+    internal static bool TryValidateRemove(
+        RunState state,
+        Player player,
+        CardModel card,
+        CardTarget target,
+        bool removeFromRunState,
+        out string error) {
+        error = "";
+        if (card == null) {
+            error = "card not found";
+            return false;
+        }
+        if (player == null) {
+            error = "player not found";
+            return false;
+        }
+        if (target != CardTarget.Deck && player.Creature?.CombatState == null) {
+            error = "not in combat";
+            return false;
+        }
+        if (GetPileIndex(player, target, card) < 0) {
+            error = "card not in target pile";
+            return false;
+        }
+        return true;
+    }
+
+    internal static CardModel? ResolveCardFromRemovePayload(Player player, MpCheatRemoveCardPayload payload) {
+        var cards = GetCardsForTarget(player, (CardTarget)payload.Target);
+        if (payload.PileIndex < 0 || payload.PileIndex >= cards.Count)
+            return null;
+        var card = cards[payload.PileIndex];
+        if (!string.Equals(((AbstractModel)card).Id.Entry, payload.CardId, StringComparison.OrdinalIgnoreCase))
+            return null;
+        return card;
+    }
+
+    internal static int GetPileIndex(Player player, CardTarget target, CardModel card) {
+        var cards = GetCardsForTarget(player, target);
+        for (var i = 0; i < cards.Count; i++) {
+            if (ReferenceEquals(cards[i], card))
+                return i;
+        }
+        var cardId = ((AbstractModel)card).Id.Entry;
+        var upgrade = 0;
+        try { upgrade = card.CurrentUpgradeLevel; } catch { }
+        for (var i = 0; i < cards.Count; i++) {
+            var c = cards[i];
+            if (!string.Equals(((AbstractModel)c).Id.Entry, cardId, StringComparison.OrdinalIgnoreCase))
+                continue;
+            try {
+                if (c.CurrentUpgradeLevel == upgrade)
+                    return i;
+            }
+            catch {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    internal static async Task ExecuteRemoveFromMpSync(
+        RunState state,
+        Player player,
+        CardModel card,
+        CardTarget target,
+        bool removeFromRunState) {
+        if (MpCheatSession.InMultiplayerRun) {
+            await ExecuteRemoveAsync(state, player, card, target, removeFromRunState, mpSync: true);
+            return;
+        }
+        await ExecuteRemoveAsync(state, player, card, target, removeFromRunState, mpSync: false);
+    }
+
+    private static async Task ExecuteRemoveAsync(
+        RunState state,
+        Player player,
+        CardModel card,
+        CardTarget target,
+        bool removeFromRunState,
+        bool mpSync) {
+        if (MpCheatSession.InMultiplayerRun && !mpSync) {
+            MainFile.Logger.Warn(
+                $"CardActions: Cannot remove {((AbstractModel)card).Id.Entry} locally in multiplayer — use host remove-card sync.");
+            return;
+        }
+
+        if (target == CardTarget.Deck) {
+            try {
+                await CardPileCmd.RemoveFromDeck((IReadOnlyList<CardModel>)new[] { card }, true);
+            }
+            catch {
+                card.RemoveFromState();
+                if (state.ContainsCard(card))
+                    state.RemoveCard(card);
+            }
+        }
+        else {
+            await CardPileCmd.RemoveFromCombat(new[] { card });
+            if (removeFromRunState && state.ContainsCard(card))
+                state.RemoveCard(card);
+        }
+
+        var who = MpCheatPlayerLabels.FormatLogLabel(player);
+        MainFile.Logger.Info(
+            $"CardActions: Removed {((AbstractModel)card).Id.Entry} from {who} pile {target}");
+    }
+
     public static async Task RemoveCards(RunState state, Player player) {
         await Task.Yield();
 
@@ -186,6 +325,12 @@ internal static class CardActions {
             .Where(c => c != null).Distinct().ToList();
 
         if (selected.Count == 0) return;
+
+        if (MpCheatSession.InMultiplayerRun) {
+            MainFile.Logger.Warn(
+                "CardActions: Bulk remove in multiplayer is not synced — remove cards from the card browser.");
+            return;
+        }
 
         if (target == CardTarget.Deck) {
             // RemoveFromDeck handles preview animation + permanent state removal.

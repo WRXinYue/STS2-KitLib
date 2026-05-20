@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using DevMode.Actions;
 using MegaCrit.Sts2.Core.Entities.Cards;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -13,12 +12,12 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Multiplayer.Cheat;
 
-/// <summary>Host-authoritative add-card: prepare/ACK on connected peers, then execute (2–N players).</summary>
-internal static class MpCheatCardAddCoordinator {
+/// <summary>Host-authoritative remove-card: prepare/ACK on connected peers, then execute (2–N players).</summary>
+internal static class MpCheatCardRemoveCoordinator {
     private static readonly object Gate = new();
-    private static readonly Dictionary<ulong, PendingAdd> PendingByCommandId = new();
+    private static readonly Dictionary<ulong, PendingRemove> PendingByCommandId = new();
     private static readonly HashSet<ulong> ExecutedCommandIds = new();
-    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientAddCompletions = new();
+    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientRemoveCompletions = new();
     private static ulong _nextCommandId;
     private static ulong _nextClientRequestId;
 
@@ -29,41 +28,39 @@ internal static class MpCheatCardAddCoordinator {
     private const int MaxConcurrentPending = 64;
     private const int MaxExecutedIdHistory = 256;
 
-    private sealed class PendingAdd {
+    private sealed class PendingRemove {
         public required ulong CommandId { get; init; }
-        public required MpCheatAddCardPayload Payload { get; init; }
+        public required MpCheatRemoveCardPayload Payload { get; init; }
         public required HashSet<ulong> AwaitingPeers { get; init; }
         public required int RequiredAckCount { get; init; }
         public required RunState State { get; init; }
         public required Player TargetPlayer { get; init; }
         public required CardModel Card { get; init; }
-        public required AddCardRequest Request { get; init; }
-        public CardPreviewStyle? UpgradePreviewStyle { get; init; }
+        public required CardTarget Target { get; init; }
+        public required bool RemoveFromRunState { get; init; }
         public Dictionary<ulong, MpCheatAddCardAckMessage> Acks { get; } = new();
         public TaskCompletionSource<bool> Completion { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
-    /// <summary>Host initiates synced add-card; returns user-facing status text.</summary>
-    public static async Task<string> TryHostAddCardAsync(
+    public static async Task<string> TryHostRemoveCardAsync(
         RunState state,
         Player targetPlayer,
         CardModel card,
-        AddCardRequest request,
-        CardPreviewStyle? upgradePreviewStyle) {
-        var (_, message) = await TryHostAddCardCoreAsync(state, targetPlayer, card, request, upgradePreviewStyle);
+        CardTarget target,
+        bool removeFromRunState) {
+        var (_, message) = await TryHostRemoveCardCoreAsync(state, targetPlayer, card, target, removeFromRunState);
         return message;
     }
 
-    /// <summary>Client asks host to run synced add-card (target must be local player).</summary>
-    public static async Task<string> TryClientRequestAddCardAsync(
+    public static async Task<string> TryClientRequestRemoveCardAsync(
         RunState state,
         Player targetPlayer,
         CardModel card,
-        AddCardRequest request,
-        CardPreviewStyle? upgradePreviewStyle) {
+        CardTarget target,
+        bool removeFromRunState) {
         if (MpCheatSession.IsHost)
-            return await TryHostAddCardAsync(state, targetPlayer, card, request, upgradePreviewStyle);
+            return await TryHostRemoveCardAsync(state, targetPlayer, card, target, removeFromRunState);
 
         if (!MpCheatSession.CanUseMultiplayerCheats)
             return I18N.T(
@@ -74,26 +71,25 @@ internal static class MpCheatCardAddCoordinator {
         var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         if (localNetId == 0 || targetPlayer.NetId != localNetId)
             return I18N.T(
-                "mpcheat.cardAdd.clientSelfOnly",
-                "In multiplayer you can only add cards to your own character.");
+                "mpcheat.cardRemove.clientSelfOnly",
+                "In multiplayer you can only remove cards from your own character.");
 
-        if (!TryValidateAdd(state, targetPlayer, card, request, out var localError))
-            return FormatError(localError);
+        if (!CardActions.TryBuildRemovePayload(targetPlayer, card, target, removeFromRunState, out var payload, out var error))
+            return FormatError(error);
 
-        var cardId = ((AbstractModel)card).Id.Entry;
         var clientRequestId = Interlocked.Increment(ref _nextClientRequestId);
         var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (Gate) {
-            ClientAddCompletions[clientRequestId] = completion;
+            ClientRemoveCompletions[clientRequestId] = completion;
         }
 
-        MpCheatNetBus.ClientSendAddCardRequest(new MpCheatAddCardClientRequestMessage {
+        MpCheatNetBus.ClientSendRemoveCardRequest(new MpCheatRemoveCardClientRequestMessage {
             ClientRequestId = clientRequestId,
             RequesterNetId = localNetId,
-            Payload = ToPayload(localNetId, request, upgradePreviewStyle.HasValue, cardId),
+            Payload = payload,
         });
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard client request id={clientRequestId} card={cardId} target={localNetId}.");
+            $"[MpCheat] RemoveCard client request id={clientRequestId} card={payload.CardId} target={localNetId} pile={payload.Target} idx={payload.PileIndex}.");
 
         try {
             using var cts = new CancellationTokenSource(ClientRequestTimeoutMs);
@@ -101,51 +97,51 @@ internal static class MpCheatCardAddCoordinator {
         }
         catch (OperationCanceledException) {
             return I18N.T(
-                "mpcheat.cardAdd.clientRequestTimeout",
-                "Host did not respond to add-card request in time.");
+                "mpcheat.cardRemove.clientRequestTimeout",
+                "Host did not respond to remove-card request in time.");
         }
         finally {
             lock (Gate) {
-                ClientAddCompletions.Remove(clientRequestId);
+                ClientRemoveCompletions.Remove(clientRequestId);
             }
         }
     }
 
-    public static void OnClientAddCardRequestReceived(MpCheatAddCardClientRequestMessage request, ulong senderId) {
+    public static void OnClientRemoveCardRequestReceived(MpCheatRemoveCardClientRequestMessage request, ulong senderId) {
         if (!MpCheatSession.IsHost) return;
-        TaskHelper.RunSafely(HandleClientAddCardRequestAsync(request, senderId));
+        TaskHelper.RunSafely(HandleClientRemoveCardRequestAsync(request, senderId));
     }
 
-    public static void OnClientAddCardResultReceived(MpCheatAddCardClientResultMessage result) {
+    public static void OnClientRemoveCardResultReceived(MpCheatAddCardClientResultMessage result) {
         if (MpCheatSession.IsHost) return;
         TaskCompletionSource<string>? completion;
         lock (Gate) {
-            ClientAddCompletions.TryGetValue(result.ClientRequestId, out completion);
+            ClientRemoveCompletions.TryGetValue(result.ClientRequestId, out completion);
         }
 
         if (completion == null) {
             MainFile.Logger.Debug(
-                $"[MpCheat] AddCard client result id={result.ClientRequestId} ignored (no pending UI).");
+                $"[MpCheat] RemoveCard client result id={result.ClientRequestId} ignored (no pending UI).");
             return;
         }
 
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard client result id={result.ClientRequestId} ok={result.Success}.");
+            $"[MpCheat] RemoveCard client result id={result.ClientRequestId} ok={result.Success}.");
         completion.TrySetResult(result.Message);
     }
 
-    private static async Task HandleClientAddCardRequestAsync(
-        MpCheatAddCardClientRequestMessage request,
+    private static async Task HandleClientRemoveCardRequestAsync(
+        MpCheatRemoveCardClientRequestMessage request,
         ulong senderId) {
         void Reply(bool success, string message) =>
-            MpCheatNetBus.HostSendAddCardRequestResult(senderId, new MpCheatAddCardClientResultMessage {
+            MpCheatNetBus.HostSendRemoveCardRequestResult(senderId, new MpCheatAddCardClientResultMessage {
                 ClientRequestId = request.ClientRequestId,
                 Success = success,
                 Message = message,
             });
 
         if (!MpCheatSession.CanEditMultiplayerCheats) {
-            Reply(false, I18N.T("mpcheat.cardAdd.hostOnly", "Only the host can add cards in multiplayer."));
+            Reply(false, I18N.T("mpcheat.cardRemove.hostOnly", "Only the host can remove cards in multiplayer."));
             return;
         }
 
@@ -156,46 +152,45 @@ internal static class MpCheatCardAddCoordinator {
 
         if (request.Payload.TargetPlayerNetId != senderId) {
             Reply(false, I18N.T(
-                "mpcheat.cardAdd.clientSelfOnly",
-                "In multiplayer you can only add cards to your own character."));
+                "mpcheat.cardRemove.clientSelfOnly",
+                "In multiplayer you can only remove cards from your own character."));
             return;
         }
 
         var resolved = TryResolveForExecute(request.Payload);
         if (resolved == null) {
-            Reply(false, FormatError("invalid add-card request"));
+            Reply(false, FormatError("invalid remove-card request"));
             return;
         }
 
-        var (state, player, card, addRequest, style) = resolved.Value;
+        var (state, player, card, target, removeFromRunState) = resolved.Value;
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard client request from {senderId} card={request.Payload.CardId}.");
+            $"[MpCheat] RemoveCard client request from {senderId} card={request.Payload.CardId}.");
 
-        var (success, message) = await TryHostAddCardCoreAsync(state, player, card, addRequest, style);
+        var (success, message) = await TryHostRemoveCardCoreAsync(state, player, card, target, removeFromRunState);
         Reply(success, message);
     }
 
-    private static async Task<(bool Success, string Message)> TryHostAddCardCoreAsync(
+    private static async Task<(bool Success, string Message)> TryHostRemoveCardCoreAsync(
         RunState state,
         Player targetPlayer,
         CardModel card,
-        AddCardRequest request,
-        CardPreviewStyle? upgradePreviewStyle) {
+        CardTarget target,
+        bool removeFromRunState) {
         if (!MpCheatSession.CanEditMultiplayerCheats)
-            return (false, I18N.T("mpcheat.cardAdd.hostOnly", "Only the host can add cards in multiplayer."));
+            return (false, I18N.T("mpcheat.cardRemove.hostOnly", "Only the host can remove cards in multiplayer."));
 
-        if (!TryValidateAdd(state, targetPlayer, card, request, out var localError))
+        if (!CardActions.TryBuildRemovePayload(targetPlayer, card, target, removeFromRunState, out var payload, out var localError))
             return (false, FormatError(localError));
 
-        var cardId = ((AbstractModel)card).Id.Entry;
-        var payload = ToPayload(targetPlayer.NetId, request, upgradePreviewStyle.HasValue, cardId);
+        var cardId = payload.CardId;
         var commandId = Interlocked.Increment(ref _nextCommandId);
         var awaitingPeers = MpCheatParticipants.GetAckRequiredPeerNetIds();
 
-        PendingAdd pending;
+        PendingRemove pending;
         lock (Gate) {
             PruneIfOverCapacity();
-            pending = new PendingAdd {
+            pending = new PendingRemove {
                 CommandId = commandId,
                 Payload = payload,
                 AwaitingPeers = awaitingPeers,
@@ -203,16 +198,16 @@ internal static class MpCheatCardAddCoordinator {
                 State = state,
                 TargetPlayer = targetPlayer,
                 Card = card,
-                Request = request,
-                UpgradePreviewStyle = upgradePreviewStyle,
+                Target = target,
+                RemoveFromRunState = removeFromRunState,
             };
             PendingByCommandId[commandId] = pending;
         }
 
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard host start id={commandId} card={cardId} target={targetPlayer.NetId} ackPeers={awaitingPeers.Count}.");
+            $"[MpCheat] RemoveCard host start id={commandId} card={cardId} target={targetPlayer.NetId} pile={payload.Target} idx={payload.PileIndex} ackPeers={awaitingPeers.Count}.");
 
-        BroadcastCommand(MpCheatCommandKind.AddCardPrepare, commandId, payload);
+        BroadcastCommand(MpCheatCommandKind.RemoveCardPrepare, commandId, payload);
 
         if (awaitingPeers.Count == 0)
             return (true, await FinishHostExecute(pending, cardId));
@@ -236,12 +231,12 @@ internal static class MpCheatCardAddCoordinator {
     }
 
     public static void OnPrepareReceived(MpCheatCommandMessage message) {
-        if (!MpCheatSession.CanUseMultiplayerCheats || message.AddCard == null) return;
+        if (!MpCheatSession.CanUseMultiplayerCheats || message.RemoveCard == null) return;
         if (MpCheatSession.IsHost) return;
 
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard prepare id={message.CommandId} card={message.AddCard.CardId} target={message.AddCard.TargetPlayerNetId}");
-        var (ok, error) = TryResolveAndValidate(message.AddCard);
+            $"[MpCheat] RemoveCard prepare id={message.CommandId} card={message.RemoveCard.CardId} target={message.RemoveCard.TargetPlayerNetId}");
+        var (ok, error) = TryResolveAndValidate(message.RemoveCard);
         var peerNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.SendAddCardAck(new MpCheatAddCardAckMessage {
             CommandId = message.CommandId,
@@ -250,76 +245,74 @@ internal static class MpCheatCardAddCoordinator {
             Error = error,
         });
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
+            $"[MpCheat] RemoveCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
     }
 
     public static void OnExecuteReceived(MpCheatCommandMessage message) {
-        if (!MpCheatSession.CanUseMultiplayerCheats || message.AddCard == null) return;
+        if (!MpCheatSession.CanUseMultiplayerCheats || message.RemoveCard == null) return;
         if (MpCheatSession.IsHost) return;
 
         lock (Gate) {
             if (!TrackExecuted(message.CommandId)) {
-                MainFile.Logger.Debug($"[MpCheat] AddCard execute id={message.CommandId} skipped (duplicate).");
+                MainFile.Logger.Debug($"[MpCheat] RemoveCard execute id={message.CommandId} skipped (duplicate).");
                 return;
             }
         }
 
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard execute id={message.CommandId} card={message.AddCard.CardId} target={message.AddCard.TargetPlayerNetId}");
-        var resolved = TryResolveForExecute(message.AddCard);
+            $"[MpCheat] RemoveCard execute id={message.CommandId} card={message.RemoveCard.CardId} target={message.RemoveCard.TargetPlayerNetId}");
+        var resolved = TryResolveForExecute(message.RemoveCard);
         if (resolved == null) {
-            MainFile.Logger.Warn($"[MpCheat] AddCard execute skipped: {message.AddCard.CardId}");
+            MainFile.Logger.Warn($"[MpCheat] RemoveCard execute skipped: {message.RemoveCard.CardId}");
             return;
         }
 
-        var (state, player, card, request, style) = resolved.Value;
-        TaskHelper.RunSafely(ExecuteOnAllPeers(state, player, card, request, style));
+        var (state, player, card, target, removeFromRunState) = resolved.Value;
+        TaskHelper.RunSafely(CardActions.ExecuteRemoveFromMpSync(state, player, card, target, removeFromRunState));
     }
 
-    /// <returns>True if this ACK matched a pending add-card command.</returns>
-    public static bool TryHandleAck(MpCheatAddCardAckMessage ack) {
-        if (!MpCheatSession.IsHost) return false;
+    public static void OnAckReceived(MpCheatAddCardAckMessage ack) {
+        if (!MpCheatSession.IsHost) return;
 
         lock (Gate) {
-            if (!PendingByCommandId.TryGetValue(ack.CommandId, out var pending)) return false;
+            if (!PendingByCommandId.TryGetValue(ack.CommandId, out var pending)) return;
 
             pending.Acks[ack.PeerNetId] = ack;
             if (!ack.Success) {
                 pending.Completion.TrySetResult(false);
-                return true;
+                return;
             }
 
             pending.AwaitingPeers.Remove(ack.PeerNetId);
             if (pending.AwaitingPeers.Count == 0)
                 pending.Completion.TrySetResult(true);
-            return true;
         }
     }
 
-    private static async Task<string> FinishHostExecute(PendingAdd pending, string cardId) {
+    private static async Task<string> FinishHostExecute(PendingRemove pending, string cardId) {
         var commandId = pending.CommandId;
-        BroadcastCommand(MpCheatCommandKind.AddCardExecute, commandId, pending.Payload);
-        await ExecuteOnAllPeers(
+        BroadcastCommand(MpCheatCommandKind.RemoveCardExecute, commandId, pending.Payload);
+        await CardActions.ExecuteRemoveFromMpSync(
             pending.State,
             pending.TargetPlayer,
             pending.Card,
-            pending.Request,
-            pending.UpgradePreviewStyle);
+            pending.Target,
+            pending.RemoveFromRunState);
         RemovePending(commandId);
         var targetLabel = MpCheatPlayerLabels.FormatLogLabel(pending.TargetPlayer);
         MainFile.Logger.Info(
-            $"[MpCheat] AddCard command {commandId} executed card={cardId} target={targetLabel}.");
+            $"[MpCheat] RemoveCard command {commandId} executed card={cardId} target={targetLabel}.");
         var acked = pending.Acks.Count(a => a.Value.Success);
         if (pending.RequiredAckCount > 0) {
             return string.Format(
-                I18N.T("mpcheat.cardAdd.successWithAcksFor", "Added {0} for {1} ({2}/{3} players confirmed)."),
+                I18N.T("mpcheat.cardRemove.successWithAcksFor", "Removed {0} from {1} ({2}/{3} players confirmed)."),
                 cardId,
                 targetLabel,
                 acked,
                 pending.RequiredAckCount);
         }
         return string.Format(
-            I18N.T("mpcheat.cardAdd.successFor", "Added {0} for {1}."),
+            I18N.T("mpcheat.cardRemove.successFor", "Removed {0} from {1}."),
             cardId,
             targetLabel);
     }
@@ -335,7 +328,7 @@ internal static class MpCheatCardAddCoordinator {
         var pending = PendingByCommandId[oldest];
         pending.Completion.TrySetResult(false);
         PendingByCommandId.Remove(oldest);
-        MainFile.Logger.Warn($"[MpCheat] Dropped oldest pending add-card command {oldest} (capacity).");
+        MainFile.Logger.Warn($"[MpCheat] Dropped oldest pending remove-card command {oldest} (capacity).");
     }
 
     private static bool TrackExecuted(ulong commandId) {
@@ -344,74 +337,37 @@ internal static class MpCheatCardAddCoordinator {
         return ExecutedCommandIds.Add(commandId);
     }
 
-    private static async Task ExecuteOnAllPeers(
-        RunState state,
-        Player player,
-        CardModel card,
-        AddCardRequest request,
-        CardPreviewStyle? upgradePreviewStyle) {
-        await CardActions.ExecuteAddFromMpSync(state, player, card, request, upgradePreviewStyle);
-    }
-
-    private static bool TryValidateAdd(RunState state, Player player, CardModel card, AddCardRequest request,
-        out string error) =>
-        CardActions.TryValidateAdd(state, player, card, request, out error);
-
-    private static (bool Ok, string? Error) TryResolveAndValidate(MpCheatAddCardPayload payload) {
+    private static (bool Ok, string? Error) TryResolveAndValidate(MpCheatRemoveCardPayload payload) {
         var resolved = TryResolveForExecute(payload);
         if (resolved == null)
-            return (false, "invalid add-card payload");
-        var (state, player, card, request, _) = resolved.Value;
-        return CardActions.TryValidateAdd(state, player, card, request, out var err)
+            return (false, "invalid remove-card payload");
+        var (state, player, card, target, removeFromRunState) = resolved.Value;
+        return CardActions.TryValidateRemove(state, player, card, target, removeFromRunState, out var err)
             ? (true, null)
             : (false, err);
     }
 
-    private static (RunState State, Player Player, CardModel Card, AddCardRequest Request, CardPreviewStyle? Style)?
-        TryResolveForExecute(MpCheatAddCardPayload payload) {
+    private static (RunState State, Player Player, CardModel Card, CardTarget Target, bool RemoveFromRunState)?
+        TryResolveForExecute(MpCheatRemoveCardPayload payload) {
         var state = RunManager.Instance?.DebugOnlyGetState();
         if (state == null) return null;
 
         var player = CardActions.FindPlayerByNetId(payload.TargetPlayerNetId);
         if (player == null) return null;
 
-        var card = CardActions.FindCardById(payload.CardId);
+        var card = CardActions.ResolveCardFromRemovePayload(player, payload);
         if (card == null) return null;
 
-        var request = new AddCardRequest {
-            Target = (CardTarget)payload.Target,
-            Duration = (EffectDuration)payload.Duration,
-            UpgradeLevelsToApply = payload.UpgradeLevels,
-            CustomBaseCost = payload.CustomBaseCost,
-        };
-        CardPreviewStyle? style = payload.UseUpgradePreviewStyle
-            ? CardPreviewStyle.HorizontalLayout
-            : null;
-        return (state, player, card, request, style);
+        return (state, player, card, (CardTarget)payload.Target, payload.RemoveFromRunState);
     }
 
-    private static MpCheatAddCardPayload ToPayload(
-        ulong targetNetId,
-        AddCardRequest request,
-        bool usePreviewStyle,
-        string cardId) =>
-        new() {
-            CardId = cardId,
-            TargetPlayerNetId = targetNetId,
-            Target = (int)request.Target,
-            Duration = (int)request.Duration,
-            UpgradeLevels = request.UpgradeLevelsToApply,
-            CustomBaseCost = request.CustomBaseCost,
-            UseUpgradePreviewStyle = usePreviewStyle,
-        };
-
-    private static void BroadcastCommand(MpCheatCommandKind kind, ulong commandId, MpCheatAddCardPayload payload) {
+    private static void BroadcastCommand(MpCheatCommandKind kind, ulong commandId, MpCheatRemoveCardPayload payload) {
         var netId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.BroadcastCommand(new MpCheatCommandMessage {
             Kind = kind,
             IssuedByNetId = netId,
             CommandId = commandId,
-            AddCard = payload,
+            RemoveCard = payload,
         });
     }
 
@@ -427,32 +383,32 @@ internal static class MpCheatCardAddCoordinator {
                 pending.Completion.TrySetResult(false);
             PendingByCommandId.Clear();
             ExecutedCommandIds.Clear();
-            foreach (var tcs in ClientAddCompletions.Values)
-                tcs.TrySetResult(I18N.T("mpcheat.cardAdd.cancelled", "Add card cancelled (run ended)."));
-            ClientAddCompletions.Clear();
+            foreach (var tcs in ClientRemoveCompletions.Values)
+                tcs.TrySetResult(I18N.T("mpcheat.cardRemove.cancelled", "Remove card cancelled (run ended)."));
+            ClientRemoveCompletions.Clear();
         }
     }
 
     private static string FormatError(string error) =>
-        string.Format(I18N.T("mpcheat.cardAdd.failedDetail", "Add card failed: {0}"), error);
+        string.Format(I18N.T("mpcheat.cardRemove.failedDetail", "Remove card failed: {0}"), error);
 
     private static string FormatPeerError(MpCheatAddCardAckMessage ack) {
         var err = string.IsNullOrEmpty(ack.Error) ? "validation failed" : ack.Error;
         return string.Format(
-            I18N.T("mpcheat.cardAdd.peerFailed", "Player {0} rejected add card: {1}"),
+            I18N.T("mpcheat.cardRemove.peerFailed", "Player {0} rejected remove card: {1}"),
             ack.PeerNetId,
             err);
     }
 
-    private static string FormatAckTimeout(PendingAdd pending) {
+    private static string FormatAckTimeout(PendingRemove pending) {
         var got = pending.Acks.Count;
         var need = pending.RequiredAckCount;
         if (need > 0) {
             return string.Format(
-                I18N.T("mpcheat.cardAdd.timeoutDetail", "Add card timed out ({0}/{1} players confirmed)."),
+                I18N.T("mpcheat.cardRemove.timeoutDetail", "Remove card timed out ({0}/{1} players confirmed)."),
                 got,
                 need);
         }
-        return I18N.T("mpcheat.cardAdd.timeout", "Add card timed out waiting for other players.");
+        return I18N.T("mpcheat.cardRemove.timeout", "Remove card timed out waiting for other players.");
     }
 }

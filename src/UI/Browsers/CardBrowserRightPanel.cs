@@ -347,7 +347,51 @@ internal static class CardBrowserRightPanel {
         var removeBtn = CreateActionButton(
             I18N.T("cardBrowser.deleteCard", "Remove Card"),
             new Color(0.65f, 0.25f, 0.25f, 0.9f));
+        if (MpCheatSession.InMultiplayerRun && !MpCheatSession.CanUseMultiplayerCheats) {
+            removeBtn.Disabled = true;
+            removeBtn.TooltipText = I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown");
+        }
+        else if (MpCheatSession.InMultiplayerRun && !browseTarget.HasValue) {
+            removeBtn.Disabled = true;
+            removeBtn.TooltipText = I18N.T(
+                "mpcheat.cardRemove.libraryBlocked",
+                "Remove synced cards from a pile tab (Hand, Deck, etc.), not All Cards.");
+        }
+        else if (MpCheatSession.InMultiplayerRun && !MpCheatSession.IsHost) {
+            removeBtn.TooltipText = I18N.T(
+                "mpcheat.cardRemove.clientTooltip",
+                "Removes from your character via host sync.");
+        }
+
+        async Task SyncRemoveCardInMultiplayerAsync() {
+            if (!browseTarget.HasValue) return;
+            var target = browseTarget.Value;
+            var removeFromRunState = target == CardTarget.Deck || state.ContainsCard(card);
+            var result = MpCheatSession.IsHost
+                ? await MpCheatCardRemoveCoordinator.TryHostRemoveCardAsync(
+                    state, player, card, target, removeFromRunState)
+                : await MpCheatCardRemoveCoordinator.TryClientRequestRemoveCardAsync(
+                    state, player, card, target, removeFromRunState);
+            statusLabel.Text = result;
+            onGridRefresh();
+        }
+
         removeBtn.Pressed += () => {
+            if (MpCheatSession.InMultiplayerRun && browseTarget.HasValue) {
+                statusLabel.Text = MpCheatSession.IsHost
+                    ? (MpCheatParticipants.RemotePeerCount > 0
+                        ? string.Format(
+                            I18N.T("mpcheat.cardRemove.pendingWithPeers", "Syncing remove card… waiting for {0} player(s)."),
+                            MpCheatParticipants.RemotePeerCount)
+                        : I18N.T("mpcheat.cardRemove.pending", "Syncing remove card to all players…"))
+                    : I18N.T("mpcheat.cardRemove.clientPending", "Requesting host to sync remove card…");
+                TaskHelper.RunSafely(SyncRemoveCardInMultiplayerAsync());
+                return;
+            }
+
             try {
                 if (browseTarget == CardTarget.Deck) {
                     TaskHelper.RunSafely(CardPileCmd.RemoveFromDeck(

@@ -19,6 +19,12 @@ public static class MpCheatCommandExecutor {
             case MpCheatCommandKind.AddCardExecute:
                 MpCheatCardAddCoordinator.OnExecuteReceived(message);
                 break;
+            case MpCheatCommandKind.RemoveCardPrepare:
+                MpCheatCardRemoveCoordinator.OnPrepareReceived(message);
+                break;
+            case MpCheatCommandKind.RemoveCardExecute:
+                MpCheatCardRemoveCoordinator.OnExecuteReceived(message);
+                break;
         }
     }
 

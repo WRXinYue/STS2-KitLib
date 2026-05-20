@@ -7,6 +7,10 @@ public enum MpCheatCommandKind {
     AddCardPrepare = 2,
     /// <summary>Apply add-card after all prepare ACKs succeeded.</summary>
     AddCardExecute = 3,
+    /// <summary>Validate remove-card on all peers; clients ACK before execute.</summary>
+    RemoveCardPrepare = 5,
+    /// <summary>Apply remove-card after all prepare ACKs succeeded.</summary>
+    RemoveCardExecute = 6,
 }
 
 public sealed class MpCheatCommandMessage {
@@ -14,4 +18,5 @@ public sealed class MpCheatCommandMessage {
     public ulong IssuedByNetId { get; set; }
     public ulong CommandId { get; set; }
     public MpCheatAddCardPayload? AddCard { get; set; }
+    public MpCheatRemoveCardPayload? RemoveCard { get; set; }
 }

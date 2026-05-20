@@ -36,6 +36,7 @@ internal static class MpCheatNetBus {
         _pendingHostConfig = null;
         _pendingHostReason = null;
         MpCheatCardAddCoordinator.Reset();
+        MpCheatCardRemoveCoordinator.Reset();
     }
 
     public static void HostPublishConfig(MpCheatConfig config, string reason) {
@@ -101,6 +102,26 @@ internal static class MpCheatNetBus {
         host.SendMessage(ZzzMpCheatEnvelopeNetMessage.FromAddCardRequestResult(result), peerNetId);
     }
 
+    public static void ClientSendRemoveCardRequest(MpCheatRemoveCardClientRequestMessage request) {
+        if (MpCheatSession.IsHost) return;
+        TryRegisterHandlers();
+        var netService = RunManager.Instance?.NetService;
+        if (netService == null || !CanSendNetMessages(netService)) return;
+
+        SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromRemoveCardRequest(request));
+        MainFile.Logger.Debug(
+            $"[MpCheat] RemoveCard request sent to host id={request.ClientRequestId}.");
+    }
+
+    public static void HostSendRemoveCardRequestResult(ulong peerNetId, MpCheatAddCardClientResultMessage result) {
+        if (!MpCheatSession.IsHost || peerNetId == 0) return;
+        TryRegisterHandlers();
+        var netService = RunManager.Instance?.NetService;
+        if (netService is not NetHostGameService host || !host.IsConnected) return;
+
+        host.SendMessage(ZzzMpCheatEnvelopeNetMessage.FromRemoveCardRequestResult(result), peerNetId);
+    }
+
     private static void SendEnvelope(INetGameService netService, ZzzMpCheatEnvelopeNetMessage envelope) {
         netService.SendMessage(envelope);
     }
@@ -136,13 +157,20 @@ internal static class MpCheatNetBus {
                     MpCheatCommandExecutor.Execute(msg.Command);
                     break;
                 case MpCheatWireChannel.AddCardAck:
-                    MpCheatCardAddCoordinator.OnAckReceived(msg.Ack);
+                    if (!MpCheatCardAddCoordinator.TryHandleAck(msg.Ack))
+                        MpCheatCardRemoveCoordinator.OnAckReceived(msg.Ack);
                     break;
                 case MpCheatWireChannel.AddCardRequest:
                     MpCheatCardAddCoordinator.OnClientAddCardRequestReceived(msg.AddCardRequest, senderId);
                     break;
                 case MpCheatWireChannel.AddCardRequestResult:
                     MpCheatCardAddCoordinator.OnClientAddCardResultReceived(msg.AddCardRequestResult);
+                    break;
+                case MpCheatWireChannel.RemoveCardRequest:
+                    MpCheatCardRemoveCoordinator.OnClientRemoveCardRequestReceived(msg.RemoveCardRequest, senderId);
+                    break;
+                case MpCheatWireChannel.RemoveCardRequestResult:
+                    MpCheatCardRemoveCoordinator.OnClientRemoveCardResultReceived(msg.AddCardRequestResult);
                     break;
                 default:
                     MainFile.Logger.Warn($"[MpCheat] Unknown envelope channel: {msg.Channel}");
