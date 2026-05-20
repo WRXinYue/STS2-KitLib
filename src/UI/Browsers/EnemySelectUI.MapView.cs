@@ -4,6 +4,7 @@ using System.Linq;
 using DevMode;
 using DevMode.Actions;
 using Godot;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -13,12 +14,31 @@ using MegaCrit.Sts2.Core.Runs;
 namespace DevMode.UI;
 
 internal static partial class EnemySelectUI {
+    private enum MapDetailMode {
+        Summary,
+        PickEncounter,
+    }
+
+    private enum MapPickTarget {
+        Global,
+        RoomType,
+        Floor,
+        SpawnCombat,
+    }
+
     private sealed class MapEditorSession {
         public required RunState RunState;
         public required MainBrowserState Browser;
         public required EnemyMapCanvas Canvas;
         public required VBoxContainer DetailHost;
+        public required Control HoverHost;
+        public required ScrollContainer MapScroll;
         public MapPoint? SelectedPoint;
+        public MapDetailMode DetailMode = MapDetailMode.Summary;
+        public MapPickTarget PickTarget;
+        public RoomType? PickRoomType;
+        public int? PickFloor;
+        public Control? HoverPopup;
         public required Action RefreshAll;
     }
 
@@ -38,13 +58,23 @@ internal static partial class EnemySelectUI {
         };
         split.AddThemeConstantOverride("separation", 12);
 
-        var mapScroll = new ScrollContainer {
+        var mapColumn = new Control {
             CustomMinimumSize = new Vector2(360, 0),
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+
+        var mapScroll = new ScrollContainer {
             HorizontalScrollMode = ScrollContainer.ScrollMode.Auto,
             VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
         };
+        mapScroll.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+
+        var hoverHost = new Control {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            ZIndex = 10,
+        };
+        hoverHost.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
         MapEditorSession? session = null;
         session = new MapEditorSession {
@@ -52,26 +82,34 @@ internal static partial class EnemySelectUI {
             Browser = state,
             Canvas = null!,
             DetailHost = new VBoxContainer(),
+            HoverHost = hoverHost,
+            MapScroll = mapScroll,
             RefreshAll = () => {
                 if (session == null) return;
+                HideMapHoverPopup(session);
                 session.Canvas.Rebuild(session.SelectedPoint);
-                if (session.SelectedPoint != null)
-                    BuildMapNodeDetail(session, session.SelectedPoint);
-                else
-                    BuildMapEmptyDetail(session);
+                RebuildMapDetail(session);
             },
         };
 
-        session.Canvas = new EnemyMapCanvas(runState, point => {
-            session!.SelectedPoint = point;
-            session.Canvas.Rebuild(point);
-            BuildMapNodeDetail(session, point);
-        });
+        session.Canvas = new EnemyMapCanvas(
+            runState,
+            point => {
+                session!.SelectedPoint = point;
+                session.DetailMode = MapDetailMode.Summary;
+                session.Canvas.Rebuild(point);
+                RebuildMapDetail(session);
+            },
+            (anchor, point) => ShowMapHoverPopup(session, anchor, point),
+            () => HideMapHoverPopup(session));
+
         mapScroll.AddChild(session.Canvas);
-        split.AddChild(mapScroll);
+        mapColumn.AddChild(mapScroll);
+        mapColumn.AddChild(hoverHost);
+        split.AddChild(mapColumn);
 
         var detailPanel = new PanelContainer {
-            CustomMinimumSize = new Vector2(300, 0),
+            CustomMinimumSize = new Vector2(320, 0),
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
@@ -92,37 +130,270 @@ internal static partial class EnemySelectUI {
             ContentMarginBottom = 12,
         });
 
+        var detailScroll = new ScrollContainer {
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+        };
         session.DetailHost.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         session.DetailHost.AddThemeConstantOverride("separation", 8);
-        detailPanel.AddChild(session.DetailHost);
+        detailScroll.AddChild(session.DetailHost);
+        detailPanel.AddChild(detailScroll);
         split.AddChild(detailPanel);
 
         state.ContentHost.AddChild(split);
         session.Canvas.Rebuild(null);
-        BuildMapEmptyDetail(session);
+        RebuildMapDetail(session);
     }
 
-    private static void BuildMapEmptyDetail(MapEditorSession session) {
+    private static void RebuildMapDetail(MapEditorSession session) {
         ClearDetailHost(session.DetailHost);
-        var hint = new Label {
-            Text = I18N.T("enemy.mapSelectHint", "Click a combat node on the map to view or edit its encounter."),
+        if (session.DetailMode == MapDetailMode.PickEncounter)
+            BuildMapEmbeddedPicker(session);
+        else
+            BuildMapSummaryDetail(session);
+    }
+
+    private static void BuildMapSummaryDetail(MapEditorSession session) {
+        session.DetailHost.AddChild(MakeSubtleLabel(
+            I18N.T("enemy.runScopeHint", "Active for this run only · cleared when the run ends.")));
+
+        var rulesTitle = new Label {
+            Text = I18N.T("enemy.runRulesTitle", "Run rules"),
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        hint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
-        hint.AddThemeFontSizeOverride("font_size", 12);
-        session.DetailHost.AddChild(hint);
+        rulesTitle.AddThemeFontSizeOverride("font_size", 13);
+        session.DetailHost.AddChild(rulesTitle);
+
+        AddRunRuleRow(
+            session,
+            I18N.T("enemy.runRuleAll", "All combats"),
+            FormatRunRuleValue(DevModeState.EnemyMode == EnemyMode.Global
+                ? DevModeState.GlobalEncounterOverride
+                : null),
+            DevModeState.EnemyMode == EnemyMode.Global && DevModeState.GlobalEncounterOverride != null,
+            () => OpenMapPicker(session, MapPickTarget.Global, null, null),
+            () => {
+                EnemyActions.ClearGlobalOverride();
+                session.Browser.StatusLabel.Text = I18N.T("enemy.clearedGlobal", "Cleared global run rule.");
+                session.RefreshAll();
+            });
+
+        foreach (var roomType in new[] { RoomType.Monster, RoomType.Elite, RoomType.Boss }) {
+            var enc = DevModeState.RoomTypeOverrides.TryGetValue(roomType, out var rtEnc) ? rtEnc : null;
+            bool active = DevModeState.EnemyMode == EnemyMode.PerType && enc != null;
+            AddRunRuleRow(
+                session,
+                RoomTypeLabel(roomType),
+                FormatRunRuleValue(active ? enc : null),
+                active,
+                () => OpenMapPicker(session, MapPickTarget.RoomType, roomType, null),
+                () => {
+                    EnemyActions.ClearRoomTypeOverride(roomType);
+                    session.Browser.StatusLabel.Text = I18N.T(
+                        "enemy.clearedByType",
+                        "Cleared {0} run rule.",
+                        roomType);
+                    session.RefreshAll();
+                });
+        }
+
+        if (CombatEnemyActions.GetCombatState() != null) {
+            session.DetailHost.AddChild(new HSeparator());
+            var spawnBtn = new Button {
+                Text = I18N.T("enemy.spawnInCombat", "Spawn in current combat"),
+                CustomMinimumSize = new Vector2(0, 34),
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            spawnBtn.Pressed += () => OpenMapPicker(session, MapPickTarget.SpawnCombat, null, null);
+            session.DetailHost.AddChild(spawnBtn);
+        }
+
+        session.DetailHost.AddChild(new HSeparator());
+        var nodeTitle = new Label {
+            Text = I18N.T("enemy.selectedNode", "Selected node"),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        nodeTitle.AddThemeFontSizeOverride("font_size", 13);
+        session.DetailHost.AddChild(nodeTitle);
+
+        if (session.SelectedPoint == null)
+            session.DetailHost.AddChild(MakeSubtleLabel(
+                I18N.T("enemy.mapSelectHint", "Click a combat node on the map to view or edit its encounter.")));
+        else
+            BuildSelectedNodeSection(session, session.SelectedPoint);
+
         AddMapClearButtons(session);
     }
 
-    private static void BuildMapNodeDetail(MapEditorSession session, MapPoint point) {
-        ClearDetailHost(session.DetailHost);
+    private static void AddRunRuleRow(
+        MapEditorSession session,
+        string label,
+        string value,
+        bool canClear,
+        Action onChange,
+        Action onClear) {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 6);
 
+        var textBox = new VBoxContainer {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        textBox.AddThemeConstantOverride("separation", 1);
+        var nameLabel = new Label {
+            Text = label,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        nameLabel.AddThemeFontSizeOverride("font_size", 12);
+        textBox.AddChild(nameLabel);
+        var valueLabel = new Label {
+            Text = value,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        valueLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        valueLabel.AddThemeFontSizeOverride("font_size", 11);
+        textBox.AddChild(valueLabel);
+        row.AddChild(textBox);
+
+        var changeBtn = new Button {
+            Text = I18N.T("enemy.changeRule", "Change"),
+            CustomMinimumSize = new Vector2(72, 30),
+            FocusMode = Control.FocusModeEnum.None,
+        };
+        changeBtn.Pressed += onChange;
+        row.AddChild(changeBtn);
+
+        if (canClear) {
+            var clearBtn = new Button {
+                Text = I18N.T("enemy.clearRule", "Clear"),
+                CustomMinimumSize = new Vector2(64, 30),
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            clearBtn.Pressed += onClear;
+            row.AddChild(clearBtn);
+        }
+
+        session.DetailHost.AddChild(row);
+    }
+
+    private static string FormatRunRuleValue(EncounterModel? encounter) {
+        if (encounter == null)
+            return I18N.T("enemy.runRuleUnset", "Not set");
+        return EnemyActions.GetShortName(encounter);
+    }
+
+    private static string RoomTypeLabel(RoomType roomType) => roomType switch {
+        RoomType.Monster => I18N.T("enemy.filterNormal", "Normal"),
+        RoomType.Elite => I18N.T("enemy.filterElite", "Elite"),
+        RoomType.Boss => I18N.T("enemy.filterBoss", "Boss"),
+        _ => roomType.ToString(),
+    };
+
+    private static void OpenMapPicker(
+        MapEditorSession session,
+        MapPickTarget target,
+        RoomType? roomType,
+        int? floor) {
+        session.DetailMode = MapDetailMode.PickEncounter;
+        session.PickTarget = target;
+        session.PickRoomType = roomType;
+        session.PickFloor = floor;
+        HideMapHoverPopup(session);
+
+        RoomType? filter = target switch {
+            MapPickTarget.RoomType => roomType,
+            MapPickTarget.Floor => roomType,
+            _ => session.Browser.EncounterFilter,
+        };
+        session.Browser.EncounterFilter = filter;
+        RebuildMapDetail(session);
+    }
+
+    private static void CloseMapPicker(MapEditorSession session) {
+        session.DetailMode = MapDetailMode.Summary;
+        RebuildMapDetail(session);
+    }
+
+    private static void BuildMapEmbeddedPicker(MapEditorSession session) {
+        RoomType? filter = session.PickTarget switch {
+            MapPickTarget.Global => session.Browser.EncounterFilter,
+            MapPickTarget.RoomType => session.PickRoomType,
+            MapPickTarget.Floor => session.PickRoomType,
+            MapPickTarget.SpawnCombat => session.Browser.EncounterFilter,
+            _ => null,
+        };
+
+        string title = session.PickTarget switch {
+            MapPickTarget.Global => I18N.T("enemy.pickGlobalRule", "Set run rule — all combats"),
+            MapPickTarget.RoomType => I18N.T("enemy.pickTypeRule", "Set run rule — {0}", RoomTypeLabel(session.PickRoomType!.Value)),
+            MapPickTarget.Floor => I18N.T("enemy.pickFloorRule", "Replace node encounter"),
+            MapPickTarget.SpawnCombat => I18N.T("enemy.pickSpawnCombat", "Spawn in current combat"),
+            _ => I18N.T("enemy.selectAny", "Select Combat Encounter"),
+        };
+
+        BuildEncounterPicker(
+            session.DetailHost,
+            session.Browser.GlobalUi,
+            filter,
+            enc => {
+                switch (session.PickTarget) {
+                    case MapPickTarget.Global:
+                        EnemyActions.SetGlobalOverride(enc);
+                        session.Browser.StatusLabel.Text = I18N.T(
+                            "enemy.appliedGlobal",
+                            "Applied global override: {0}",
+                            EnemyActions.GetShortName(enc));
+                        break;
+                    case MapPickTarget.RoomType:
+                        EnemyActions.SetRoomTypeOverride(session.PickRoomType!.Value, enc);
+                        session.Browser.StatusLabel.Text = I18N.T(
+                            "enemy.appliedByType",
+                            "Applied {0} override: {1}",
+                            session.PickRoomType,
+                            EnemyActions.GetShortName(enc));
+                        break;
+                    case MapPickTarget.Floor:
+                        EnemyActions.SetFloorOverride(session.PickFloor!.Value, enc);
+                        session.Browser.StatusLabel.Text = I18N.T(
+                            "enemy.appliedFloor",
+                            "Floor {0} set to {1}.",
+                            session.PickFloor,
+                            EnemyActions.GetShortName(enc));
+                        break;
+                    case MapPickTarget.SpawnCombat:
+                        TaskHelper.RunSafely(CombatEnemyActions.AddEncounterMonsters(enc));
+                        session.Browser.StatusLabel.Text = I18N.T(
+                            "enemy.spawnedCombat",
+                            "Spawned monsters from {0}.",
+                            EnemyActions.GetShortName(enc));
+                        break;
+                }
+
+                session.DetailMode = MapDetailMode.Summary;
+                session.RefreshAll();
+            },
+            new EncounterPickerOptions {
+                CloseOnSelect = false,
+                ShowTitle = false,
+                CompactEmbedded = true,
+                PickerTitle = title,
+                OnBack = () => CloseMapPicker(session),
+                OnFilterChanged = nextFilter => {
+                    session.Browser.EncounterFilter = nextFilter;
+                    RebuildMapDetail(session);
+                },
+            });
+
+        GrabEncounterSearchFocus(session.DetailHost);
+    }
+
+    private static void BuildSelectedNodeSection(MapEditorSession session, MapPoint point) {
         if (!MapEncounterPreview.IsCombatNode(point.PointType)) {
             session.DetailHost.AddChild(new Label {
                 Text = I18N.T("enemy.mapNonCombat", "This node is not a combat room."),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             });
-            AddMapClearButtons(session);
             return;
         }
 
@@ -131,7 +402,6 @@ internal static partial class EnemySelectUI {
             session.DetailHost.AddChild(new Label {
                 Text = I18N.T("enemy.mapNoPreview", "Could not preview this node."),
             });
-            AddMapClearButtons(session);
             return;
         }
 
@@ -180,14 +450,7 @@ internal static partial class EnemySelectUI {
                 I18N.T("enemy.mapNoEncounter", "No encounter predicted for this node.")));
         }
 
-        if (preview.IsFloorOverride)
-            session.DetailHost.AddChild(MakeSubtleLabel(
-                I18N.T("enemy.mapFloorOverride", "Floor override is active for this node.")));
-        else if (preview.IsGlobalOrTypeOverride)
-            session.DetailHost.AddChild(MakeSubtleLabel(
-                I18N.T("enemy.mapInheritedOverride", "Using global or per-type override (no floor override).")));
-
-        session.DetailHost.AddChild(new HSeparator());
+        session.DetailHost.AddChild(MakeSubtleLabel(DescribeOverrideSource(preview)));
 
         if (!preview.IsCurrentRoom) {
             var replaceBtn = new Button {
@@ -195,19 +458,11 @@ internal static partial class EnemySelectUI {
                 CustomMinimumSize = new Vector2(0, 34),
                 FocusMode = Control.FocusModeEnum.None,
             };
-            replaceBtn.Pressed += () => {
-                RoomType? filter = preview.CombatRoomType;
-                int floor = preview.Floor;
-                ShowEncounterOverlay(session.Browser.GlobalUi, filter, enc => {
-                    EnemyActions.SetFloorOverride(floor, enc);
-                    session.Browser.StatusLabel.Text = I18N.T(
-                        "enemy.appliedFloor",
-                        "Floor {0} set to {1}.",
-                        floor,
-                        EnemyActions.GetShortName(enc));
-                    session.RefreshAll();
-                });
-            };
+            replaceBtn.Pressed += () => OpenMapPicker(
+                session,
+                MapPickTarget.Floor,
+                preview.CombatRoomType,
+                preview.Floor);
             session.DetailHost.AddChild(replaceBtn);
 
             if (preview.IsFloorOverride) {
@@ -227,8 +482,14 @@ internal static partial class EnemySelectUI {
                 session.DetailHost.AddChild(clearFloorBtn);
             }
         }
+    }
 
-        AddMapClearButtons(session);
+    private static string DescribeOverrideSource(MapEncounterPreview.Preview preview) {
+        if (preview.IsFloorOverride)
+            return I18N.T("enemy.mapFloorOverride", "Floor override is active for this node.");
+        if (preview.IsGlobalOrTypeOverride)
+            return I18N.T("enemy.mapInheritedOverride", "Using a run rule (no floor override).");
+        return I18N.T("enemy.mapVanillaEncounter", "Using the act's default encounter pool.");
     }
 
     private static void AddMapClearButtons(MapEditorSession session) {
@@ -244,8 +505,9 @@ internal static partial class EnemySelectUI {
         };
         clearFloorsBtn.Pressed += () => {
             DevModeState.FloorOverrides.Clear();
-            session.Browser.StatusLabel.Text = I18N.T("enemy.byFloorHint",
-                "Floor overrides apply on top of global / per-type settings. Right-click a combat node on the map to replace its encounter.");
+            session.Browser.StatusLabel.Text = I18N.T(
+                "enemy.clearedFloors",
+                "Cleared all floor overrides.");
             session.RefreshAll();
         };
 
@@ -266,21 +528,151 @@ internal static partial class EnemySelectUI {
         session.DetailHost.AddChild(row);
     }
 
-    private static Control BuildMonsterPreviewRow(IList<MonsterModel> monsters) {
+    private static void ShowMapHoverPopup(MapEditorSession session, Control anchor, MapPoint point) {
+        HideMapHoverPopup(session);
+
+        var preview = MapEncounterPreview.Build(session.RunState, point);
+        if (preview?.Encounter == null)
+            return;
+
+        session.HoverPopup = BuildEncounterHoverPopup(preview);
+        session.HoverPopup.Name = "MapNodeHoverPopup";
+        session.HoverPopup.ZIndex = 20;
+        session.HoverHost.AddChild(session.HoverPopup);
+        PositionMapHoverPopup(session, anchor);
+    }
+
+    private static void HideMapHoverPopup(MapEditorSession? session) {
+        if (session?.HoverPopup == null)
+            return;
+        session.HoverPopup.QueueFree();
+        session.HoverPopup = null;
+    }
+
+    private static void PositionMapHoverPopup(MapEditorSession session, Control anchor) {
+        if (session.HoverPopup == null || !GodotObject.IsInstanceValid(session.HoverPopup))
+            return;
+
+        void Place(bool retry) {
+            if (session.HoverPopup == null || !GodotObject.IsInstanceValid(session.HoverPopup))
+                return;
+
+            const float margin = 8f;
+            const float gap = 8f;
+
+            var popupSize = session.HoverPopup.Size;
+            if (popupSize.X <= 0f || popupSize.Y <= 0f)
+                popupSize = session.HoverPopup.GetCombinedMinimumSize();
+
+            if (popupSize.Y <= 0f && retry) {
+                Callable.From(() => Place(false)).CallDeferred();
+                return;
+            }
+
+            var anchorRect = anchor.GetGlobalRect();
+            var viewRect = session.MapScroll.GetGlobalRect();
+
+            float globalX = anchorRect.GetCenter().X - popupSize.X * 0.5f;
+            globalX = Mathf.Clamp(globalX, viewRect.Position.X + margin, viewRect.End.X - popupSize.X - margin);
+
+            float yAbove = anchorRect.Position.Y - popupSize.Y - gap;
+            float yBelow = anchorRect.End.Y + gap;
+            float globalY;
+            if (yAbove >= viewRect.Position.Y + margin)
+                globalY = yAbove;
+            else if (yBelow + popupSize.Y <= viewRect.End.Y - margin)
+                globalY = yBelow;
+            else
+                globalY = Mathf.Clamp(yAbove, viewRect.Position.Y + margin, viewRect.End.Y - popupSize.Y - margin);
+
+            session.HoverPopup.Position = session.HoverHost.GetGlobalTransformWithCanvas().AffineInverse()
+                * new Vector2(globalX, globalY);
+        }
+
+        Callable.From(() => Place(true)).CallDeferred();
+    }
+
+    private static Control BuildMonsterPreviewRow(IList<MonsterModel> monsters, float bandHeight = 90f) {
+        float width = Math.Min(monsters.Count * 72, 216);
         var container = new SubViewportContainer {
-            CustomMinimumSize = new Vector2(Math.Min(monsters.Count * 72, 216), 90),
+            CustomMinimumSize = new Vector2(width, bandHeight),
             StretchShrink = 1,
             Stretch = true,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         var viewport = new SubViewport {
-            Size = new Vector2I(Math.Min(monsters.Count * 72, 216), 90),
+            Size = new Vector2I((int)width, (int)bandHeight),
             TransparentBg = true,
             RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
         };
         container.AddChild(viewport);
         LoadVisualsIntoViewport(viewport, monsters, maxCount: 3);
         return container;
+    }
+
+    private static PanelContainer BuildEncounterHoverPopup(MapEncounterPreview.Preview preview) {
+        var encounter = preview.Encounter!;
+        string encounterName = encounter.Title?.GetFormattedText()
+            ?? ((AbstractModel)encounter).Id.Entry;
+
+        string typeTag = preview.CombatRoomType switch {
+            RoomType.Monster => I18N.T("map.roomNormal", "Normal"),
+            RoomType.Elite => I18N.T("map.roomElite", "Elite"),
+            RoomType.Boss => I18N.T("map.roomBoss", "Boss"),
+            _ => preview.CombatRoomType.ToString(),
+        };
+
+        var panel = new PanelContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            CustomMinimumSize = new Vector2(220, 0),
+        };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
+            BgColor = new Color(0.06f, 0.06f, 0.1f, 0.96f),
+            ContentMarginLeft = 8,
+            ContentMarginRight = 8,
+            ContentMarginTop = 6,
+            ContentMarginBottom = 6,
+            CornerRadiusTopLeft = 8,
+            CornerRadiusTopRight = 8,
+            CornerRadiusBottomLeft = 8,
+            CornerRadiusBottomRight = 8,
+            BorderWidthLeft = 1,
+            BorderWidthRight = 1,
+            BorderWidthTop = 1,
+            BorderWidthBottom = 1,
+            BorderColor = new Color(0.4f, 0.4f, 0.55f, 0.75f),
+        });
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 3);
+        vbox.MouseFilter = Control.MouseFilterEnum.Ignore;
+
+        var header = new Label {
+            Text = I18N.T("map.tooltipHeader", "[{0}] Floor {1}", typeTag, preview.Floor),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        header.AddThemeFontSizeOverride("font_size", 11);
+        header.AddThemeColorOverride("font_color", RoomTypeColor(preview.CombatRoomType));
+        vbox.AddChild(header);
+
+        vbox.AddChild(new Label {
+            Text = preview.IsOverride
+                ? I18N.T("map.override", "{0} (Override)", encounterName)
+                : encounterName,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            MaxLinesVisible = 2,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        });
+
+        var monsters = encounter.AllPossibleMonsters?.ToList();
+        if (monsters is { Count: > 0 })
+            vbox.AddChild(BuildMonsterPreviewRow(monsters, bandHeight: 72f));
+
+        panel.AddChild(vbox);
+        return panel;
     }
 
     private static Label MakeSubtleLabel(string text) {
@@ -322,14 +714,22 @@ internal static partial class EnemySelectUI {
 
         private readonly RunState _runState;
         private readonly Action<MapPoint> _onSelect;
+        private readonly Action<Control, MapPoint> _onHoverShow;
+        private readonly Action _onHoverHide;
         private readonly List<(MapPoint from, MapPoint to)> _edges = new();
         private readonly Dictionary<MapCoord, MapPoint> _pointsByCoord = new();
         private MapCoord? _currentCoord;
         private MapPoint? _selectedPoint;
 
-        public EnemyMapCanvas(RunState runState, Action<MapPoint> onSelect) {
+        public EnemyMapCanvas(
+            RunState runState,
+            Action<MapPoint> onSelect,
+            Action<Control, MapPoint> onHoverShow,
+            Action onHoverHide) {
             _runState = runState;
             _onSelect = onSelect;
+            _onHoverShow = onHoverShow;
+            _onHoverHide = onHoverHide;
             MouseFilter = MouseFilterEnum.Ignore;
             ClipContents = false;
             Rebuild(null);
@@ -338,6 +738,7 @@ internal static partial class EnemySelectUI {
         public void Rebuild(MapPoint? selectedPoint) {
             _selectedPoint = selectedPoint;
             _currentCoord = _runState.CurrentMapCoord;
+            _onHoverHide();
 
             foreach (var child in GetChildren())
                 child.QueueFree();
@@ -395,9 +796,17 @@ internal static partial class EnemySelectUI {
                 Position = NodePos(point.coord, minCol, maxRow) - new Vector2(NodeR, NodeR),
                 Size = new Vector2(NodeR * 2, NodeR * 2),
                 Disabled = !isCombat,
-                TooltipText = BuildNodeTooltip(point),
             };
             btn.AddThemeFontSizeOverride("font_size", 10);
+
+            if (isCombat) {
+                btn.TooltipText = "";
+                btn.MouseEntered += () => _onHoverShow(btn, point);
+                btn.MouseExited += _onHoverHide;
+            }
+            else {
+                btn.TooltipText = BuildNodeTooltip(point);
+            }
 
             var fill = NodeFillColor(point.PointType);
             if (isSelected)
@@ -420,9 +829,8 @@ internal static partial class EnemySelectUI {
             btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
             btn.AddThemeColorOverride("font_disabled_color", DevModeTheme.Subtle);
 
-            if (isCombat) {
+            if (isCombat)
                 btn.Pressed += () => _onSelect(point);
-            }
 
             return btn;
         }

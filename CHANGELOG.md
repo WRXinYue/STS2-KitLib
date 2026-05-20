@@ -19,12 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Enemy panel map-centric UI** — Global, By Type, and Map tabs are merged into a single map editor: left side shows the run map with hover previews; right side has **Run rules** (all combats / Normal / Elite / Boss, active for this run only), **Selected node** editing, and an embedded encounter picker. Kill remains a separate chip during combat.
 - **RitsuLib is now optional.** DevMode no longer lists RitsuLib as a required dependency mod — it loads and runs without RitsuLib installed. The Framework Bridge panel shows "—" when RitsuLib is absent instead of preventing DevMode from loading.
 - **Normal run Dev Mode preference** — In the Developer Mode main menu, the **Normal run** cycle (disabled / Dev Mode / Cheat Mode) **defaults to Dev Mode** and is **saved** for the next launch.
 - Opening a dev browser panel no longer hides the **multiplayer combat stats overlay**; it stays visible above the panel.
 
 ### Fixed
 
+- **Enemy map hover tooltip** — Node hover previews render inside the map panel again (no longer invisible due to incorrect top-level layering).
 - **Settings, save slots, presets, and scripts** are now stored in the game's user-data directory (`SlayTheSpire2/steam/<id>/mod_data/DevMode/`) instead of inside the mod folder — they survive Steam Workshop updates without data loss.
 - Settings and save-slot files are now written atomically, preventing file corruption if the game crashes mid-save.
 - Applying powers, adding cards in combat, and loading presets work on the **stable/public** STS2 build again, not only the Steam beta branch.

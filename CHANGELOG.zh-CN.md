@@ -19,12 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **敌人面板地图中心化** — 合并全局、按类型与地图三个标签为单一地图编辑器：左侧为 run 地图与悬停预览；右侧为**本局规则**（全部战斗 / 普通 / 精英 / Boss，仅本局生效）、**选中节点**编辑与内嵌遭遇选择器。战斗中仍保留独立的「击杀敌人」chip。
 - **RitsuLib 现为可选依赖。** DevMode 不再将 RitsuLib 列为必需依赖 mod，未安装时也能正常加载运行；框架桥接面板在 RitsuLib 缺失时显示「—」，而不会导致 DevMode 无法加载。
 - **普通对局 Dev Mode 偏好** — 开发者模式主菜单中的 **普通对局** 循环（关闭 / Dev Mode / 作弊模式）**默认 Dev Mode**，并会**写入设置**供下次启动沿用。
 - 打开开发浏览器面板时，**联机战斗统计浮层**不再被挡住，会保持在面板上方可见。
 
 ### Fixed
 
+- **敌人地图悬停预览** — 节点悬停 tooltip 重新正确显示在地图面板内（修复因 TopLevel 层级导致的不可见问题）。
 - **设置、存档槽、预设与脚本**现存储在游戏用户数据目录（`SlayTheSpire2/steam/<id>/mod_data/DevMode/`）而非 mod 文件夹内 — Steam Workshop 更新 mod 后数据不再丢失。
 - 设置与存档槽文件改为原子写入，游戏崩溃时不会产生损坏的文件。
 - 在 **正式版/公开版** STS2 上再次可用：施加能力、战斗中添加卡牌、加载预设等开发工具（不仅限于 Steam beta）。

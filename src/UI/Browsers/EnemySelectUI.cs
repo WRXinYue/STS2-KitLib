@@ -157,6 +157,9 @@ internal static partial class EnemySelectUI {
     internal sealed class EncounterPickerOptions {
         public bool CloseOnSelect { get; init; } = true;
         public bool ShowTitle { get; init; } = true;
+        public bool CompactEmbedded { get; init; }
+        public string? PickerTitle { get; init; }
+        public Action? OnBack { get; init; }
         public Action<RoomType?>? OnFilterChanged { get; init; }
     }
 
@@ -175,7 +178,21 @@ internal static partial class EnemySelectUI {
             return;
         }
 
-        if (options.ShowTitle) {
+        if (options.OnBack != null) {
+            var backBtn = new Button {
+                Text = I18N.T("enemy.pickerBack", "Back"),
+                CustomMinimumSize = new Vector2(0, 32),
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            backBtn.Pressed += () => options.OnBack!();
+            vbox.AddChild(backBtn);
+        }
+
+        if (!string.IsNullOrEmpty(options.PickerTitle)) {
+            vbox.AddChild(DevPanelUI.CreatePanelTitle(options.PickerTitle!));
+            vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
+        }
+        else if (options.ShowTitle) {
             var titleText = filter switch {
                 RoomType.Monster => I18N.T("enemy.selectNormal", "Select Normal Combat"),
                 RoomType.Elite => I18N.T("enemy.selectElite", "Select Elite Combat"),
@@ -220,114 +237,132 @@ internal static partial class EnemySelectUI {
             I18N.T("enemy.searchPlaceholder", "Search encounters..."));
         vbox.AddChild(searchRowCtrl);
 
-        // ── Main content: grid left, preview right ──
+        // ── Main content: grid left, preview right (or compact single column) ──
         var contentHBox = new HBoxContainer();
         contentHBox.AddThemeConstantOverride("separation", 12);
         contentHBox.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
-        vbox.AddChild(contentHBox);
+        if (!options.CompactEmbedded)
+            vbox.AddChild(contentHBox);
 
         // Left: scrollable grid
         var scroll = new ScrollContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(480, 0)
+            CustomMinimumSize = new Vector2(options.CompactEmbedded ? 0 : 480, 0),
         };
         var gridContainer = new GridContainer {
-            Columns = 3,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            Columns = options.CompactEmbedded ? 1 : 3,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         gridContainer.AddThemeConstantOverride("h_separation", 6);
         gridContainer.AddThemeConstantOverride("v_separation", 6);
         scroll.AddChild(gridContainer);
-        contentHBox.AddChild(scroll);
+        if (options.CompactEmbedded)
+            vbox.AddChild(scroll);
+        else
+            contentHBox.AddChild(scroll);
 
-        // Right: preview panel
-        var previewPanel = new PanelContainer {
-            CustomMinimumSize = new Vector2(300, 0),
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill
-        };
-        var previewStyle = new StyleBoxFlat {
-            BgColor = new Color(0.09f, 0.09f, 0.12f, 0.90f),
-            CornerRadiusTopLeft = 10,
-            CornerRadiusTopRight = 10,
-            CornerRadiusBottomLeft = 10,
-            CornerRadiusBottomRight = 10,
-            ContentMarginLeft = 12,
-            ContentMarginRight = 12,
-            ContentMarginTop = 12,
-            ContentMarginBottom = 12,
-            BorderWidthTop = 1,
-            BorderWidthBottom = 1,
-            BorderWidthLeft = 1,
-            BorderWidthRight = 1,
-            BorderColor = DevModeTheme.Separator
-        };
-        previewPanel.AddThemeStyleboxOverride("panel", previewStyle);
-        contentHBox.AddChild(previewPanel);
+        PanelContainer? previewPanel = null;
+        VBoxContainer? previewVBox = null;
+        Label? previewNameLabel = null;
+        VBoxContainer? previewIdContainer = null;
+        Label? previewMonstersLabel = null;
+        SubViewport? subViewport = null;
 
-        var previewVBox = new VBoxContainer();
-        previewVBox.AddThemeConstantOverride("separation", 6);
-        previewPanel.AddChild(previewVBox);
+        if (!options.CompactEmbedded) {
+            // Right: preview panel
+            previewPanel = new PanelContainer {
+                CustomMinimumSize = new Vector2(300, 0),
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            };
+            var previewStyle = new StyleBoxFlat {
+                BgColor = new Color(0.09f, 0.09f, 0.12f, 0.90f),
+                CornerRadiusTopLeft = 10,
+                CornerRadiusTopRight = 10,
+                CornerRadiusBottomLeft = 10,
+                CornerRadiusBottomRight = 10,
+                ContentMarginLeft = 12,
+                ContentMarginRight = 12,
+                ContentMarginTop = 12,
+                ContentMarginBottom = 12,
+                BorderWidthTop = 1,
+                BorderWidthBottom = 1,
+                BorderWidthLeft = 1,
+                BorderWidthRight = 1,
+                BorderColor = DevModeTheme.Separator,
+            };
+            previewPanel.AddThemeStyleboxOverride("panel", previewStyle);
+            contentHBox.AddChild(previewPanel);
 
-        var previewNameLabel = new Label {
-            Text = I18N.T("enemy.hoverPreview", "Hover to preview"),
-            HorizontalAlignment = HorizontalAlignment.Center
-        };
-        previewNameLabel.AddThemeFontSizeOverride("font_size", 14);
-        previewNameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-        previewVBox.AddChild(previewNameLabel);
+            previewVBox = new VBoxContainer();
+            previewVBox.AddThemeConstantOverride("separation", 6);
+            previewPanel.AddChild(previewVBox);
 
-        var previewIdContainer = new VBoxContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
-        };
-        previewVBox.AddChild(previewIdContainer);
+            previewNameLabel = new Label {
+                Text = I18N.T("enemy.hoverPreview", "Hover to preview"),
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            previewNameLabel.AddThemeFontSizeOverride("font_size", 14);
+            previewNameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            previewVBox.AddChild(previewNameLabel);
 
-        var previewMonstersLabel = new Label {
-            Text = "",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart
-        };
-        previewMonstersLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
-        previewMonstersLabel.AddThemeFontSizeOverride("font_size", 12);
-        previewVBox.AddChild(previewMonstersLabel);
+            previewIdContainer = new VBoxContainer {
+                SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+            };
+            previewVBox.AddChild(previewIdContainer);
 
-        // Creature visual preview
-        var visualContainer = new SubViewportContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            StretchShrink = 1,
-            Stretch = true
-        };
-        var subViewport = new SubViewport {
-            Size = new Vector2I(300, 280),
-            TransparentBg = true,
-            RenderTargetUpdateMode = SubViewport.UpdateMode.Always
-        };
-        visualContainer.AddChild(subViewport);
-        previewVBox.AddChild(visualContainer);
+            previewMonstersLabel = new Label {
+                Text = "",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            previewMonstersLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            previewMonstersLabel.AddThemeFontSizeOverride("font_size", 12);
+            previewVBox.AddChild(previewMonstersLabel);
+
+            var visualContainer = new SubViewportContainer {
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                StretchShrink = 1,
+                Stretch = true,
+            };
+            subViewport = new SubViewport {
+                Size = new Vector2I(300, 280),
+                TransparentBg = true,
+                RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
+            };
+            visualContainer.AddChild(subViewport);
+            previewVBox.AddChild(visualContainer);
+        }
 
         var activeVisuals = new List<NCreatureVisuals>();
 
         void ShowPreview(EncounterModel enc) {
+            if (options.CompactEmbedded || previewNameLabel == null || subViewport == null)
+                return;
+
             var encTitle = enc.Title?.GetFormattedText();
             var encId = ((AbstractModel)enc).Id.Entry;
             previewNameLabel.Text = !string.IsNullOrEmpty(encTitle) ? encTitle : encId;
-            foreach (var c in previewIdContainer.GetChildren()) ((Node)c).QueueFree();
-            if (!string.IsNullOrEmpty(encId) && encId != encTitle)
-                previewIdContainer.AddChild(DevModeTheme.CreateCopyableIdRow(encId));
+            if (previewIdContainer != null) {
+                foreach (var c in previewIdContainer.GetChildren()) ((Node)c).QueueFree();
+                if (!string.IsNullOrEmpty(encId) && encId != encTitle)
+                    previewIdContainer.AddChild(DevModeTheme.CreateCopyableIdRow(encId));
+            }
 
             var monsters = enc.AllPossibleMonsters?.ToList();
-            if (monsters != null && monsters.Count > 0) {
-                var names = monsters
-                    .Select(m => m.Title?.GetFormattedText() ?? ((AbstractModel)m).Id.Entry)
-                    .Distinct();
-                previewMonstersLabel.Text = string.Join(", ", names);
-            }
-            else {
-                previewMonstersLabel.Text = "";
+            if (previewMonstersLabel != null) {
+                if (monsters != null && monsters.Count > 0) {
+                    var names = monsters
+                        .Select(m => m.Title?.GetFormattedText() ?? ((AbstractModel)m).Id.Entry)
+                        .Distinct();
+                    previewMonstersLabel.Text = string.Join(", ", names);
+                }
+                else {
+                    previewMonstersLabel.Text = "";
+                }
             }
 
-            // Load creature visuals safely
             ClearViewport(subViewport, activeVisuals);
             if (monsters != null)
                 activeVisuals = LoadVisualsIntoViewport(subViewport, monsters);
@@ -365,9 +400,9 @@ internal static partial class EnemySelectUI {
             };
 
             var cell = new PanelContainer {
-                CustomMinimumSize = new Vector2(150, 52),
+                CustomMinimumSize = new Vector2(options.CompactEmbedded ? 0 : 150, options.CompactEmbedded ? 44 : 52),
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                MouseFilter = Control.MouseFilterEnum.Stop
+                MouseFilter = Control.MouseFilterEnum.Stop,
             };
             var cellStyle = new StyleBoxFlat {
                 BgColor = cellBaseBg,
@@ -417,20 +452,23 @@ internal static partial class EnemySelectUI {
 
             // Hover
             var captured = enc;
-            cell.MouseEntered += () => {
-                cellStyle.BorderColor = new Color(0.40f, 0.68f, 1f, 0.55f);
-                cellStyle.BgColor = cellBaseBg.Lightened(0.10f);
-                ShowPreview(captured);
-            };
-            cell.MouseExited += () => {
-                cellStyle.BorderColor = cellBorderRest;
-                cellStyle.BgColor = cellBaseBg;
-            };
+            if (!options.CompactEmbedded) {
+                cell.MouseEntered += () => {
+                    cellStyle.BorderColor = new Color(0.40f, 0.68f, 1f, 0.55f);
+                    cellStyle.BgColor = cellBaseBg.Lightened(0.10f);
+                    ShowPreview(captured);
+                };
+                cell.MouseExited += () => {
+                    cellStyle.BorderColor = cellBorderRest;
+                    cellStyle.BgColor = cellBaseBg;
+                };
+            }
 
             // Click
             cell.GuiInput += (InputEvent ev) => {
                 if (ev is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true }) {
-                    ClearViewport(subViewport, activeVisuals);
+                    if (subViewport != null)
+                        ClearViewport(subViewport, activeVisuals);
                     onSelected(captured);
                     if (options.CloseOnSelect)
                         Hide(globalUi);

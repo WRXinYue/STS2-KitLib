@@ -2,28 +2,25 @@ using System;
 using System.Linq;
 using DevMode.Actions;
 using Godot;
-using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Rooms;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace DevMode.UI;
 
 internal static partial class EnemySelectUI {
-    private enum EnemyNavTab {
-        Global,
-        ByType,
-        ByFloor,
+    internal enum EnemyPanelMode {
+        Map,
         Kill,
     }
 
-    private sealed class MainBrowserState {
+    internal sealed class MainBrowserState {
         public required NGlobalUi GlobalUi;
         public required VBoxContainer ContentHost;
-        public EnemyNavTab ActiveTab;
+        public EnemyPanelMode Mode = EnemyPanelMode.Map;
         public RoomType? EncounterFilter;
         public Label StatusLabel = null!;
+        public HBoxContainer? NavRow;
     }
 
     public static void ShowMain(NGlobalUi globalUi) {
@@ -37,7 +34,7 @@ internal static partial class EnemySelectUI {
             ContentHost = new VBoxContainer {
                 SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             },
-            ActiveTab = ResolveInitialTab(),
+            Mode = EnemyPanelMode.Map,
             EncounterFilter = null,
         };
         state.ContentHost.AddThemeConstantOverride("separation", 8);
@@ -52,27 +49,14 @@ internal static partial class EnemySelectUI {
         state.StatusLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         vbox.AddChild(state.StatusLabel);
 
-        SwitchMainTab(state);
+        SwitchMainView(state);
         ((Node)globalUi).AddChild(root);
-    }
-
-    private static EnemyNavTab ResolveInitialTab() {
-        if (RunManager.Instance?.DebugOnlyGetState()?.Map != null && DevModeState.InDevRun)
-            return EnemyNavTab.ByFloor;
-
-        if (DevModeState.FloorOverrides.Count > 0)
-            return EnemyNavTab.ByFloor;
-
-        return DevModeState.EnemyMode switch {
-            EnemyMode.Global => EnemyNavTab.Global,
-            EnemyMode.PerType => EnemyNavTab.ByType,
-            _ => EnemyNavTab.Global,
-        };
     }
 
     private static void BuildMainNav(VBoxContainer vbox, MainBrowserState state) {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
+        state.NavRow = row;
 
         var title = new Label {
             Text = I18N.T("panel.enemies", "Enemies"),
@@ -82,126 +66,51 @@ internal static partial class EnemySelectUI {
         title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
         row.AddChild(title);
 
-        row.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
-
-        AddNavChip(row, state, EnemyNavTab.Global, I18N.T("topbar.enemy.global", "Global"));
-        AddNavChip(row, state, EnemyNavTab.ByType, I18N.T("topbar.enemy.byType", "By Type"));
-        AddNavChip(row, state, EnemyNavTab.ByFloor, I18N.T("enemy.navMap", "Map"));
-
         if (CombatEnemyActions.GetCombatState() != null) {
             row.AddChild(new Control { CustomMinimumSize = new Vector2(8, 0) });
-            AddNavChip(row, state, EnemyNavTab.Kill, I18N.T("topbar.enemy.killEnemy", "Kill Enemy"));
+            AddModeChip(row, state, EnemyPanelMode.Kill, I18N.T("topbar.enemy.killEnemy", "Kill Enemy"));
         }
 
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         vbox.AddChild(row);
     }
 
-    private static void AddNavChip(HBoxContainer row, MainBrowserState state, EnemyNavTab tab, string label) {
-        var chip = DevPanelUI.CreateFilterChip(label, active: state.ActiveTab == tab);
+    private static void AddModeChip(HBoxContainer row, MainBrowserState state, EnemyPanelMode mode, string label) {
+        var chip = DevPanelUI.CreateFilterChip(label, active: state.Mode == mode);
         chip.Pressed += () => {
-            if (state.ActiveTab == tab)
+            if (state.Mode == mode)
                 return;
-            state.ActiveTab = tab;
-            RefreshNavChips(row, state);
-            SwitchMainTab(state);
+            state.Mode = mode;
+            RefreshModeChips(row, state);
+            SwitchMainView(state);
         };
-        chip.SetMeta("enemy_nav_tab", (int)tab);
+        chip.SetMeta("enemy_panel_mode", (int)mode);
         row.AddChild(chip);
     }
 
-    private static void RefreshNavChips(HBoxContainer row, MainBrowserState state) {
+    private static void RefreshModeChips(HBoxContainer row, MainBrowserState state) {
         foreach (var child in row.GetChildren()) {
-            if (child is not Button chip || !chip.HasMeta("enemy_nav_tab"))
+            if (child is not Button chip || !chip.HasMeta("enemy_panel_mode"))
                 continue;
-            chip.ButtonPressed = (EnemyNavTab)(int)chip.GetMeta("enemy_nav_tab") == state.ActiveTab;
+            chip.ButtonPressed = (EnemyPanelMode)(int)chip.GetMeta("enemy_panel_mode") == state.Mode;
         }
     }
 
-    private static void SwitchMainTab(MainBrowserState state) {
+    internal static void SwitchMainView(MainBrowserState state) {
         foreach (var child in state.ContentHost.GetChildren())
             ((Node)child).QueueFree();
 
         state.StatusLabel.Text = "";
 
-        switch (state.ActiveTab) {
-            case EnemyNavTab.Global:
-                BuildGlobalTab(state);
-                break;
-            case EnemyNavTab.ByType:
-                BuildByTypeTab(state);
-                break;
-            case EnemyNavTab.ByFloor:
-                BuildMapTab(state);
-                state.StatusLabel.Text = I18N.T(
-                    "enemy.byFloorHint",
-                    "Floor overrides apply on top of global / per-type settings. Click combat nodes on the map to edit.");
-                break;
-            case EnemyNavTab.Kill:
-                BuildKillTab(state);
-                break;
+        if (state.Mode == EnemyPanelMode.Kill) {
+            BuildKillTab(state);
+            return;
         }
-    }
 
-    private static void BuildGlobalTab(MainBrowserState state) {
-        bool inCombat = CombatEnemyActions.GetCombatState() != null;
-        state.StatusLabel.Text = inCombat
-            ? I18N.T("enemy.globalCombatHint", "Pick an encounter to spawn in the current combat.")
-            : I18N.T("enemy.globalHint", "Sets the same encounter for all combat rooms in the run.");
-
-        BuildEncounterPicker(
-            state.ContentHost,
-            state.GlobalUi,
-            state.EncounterFilter,
-            enc => {
-                if (inCombat)
-                    TaskHelper.RunSafely(CombatEnemyActions.AddEncounterMonsters(enc));
-                else
-                    EnemyActions.SetGlobalOverride(enc);
-                state.StatusLabel.Text = I18N.T(
-                    "enemy.appliedGlobal",
-                    "Applied global override: {0}",
-                    EnemyActions.GetShortName(enc));
-            },
-            new EncounterPickerOptions {
-                CloseOnSelect = false,
-                ShowTitle = false,
-                OnFilterChanged = filter => {
-                    state.EncounterFilter = filter;
-                    SwitchMainTab(state);
-                },
-            });
-
-        GrabEncounterSearchFocus(state.ContentHost);
-    }
-
-    private static void BuildByTypeTab(MainBrowserState state) {
+        BuildMapTab(state);
         state.StatusLabel.Text = I18N.T(
-            "enemy.byTypeHint",
-            "Pick an encounter to override its room type (Normal / Elite / Boss).");
-
-        BuildEncounterPicker(
-            state.ContentHost,
-            state.GlobalUi,
-            state.EncounterFilter,
-            enc => {
-                EnemyActions.SetRoomTypeOverride(enc.RoomType, enc);
-                state.StatusLabel.Text = I18N.T(
-                    "enemy.appliedByType",
-                    "Applied {0} override: {1}",
-                    enc.RoomType,
-                    EnemyActions.GetShortName(enc));
-            },
-            new EncounterPickerOptions {
-                CloseOnSelect = false,
-                ShowTitle = false,
-                OnFilterChanged = filter => {
-                    state.EncounterFilter = filter;
-                    SwitchMainTab(state);
-                },
-            });
-
-        GrabEncounterSearchFocus(state.ContentHost);
+            "enemy.mapHint",
+            "Click combat nodes on the map to edit. Run rules apply to this run only.");
     }
 
     private static void BuildKillTab(MainBrowserState state) {
@@ -231,7 +140,7 @@ internal static partial class EnemySelectUI {
             var captured = enemy;
             btn.Pressed += () => {
                 TaskHelper.RunSafely(CombatEnemyActions.KillEnemy(captured));
-                SwitchMainTab(state);
+                SwitchMainView(state);
             };
             listBox.AddChild(btn);
         }
@@ -240,7 +149,7 @@ internal static partial class EnemySelectUI {
         killAllBtn.Alignment = HorizontalAlignment.Center;
         killAllBtn.Pressed += () => {
             TaskHelper.RunSafely(CombatEnemyActions.KillAllEnemies());
-            SwitchMainTab(state);
+            SwitchMainView(state);
         };
         state.ContentHost.AddChild(killAllBtn);
     }
