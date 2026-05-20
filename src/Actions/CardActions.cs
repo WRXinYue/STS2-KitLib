@@ -327,7 +327,9 @@ internal static class CardActions {
             }
         }
 
-        MainFile.Logger.Info($"CardActions: Added {canonicalCard.Id.Entry} to {target} ({duration})");
+        var who = Multiplayer.Cheat.MpCheatPlayerLabels.FormatLogLabel(player);
+        MainFile.Logger.Info(
+            $"CardActions: Added {canonicalCard.Id.Entry} for {who} to {target} ({duration})");
     }
 
     private static void ApplyCustomBaseCostIfAny(CardModel instance, int? customBaseCost) {

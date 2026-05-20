@@ -82,6 +82,7 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 | 1 | `INetMessage` 配置快照 | 经 `ZzzMpCheatEnvelopeNetMessage`（channel=Config，JSON + magic） |
 | 2 | `INetMessage` 命令 | 同一 envelope（channel=Command：击杀、加牌 prepare/execute） |
 | 2b | 加牌 ACK | 同一 envelope（channel=AddCardAck，客机 → 主机） |
+| 2c | 客机加牌请求 | channel=AddCardRequest（客机 → 主机）；主机跑 prepare/ACK/execute 后 channel=AddCardRequestResult 回传 |
 | — | **单槽位** | 仅注册 **1** 个 mod `INetMessage` 类型，降低与其他 mod 的 id 冲突 |
 | — | **多人 ACK** | 主机等待「Run 内远端玩家 ∩ 大厅已连接」全部 ACK；超时随人数递增（8s + 1.5s×(n−1)，上限 20s）；`commandId` 多路复用，支持并发多笔加牌 |
 | — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写 |
@@ -105,6 +106,7 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 - [ ] 主机开无限血/冻怪/伤害倍率，客机无 StateDivergence，跑 3+ 场战斗
 - [ ] 主机点「击杀全部（同步）」，双方敌人同时死亡
 - [ ] 主机卡牌浏览器加牌：侧栏 **Player** 选客机角色后再加；客机牌组出现相同卡牌（无 8s 超时）
+- [ ] 客机卡牌浏览器加牌：点添加后日志有 `AddCard client request` / `AddCard host start`（target=客机 netId）；牌出现在客机角色
 - [ ] 客机 Cheats 面板只读，改开关不生效
 - [ ] 一方关闭联机作弊 opt-in 时，会话不 arm（面板提示原因）
 

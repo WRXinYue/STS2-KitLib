@@ -16,6 +16,8 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
     public string ConfigJson;
     public MpCheatCommandMessage Command;
     public MpCheatAddCardAckMessage Ack;
+    public MpCheatAddCardClientRequestMessage AddCardRequest;
+    public MpCheatAddCardClientResultMessage AddCardRequestResult;
 
     public readonly bool ShouldBroadcast =>
         Channel is MpCheatWireChannel.Config or MpCheatWireChannel.Command;
@@ -23,7 +25,9 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
     public readonly NetTransferMode Mode => NetTransferMode.Reliable;
 
     public readonly LogLevel LogLevel =>
-        Channel == MpCheatWireChannel.AddCardAck ? LogLevel.Debug : LogLevel.Info;
+        Channel is MpCheatWireChannel.AddCardAck or MpCheatWireChannel.AddCardRequestResult
+            ? LogLevel.Debug
+            : LogLevel.Info;
 
     public void Serialize(PacketWriter writer) {
         MpCheatPacketIO.WriteMagic(writer);
@@ -37,6 +41,12 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
                 break;
             case MpCheatWireChannel.AddCardAck:
                 MpCheatEnvelopeCodec.WriteAck(writer, Ack);
+                break;
+            case MpCheatWireChannel.AddCardRequest:
+                MpCheatEnvelopeCodec.WriteAddCardRequest(writer, AddCardRequest);
+                break;
+            case MpCheatWireChannel.AddCardRequestResult:
+                MpCheatEnvelopeCodec.WriteAddCardRequestResult(writer, AddCardRequestResult);
                 break;
             default:
                 throw new InvalidOperationException($"MpCheat unknown channel: {Channel}");
@@ -58,6 +68,12 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
                 break;
             case MpCheatWireChannel.AddCardAck:
                 Ack = MpCheatEnvelopeCodec.ReadAck(reader);
+                break;
+            case MpCheatWireChannel.AddCardRequest:
+                AddCardRequest = MpCheatEnvelopeCodec.ReadAddCardRequest(reader);
+                break;
+            case MpCheatWireChannel.AddCardRequestResult:
+                AddCardRequestResult = MpCheatEnvelopeCodec.ReadAddCardRequestResult(reader);
                 break;
             default:
                 throw new InvalidOperationException($"MpCheat unknown channel: {Channel}");
@@ -81,6 +97,18 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
         new() {
             Channel = MpCheatWireChannel.AddCardAck,
             Ack = ack,
+        };
+
+    public static ZzzMpCheatEnvelopeNetMessage FromAddCardRequest(MpCheatAddCardClientRequestMessage request) =>
+        new() {
+            Channel = MpCheatWireChannel.AddCardRequest,
+            AddCardRequest = request,
+        };
+
+    public static ZzzMpCheatEnvelopeNetMessage FromAddCardRequestResult(MpCheatAddCardClientResultMessage result) =>
+        new() {
+            Channel = MpCheatWireChannel.AddCardRequestResult,
+            AddCardRequestResult = result,
         };
 }
 

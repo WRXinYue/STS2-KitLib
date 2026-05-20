@@ -18,9 +18,12 @@ internal static class MpCheatCardAddCoordinator {
     private static readonly object Gate = new();
     private static readonly Dictionary<ulong, PendingAdd> PendingByCommandId = new();
     private static readonly HashSet<ulong> ExecutedCommandIds = new();
+    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientAddCompletions = new();
     private static ulong _nextCommandId;
+    private static ulong _nextClientRequestId;
 
     private const int BaseAckTimeoutMs = 8000;
+    private const int ClientRequestTimeoutMs = 25000;
     private const int AckTimeoutPerPeerMs = 1500;
     private const int MaxAckTimeoutMs = 20000;
     private const int MaxConcurrentPending = 64;
@@ -48,11 +51,141 @@ internal static class MpCheatCardAddCoordinator {
         CardModel card,
         AddCardRequest request,
         CardPreviewStyle? upgradePreviewStyle) {
-        if (!MpCheatSession.CanEditMultiplayerCheats)
-            return I18N.T("mpcheat.cardAdd.hostOnly", "Only the host can add cards in multiplayer.");
+        var (_, message) = await TryHostAddCardCoreAsync(state, targetPlayer, card, request, upgradePreviewStyle);
+        return message;
+    }
+
+    /// <summary>Client asks host to run synced add-card (target must be local player).</summary>
+    public static async Task<string> TryClientRequestAddCardAsync(
+        RunState state,
+        Player targetPlayer,
+        CardModel card,
+        AddCardRequest request,
+        CardPreviewStyle? upgradePreviewStyle) {
+        if (MpCheatSession.IsHost)
+            return await TryHostAddCardAsync(state, targetPlayer, card, request, upgradePreviewStyle);
+
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown");
+
+        var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
+        if (localNetId == 0 || targetPlayer.NetId != localNetId)
+            return I18N.T(
+                "mpcheat.cardAdd.clientSelfOnly",
+                "In multiplayer you can only add cards to your own character.");
 
         if (!TryValidateAdd(state, targetPlayer, card, request, out var localError))
             return FormatError(localError);
+
+        var cardId = ((AbstractModel)card).Id.Entry;
+        var clientRequestId = Interlocked.Increment(ref _nextClientRequestId);
+        var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        lock (Gate) {
+            ClientAddCompletions[clientRequestId] = completion;
+        }
+
+        MpCheatNetBus.ClientSendAddCardRequest(new MpCheatAddCardClientRequestMessage {
+            ClientRequestId = clientRequestId,
+            RequesterNetId = localNetId,
+            Payload = ToPayload(localNetId, request, upgradePreviewStyle.HasValue, cardId),
+        });
+        MainFile.Logger.Info(
+            $"[MpCheat] AddCard client request id={clientRequestId} card={cardId} target={localNetId}.");
+
+        try {
+            using var cts = new CancellationTokenSource(ClientRequestTimeoutMs);
+            return await completion.Task.WaitAsync(cts.Token);
+        }
+        catch (OperationCanceledException) {
+            return I18N.T(
+                "mpcheat.cardAdd.clientRequestTimeout",
+                "Host did not respond to add-card request in time.");
+        }
+        finally {
+            lock (Gate) {
+                ClientAddCompletions.Remove(clientRequestId);
+            }
+        }
+    }
+
+    public static void OnClientAddCardRequestReceived(MpCheatAddCardClientRequestMessage request, ulong senderId) {
+        if (!MpCheatSession.IsHost) return;
+        TaskHelper.RunSafely(HandleClientAddCardRequestAsync(request, senderId));
+    }
+
+    public static void OnClientAddCardResultReceived(MpCheatAddCardClientResultMessage result) {
+        if (MpCheatSession.IsHost) return;
+        TaskCompletionSource<string>? completion;
+        lock (Gate) {
+            ClientAddCompletions.TryGetValue(result.ClientRequestId, out completion);
+        }
+
+        if (completion == null) {
+            MainFile.Logger.Debug(
+                $"[MpCheat] AddCard client result id={result.ClientRequestId} ignored (no pending UI).");
+            return;
+        }
+
+        MainFile.Logger.Info(
+            $"[MpCheat] AddCard client result id={result.ClientRequestId} ok={result.Success}.");
+        completion.TrySetResult(result.Message);
+    }
+
+    private static async Task HandleClientAddCardRequestAsync(
+        MpCheatAddCardClientRequestMessage request,
+        ulong senderId) {
+        void Reply(bool success, string message) =>
+            MpCheatNetBus.HostSendAddCardRequestResult(senderId, new MpCheatAddCardClientResultMessage {
+                ClientRequestId = request.ClientRequestId,
+                Success = success,
+                Message = message,
+            });
+
+        if (!MpCheatSession.CanEditMultiplayerCheats) {
+            Reply(false, I18N.T("mpcheat.cardAdd.hostOnly", "Only the host can add cards in multiplayer."));
+            return;
+        }
+
+        if (request.RequesterNetId != senderId) {
+            Reply(false, FormatError("request sender mismatch"));
+            return;
+        }
+
+        if (request.Payload.TargetPlayerNetId != senderId) {
+            Reply(false, I18N.T(
+                "mpcheat.cardAdd.clientSelfOnly",
+                "In multiplayer you can only add cards to your own character."));
+            return;
+        }
+
+        var resolved = TryResolveForExecute(request.Payload);
+        if (resolved == null) {
+            Reply(false, FormatError("invalid add-card request"));
+            return;
+        }
+
+        var (state, player, card, addRequest, style) = resolved.Value;
+        MainFile.Logger.Info(
+            $"[MpCheat] AddCard client request from {senderId} card={request.Payload.CardId}.");
+
+        var (success, message) = await TryHostAddCardCoreAsync(state, player, card, addRequest, style);
+        Reply(success, message);
+    }
+
+    private static async Task<(bool Success, string Message)> TryHostAddCardCoreAsync(
+        RunState state,
+        Player targetPlayer,
+        CardModel card,
+        AddCardRequest request,
+        CardPreviewStyle? upgradePreviewStyle) {
+        if (!MpCheatSession.CanEditMultiplayerCheats)
+            return (false, I18N.T("mpcheat.cardAdd.hostOnly", "Only the host can add cards in multiplayer."));
+
+        if (!TryValidateAdd(state, targetPlayer, card, request, out var localError))
+            return (false, FormatError(localError));
 
         var cardId = ((AbstractModel)card).Id.Entry;
         var payload = ToPayload(targetPlayer.NetId, request, upgradePreviewStyle.HasValue, cardId);
@@ -81,9 +214,8 @@ internal static class MpCheatCardAddCoordinator {
 
         BroadcastCommand(MpCheatCommandKind.AddCardPrepare, commandId, payload);
 
-        if (awaitingPeers.Count == 0) {
-            return await FinishHostExecute(pending, cardId);
-        }
+        if (awaitingPeers.Count == 0)
+            return (true, await FinishHostExecute(pending, cardId));
 
         var timeoutMs = ComputeAckTimeoutMs(awaitingPeers.Count);
         using var cts = new CancellationTokenSource(timeoutMs);
@@ -92,16 +224,14 @@ internal static class MpCheatCardAddCoordinator {
             if (!ok) {
                 var fail = pending.Acks.Values.FirstOrDefault(a => !a.Success);
                 RemovePending(commandId);
-                return fail != null
-                    ? FormatPeerError(fail)
-                    : FormatAckTimeout(pending);
+                return (false, fail != null ? FormatPeerError(fail) : FormatAckTimeout(pending));
             }
 
-            return await FinishHostExecute(pending, cardId);
+            return (true, await FinishHostExecute(pending, cardId));
         }
         catch (OperationCanceledException) {
             RemovePending(commandId);
-            return FormatAckTimeout(pending);
+            return (false, FormatAckTimeout(pending));
         }
     }
 
@@ -112,12 +242,15 @@ internal static class MpCheatCardAddCoordinator {
         MainFile.Logger.Info(
             $"[MpCheat] AddCard prepare id={message.CommandId} card={message.AddCard.CardId} target={message.AddCard.TargetPlayerNetId}");
         var (ok, error) = TryResolveAndValidate(message.AddCard);
+        var peerNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.SendAddCardAck(new MpCheatAddCardAckMessage {
             CommandId = message.CommandId,
-            PeerNetId = RunManager.Instance?.NetService?.NetId ?? 0,
+            PeerNetId = peerNetId,
             Success = ok,
             Error = error,
         });
+        MainFile.Logger.Info(
+            $"[MpCheat] AddCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
     }
 
     public static void OnExecuteReceived(MpCheatCommandMessage message) {
@@ -171,15 +304,22 @@ internal static class MpCheatCardAddCoordinator {
             pending.Request,
             pending.UpgradePreviewStyle);
         RemovePending(commandId);
-        MainFile.Logger.Info($"[MpCheat] AddCard command {commandId} executed for {cardId}.");
+        var targetLabel = MpCheatPlayerLabels.FormatLogLabel(pending.TargetPlayer);
+        MainFile.Logger.Info(
+            $"[MpCheat] AddCard command {commandId} executed card={cardId} target={targetLabel}.");
         var acked = pending.Acks.Count(a => a.Value.Success);
         if (pending.RequiredAckCount > 0) {
             return string.Format(
-                I18N.T("mpcheat.cardAdd.successWithAcks", "Card added ({0}/{1} players confirmed)."),
+                I18N.T("mpcheat.cardAdd.successWithAcksFor", "Added {0} for {1} ({2}/{3} players confirmed)."),
+                cardId,
+                targetLabel,
                 acked,
                 pending.RequiredAckCount);
         }
-        return I18N.T("mpcheat.cardAdd.success", "Card added (all players).");
+        return string.Format(
+            I18N.T("mpcheat.cardAdd.successFor", "Added {0} for {1}."),
+            cardId,
+            targetLabel);
     }
 
     private static int ComputeAckTimeoutMs(int peerCount) {
@@ -285,6 +425,9 @@ internal static class MpCheatCardAddCoordinator {
                 pending.Completion.TrySetResult(false);
             PendingByCommandId.Clear();
             ExecutedCommandIds.Clear();
+            foreach (var tcs in ClientAddCompletions.Values)
+                tcs.TrySetResult(I18N.T("mpcheat.cardAdd.cancelled", "Add card cancelled (run ended)."));
+            ClientAddCompletions.Clear();
         }
     }
 

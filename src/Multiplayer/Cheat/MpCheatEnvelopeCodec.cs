@@ -22,14 +22,7 @@ internal static class MpCheatEnvelopeCodec {
         var add = msg.AddCard;
         writer.WriteBool(add != null);
         if (add == null) return;
-        MpCheatPacketIO.WriteBoundedString(writer, add.CardId);
-        writer.WriteULong(add.TargetPlayerNetId);
-        writer.WriteInt(add.Target);
-        writer.WriteInt(add.Duration);
-        writer.WriteInt(add.UpgradeLevels);
-        writer.WriteBool(add.CustomBaseCost.HasValue);
-        writer.WriteInt(add.CustomBaseCost ?? 0);
-        writer.WriteBool(add.UseUpgradePreviewStyle);
+        WriteAddCardPayload(writer, add);
     }
 
     internal static MpCheatCommandMessage ReadCommand(PacketReader reader) {
@@ -39,17 +32,7 @@ internal static class MpCheatEnvelopeCodec {
             CommandId = reader.ReadULong(),
         };
         if (!reader.ReadBool()) return msg;
-        var add = new MpCheatAddCardPayload {
-            CardId = MpCheatPacketIO.ReadBoundedString(reader),
-            TargetPlayerNetId = reader.ReadULong(),
-            Target = reader.ReadInt(),
-            Duration = reader.ReadInt(),
-            UpgradeLevels = reader.ReadInt(),
-        };
-        var hasCost = reader.ReadBool();
-        add.CustomBaseCost = hasCost ? reader.ReadInt() : null;
-        add.UseUpgradePreviewStyle = reader.ReadBool();
-        msg.AddCard = add;
+        msg.AddCard = ReadAddCardPayload(reader);
         return msg;
     }
 
@@ -66,5 +49,56 @@ internal static class MpCheatEnvelopeCodec {
             PeerNetId = reader.ReadULong(),
             Success = reader.ReadBool(),
             Error = MpCheatPacketIO.ReadBoundedString(reader),
+        };
+
+    internal static void WriteAddCardPayload(PacketWriter writer, MpCheatAddCardPayload add) {
+        MpCheatPacketIO.WriteBoundedString(writer, add.CardId);
+        writer.WriteULong(add.TargetPlayerNetId);
+        writer.WriteInt(add.Target);
+        writer.WriteInt(add.Duration);
+        writer.WriteInt(add.UpgradeLevels);
+        writer.WriteBool(add.CustomBaseCost.HasValue);
+        writer.WriteInt(add.CustomBaseCost ?? 0);
+        writer.WriteBool(add.UseUpgradePreviewStyle);
+    }
+
+    internal static MpCheatAddCardPayload ReadAddCardPayload(PacketReader reader) {
+        var add = new MpCheatAddCardPayload {
+            CardId = MpCheatPacketIO.ReadBoundedString(reader),
+            TargetPlayerNetId = reader.ReadULong(),
+            Target = reader.ReadInt(),
+            Duration = reader.ReadInt(),
+            UpgradeLevels = reader.ReadInt(),
+        };
+        var hasCost = reader.ReadBool();
+        add.CustomBaseCost = hasCost ? reader.ReadInt() : null;
+        add.UseUpgradePreviewStyle = reader.ReadBool();
+        return add;
+    }
+
+    internal static void WriteAddCardRequest(PacketWriter writer, MpCheatAddCardClientRequestMessage msg) {
+        writer.WriteULong(msg.ClientRequestId);
+        writer.WriteULong(msg.RequesterNetId);
+        WriteAddCardPayload(writer, msg.Payload);
+    }
+
+    internal static MpCheatAddCardClientRequestMessage ReadAddCardRequest(PacketReader reader) =>
+        new() {
+            ClientRequestId = reader.ReadULong(),
+            RequesterNetId = reader.ReadULong(),
+            Payload = ReadAddCardPayload(reader),
+        };
+
+    internal static void WriteAddCardRequestResult(PacketWriter writer, MpCheatAddCardClientResultMessage msg) {
+        writer.WriteULong(msg.ClientRequestId);
+        writer.WriteBool(msg.Success);
+        MpCheatPacketIO.WriteBoundedString(writer, msg.Message);
+    }
+
+    internal static MpCheatAddCardClientResultMessage ReadAddCardRequestResult(PacketReader reader) =>
+        new() {
+            ClientRequestId = reader.ReadULong(),
+            Success = reader.ReadBool(),
+            Message = MpCheatPacketIO.ReadBoundedString(reader),
         };
 }

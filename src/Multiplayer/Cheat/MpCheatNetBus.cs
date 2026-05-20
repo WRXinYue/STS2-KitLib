@@ -79,6 +79,28 @@ internal static class MpCheatNetBus {
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromAck(ack));
     }
 
+    /// <summary>Client → host: request synced add-card.</summary>
+    public static void ClientSendAddCardRequest(MpCheatAddCardClientRequestMessage request) {
+        if (MpCheatSession.IsHost) return;
+        TryRegisterHandlers();
+        var netService = RunManager.Instance?.NetService;
+        if (netService == null || !CanSendNetMessages(netService)) return;
+
+        SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromAddCardRequest(request));
+        MainFile.Logger.Debug(
+            $"[MpCheat] AddCard request sent to host id={request.ClientRequestId}.");
+    }
+
+    /// <summary>Host → client: add-card request outcome.</summary>
+    public static void HostSendAddCardRequestResult(ulong peerNetId, MpCheatAddCardClientResultMessage result) {
+        if (!MpCheatSession.IsHost || peerNetId == 0) return;
+        TryRegisterHandlers();
+        var netService = RunManager.Instance?.NetService;
+        if (netService is not NetHostGameService host || !host.IsConnected) return;
+
+        host.SendMessage(ZzzMpCheatEnvelopeNetMessage.FromAddCardRequestResult(result), peerNetId);
+    }
+
     private static void SendEnvelope(INetGameService netService, ZzzMpCheatEnvelopeNetMessage envelope) {
         netService.SendMessage(envelope);
     }
@@ -115,6 +137,12 @@ internal static class MpCheatNetBus {
                     break;
                 case MpCheatWireChannel.AddCardAck:
                     MpCheatCardAddCoordinator.OnAckReceived(msg.Ack);
+                    break;
+                case MpCheatWireChannel.AddCardRequest:
+                    MpCheatCardAddCoordinator.OnClientAddCardRequestReceived(msg.AddCardRequest, senderId);
+                    break;
+                case MpCheatWireChannel.AddCardRequestResult:
+                    MpCheatCardAddCoordinator.OnClientAddCardResultReceived(msg.AddCardRequestResult);
                     break;
                 default:
                     MainFile.Logger.Warn($"[MpCheat] Unknown envelope channel: {msg.Channel}");

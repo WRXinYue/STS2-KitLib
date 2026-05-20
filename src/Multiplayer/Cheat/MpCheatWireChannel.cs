@@ -5,4 +5,8 @@ public enum MpCheatWireChannel : byte {
     Config = 0,
     Command = 1,
     AddCardAck = 2,
+    /// <summary>Client → host: request host-authoritative add-card sync.</summary>
+    AddCardRequest = 3,
+    /// <summary>Host → client: outcome of <see cref="AddCardRequest" />.</summary>
+    AddCardRequestResult = 4,
 }
