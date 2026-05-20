@@ -6,6 +6,7 @@ namespace DevMode.UI;
 
 internal static partial class DevPanelUI {
     private const string SettingsRootName = "DevModeSettings";
+    private const string AiRootName = "DevModeAi";
     private const string CheatsRootName = "DevModeCheats";
     private const string SaveLoadRootName = "DevModeSaveLoad";
     private const string SaveLoadMenuHostName = "SaveLoadMenuHost";

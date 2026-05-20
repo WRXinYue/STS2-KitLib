@@ -1,4 +1,5 @@
 using DevMode.Multiplayer.Cheat;
+using DevMode.Multiplayer.SyncBot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
@@ -24,6 +25,7 @@ internal static class MpCheatRunLifecyclePatch {
     [HarmonyPatch(nameof(RunManager.OnEnded))]
     static void OnEnded() {
         MpCheatSync.OnRunEnded();
+        MpCheatSyncBot.OnRunEnded();
         DevModeState.OnRunEnded();
     }
 }

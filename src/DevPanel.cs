@@ -135,6 +135,7 @@ internal static class DevPanel {
         DevPanelRegistry.Register("devmode.events", MdiIcon.CalendarStar, I18N.T("panel.events", "Events"), 600, DevPanelTabGroup.Primary, _ => OpenEvents());
         DevPanelRegistry.Register("devmode.rooms", MdiIcon.MapMarker, I18N.T("panel.rooms", "Rooms"), 650, DevPanelTabGroup.Primary, _ => OpenRooms());
         DevPanelRegistry.Register("devmode.console", MdiIcon.Console, I18N.T("panel.console", "Console"), 700, DevPanelTabGroup.Primary, _ => OpenConsole());
+        DevPanelRegistry.Register("devmode.ai", MdiIcon.PuzzleOutline, I18N.T("panel.ai", "AI Host"), 745, DevPanelTabGroup.Primary, gui => DevPanelUI.ShowAiOverlay(gui, actions));
         DevPanelRegistry.Register("devmode.cheats", MdiIcon.Star, I18N.T("panel.cheats", "Cheats"), 750, DevPanelTabGroup.Primary, gui => DevPanelUI.ShowCheatsOverlay(gui, actions));
         DevPanelRegistry.Register("devmode.enemyIntent", MdiIcon.From("bullseye-arrow"), I18N.T("panel.enemyIntent", "Enemy intents"), 754, DevPanelTabGroup.Primary, _ => OpenEnemyIntent(), kind: DevPanelTabKind.Developer);
         DevPanelRegistry.Register("devmode.combatStats", MdiIcon.From("chart-bar"), I18N.T("panel.combatStats", "Combat Stats"), 756, DevPanelTabGroup.Primary, _ => OpenCombatStats(), kind: DevPanelTabKind.Developer);

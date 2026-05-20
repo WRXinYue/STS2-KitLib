@@ -7,7 +7,6 @@ using DevMode.Panels;
 using DevMode.Presets;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
-using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.UI;
 
@@ -222,15 +221,14 @@ internal static partial class DevPanelUI {
 
             switch (numCols) {
                 case 1:
-                    foreach (var sec in allSections) colA.AddChild(sec);
+                    foreach (var sec in allSections)
+                        colA.AddChild(sec);
                     columns.AddChild(wrapA);
                     break;
 
                 case 2:
-                    // Left: Player + Enemy
                     colA.AddChild(secPlayer);
                     colA.AddChild(secEnemy);
-                    // Right: Inventory + Status + Rewards + Game + Locks
                     colB.AddChild(secInventory);
                     colB.AddChild(secStatus);
                     colB.AddChild(secRewards);
@@ -242,13 +240,10 @@ internal static partial class DevPanelUI {
                     break;
 
                 default: // 3 columns
-                    // Left: Player
                     colA.AddChild(secPlayer);
-                    // Middle: Enemy + Inventory + Status
                     colB.AddChild(secEnemy);
                     colB.AddChild(secInventory);
                     colB.AddChild(secStatus);
-                    // Right: Rewards + Game + Locks
                     colC.AddChild(secRewards);
                     colC.AddChild(secGame);
                     colC.AddChild(secLocks);

@@ -110,6 +110,37 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 - Handler 在 `NRun._Ready` 注册（与 LustTravel2 `ArousalSync` 相同模式）
 - `CheatPatches.cs` — 通过 `MpCheatApplier` 查询标志
 
+---
+
+## DevMode AI托管
+
+从 STS2-AI 迁入 **规则策略**（`SimpleStrategy`，无 LLM/MCP），源码在 `src/AI/`：
+
+- `AiPlayModule` — 轮询 `GameLoop` → `Sts2ActionExecutor`（`CardCmd.AutoPlay`、地图 UI 等）
+- 仅控制 **`LocalContext.GetMe()`** 本机角色
+- 侧栏 **AI托管** 面板（`devmode.ai`，非作弊面板）：开关 + 操作间隔（ms）；设置写入 `settings.json`
+- **SyncBot** 在同面板：仅**主机**联机跑中显示三项开关；客机见 `syncbot.hostOnly` 提示
+- 作弊面板（`devmode.cheats`）仅保留 MpCheat 会话 banner 与传统作弊项
+- **联机**：默认不自动启动；开启后仅托管本机，远端选牌可能卡住（需 SyncBot 或真人）
+
+---
+
+## DevMode SyncBot（无第二进程）
+
+主机开发用：`src/Multiplayer/SyncBot/`
+
+| 能力 | 说明 |
+|------|------|
+| 模拟 MpCheat ACK | `MpCheatNetBus.BroadcastCommand` 后对 run 内非 host 的 NetId 调用 `TryHandleAck` |
+| ACK 等待集合 | SyncBot ON 时 `MpCheatParticipants` 用 **run 内远端玩家**，不要求 `ConnectedPlayerIds` |
+| 远端选牌 | `PlayerChoiceSynchronizer.WaitForRemoteChoice` 前缀 → `ReceiveReplayChoice`（index 0） |
+| 合作结束回合 | `NRun._Process` 每 0.5s 对模拟玩家 `SetReadyToEndTurn` |
+| 幻影玩家（实验） | `SyncBotSpawnPhantomPlayer`：主机 Launch 且仅 1 人时 `AddPlayerDebug` NetId **1001** |
+
+**不能替代**：ENet 双实例、StateDivergence、客机 `ConfigRequest` / `AddCardRequest` 回包路径。
+
+**推荐流程（测 ACK）**：`multiplayer test` 建房 → 第二实例 Join+Ready 进跑 → 关客机进程 → 主机开 SyncBot + 联机作弊 → 主机加牌/改牌。
+
 ### 双人回归测试清单
 
 - [ ] 双方 `联机作弊：ON` + DevMode，能进大厅并进跑
@@ -133,6 +164,15 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 - [ ] 药栏满时加药：prepare ACK 失败，有明确错误文案
 - [ ] 非战斗时点加遭遇：失败且不 execute
 - [ ] 单人模式：遗物/药水/战斗加怪行为与改前一致（不走 coordinator）
+
+### AI托管 / SyncBot（开发辅助）
+
+- [ ] 侧栏有 **AI托管**（`devmode.ai`），作弊面板无 AI/SyncBot 区块
+- [ ] 单机开 AI托管：能自动打牌、选图、领奖
+- [ ] 联机开 AI托管：仅本机角色动；日志有 `[AiHost]`，无 StateDivergence（本机路径）
+- [ ] 双人进跑后关客机、主机开 SyncBot：主机加牌日志 `[SyncBot] Injected … ACK` 且 `AddCard execute` 无 8s 超时
+- [ ] SyncBot + 合作战斗 2 人：不卡在「等待全员结束回合」
+- [ ] * 标星项仍须 ENet 双开真客户端（SyncBot 不验 checksum 双端一致）
 
 ---
 

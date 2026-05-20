@@ -1,4 +1,5 @@
 using System;
+using DevMode.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
@@ -75,6 +76,7 @@ internal static class MpCheatNetBus {
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromCommand(message));
         MainFile.Logger.Info($"[MpCheat] Command broadcast kind={message.Kind} id={message.CommandId}.");
+        MpCheatSyncBot.InjectPrepareAcks(message);
     }
 
     public static void SendAddCardAck(MpCheatAddCardAckMessage ack) {

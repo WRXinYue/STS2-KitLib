@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using DevMode.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Multiplayer.Cheat;
@@ -20,6 +21,9 @@ internal static class MpCheatParticipants {
             .Select(p => p.NetId)
             .Where(id => id != hostNetId)
             .ToHashSet();
+
+        if (MpCheatSyncBot.IsEnabled)
+            return remotePlayers;
 
         var connected = run.RunLobby?.ConnectedPlayerIds;
         if (connected == null || connected.Count == 0)

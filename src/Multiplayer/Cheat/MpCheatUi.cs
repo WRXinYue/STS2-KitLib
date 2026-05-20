@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using DevMode.Multiplayer.SyncBot;
 using DevMode.Settings;
 using DevMode.UI;
 using Godot;
@@ -47,9 +48,12 @@ internal static class MpCheatUi {
         }
 
         if (MpCheatSession.CanUseMultiplayerCheats) {
-            label.Text = MpCheatSession.IsHost
+            var baseText = MpCheatSession.IsHost
                 ? I18N.T("mpcheat.host.active", "Multiplayer cheat: host — changes sync to all players.")
                 : I18N.T("mpcheat.client.active", "Multiplayer cheat: client — cheat toggles sync via host.");
+            if (MpCheatSession.IsHost && MpCheatSyncBot.IsEnabled)
+                baseText += " " + I18N.T("syncbot.banner", "[SyncBot: simulated remote ACK/choices]");
+            label.Text = baseText;
             label.AddThemeColorOverride("font_color", DevModeTheme.Accent);
         }
         else {

@@ -13,6 +13,24 @@
   "devmenu.mpCheat.on": "联机作弊：开启",
   "devmenu.mpCheat.off": "联机作弊：关闭",
 
+  "autoplay.section": "AI托管",
+  "autoplay.enabled": "AI托管",
+  "autoplay.enabled.desc": "规则策略替你操作本机角色（地图、战斗、奖励）。",
+  "autoplay.delay": "操作间隔（毫秒）",
+  "autoplay.delay.desc": "两次托管操作之间的等待时间",
+  "autoplay.mpWarn": "联机：仅托管本机角色；远端 ACK 请开 SyncBot。",
+
+  "syncbot.section": "SyncBot（开发）",
+  "syncbot.enabled": "模拟远端玩家",
+  "syncbot.enabled.desc": "在本机注入 MpCheat ACK 与默认远端选牌（非真实客户端）。",
+  "syncbot.autoEndTurn": "远端自动结束回合",
+  "syncbot.autoEndTurn.desc": "合作战斗中为非本机玩家自动准备结束回合",
+  "syncbot.phantom": "生成幻影玩家",
+  "syncbot.phantom.desc": "实验：下次主机开跑时添加 NetId 1001（仅 1 人局）",
+  "syncbot.hint": "不能替代 ENet 双开与 StateDivergence 校验。",
+  "syncbot.hostOnly": "SyncBot 仅主机可用；请以主机身份开房或双开客户端。",
+  "syncbot.banner": "[SyncBot：模拟远端 ACK/选牌]",
+
   "mpcheat.optIn.hint": "在开发者模式菜单中开启「联机作弊」以在合作模式同步作弊（全员需安装 DevMode）。",
   "mpcheat.host.active": "联机作弊：主机 — 玩家向仅影响对应角色；敌人向全队同步。",
   "mpcheat.client.active": "联机作弊：客机 — 玩家向开关仅影响本机角色，经主机同步。",
@@ -647,6 +665,7 @@
   "restart.cancel": "取消",
   "restart.go": "重开",
 
+  "panel.ai": "AI托管",
   "panel.cheats": "作弊",
   "panel.combatStats": "战斗统计",
   "panel.enemyIntent": "敌方意图",

@@ -1,3 +1,4 @@
+using DevMode.AI;
 using DevMode.CombatStats;
 using DevMode.Multiplayer.Cheat;
 using DevMode.EnemyIntent;
@@ -33,6 +34,7 @@ public class MainFile {
         ScriptBridge.Start();
 
         FrameworkBridge.Initialize();
+        AiPlayInitializer.Initialize();
         MpCheatSync.Initialize();
 
         CombatStatsTracker.Initialize();

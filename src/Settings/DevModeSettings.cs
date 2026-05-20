@@ -36,6 +36,21 @@ public sealed class DevModeSettings {
     /// <summary>Opt in to synchronized multiplayer cheat sessions (requires DevMode on all peers).</summary>
     public bool MultiplayerCheatOptIn { get; set; }
 
+    /// <summary>AI托管：规则策略代打（STS2-AI SimpleStrategy）。</summary>
+    public bool AutoPlayEnabled { get; set; }
+
+    /// <summary>AI托管操作间隔（毫秒）。</summary>
+    public int AutoPlayDelayMs { get; set; } = 800;
+
+    /// <summary>Host-only: simulate remote MpCheat ACKs without a second game instance.</summary>
+    public bool SyncBotEnabled { get; set; }
+
+    /// <summary>Experimental: spawn a second run player on host launch (NetId 1001).</summary>
+    public bool SyncBotSpawnPhantomPlayer { get; set; }
+
+    /// <summary>Auto ready-to-end-turn for non-local players when SyncBot is on.</summary>
+    public bool SyncBotAutoEndTurn { get; set; } = true;
+
     /// <summary>Whether the draggable top-right multiplayer combat score panel is shown.</summary>
     public bool CombatStatsMpOverlayEnabled { get; set; } = true;
 
