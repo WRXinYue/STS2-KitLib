@@ -16,7 +16,7 @@ namespace DevMode.UI;
 /// Encounter picker — spliced to the DevMode rail (full-width), matching card / relic browser layout.
 /// Supports filtering by room type, search, and creature-visual preview.
 /// </summary>
-internal static class EnemySelectUI {
+internal static partial class EnemySelectUI {
     private const string RootName = "DevModeEnemySelect";
 
     // Cache of monsters whose visuals failed to load — avoid retrying
@@ -118,15 +118,73 @@ internal static class EnemySelectUI {
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
             globalUi, RootName, 0f, () => Hide(globalUi), contentSeparation: 10, backdropWhenFullWidth: true);
 
-        // ── Title ──
-        var titleText = filter switch {
-            RoomType.Monster => I18N.T("enemy.selectNormal", "Select Normal Combat"),
-            RoomType.Elite => I18N.T("enemy.selectElite", "Select Elite Combat"),
-            RoomType.Boss => I18N.T("enemy.selectBoss", "Select Boss Combat"),
-            _ => I18N.T("enemy.selectAny", "Select Combat Encounter")
-        };
-        vbox.AddChild(DevPanelUI.CreatePanelTitle(titleText));
-        vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
+        BuildEncounterPicker(vbox, globalUi, filter, onSelected, new EncounterPickerOptions {
+            CloseOnSelect = true,
+            ShowTitle = true,
+            OnFilterChanged = nextFilter => {
+                Hide(globalUi);
+                Show(globalUi, nextFilter, onSelected);
+            },
+        });
+
+        ((Node)globalUi).AddChild(root);
+        GrabEncounterSearchFocus(vbox);
+    }
+
+    private static void GrabEncounterSearchFocus(VBoxContainer vbox) {
+        foreach (var child in vbox.GetChildren()) {
+            if (child is not Control control)
+                continue;
+            if (TryGrabSearchFocus(control))
+                return;
+        }
+    }
+
+    private static bool TryGrabSearchFocus(Control control) {
+        if (control is LineEdit search) {
+            search.GrabFocus();
+            return true;
+        }
+
+        foreach (var child in control.GetChildren()) {
+            if (child is Control nested && TryGrabSearchFocus(nested))
+                return true;
+        }
+
+        return false;
+    }
+
+    internal sealed class EncounterPickerOptions {
+        public bool CloseOnSelect { get; init; } = true;
+        public bool ShowTitle { get; init; } = true;
+        public Action<RoomType?>? OnFilterChanged { get; init; }
+    }
+
+    internal static void BuildEncounterPicker(
+        VBoxContainer vbox,
+        NGlobalUi globalUi,
+        RoomType? filter,
+        Action<EncounterModel> onSelected,
+        EncounterPickerOptions options) {
+        var encounters = EnemyActions.GetAllEncounters(filter);
+        if (encounters.Count == 0) {
+            vbox.AddChild(new Label {
+                Text = I18N.T("enemy.emptyEncounters", "No encounters found."),
+                HorizontalAlignment = HorizontalAlignment.Center,
+            });
+            return;
+        }
+
+        if (options.ShowTitle) {
+            var titleText = filter switch {
+                RoomType.Monster => I18N.T("enemy.selectNormal", "Select Normal Combat"),
+                RoomType.Elite => I18N.T("enemy.selectElite", "Select Elite Combat"),
+                RoomType.Boss => I18N.T("enemy.selectBoss", "Select Boss Combat"),
+                _ => I18N.T("enemy.selectAny", "Select Combat Encounter")
+            };
+            vbox.AddChild(DevPanelUI.CreatePanelTitle(titleText));
+            vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
+        }
 
         // ── Filter chips ──
         var filterBar = new HBoxContainer();
@@ -144,9 +202,14 @@ internal static class EnemySelectUI {
             bool active = filter == filters[idx];
             var chip = DevPanelUI.CreateFilterChip(filterNames[idx], active);
             chip.Toggled += on => {
-                if (!on) return;
-                Hide(globalUi);
-                Show(globalUi, filters[idx], onSelected);
+                if (!on || filter == filters[idx])
+                    return;
+                if (options.OnFilterChanged != null)
+                    options.OnFilterChanged(filters[idx]);
+                else {
+                    Hide(globalUi);
+                    Show(globalUi, filters[idx], onSelected);
+                }
             };
             filterBar.AddChild(chip);
         }
@@ -369,7 +432,8 @@ internal static class EnemySelectUI {
                 if (ev is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true }) {
                     ClearViewport(subViewport, activeVisuals);
                     onSelected(captured);
-                    Hide(globalUi);
+                    if (options.CloseOnSelect)
+                        Hide(globalUi);
                 }
             };
 
@@ -383,12 +447,11 @@ internal static class EnemySelectUI {
             foreach (var (cell, key) in cells)
                 cell.Visible = string.IsNullOrEmpty(query) || key.Contains(query);
         };
-
-        ((Node)globalUi).AddChild(root);
-        searchBox.GrabFocus();
     }
 
     public static void Hide(NGlobalUi globalUi) {
+        ((Node)globalUi).GetNodeOrNull<Control>($"{RootName}EncounterOverlay")?.QueueFree();
+
         var node = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
         if (node != null) {
             ((Node)globalUi).RemoveChild(node);
@@ -404,8 +467,19 @@ internal static class EnemySelectUI {
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
             globalUi, RootName, 600f, () => Hide(globalUi), contentSeparation: 10);
 
-        vbox.AddChild(DevPanelUI.CreatePanelTitle(I18N.T("enemy.byFloorTitle", "Customize Enemies by Floor")));
-        vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
+        BuildFloorPicker(vbox, globalUi, embedded: false);
+        ((Node)globalUi).AddChild(root);
+    }
+
+    internal static void BuildFloorPicker(
+        VBoxContainer vbox,
+        NGlobalUi globalUi,
+        bool embedded,
+        Action<string>? onStatusChanged = null) {
+        if (!embedded) {
+            vbox.AddChild(DevPanelUI.CreatePanelTitle(I18N.T("enemy.byFloorTitle", "Customize Enemies by Floor")));
+            vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
+        }
 
         // Current floor overrides list
         var overridesScroll = new ScrollContainer {
@@ -481,6 +555,14 @@ internal static class EnemySelectUI {
         };
         pickBtn.Pressed += () => {
             int floor = (int)floorInput.Value;
+            if (embedded) {
+                ShowEncounterOverlay(globalUi, null, enc => {
+                    EnemyActions.SetFloorOverride(floor, enc);
+                    RefreshOverridesList();
+                });
+                return;
+            }
+
             Hide(globalUi);
             Show(globalUi, null, enc => {
                 EnemyActions.SetFloorOverride(floor, enc);
@@ -490,34 +572,104 @@ internal static class EnemySelectUI {
         addBar.AddChild(pickBtn);
         vbox.AddChild(addBar);
 
-        // Close + Clear buttons
+        // Clear buttons
         var bottomBar = new HBoxContainer();
         bottomBar.AddThemeConstantOverride("separation", 8);
 
-        var clearBtn = new Button {
-            Text = I18N.T("enemy.clearAll", "Clear All"),
+        var clearFloorsBtn = new Button {
+            Text = I18N.T("enemy.clearFloors", "Clear floor overrides"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             CustomMinimumSize = new Vector2(0, 36),
             FocusMode = Control.FocusModeEnum.None
         };
-        clearBtn.Pressed += () => {
+        clearFloorsBtn.Pressed += () => {
             DevModeState.FloorOverrides.Clear();
             RefreshOverridesList();
+            onStatusChanged?.Invoke(I18N.T(
+                "enemy.byFloorHint",
+                "Floor overrides apply on top of global / per-type settings."));
         };
-        bottomBar.AddChild(clearBtn);
 
-        var closeBtn = new Button {
-            Text = I18N.T("enemy.close", "Close"),
+        var clearAllBtn = new Button {
+            Text = I18N.T("enemy.clearAllOverrides", "Clear all overrides"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             CustomMinimumSize = new Vector2(0, 36),
             FocusMode = Control.FocusModeEnum.None
         };
-        closeBtn.Pressed += () => Hide(globalUi);
-        bottomBar.AddChild(closeBtn);
+        clearAllBtn.Pressed += () => {
+            DevModeState.ClearEnemyOverrides();
+            RefreshOverridesList();
+            onStatusChanged?.Invoke(I18N.T("enemy.clearedOverrides", "All enemy overrides cleared."));
+        };
 
+        bottomBar.AddChild(clearFloorsBtn);
+        bottomBar.AddChild(clearAllBtn);
         vbox.AddChild(bottomBar);
+    }
 
-        ((Node)globalUi).AddChild(root);
+    private static void ShowEncounterOverlay(NGlobalUi globalUi, RoomType? filter, Action<EncounterModel> onSelected) {
+        var overlayName = $"{RootName}EncounterOverlay";
+        ((Node)globalUi).GetNodeOrNull<Control>(overlayName)?.QueueFree();
+
+        var backdrop = new ColorRect {
+            Name = overlayName,
+            Color = new Color(0f, 0f, 0f, 0.45f),
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            AnchorRight = 1,
+            AnchorBottom = 1,
+            ZIndex = 1300,
+        };
+        backdrop.GuiInput += ev => {
+            if (ev is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                backdrop.QueueFree();
+        };
+
+        var panel = new PanelContainer {
+            AnchorLeft = 0.5f,
+            AnchorRight = 0.5f,
+            AnchorTop = 0.5f,
+            AnchorBottom = 0.5f,
+            OffsetLeft = -420,
+            OffsetRight = 420,
+            OffsetTop = -280,
+            OffsetBottom = 280,
+        };
+        panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
+            BgColor = DevModeTheme.PanelBg,
+            BorderColor = DevModeTheme.PanelBorder,
+            BorderWidthLeft = 1,
+            BorderWidthRight = 1,
+            BorderWidthTop = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 10,
+            CornerRadiusTopRight = 10,
+            CornerRadiusBottomLeft = 10,
+            CornerRadiusBottomRight = 10,
+            ContentMarginLeft = 12,
+            ContentMarginRight = 12,
+            ContentMarginTop = 12,
+            ContentMarginBottom = 12,
+        });
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 8);
+        panel.AddChild(vbox);
+        backdrop.AddChild(panel);
+
+        BuildEncounterPicker(vbox, globalUi, filter, enc => {
+            onSelected(enc);
+            backdrop.QueueFree();
+        }, new EncounterPickerOptions {
+            CloseOnSelect = true,
+            ShowTitle = false,
+            OnFilterChanged = nextFilter => {
+                backdrop.QueueFree();
+                ShowEncounterOverlay(globalUi, nextFilter, onSelected);
+            },
+        });
+
+        ((Node)globalUi).AddChild(backdrop);
+        GrabEncounterSearchFocus(vbox);
     }
 
     // ── Combat mode: pick enemies to kill ──

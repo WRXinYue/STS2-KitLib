@@ -51,29 +51,6 @@ internal static class HookConfigUI {
         title.AddThemeFontSizeOverride("font_size", 14);
         title.AddThemeColorOverride("font_color", ColAccent);
         titleRow.AddChild(title);
-
-        titleRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-
-        var addBtn = new Button {
-            Text = I18N.T("hook.add", "+ New Rule"),
-            FocusMode = Control.FocusModeEnum.None,
-        };
-        addBtn.AddThemeFontSizeOverride("font_size", 12);
-        addBtn.AddThemeColorOverride("font_color", ColAccent);
-        addBtn.Pressed += () => {
-            var entry = new HookEntry {
-                Name = I18N.T("hook.newRule", "New Rule"),
-                Trigger = TriggerType.CombatStart,
-                Actions = [new HookAction { Type = ActionType.ApplyPower }],
-            };
-            SettingsStore.Current.Hooks.Add(entry);
-            SettingsStore.Save();
-            s.Selected = entry;
-            s.SelectedIdx = SettingsStore.Current.Hooks.Count - 1;
-            RebuildList(s);
-            ShowDetail(s);
-        };
-        titleRow.AddChild(addBtn);
         vbox.AddChild(titleRow);
 
         vbox.AddChild(MakeDivider());
@@ -83,15 +60,31 @@ internal static class HookConfigUI {
         body.AddThemeConstantOverride("separation", 12);
 
         // Left: rule list
-        var listScroll = new ScrollContainer {
+        var leftColumn = new VBoxContainer {
             CustomMinimumSize = new Vector2(260, 0),
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        leftColumn.AddThemeConstantOverride("separation", 6);
+
+        var listScroll = new ScrollContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
         s.ListBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         s.ListBox.AddThemeConstantOverride("separation", 4);
         listScroll.AddChild(s.ListBox);
-        body.AddChild(listScroll);
+        leftColumn.AddChild(listScroll);
+
+        var addRuleBtn = new Button {
+            Text = I18N.T("hook.add", "+ New Rule"),
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(0, 32),
+        };
+        addRuleBtn.AddThemeFontSizeOverride("font_size", 12);
+        addRuleBtn.AddThemeColorOverride("font_color", ColAccent);
+        addRuleBtn.Pressed += () => CreateNewRule(s);
+        leftColumn.AddChild(addRuleBtn);
+        body.AddChild(leftColumn);
 
         // Right: detail editor
         var detailScroll = new ScrollContainer {
@@ -188,12 +181,34 @@ internal static class HookConfigUI {
         var hint = new Label {
             Text = I18N.T("hook.selectHint", "Select a rule or create a new one"),
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         hint.AddThemeFontSizeOverride("font_size", 12);
         hint.AddThemeColorOverride("font_color", ColSubtle);
         s.DetailBox.AddChild(hint);
+
+        var addBtn = new Button {
+            Text = I18N.T("hook.add", "+ New Rule"),
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(0, 34),
+        };
+        addBtn.AddThemeFontSizeOverride("font_size", 12);
+        addBtn.AddThemeColorOverride("font_color", ColAccent);
+        addBtn.Pressed += () => CreateNewRule(s);
+        s.DetailBox.AddChild(addBtn);
+    }
+
+    private static void CreateNewRule(State s) {
+        var entry = new HookEntry {
+            Name = I18N.T("hook.newRule", "New Rule"),
+            Trigger = TriggerType.CombatStart,
+            Actions = [new HookAction { Type = ActionType.ApplyPower }],
+        };
+        SettingsStore.Current.Hooks.Add(entry);
+        SettingsStore.Save();
+        s.Selected = entry;
+        s.SelectedIdx = SettingsStore.Current.Hooks.Count - 1;
+        RebuildList(s);
+        ShowDetail(s);
     }
 
     private static void ShowDetail(State s) {

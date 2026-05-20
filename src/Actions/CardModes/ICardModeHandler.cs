@@ -15,17 +15,11 @@ namespace DevMode.Actions.CardModes;
 internal interface ICardModeHandler {
     string Id { get; }
 
-    // ── TopBar configuration ──
-
     bool ShowTargets { get; }
     bool ShowDuration { get; }
     bool RefreshOnTargetChange { get; }
 
-    // ── Availability ──
-
     bool HasRelevantCards(Player player, CardTarget target);
-
-    // ── Lifecycle ──
 
     void Execute(NGlobalUi globalUi, ActionSession session, RunState state, Player player);
 
@@ -34,26 +28,4 @@ internal interface ICardModeHandler {
                                 RunState state, Player player);
 
     void OnLibraryClosed(NGlobalUi globalUi);
-}
-
-/// <summary>
-/// Serialized configuration passed from handler to TopBar so the TopBar
-/// never needs to know about individual CardMode values.
-/// </summary>
-internal readonly struct CardTopBarConfig {
-    public readonly bool ShowTargets;
-    public readonly bool ShowDuration;
-    public readonly bool RefreshOnTargetChange;
-    public readonly Func<CardTarget, bool>? TargetAvailable;
-
-    public CardTopBarConfig(ICardModeHandler handler, Player? player) {
-        ShowTargets = handler.ShowTargets;
-        ShowDuration = handler.ShowDuration;
-        RefreshOnTargetChange = handler.RefreshOnTargetChange;
-        TargetAvailable = ShowTargets && player != null
-            ? target => handler.HasRelevantCards(player, target)
-            : null;
-    }
-
-    public static readonly CardTopBarConfig None = default;
 }

@@ -11,9 +11,8 @@ namespace DevMode.UI;
 
 internal static partial class DevPanelUI {
     internal const string RailRootName = "DevModeRailRoot";
-    internal const string TopBarRootName = "DevModeTopBar";
+    private const string LegacyTopBarName = "DevModeTopBar";
     private const string RootName = RailRootName;
-    private const string TopBarName = TopBarRootName;
     private const string OverlayName = "DevModeOverlay";
     private const float RailW = 52f;
     private const float IconBtnSize = 36f;
@@ -382,12 +381,12 @@ internal static partial class DevPanelUI {
         _moveRailIndicator = null;
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
         DetachContextPane(globalUi);
-        RemoveTopBar(globalUi);
+        ((Node)globalUi).GetNodeOrNull<Control>(LegacyTopBarName)?.QueueFree();
         _onRefreshPanel = null;
     }
 
     // ──────── Close all known overlays (internal + external UIs) ────────
-    private static readonly HashSet<string> _keepNodes = new() { RootName, TopBarName, ContextPaneRootName };
+    private static readonly HashSet<string> _keepNodes = new() { RootName, ContextPaneRootName };
 
     /// <summary>
     /// Close the internal overlay (cheats/save/ai) and remove all DevMode external
