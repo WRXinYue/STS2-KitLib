@@ -1,0 +1,89 @@
+using System;
+using System.Collections.Generic;
+using DevMode.Actions;
+using DevMode.Icons;
+using Godot;
+using MegaCrit.Sts2.Core.Combat;
+
+namespace DevMode.UI;
+
+internal readonly record struct ContextRailAction(
+    MdiIcon Icon,
+    string Tooltip,
+    Action OnClick,
+    Color? Tint = null);
+
+internal abstract class CombatContextSidebarBase : IDevPanelSidebarProvider {
+    private readonly VBoxContainer _root;
+    private readonly VBoxContainer _actions;
+    private readonly Control _divider;
+    private readonly VBoxContainer _dynamic;
+    private bool _hasContent;
+
+    protected CombatContextSidebarBase(string rootName) {
+        _root = new VBoxContainer {
+            Name = rootName,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        _root.AddThemeConstantOverride("separation", 4);
+        _root.Alignment = BoxContainer.AlignmentMode.Center;
+
+        _actions = new VBoxContainer();
+        _actions.AddThemeConstantOverride("separation", 4);
+        _actions.Alignment = BoxContainer.AlignmentMode.Center;
+
+        _divider = ContextRailWidgets.CreateRailDivider();
+        _divider.Visible = false;
+
+        _dynamic = new VBoxContainer();
+        _dynamic.AddThemeConstantOverride("separation", 4);
+        _dynamic.Alignment = BoxContainer.AlignmentMode.Center;
+
+        _root.AddChild(_actions);
+        _root.AddChild(_divider);
+        _root.AddChild(_dynamic);
+    }
+
+    public Control Root => _root;
+
+    public abstract string Title { get; }
+
+    public abstract string Hint { get; }
+
+    public bool HasContent => _hasContent;
+
+    protected static bool IsCombatVisible =>
+        DevModeState.IsActive
+        && CombatManager.Instance?.IsInProgress == true
+        && CombatEnemyActions.GetCombatState() != null;
+
+    public void Refresh() {
+        ContextRailWidgets.ClearChildren(_actions);
+        ContextRailWidgets.ClearChildren(_dynamic);
+        _divider.Visible = false;
+
+        if (!IsCombatVisible) {
+            _hasContent = false;
+            return;
+        }
+
+        _hasContent = true;
+        RebuildFixedActions(_actions);
+        RebuildDynamicActions(_dynamic);
+        _divider.Visible = _dynamic.GetChildCount() > 0 && _actions.GetChildCount() > 0;
+    }
+
+    protected abstract void RebuildFixedActions(VBoxContainer host);
+
+    protected abstract void RebuildDynamicActions(VBoxContainer host);
+
+    protected static void AddActions(VBoxContainer host, IEnumerable<ContextRailAction> actions) {
+        foreach (var action in actions)
+            host.AddChild(ContextRailWidgets.CreateContextIconButton(
+                action.Icon,
+                action.Tooltip,
+                action.OnClick,
+                action.Tint));
+    }
+}

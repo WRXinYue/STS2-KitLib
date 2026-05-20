@@ -173,6 +173,7 @@
   "enemy.mapVanillaEncounter": "使用 Act 默认遭遇池。",
   "enemy.combatSidebar.title": "战斗",
   "enemy.combatSidebar.hint": "在当前战斗中添加或移除敌人。",
+  "enemy.combatSidebar.addMenu": "添加敌人到战斗",
   "enemy.combatSidebar.addEncounter": "添加遭遇到战斗",
   "enemy.combatSidebar.addMonster": "添加怪物到战斗",
   "enemy.combatSidebar.killAll": "击杀全部敌人",

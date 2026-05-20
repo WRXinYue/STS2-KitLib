@@ -173,6 +173,7 @@
   "enemy.mapVanillaEncounter": "Using the act's default encounter pool.",
   "enemy.combatSidebar.title": "Combat",
   "enemy.combatSidebar.hint": "Add or remove enemies in the current fight.",
+  "enemy.combatSidebar.addMenu": "Add enemies to combat",
   "enemy.combatSidebar.addEncounter": "Add encounter to combat",
   "enemy.combatSidebar.addMonster": "Add monster to combat",
   "enemy.combatSidebar.killAll": "Kill all enemies",

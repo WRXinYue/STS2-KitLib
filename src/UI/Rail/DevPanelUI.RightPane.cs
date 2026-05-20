@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DevMode.CombatStats;
 using DevMode.EnemyIntent;
 using Godot;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace DevMode.UI;
@@ -122,6 +123,29 @@ internal static partial class DevPanelUI {
         _contextProviders[id] = provider;
         if (_contextHost != null)
             _contextHost.Register(id, provider);
+    }
+
+    internal static void EnsureContextProvider<T>(
+        ref DevPanelSidebarHost? cachedHost,
+        DevPanelSidebarHost host,
+        ref T? panel,
+        string id,
+        Func<T> factory) where T : class, IDevPanelSidebarProvider {
+        if (cachedHost == host && panel != null)
+            return;
+
+        cachedHost = host;
+        panel = factory();
+        RegisterContextProvider(id, panel);
+    }
+
+    internal static void RunCombatAction(Func<System.Threading.Tasks.Task> action) {
+        TaskHelper.RunSafely(WrapCombatAction(action));
+    }
+
+    private static async System.Threading.Tasks.Task WrapCombatAction(Func<System.Threading.Tasks.Task> action) {
+        await action();
+        RefreshContextPane();
     }
 
     internal static void SetDefaultContextIds(params string[] ids) {

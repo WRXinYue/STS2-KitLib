@@ -280,34 +280,8 @@ internal static partial class DevPanelUI {
 
     // ─────────────────────────────────────────────────────────────────────────
 
-    private static Button CreateRailIcon(MdiIcon icon, string tooltip) {
-        var btn = new Button {
-            CustomMinimumSize = new Vector2(IconBtnSize, IconBtnSize),
-            FocusMode = Control.FocusModeEnum.None,
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            TooltipText = tooltip,
-            IconAlignment = HorizontalAlignment.Center,
-            Icon = icon.Texture(20, ColIconNormal)
-        };
-
-        var flat = new StyleBoxFlat {
-            BgColor = Colors.Transparent,
-            CornerRadiusTopLeft = 8,
-            CornerRadiusTopRight = 8,
-            CornerRadiusBottomLeft = 8,
-            CornerRadiusBottomRight = 8,
-            ContentMarginLeft = 6,
-            ContentMarginRight = 6,
-            ContentMarginTop = 6,
-            ContentMarginBottom = 6
-        };
-        btn.AddThemeStyleboxOverride("normal", flat);
-        btn.AddThemeStyleboxOverride("hover", flat);
-        btn.AddThemeStyleboxOverride("pressed", flat);
-        btn.AddThemeStyleboxOverride("focus", flat);
-
-        return btn;
-    }
+    private static Button CreateRailIcon(MdiIcon icon, string tooltip) =>
+        ContextRailWidgets.CreateContextIconButton(icon, tooltip, iconSize: 20);
 
     private static Button CreateToggleButton(string text) {
         return new Button {

@@ -14,12 +14,12 @@ internal static partial class EnemyIntentUI {
     internal static bool IsPanelOpen => _panelOpen;
 
     internal static void EnsureGameContextPane(DevPanelSidebarHost host) {
-        if (_gameHost == host && _nextTurnSidebar != null)
-            return;
-
-        _gameHost = host;
-        _nextTurnSidebar = new NextTurnSidebarPanel();
-        DevPanelUI.RegisterContextProvider(PanelContextId, _nextTurnSidebar);
+        DevPanelUI.EnsureContextProvider(
+            ref _gameHost,
+            host,
+            ref _nextTurnSidebar,
+            PanelContextId,
+            () => new NextTurnSidebarPanel());
     }
 
     internal static void RefreshDefaultContext() {
@@ -88,9 +88,6 @@ internal static partial class EnemyIntentUI {
             _hasContent = true;
         }
 
-        private void Clear() {
-            foreach (var child in _list.GetChildren())
-                child.QueueFree();
-        }
+        private void Clear() => ContextRailWidgets.ClearChildren(_list);
     }
 }
