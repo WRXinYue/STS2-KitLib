@@ -1,3 +1,4 @@
+using DevMode;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -25,6 +26,13 @@ public static class MpCheatSession {
 
     public static ulong LocalNetId =>
         RunManager.Instance?.NetService?.NetId ?? 0;
+
+    /// <summary>Net id for PerPlayer config keys — prefers run <see cref="Player.NetId"/> over net service.</summary>
+    public static ulong ResolveLocalPlayerNetId() {
+        if (RunContext.TryGetRunAndPlayer(out _, out var player) && player.NetId != 0)
+            return player.NetId;
+        return LocalNetId;
+    }
 
     public static bool CanUseMultiplayerCheats =>
         InMultiplayerRun && SessionArmed && MpCheatState.IsActive;

@@ -10,6 +10,7 @@ internal static class MpCheatNRunReadyPatch {
     static void Postfix() {
         if (!MpCheatSession.LocalOptIn) return;
         MpCheatNetBus.TryRegisterHandlers();
+        MpCheatSync.TryPublishInitialHostConfig("nrun_ready");
     }
 }
 

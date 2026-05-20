@@ -91,7 +91,7 @@ public sealed class MpCheatConfig {
 
     /// <summary>Apply synced snapshot to local DevMode UI (MP: only this machine's player flags).</summary>
     public void ApplyToLocalDevModeState(ulong localNetId) {
-        if (localNetId != 0 && PerPlayer.TryGetValue(localNetId, out var per))
+        if (TryGetPlayerFlags(localNetId, out var per))
             per.ApplyToDevMode();
         else
             new MpCheatPlayerFlags().ApplyToDevMode();
@@ -99,6 +99,28 @@ public sealed class MpCheatConfig {
         GlobalEnemy.ApplyToDevMode();
         GlobalGameplay.ApplyToDevMode();
         GlobalMap.ApplyToDevMode();
+    }
+
+    /// <summary>Move legacy PerPlayer[0] to the real local net id after run start.</summary>
+    public void NormalizePerPlayerKeys(ulong localNetId) {
+        if (localNetId == 0) return;
+        if (PerPlayer.TryGetValue(0, out var legacy) && !PerPlayer.ContainsKey(localNetId))
+            PerPlayer[localNetId] = legacy.Clone();
+        if (localNetId != 0)
+            PerPlayer.Remove(0);
+    }
+
+    public bool TryGetPlayerFlags(ulong netId, out MpCheatPlayerFlags flags) {
+        if (netId != 0 && PerPlayer.TryGetValue(netId, out var per)) {
+            flags = per;
+            return true;
+        }
+        if (netId != 0 && PerPlayer.TryGetValue(0, out var legacy)) {
+            flags = legacy;
+            return true;
+        }
+        flags = new MpCheatPlayerFlags();
+        return false;
     }
 
     private static bool HasAnyPlayerFlag(MpCheatPlayerFlags flags) =>

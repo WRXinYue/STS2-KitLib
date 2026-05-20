@@ -87,9 +87,7 @@ public static class MpCheatApplier {
         if (!MpCheatSession.InMultiplayerRun)
             return MpCheatPlayerFlags.FromDevMode();
 
-        var cfg = MpCheatState.Config;
-        if (cfg.PerPlayer.TryGetValue(netId, out var per))
-            return per;
-        return new MpCheatPlayerFlags();
+        MpCheatState.Config.TryGetPlayerFlags(netId, out var flags);
+        return flags;
     }
 }

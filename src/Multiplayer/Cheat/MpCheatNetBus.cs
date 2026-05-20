@@ -20,14 +20,16 @@ internal static class MpCheatNetBus {
         var netService = RunManager.Instance?.NetService;
         if (netService == null) return;
         if (_registeredService == (object)netService) {
-            TryFlushPendingHostPublish();
-            return;
-        }
+        TryFlushPendingHostPublish();
+        MpCheatSync.TryPublishInitialHostConfig("handlers_ready");
+        return;
+    }
 
-        netService.RegisterMessageHandler<ZzzMpCheatEnvelopeNetMessage>(OnEnvelopeReceived);
+    netService.RegisterMessageHandler<ZzzMpCheatEnvelopeNetMessage>(OnEnvelopeReceived);
         _registeredService = netService;
         MainFile.Logger.Info("[MpCheat] NetMessage handlers registered (envelope).");
         TryFlushPendingHostPublish();
+        MpCheatSync.TryPublishInitialHostConfig("handlers_ready");
     }
 
     public static void Reset() {

@@ -25,7 +25,7 @@ internal static class MpCheatConfigCoordinator {
                 "Multiplayer cheat inactive: {0}",
                 MpCheatSession.LastBlockReason ?? "unknown");
 
-        var localNetId = MpCheatSession.LocalNetId;
+        var localNetId = MpCheatSession.ResolveLocalPlayerNetId();
         if (localNetId == 0)
             return I18N.T("mpcheat.config.noNetId", "No local net id for config sync.");
 
