@@ -7,7 +7,7 @@ namespace DevMode.Multiplayer.Cheat.Patches;
 
 [HarmonyPatch(typeof(NRun), "_Ready")]
 internal static class MpCheatNRunReadyPatch {
-    static void Postfix() => MpCheatSidecarBridge.EnsureBootstrapped();
+    static void Postfix() => MpCheatNetBus.TryRegisterHandlers();
 }
 
 [HarmonyPatch(typeof(RunManager))]

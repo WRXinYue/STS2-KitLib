@@ -1,4 +1,3 @@
-using DevMode.Interop;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -48,15 +47,10 @@ public static class MpCheatSession {
             return;
         }
 
-        if (!FrameworkBridge.IsRitsuLibPresentForMpCheat()) {
-            Disarm("ritsulib_required");
-            return;
-        }
-
-        MpCheatSidecarBridge.EnsureBootstrapped();
-        if (!MpCheatSidecarBridge.IsBootstrapReady) {
-            Disarm("sidecar_bootstrap_failed");
-            MainFile.Logger.Warn("[MpCheat] Sidecar bootstrap failed; config/command sync disabled.");
+        MpCheatNetBus.TryRegisterHandlers();
+        if (!MpCheatNetBus.IsReady) {
+            Disarm("net_handlers_unavailable");
+            MainFile.Logger.Warn("[MpCheat] NetMessage handlers unavailable; sync disabled.");
             return;
         }
 

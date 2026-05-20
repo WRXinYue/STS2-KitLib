@@ -97,7 +97,7 @@ internal static class MpCheatCardAddCoordinator {
         if (MpCheatSession.IsHost) return;
 
         var (ok, error) = TryResolveAndValidate(message.AddCard);
-        MpCheatSidecarBridge.SendAddCardAck(new MpCheatAddCardAckMessage {
+        MpCheatNetBus.SendAddCardAck(new MpCheatAddCardAckMessage {
             CommandId = message.CommandId,
             PeerNetId = RunManager.Instance?.NetService?.NetId ?? 0,
             Success = ok,
@@ -200,7 +200,7 @@ internal static class MpCheatCardAddCoordinator {
 
     private static void BroadcastCommand(MpCheatCommandKind kind, ulong commandId, MpCheatAddCardPayload payload) {
         var netId = RunManager.Instance?.NetService?.NetId ?? 0;
-        MpCheatSidecarBridge.BroadcastCommand(new MpCheatCommandMessage {
+        MpCheatNetBus.BroadcastCommand(new MpCheatCommandMessage {
             Kind = kind,
             IssuedByNetId = netId,
             CommandId = commandId,

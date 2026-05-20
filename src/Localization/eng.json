@@ -13,7 +13,7 @@
   "devmenu.mpCheat.on": "Multiplayer cheat: ON",
   "devmenu.mpCheat.off": "Multiplayer cheat: OFF",
 
-  "mpcheat.optIn.hint": "Enable Multiplayer Cheat in Dev Mode menu to sync cheats in co-op (requires RitsuLib).",
+  "mpcheat.optIn.hint": "Enable Multiplayer Cheat in Dev Mode menu to sync cheats in co-op (all players need DevMode).",
   "mpcheat.host.active": "Multiplayer cheat: host — changes sync to all players.",
   "mpcheat.client.active": "Multiplayer cheat: client — host controls cheat toggles.",
   "mpcheat.blocked": "Multiplayer cheat inactive: {0}",

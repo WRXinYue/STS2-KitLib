@@ -13,7 +13,7 @@
   "devmenu.mpCheat.on": "联机作弊：开启",
   "devmenu.mpCheat.off": "联机作弊：关闭",
 
-  "mpcheat.optIn.hint": "在开发者模式菜单中开启「联机作弊」以在合作模式同步作弊（需要 RitsuLib）。",
+  "mpcheat.optIn.hint": "在开发者模式菜单中开启「联机作弊」以在合作模式同步作弊（全员需安装 DevMode）。",
   "mpcheat.host.active": "联机作弊：主机 — 修改会同步到所有玩家。",
   "mpcheat.client.active": "联机作弊：客机 — 仅主机可改作弊开关。",
   "mpcheat.blocked": "联机作弊未启用：{0}",

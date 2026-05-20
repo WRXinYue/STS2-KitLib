@@ -2,7 +2,7 @@ using DevMode.Settings;
 
 namespace DevMode.Multiplayer.Cheat;
 
-/// <summary>Initializes multiplayer cheat sync (Sidecar + run lifecycle).</summary>
+/// <summary>Initializes multiplayer cheat sync (INetMessage + run lifecycle).</summary>
 public static class MpCheatSync {
     public static void Initialize() {
         MpCheatSession.SetLocalOptIn(SettingsStore.Current.MultiplayerCheatOptIn);
@@ -14,17 +14,17 @@ public static class MpCheatSync {
         MpCheatSession.TryArmSession("run_started");
         if (!MpCheatSession.SessionArmed) return;
 
-        MpCheatSidecarBridge.EnsureBootstrapped();
+        MpCheatNetBus.TryRegisterHandlers();
 
         if (MpCheatSession.IsHost) {
             var config = MpCheatConfig.FromDevModeState();
             config.SessionEnabled = true;
-            MpCheatSidecarBridge.HostPublishConfig(config, "run_start");
+            MpCheatNetBus.HostPublishConfig(config, "run_start");
         }
     }
 
     public static void OnRunEnded() {
-        MpCheatSidecarBridge.Shutdown();
+        MpCheatNetBus.Reset();
         MpCheatSession.OnRunEnded();
     }
 
@@ -32,11 +32,11 @@ public static class MpCheatSync {
         if (!MpCheatSession.CanEditMultiplayerCheats) return;
         var config = MpCheatConfig.FromDevModeState();
         config.SessionEnabled = true;
-        MpCheatSidecarBridge.HostPublishConfig(config, reason);
+        MpCheatNetBus.HostPublishConfig(config, reason);
     }
 
     public static void BroadcastCommand(MpCheatCommandMessage message) =>
-        MpCheatSidecarBridge.BroadcastCommand(message);
+        MpCheatNetBus.BroadcastCommand(message);
 
     public static void TryPersistConfig(MpCheatConfig config) =>
         MpCheatRunSavedData.TryWrite(config);

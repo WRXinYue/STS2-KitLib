@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace DevMode.Multiplayer.Cheat;
 
-/// <summary>Optional RunSavedData persistence for reconnect (RitsuLib reflection).</summary>
+/// <summary>Optional local file persistence for reconnect (mod_data/DevMode).</summary>
 internal static class MpCheatRunSavedData {
     private const string StoreTypeName = "STS2RitsuLib.RunData.RunSavedDataStore";
     private const string SlotKey = "mp_cheat_config";

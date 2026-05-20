@@ -21,7 +21,7 @@ internal static class MpCheatUi {
             if (!SettingsStore.Current.MultiplayerCheatOptIn)
                 label.Text = I18N.T(
                     "mpcheat.optIn.hint",
-                    "Enable Multiplayer Cheat in Dev Mode menu to sync cheats in co-op (requires RitsuLib).");
+                    "Enable Multiplayer Cheat in Dev Mode menu to sync cheats in co-op (all players need DevMode).");
             parent.AddChild(label);
             return;
         }

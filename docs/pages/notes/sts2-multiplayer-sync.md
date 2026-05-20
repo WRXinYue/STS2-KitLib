@@ -79,29 +79,32 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 | Tier | 机制 | 内容 |
 |------|------|------|
 | 0 | 对称 Harmony + `MpCheatState` | `CheatPatches`（无限血/能量、倍率、冻怪等）— 战斗内 **零网络包** |
-| 1 | RitsuLib Sidecar ConfigSync | 主机广播 `MpCheatConfig` 快照（开关/倍率） |
-| 2 | Sidecar typed command | `KillAllEnemies` 等离散操作，各端执行同一 `*Cmd` |
+| 1 | `INetMessage` 配置快照 | 主机广播 `MpCheatConfigNetMessage`（JSON 快照） |
+| 2 | `INetMessage` 命令 | `MpCheatCommandNetMessage`（击杀、加牌 prepare/execute） |
+| 2b | 加牌 ACK | 客机 `MpCheatAddCardAckNetMessage` → 主机，全部通过后再 execute |
 | — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写 |
 
 ### 启用条件
 
-1. 全员安装 **DevMode** + **STS2-RitsuLib**
-2. 开发者模式菜单 → **联机作弊：ON**（仅本地设置，**不会**写入原版 mod 握手列表）
-3. 全员安装 **STS2-RitsuLib**；主机在跑档中打开 Cheats 面板修改；客机只读，状态与主机一致
+1. 全员安装 **DevMode**（**不依赖** RitsuLib）
+2. 开发者模式菜单 → **联机作弊：ON**（仅本地 opt-in，**不会**写入原版 mod 握手列表）
+3. 主机在跑档中打开 Cheats 面板修改；客机只读，状态与主机一致
 
 ### 代码入口
 
-- `src/Multiplayer/Cheat/` — `MpCheatSession`, `MpCheatConfig`, `MpCheatApplier`, `MpCheatSidecarBridge`
+- `src/Multiplayer/Cheat/` — `MpCheatSession`, `MpCheatConfig`, `MpCheatApplier`, `MpCheatNetBus`, `MpCheatNetMessages`
+- Handler 在 `NRun._Ready` 注册（与 LustTravel2 `ArousalSync` 相同模式）
 - `CheatPatches.cs` — 通过 `MpCheatApplier` 查询标志
 
 ### 双人回归测试清单
 
-- [ ] 双方 `联机作弊：ON` + RitsuLib，能进大厅并进跑
+- [ ] 双方 `联机作弊：ON` + DevMode，能进大厅并进跑
+- [ ] 日志有 `[MpCheat] NetMessage handlers registered.`
 - [ ] 主机开无限血/冻怪/伤害倍率，客机无 StateDivergence，跑 3+ 场战斗
 - [ ] 主机点「击杀全部（同步）」，双方敌人同时死亡
+- [ ] 主机卡牌浏览器加牌，客机收到相同卡牌（无 8s 超时）
 - [ ] 客机 Cheats 面板只读，改开关不生效
 - [ ] 一方关闭联机作弊 opt-in 时，会话不 arm（面板提示原因）
-- [ ] 断线重连后配置仍一致（Sidecar 快照）
 
 ---
 

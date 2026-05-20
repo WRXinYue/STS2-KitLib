@@ -34,9 +34,6 @@ public static class FrameworkBridge {
 
     public static bool IsAvailable => FrameworkType != null;
 
-    /// <summary>Whether RitsuLib is loaded (required for multiplayer cheat sync).</summary>
-    public static bool IsRitsuLibPresentForMpCheat() => IsAvailable;
-
     public readonly record struct FrameworkBridgeSnapshot(
         // RitsuLib — manifest / identity
         string RitsuDisplayName,
