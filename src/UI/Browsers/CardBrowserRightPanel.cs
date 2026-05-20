@@ -213,6 +213,7 @@ internal static class CardBrowserRightPanel {
         targetRow.AddChild(targetPicker);
         container.AddChild(targetRow);
 
+        var mpAddCard = MpCheatSession.InMultiplayerRun;
         var durRow = new HBoxContainer();
         durRow.AddThemeConstantOverride("separation", 4);
         var durLbl = new Label { Text = I18N.T("cardBrowser.sidebarDuration", "Duration") };
@@ -220,13 +221,30 @@ internal static class CardBrowserRightPanel {
         durRow.AddChild(durLbl);
         var durPicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         durPicker.AddItem(I18N.T("topbar.card.temporary", "Temp"), 0);
-        durPicker.AddItem(I18N.T("topbar.card.permanent", "Perm"), 1);
-        durPicker.Selected = DevModeState.EffectDuration == EffectDuration.Permanent ? 1 : 0;
-        durPicker.ItemSelected += idx => {
-            DevModeState.EffectDuration = idx == 1 ? EffectDuration.Permanent : EffectDuration.Temporary;
-        };
+        if (mpAddCard) {
+            DevModeState.EffectDuration = EffectDuration.Temporary;
+            durPicker.Selected = 0;
+        }
+        else {
+            durPicker.AddItem(I18N.T("topbar.card.permanent", "Perm"), 1);
+            durPicker.Selected = DevModeState.EffectDuration == EffectDuration.Permanent ? 1 : 0;
+            durPicker.ItemSelected += idx => {
+                DevModeState.EffectDuration = idx == 1 ? EffectDuration.Permanent : EffectDuration.Temporary;
+            };
+        }
         durRow.AddChild(durPicker);
         container.AddChild(durRow);
+        if (mpAddCard) {
+            var durHint = new Label {
+                Text = I18N.T(
+                    "mpcheat.cardAdd.tempOnly",
+                    "Multiplayer: only Temporary — Permanent adds to the run deck and edited stats may desync in later combats."),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            durHint.AddThemeFontSizeOverride("font_size", 11);
+            durHint.AddThemeColorOverride("font_color", new Color(0.95f, 0.75f, 0.35f));
+            container.AddChild(durHint);
+        }
 
         container.AddChild(new Control { CustomMinimumSize = new Vector2(0, 4) });
 
@@ -249,7 +267,7 @@ internal static class CardBrowserRightPanel {
         async Task SyncAddCardInMultiplayerAsync() {
             var addRequest = new AddCardRequest {
                 Target = DevModeState.CardTarget,
-                Duration = DevModeState.EffectDuration,
+                Duration = EffectDuration.Temporary,
                 UpgradeLevelsToApply = upgradeLevelsToApply,
                 StagedTemplate = addStaging.Template,
             };

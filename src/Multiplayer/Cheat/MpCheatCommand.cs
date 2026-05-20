@@ -15,6 +15,18 @@ public enum MpCheatCommandKind {
     EditCardPrepare = 7,
     /// <summary>Apply edit-card after all prepare ACKs succeeded.</summary>
     EditCardExecute = 8,
+    AddRelicPrepare = 9,
+    AddRelicExecute = 10,
+    RemoveRelicPrepare = 11,
+    RemoveRelicExecute = 12,
+    AddPotionPrepare = 13,
+    AddPotionExecute = 14,
+    RemovePotionPrepare = 15,
+    RemovePotionExecute = 16,
+    AddMonsterPrepare = 17,
+    AddMonsterExecute = 18,
+    AddEncounterPrepare = 19,
+    AddEncounterExecute = 20,
 }
 
 public sealed class MpCheatCommandMessage {
@@ -24,4 +36,5 @@ public sealed class MpCheatCommandMessage {
     public MpCheatAddCardPayload? AddCard { get; set; }
     public MpCheatRemoveCardPayload? RemoveCard { get; set; }
     public MpCheatEditCardPayload? EditCard { get; set; }
+    public MpCheatItemPayload? Item { get; set; }
 }

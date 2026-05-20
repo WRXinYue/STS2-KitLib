@@ -31,6 +31,10 @@ internal static class MpCheatEnvelopeCodec {
         writer.WriteBool(edit != null);
         if (edit != null)
             WriteEditCardPayload(writer, edit);
+        var item = msg.Item;
+        writer.WriteBool(item != null);
+        if (item != null)
+            WriteItemPayload(writer, item);
     }
 
     internal static MpCheatCommandMessage ReadCommand(PacketReader reader) {
@@ -45,8 +49,38 @@ internal static class MpCheatEnvelopeCodec {
             msg.RemoveCard = ReadRemoveCardPayload(reader);
         if (reader.ReadBool())
             msg.EditCard = ReadEditCardPayload(reader);
+        if (reader.ReadBool())
+            msg.Item = ReadItemPayload(reader);
         return msg;
     }
+
+    internal static void WriteItemPayload(PacketWriter writer, MpCheatItemPayload payload) {
+        writer.WriteByte((byte)payload.Kind);
+        writer.WriteULong(payload.TargetPlayerNetId);
+        MpCheatPacketIO.WriteBoundedString(writer, payload.ItemId);
+        writer.WriteInt(payload.SlotIndex);
+    }
+
+    internal static MpCheatItemPayload ReadItemPayload(PacketReader reader) =>
+        new() {
+            Kind = (MpCheatItemKind)reader.ReadByte(),
+            TargetPlayerNetId = reader.ReadULong(),
+            ItemId = MpCheatPacketIO.ReadBoundedString(reader),
+            SlotIndex = reader.ReadInt(),
+        };
+
+    internal static void WriteItemRequest(PacketWriter writer, MpCheatItemClientRequestMessage msg) {
+        writer.WriteULong(msg.ClientRequestId);
+        writer.WriteULong(msg.RequesterNetId);
+        WriteItemPayload(writer, msg.Payload);
+    }
+
+    internal static MpCheatItemClientRequestMessage ReadItemRequest(PacketReader reader) =>
+        new() {
+            ClientRequestId = reader.ReadULong(),
+            RequesterNetId = reader.ReadULong(),
+            Payload = ReadItemPayload(reader),
+        };
 
     internal static void WriteAck(PacketWriter writer, MpCheatAddCardAckMessage ack) {
         writer.WriteULong(ack.CommandId);

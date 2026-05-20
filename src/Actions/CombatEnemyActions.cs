@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using DevMode.Multiplayer.Cheat;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -34,7 +35,88 @@ internal static class CombatEnemyActions {
     }
 
     /// <summary>Add a monster to the current combat.</summary>
-    public static async Task<Creature?> AddMonster(MonsterModel canonicalMonster) {
+    public static Task<Creature?> AddMonster(MonsterModel canonicalMonster) =>
+        AddMonsterInternal(canonicalMonster, mpSync: false);
+
+    /// <summary>Add all monsters from an encounter to the current combat.</summary>
+    public static Task AddEncounterMonsters(EncounterModel encounter) =>
+        AddEncounterMonstersInternal(encounter, mpSync: false);
+
+    internal static MonsterModel? FindMonsterById(string monsterId) {
+        if (string.IsNullOrEmpty(monsterId)) return null;
+        return EnemyActions.GetAllMonsters().FirstOrDefault(m => ((AbstractModel)m).Id.Entry == monsterId);
+    }
+
+    internal static EncounterModel? FindEncounterById(string encounterId) {
+        if (string.IsNullOrEmpty(encounterId)) return null;
+        return EnemyActions.GetAllEncounters().FirstOrDefault(e => ((AbstractModel)e).Id.Entry == encounterId);
+    }
+
+    internal static bool TryValidateAddMonster(MpCheatItemPayload payload, out string? error) {
+        error = null;
+        if (!IsCombatReadyForAdd(out error))
+            return false;
+
+        if (FindMonsterById(payload.ItemId) == null) {
+            error = "monster not found";
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static bool TryValidateAddEncounter(MpCheatItemPayload payload, out string? error) {
+        error = null;
+        if (!IsCombatReadyForAdd(out error))
+            return false;
+
+        var encounter = FindEncounterById(payload.ItemId);
+        if (encounter == null) {
+            error = "encounter not found";
+            return false;
+        }
+
+        var monsters = encounter.AllPossibleMonsters?.ToList();
+        if (monsters == null || monsters.Count == 0) {
+            error = "encounter has no monsters";
+            return false;
+        }
+
+        return true;
+    }
+
+    internal static Task ExecuteAddMonsterFromMpSync(MpCheatItemPayload payload) {
+        var monster = FindMonsterById(payload.ItemId);
+        return monster == null ? Task.CompletedTask : AddMonsterInternal(monster, mpSync: true);
+    }
+
+    internal static Task ExecuteAddEncounterFromMpSync(MpCheatItemPayload payload) {
+        var encounter = FindEncounterById(payload.ItemId);
+        return encounter == null ? Task.CompletedTask : AddEncounterMonstersInternal(encounter, mpSync: true);
+    }
+
+    private static bool IsCombatReadyForAdd(out string? error) {
+        error = null;
+        if (GetCombatState() == null) {
+            error = I18N.T("mpcheat.combatAdd.notInCombat", "Not in combat.");
+            return false;
+        }
+
+        if (!CombatManager.Instance.IsInProgress) {
+            error = I18N.T("mpcheat.combatAdd.notInProgress", "Combat is not in progress.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task<Creature?> AddMonsterInternal(MonsterModel canonicalMonster, bool mpSync) {
+        if (MpCheatSession.InMultiplayerRun && !mpSync) {
+            MainFile.Logger.Warn(
+                $"CombatEnemyActions: Cannot add {((AbstractModel)canonicalMonster).Id.Entry} locally in multiplayer — use host combat sync.");
+            return null;
+        }
+
         var cs = GetCombatState();
         if (cs == null) {
             MainFile.Logger.Info("CombatEnemyActions: Not in combat.");
@@ -48,7 +130,6 @@ internal static class CombatEnemyActions {
 
         var mutable = canonicalMonster.ToMutable();
 
-        // Try to get a slot from the encounter if available
         string? slot = null;
         try {
             slot = cs.Encounter?.GetNextSlot(cs);
@@ -59,20 +140,24 @@ internal static class CombatEnemyActions {
         var creature = await CreatureCmd.Add(mutable, cs, CombatSide.Enemy, slot);
         MainFile.Logger.Info($"CombatEnemyActions: Added {((AbstractModel)canonicalMonster).Id.Entry} to combat");
 
-        // Reposition all enemies if no slot-based scene (official PositionEnemies logic)
         if (slot == null)
             RepositionEnemies(cs);
 
         return creature;
     }
 
-    /// <summary>Add all monsters from an encounter to the current combat.</summary>
-    public static async Task AddEncounterMonsters(EncounterModel encounter) {
+    private static async Task AddEncounterMonstersInternal(EncounterModel encounter, bool mpSync) {
+        if (MpCheatSession.InMultiplayerRun && !mpSync) {
+            MainFile.Logger.Warn(
+                $"CombatEnemyActions: Cannot add encounter {((AbstractModel)encounter).Id.Entry} locally in multiplayer — use host combat sync.");
+            return;
+        }
+
         var monsters = encounter.AllPossibleMonsters?.ToList();
         if (monsters == null || monsters.Count == 0) return;
 
         foreach (var monster in monsters)
-            await AddMonster(monster);
+            await AddMonsterInternal(monster, mpSync: true);
     }
 
     /// <summary>

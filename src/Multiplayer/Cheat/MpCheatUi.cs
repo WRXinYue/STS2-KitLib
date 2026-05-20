@@ -1,9 +1,18 @@
 using System;
+using System.Linq;
 using DevMode.Settings;
 using DevMode.UI;
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Multiplayer.Cheat;
+
+/// <summary>Mutable target player selected by host MP picker.</summary>
+internal sealed class MpCheatTargetPlayerRef {
+    public Player Value { get; set; }
+    public MpCheatTargetPlayerRef(Player initial) => Value = initial;
+}
 
 internal static class MpCheatUi {
     internal static bool CanEditCheats =>
@@ -60,4 +69,35 @@ internal static class MpCheatUi {
     }
 
     internal static bool IsFrameCheatAllowed => MpCheatApplier.FrameCheatsAllowed;
+
+    /// <summary>Host MP run with 2+ players: player picker row. Returns mutable ref or null.</summary>
+    internal static MpCheatTargetPlayerRef? TryBuildTargetPlayerPicker(
+        VBoxContainer parent,
+        RunState state,
+        Player defaultPlayer) {
+        if (!MpCheatSession.InMultiplayerRun || !MpCheatSession.IsHost || state.Players.Count <= 1)
+            return null;
+
+        var players = state.Players.ToList();
+        var playerRow = new HBoxContainer();
+        playerRow.AddThemeConstantOverride("separation", 4);
+        var playerLbl = new Label { Text = I18N.T("mpcheat.cardAdd.targetPlayer", "Player") };
+        playerLbl.AddThemeFontSizeOverride("font_size", 12);
+        playerRow.AddChild(playerLbl);
+        var playerPicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
+        var localIdx = 0;
+        for (var i = 0; i < players.Count; i++) {
+            var p = players[i];
+            playerPicker.AddItem(MpCheatPlayerLabels.FormatPickerLabel(p), i);
+            if (p.NetId == localNetId)
+                localIdx = i;
+        }
+        playerPicker.Selected = localIdx;
+        var targetRef = new MpCheatTargetPlayerRef(players[localIdx]);
+        playerPicker.ItemSelected += idx => targetRef.Value = players[(int)idx];
+        playerRow.AddChild(playerPicker);
+        parent.AddChild(playerRow);
+        return targetRef;
+    }
 }

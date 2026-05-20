@@ -66,6 +66,12 @@ public class DmCardConsoleCmd : AbstractConsoleCmd {
                         };
                     }
 
+                    if (Multiplayer.Cheat.MpCheatSession.InMultiplayerRun
+                        && DevModeState.EffectDuration == EffectDuration.Permanent) {
+                        return new CmdResult(false,
+                            "Permanent add-card is disabled in multiplayer (use temp/temporary).");
+                    }
+
                     TaskHelper.RunSafely(CardActions.Add(state, player, card).RunAsync());
                     return new CmdResult(true, $"Added '{cardId}' to {DevModeState.CardTarget} ({DevModeState.EffectDuration})");
                 }

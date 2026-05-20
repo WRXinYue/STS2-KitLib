@@ -17,4 +17,8 @@ public enum MpCheatWireChannel : byte {
     EditCardRequest = 7,
     /// <summary>Host → client: outcome of <see cref="EditCardRequest" />.</summary>
     EditCardRequestResult = 8,
+    /// <summary>Client → host: relic/potion/combat item sync request.</summary>
+    ItemRequest = 9,
+    /// <summary>Host → client: outcome of <see cref="ItemRequest" />.</summary>
+    ItemRequestResult = 10,
 }

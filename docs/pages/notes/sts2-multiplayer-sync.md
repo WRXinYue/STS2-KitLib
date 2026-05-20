@@ -82,14 +82,18 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 | 1 | `INetMessage` 配置快照 | 经 `ZzzMpCheatEnvelopeNetMessage`（channel=Config，JSON + magic） |
 | 2 | `INetMessage` 命令 | 同一 envelope（channel=Command：击杀、加牌 prepare/execute） |
 | 2b | 加牌 ACK | 同一 envelope（channel=AddCardAck，客机 → 主机） |
-| 2c | 客机加牌请求 | channel=AddCardRequest（客机 → 主机）；主机跑 prepare/ACK/execute 后 channel=AddCardRequestResult 回传；payload 含 `TemplateJson`（`CardEditTemplate`：费/格挡/伤害/关键词等，库页暂存后加牌时全员应用） |
+| 2c | 客机加牌请求 | channel=AddCardRequest（客机 → 主机）；主机跑 prepare/ACK/execute 后 channel=AddCardRequestResult 回传；payload 含 `TemplateJson`（`CardEditTemplate`：费/格挡/伤害/关键词等，库页暂存后加牌时全员应用）；**仅 Temporary**（禁止 Permanent 写入跑团牌组，避免后续战斗改牌数值 desync） |
 | 2d | 删牌 | Command：RemoveCardPrepare / RemoveCardExecute（按牌堆索引定位实例）；ACK 复用 AddCardAck |
 | 2e | 客机删牌请求 | channel=RemoveCardRequest / RemoveCardRequestResult（与加牌相同主机权威流程） |
 | 2f | 改牌 | Command：EditCardPrepare / EditCardExecute（牌堆索引定位 + `CardEditTemplate` JSON）；ACK 复用 AddCardAck |
 | 2g | 客机改牌请求 | channel=EditCardRequest (7) / EditCardRequestResult (8) |
+| 2i | 遗物 | Command：AddRelicPrepare/Execute、RemoveRelicPrepare/Execute；payload=`MpCheatItemPayload`（目标玩家 netId + relicId） |
+| 2j | 药水 | Command：AddPotionPrepare/Execute、RemovePotionPrepare/Execute；丢弃用 **slot index** 定位 |
+| 2k | 战斗加怪 | Command：AddMonsterPrepare/Execute、AddEncounterPrepare/Execute；须在战斗内且 `CombatManager.IsInProgress` |
+| 2l | 客机物品请求 | channel=ItemRequest (9) / ItemRequestResult (10)；遗物/药水仅可改**自己角色**；加怪/遭遇客机可请求主机代执行 |
 | — | **单槽位** | 仅注册 **1** 个 mod `INetMessage` 类型，降低与其他 mod 的 id 冲突 |
 | — | **多人 ACK** | 主机等待「Run 内远端玩家 ∩ 大厅已连接」全部 ACK；超时随人数递增（8s + 1.5s×(n−1)，上限 20s）；`commandId` 多路复用，支持并发多笔加牌 |
-| — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写 |
+| — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写；联机下遗物/药水/战斗加怪的**本地直写**（须走 coordinator） |
 
 ### 启用条件
 
@@ -117,6 +121,12 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 - [ ] 客机改自己手牌：日志 `EditCard client request` → 主机执行；无 StateDivergence
 - [ ] 客机 Cheats 面板只读，改开关不生效
 - [ ] 一方关闭联机作弊 opt-in 时，会话不 arm（面板提示原因）
+- [ ] 主机遗物/药水浏览器：侧栏 **Player** 选客机后添加；客机栏位与主机一致
+- [ ] 客机请求给自己加药水：日志 `Item request` → prepare/execute；药栏一致
+- [ ] 战斗内主机加单怪、加遭遇：双方敌人列表一致，无 StateDivergence
+- [ ] 药栏满时加药：prepare ACK 失败，有明确错误文案
+- [ ] 非战斗时点加遭遇：失败且不 execute
+- [ ] 单人模式：遗物/药水/战斗加怪行为与改前一致（不走 coordinator）
 
 ---
 

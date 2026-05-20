@@ -4,6 +4,7 @@ using System.Linq;
 using DevMode.Actions;
 using DevMode.Hooks;
 using DevMode.Icons;
+using DevMode.Multiplayer.Cheat;
 using DevMode.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
@@ -12,6 +13,7 @@ using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.UI;
 
@@ -595,13 +597,55 @@ internal static class PotionSelectUI {
 
         container.AddChild(new HSeparator());
 
+        var mpItemSync = MpCheatSession.InMultiplayerRun;
+        if (mpItemSync)
+            MpCheatUi.AddSessionBanner(container);
+
+        MpCheatTargetPlayerRef? targetRef = null;
+        if (IsAllSource) {
+            var runState = RunManager.Instance?.DebugOnlyGetState();
+            if (runState != null)
+                targetRef = MpCheatUi.TryBuildTargetPlayerPicker(container, runState, s.Player);
+        }
+        Player TargetPlayer() => targetRef?.Value ?? s.Player;
+
         // Action button
         if (IsAllSource) {
             var addBtn = CreateActionButton(
                 I18N.T("potionBrowser.add", "Add to Inventory"),
                 new Color(0.25f, 0.55f, 0.35f, 0.9f));
+            if (mpItemSync && !MpCheatSession.CanUseMultiplayerCheats) {
+                addBtn.Disabled = true;
+                addBtn.TooltipText = I18N.T(
+                    "mpcheat.blocked",
+                    "Multiplayer cheat inactive: {0}",
+                    MpCheatSession.LastBlockReason ?? "unknown");
+            }
+            else if (mpItemSync && !MpCheatSession.IsHost) {
+                addBtn.TooltipText = I18N.T(
+                    "mpcheat.potionAdd.clientTooltip",
+                    "Requests host to sync add potion to your character.");
+            }
+
             addBtn.Pressed += () => {
-                TaskHelper.RunSafely(PotionActions.AddPotion(s.Player, potion));
+                async System.Threading.Tasks.Task SyncAddPotionAsync() {
+                    var result = MpCheatSession.IsHost
+                        ? await MpCheatPotionCoordinator.TryHostAddPotionAsync(TargetPlayer(), potion)
+                        : await MpCheatPotionCoordinator.TryClientRequestAddPotionAsync(TargetPlayer(), potion);
+                    s.StatusLabel.Text = result;
+                    InvalidateCache(s);
+                    RebuildGrid(s, s.SearchInput.Text ?? "");
+                }
+
+                if (mpItemSync) {
+                    s.StatusLabel.Text = MpCheatSession.IsHost
+                        ? I18N.T("mpcheat.potionAdd.pending", "Syncing add potion…")
+                        : I18N.T("mpcheat.potionAdd.clientPending", "Requesting host to sync add potion…");
+                    TaskHelper.RunSafely(SyncAddPotionAsync());
+                    return;
+                }
+
+                TaskHelper.RunSafely(PotionActions.AddPotion(TargetPlayer(), potion));
                 s.StatusLabel.Text = string.Format(I18N.T("potionBrowser.added", "Added: {0}"), name);
             };
             container.AddChild(addBtn);
@@ -630,10 +674,37 @@ internal static class PotionSelectUI {
         else {
             var ownedPotion = s.Player.Potions.FirstOrDefault(p => p.CanonicalInstance == potion);
             if (ownedPotion != null) {
+                var slotIndex = PotionActions.GetPotionSlotIndex(s.Player, ownedPotion);
                 var discardBtn = CreateActionButton(
                     I18N.T("potionBrowser.discard", "Discard Potion"),
                     new Color(0.65f, 0.25f, 0.25f, 0.9f));
+                if (mpItemSync && !MpCheatSession.CanUseMultiplayerCheats) {
+                    discardBtn.Disabled = true;
+                    discardBtn.TooltipText = I18N.T(
+                        "mpcheat.blocked",
+                        "Multiplayer cheat inactive: {0}",
+                        MpCheatSession.LastBlockReason ?? "unknown");
+                }
+
                 discardBtn.Pressed += () => {
+                    async System.Threading.Tasks.Task SyncDiscardAsync() {
+                        var result = MpCheatSession.IsHost
+                            ? await MpCheatPotionCoordinator.TryHostDiscardPotionAsync(s.Player, slotIndex)
+                            : await MpCheatPotionCoordinator.TryClientRequestDiscardPotionAsync(s.Player, slotIndex);
+                        s.StatusLabel.Text = result;
+                        ClearDetail(s);
+                        InvalidateCache(s);
+                        RebuildGrid(s, s.SearchInput.Text ?? "");
+                    }
+
+                    if (mpItemSync) {
+                        s.StatusLabel.Text = MpCheatSession.IsHost
+                            ? I18N.T("mpcheat.potionRemove.pending", "Syncing discard potion…")
+                            : I18N.T("mpcheat.potionRemove.clientPending", "Requesting host to sync discard potion…");
+                        TaskHelper.RunSafely(SyncDiscardAsync());
+                        return;
+                    }
+
                     TaskHelper.RunSafely(PotionActions.DiscardPotion(ownedPotion));
                     s.StatusLabel.Text = string.Format(I18N.T("potionBrowser.discarded", "Discarded: {0}"), name);
                     ClearDetail(s);

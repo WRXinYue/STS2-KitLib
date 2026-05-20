@@ -3,7 +3,10 @@ using System.Linq;
 using DevMode.Actions;
 using DevMode.EnemyIntent;
 using DevMode.Icons;
+using DevMode.Multiplayer.Cheat;
 using Godot;
+using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
@@ -142,22 +145,59 @@ internal static partial class EnemySelectUI {
                 I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
                 () => {
                     backdrop.QueueFree();
-                    ShowEncounterOverlay(globalUi, null, enc => {
-                        DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddEncounterMonsters(enc));
-                    });
+                    ShowEncounterOverlay(globalUi, null, enc => RunSyncedCombatAdd(enc, null));
                 }));
 
             vbox.AddChild(CreateAddMenuButton(
                 I18N.T("enemy.combatSidebar.addMonster", "Add monster to combat"),
                 () => {
                     backdrop.QueueFree();
-                    ShowMonsterSpawnOverlay(globalUi, monster => {
-                        DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddMonster(monster));
-                    });
+                    ShowMonsterSpawnOverlay(globalUi, monster => RunSyncedCombatAdd(null, monster));
                 }));
 
             backdrop.AddChild(panel);
             ((Node)globalUi).AddChild(backdrop);
+        }
+
+        private static void RunSyncedCombatAdd(EncounterModel? encounter, MonsterModel? monster) {
+            if (!MpCheatSession.InMultiplayerRun) {
+                if (encounter != null)
+                    DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddEncounterMonsters(encounter));
+                else if (monster != null)
+                    DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddMonster(monster));
+                return;
+            }
+
+            if (!MpCheatSession.CanUseMultiplayerCheats) {
+                MainFile.Logger.Warn(
+                    I18N.T(
+                        "mpcheat.blocked",
+                        "Multiplayer cheat inactive: {0}",
+                        MpCheatSession.LastBlockReason ?? "unknown"));
+                return;
+            }
+
+            TaskHelper.RunSafely(SyncAsync());
+
+            async System.Threading.Tasks.Task SyncAsync() {
+                string result;
+                if (encounter != null) {
+                    result = MpCheatSession.IsHost
+                        ? await MpCheatCombatEnemyCoordinator.TryHostAddEncounterAsync(encounter)
+                        : await MpCheatCombatEnemyCoordinator.TryClientRequestAddEncounterAsync(encounter);
+                }
+                else if (monster != null) {
+                    result = MpCheatSession.IsHost
+                        ? await MpCheatCombatEnemyCoordinator.TryHostAddMonsterAsync(monster)
+                        : await MpCheatCombatEnemyCoordinator.TryClientRequestAddMonsterAsync(monster);
+                }
+                else {
+                    return;
+                }
+
+                MainFile.Logger.Info($"[MpCheat] Combat add result: {result}");
+                RefreshCombatContext();
+            }
         }
 
         private static Button CreateAddMenuButton(string text, System.Action onPressed) {

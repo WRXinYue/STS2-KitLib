@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DevMode.Actions;
 using DevMode.Icons;
+using DevMode.Multiplayer.Cheat;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -389,13 +390,54 @@ internal static partial class RelicBrowserUI {
 
         container.AddChild(new HSeparator());
 
+        var mpItemSync = MpCheatSession.InMultiplayerRun;
+        if (mpItemSync)
+            MpCheatUi.AddSessionBanner(container);
+
+        var targetRef = MpCheatUi.TryBuildTargetPlayerPicker(container, s.RunState, s.Player);
+        Player TargetPlayer() => targetRef?.Value ?? s.Player;
+
         // Actions
         if (IsAllSource) {
             var addBtn = CreateActionButton(
                 I18N.T("relicBrowser.addRelic", "Add to Inventory"),
                 new Color(0.25f, 0.55f, 0.35f, 0.9f));
+            if (mpItemSync && !MpCheatSession.CanUseMultiplayerCheats) {
+                addBtn.Disabled = true;
+                addBtn.TooltipText = I18N.T(
+                    "mpcheat.blocked",
+                    "Multiplayer cheat inactive: {0}",
+                    MpCheatSession.LastBlockReason ?? "unknown");
+            }
+            else if (mpItemSync && !MpCheatSession.IsHost) {
+                addBtn.TooltipText = I18N.T(
+                    "mpcheat.relicAdd.clientTooltip",
+                    "Requests host to sync add relic to your character.");
+            }
+
             addBtn.Pressed += () => {
-                TaskHelper.RunSafely(RelicActions.AddRelic(relic, s.Player));
+                async System.Threading.Tasks.Task SyncAddRelicAsync() {
+                    var result = MpCheatSession.IsHost
+                        ? await MpCheatRelicCoordinator.TryHostAddRelicAsync(TargetPlayer(), relic)
+                        : await MpCheatRelicCoordinator.TryClientRequestAddRelicAsync(TargetPlayer(), relic);
+                    s.StatusLabel.Text = result;
+                    InvalidateRelicCache(s);
+                    RebuildGrid(s, s.SearchInput.Text ?? "");
+                }
+
+                if (mpItemSync) {
+                    s.StatusLabel.Text = MpCheatSession.IsHost
+                        ? (MpCheatParticipants.RemotePeerCount > 0
+                            ? string.Format(
+                                I18N.T("mpcheat.relicAdd.pendingWithPeers", "Syncing add relic… waiting for {0} player(s)."),
+                                MpCheatParticipants.RemotePeerCount)
+                            : I18N.T("mpcheat.relicAdd.pending", "Syncing add relic to all players…"))
+                        : I18N.T("mpcheat.relicAdd.clientPending", "Requesting host to sync add relic…");
+                    TaskHelper.RunSafely(SyncAddRelicAsync());
+                    return;
+                }
+
+                TaskHelper.RunSafely(RelicActions.AddRelic(relic, TargetPlayer()));
                 s.StatusLabel.Text = string.Format(I18N.T("relicBrowser.added", "Added: {0}"), name);
             };
             container.AddChild(addBtn);
@@ -404,9 +446,36 @@ internal static partial class RelicBrowserUI {
             var removeBtn = CreateActionButton(
                 I18N.T("relicBrowser.removeRelic", "Remove Relic"),
                 new Color(0.65f, 0.25f, 0.25f, 0.9f));
+            var relicId = ((AbstractModel)relic).Id.Entry ?? "";
+            if (mpItemSync && !MpCheatSession.CanUseMultiplayerCheats) {
+                removeBtn.Disabled = true;
+                removeBtn.TooltipText = I18N.T(
+                    "mpcheat.blocked",
+                    "Multiplayer cheat inactive: {0}",
+                    MpCheatSession.LastBlockReason ?? "unknown");
+            }
+
             removeBtn.Pressed += () => {
-                var ownedRelic = s.Player.Relics.FirstOrDefault(r => r == relic)
-                    ?? s.Player.GetRelicById(((AbstractModel)relic).Id);
+                async System.Threading.Tasks.Task SyncRemoveRelicAsync() {
+                    var result = MpCheatSession.IsHost
+                        ? await MpCheatRelicCoordinator.TryHostRemoveRelicAsync(TargetPlayer(), relicId)
+                        : await MpCheatRelicCoordinator.TryClientRequestRemoveRelicAsync(TargetPlayer(), relicId);
+                    s.StatusLabel.Text = result;
+                    ClearRightPanel(s);
+                    InvalidateRelicCache(s);
+                    RebuildGrid(s, s.SearchInput.Text ?? "");
+                }
+
+                if (mpItemSync) {
+                    s.StatusLabel.Text = MpCheatSession.IsHost
+                        ? I18N.T("mpcheat.relicRemove.pending", "Syncing remove relic…")
+                        : I18N.T("mpcheat.relicRemove.clientPending", "Requesting host to sync remove relic…");
+                    TaskHelper.RunSafely(SyncRemoveRelicAsync());
+                    return;
+                }
+
+                var ownedRelic = TargetPlayer().Relics.FirstOrDefault(r => r == relic)
+                    ?? TargetPlayer().GetRelicById(((AbstractModel)relic).Id);
                 if (ownedRelic != null) {
                     TaskHelper.RunSafely(RelicCmd.Remove(ownedRelic));
                     s.StatusLabel.Text = string.Format(I18N.T("relicBrowser.removed", "Removed: {0}"), name);

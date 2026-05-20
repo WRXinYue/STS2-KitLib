@@ -31,6 +31,30 @@ public static class MpCheatCommandExecutor {
             case MpCheatCommandKind.EditCardExecute:
                 MpCheatCardEditCoordinator.OnExecuteReceived(message);
                 break;
+            case MpCheatCommandKind.AddRelicPrepare:
+            case MpCheatCommandKind.RemoveRelicPrepare:
+                MpCheatRelicCoordinator.OnPrepareReceived(message);
+                break;
+            case MpCheatCommandKind.AddRelicExecute:
+            case MpCheatCommandKind.RemoveRelicExecute:
+                MpCheatRelicCoordinator.OnExecuteReceived(message);
+                break;
+            case MpCheatCommandKind.AddPotionPrepare:
+            case MpCheatCommandKind.RemovePotionPrepare:
+                MpCheatPotionCoordinator.OnPrepareReceived(message);
+                break;
+            case MpCheatCommandKind.AddPotionExecute:
+            case MpCheatCommandKind.RemovePotionExecute:
+                MpCheatPotionCoordinator.OnExecuteReceived(message);
+                break;
+            case MpCheatCommandKind.AddMonsterPrepare:
+            case MpCheatCommandKind.AddEncounterPrepare:
+                MpCheatCombatEnemyCoordinator.OnPrepareReceived(message);
+                break;
+            case MpCheatCommandKind.AddMonsterExecute:
+            case MpCheatCommandKind.AddEncounterExecute:
+                MpCheatCombatEnemyCoordinator.OnExecuteReceived(message);
+                break;
         }
     }
 
