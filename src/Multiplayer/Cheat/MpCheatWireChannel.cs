@@ -13,4 +13,8 @@ public enum MpCheatWireChannel : byte {
     RemoveCardRequest = 5,
     /// <summary>Host → client: outcome of <see cref="RemoveCardRequest" />.</summary>
     RemoveCardRequestResult = 6,
+    /// <summary>Client → host: request host-authoritative edit-card sync.</summary>
+    EditCardRequest = 7,
+    /// <summary>Host → client: outcome of <see cref="EditCardRequest" />.</summary>
+    EditCardRequestResult = 8,
 }

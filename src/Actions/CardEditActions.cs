@@ -206,8 +206,20 @@ internal static class CardEditActions {
 
     public static string GetTitleText(CardModel card) {
         object? value = TryGetObject(card, "TitleLocString", "_titleLocString");
-        if (value is LocString loc) return GetLocText(loc);
-        return card.Title ?? string.Empty;
+        if (value is LocString loc) {
+            var text = GetLocText(loc);
+            if (!string.IsNullOrWhiteSpace(text)) return text;
+        }
+        return GetTitlePropertyText(card);
+    }
+
+    private static string GetTitlePropertyText(CardModel card) {
+        try {
+            return card.Title ?? string.Empty;
+        }
+        catch {
+            return string.Empty;
+        }
     }
 
     public static string GetDescriptionText(CardModel card) {
@@ -221,14 +233,54 @@ internal static class CardEditActions {
 
     public static bool TrySetTitleText(CardModel card, string text) {
         if (string.IsNullOrWhiteSpace(text)) return false;
-        var loc = new LocString(string.Empty, text.Trim());
-        return TrySetObject(card, loc, "TitleLocString", "_titleLocString");
+        var loc = CreateOverrideLocString(text.Trim());
+        if (loc == null) return false;
+        var trimmed = text.Trim();
+        var ok = TrySetObject(card, loc, "TitleLocString", "_titleLocString");
+        ok |= TrySetProperty(card, "Title", trimmed);
+        return ok;
     }
 
     public static bool TrySetDescriptionText(CardModel card, string text) {
         if (string.IsNullOrWhiteSpace(text)) return false;
-        var loc = new LocString(string.Empty, text.Trim());
-        return TrySetObject(card, loc, "Description", "_descriptionLocString", "_description");
+        var loc = CreateOverrideLocString(text.Trim());
+        if (loc == null) return false;
+        var ok = TrySetObject(card, loc, "Description", "_descriptionLocString", "_description");
+        return ok;
+    }
+
+    /// <summary>LocString the game can render without a loc table entry (raw override text).</summary>
+    private static LocString? CreateOverrideLocString(string text) {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        try {
+            var loc = new LocString("devmode", "card_override");
+            if (TrySetLocRawText(loc, text)) return loc;
+        }
+        catch { }
+        try {
+            var loc = new LocString("!", text);
+            if (TrySetLocRawText(loc, text)) return loc;
+        }
+        catch { }
+        return null;
+    }
+
+    private static bool TrySetLocRawText(LocString loc, string text) {
+        foreach (var name in new[] { "RawText", "rawText", "_rawText", "_overrideText", "_text" }) {
+            if (TrySetProperty(loc, name, text) || TrySetField(loc, name, text))
+                return true;
+        }
+        try {
+            var getRaw = loc.GetType().GetMethod("GetRawText", ReflFlags);
+            var setRaw = loc.GetType().GetMethod("SetRawText", ReflFlags)
+                ?? loc.GetType().GetMethod("SetRaw", ReflFlags);
+            if (setRaw != null) {
+                setRaw.Invoke(loc, new object[] { text });
+                return true;
+            }
+        }
+        catch { }
+        return !string.IsNullOrWhiteSpace(GetLocText(loc));
     }
 
     public static CardEditTemplate CaptureTemplate(CardModel card) {
@@ -347,8 +399,12 @@ internal static class CardEditActions {
     }
 
     public static string GetCardDisplayName(CardModel card) {
-        try { return card.Title ?? ((AbstractModel)card).Id.Entry ?? "?"; }
-        catch { return ((AbstractModel)card).Id.Entry ?? "?"; }
+        var overrideTitle = GetTitleText(card);
+        if (!string.IsNullOrWhiteSpace(overrideTitle)) return overrideTitle;
+        var fromTitle = GetTitlePropertyText(card);
+        if (!string.IsNullOrWhiteSpace(fromTitle)) return fromTitle;
+        try { return ((AbstractModel)card).Id.Entry ?? "?"; }
+        catch { return "?"; }
     }
 
     // ── Reflection helpers ──

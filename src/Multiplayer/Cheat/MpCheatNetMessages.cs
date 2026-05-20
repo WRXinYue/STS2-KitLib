@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using DevMode.Presets;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Multiplayer.Transport;
@@ -19,6 +20,7 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
     public MpCheatAddCardClientRequestMessage AddCardRequest;
     public MpCheatAddCardClientResultMessage AddCardRequestResult;
     public MpCheatRemoveCardClientRequestMessage RemoveCardRequest;
+    public MpCheatEditCardClientRequestMessage EditCardRequest;
 
     public readonly bool ShouldBroadcast =>
         Channel is MpCheatWireChannel.Config or MpCheatWireChannel.Command;
@@ -29,6 +31,7 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
         Channel is MpCheatWireChannel.AddCardAck
             or MpCheatWireChannel.AddCardRequestResult
             or MpCheatWireChannel.RemoveCardRequestResult
+            or MpCheatWireChannel.EditCardRequestResult
             ? LogLevel.Debug
             : LogLevel.Info;
 
@@ -50,10 +53,14 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
                 break;
             case MpCheatWireChannel.AddCardRequestResult:
             case MpCheatWireChannel.RemoveCardRequestResult:
+            case MpCheatWireChannel.EditCardRequestResult:
                 MpCheatEnvelopeCodec.WriteAddCardRequestResult(writer, AddCardRequestResult);
                 break;
             case MpCheatWireChannel.RemoveCardRequest:
                 MpCheatEnvelopeCodec.WriteRemoveCardRequest(writer, RemoveCardRequest);
+                break;
+            case MpCheatWireChannel.EditCardRequest:
+                MpCheatEnvelopeCodec.WriteEditCardRequest(writer, EditCardRequest);
                 break;
             default:
                 throw new InvalidOperationException($"MpCheat unknown channel: {Channel}");
@@ -81,10 +88,14 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
                 break;
             case MpCheatWireChannel.AddCardRequestResult:
             case MpCheatWireChannel.RemoveCardRequestResult:
+            case MpCheatWireChannel.EditCardRequestResult:
                 AddCardRequestResult = MpCheatEnvelopeCodec.ReadAddCardRequestResult(reader);
                 break;
             case MpCheatWireChannel.RemoveCardRequest:
                 RemoveCardRequest = MpCheatEnvelopeCodec.ReadRemoveCardRequest(reader);
+                break;
+            case MpCheatWireChannel.EditCardRequest:
+                EditCardRequest = MpCheatEnvelopeCodec.ReadEditCardRequest(reader);
                 break;
             default:
                 throw new InvalidOperationException($"MpCheat unknown channel: {Channel}");
@@ -133,6 +144,18 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
             Channel = MpCheatWireChannel.RemoveCardRequestResult,
             AddCardRequestResult = result,
         };
+
+    public static ZzzMpCheatEnvelopeNetMessage FromEditCardRequest(MpCheatEditCardClientRequestMessage request) =>
+        new() {
+            Channel = MpCheatWireChannel.EditCardRequest,
+            EditCardRequest = request,
+        };
+
+    public static ZzzMpCheatEnvelopeNetMessage FromEditCardRequestResult(MpCheatAddCardClientResultMessage result) =>
+        new() {
+            Channel = MpCheatWireChannel.EditCardRequestResult,
+            AddCardRequestResult = result,
+        };
 }
 
 internal static class MpCheatNetJson {
@@ -142,5 +165,13 @@ internal static class MpCheatNetJson {
     internal static MpCheatConfig? DeserializeConfig(string json) {
         if (string.IsNullOrEmpty(json)) return null;
         return JsonSerializer.Deserialize<MpCheatConfig>(json);
+    }
+
+    internal static string SerializeEditTemplate(CardEditTemplate template) =>
+        JsonSerializer.Serialize(template);
+
+    internal static CardEditTemplate? DeserializeEditTemplate(string json) {
+        if (string.IsNullOrEmpty(json)) return null;
+        return JsonSerializer.Deserialize<CardEditTemplate>(json);
     }
 }

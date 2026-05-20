@@ -43,6 +43,21 @@ public sealed class CardEditTemplate {
 
     [JsonPropertyName("descriptionOverride")]
     public string? DescriptionOverride { get; set; }
+
+    public bool HasAnyPatch() =>
+        BaseCost.HasValue
+        || ReplayCount.HasValue
+        || Damage.HasValue
+        || Block.HasValue
+        || Exhaust.HasValue
+        || Ethereal.HasValue
+        || Unplayable.HasValue
+        || ExhaustOnNextPlay.HasValue
+        || SingleTurnRetain.HasValue
+        || SingleTurnSly.HasValue
+        || !string.IsNullOrWhiteSpace(NameOverride)
+        || !string.IsNullOrWhiteSpace(DescriptionOverride)
+        || DynamicVars is { Count: > 0 };
 }
 
 public sealed class CardEditNamedPreset {

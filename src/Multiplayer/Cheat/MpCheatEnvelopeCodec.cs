@@ -27,6 +27,10 @@ internal static class MpCheatEnvelopeCodec {
         writer.WriteBool(remove != null);
         if (remove != null)
             WriteRemoveCardPayload(writer, remove);
+        var edit = msg.EditCard;
+        writer.WriteBool(edit != null);
+        if (edit != null)
+            WriteEditCardPayload(writer, edit);
     }
 
     internal static MpCheatCommandMessage ReadCommand(PacketReader reader) {
@@ -39,6 +43,8 @@ internal static class MpCheatEnvelopeCodec {
             msg.AddCard = ReadAddCardPayload(reader);
         if (reader.ReadBool())
             msg.RemoveCard = ReadRemoveCardPayload(reader);
+        if (reader.ReadBool())
+            msg.EditCard = ReadEditCardPayload(reader);
         return msg;
     }
 
@@ -136,5 +142,35 @@ internal static class MpCheatEnvelopeCodec {
             ClientRequestId = reader.ReadULong(),
             RequesterNetId = reader.ReadULong(),
             Payload = ReadRemoveCardPayload(reader),
+        };
+
+    internal static void WriteEditCardPayload(PacketWriter writer, MpCheatEditCardPayload payload) {
+        MpCheatPacketIO.WriteBoundedString(writer, payload.CardId);
+        writer.WriteULong(payload.TargetPlayerNetId);
+        writer.WriteInt(payload.Target);
+        writer.WriteInt(payload.PileIndex);
+        MpCheatPacketIO.WriteBoundedString(writer, payload.TemplateJson);
+    }
+
+    internal static MpCheatEditCardPayload ReadEditCardPayload(PacketReader reader) =>
+        new() {
+            CardId = MpCheatPacketIO.ReadBoundedString(reader),
+            TargetPlayerNetId = reader.ReadULong(),
+            Target = reader.ReadInt(),
+            PileIndex = reader.ReadInt(),
+            TemplateJson = MpCheatPacketIO.ReadBoundedString(reader),
+        };
+
+    internal static void WriteEditCardRequest(PacketWriter writer, MpCheatEditCardClientRequestMessage msg) {
+        writer.WriteULong(msg.ClientRequestId);
+        writer.WriteULong(msg.RequesterNetId);
+        WriteEditCardPayload(writer, msg.Payload);
+    }
+
+    internal static MpCheatEditCardClientRequestMessage ReadEditCardRequest(PacketReader reader) =>
+        new() {
+            ClientRequestId = reader.ReadULong(),
+            RequesterNetId = reader.ReadULong(),
+            Payload = ReadEditCardPayload(reader),
         };
 }

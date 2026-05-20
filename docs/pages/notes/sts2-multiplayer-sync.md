@@ -85,6 +85,8 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 | 2c | 客机加牌请求 | channel=AddCardRequest（客机 → 主机）；主机跑 prepare/ACK/execute 后 channel=AddCardRequestResult 回传 |
 | 2d | 删牌 | Command：RemoveCardPrepare / RemoveCardExecute（按牌堆索引定位实例）；ACK 复用 AddCardAck |
 | 2e | 客机删牌请求 | channel=RemoveCardRequest / RemoveCardRequestResult（与加牌相同主机权威流程） |
+| 2f | 改牌 | Command：EditCardPrepare / EditCardExecute（牌堆索引定位 + `CardEditTemplate` JSON）；ACK 复用 AddCardAck |
+| 2g | 客机改牌请求 | channel=EditCardRequest (7) / EditCardRequestResult (8) |
 | — | **单槽位** | 仅注册 **1** 个 mod `INetMessage` 类型，降低与其他 mod 的 id 冲突 |
 | — | **多人 ACK** | 主机等待「Run 内远端玩家 ∩ 大厅已连接」全部 ACK；超时随人数递增（8s + 1.5s×(n−1)，上限 20s）；`commandId` 多路复用，支持并发多笔加牌 |
 | — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写 |
@@ -110,6 +112,8 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 - [ ] 主机卡牌浏览器加牌：侧栏 **Player** 选客机角色后再加；客机牌组出现相同卡牌（无 8s 超时）
 - [ ] 客机卡牌浏览器加牌：点添加后日志有 `AddCard client request` / `AddCard host start`（target=客机 netId）；牌出现在客机角色
 - [ ] 客机在 Hand/Deck 等分页删牌：日志 `RemoveCard client request` → `RemoveCard host start`；各方牌堆一致
+- [ ] 手牌/牌组分页改费、改名：日志 `EditCard host start` / `EditCard execute`；双方卡牌属性一致
+- [ ] 客机改自己手牌：日志 `EditCard client request` → 主机执行；无 StateDivergence
 - [ ] 客机 Cheats 面板只读，改开关不生效
 - [ ] 一方关闭联机作弊 opt-in 时，会话不 arm（面板提示原因）
 

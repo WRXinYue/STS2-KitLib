@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using DevMode.Actions;
+using DevMode.Presets;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -12,12 +13,12 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Multiplayer.Cheat;
 
-/// <summary>Host-authoritative remove-card: prepare/ACK on connected peers, then execute (2–N players).</summary>
-internal static class MpCheatCardRemoveCoordinator {
+/// <summary>Host-authoritative edit-card: prepare/ACK on connected peers, then apply template (2–N players).</summary>
+internal static class MpCheatCardEditCoordinator {
     private static readonly object Gate = new();
-    private static readonly Dictionary<ulong, PendingRemove> PendingByCommandId = new();
+    private static readonly Dictionary<ulong, PendingEdit> PendingByCommandId = new();
     private static readonly HashSet<ulong> ExecutedCommandIds = new();
-    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientRemoveCompletions = new();
+    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientEditCompletions = new();
     private static ulong _nextCommandId;
     private static ulong _nextClientRequestId;
 
@@ -28,39 +29,39 @@ internal static class MpCheatCardRemoveCoordinator {
     private const int MaxConcurrentPending = 64;
     private const int MaxExecutedIdHistory = 256;
 
-    private sealed class PendingRemove {
+    private sealed class PendingEdit {
         public required ulong CommandId { get; init; }
-        public required MpCheatRemoveCardPayload Payload { get; init; }
+        public required MpCheatEditCardPayload Payload { get; init; }
+        public required CardEditTemplate Template { get; init; }
         public required HashSet<ulong> AwaitingPeers { get; init; }
         public required int RequiredAckCount { get; init; }
         public required RunState State { get; init; }
         public required Player TargetPlayer { get; init; }
         public required CardModel Card { get; init; }
         public required CardTarget Target { get; init; }
-        public required bool RemoveFromRunState { get; init; }
         public Dictionary<ulong, MpCheatAddCardAckMessage> Acks { get; } = new();
         public TaskCompletionSource<bool> Completion { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
-    public static async Task<string> TryHostRemoveCardAsync(
+    public static async Task<string> TryHostEditCardAsync(
         RunState state,
         Player targetPlayer,
         CardModel card,
         CardTarget target,
-        bool removeFromRunState) {
-        var (_, message) = await TryHostRemoveCardCoreAsync(state, targetPlayer, card, target, removeFromRunState);
+        CardEditTemplate template) {
+        var (_, message) = await TryHostEditCardCoreAsync(state, targetPlayer, card, target, template);
         return message;
     }
 
-    public static async Task<string> TryClientRequestRemoveCardAsync(
+    public static async Task<string> TryClientRequestEditCardAsync(
         RunState state,
         Player targetPlayer,
         CardModel card,
         CardTarget target,
-        bool removeFromRunState) {
+        CardEditTemplate template) {
         if (MpCheatSession.IsHost)
-            return await TryHostRemoveCardAsync(state, targetPlayer, card, target, removeFromRunState);
+            return await TryHostEditCardAsync(state, targetPlayer, card, target, template);
 
         if (!MpCheatSession.CanUseMultiplayerCheats)
             return I18N.T(
@@ -71,25 +72,25 @@ internal static class MpCheatCardRemoveCoordinator {
         var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         if (localNetId == 0 || targetPlayer.NetId != localNetId)
             return I18N.T(
-                "mpcheat.cardRemove.clientSelfOnly",
-                "In multiplayer you can only remove cards from your own character.");
+                "mpcheat.cardEdit.clientSelfOnly",
+                "In multiplayer you can only edit cards on your own character.");
 
-        if (!CardActions.TryBuildRemovePayload(targetPlayer, card, target, removeFromRunState, out var payload, out var error))
+        if (!CardActions.TryBuildEditPayload(targetPlayer, card, target, template, out var payload, out var error))
             return FormatError(error);
 
         var clientRequestId = Interlocked.Increment(ref _nextClientRequestId);
         var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (Gate) {
-            ClientRemoveCompletions[clientRequestId] = completion;
+            ClientEditCompletions[clientRequestId] = completion;
         }
 
-        MpCheatNetBus.ClientSendRemoveCardRequest(new MpCheatRemoveCardClientRequestMessage {
+        MpCheatNetBus.ClientSendEditCardRequest(new MpCheatEditCardClientRequestMessage {
             ClientRequestId = clientRequestId,
             RequesterNetId = localNetId,
             Payload = payload,
         });
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard client request id={clientRequestId} card={payload.CardId} target={localNetId} pile={payload.Target} idx={payload.PileIndex}.");
+            $"[MpCheat] EditCard client request id={clientRequestId} card={payload.CardId} target={localNetId} pile={payload.Target} idx={payload.PileIndex}.");
 
         try {
             using var cts = new CancellationTokenSource(ClientRequestTimeoutMs);
@@ -97,51 +98,51 @@ internal static class MpCheatCardRemoveCoordinator {
         }
         catch (OperationCanceledException) {
             return I18N.T(
-                "mpcheat.cardRemove.clientRequestTimeout",
-                "Host did not respond to remove-card request in time.");
+                "mpcheat.cardEdit.clientRequestTimeout",
+                "Host did not respond to edit-card request in time.");
         }
         finally {
             lock (Gate) {
-                ClientRemoveCompletions.Remove(clientRequestId);
+                ClientEditCompletions.Remove(clientRequestId);
             }
         }
     }
 
-    public static void OnClientRemoveCardRequestReceived(MpCheatRemoveCardClientRequestMessage request, ulong senderId) {
+    public static void OnClientEditCardRequestReceived(MpCheatEditCardClientRequestMessage request, ulong senderId) {
         if (!MpCheatSession.IsHost) return;
-        TaskHelper.RunSafely(HandleClientRemoveCardRequestAsync(request, senderId));
+        TaskHelper.RunSafely(HandleClientEditCardRequestAsync(request, senderId));
     }
 
-    public static void OnClientRemoveCardResultReceived(MpCheatAddCardClientResultMessage result) {
+    public static void OnClientEditCardResultReceived(MpCheatAddCardClientResultMessage result) {
         if (MpCheatSession.IsHost) return;
         TaskCompletionSource<string>? completion;
         lock (Gate) {
-            ClientRemoveCompletions.TryGetValue(result.ClientRequestId, out completion);
+            ClientEditCompletions.TryGetValue(result.ClientRequestId, out completion);
         }
 
         if (completion == null) {
             MainFile.Logger.Debug(
-                $"[MpCheat] RemoveCard client result id={result.ClientRequestId} ignored (no pending UI).");
+                $"[MpCheat] EditCard client result id={result.ClientRequestId} ignored (no pending UI).");
             return;
         }
 
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard client result id={result.ClientRequestId} ok={result.Success}.");
+            $"[MpCheat] EditCard client result id={result.ClientRequestId} ok={result.Success}.");
         completion.TrySetResult(result.Message);
     }
 
-    private static async Task HandleClientRemoveCardRequestAsync(
-        MpCheatRemoveCardClientRequestMessage request,
+    private static async Task HandleClientEditCardRequestAsync(
+        MpCheatEditCardClientRequestMessage request,
         ulong senderId) {
         void Reply(bool success, string message) =>
-            MpCheatNetBus.HostSendRemoveCardRequestResult(senderId, new MpCheatAddCardClientResultMessage {
+            MpCheatNetBus.HostSendEditCardRequestResult(senderId, new MpCheatAddCardClientResultMessage {
                 ClientRequestId = request.ClientRequestId,
                 Success = success,
                 Message = message,
             });
 
         if (!MpCheatSession.CanEditMultiplayerCheats) {
-            Reply(false, I18N.T("mpcheat.cardRemove.hostOnly", "Only the host can remove cards in multiplayer."));
+            Reply(false, I18N.T("mpcheat.cardEdit.hostOnly", "Only the host can edit cards in multiplayer."));
             return;
         }
 
@@ -152,65 +153,65 @@ internal static class MpCheatCardRemoveCoordinator {
 
         if (request.Payload.TargetPlayerNetId != senderId) {
             Reply(false, I18N.T(
-                "mpcheat.cardRemove.clientSelfOnly",
-                "In multiplayer you can only remove cards from your own character."));
+                "mpcheat.cardEdit.clientSelfOnly",
+                "In multiplayer you can only edit cards on your own character."));
             return;
         }
 
         var resolved = TryResolveForExecute(request.Payload);
         if (resolved == null) {
-            Reply(false, FormatError("invalid remove-card request"));
+            Reply(false, FormatError("invalid edit-card request"));
             return;
         }
 
-        var (state, player, card, target, removeFromRunState) = resolved.Value;
+        var (state, player, card, target, template) = resolved.Value;
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard client request from {senderId} card={request.Payload.CardId}.");
+            $"[MpCheat] EditCard client request from {senderId} card={request.Payload.CardId}.");
 
-        var (success, message) = await TryHostRemoveCardCoreAsync(state, player, card, target, removeFromRunState);
+        var (success, message) = await TryHostEditCardCoreAsync(state, player, card, target, template);
         Reply(success, message);
     }
 
-    private static async Task<(bool Success, string Message)> TryHostRemoveCardCoreAsync(
+    private static async Task<(bool Success, string Message)> TryHostEditCardCoreAsync(
         RunState state,
         Player targetPlayer,
         CardModel card,
         CardTarget target,
-        bool removeFromRunState) {
+        CardEditTemplate template) {
         if (!MpCheatSession.CanEditMultiplayerCheats)
-            return (false, I18N.T("mpcheat.cardRemove.hostOnly", "Only the host can remove cards in multiplayer."));
+            return (false, I18N.T("mpcheat.cardEdit.hostOnly", "Only the host can edit cards in multiplayer."));
 
-        if (!CardActions.TryBuildRemovePayload(targetPlayer, card, target, removeFromRunState, out var payload, out var localError))
+        if (!CardActions.TryBuildEditPayload(targetPlayer, card, target, template, out var payload, out var localError))
             return (false, FormatError(localError));
 
         var cardId = payload.CardId;
         var commandId = Interlocked.Increment(ref _nextCommandId);
         var awaitingPeers = MpCheatParticipants.GetAckRequiredPeerNetIds();
 
-        PendingRemove pending;
+        PendingEdit pending;
         lock (Gate) {
             PruneIfOverCapacity();
-            pending = new PendingRemove {
+            pending = new PendingEdit {
                 CommandId = commandId,
                 Payload = payload,
+                Template = template,
                 AwaitingPeers = awaitingPeers,
                 RequiredAckCount = awaitingPeers.Count,
                 State = state,
                 TargetPlayer = targetPlayer,
                 Card = card,
                 Target = target,
-                RemoveFromRunState = removeFromRunState,
             };
             PendingByCommandId[commandId] = pending;
         }
 
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard host start id={commandId} card={cardId} target={targetPlayer.NetId} pile={payload.Target} idx={payload.PileIndex} ackPeers={awaitingPeers.Count}.");
+            $"[MpCheat] EditCard host start id={commandId} card={cardId} target={targetPlayer.NetId} pile={payload.Target} idx={payload.PileIndex} ackPeers={awaitingPeers.Count}.");
 
-        BroadcastCommand(MpCheatCommandKind.RemoveCardPrepare, commandId, payload);
+        BroadcastCommand(MpCheatCommandKind.EditCardPrepare, commandId, payload);
 
         if (awaitingPeers.Count == 0)
-            return (true, await FinishHostExecute(pending, cardId));
+            return (true, FinishHostExecute(pending, cardId));
 
         var timeoutMs = ComputeAckTimeoutMs(awaitingPeers.Count);
         using var cts = new CancellationTokenSource(timeoutMs);
@@ -222,7 +223,7 @@ internal static class MpCheatCardRemoveCoordinator {
                 return (false, fail != null ? FormatPeerError(fail) : FormatAckTimeout(pending));
             }
 
-            return (true, await FinishHostExecute(pending, cardId));
+            return (true, FinishHostExecute(pending, cardId));
         }
         catch (OperationCanceledException) {
             RemovePending(commandId);
@@ -231,12 +232,12 @@ internal static class MpCheatCardRemoveCoordinator {
     }
 
     public static void OnPrepareReceived(MpCheatCommandMessage message) {
-        if (!MpCheatSession.CanUseMultiplayerCheats || message.RemoveCard == null) return;
+        if (!MpCheatSession.CanUseMultiplayerCheats || message.EditCard == null) return;
         if (MpCheatSession.IsHost) return;
 
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard prepare id={message.CommandId} card={message.RemoveCard.CardId} target={message.RemoveCard.TargetPlayerNetId}");
-        var (ok, error) = TryResolveAndValidate(message.RemoveCard);
+            $"[MpCheat] EditCard prepare id={message.CommandId} card={message.EditCard.CardId} target={message.EditCard.TargetPlayerNetId}");
+        var (ok, error) = TryResolveAndValidate(message.EditCard);
         var peerNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.SendAddCardAck(new MpCheatAddCardAckMessage {
             CommandId = message.CommandId,
@@ -245,30 +246,30 @@ internal static class MpCheatCardRemoveCoordinator {
             Error = error,
         });
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
+            $"[MpCheat] EditCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
     }
 
     public static void OnExecuteReceived(MpCheatCommandMessage message) {
-        if (!MpCheatSession.CanUseMultiplayerCheats || message.RemoveCard == null) return;
+        if (!MpCheatSession.CanUseMultiplayerCheats || message.EditCard == null) return;
         if (MpCheatSession.IsHost) return;
 
         lock (Gate) {
             if (!TrackExecuted(message.CommandId)) {
-                MainFile.Logger.Debug($"[MpCheat] RemoveCard execute id={message.CommandId} skipped (duplicate).");
+                MainFile.Logger.Debug($"[MpCheat] EditCard execute id={message.CommandId} skipped (duplicate).");
                 return;
             }
         }
 
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard execute id={message.CommandId} card={message.RemoveCard.CardId} target={message.RemoveCard.TargetPlayerNetId}");
-        var resolved = TryResolveForExecute(message.RemoveCard);
+            $"[MpCheat] EditCard execute id={message.CommandId} card={message.EditCard.CardId} target={message.EditCard.TargetPlayerNetId}");
+        var resolved = TryResolveForExecute(message.EditCard);
         if (resolved == null) {
-            MainFile.Logger.Warn($"[MpCheat] RemoveCard execute skipped: {message.RemoveCard.CardId}");
+            MainFile.Logger.Warn($"[MpCheat] EditCard execute skipped: {message.EditCard.CardId}");
             return;
         }
 
-        var (state, player, card, target, removeFromRunState) = resolved.Value;
-        TaskHelper.RunSafely(CardActions.ExecuteRemoveFromMpSync(state, player, card, target, removeFromRunState));
+        var (_, _, card, _, template) = resolved.Value;
+        CardEditActions.ApplyTemplate(card, template);
     }
 
     public static bool TryHandleAck(MpCheatAddCardAckMessage ack) {
@@ -290,30 +291,25 @@ internal static class MpCheatCardRemoveCoordinator {
         }
     }
 
-    private static async Task<string> FinishHostExecute(PendingRemove pending, string cardId) {
+    private static string FinishHostExecute(PendingEdit pending, string cardId) {
         var commandId = pending.CommandId;
-        BroadcastCommand(MpCheatCommandKind.RemoveCardExecute, commandId, pending.Payload);
-        await CardActions.ExecuteRemoveFromMpSync(
-            pending.State,
-            pending.TargetPlayer,
-            pending.Card,
-            pending.Target,
-            pending.RemoveFromRunState);
+        BroadcastCommand(MpCheatCommandKind.EditCardExecute, commandId, pending.Payload);
+        CardEditActions.ApplyTemplate(pending.Card, pending.Template);
         RemovePending(commandId);
         var targetLabel = MpCheatPlayerLabels.FormatLogLabel(pending.TargetPlayer);
         MainFile.Logger.Info(
-            $"[MpCheat] RemoveCard command {commandId} executed card={cardId} target={targetLabel}.");
+            $"[MpCheat] EditCard command {commandId} executed card={cardId} target={targetLabel}.");
         var acked = pending.Acks.Count(a => a.Value.Success);
         if (pending.RequiredAckCount > 0) {
             return string.Format(
-                I18N.T("mpcheat.cardRemove.successWithAcksFor", "Removed {0} from {1} ({2}/{3} players confirmed)."),
+                I18N.T("mpcheat.cardEdit.successWithAcksFor", "Edited {0} for {1} ({2}/{3} players confirmed)."),
                 cardId,
                 targetLabel,
                 acked,
                 pending.RequiredAckCount);
         }
         return string.Format(
-            I18N.T("mpcheat.cardRemove.successFor", "Removed {0} from {1}."),
+            I18N.T("mpcheat.cardEdit.successFor", "Edited {0} for {1}."),
             cardId,
             targetLabel);
     }
@@ -329,7 +325,7 @@ internal static class MpCheatCardRemoveCoordinator {
         var pending = PendingByCommandId[oldest];
         pending.Completion.TrySetResult(false);
         PendingByCommandId.Remove(oldest);
-        MainFile.Logger.Warn($"[MpCheat] Dropped oldest pending remove-card command {oldest} (capacity).");
+        MainFile.Logger.Warn($"[MpCheat] Dropped oldest pending edit-card command {oldest} (capacity).");
     }
 
     private static bool TrackExecuted(ulong commandId) {
@@ -338,37 +334,40 @@ internal static class MpCheatCardRemoveCoordinator {
         return ExecutedCommandIds.Add(commandId);
     }
 
-    private static (bool Ok, string? Error) TryResolveAndValidate(MpCheatRemoveCardPayload payload) {
+    private static (bool Ok, string? Error) TryResolveAndValidate(MpCheatEditCardPayload payload) {
         var resolved = TryResolveForExecute(payload);
         if (resolved == null)
-            return (false, "invalid remove-card payload");
-        var (state, player, card, target, removeFromRunState) = resolved.Value;
-        return CardActions.TryValidateRemove(state, player, card, target, removeFromRunState, out var err)
+            return (false, "invalid edit-card payload");
+        var (state, player, card, target, template) = resolved.Value;
+        return CardActions.TryValidateEdit(state, player, card, target, template, out var err)
             ? (true, null)
             : (false, err);
     }
 
-    private static (RunState State, Player Player, CardModel Card, CardTarget Target, bool RemoveFromRunState)?
-        TryResolveForExecute(MpCheatRemoveCardPayload payload) {
+    private static (RunState State, Player Player, CardModel Card, CardTarget Target, CardEditTemplate Template)?
+        TryResolveForExecute(MpCheatEditCardPayload payload) {
         var state = RunManager.Instance?.DebugOnlyGetState();
         if (state == null) return null;
 
         var player = CardActions.FindPlayerByNetId(payload.TargetPlayerNetId);
         if (player == null) return null;
 
-        var card = CardActions.ResolveCardFromRemovePayload(player, payload);
+        var card = CardActions.ResolveCardFromEditPayload(player, payload);
         if (card == null) return null;
 
-        return (state, player, card, (CardTarget)payload.Target, payload.RemoveFromRunState);
+        var template = MpCheatNetJson.DeserializeEditTemplate(payload.TemplateJson);
+        if (template == null || !template.HasAnyPatch()) return null;
+
+        return (state, player, card, (CardTarget)payload.Target, template);
     }
 
-    private static void BroadcastCommand(MpCheatCommandKind kind, ulong commandId, MpCheatRemoveCardPayload payload) {
+    private static void BroadcastCommand(MpCheatCommandKind kind, ulong commandId, MpCheatEditCardPayload payload) {
         var netId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.BroadcastCommand(new MpCheatCommandMessage {
             Kind = kind,
             IssuedByNetId = netId,
             CommandId = commandId,
-            RemoveCard = payload,
+            EditCard = payload,
         });
     }
 
@@ -384,32 +383,32 @@ internal static class MpCheatCardRemoveCoordinator {
                 pending.Completion.TrySetResult(false);
             PendingByCommandId.Clear();
             ExecutedCommandIds.Clear();
-            foreach (var tcs in ClientRemoveCompletions.Values)
-                tcs.TrySetResult(I18N.T("mpcheat.cardRemove.cancelled", "Remove card cancelled (run ended)."));
-            ClientRemoveCompletions.Clear();
+            foreach (var tcs in ClientEditCompletions.Values)
+                tcs.TrySetResult(I18N.T("mpcheat.cardEdit.cancelled", "Edit card cancelled (run ended)."));
+            ClientEditCompletions.Clear();
         }
     }
 
     private static string FormatError(string error) =>
-        string.Format(I18N.T("mpcheat.cardRemove.failedDetail", "Remove card failed: {0}"), error);
+        string.Format(I18N.T("mpcheat.cardEdit.failedDetail", "Edit card failed: {0}"), error);
 
     private static string FormatPeerError(MpCheatAddCardAckMessage ack) {
         var err = string.IsNullOrEmpty(ack.Error) ? "validation failed" : ack.Error;
         return string.Format(
-            I18N.T("mpcheat.cardRemove.peerFailed", "Player {0} rejected remove card: {1}"),
+            I18N.T("mpcheat.cardEdit.peerFailed", "Player {0} rejected edit card: {1}"),
             ack.PeerNetId,
             err);
     }
 
-    private static string FormatAckTimeout(PendingRemove pending) {
+    private static string FormatAckTimeout(PendingEdit pending) {
         var got = pending.Acks.Count;
         var need = pending.RequiredAckCount;
         if (need > 0) {
             return string.Format(
-                I18N.T("mpcheat.cardRemove.timeoutDetail", "Remove card timed out ({0}/{1} players confirmed)."),
+                I18N.T("mpcheat.cardEdit.timeoutDetail", "Edit card timed out ({0}/{1} players confirmed)."),
                 got,
                 need);
         }
-        return I18N.T("mpcheat.cardRemove.timeout", "Remove card timed out waiting for other players.");
+        return I18N.T("mpcheat.cardEdit.timeout", "Edit card timed out waiting for other players.");
     }
 }

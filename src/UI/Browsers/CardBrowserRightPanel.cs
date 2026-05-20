@@ -101,7 +101,8 @@ internal static class CardBrowserRightPanel {
 
         container.AddChild(new HSeparator());
         // Inline editors apply to the pile instance, or stage values for Add when browsing the library.
-        BuildEditSection(container, statusLabel, card, libraryAddCost);
+        BuildEditSection(container, statusLabel, card, state, player, onGridRefresh, libraryAddCost,
+            isLibrary ? null : browseTarget);
     }
 
     /// <summary>When browsing the card library with "view upgrades" on, match grid + NCard: clone and UpgradeInternal for read-only UI.</summary>
@@ -151,20 +152,15 @@ internal static class CardBrowserRightPanel {
             playerRow.AddChild(playerLbl);
             var playerPicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
-            var defaultIdx = 0;
-            var firstRemoteIdx = -1;
+            var localIdx = 0;
             for (var i = 0; i < players.Count; i++) {
                 var p = players[i];
                 playerPicker.AddItem(MpCheatPlayerLabels.FormatPickerLabel(p), i);
                 if (p.NetId == localNetId)
-                    defaultIdx = i;
-                else if (firstRemoteIdx < 0)
-                    firstRemoteIdx = i;
+                    localIdx = i;
             }
-            // Co-op: default to first remote player so host does not accidentally buff only themselves.
-            var selectedIdx = firstRemoteIdx >= 0 ? firstRemoteIdx : defaultIdx;
-            playerPicker.Selected = selectedIdx;
-            addTargetPlayer = players[selectedIdx];
+            playerPicker.Selected = localIdx;
+            addTargetPlayer = players[localIdx];
             playerPicker.ItemSelected += idx => addTargetPlayer = players[(int)idx];
             playerRow.AddChild(playerPicker);
             container.AddChild(playerRow);
@@ -417,7 +413,51 @@ internal static class CardBrowserRightPanel {
     // ── Edit section (inline property editor) ──
 
     private static void BuildEditSection(VBoxContainer container, Label statusLabel, CardModel card,
-        LibraryAddCostStaging? libraryAddCost = null) {
+        RunState state, Player player, Action? onGridRefresh, LibraryAddCostStaging? libraryAddCost = null,
+        CardTarget? browseTarget = null) {
+        var mpOwnedPile = libraryAddCost == null && MpCheatSession.InMultiplayerRun && browseTarget.HasValue;
+        var mpBlocked = libraryAddCost == null && MpCheatSession.InMultiplayerRun && !browseTarget.HasValue;
+
+        if (MpCheatSession.InMultiplayerRun) {
+            var mpWarn = new Label {
+                Text = mpOwnedPile
+                    ? I18N.T(
+                        "cardBrowser.editMpSync",
+                        "Multiplayer: edits below sync to all players (Hand/Deck tabs).")
+                    : mpBlocked
+                        ? I18N.T(
+                            "cardBrowser.editMpLibraryBlocked",
+                            "Multiplayer: open Hand/Deck (or another pile tab) to sync edits. All Cards library edits are local-only.")
+                        : I18N.T(
+                            "cardBrowser.costAppliesOnAdd",
+                            "Base cost applies when you add this card."),
+            };
+            mpWarn.AddThemeFontSizeOverride("font_size", 11);
+            mpWarn.AddThemeColorOverride(
+                "font_color",
+                mpOwnedPile ? new Color(0.55f, 0.85f, 0.55f) : new Color(0.95f, 0.75f, 0.35f));
+            mpWarn.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+            container.AddChild(mpWarn);
+        }
+
+        void ApplyPatch(CardEditTemplate patch, string singlePlayerOk, string? singlePlayerFail = null) {
+            if (mpBlocked) {
+                statusLabel.Text = I18N.T(
+                    "mpcheat.cardEdit.libraryBlocked",
+                    "Edit synced cards from a pile tab (Hand, Deck, etc.), not All Cards.");
+                return;
+            }
+            if (mpOwnedPile) {
+                RunSyncedCardEdit(statusLabel, card, state, player, browseTarget!.Value, onGridRefresh, patch);
+                return;
+            }
+            CardEditActions.ApplyTemplate(card, patch);
+            statusLabel.Text = singlePlayerFail != null && !patch.HasAnyPatch()
+                ? singlePlayerFail
+                : singlePlayerOk;
+            onGridRefresh?.Invoke();
+        }
+
         if (libraryAddCost != null) {
             AddIntEditor(container, I18N.T("cardEdit.cost", "Base Cost"), libraryAddCost.BaseCost,
                 v => {
@@ -428,44 +468,54 @@ internal static class CardBrowserRightPanel {
         else {
             AddIntEditor(container, I18N.T("cardEdit.cost", "Base Cost"),
                 CardEditActions.GetBaseCost(card) ?? 0,
-                v => {
-                    if (CardEditActions.TrySetBaseCost(card, v))
-                        statusLabel.Text = I18N.T("cardBrowser.costSet", "Cost set.");
-                    else
-                        statusLabel.Text = I18N.T("cardBrowser.costSetFailed", "Could not set cost.");
-                });
+                v => ApplyPatch(
+                    new CardEditTemplate { BaseCost = v },
+                    I18N.T("cardBrowser.costSet", "Cost set."),
+                    I18N.T("cardBrowser.costSetFailed", "Could not set cost.")));
         }
 
         AddIntEditor(container, I18N.T("cardEdit.replay", "Replay Count"),
             CardEditActions.GetReplayCount(card) ?? 0,
-            v => { CardEditActions.TrySetReplayCount(card, v); statusLabel.Text = I18N.T("cardBrowser.replaySet", "Replay set."); });
+            v => ApplyPatch(
+                new CardEditTemplate { ReplayCount = v },
+                I18N.T("cardBrowser.replaySet", "Replay set.")));
 
         AddIntEditor(container, I18N.T("cardEdit.damage", "Base Damage"),
             CardEditActions.GetDamage(card) ?? 0,
-            v => { CardEditActions.TrySetDamage(card, v); statusLabel.Text = I18N.T("cardBrowser.damageSet", "Damage set."); });
+            v => ApplyPatch(
+                new CardEditTemplate { Damage = v },
+                I18N.T("cardBrowser.damageSet", "Damage set.")));
 
         AddIntEditor(container, I18N.T("cardEdit.block", "Base Block"),
             CardEditActions.GetBlock(card) ?? 0,
-            v => { CardEditActions.TrySetBlock(card, v); statusLabel.Text = I18N.T("cardBrowser.blockSet", "Block set."); });
+            v => ApplyPatch(
+                new CardEditTemplate { Block = v },
+                I18N.T("cardBrowser.blockSet", "Block set.")));
 
         AddBoolToggle(container, I18N.T("cardEdit.exhaust", "Exhaust"),
             CardEditActions.GetExhaust(card) ?? false,
-            v => { CardEditActions.TrySetExhaust(card, v); statusLabel.Text = I18N.T("cardBrowser.exhaustToggled", "Exhaust toggled."); });
+            v => ApplyPatch(
+                new CardEditTemplate { Exhaust = v },
+                I18N.T("cardBrowser.exhaustToggled", "Exhaust toggled.")));
         AddBoolToggle(container, I18N.T("cardEdit.ethereal", "Ethereal"),
             CardEditActions.GetEthereal(card) ?? false,
-            v => { CardEditActions.TrySetEthereal(card, v); statusLabel.Text = I18N.T("cardBrowser.etherealToggled", "Ethereal toggled."); });
+            v => ApplyPatch(
+                new CardEditTemplate { Ethereal = v },
+                I18N.T("cardBrowser.etherealToggled", "Ethereal toggled.")));
         AddBoolToggle(container, I18N.T("cardEdit.unplayable", "Unplayable"),
             CardEditActions.GetUnplayable(card) ?? false,
-            v => { CardEditActions.TrySetUnplayable(card, v); statusLabel.Text = I18N.T("cardBrowser.unplayableToggled", "Unplayable toggled."); });
+            v => ApplyPatch(
+                new CardEditTemplate { Unplayable = v },
+                I18N.T("cardBrowser.unplayableToggled", "Unplayable toggled.")));
         AddBoolToggle(container, I18N.T("cardEdit.exhaustOnNextPlay", "Exhaust On Next Play"),
             CardEditActions.GetExhaustOnNextPlay(card) ?? false,
-            v => { CardEditActions.TrySetExhaustOnNextPlay(card, v); statusLabel.Text = "Exhaust-on-next-play toggled."; });
+            v => ApplyPatch(new CardEditTemplate { ExhaustOnNextPlay = v }, "Exhaust-on-next-play toggled."));
         AddBoolToggle(container, I18N.T("cardEdit.singleTurnRetain", "Single-Turn Retain"),
             CardEditActions.GetSingleTurnRetain(card) ?? false,
-            v => { CardEditActions.TrySetSingleTurnRetain(card, v); statusLabel.Text = "Single-turn retain toggled."; });
+            v => ApplyPatch(new CardEditTemplate { SingleTurnRetain = v }, "Single-turn retain toggled."));
         AddBoolToggle(container, I18N.T("cardEdit.singleTurnSly", "Single-Turn Sly"),
             CardEditActions.GetSingleTurnSly(card) ?? false,
-            v => { CardEditActions.TrySetSingleTurnSly(card, v); statusLabel.Text = "Single-turn sly toggled."; });
+            v => ApplyPatch(new CardEditTemplate { SingleTurnSly = v }, "Single-turn sly toggled."));
 
         var dynamicKeys = CardEditActions.GetDynamicVarKeys(card);
         if (dynamicKeys.Count > 0) {
@@ -473,8 +523,11 @@ internal static class CardBrowserRightPanel {
             container.AddChild(new Label { Text = I18N.T("cardEdit.dynamicVars", "Dynamic Vars") });
             foreach (var key in dynamicKeys) {
                 var displayKey = CardEditActions.GetDynamicVarDisplayName(key);
+                var dynKey = key;
                 AddIntEditor(container, displayKey, CardEditActions.GetDynamicVar(card, key) ?? 0,
-                    v => { CardEditActions.TrySetDynamicVar(card, key, v); statusLabel.Text = $"{displayKey} set."; });
+                    v => ApplyPatch(
+                        new CardEditTemplate { DynamicVars = new Dictionary<string, int> { [dynKey] = v } },
+                        $"{displayKey} set."));
             }
         }
 
@@ -482,10 +535,28 @@ internal static class CardBrowserRightPanel {
 
         AddTextEditor(container, I18N.T("cardEdit.titleText", "Name Override"),
             CardEditActions.GetTitleText(card),
-            v => { CardEditActions.TrySetTitleText(card, v); statusLabel.Text = "Name override set."; });
+            v => {
+                if (string.IsNullOrWhiteSpace(v)) {
+                    statusLabel.Text = I18N.T("cardBrowser.nameOverrideFailed", "Could not set name override.");
+                    return;
+                }
+                ApplyPatch(
+                    new CardEditTemplate { NameOverride = v.Trim() },
+                    I18N.T("cardBrowser.nameOverrideSet", "Name override set."),
+                    I18N.T("cardBrowser.nameOverrideFailed", "Could not set name override."));
+            });
         AddTextEditor(container, I18N.T("cardEdit.descText", "Description Override"),
             CardEditActions.GetDescriptionText(card),
-            v => { CardEditActions.TrySetDescriptionText(card, v); statusLabel.Text = "Description override set."; });
+            v => {
+                if (string.IsNullOrWhiteSpace(v)) {
+                    statusLabel.Text = I18N.T("cardBrowser.descOverrideFailed", "Could not set description override.");
+                    return;
+                }
+                ApplyPatch(
+                    new CardEditTemplate { DescriptionOverride = v.Trim() },
+                    I18N.T("cardBrowser.descOverrideSet", "Description override set."),
+                    I18N.T("cardBrowser.descOverrideFailed", "Could not set description override."));
+            });
 
         var enchantTypes = CardEditActions.GetEnchantmentTypes();
         if (enchantTypes.Count > 0) {
@@ -530,13 +601,58 @@ internal static class CardBrowserRightPanel {
             container.AddChild(clearBtn);
         }
 
+        if (MpCheatSession.InMultiplayerRun && mpOwnedPile) {
+            container.AddChild(new Label {
+                Text = I18N.T(
+                    "cardBrowser.editMpEnchantLocal",
+                    "Enchantment apply/clear is not synced yet (local only)."),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            });
+        }
+
         container.AddChild(new HSeparator());
-        BuildPresetRow(container, statusLabel, card);
+        BuildPresetRow(container, statusLabel, card, state, player, browseTarget, onGridRefresh, libraryAddCost != null);
+    }
+
+    private static void RunSyncedCardEdit(
+        Label statusLabel,
+        CardModel card,
+        RunState state,
+        Player player,
+        CardTarget browseTarget,
+        Action? onGridRefresh,
+        CardEditTemplate patch) {
+        if (!MpCheatSession.CanUseMultiplayerCheats) {
+            statusLabel.Text = I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown");
+            return;
+        }
+
+        statusLabel.Text = MpCheatSession.IsHost
+            ? (MpCheatParticipants.RemotePeerCount > 0
+                ? string.Format(
+                    I18N.T("mpcheat.cardEdit.pendingWithPeers", "Syncing edit… waiting for {0} player(s)."),
+                    MpCheatParticipants.RemotePeerCount)
+                : I18N.T("mpcheat.cardEdit.pending", "Syncing edit to all players…"))
+            : I18N.T("mpcheat.cardEdit.clientPending", "Requesting host to sync card edit…");
+
+        async Task SyncAsync() {
+            var result = MpCheatSession.IsHost
+                ? await MpCheatCardEditCoordinator.TryHostEditCardAsync(state, player, card, browseTarget, patch)
+                : await MpCheatCardEditCoordinator.TryClientRequestEditCardAsync(state, player, card, browseTarget, patch);
+            statusLabel.Text = result;
+            onGridRefresh?.Invoke();
+        }
+
+        TaskHelper.RunSafely(SyncAsync());
     }
 
     // ──────── Preset Row ────────
 
-    private static void BuildPresetRow(VBoxContainer container, Label statusLabel, CardModel card) {
+    private static void BuildPresetRow(VBoxContainer container, Label statusLabel, CardModel card,
+        RunState state, Player player, CardTarget? browseTarget, Action? onGridRefresh, bool isLibrary) {
         var presetRow = new HBoxContainer();
         presetRow.AddThemeConstantOverride("separation", 4);
 
@@ -572,8 +688,13 @@ internal static class CardBrowserRightPanel {
             if (presetPicker.ItemCount == 0) { statusLabel.Text = "No preset."; return; }
             var pName = presetPicker.GetItemText(presetPicker.Selected);
             if (!CardEditPresetManager.Store.TryGet(pName, out var preset)) { statusLabel.Text = "Preset not found."; return; }
+            if (!isLibrary && MpCheatSession.InMultiplayerRun && browseTarget.HasValue) {
+                RunSyncedCardEdit(statusLabel, card, state, player, browseTarget.Value, onGridRefresh, preset.Template);
+                return;
+            }
             CardEditActions.ApplyTemplate(card, preset.Template);
             statusLabel.Text = $"Preset applied: {pName}";
+            onGridRefresh?.Invoke();
         };
 
         delBtn.Pressed += () => {

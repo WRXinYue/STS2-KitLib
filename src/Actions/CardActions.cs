@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DevMode.Multiplayer.Cheat;
 using DevMode.Navigation;
+using DevMode.Presets;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -227,6 +228,80 @@ internal static class CardActions {
             return null;
         return card;
     }
+
+    internal static bool TryBuildEditPayload(
+        Player player,
+        CardModel card,
+        CardTarget target,
+        CardEditTemplate template,
+        out MpCheatEditCardPayload payload,
+        out string error) {
+        payload = new MpCheatEditCardPayload();
+        error = "";
+        if (card == null) {
+            error = "card not found";
+            return false;
+        }
+        if (!template.HasAnyPatch()) {
+            error = "empty edit patch";
+            return false;
+        }
+
+        var pileIndex = GetPileIndex(player, target, card);
+        if (pileIndex < 0) {
+            error = "card not in target pile";
+            return false;
+        }
+
+        payload = new MpCheatEditCardPayload {
+            CardId = ((AbstractModel)card).Id.Entry,
+            TargetPlayerNetId = player.NetId,
+            Target = (int)target,
+            PileIndex = pileIndex,
+            TemplateJson = MpCheatNetJson.SerializeEditTemplate(template),
+        };
+        return true;
+    }
+
+    internal static bool TryValidateEdit(
+        RunState state,
+        Player player,
+        CardModel card,
+        CardTarget target,
+        CardEditTemplate template,
+        out string error) {
+        error = "";
+        if (card == null) {
+            error = "card not found";
+            return false;
+        }
+        if (player == null) {
+            error = "player not found";
+            return false;
+        }
+        if (!template.HasAnyPatch()) {
+            error = "empty edit patch";
+            return false;
+        }
+        if (target != CardTarget.Deck && player.Creature?.CombatState == null) {
+            error = "not in combat";
+            return false;
+        }
+        if (GetPileIndex(player, target, card) < 0) {
+            error = "card not in target pile";
+            return false;
+        }
+        return true;
+    }
+
+    internal static CardModel? ResolveCardFromEditPayload(Player player, MpCheatEditCardPayload payload) =>
+        ResolveCardFromRemovePayload(player, new MpCheatRemoveCardPayload {
+            CardId = payload.CardId,
+            TargetPlayerNetId = payload.TargetPlayerNetId,
+            Target = payload.Target,
+            PileIndex = payload.PileIndex,
+            RemoveFromRunState = false,
+        });
 
     internal static int GetPileIndex(Player player, CardTarget target, CardModel card) {
         var cards = GetCardsForTarget(player, target);
