@@ -21,7 +21,9 @@ public static class SettingsStore {
     public static void Load() {
         try {
             if (!File.Exists(FilePath)) {
+                Current = new DevModeSettings { RailIntroDismissed = false };
                 ApplyNormalRunModeFromSettings();
+                Save();
                 return;
             }
             var json = File.ReadAllText(FilePath);
@@ -61,6 +63,16 @@ public static class SettingsStore {
     public static void SetCombatStatsMonsterIntentOverlayPosition(float x, float y) {
         Current.CombatStatsMonsterIntentOverlayPosX = x;
         Current.CombatStatsMonsterIntentOverlayPosY = y;
+        Save();
+    }
+
+    public static bool ShouldShowRailIntroHint()
+        => Current.RailIntroDismissed == false;
+
+    public static void MarkRailIntroDismissed() {
+        if (Current.RailIntroDismissed == true)
+            return;
+        Current.RailIntroDismissed = true;
         Save();
     }
 

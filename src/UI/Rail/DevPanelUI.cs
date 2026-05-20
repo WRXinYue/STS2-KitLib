@@ -111,6 +111,7 @@ internal static partial class DevPanelUI {
 
         RefreshRailIconTints();
         ApplyContextPaneTheme();
+        RefreshRailIntroHints();
     }
 
     private static void RefreshRailIconTints() {
@@ -295,6 +296,7 @@ internal static partial class DevPanelUI {
         peekTab.AddThemeStyleboxOverride("pressed", _peekTabStyle);
         peekTab.AddThemeStyleboxOverride("focus", _peekTabStyle);
         _peekTabBtn = peekTab;
+        peekTab.Visible = true;
         root.AddChild(peekTab);
 
         // ── Auto-hide: timer-based mouse position polling ──
@@ -307,8 +309,14 @@ internal static partial class DevPanelUI {
         rail.OffsetRight = hiddenX + RailW;
         rail.Modulate = new Color(1, 1, 1, 0);
 
-        void SlideRail(bool show) {
+        void SlideRail(bool show, bool userTriggered = false) {
             if (railShown == show) return;
+
+            if (show && userTriggered && SettingsStore.ShouldShowRailIntroHint()) {
+                SettingsStore.MarkRailIntroDismissed();
+                StopAllRailBlinkHints();
+            }
+
             railShown = show;
 
             railTween?.Kill();
@@ -328,6 +336,10 @@ internal static partial class DevPanelUI {
                      .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
 
             peekTab.Visible = !show;
+            if (show)
+                StopAllRailBlinkHints();
+            else
+                RefreshRailIntroHints();
         }
 
         var pollTimer = new Timer {
@@ -340,6 +352,8 @@ internal static partial class DevPanelUI {
         pollTimer.Timeout += () => {
             if (_activeOverlayId != null || _pinRailCount > 0) {
                 if (!railShown) SlideRail(true);
+                peekTab.Visible = false;
+                StopAllRailBlinkHints();
                 return;
             }
 
@@ -351,13 +365,17 @@ internal static partial class DevPanelUI {
             bool overRail = railShown && railRect.Grow(8).HasPoint(mousePos);
 
             if (inHitZone || overRail)
-                SlideRail(true);
+                SlideRail(true, userTriggered: true);
             else if (railShown)
                 SlideRail(false);
+
+            RefreshRailIntroHints();
         };
         root.AddChild(pollTimer);
 
-        peekTab.Pressed += () => SlideRail(true);
+        peekTab.Pressed += () => SlideRail(true, userTriggered: true);
+
+        RefreshRailIntroHints();
 
         AttachContextPane(globalUi);
         ((Node)globalUi).AddChild(root);
@@ -371,9 +389,12 @@ internal static partial class DevPanelUI {
         _browserRailHoldCount = 0;
         _pinRailCount = 0;
         ThemeManager.OnThemeChanged -= ApplyRailTheme;
+        StopAllRailBlinkHints();
         _railStyle = null;
         _railIndicatorStyle = null;
         _railSepStyle = null;
+        _peekTabStyle = null;
+        _peekTabBtn = null;
         _railIconButtons.Clear();
         _railButtons.Clear();
         _railVBox = null;

@@ -48,6 +48,12 @@ public sealed class DevModeSettings {
     public float? CombatStatsMonsterIntentOverlayPosX { get; set; }
 
     public float? CombatStatsMonsterIntentOverlayPosY { get; set; }
+
+    /// <summary>
+    /// <see langword="false"/> = blink peek tab until first rail hover;
+    /// <see langword="null"/> / <see langword="true"/> = intro dismissed.
+    /// </summary>
+    public bool? RailIntroDismissed { get; set; }
 }
 
 public static class ThemeNames {
