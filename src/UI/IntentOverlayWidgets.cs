@@ -47,7 +47,8 @@ internal static class IntentPreviewRows {
         VBoxContainer list,
         IReadOnlyList<MonsterIntentEntry> entries,
         bool displayedOnly,
-        float badgeSize = IntentOverlayLayout.BadgeSize) {
+        float badgeSize = IntentOverlayLayout.BadgeSize,
+        bool stackMultipleIntents = false) {
         var existing = new Dictionary<string, IntentEnemyPreviewRow>(StringComparer.Ordinal);
         foreach (var child in list.GetChildren()) {
             if (child is IntentEnemyPreviewRow row)
@@ -60,7 +61,7 @@ internal static class IntentPreviewRows {
             keepKeys.Add(entry.EnemyKey);
 
             if (!existing.TryGetValue(entry.EnemyKey, out var row) || !GodotObject.IsInstanceValid(row)) {
-                row = new IntentEnemyPreviewRow(badgeSize);
+                row = new IntentEnemyPreviewRow(badgeSize, stackMultipleIntents);
                 list.AddChild(row);
             }
 
@@ -83,10 +84,12 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
     private readonly ScrollContainer _stepScroll;
     private readonly HBoxContainer _stepRow;
     private readonly float _badgeSize;
+    private readonly bool _stackMultipleIntents;
     private string _lastBindKey = "";
 
-    public IntentEnemyPreviewRow(float badgeSize) {
+    public IntentEnemyPreviewRow(float badgeSize, bool stackMultipleIntents = false) {
         _badgeSize = badgeSize;
+        _stackMultipleIntents = stackMultipleIntents;
         AddThemeConstantOverride("separation", 4);
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
@@ -134,12 +137,14 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
                 }
             }
             step ??= entry.Steps.Count > 0 ? entry.Steps[0] : null;
+            UpdateScrollHeight(step?.Intents.Count ?? 0);
             if (step != null && step.Intents.Count > 0)
                 _stepRow.AddChild(MakeStepChip(step, entry.Targets, entry.Owner));
             TooltipText = step == null ? entry.DisplayName : BuildStepTooltip(entry, step);
             return;
         }
 
+        UpdateScrollHeight(1);
         for (int i = 0; i < entry.Steps.Count; i++) {
             var step = entry.Steps[i];
 
@@ -176,6 +181,25 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
     private static string BuildStepTooltip(MonsterIntentEntry entry, MonsterIntentStep step) {
         var lines = new List<string> { entry.DisplayName, step.MoveName };
         return string.Join("\n", lines);
+    }
+
+    private void UpdateScrollHeight(int intentCount) {
+        if (intentCount <= 0) {
+            _stepScroll.CustomMinimumSize = Vector2.Zero;
+            return;
+        }
+
+        float height;
+        if (_stackMultipleIntents && intentCount > 1) {
+            const float stackSeparation = 2f;
+            const float padding = 6f;
+            height = _badgeSize * intentCount + stackSeparation * (intentCount - 1) + padding;
+        }
+        else {
+            height = _badgeSize + 6f;
+        }
+
+        _stepScroll.CustomMinimumSize = new Vector2(0, height);
     }
 
     private static Control MakeArrow() {
@@ -221,11 +245,17 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
         };
         panel.AddThemeStyleboxOverride("panel", style);
 
-        var intentsRow = new HBoxContainer {
-            MouseFilter = MouseFilterEnum.Ignore,
-            Alignment = BoxContainer.AlignmentMode.Center,
-        };
-        intentsRow.AddThemeConstantOverride("separation", 0);
+        bool stackIntents = _stackMultipleIntents && step.Intents.Count > 1;
+        BoxContainer intentsRow = stackIntents
+            ? new VBoxContainer {
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            }
+            : new HBoxContainer {
+                MouseFilter = MouseFilterEnum.Ignore,
+                Alignment = BoxContainer.AlignmentMode.Center,
+            };
+        intentsRow.AddThemeConstantOverride("separation", stackIntents ? 2 : 0);
 
         foreach (AbstractIntent intent in step.Intents) {
             var badge = new IntentOverlayBadge(_badgeSize, step.IsCurrent);

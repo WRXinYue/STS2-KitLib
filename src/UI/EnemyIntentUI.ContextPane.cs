@@ -89,7 +89,8 @@ internal static partial class EnemyIntentUI {
                 _list,
                 entries,
                 displayedOnly: true,
-                IntentOverlayLayout.CompactBadgeSize);
+                IntentOverlayLayout.CompactBadgeSize,
+                stackMultipleIntents: true);
             _hasContent = true;
         }
 
