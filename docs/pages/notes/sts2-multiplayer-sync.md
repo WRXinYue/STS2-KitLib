@@ -79,9 +79,11 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 | Tier | 机制 | 内容 |
 |------|------|------|
 | 0 | 对称 Harmony + `MpCheatState` | `CheatPatches`（无限血/能量、倍率、冻怪等）— 战斗内 **零网络包** |
-| 1 | `INetMessage` 配置快照 | 主机广播 `ZzzMpCheatConfigNetMessage`（JSON 快照 + wire magic） |
-| 2 | `INetMessage` 命令 | `ZzzMpCheatCommandNetMessage`（击杀、加牌 prepare/execute） |
-| 2b | 加牌 ACK | 客机 `ZzzMpCheatAddCardAckNetMessage` → 主机，全部通过后再 execute |
+| 1 | `INetMessage` 配置快照 | 经 `ZzzMpCheatEnvelopeNetMessage`（channel=Config，JSON + magic） |
+| 2 | `INetMessage` 命令 | 同一 envelope（channel=Command：击杀、加牌 prepare/execute） |
+| 2b | 加牌 ACK | 同一 envelope（channel=AddCardAck，客机 → 主机） |
+| — | **单槽位** | 仅注册 **1** 个 mod `INetMessage` 类型，降低与其他 mod 的 id 冲突 |
+| — | **多人 ACK** | 主机等待「Run 内远端玩家 ∩ 大厅已连接」全部 ACK；超时随人数递增（8s + 1.5s×(n−1)，上限 20s）；`commandId` 多路复用，支持并发多笔加牌 |
 | — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写 |
 
 ### 启用条件
@@ -102,7 +104,7 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 - [ ] 日志有 `[MpCheat] NetMessage handlers registered.`
 - [ ] 主机开无限血/冻怪/伤害倍率，客机无 StateDivergence，跑 3+ 场战斗
 - [ ] 主机点「击杀全部（同步）」，双方敌人同时死亡
-- [ ] 主机卡牌浏览器加牌，客机收到相同卡牌（无 8s 超时）
+- [ ] 主机卡牌浏览器加牌：侧栏 **Player** 选客机角色后再加；客机牌组出现相同卡牌（无 8s 超时）
 - [ ] 客机 Cheats 面板只读，改开关不生效
 - [ ] 一方关闭联机作弊 opt-in 时，会话不 arm（面板提示原因）
 

@@ -137,6 +137,32 @@ internal static class CardBrowserRightPanel {
         var nameAfterAdd = upgradeLevelsToApply > 0
             ? CardEditActions.GetCardDisplayName(displayCard)
             : CardEditActions.GetCardDisplayName(card);
+
+        // Co-op host: default RunContext player is local; allow adding to any peer's piles/deck.
+        var addTargetPlayer = player;
+        if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost && state.Players.Count > 1) {
+            var players = state.Players.ToList();
+            var playerRow = new HBoxContainer();
+            playerRow.AddThemeConstantOverride("separation", 4);
+            var playerLbl = new Label {
+                Text = I18N.T("mpcheat.cardAdd.targetPlayer", "Player"),
+            };
+            playerLbl.AddThemeFontSizeOverride("font_size", 12);
+            playerRow.AddChild(playerLbl);
+            var playerPicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            var selectedIdx = 0;
+            for (var i = 0; i < players.Count; i++) {
+                var p = players[i];
+                playerPicker.AddItem(FormatMpAddPlayerLabel(p), i);
+                if (p.NetId == player.NetId) selectedIdx = i;
+            }
+            playerPicker.Selected = selectedIdx;
+            addTargetPlayer = players[selectedIdx];
+            playerPicker.ItemSelected += idx => addTargetPlayer = players[(int)idx];
+            playerRow.AddChild(playerPicker);
+            container.AddChild(playerRow);
+        }
+
         var targetRow = new HBoxContainer();
         targetRow.AddThemeConstantOverride("separation", 4);
         var targetLbl = new Label { Text = I18N.T("cardBrowser.sidebarTarget", "Target") };
@@ -204,7 +230,7 @@ internal static class CardBrowserRightPanel {
         async Task SyncAddCardInMultiplayerAsync() {
             var result = await MpCheatCardAddCoordinator.TryHostAddCardAsync(
                 state,
-                player,
+                addTargetPlayer,
                 card,
                 new AddCardRequest {
                     Target = DevModeState.CardTarget,
@@ -218,11 +244,16 @@ internal static class CardBrowserRightPanel {
 
         addBtn.Pressed += () => {
             if (MpCheatSession.InMultiplayerRun) {
-                statusLabel.Text = I18N.T("mpcheat.cardAdd.pending", "Syncing add card to all players…");
+                var n = MpCheatParticipants.RemotePeerCount;
+                statusLabel.Text = n > 0
+                    ? string.Format(
+                        I18N.T("mpcheat.cardAdd.pendingWithPeers", "Syncing add card… waiting for {0} player(s)."),
+                        n)
+                    : I18N.T("mpcheat.cardAdd.pending", "Syncing add card to all players…");
                 TaskHelper.RunSafely(SyncAddCardInMultiplayerAsync());
                 return;
             }
-            TaskHelper.RunSafely(CardActions.Add(state, player, card)
+            TaskHelper.RunSafely(CardActions.Add(state, addTargetPlayer, card)
                 .BaseCost(addCostStaging.BaseCost)
                 .UpgradeLevels(upgradeLevelsToApply)
                 .UpgradePreviewStyle(CardPreviewStyle.HorizontalLayout)
@@ -616,5 +647,14 @@ internal static class CardBrowserRightPanel {
         btn.AddThemeStyleboxOverride("pressed", h);
         btn.AddThemeStyleboxOverride("focus", s);
         btn.AddThemeFontSizeOverride("font_size", 12);
+    }
+
+    private static string FormatMpAddPlayerLabel(Player player) {
+        var character = player.Character?.Id.Entry ?? "?";
+        var local = RunManager.Instance?.NetService?.NetId == player.NetId;
+        var suffix = local
+            ? I18N.T("mpcheat.cardAdd.targetPlayerLocal", " (you)")
+            : "";
+        return $"{character}{suffix}";
     }
 }

@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Multiplayer.Cheat;
 
-/// <summary>Native STS2 INetMessage bus for MpCheat (no RitsuLib Sidecar).</summary>
+/// <summary>Native STS2 INetMessage bus for MpCheat (single envelope, no RitsuLib Sidecar).</summary>
 internal static class MpCheatNetBus {
     private static object? _registeredService;
     private static long _hostRevision;
@@ -24,11 +24,9 @@ internal static class MpCheatNetBus {
             return;
         }
 
-        netService.RegisterMessageHandler<ZzzMpCheatConfigNetMessage>(OnConfigReceived);
-        netService.RegisterMessageHandler<ZzzMpCheatCommandNetMessage>(OnCommandReceived);
-        netService.RegisterMessageHandler<ZzzMpCheatAddCardAckNetMessage>(OnAddCardAckReceived);
+        netService.RegisterMessageHandler<ZzzMpCheatEnvelopeNetMessage>(OnEnvelopeReceived);
         _registeredService = netService;
-        MainFile.Logger.Info("[MpCheat] NetMessage handlers registered.");
+        MainFile.Logger.Info("[MpCheat] NetMessage handlers registered (envelope).");
         TryFlushPendingHostPublish();
     }
 
@@ -37,6 +35,7 @@ internal static class MpCheatNetBus {
         _hostRevision = 0;
         _pendingHostConfig = null;
         _pendingHostReason = null;
+        MpCheatCardAddCoordinator.Reset();
     }
 
     public static void HostPublishConfig(MpCheatConfig config, string reason) {
@@ -57,10 +56,7 @@ internal static class MpCheatNetBus {
 
         _pendingHostConfig = null;
         _pendingHostReason = null;
-        netService.SendMessage(new ZzzMpCheatConfigNetMessage {
-            Revision = (ulong)_hostRevision,
-            ConfigJson = MpCheatNetJson.SerializeConfig(config),
-        });
+        SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromConfig((ulong)_hostRevision, MpCheatNetJson.SerializeConfig(config)));
         MpCheatRunSavedData.TryWrite(config);
         MainFile.Logger.Info($"[MpCheat] Config broadcast rev={_hostRevision} ({reason}).");
     }
@@ -71,7 +67,7 @@ internal static class MpCheatNetBus {
         var netService = RunManager.Instance?.NetService;
         if (netService == null || !CanSendNetMessages(netService)) return;
 
-        netService.SendMessage(ZzzMpCheatCommandNetMessage.FromDto(message));
+        SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromCommand(message));
         MainFile.Logger.Info($"[MpCheat] Command broadcast kind={message.Kind} id={message.CommandId}.");
     }
 
@@ -80,12 +76,11 @@ internal static class MpCheatNetBus {
         var netService = RunManager.Instance?.NetService;
         if (netService == null || !CanSendNetMessages(netService)) return;
 
-        netService.SendMessage(new ZzzMpCheatAddCardAckNetMessage {
-            CommandId = ack.CommandId,
-            PeerNetId = ack.PeerNetId,
-            Success = ack.Success,
-            Error = ack.Error ?? "",
-        });
+        SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromAck(ack));
+    }
+
+    private static void SendEnvelope(INetGameService netService, ZzzMpCheatEnvelopeNetMessage envelope) {
+        netService.SendMessage(envelope);
     }
 
     private static void TryFlushPendingHostPublish() {
@@ -109,41 +104,35 @@ internal static class MpCheatNetBus {
             _ => false,
         };
 
-    private static void OnConfigReceived(ZzzMpCheatConfigNetMessage msg, ulong senderId) {
+    private static void OnEnvelopeReceived(ZzzMpCheatEnvelopeNetMessage msg, ulong senderId) {
         try {
-            if ((long)msg.Revision <= MpCheatState.Revision) return;
-            var config = MpCheatNetJson.DeserializeConfig(msg.ConfigJson);
-            if (config == null) {
-                MainFile.Logger.Warn("[MpCheat] Config message had empty/invalid JSON.");
-                return;
+            switch (msg.Channel) {
+                case MpCheatWireChannel.Config:
+                    OnConfigBody(msg.ConfigRevision, msg.ConfigJson);
+                    break;
+                case MpCheatWireChannel.Command:
+                    MpCheatCommandExecutor.Execute(msg.Command);
+                    break;
+                case MpCheatWireChannel.AddCardAck:
+                    MpCheatCardAddCoordinator.OnAckReceived(msg.Ack);
+                    break;
+                default:
+                    MainFile.Logger.Warn($"[MpCheat] Unknown envelope channel: {msg.Channel}");
+                    break;
             }
-            MpCheatState.ApplySnapshot(config, (long)msg.Revision, "net_config");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[MpCheat] OnConfigReceived failed: {ex.Message}");
+            MainFile.Logger.Warn($"[MpCheat] OnEnvelopeReceived failed ({msg.Channel}): {ex.Message}");
         }
     }
 
-    private static void OnCommandReceived(ZzzMpCheatCommandNetMessage msg, ulong senderId) {
-        try {
-            MpCheatCommandExecutor.Execute(msg.ToDto());
+    private static void OnConfigBody(ulong revision, string configJson) {
+        if ((long)revision <= MpCheatState.Revision) return;
+        var config = MpCheatNetJson.DeserializeConfig(configJson);
+        if (config == null) {
+            MainFile.Logger.Warn("[MpCheat] Config message had empty/invalid JSON.");
+            return;
         }
-        catch (Exception ex) {
-            MainFile.Logger.Warn($"[MpCheat] OnCommandReceived failed: {ex.Message}");
-        }
-    }
-
-    private static void OnAddCardAckReceived(ZzzMpCheatAddCardAckNetMessage msg, ulong senderId) {
-        try {
-            MpCheatCardAddCoordinator.OnAckReceived(new MpCheatAddCardAckMessage {
-                CommandId = msg.CommandId,
-                PeerNetId = msg.PeerNetId,
-                Success = msg.Success,
-                Error = msg.Error,
-            });
-        }
-        catch (Exception ex) {
-            MainFile.Logger.Warn($"[MpCheat] OnAddCardAckReceived failed: {ex.Message}");
-        }
+        MpCheatState.ApplySnapshot(config, (long)revision, "net_config");
     }
 }
