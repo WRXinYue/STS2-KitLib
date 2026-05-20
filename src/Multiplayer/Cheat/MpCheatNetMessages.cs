@@ -6,7 +6,8 @@ using MegaCrit.Sts2.Core.Multiplayer.Transport;
 namespace DevMode.Multiplayer.Cheat;
 
 /// <summary>Host → all: cheat config snapshot (JSON payload).</summary>
-public struct MpCheatConfigNetMessage : INetMessage {
+/// <remarks>Type name sorts late (Zzz*) so vanilla/peer traffic is less likely to collide on message id 29.</remarks>
+public struct ZzzMpCheatConfigNetMessage : INetMessage {
     public ulong Revision;
     public string ConfigJson;
 
@@ -15,18 +16,20 @@ public struct MpCheatConfigNetMessage : INetMessage {
     public readonly LogLevel LogLevel => LogLevel.Info;
 
     public void Serialize(PacketWriter writer) {
+        MpCheatPacketIO.WriteMagic(writer);
         writer.WriteULong(Revision);
-        writer.WriteString(ConfigJson ?? "");
+        MpCheatPacketIO.WriteBoundedString(writer, ConfigJson);
     }
 
     public void Deserialize(PacketReader reader) {
+        MpCheatPacketIO.ReadMagic(reader);
         Revision = reader.ReadULong();
-        ConfigJson = reader.ReadString();
+        ConfigJson = MpCheatPacketIO.ReadBoundedString(reader);
     }
 }
 
 /// <summary>Host → all: discrete cheat command (kill all, add-card prepare/execute).</summary>
-public struct MpCheatCommandNetMessage : INetMessage {
+public struct ZzzMpCheatCommandNetMessage : INetMessage {
     public MpCheatCommandKind Kind;
     public ulong IssuedByNetId;
     public ulong CommandId;
@@ -45,12 +48,13 @@ public struct MpCheatCommandNetMessage : INetMessage {
     public readonly LogLevel LogLevel => LogLevel.Info;
 
     public void Serialize(PacketWriter writer) {
+        MpCheatPacketIO.WriteMagic(writer);
         writer.WriteByte((byte)Kind);
         writer.WriteULong(IssuedByNetId);
         writer.WriteULong(CommandId);
         writer.WriteBool(HasAddCard);
         if (!HasAddCard) return;
-        writer.WriteString(CardId ?? "");
+        MpCheatPacketIO.WriteBoundedString(writer, CardId);
         writer.WriteULong(TargetPlayerNetId);
         writer.WriteInt(Target);
         writer.WriteInt(Duration);
@@ -61,12 +65,13 @@ public struct MpCheatCommandNetMessage : INetMessage {
     }
 
     public void Deserialize(PacketReader reader) {
+        MpCheatPacketIO.ReadMagic(reader);
         Kind = (MpCheatCommandKind)reader.ReadByte();
         IssuedByNetId = reader.ReadULong();
         CommandId = reader.ReadULong();
         HasAddCard = reader.ReadBool();
         if (!HasAddCard) return;
-        CardId = reader.ReadString();
+        CardId = MpCheatPacketIO.ReadBoundedString(reader);
         TargetPlayerNetId = reader.ReadULong();
         Target = reader.ReadInt();
         Duration = reader.ReadInt();
@@ -76,8 +81,8 @@ public struct MpCheatCommandNetMessage : INetMessage {
         UseUpgradePreviewStyle = reader.ReadBool();
     }
 
-    public static MpCheatCommandNetMessage FromDto(MpCheatCommandMessage msg) {
-        var net = new MpCheatCommandNetMessage {
+    public static ZzzMpCheatCommandNetMessage FromDto(MpCheatCommandMessage msg) {
+        var net = new ZzzMpCheatCommandNetMessage {
             Kind = msg.Kind,
             IssuedByNetId = msg.IssuedByNetId,
             CommandId = msg.CommandId,
@@ -116,7 +121,7 @@ public struct MpCheatCommandNetMessage : INetMessage {
 }
 
 /// <summary>Client → host: add-card prepare validation result.</summary>
-public struct MpCheatAddCardAckNetMessage : INetMessage {
+public struct ZzzMpCheatAddCardAckNetMessage : INetMessage {
     public ulong CommandId;
     public ulong PeerNetId;
     public bool Success;
@@ -127,17 +132,19 @@ public struct MpCheatAddCardAckNetMessage : INetMessage {
     public readonly LogLevel LogLevel => LogLevel.Info;
 
     public void Serialize(PacketWriter writer) {
+        MpCheatPacketIO.WriteMagic(writer);
         writer.WriteULong(CommandId);
         writer.WriteULong(PeerNetId);
         writer.WriteBool(Success);
-        writer.WriteString(Error ?? "");
+        MpCheatPacketIO.WriteBoundedString(writer, Error);
     }
 
     public void Deserialize(PacketReader reader) {
+        MpCheatPacketIO.ReadMagic(reader);
         CommandId = reader.ReadULong();
         PeerNetId = reader.ReadULong();
         Success = reader.ReadBool();
-        Error = reader.ReadString();
+        Error = MpCheatPacketIO.ReadBoundedString(reader);
     }
 }
 

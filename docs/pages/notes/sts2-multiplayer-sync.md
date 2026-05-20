@@ -79,14 +79,14 @@ DevMode 在合作模式使用 **分层同步**，不每帧发包：
 | Tier | 机制 | 内容 |
 |------|------|------|
 | 0 | 对称 Harmony + `MpCheatState` | `CheatPatches`（无限血/能量、倍率、冻怪等）— 战斗内 **零网络包** |
-| 1 | `INetMessage` 配置快照 | 主机广播 `MpCheatConfigNetMessage`（JSON 快照） |
-| 2 | `INetMessage` 命令 | `MpCheatCommandNetMessage`（击杀、加牌 prepare/execute） |
-| 2b | 加牌 ACK | 客机 `MpCheatAddCardAckNetMessage` → 主机，全部通过后再 execute |
+| 1 | `INetMessage` 配置快照 | 主机广播 `ZzzMpCheatConfigNetMessage`（JSON 快照 + wire magic） |
+| 2 | `INetMessage` 命令 | `ZzzMpCheatCommandNetMessage`（击杀、加牌 prepare/execute） |
+| 2b | 加牌 ACK | 客机 `ZzzMpCheatAddCardAckNetMessage` → 主机，全部通过后再 execute |
 | — | **禁用** | `RuntimeStatModifiers` 帧循环；战斗中改 gold/HP 等本地直写 |
 
 ### 启用条件
 
-1. 全员安装 **DevMode**（**不依赖** RitsuLib）
+1. 全员安装 **相同版本 DevMode**（**不依赖** RitsuLib；消息 id 按类型名排序，`Zzz*` 前缀避免与 `PeerInputMessage` 等冲突）
 2. 开发者模式菜单 → **联机作弊：ON**（仅本地 opt-in，**不会**写入原版 mod 握手列表）
 3. 主机在跑档中打开 Cheats 面板修改；客机只读，状态与主机一致
 
