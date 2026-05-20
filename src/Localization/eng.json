@@ -787,6 +787,8 @@
   "log.autoScroll": "Auto-scroll",
   "log.copyHint": "Click to copy",
   "log.copyAll": "Copy All",
+  "log.openFolder": "Open Folder",
+  "log.openFolderTip": "Open the game log folder (user://logs/) in the system file manager",
   "log.count": "{0} entries",
   "log.count.withNoise": "{0} entries  •  {1} filtered",
   "log.filter.rules": "Filter",

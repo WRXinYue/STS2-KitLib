@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using DevMode.Icons;
@@ -26,6 +27,7 @@ internal static class LogViewerUI {
     private const string ColError = "#FF5F5F";
     private const string ColDebug = "#6A6A8A";
     private const string ColTime = "#55556A";
+    private const float GameSourceDimAmount = 0.18f;
 
     private static Label CreateLogFilterSectionHeading(string i18nKey, string fallback) {
         var l = new Label { Text = I18N.T(i18nKey, fallback) };
@@ -357,15 +359,25 @@ internal static class LogViewerUI {
                 bar.Value = bar.MaxValue;
         }
 
-        string BuildBbCode(List<LogCollector.Entry> entries) {
-            var sb = new StringBuilder(entries.Count * 80);
-            foreach (var e in entries) {
-                string col = LevelColor(e.Level);
-                string badge = LevelBadge(e.Level);
-                string time = e.Time.ToString("HH:mm:ss");
-                string text = EscapeBbCode(e.Text);
-                sb.Append($"[color={ColTime}]{time}[/color] [color={col}]{badge,-4} {text}[/color]\n");
+        string BuildBbCode(
+            List<FilteredLogEntry> entries,
+            HashSet<string> loadedModIds,
+            Dictionary<string, string> modIdAliases) {
+            var sb = new StringBuilder(entries.Count * 96);
+            foreach (var (entry, source) in entries) {
+                bool dim = source == "Game";
+                string timeCol = dim
+                    ? LogSourceColors.DimBbHex(ColTime, GameSourceDimAmount)
+                    : ColTime;
+                string levelCol = dim
+                    ? LogSourceColors.DimBbHex(LevelColor(entry.Level), GameSourceDimAmount)
+                    : LevelColor(entry.Level);
+                string time = entry.Time.ToString("HH:mm:ss");
+                sb.Append($"[color={timeCol}]{time}[/color] ");
+                AppendEntryBody(sb, entry, source, levelCol, loadedModIds, modIdAliases);
+                sb.Append('\n');
             }
+
             return sb.ToString();
         }
 
@@ -375,10 +387,12 @@ internal static class LogViewerUI {
 
             LogSuppressor.ResetCounts();
             var loadedModIds = ModRuntime.Catalog.GetIdSet();
+            var modIdAliases = BuildModIdAliasLookup(loadedModIds);
             SyncModFilterChips(loadedModIds);
-            var (filtered, suppressed, modStats) = FilterEntries(entries, minLevel, textFilter, modVisible, loadedModIds);
+            var (filtered, suppressed, modStats) = FilterEntries(
+                entries, minLevel, textFilter, modVisible, loadedModIds, modIdAliases);
 
-            richText.Text = BuildBbCode(filtered);
+            richText.Text = BuildBbCode(filtered, loadedModIds, modIdAliases);
 
             // Update count label
             countLabel.Text = suppressed > 0
@@ -442,14 +456,17 @@ internal static class LogViewerUI {
 
     // ── Filtering ────────────────────────────────────────────────────────
 
-    private static (List<LogCollector.Entry> filtered, int suppressed, Dictionary<string, int> modStats)
+    private readonly record struct FilteredLogEntry(LogCollector.Entry Entry, string Source);
+
+    private static (List<FilteredLogEntry> filtered, int suppressed, Dictionary<string, int> modStats)
         FilterEntries(
             List<LogCollector.Entry> entries,
             LogLevel? minLevel,
             string textFilter,
             Dictionary<string, bool> modSourceFilter,
-            HashSet<string> loadedModIds) {
-        var result = new List<LogCollector.Entry>(entries.Count);
+            HashSet<string> loadedModIds,
+            Dictionary<string, string> modIdAliases) {
+        var result = new List<FilteredLogEntry>(entries.Count);
         var modStats = new Dictionary<string, int>(StringComparer.Ordinal);
         int suppressed = 0;
 
@@ -458,13 +475,13 @@ internal static class LogViewerUI {
             if (!string.IsNullOrWhiteSpace(textFilter) &&
                 !e.Text.Contains(textFilter, StringComparison.OrdinalIgnoreCase)) continue;
 
-            string source = ParseSource(e.Text, loadedModIds);
+            string source = ParseSource(e.Text, loadedModIds, modIdAliases);
             if (modSourceFilter.TryGetValue(source, out var showMod) && !showMod)
                 continue;
 
             if (LogSuppressor.IsSuppressed(e.Text)) { suppressed++; continue; }
 
-            result.Add(e);
+            result.Add(new FilteredLogEntry(e, source));
 
             modStats.TryGetValue(source, out int n);
             modStats[source] = n + 1;
@@ -473,12 +490,35 @@ internal static class LogViewerUI {
     }
 
     /// <summary>
-    /// Resolves log source by matching bracket tags against <see cref="ModRuntime.Catalog"/> ids only.
-    /// Walks <c>[...]</c> segments from the left and returns the first whose inner text is a loaded mod id; otherwise "Game".
+    /// Resolves log source by matching bracket tags against <see cref="ModRuntime.Catalog"/> ids.
+    /// Walks <c>[...]</c> segments from the left and returns the first whose inner text matches a loaded mod id
+    /// (exact or normalized via <see cref="NormalizeModIdKey"/>); otherwise "Game".
     /// </summary>
-    private static string ParseSource(string text, HashSet<string> loadedModIds) {
+    private static string ParseSource(
+        string text,
+        HashSet<string> loadedModIds,
+        Dictionary<string, string> modIdAliases) {
         if (loadedModIds.Count == 0 || string.IsNullOrEmpty(text))
             return "Game";
+
+        return TryFindModTagSpan(text, loadedModIds, modIdAliases, out _, out _, out var modId)
+            ? modId
+            : "Game";
+    }
+
+    private static bool TryFindModTagSpan(
+        string text,
+        HashSet<string> loadedModIds,
+        Dictionary<string, string> modIdAliases,
+        out int tagStart,
+        out int tagEndExclusive,
+        out string modId) {
+        tagStart = 0;
+        tagEndExclusive = 0;
+        modId = "";
+
+        if (loadedModIds.Count == 0 || string.IsNullOrEmpty(text))
+            return false;
 
         int i = 0;
         while (i < text.Length) {
@@ -491,13 +531,103 @@ internal static class LogViewerUI {
             }
 
             string inner = text.Substring(open + 1, close - open - 1);
-            if (loadedModIds.Contains(inner))
-                return inner;
+            if (TryResolveModId(inner, loadedModIds, modIdAliases, out modId)) {
+                tagStart = open;
+                tagEndExclusive = close + 1;
+                return true;
+            }
 
             i = close + 1;
         }
 
-        return "Game";
+        return false;
+    }
+
+    /// <summary>
+    /// Maps normalized mod id keys (case-insensitive, <c>-</c>/<c>_</c> equivalent) to canonical manifest ids.
+    /// </summary>
+    private static Dictionary<string, string> BuildModIdAliasLookup(HashSet<string> loadedModIds) {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var id in loadedModIds) {
+            var key = NormalizeModIdKey(id);
+            if (!map.ContainsKey(key))
+                map[key] = id;
+        }
+
+        return map;
+    }
+
+    private static bool TryResolveModId(
+        string candidate,
+        HashSet<string> loadedModIds,
+        Dictionary<string, string> modIdAliases,
+        out string modId) {
+        modId = "";
+
+        if (loadedModIds.Contains(candidate)) {
+            modId = candidate;
+            return true;
+        }
+
+        if (TryResolveModIdKey(NormalizeModIdKey(candidate), modIdAliases, out modId))
+            return true;
+
+        // Reverse-domain logger ids (e.g. com.ritsukage.sts2-RitsuLib vs manifest STS2-RitsuLib).
+        int lastDot = candidate.LastIndexOf('.');
+        if (lastDot >= 0 && lastDot < candidate.Length - 1 &&
+            TryResolveModIdKey(NormalizeModIdKey(candidate[(lastDot + 1)..]), modIdAliases, out modId))
+            return true;
+
+        return false;
+    }
+
+    private static bool TryResolveModIdKey(
+        string normalizedKey,
+        Dictionary<string, string> modIdAliases,
+        out string modId) {
+        if (modIdAliases.TryGetValue(normalizedKey, out var resolved) && resolved != null) {
+            modId = resolved;
+            return true;
+        }
+
+        modId = "";
+        return false;
+    }
+
+    /// <summary>Case-insensitive key where hyphen and underscore are treated as equivalent.</summary>
+    private static string NormalizeModIdKey(string id)
+        => id.ToLowerInvariant().Replace('-', '_');
+
+    private static void AppendEntryBody(
+        StringBuilder sb,
+        LogCollector.Entry entry,
+        string source,
+        string levelCol,
+        HashSet<string> loadedModIds,
+        Dictionary<string, string> modIdAliases) {
+        string badge = LevelBadge(entry.Level);
+        sb.Append($"[color={levelCol}]{badge,-4}[/color]");
+
+        if (source == "Game" ||
+            !TryFindModTagSpan(entry.Text, loadedModIds, modIdAliases, out int tagStart, out int tagEnd, out _)) {
+            sb.Append($" [color={levelCol}]{EscapeBbCode(entry.Text)}[/color]");
+            return;
+        }
+
+        string modCol = LogSourceColors.ColorToBbHex(LogSourceColors.GetModHighlightColor(source));
+        string prefix = entry.Text[..tagStart];
+        string tag = entry.Text[tagStart..tagEnd];
+        string suffix = entry.Text[tagEnd..];
+
+        if (prefix.Length > 0)
+            sb.Append($" [color={levelCol}]{EscapeBbCode(prefix)}[/color]");
+        else
+            sb.Append(' ');
+
+        sb.Append($"[color={modCol}]{EscapeBbCode(tag)}[/color]");
+
+        if (suffix.Length > 0)
+            sb.Append($"[color={levelCol}]{EscapeBbCode(suffix)}[/color]");
     }
 
     private static void RefreshStatsPanel(
@@ -585,6 +715,20 @@ internal static class LogViewerUI {
     private static string EscapeBbCode(string text)
         => text.Replace("[", "[lb]");
 
+    private static string GetGameLogsDirectory()
+        => Path.Combine(OS.GetUserDataDir(), "logs");
+
+    private static void OpenGameLogsFolder() {
+        var dir = GetGameLogsDirectory();
+        try {
+            Directory.CreateDirectory(dir);
+            OS.ShellOpen(dir);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"[LogViewer] Open logs folder failed: {ex.Message}");
+        }
+    }
+
     // ── Header builder ────────────────────────────────────────────────────
 
     private static Button? _clearBtn;
@@ -600,6 +744,17 @@ internal static class LogViewerUI {
         row.AddChild(title);
 
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+
+        var openFolderBtn = new Button {
+            Text = I18N.T("log.openFolder", "Open Folder"),
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(64, 26),
+            Icon = MdiIcon.FolderOpen.Texture(14, DevModeTheme.Subtle),
+            TooltipText = I18N.T("log.openFolderTip", "Open the game log folder (user://logs/) in the system file manager"),
+        };
+        ApplySmallFlatButton(openFolderBtn);
+        openFolderBtn.Pressed += OpenGameLogsFolder;
+        row.AddChild(openFolderBtn);
 
         _clearBtn = new Button {
             Text = I18N.T("log.clear", "Clear"),

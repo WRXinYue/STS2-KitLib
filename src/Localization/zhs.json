@@ -819,6 +819,8 @@
   "log.autoScroll": "自动滚动",
   "log.copyHint": "点击复制",
   "log.copyAll": "复制全部",
+  "log.openFolder": "打开文件夹",
+  "log.openFolderTip": "在系统文件管理器中打开游戏日志目录（user://logs/）",
   "log.count": "{0} 条",
   "log.count.withNoise": "{0} 条  •  已过滤 {1} 条",
   "log.filter.rules": "过滤",

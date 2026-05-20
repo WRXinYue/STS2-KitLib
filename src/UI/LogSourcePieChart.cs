@@ -9,17 +9,6 @@ namespace DevMode.UI;
 /// Simple pie chart for log source counts (drawn in <see cref="_Draw"/>).
 /// </summary>
 internal sealed partial class LogSourcePieChart : Control {
-    private static readonly Color[] SlicePalette =
-    {
-        new(0.45f, 0.62f, 0.95f, 1f),
-        new(0.52f, 0.80f, 0.52f, 1f),
-        new(0.95f, 0.66f, 0.38f, 1f),
-        new(0.82f, 0.52f, 0.92f, 1f),
-        new(0.48f, 0.86f, 0.86f, 1f),
-        new(0.92f, 0.48f, 0.55f, 1f),
-        new(0.82f, 0.76f, 0.42f, 1f),
-        new(0.62f, 0.60f, 0.95f, 1f),
-    };
 
     private readonly List<(string Name, int Count, int PaletteIndex)> _slices = new();
     private int _total;
@@ -107,7 +96,7 @@ internal sealed partial class LogSourcePieChart : Control {
     private static Color SliceColor(string name, int paletteIndex) {
         if (name == "Game")
             return new Color(DevModeTheme.Subtle.R, DevModeTheme.Subtle.G, DevModeTheme.Subtle.B, 0.95f);
-        return SlicePalette[paletteIndex % SlicePalette.Length];
+        return LogSourceColors.ModPalette[paletteIndex % LogSourceColors.ModPalette.Length];
     }
 
     private void DrawWedge(Vector2 center, float radius, float fromRad, float toRad, Color color) {
@@ -122,5 +111,38 @@ internal sealed partial class LogSourcePieChart : Control {
 
         DrawColoredPolygon(pts, color);
     }
+}
+
+/// <summary>Stable per-mod colors shared by the log viewer and source pie chart.</summary>
+internal static class LogSourceColors {
+    internal static readonly Color[] ModPalette =
+    {
+        new(0.45f, 0.62f, 0.95f, 1f),
+        new(0.52f, 0.80f, 0.52f, 1f),
+        new(0.95f, 0.66f, 0.38f, 1f),
+        new(0.82f, 0.52f, 0.92f, 1f),
+        new(0.48f, 0.86f, 0.86f, 1f),
+        new(0.92f, 0.48f, 0.55f, 1f),
+        new(0.82f, 0.76f, 0.42f, 1f),
+        new(0.62f, 0.60f, 0.95f, 1f),
+    };
+
+    internal static Color GetModHighlightColor(string canonicalModId) {
+        if (string.IsNullOrEmpty(canonicalModId) || canonicalModId == "Game")
+            return DevModeTheme.Subtle;
+
+        int idx = Math.Abs(canonicalModId.GetHashCode(StringComparison.Ordinal)) % ModPalette.Length;
+        return ModPalette[idx];
+    }
+
+    internal static string ColorToBbHex(Color c) {
+        int r = (int)(c.R * 255f + 0.5f);
+        int g = (int)(c.G * 255f + 0.5f);
+        int b = (int)(c.B * 255f + 0.5f);
+        return $"#{r:X2}{g:X2}{b:X2}";
+    }
+
+    internal static string DimBbHex(string hex, float amount = 0.18f)
+        => ColorToBbHex(new Color(hex).Darkened(amount));
 }
 
