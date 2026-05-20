@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DevMode.Actions;
+using DevMode.EnemyIntent;
 using DevMode.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
@@ -37,6 +38,18 @@ internal static partial class EnemySelectUI {
 
         public override string Hint => I18N.T("enemy.combatSidebar.hint",
             "Add or remove enemies in the current fight.");
+
+        protected override string ComputeSnapshotKey() {
+            if (!IsCombatVisible)
+                return "hidden";
+
+            var enemies = CombatEnemyActions.GetCurrentEnemies().Where(e => !e.IsDead).ToList();
+            var identityKeys = new List<string>(enemies.Count);
+            foreach (var enemy in enemies)
+                identityKeys.Add(MonsterIntentOverrides.BuildEnemyKey(enemy));
+
+            return $"{enemies.Count}|{string.Join(';', identityKeys)}";
+        }
 
         protected override void RebuildFixedActions(VBoxContainer host) {
             AddActions(host, [

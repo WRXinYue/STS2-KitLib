@@ -83,6 +83,7 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
     private readonly ScrollContainer _stepScroll;
     private readonly HBoxContainer _stepRow;
     private readonly float _badgeSize;
+    private string _lastBindKey = "";
 
     public IntentEnemyPreviewRow(float badgeSize) {
         _badgeSize = badgeSize;
@@ -113,6 +114,11 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
     }
 
     public void Bind(MonsterIntentEntry entry, bool displayedOnly) {
+        string bindKey = BuildBindKey(entry, displayedOnly);
+        if (bindKey == _lastBindKey)
+            return;
+
+        _lastBindKey = bindKey;
         EnemyKey = entry.EnemyKey;
         _nameLabel.Text = entry.DisplayName;
 
@@ -144,6 +150,27 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
         }
 
         TooltipText = BuildTooltip(entry);
+    }
+
+    private static string BuildBindKey(MonsterIntentEntry entry, bool displayedOnly) {
+        if (displayedOnly) {
+            MonsterIntentStep? step = null;
+            foreach (var candidate in entry.Steps) {
+                if (candidate.IsCurrent) {
+                    step = candidate;
+                    break;
+                }
+            }
+            step ??= entry.Steps.Count > 0 ? entry.Steps[0] : null;
+            if (step == null)
+                return $"{entry.EnemyKey}|none";
+            return $"{entry.EnemyKey}|{step.MoveId}|{step.IsCurrent}|{step.IsUncertain}|{step.Intents.Count}";
+        }
+
+        var parts = new List<string>(entry.Steps.Count + 1) { entry.EnemyKey };
+        foreach (var step in entry.Steps)
+            parts.Add($"{step.MoveId}:{step.IsCurrent}:{step.IsUncertain}:{step.Intents.Count}");
+        return string.Join('/', parts);
     }
 
     private static string BuildStepTooltip(MonsterIntentEntry entry, MonsterIntentStep step) {

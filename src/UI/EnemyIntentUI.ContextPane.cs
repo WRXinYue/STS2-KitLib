@@ -40,7 +40,9 @@ internal static partial class EnemyIntentUI {
         if (CombatStatsUI.IsPanelOpen)
             return;
 
-        DevPanelUI.RefreshContextPane();
+        DevPanelUI.RefreshContextProviders(
+            PanelContextId,
+            EnemySelectUI.CombatToolsContextId);
     }
 
     internal sealed partial class NextTurnSidebarPanel : IDevPanelSidebarProvider {
@@ -75,6 +77,9 @@ internal static partial class EnemyIntentUI {
 
             var entries = MonsterIntentReader.CaptureNextTurn(state);
             if (entries.Count == 0) {
+                if (_hasContent)
+                    return;
+
                 Clear();
                 _hasContent = false;
                 return;

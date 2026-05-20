@@ -19,6 +19,7 @@ internal abstract class CombatContextSidebarBase : IDevPanelSidebarProvider {
     private readonly Control _divider;
     private readonly VBoxContainer _dynamic;
     private bool _hasContent;
+    private string _lastSnapshotKey = "";
 
     protected CombatContextSidebarBase(string rootName) {
         _root = new VBoxContainer {
@@ -59,6 +60,11 @@ internal abstract class CombatContextSidebarBase : IDevPanelSidebarProvider {
         && CombatEnemyActions.GetCombatState() != null;
 
     public void Refresh() {
+        string snapshotKey = ComputeSnapshotKey();
+        if (snapshotKey == _lastSnapshotKey)
+            return;
+
+        _lastSnapshotKey = snapshotKey;
         ContextRailWidgets.ClearChildren(_actions);
         ContextRailWidgets.ClearChildren(_dynamic);
         _divider.Visible = false;
@@ -73,6 +79,8 @@ internal abstract class CombatContextSidebarBase : IDevPanelSidebarProvider {
         RebuildDynamicActions(_dynamic);
         _divider.Visible = _dynamic.GetChildCount() > 0 && _actions.GetChildCount() > 0;
     }
+
+    protected abstract string ComputeSnapshotKey();
 
     protected abstract void RebuildFixedActions(VBoxContainer host);
 

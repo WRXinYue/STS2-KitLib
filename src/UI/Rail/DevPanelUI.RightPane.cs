@@ -28,6 +28,9 @@ internal static partial class DevPanelUI {
     private static string[] _defaultContextIds = ["default.players"];
     private static bool _contextPaneJoined;
     private static bool _contextRefreshPending;
+    private static bool _contextRefreshNeedsIntent;
+    private static ulong _lastIntentRefreshFrame;
+    private static ulong _lastStatsRefreshFrame;
     private static NGlobalUi? _contextGlobalUi;
     private static bool _contextPaneShown;
     private static Tween? _contextPaneTween;
@@ -74,15 +77,15 @@ internal static partial class DevPanelUI {
         CombatStatsUI.AttachMultiplayerOverlay(globalUi);
         MonsterIntentOverlayUI.Attach(globalUi);
 
-        CombatStatsTracker.Changed += OnContextTrackerChanged;
-        MonsterIntentOverlayTracker.Changed += OnContextTrackerChanged;
+        CombatStatsTracker.Changed += OnCombatStatsTrackerChanged;
+        MonsterIntentOverlayTracker.Changed += OnMonsterIntentTrackerChanged;
 
         _contextGlobalUi = globalUi;
         _contextPaneShown = false;
 
         root.TreeExiting += () => {
-            CombatStatsTracker.Changed -= OnContextTrackerChanged;
-            MonsterIntentOverlayTracker.Changed -= OnContextTrackerChanged;
+            CombatStatsTracker.Changed -= OnCombatStatsTrackerChanged;
+            MonsterIntentOverlayTracker.Changed -= OnMonsterIntentTrackerChanged;
             _contextPaneTween?.Kill();
             _contextPaneTween = null;
             _contextPane = null;
@@ -105,8 +108,8 @@ internal static partial class DevPanelUI {
     internal static void DetachContextPane(NGlobalUi globalUi) {
         CombatStatsUI.DetachMultiplayerOverlay(globalUi);
         MonsterIntentOverlayUI.Detach(globalUi);
-        CombatStatsTracker.Changed -= OnContextTrackerChanged;
-        MonsterIntentOverlayTracker.Changed -= OnContextTrackerChanged;
+        CombatStatsTracker.Changed -= OnCombatStatsTrackerChanged;
+        MonsterIntentOverlayTracker.Changed -= OnMonsterIntentTrackerChanged;
         _contextPaneTween?.Kill();
         _contextPaneTween = null;
         _contextPane = null;
@@ -174,7 +177,30 @@ internal static partial class DevPanelUI {
         return false;
     }
 
+    internal static bool HasActiveContext(params string[] ids) {
+        var active = _contextHost?.ActiveIds;
+        if (active == null || ids.Length == 0)
+            return false;
+        foreach (string id in ids) {
+            bool found = false;
+            foreach (string activeId in active) {
+                if (activeId == id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                return false;
+        }
+        return true;
+    }
+
     internal static void RefreshContextPaneChrome() => _contextHost?.RefreshChrome();
+
+    internal static void RefreshContextProviders(params string[] ids) {
+        _contextHost?.RefreshProviders(ids);
+        UpdateContextPaneVisibility();
+    }
 
     internal static void RefreshContextPane() {
         _contextHost?.RefreshActive();
@@ -246,9 +272,19 @@ internal static partial class DevPanelUI {
         ApplyContextPaneSplice();
     }
 
-    private static void OnContextTrackerChanged() {
+    private static void OnCombatStatsTrackerChanged() {
+        EnqueueContextRefresh(intent: false);
+    }
+
+    private static void OnMonsterIntentTrackerChanged() {
+        EnqueueContextRefresh(intent: true);
+    }
+
+    private static void EnqueueContextRefresh(bool intent) {
         if (!GodotObject.IsInstanceValid(_contextHost))
             return;
+        if (intent)
+            _contextRefreshNeedsIntent = true;
         if (_contextRefreshPending)
             return;
         _contextRefreshPending = true;
@@ -256,10 +292,45 @@ internal static partial class DevPanelUI {
             _contextRefreshPending = false;
             if (!GodotObject.IsInstanceValid(_contextHost))
                 return;
-            CombatStatsUI.OnGameContextTrackerChanged();
-            EnemyIntentUI.OnContextChanged();
+
+            bool needsIntent = _contextRefreshNeedsIntent;
+            _contextRefreshNeedsIntent = false;
+
+            if (needsIntent)
+                RunIntentContextRefresh();
+            else if (Engine.GetProcessFrames() != _lastStatsRefreshFrame) {
+                _lastStatsRefreshFrame = Engine.GetProcessFrames();
+                CombatStatsUI.RefreshStatsContextOnly();
+            }
+
             UpdateContextPaneVisibility();
+
+            if (_contextRefreshNeedsIntent) {
+                if (!GodotObject.IsInstanceValid(_contextHost))
+                    _contextRefreshNeedsIntent = false;
+                else
+                    EnqueueContextRefresh(intent: true);
+            }
         }).CallDeferred();
+    }
+
+    private static void RunIntentContextRefresh() {
+        ulong frame = Engine.GetProcessFrames();
+        if (frame == _lastIntentRefreshFrame)
+            return;
+        _lastIntentRefreshFrame = frame;
+
+        if (CombatStatsUI.IsPanelOpen) {
+            DevPanelUI.UpdateContextPaneVisibility();
+            return;
+        }
+
+        if (EnemyIntentUI.IsPanelOpen) {
+            EnemyIntentUI.OnContextChanged();
+            return;
+        }
+
+        CombatStatsUI.RefreshIntentGameContext();
     }
 
     private static void SlideContextPane(bool show) {

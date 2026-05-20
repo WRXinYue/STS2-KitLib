@@ -56,14 +56,25 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
     public void SetActive(string id) => SetActiveMany(id);
 
     public void SetActiveMany(params string[] ids) {
-        _activeIds.Clear();
+        var nextActive = new List<string>(ids.Length);
         foreach (string id in ids) {
             if (_providers.ContainsKey(id))
-                _activeIds.Add(id);
+                nextActive.Add(id);
         }
-        if (_activeIds.Count == 0)
+        if (nextActive.Count == 0)
             return;
-        MountActiveProviders();
+
+        string nextActiveKey = string.Join(',', nextActive);
+        bool activeChanged = nextActiveKey != _lastActiveIdsKey;
+        _activeIds.Clear();
+        _activeIds.AddRange(nextActive);
+
+        if (activeChanged) {
+            _lastActiveIdsKey = nextActiveKey;
+            _lastMountedKey = "";
+        }
+
+        MountActiveProvidersIfChanged();
         RefreshChrome();
     }
 
@@ -87,8 +98,18 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
             if (_providers.TryGetValue(id, out var provider))
                 provider.Refresh();
         }
-        MountActiveProviders();
+        MountActiveProvidersIfChanged();
         RefreshChrome();
+    }
+
+    public void RefreshProviders(params string[] ids) {
+        foreach (string id in ids) {
+            if (!_activeIds.Contains(id))
+                continue;
+            if (_providers.TryGetValue(id, out var provider))
+                provider.Refresh();
+        }
+        MountActiveProvidersIfChanged();
     }
 
     public bool ActiveHasContent {
@@ -103,26 +124,75 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
 
     public IReadOnlyList<string> ActiveIds => _activeIds;
 
-    private void MountActiveProviders() {
-        while (_content.GetChildCount() > 0) {
-            var child = _content.GetChild(0);
-            _content.RemoveChild(child);
-        }
+    private string _lastActiveIdsKey = "";
+    private string _lastMountedKey = "";
 
-        var visible = new List<IDevPanelSidebarProvider>(_activeIds.Count);
+    private void MountActiveProvidersIfChanged() {
+        string key = BuildVisibleMountKey();
+        if (key == _lastMountedKey)
+            return;
+        _lastMountedKey = key;
+        MountActiveProviders();
+    }
+
+    private string BuildVisibleMountKey() {
+        var parts = new List<string>(_activeIds.Count);
         foreach (string id in _activeIds) {
-            if (_providers.TryGetValue(id, out var provider) && provider.HasContent)
-                visible.Add(provider);
+            if (_providers.TryGetValue(id, out var provider))
+                parts.Add($"{id}:{provider.HasContent}");
         }
+        return string.Join(',', parts);
+    }
 
-        for (int i = 0; i < visible.Count; i++) {
-            var active = visible[i];
-            active.Root.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-            active.Root.SizeFlagsVertical = i < visible.Count - 1
+    private void MountActiveProviders() {
+        int visibleIndex = 0;
+        int visibleCount = CountVisibleProviders();
+
+        foreach (string id in _activeIds) {
+            if (!_providers.TryGetValue(id, out var provider))
+                continue;
+
+            var root = provider.Root;
+            bool visible = provider.HasContent;
+
+            if (root.GetParent() != _content)
+                _content.AddChild(root);
+
+            root.Visible = visible;
+            if (!visible)
+                continue;
+
+            if (root.GetIndex() != visibleIndex)
+                _content.MoveChild(root, visibleIndex);
+
+            root.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            root.SizeFlagsVertical = visibleIndex < visibleCount - 1
                 ? SizeFlags.ShrinkBegin
                 : SizeFlags.ExpandFill;
-            active.Root.Visible = true;
-            _content.AddChild(active.Root);
+            visibleIndex++;
         }
+
+        foreach (var child in _content.GetChildren()) {
+            if (child is not Control control)
+                continue;
+            bool stillActive = false;
+            foreach (string id in _activeIds) {
+                if (_providers.TryGetValue(id, out var provider) && provider.Root == control) {
+                    stillActive = true;
+                    break;
+                }
+            }
+            if (!stillActive)
+                _content.RemoveChild(control);
+        }
+    }
+
+    private int CountVisibleProviders() {
+        int count = 0;
+        foreach (string id in _activeIds) {
+            if (_providers.TryGetValue(id, out var provider) && provider.HasContent)
+                count++;
+        }
+        return count;
     }
 }

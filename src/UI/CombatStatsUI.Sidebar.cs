@@ -194,6 +194,7 @@ internal static partial class CombatStatsUI {
         private bool _isRunView;
         private readonly bool _railCompact;
         private bool _hasContent;
+        private string _lastStatsKey = "";
 
         public PlayerContributionSidebarPanel(bool railCompact = false) {
             _railCompact = railCompact;
@@ -248,6 +249,12 @@ internal static partial class CombatStatsUI {
 
         public void Refresh() {
             var players = ResolvePlayers(_snapshot, _isRunView);
+            string statsKey = BuildStatsKey(players);
+            bool nextHasContent = players.Count > 0 && (!_railCompact || players.Count == 1);
+            if (statsKey == _lastStatsKey && nextHasContent == _hasContent)
+                return;
+
+            _lastStatsKey = statsKey;
             ClearList();
 
             if (players.Count == 0) {
@@ -285,6 +292,20 @@ internal static partial class CombatStatsUI {
                 int total = CombatScoreCalculator.TotalScore(player);
                 _list.AddChild(MakePlayerRow(player, total, maxScore));
             }
+        }
+
+        private string BuildStatsKey(List<PlayerCombatStats> players) {
+            if (players.Count == 0)
+                return "empty";
+            if (_railCompact) {
+                if (players.Count != 1)
+                    return "compact:multi";
+                return $"compact:{CombatScoreCalculator.TotalScore(players[0])}";
+            }
+
+            return string.Join('|', players
+                .OrderBy(p => p.DisplayName)
+                .Select(p => $"{p.DisplayName}:{CombatScoreCalculator.TotalScore(p)}"));
         }
 
         private static List<PlayerCombatStats> ResolvePlayers(

@@ -4,7 +4,7 @@ using Godot;
 namespace DevMode.UI;
 
 internal static partial class CombatStatsUI {
-    private const string DefaultContextId = "default.players";
+    internal const string DefaultContextId = "default.players";
     private const string PanelPlayersContextId = "combatStats.players";
     private const string PanelPieContextId = "combatStats.pie";
 
@@ -33,40 +33,70 @@ internal static partial class CombatStatsUI {
     }
 
     internal static void OnGameContextTrackerChanged() {
+        RefreshDefaultGameContext();
+    }
+
+    internal static void RefreshStatsContextOnly() {
         SyncMultiplayerOverlayState();
-        MonsterIntentOverlayUI.SyncState();
 
         if (_panelOpen) {
             DevPanelUI.UpdateContextPaneVisibility();
             return;
         }
 
-        RefreshDefaultGameContext();
+        ApplyDefaultGameStatsContext();
+        DevPanelUI.RefreshContextProviders(DefaultContextId);
+    }
+
+    internal static void RefreshIntentGameContext() {
+        if (_panelOpen) {
+            DevPanelUI.UpdateContextPaneVisibility();
+            return;
+        }
+
+        SyncMultiplayerOverlayState();
+        MonsterIntentOverlayUI.SyncState();
+        EnsureDefaultGameContextActive();
+        DevPanelUI.RefreshContextProviders(
+            EnemyIntentUI.PanelContextId,
+            EnemySelectUI.CombatToolsContextId);
     }
 
     internal static void RefreshDefaultGameContext() {
+        if (_panelOpen) {
+            DevPanelUI.UpdateContextPaneVisibility();
+            return;
+        }
+
         SyncMultiplayerOverlayState();
         MonsterIntentOverlayUI.SyncState();
-        RefreshDefaultGameStats();
-        EnemyIntentUI.RefreshDefaultContext();
-        EnemySelectUI.RefreshCombatContext();
-
-        if (!EnemyIntentUI.IsPanelOpen && !IsPanelOpen)
-            DevPanelUI.SetContextPaneActiveMany(
-                EnemyIntentUI.PanelContextId,
-                EnemySelectUI.CombatToolsContextId,
-                DefaultContextId);
-
+        ApplyDefaultGameStatsContext();
+        EnsureDefaultGameContextActive();
         DevPanelUI.RefreshContextPane();
     }
 
-    private static void RefreshDefaultGameStats() {
+    private static void EnsureDefaultGameContextActive() {
+        if (EnemyIntentUI.IsPanelOpen || IsPanelOpen)
+            return;
+
+        if (DevPanelUI.HasActiveContext(
+                EnemyIntentUI.PanelContextId,
+                EnemySelectUI.CombatToolsContextId,
+                DefaultContextId))
+            return;
+
+        DevPanelUI.SetContextPaneActiveMany(
+            EnemyIntentUI.PanelContextId,
+            EnemySelectUI.CombatToolsContextId,
+            DefaultContextId);
+    }
+
+    private static void ApplyDefaultGameStatsContext() {
         if (CanShowMultiplayerOverlay()) {
             if (_gamePlayers != null) {
                 _gamePlayers.SetContext(
                     CombatStatsTracker.IsTracking ? CombatStatsTracker.Current : CombatStatsTracker.Last,
                     isRunView: false);
-                _gamePlayers.Refresh();
             }
             return;
         }
@@ -77,7 +107,11 @@ internal static partial class CombatStatsUI {
             ? CombatStatsTracker.Current
             : CombatStatsTracker.Last;
         _gamePlayers.SetContext(snap, isRunView: false);
-        _gamePlayers.Refresh();
+    }
+
+    private static void RefreshDefaultGameStats() {
+        ApplyDefaultGameStatsContext();
+        _gamePlayers?.Refresh();
     }
 
     private static void SyncGameContextPane(
