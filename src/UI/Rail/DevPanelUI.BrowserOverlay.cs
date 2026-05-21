@@ -137,7 +137,7 @@ internal static partial class DevPanelUI {
 
     #region Private Helpers
 
-    private static Control CreateAndSetupRoot(NGlobalUi globalUi, string rootName, int zIndex) {
+    internal static Control CreateAndSetupRoot(NGlobalUi globalUi, string rootName, int zIndex) {
         var root = new Control { Name = rootName, MouseFilter = Control.MouseFilterEnum.Ignore, ZIndex = zIndex };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
@@ -227,7 +227,7 @@ internal static partial class DevPanelUI {
             }));
     }
 
-    private static Control CreateBrowserPanelClipHost() {
+    internal static Control CreateBrowserPanelClipHost() {
         var clipHost = new Control {
             Name = BrowserPanelClipHostName,
             MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -268,8 +268,8 @@ internal static partial class DevPanelUI {
     }
 
     internal static bool TryAnimateBrowserOverlayClose(Node parent, Control root) {
-        if (root.HasMeta("dm_dual_save_load") && root.GetMeta("dm_dual_save_load").AsBool())
-            return TryAnimateDualSaveLoadClose(parent, root);
+        if (IsDualColumnOverlay(root))
+            return TryAnimateDualPanelClose(parent, root);
 
         var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
         var panel = clipHost?.GetNodeOrNull<PanelContainer>("BrowserPanel");
@@ -303,9 +303,19 @@ internal static partial class DevPanelUI {
         return true;
     }
 
-    private static bool TryAnimateDualSaveLoadClose(Node parent, Control root) {
+    private static bool IsDualColumnOverlay(Control root) {
+        if (!root.HasMeta(DualCarrierMetaKey))
+            return false;
+        var name = root.GetMeta(DualCarrierMetaKey).AsString();
+        return !string.IsNullOrEmpty(name);
+    }
+
+    private static bool TryAnimateDualPanelClose(Node parent, Control root) {
         var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
-        var mover = clipHost?.GetNodeOrNull<Control>("SaveLoadDualCarrier");
+        if (!root.HasMeta(DualCarrierMetaKey))
+            return false;
+        var carrierName = root.GetMeta(DualCarrierMetaKey).AsString();
+        var mover = clipHost?.GetNodeOrNull<Control>(carrierName);
         if (mover == null)
             return false;
 

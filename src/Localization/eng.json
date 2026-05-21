@@ -617,6 +617,11 @@
   "room.desc.rest": "Rest or smith — recover HP or upgrade a card.",
   "room.desc.treasure": "Open a chest — gain a relic.",
   "room.desc.map": "Return to the map screen.",
+  "room.type.ancients": "Ancient Ones",
+  "room.desc.ancients": "Visit an Ancient — dialogue and blessings.",
+  "room.section.ancients": "Ancient Ones",
+  "room.ancients.back": "Back",
+  "room.ancients.count": "{0} ancients",
 
   "cardBrowser.chipLibrary": "Library",
   "cardBrowser.viewUpgrades": "View upgrades",

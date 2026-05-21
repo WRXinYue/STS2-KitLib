@@ -651,6 +651,11 @@
   "room.desc.rest": "休息或锻造——恢复 HP 或升级一张卡牌。",
   "room.desc.treasure": "打开宝箱——获得一件遗物。",
   "room.desc.map": "返回地图界面。",
+  "room.type.ancients": "先古之民",
+  "room.desc.ancients": "拜访先古之民——对话与赐福。",
+  "room.section.ancients": "先古之民",
+  "room.ancients.back": "返回",
+  "room.ancients.count": "共 {0} 位先古之民",
 
   "cardBrowser.sortType": "类型",
   "cardBrowser.sortRarity": "稀有度",

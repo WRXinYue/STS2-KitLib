@@ -15,58 +15,22 @@ internal static partial class DevPanelUI {
         ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree();
 
         const float defaultExtWidth = 600f;
-        const float extSlideOutSec = 0.28f;
-
-        var root = CreateAndSetupRoot(globalUi, SaveLoadRootName, 1250);
-        root.SetMeta("dm_dual_save_load", true);
 
         void FallbackClose() => ((Node)globalUi).GetNodeOrNull<Control>(SaveLoadRootName)?.QueueFree();
-        root.AddChild(CreateBrowserBackdrop(() => RequestCloseBrowserOverlay(globalUi, SaveLoadRootName, FallbackClose)));
 
-        float mainW = ResolveBrowserPanelWidth(SaveLoadRootName, 520f, (Node)globalUi);
-        float extW = ResolveBrowserPanelWidth(SaveLoadExtensionWidthKey, defaultExtWidth, (Node)globalUi);
+        var dual = CreateDualColumnOverlay(new DualColumnOverlayOptions {
+            GlobalUi = globalUi,
+            RootName = SaveLoadRootName,
+            DualMetaKey = "dm_dual_save_load",
+            CarrierNodeName = "SaveLoadDualCarrier",
+            MainWidthKey = SaveLoadRootName,
+            ExtWidthKey = SaveLoadExtensionWidthKey,
+            MainDefaultWidth = 520f,
+            ExtDefaultWidth = defaultExtWidth,
+            FallbackClose = FallbackClose,
+        });
 
-        var clipHost = CreateBrowserPanelClipHost();
-
-        var mover = new Control {
-            Name = "SaveLoadDualCarrier",
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            ClipContents = true,
-        };
-        mover.AnchorLeft = 0;
-        mover.AnchorRight = 0;
-        // Same vertical band as `Rail` and `CreateBrowserPanel` (0.15–0.85 of clip host).
-        // Full-height mover + FullRect inner panels made columns taller than the rail.
-        mover.AnchorTop = 0.15f;
-        mover.AnchorBottom = 0.85f;
-        mover.OffsetTop = 0;
-        mover.OffsetBottom = 0;
-
-        var row = new HBoxContainer {
-            Name = "SaveLoadDualRow",
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
-        row.AddThemeConstantOverride("separation", 0);
-        // Parent `mover` is a plain Control; without full-rect anchors the row only uses minimum
-        // height and sits at the top — middle column looks detached / "floating" upward.
-        row.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-
-        var mainSlot = new Control {
-            CustomMinimumSize = new Vector2(mainW, 0),
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
-
-        var mainPanel = CreateBrowserPanelInner(mainW, joinFlushOnRight: true);
-        mainPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        mainSlot.AddChild(mainPanel);
-
-        var mainVbox = mainPanel.GetNodeOrNull<VBoxContainer>("Content")
-            ?? throw new InvalidOperationException("Save/Load main panel missing Content");
-
-        AddBrowserNavTab(mainVbox, I18N.T("panel.section.save", "Save / Load"));
+        AddBrowserNavTab(dual.MainContent, I18N.T("panel.section.save", "Save / Load"));
 
         var menuHost = new VBoxContainer {
             Name = SaveLoadMenuHostName,
@@ -97,23 +61,7 @@ internal static partial class DevPanelUI {
         loadBtn.Alignment = HorizontalAlignment.Left;
         menuHost.AddChild(loadBtn);
 
-        mainVbox.AddChild(menuHost);
-
-        var extSlot = new Control {
-            CustomMinimumSize = new Vector2(extW, 0),
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            Visible = false,
-            ClipContents = true,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
-
-        var extPanel = CreateBrowserPanelInner(extW);
-        extPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        extSlot.AddChild(extPanel);
-
-        var extVbox = extPanel.GetNodeOrNull<VBoxContainer>("Content")
-            ?? throw new InvalidOperationException("Save/Load extension panel missing Content");
+        dual.MainContent.AddChild(menuHost);
 
         var slotHost = new Control {
             Name = "SaveLoadSlotHost",
@@ -122,52 +70,18 @@ internal static partial class DevPanelUI {
             MouseFilter = Control.MouseFilterEnum.Stop,
         };
         slotHost.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        extVbox.AddChild(slotHost);
-
-        row.AddChild(mainSlot);
-        row.AddChild(extSlot);
-        mover.AddChild(row);
-        clipHost.AddChild(mover);
-        root.AddChild(clipHost);
-
-        Tween? extCloseTween = null;
-
-        void KillExtCloseTween() {
-            extCloseTween?.Kill();
-            extCloseTween = null;
-        }
-
-        void SyncMoverWidth() {
-            float totalW = mainSlot.CustomMinimumSize.X + (extSlot.Visible ? extSlot.CustomMinimumSize.X : 0f);
-            mover.OffsetLeft = 0;
-            mover.OffsetRight = Mathf.Max(1f, totalW);
-        }
+        dual.ExtContent.AddChild(slotHost);
 
         void CloseExtensionPanel() {
-            if (!extSlot.Visible) return;
-            KillExtCloseTween();
-            float w = Mathf.Max(1f, extPanel.GetRect().Size.X);
-            extCloseTween = extPanel.CreateTween();
-            extCloseTween.SetTrans(Tween.TransitionType.Cubic);
-            extCloseTween.SetEase(Tween.EaseType.In);
-            extCloseTween.TweenProperty(extPanel, "position:x", w, extSlideOutSec);
-            extCloseTween.TweenCallback(Callable.From(() => {
-                extCloseTween = null;
-                SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost);
-                extPanel.Position = Vector2.Zero;
-                extSlot.Visible = false;
-                SyncMoverWidth();
-            }));
+            dual.CloseExtension(() => SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost));
         }
 
         void OpenPicker(bool saveMode) {
             Callable.From(() => {
-                KillExtCloseTween();
-                if (extSlot.Visible)
+                dual.KillExtCloseTween();
+                if (dual.ExtSlot.Visible)
                     SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost);
-                extPanel.Position = Vector2.Zero;
-                extSlot.Visible = true;
-                SyncMoverWidth();
+                dual.PrepareExtensionVisible();
                 SaveSlotUI.Show(
                     slotHost,
                     saveMode: saveMode,
@@ -182,33 +96,21 @@ internal static partial class DevPanelUI {
                     onEmbeddedAfterLoadClose: saveMode
                         ? null
                         : () => {
-                            KillExtCloseTween();
+                            dual.KillExtCloseTween();
                             SaveSlotUI.TearDownEmbeddedInDevPanel(slotHost);
-                            extPanel.Position = Vector2.Zero;
-                            extSlot.Visible = false;
-                            SyncMoverWidth();
+                            dual.ExtPanel.Position = Vector2.Zero;
+                            dual.ExtSlot.Visible = false;
+                            dual.SyncMoverWidth();
                             RequestCloseBrowserOverlay(globalUi, SaveLoadRootName, FallbackClose);
                         });
-                Callable.From(() => PlayBrowserPanelOpenFromLeft(extPanel)).CallDeferred();
+                dual.AnimateExtensionSlideIn();
             }).CallDeferred();
         }
 
         saveBtn.Pressed += () => OpenPicker(saveMode: true);
         loadBtn.Pressed += () => OpenPicker(saveMode: false);
 
-        clipHost.Resized += () => SyncMoverWidth();
-
-        bool opened = false;
-        clipHost.TreeEntered += () => {
-            if (opened) return;
-            opened = true;
-            Callable.From(() => {
-                SyncMoverWidth();
-                PlaySubPanelSlideOpenFromLeft(mover);
-            }).CallDeferred();
-        };
-
-        ((Node)globalUi).AddChild(root);
+        dual.AttachToScene();
     }
 
     internal static void ShowRestartSeedOverlay(NGlobalUi globalUi, DevPanelActions actions) {
@@ -222,7 +124,6 @@ internal static partial class DevPanelUI {
         var inner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         inner.AddThemeConstantOverride("separation", 12);
 
-        // ── Seed input ──
         var seedSection = new VBoxContainer();
         seedSection.AddThemeConstantOverride("separation", 4);
 
@@ -238,14 +139,12 @@ internal static partial class DevPanelUI {
         seedSection.AddChild(seedInput);
         inner.AddChild(seedSection);
 
-        // ── Divider ──
         inner.AddChild(new ColorRect {
             Color = DevModeTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
 
-        // ── Carry-over scope ──
         var carryLbl = new Label { Text = I18N.T("restart.carry.label", "Carry over from current run:") };
         carryLbl.AddThemeFontSizeOverride("font_size", 12);
         carryLbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
@@ -292,13 +191,11 @@ internal static partial class DevPanelUI {
 
         inner.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
 
-        // ── Status label ──
         var statusLbl = new Label { HorizontalAlignment = HorizontalAlignment.Center };
         statusLbl.AddThemeFontSizeOverride("font_size", 11);
         statusLbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
         inner.AddChild(statusLbl);
 
-        // ── Action buttons ──
         var btnRow = new HBoxContainer();
         btnRow.AddThemeConstantOverride("separation", 8);
 
@@ -314,7 +211,6 @@ internal static partial class DevPanelUI {
         restartBtn.Pressed += () => {
             var seed = seedInput.Text?.Trim();
 
-            // Capture carry-over state from current run
             var scope = PresetContents.None;
             if (cardsToggle.ButtonPressed) scope |= PresetContents.Cards;
             if (relicsToggle.ButtonPressed) scope |= PresetContents.Relics;
@@ -333,14 +229,11 @@ internal static partial class DevPanelUI {
                 MainFile.Logger.Info($"[DevMode] RestartWithSeed: captured gold={player.Gold}.");
             }
 
-            // Store seed for SeedInjectPatch to inject into NGame.StartNewSingleplayerRun.
-            // (NGame.DebugSeedOverride is unreliable — NCharacterSelectScreen clears it before the run.)
             if (!string.IsNullOrEmpty(seed)) {
                 DevModeState.PendingRestartSeed = seed;
                 MainFile.Logger.Info($"[DevMode] RestartWithSeed: seed override set to '{seed}'.");
             }
 
-            // Signal MainMenuPatch to skip the Dev menu and go straight to character select
             DevModeState.AutoProceedToCharSelect = true;
 
             ((Node)globalUi).GetNodeOrNull<Control>(RestartSeedRootName)?.QueueFree();

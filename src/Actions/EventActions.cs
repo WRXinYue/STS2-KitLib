@@ -11,8 +11,13 @@ namespace DevMode.Actions;
 
 internal static class EventActions {
     public static IEnumerable<EventModel> GetAllEvents() {
-        try { return ModelDb.AllEvents; }
+        try { return ModelDb.AllEvents.Concat(ModelDb.AllAncients).Distinct(); }
         catch { return Enumerable.Empty<EventModel>(); }
+    }
+
+    public static IEnumerable<AncientEventModel> GetAllAncients() {
+        try { return ModelDb.AllAncients; }
+        catch { return Enumerable.Empty<AncientEventModel>(); }
     }
 
     /// <summary>
