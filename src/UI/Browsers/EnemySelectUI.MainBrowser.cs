@@ -31,19 +31,22 @@ internal static partial class EnemySelectUI {
         _mainDual = dual;
         _mainGlobalUi = globalUi;
 
-        var extScroll = new ScrollContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
-        };
         _extensionHost = new VBoxContainer {
             Name = "EnemyExtensionHost",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         _extensionHost.AddThemeConstantOverride("separation", 8);
-        extScroll.AddChild(_extensionHost);
-        dual.ExtContent.AddChild(extScroll);
+        dual.ExtContent.AddChild(_extensionHost);
+
+        dual.Root.TreeExiting += () => {
+            if (_mainDual?.Root != dual.Root)
+                return;
+            _mainDual = null;
+            _mainGlobalUi = null;
+            _extensionHost = null;
+            _activeMapSession = null;
+        };
 
         var state = new MainBrowserState {
             GlobalUi = globalUi,

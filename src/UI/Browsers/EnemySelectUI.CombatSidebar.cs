@@ -56,8 +56,8 @@ internal static partial class EnemySelectUI {
             AddActions(host, [
                 new ContextRailAction(
                     MdiIcon.Plus,
-                    I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
-                    OpenAddEncounter),
+                    I18N.T("enemy.combatSidebar.addMenu", "Add enemies to combat"),
+                    OpenAddEnemies),
             ]);
         }
 
@@ -87,12 +87,12 @@ internal static partial class EnemySelectUI {
             AddActions(host, killActions);
         }
 
-        private static void OpenAddEncounter() {
+        private static void OpenAddEnemies() {
             var globalUi = NRun.Instance?.GlobalUi;
             if (globalUi == null)
                 return;
 
-            ShowEncounterOverlay(globalUi, null, enc => RunSyncedCombatAdd(enc));
+            OpenCombatAddPicker(globalUi);
         }
     }
 }

@@ -27,12 +27,14 @@ internal static partial class EnemySelectUI {
     }
 
     internal static void CloseExtensionPicker() {
-        if (_mainDual == null)
+        if (_mainDual == null || !GodotObject.IsInstanceValid(_mainDual.Root))
             return;
+
         var globalUi = _mainGlobalUi;
+        var dual = _mainDual;
         _mainDual.CloseExtension(() => {
             ClearExtensionHost();
-            if (globalUi != null)
+            if (globalUi != null && GodotObject.IsInstanceValid(dual.Root))
                 DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
         });
     }
@@ -43,7 +45,7 @@ internal static partial class EnemySelectUI {
         Action<EncounterModel> onSelected,
         EncounterPickerOptions options) {
         if (_mainDual == null || _extensionHost == null) {
-            ShowEncounterOverlay(globalUi, filter, onSelected);
+            ShowEncounterPickerModal(globalUi, filter, onSelected, options);
             return;
         }
 
@@ -52,28 +54,69 @@ internal static partial class EnemySelectUI {
             _mainDual.KillExtCloseTween();
             ClearExtensionHost();
 
-            BuildEncounterPicker(
+            var builderOptions = new EncounterPickerOptions {
+                CloseOnSelect = options.CloseOnSelect,
+                ShowTitle = options.ShowTitle,
+                PickerTitle = options.PickerTitle,
+                Purpose = options.Purpose,
+                OnMonsterSelected = options.OnMonsterSelected,
+                OnFilterChanged = options.OnFilterChanged
+                    ?? (nextFilter => ShowEncounterInExtension(
+                        globalUi,
+                        nextFilter,
+                        onSelected,
+                        options)),
+            };
+
+            BuildUnifiedEncounterPicker(
                 _extensionHost,
-                globalUi,
                 filter,
                 enc => {
                     onSelected(enc);
                     if (options.CloseOnSelect)
                         CloseExtensionPicker();
                 },
-                new EncounterPickerOptions {
-                    CloseOnSelect = options.CloseOnSelect,
-                    ShowTitle = options.ShowTitle,
-                    CompactEmbedded = true,
-                    PickerTitle = options.PickerTitle,
-                    OnBack = options.OnBack ?? CloseExtensionPicker,
-                    OnFilterChanged = options.OnFilterChanged
-                        ?? (nextFilter => ShowEncounterInExtension(
-                            globalUi,
-                            nextFilter,
-                            onSelected,
-                            options)),
-                });
+                mon => options.OnMonsterSelected?.Invoke(mon),
+                builderOptions);
+
+            if (!alreadyOpen) {
+                _mainDual.PrepareExtensionVisible();
+                _mainDual.AnimateExtensionSlideIn();
+            }
+            else {
+                _mainDual.PrepareExtensionVisible();
+            }
+
+            GrabEncounterSearchFocus(_extensionHost);
+            DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
+        }).CallDeferred();
+    }
+
+    internal static void ShowCombatAddInExtension(
+        NGlobalUi globalUi,
+        RoomType? filter,
+        Action<EncounterModel> onEncounterSelected,
+        Action<MonsterModel> onMonsterSelected) {
+        if (_mainDual == null || _extensionHost == null) {
+            ShowCombatAddPickerModal(globalUi, filter, onEncounterSelected, onMonsterSelected);
+            return;
+        }
+
+        Callable.From(() => {
+            bool alreadyOpen = _mainDual.ExtSlot.Visible;
+            _mainDual.KillExtCloseTween();
+            ClearExtensionHost();
+
+            BuildCombatAddPicker(
+                _extensionHost,
+                filter,
+                onEncounterSelected,
+                onMonsterSelected,
+                nextFilter => ShowCombatAddInExtension(
+                    globalUi,
+                    nextFilter,
+                    onEncounterSelected,
+                    onMonsterSelected));
 
             if (!alreadyOpen) {
                 _mainDual.PrepareExtensionVisible();

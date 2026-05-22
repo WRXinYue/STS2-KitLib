@@ -16,7 +16,7 @@ using MegaCrit.Sts2.Core.Runs;
 namespace DevMode.Patches;
 
 /// <summary>
-/// Adds encounter preview tooltip on map node hover and right-click to replace encounter.
+/// Adds encounter preview tooltip on map node hover.
 /// </summary>
 [HarmonyPatch(typeof(NMapPoint), "OnFocus")]
 public static class MapPointHoverPatch {
@@ -163,7 +163,7 @@ public static class MapPointHoverPatch {
 
         if (!preview.IsCurrentRoom) {
             var hintLabel = new Label {
-                Text = I18N.T("map.rightClickHint", "Right-click to replace"),
+                Text = I18N.T("map.editHint", "Edit in Dev panel"),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
@@ -197,11 +197,10 @@ public static class MapPointUnhoverPatch {
 }
 
 /// <summary>
-/// Intercepts right-click on map nodes to allow encounter replacement.
-/// Patches NClickableControl._GuiInput since NMapPoint doesn't override it.
+/// Left-click free travel when map cheat is enabled.
 /// </summary>
 [HarmonyPatch(typeof(NClickableControl), nameof(NClickableControl._GuiInput))]
-public static class MapPointRightClickPatch {
+public static class MapPointFreeTravelPatch {
     public static bool Prefix(NClickableControl __instance, InputEvent inputEvent) {
         if (__instance is not NMapPoint mapPoint) return true;
 
@@ -216,41 +215,8 @@ public static class MapPointRightClickPatch {
             bool ok = RoomActions.TryEnterMapPoint(point.coord, point.PointType);
             if (ok) {
                 MainFile.Logger.Info($"MapPreview: Jumped to map point {point.PointType} at floor {point.coord.row + 1}");
-                return false; // consume default path-restricted click
+                return false;
             }
-        }
-
-        if (inputEvent is InputEventMouseButton { ButtonIndex: MouseButton.Right, Pressed: true }) {
-            var point = mapPoint.Point;
-            if (point == null) return true;
-
-            var pointType = point.PointType;
-            if (pointType is not (MapPointType.Monster or MapPointType.Elite or MapPointType.Boss))
-                return true;
-
-            // Block right-click on the current combat position — the encounter is already running
-            var state = RunManager.Instance?.DebugOnlyGetState();
-            if (state?.CurrentMapCoord.HasValue == true && point.coord.Equals(state.CurrentMapCoord.Value))
-                return true;
-
-            int floor = point.coord.row + 1;
-            var filter = pointType switch {
-                MapPointType.Monster => RoomType.Monster,
-                MapPointType.Elite => RoomType.Elite,
-                MapPointType.Boss => RoomType.Boss,
-                _ => (RoomType?)null
-            };
-
-            // Open encounter selector for this floor
-            var globalUi = NRun.Instance?.GlobalUi;
-            if (globalUi != null) {
-                EnemySelectUI.Show(globalUi, filter, enc => {
-                    EnemyActions.SetFloorOverride(floor, enc);
-                    MainFile.Logger.Info($"MapPreview: Floor {floor} override set to {EnemyActions.GetShortName(enc)}");
-                });
-            }
-
-            return false; // consume the event
         }
 
         return true;

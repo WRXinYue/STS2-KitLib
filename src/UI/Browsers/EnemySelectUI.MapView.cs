@@ -345,6 +345,7 @@ internal static partial class EnemySelectUI {
                 CloseOnSelect = true,
                 ShowTitle = false,
                 PickerTitle = title,
+                Purpose = EncounterPickerPurpose.RunRule,
                 OnFilterChanged = nextFilter => {
                     session.Browser.EncounterFilter = nextFilter;
                     OpenMapPicker(session, target, roomType, floor);

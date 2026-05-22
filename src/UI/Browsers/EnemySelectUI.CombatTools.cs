@@ -47,21 +47,13 @@ internal static partial class EnemySelectUI {
                 host.AddChild(CreateCombatEnemyRow(enemy, onChanged));
         }
 
-        var addEncounterBtn = new Button {
-            Text = I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
+        var addBtn = new Button {
+            Text = I18N.T("enemy.combatSidebar.addMenu", "Add enemies to combat"),
             CustomMinimumSize = new Vector2(0, 32),
             FocusMode = Control.FocusModeEnum.None,
         };
-        addEncounterBtn.Pressed += () => ShowEncounterInExtension(
-            globalUi,
-            null,
-            enc => RunSyncedCombatAdd(enc, onChanged),
-            new EncounterPickerOptions {
-                CloseOnSelect = true,
-                ShowTitle = false,
-                PickerTitle = I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
-            });
-        host.AddChild(addEncounterBtn);
+        addBtn.Pressed += () => OpenCombatAddPicker(globalUi, onChanged);
+        host.AddChild(addBtn);
 
         if (enemies.Count > 0) {
             var killAllBtn = new Button {
@@ -146,6 +138,45 @@ internal static partial class EnemySelectUI {
         async System.Threading.Tasks.Task SyncKillAllAsync() {
             var result = await MpCheatCombatEnemyCoordinator.TryHostKillAllAsync();
             MainFile.Logger.Info($"[MpCheat] Combat kill all result: {result}");
+            RefreshCombatContext();
+            onChanged?.Invoke();
+        }
+    }
+
+    internal static void OpenCombatAddPicker(NGlobalUi globalUi, Action? onChanged = null) {
+        Action<EncounterModel> onEncounter = enc => RunSyncedCombatAdd(enc, onChanged);
+        Action<MonsterModel> onMonster = mon => RunSyncedCombatAddMonster(mon, onChanged);
+
+        if (IsMainPanelOpen) {
+            ShowCombatAddInExtension(globalUi, null, onEncounter, onMonster);
+            return;
+        }
+
+        ShowCombatAddPickerModal(globalUi, null, onEncounter, onMonster);
+    }
+
+    internal static void RunSyncedCombatAddMonster(MonsterModel monster, Action? onChanged = null) {
+        if (!MpCheatSession.InMultiplayerRun) {
+            DevPanelUI.RunCombatAction(async () => { await CombatEnemyActions.AddMonster(monster); }, onChanged);
+            return;
+        }
+
+        if (!MpCheatSession.CanUseMultiplayerCheats) {
+            MainFile.Logger.Warn(
+                I18N.T(
+                    "mpcheat.blocked",
+                    "Multiplayer cheat inactive: {0}",
+                    MpCheatSession.LastBlockReason ?? "unknown"));
+            return;
+        }
+
+        TaskHelper.RunSafely(SyncAddMonsterAsync());
+
+        async System.Threading.Tasks.Task SyncAddMonsterAsync() {
+            var result = MpCheatSession.IsHost
+                ? await MpCheatCombatEnemyCoordinator.TryHostAddMonsterAsync(monster)
+                : await MpCheatCombatEnemyCoordinator.TryClientRequestAddMonsterAsync(monster);
+            MainFile.Logger.Info($"[MpCheat] Combat add monster result: {result}");
             RefreshCombatContext();
             onChanged?.Invoke();
         }
