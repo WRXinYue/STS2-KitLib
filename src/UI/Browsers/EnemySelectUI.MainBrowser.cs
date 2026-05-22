@@ -8,6 +8,7 @@ internal static partial class EnemySelectUI {
     internal sealed class MainBrowserState {
         public required NGlobalUi GlobalUi;
         public required VBoxContainer ContentHost;
+        public required DevPanelUI.DualColumnOverlayHandle Dual;
         public RoomType? EncounterFilter;
         public Label StatusLabel = null!;
     }
@@ -15,11 +16,38 @@ internal static partial class EnemySelectUI {
     public static void ShowMain(NGlobalUi globalUi) {
         Hide(globalUi);
 
-        var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
-            globalUi, RootName, 0f, () => Hide(globalUi), contentSeparation: 8, backdropWhenFullWidth: true);
+        var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
+            GlobalUi = globalUi,
+            RootName = RootName,
+            DualMetaKey = DualMetaKey,
+            CarrierNodeName = CarrierNodeName,
+            MainWidthKey = RootName,
+            ExtWidthKey = ExtensionWidthKey,
+            MainDefaultWidth = DefaultMainWidth,
+            ExtDefaultWidth = DefaultExtWidth,
+            FallbackClose = () => Hide(globalUi),
+        });
+
+        _mainDual = dual;
+        _mainGlobalUi = globalUi;
+
+        var extScroll = new ScrollContainer {
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+        };
+        _extensionHost = new VBoxContainer {
+            Name = "EnemyExtensionHost",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _extensionHost.AddThemeConstantOverride("separation", 8);
+        extScroll.AddChild(_extensionHost);
+        dual.ExtContent.AddChild(extScroll);
 
         var state = new MainBrowserState {
             GlobalUi = globalUi,
+            Dual = dual,
             ContentHost = new VBoxContainer {
                 SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             },
@@ -27,18 +55,18 @@ internal static partial class EnemySelectUI {
         };
         state.ContentHost.AddThemeConstantOverride("separation", 8);
 
-        BuildMainNav(vbox);
-        vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
-        vbox.AddChild(state.ContentHost);
+        BuildMainNav(dual.MainContent);
+        dual.MainContent.AddChild(DevPanelUI.CreateOverlaySeparator());
+        dual.MainContent.AddChild(state.ContentHost);
 
         state.StatusLabel = new Label { Text = "" };
         state.StatusLabel.AddThemeFontSizeOverride("font_size", 11);
         state.StatusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
         state.StatusLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
-        vbox.AddChild(state.StatusLabel);
+        dual.MainContent.AddChild(state.StatusLabel);
 
         SwitchMainView(state);
-        ((Node)globalUi).AddChild(root);
+        dual.AttachToScene();
     }
 
     private static void BuildMainNav(VBoxContainer vbox) {

@@ -142,13 +142,17 @@ internal static partial class DevPanelUI {
         RegisterContextProvider(id, panel);
     }
 
-    internal static void RunCombatAction(Func<System.Threading.Tasks.Task> action) {
-        TaskHelper.RunSafely(WrapCombatAction(action));
+    internal static void RunCombatAction(Func<System.Threading.Tasks.Task> action, Action? onCompleted = null) {
+        TaskHelper.RunSafely(WrapCombatAction(action, onCompleted));
     }
 
-    private static async System.Threading.Tasks.Task WrapCombatAction(Func<System.Threading.Tasks.Task> action) {
+    private static async System.Threading.Tasks.Task WrapCombatAction(
+        Func<System.Threading.Tasks.Task> action,
+        Action? onCompleted) {
         await action();
         RefreshContextPane();
+        EnemySelectUI.RefreshMapCombatDetailIfOpen();
+        onCompleted?.Invoke();
     }
 
     internal static void SetDefaultContextIds(params string[] ids) {

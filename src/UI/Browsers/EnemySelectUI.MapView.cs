@@ -13,15 +13,18 @@ using MegaCrit.Sts2.Core.Runs;
 namespace DevMode.UI;
 
 internal static partial class EnemySelectUI {
-    private enum MapDetailMode {
-        Summary,
-        PickEncounter,
-    }
-
     private enum MapPickTarget {
         Global,
         RoomType,
         Floor,
+    }
+
+    private static MapEditorSession? _activeMapSession;
+
+    internal static void RefreshMapCombatDetailIfOpen() {
+        if (_activeMapSession == null)
+            return;
+        RebuildMapDetail(_activeMapSession);
     }
 
     private sealed class MapEditorSession {
@@ -32,7 +35,6 @@ internal static partial class EnemySelectUI {
         public required Control HoverHost;
         public required ScrollContainer MapScroll;
         public MapPoint? SelectedPoint;
-        public MapDetailMode DetailMode = MapDetailMode.Summary;
         public MapPickTarget PickTarget;
         public RoomType? PickRoomType;
         public int? PickFloor;
@@ -41,6 +43,8 @@ internal static partial class EnemySelectUI {
     }
 
     private static void BuildMapTab(MainBrowserState state) {
+        _activeMapSession = null;
+
         var runState = RunManager.Instance?.DebugOnlyGetState();
         if (runState?.Map == null || !DevModeState.InDevRun) {
             state.ContentHost.AddChild(new Label {
@@ -94,7 +98,6 @@ internal static partial class EnemySelectUI {
             runState,
             point => {
                 session!.SelectedPoint = point;
-                session.DetailMode = MapDetailMode.Summary;
                 session.Canvas.Rebuild(point);
                 RebuildMapDetail(session);
             },
@@ -141,19 +144,21 @@ internal static partial class EnemySelectUI {
         split.AddChild(detailPanel);
 
         state.ContentHost.AddChild(split);
+        _activeMapSession = session;
         session.Canvas.Rebuild(null);
         RebuildMapDetail(session);
     }
 
     private static void RebuildMapDetail(MapEditorSession session) {
         ClearDetailHost(session.DetailHost);
-        if (session.DetailMode == MapDetailMode.PickEncounter)
-            BuildMapEmbeddedPicker(session);
-        else
-            BuildMapSummaryDetail(session);
+        BuildMapSummaryDetail(session);
     }
 
     private static void BuildMapSummaryDetail(MapEditorSession session) {
+        BuildCurrentCombatDetailSection(
+            session.DetailHost,
+            session.Browser.GlobalUi);
+
         session.DetailHost.AddChild(MakeSubtleLabel(
             I18N.T("enemy.runScopeHint", "Active for this run only · cleared when the run ends.")));
 
@@ -171,7 +176,10 @@ internal static partial class EnemySelectUI {
                 ? DevModeState.GlobalEncounterOverride
                 : null),
             DevModeState.EnemyMode == EnemyMode.Global && DevModeState.GlobalEncounterOverride != null,
-            () => OpenMapPicker(session, MapPickTarget.Global, null, null),
+            () => {
+                session.Browser.EncounterFilter = null;
+                OpenMapPicker(session, MapPickTarget.Global, null, null);
+            },
             () => {
                 EnemyActions.ClearGlobalOverride();
                 session.Browser.StatusLabel.Text = I18N.T("enemy.clearedGlobal", "Cleared global run rule.");
@@ -282,7 +290,6 @@ internal static partial class EnemySelectUI {
         MapPickTarget target,
         RoomType? roomType,
         int? floor) {
-        session.DetailMode = MapDetailMode.PickEncounter;
         session.PickTarget = target;
         session.PickRoomType = roomType;
         session.PickFloor = floor;
@@ -291,38 +298,22 @@ internal static partial class EnemySelectUI {
         RoomType? filter = target switch {
             MapPickTarget.RoomType => roomType,
             MapPickTarget.Floor => roomType,
+            MapPickTarget.Global => session.Browser.EncounterFilter,
             _ => session.Browser.EncounterFilter,
         };
-        session.Browser.EncounterFilter = filter;
-        RebuildMapDetail(session);
-    }
 
-    private static void CloseMapPicker(MapEditorSession session) {
-        session.DetailMode = MapDetailMode.Summary;
-        RebuildMapDetail(session);
-    }
-
-    private static void BuildMapEmbeddedPicker(MapEditorSession session) {
-        RoomType? filter = session.PickTarget switch {
-            MapPickTarget.Global => session.Browser.EncounterFilter,
-            MapPickTarget.RoomType => session.PickRoomType,
-            MapPickTarget.Floor => session.PickRoomType,
-            _ => null,
-        };
-
-        string title = session.PickTarget switch {
+        string title = target switch {
             MapPickTarget.Global => I18N.T("enemy.pickGlobalRule", "Set run rule — all combats"),
-            MapPickTarget.RoomType => I18N.T("enemy.pickTypeRule", "Set run rule — {0}", RoomTypeLabel(session.PickRoomType!.Value)),
+            MapPickTarget.RoomType => I18N.T("enemy.pickTypeRule", "Set run rule — {0}", RoomTypeLabel(roomType!.Value)),
             MapPickTarget.Floor => I18N.T("enemy.pickFloorRule", "Replace node encounter"),
             _ => I18N.T("enemy.selectAny", "Select Combat Encounter"),
         };
 
-        BuildEncounterPicker(
-            session.DetailHost,
+        ShowEncounterInExtension(
             session.Browser.GlobalUi,
             filter,
             enc => {
-                switch (session.PickTarget) {
+                switch (target) {
                     case MapPickTarget.Global:
                         EnemyActions.SetGlobalOverride(enc);
                         session.Browser.StatusLabel.Text = I18N.T(
@@ -331,39 +322,34 @@ internal static partial class EnemySelectUI {
                             EnemyActions.GetShortName(enc));
                         break;
                     case MapPickTarget.RoomType:
-                        EnemyActions.SetRoomTypeOverride(session.PickRoomType!.Value, enc);
+                        EnemyActions.SetRoomTypeOverride(roomType!.Value, enc);
                         session.Browser.StatusLabel.Text = I18N.T(
                             "enemy.appliedByType",
                             "Applied {0} override: {1}",
-                            session.PickRoomType,
+                            roomType,
                             EnemyActions.GetShortName(enc));
                         break;
                     case MapPickTarget.Floor:
-                        EnemyActions.SetFloorOverride(session.PickFloor!.Value, enc);
+                        EnemyActions.SetFloorOverride(floor!.Value, enc);
                         session.Browser.StatusLabel.Text = I18N.T(
                             "enemy.appliedFloor",
                             "Floor {0} set to {1}.",
-                            session.PickFloor,
+                            floor,
                             EnemyActions.GetShortName(enc));
                         break;
                 }
 
-                session.DetailMode = MapDetailMode.Summary;
                 session.RefreshAll();
             },
             new EncounterPickerOptions {
-                CloseOnSelect = false,
+                CloseOnSelect = true,
                 ShowTitle = false,
-                CompactEmbedded = true,
                 PickerTitle = title,
-                OnBack = () => CloseMapPicker(session),
                 OnFilterChanged = nextFilter => {
                     session.Browser.EncounterFilter = nextFilter;
-                    RebuildMapDetail(session);
+                    OpenMapPicker(session, target, roomType, floor);
                 },
             });
-
-        GrabEncounterSearchFocus(session.DetailHost);
     }
 
     private static void BuildSelectedNodeSection(MapEditorSession session, MapPoint point) {

@@ -244,23 +244,27 @@ internal static partial class EnemySelectUI {
         if (!options.CompactEmbedded)
             vbox.AddChild(contentHBox);
 
-        // Left: scrollable grid
-        var scroll = new ScrollContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(options.CompactEmbedded ? 0 : 480, 0),
-        };
         var gridContainer = new GridContainer {
             Columns = options.CompactEmbedded ? 1 : 3,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         gridContainer.AddThemeConstantOverride("h_separation", 6);
         gridContainer.AddThemeConstantOverride("v_separation", 6);
-        scroll.AddChild(gridContainer);
-        if (options.CompactEmbedded)
-            vbox.AddChild(scroll);
-        else
+
+        // Embedded pickers live inside the map detail ScrollContainer; nesting another
+        // ScrollContainer here collapses to zero height and hides every encounter row.
+        if (options.CompactEmbedded) {
+            vbox.AddChild(gridContainer);
+        }
+        else {
+            var scroll = new ScrollContainer {
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                CustomMinimumSize = new Vector2(480, 0),
+            };
+            scroll.AddChild(gridContainer);
             contentHBox.AddChild(scroll);
+        }
 
         PanelContainer? previewPanel = null;
         VBoxContainer? previewVBox = null;
@@ -488,6 +492,12 @@ internal static partial class EnemySelectUI {
     }
 
     public static void Hide(NGlobalUi globalUi) {
+        _activeMapSession = null;
+        CloseExtensionPicker();
+        _mainDual = null;
+        _mainGlobalUi = null;
+        _extensionHost = null;
+
         ((Node)globalUi).GetNodeOrNull<Control>($"{RootName}EncounterOverlay")?.QueueFree();
 
         var node = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
@@ -763,45 +773,12 @@ internal static partial class EnemySelectUI {
         panel.AddChild(vbox);
         backdrop.AddChild(panel);
 
-        vbox.AddChild(DevPanelUI.CreatePanelTitle(I18N.T("enemy.pickMonster", "Add monster to combat")));
-        vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
-
-        var (searchRowCtrl, searchBox) = DevPanelUI.CreateSearchRow(
-            I18N.T("enemy.searchMonsterPlaceholder", "Search monsters..."));
-        vbox.AddChild(searchRowCtrl);
-
-        var scroll = new ScrollContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
-        var listBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        listBox.AddThemeConstantOverride("separation", 2);
-        scroll.AddChild(listBox);
-        vbox.AddChild(scroll);
-
-        var rows = new List<(Control cell, string searchKey)>();
-        foreach (var monster in monsters) {
-            var id = ((AbstractModel)monster).Id.Entry;
-            var title = monster.Title?.GetFormattedText();
-            var displayName = !string.IsNullOrEmpty(title) ? title : id;
-
-            var btn = DevPanelUI.CreateListItemButton(displayName);
-            var captured = monster;
-            btn.Pressed += () => {
-                onSelected(captured);
-                backdrop.QueueFree();
-            };
-            listBox.AddChild(btn);
-            rows.Add((btn, $"{displayName} {id}".ToLowerInvariant()));
-        }
-
-        searchBox.TextChanged += text => {
-            var query = text.Trim().ToLowerInvariant();
-            foreach (var (cell, key) in rows)
-                cell.Visible = string.IsNullOrEmpty(query) || key.Contains(query);
-        };
+        BuildMonsterPicker(vbox, monster => {
+            onSelected(monster);
+            backdrop.QueueFree();
+        }, closeOnSelect: true, onBack: () => backdrop.QueueFree());
 
         ((Node)globalUi).AddChild(backdrop);
-        searchBox.GrabFocus();
     }
 
 }

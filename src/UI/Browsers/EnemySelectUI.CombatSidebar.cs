@@ -3,10 +3,7 @@ using System.Linq;
 using DevMode.Actions;
 using DevMode.EnemyIntent;
 using DevMode.Icons;
-using DevMode.Multiplayer.Cheat;
 using Godot;
-using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
@@ -29,6 +26,7 @@ internal static partial class EnemySelectUI {
 
     internal static void RefreshCombatContext() {
         _combatSidebar?.Refresh();
+        RefreshMapCombatDetailIfOpen();
     }
 
     internal sealed partial class CombatEnemySidebarPanel : CombatContextSidebarBase {
@@ -46,7 +44,7 @@ internal static partial class EnemySelectUI {
             if (!IsCombatVisible)
                 return "hidden";
 
-            var enemies = CombatEnemyActions.GetCurrentEnemies().Where(e => !e.IsDead).ToList();
+            var enemies = GetLivingEnemies();
             var identityKeys = new List<string>(enemies.Count);
             foreach (var enemy in enemies)
                 identityKeys.Add(MonsterIntentOverrides.BuildEnemyKey(enemy));
@@ -64,7 +62,7 @@ internal static partial class EnemySelectUI {
         }
 
         protected override void RebuildDynamicActions(VBoxContainer host) {
-            var enemies = CombatEnemyActions.GetCurrentEnemies().Where(e => !e.IsDead).ToList();
+            var enemies = GetLivingEnemies();
             var killActions = new List<ContextRailAction>(enemies.Count + 1);
 
             foreach (var enemy in enemies) {
@@ -82,7 +80,7 @@ internal static partial class EnemySelectUI {
                 killActions.Add(new ContextRailAction(
                     MdiIcon.Skull,
                     I18N.T("enemy.combatSidebar.killAll", "Kill all enemies"),
-                    RunSyncedKillAll,
+                    () => RunSyncedKillAll(),
                     KillAllTint));
             }
 
@@ -145,91 +143,18 @@ internal static partial class EnemySelectUI {
                 I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
                 () => {
                     backdrop.QueueFree();
-                    ShowEncounterOverlay(globalUi, null, enc => RunSyncedCombatAdd(enc, null));
+                    ShowEncounterOverlay(globalUi, null, enc => RunSyncedCombatAdd(globalUi, enc, null));
                 }));
 
             vbox.AddChild(CreateAddMenuButton(
                 I18N.T("enemy.combatSidebar.addMonster", "Add monster to combat"),
                 () => {
                     backdrop.QueueFree();
-                    ShowMonsterSpawnOverlay(globalUi, monster => RunSyncedCombatAdd(null, monster));
+                    ShowMonsterSpawnOverlay(globalUi, monster => RunSyncedCombatAdd(globalUi, null, monster));
                 }));
 
             backdrop.AddChild(panel);
             ((Node)globalUi).AddChild(backdrop);
-        }
-
-        private static void RunSyncedKillEnemy(MegaCrit.Sts2.Core.Entities.Creatures.Creature enemy) {
-            if (!MpCheatSession.InMultiplayerRun) {
-                DevPanelUI.RunCombatAction(() => CombatEnemyActions.KillEnemy(enemy));
-                return;
-            }
-            if (!MpCheatSession.CanUseMultiplayerCheats) return;
-            TaskHelper.RunSafely(SyncKillEnemyAsync());
-
-            async System.Threading.Tasks.Task SyncKillEnemyAsync() {
-                var result = MpCheatSession.IsHost
-                    ? await MpCheatCombatEnemyCoordinator.TryHostKillEnemyAsync(enemy)
-                    : await MpCheatCombatEnemyCoordinator.TryClientRequestKillEnemyAsync(enemy);
-                MainFile.Logger.Info($"[MpCheat] Combat kill result: {result}");
-                RefreshCombatContext();
-            }
-        }
-
-        private static void RunSyncedKillAll() {
-            if (!MpCheatSession.InMultiplayerRun) {
-                DevPanelUI.RunCombatAction(CombatEnemyActions.KillAllEnemies);
-                return;
-            }
-            if (!MpCheatSession.CanUseMultiplayerCheats) return;
-            TaskHelper.RunSafely(SyncKillAllAsync());
-
-            async System.Threading.Tasks.Task SyncKillAllAsync() {
-                var result = await MpCheatCombatEnemyCoordinator.TryHostKillAllAsync();
-                MainFile.Logger.Info($"[MpCheat] Combat kill all result: {result}");
-                RefreshCombatContext();
-            }
-        }
-
-        private static void RunSyncedCombatAdd(EncounterModel? encounter, MonsterModel? monster) {
-            if (!MpCheatSession.InMultiplayerRun) {
-                if (encounter != null)
-                    DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddEncounterMonsters(encounter));
-                else if (monster != null)
-                    DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddMonster(monster));
-                return;
-            }
-
-            if (!MpCheatSession.CanUseMultiplayerCheats) {
-                MainFile.Logger.Warn(
-                    I18N.T(
-                        "mpcheat.blocked",
-                        "Multiplayer cheat inactive: {0}",
-                        MpCheatSession.LastBlockReason ?? "unknown"));
-                return;
-            }
-
-            TaskHelper.RunSafely(SyncAsync());
-
-            async System.Threading.Tasks.Task SyncAsync() {
-                string result;
-                if (encounter != null) {
-                    result = MpCheatSession.IsHost
-                        ? await MpCheatCombatEnemyCoordinator.TryHostAddEncounterAsync(encounter)
-                        : await MpCheatCombatEnemyCoordinator.TryClientRequestAddEncounterAsync(encounter);
-                }
-                else if (monster != null) {
-                    result = MpCheatSession.IsHost
-                        ? await MpCheatCombatEnemyCoordinator.TryHostAddMonsterAsync(monster)
-                        : await MpCheatCombatEnemyCoordinator.TryClientRequestAddMonsterAsync(monster);
-                }
-                else {
-                    return;
-                }
-
-                MainFile.Logger.Info($"[MpCheat] Combat add result: {result}");
-                RefreshCombatContext();
-            }
         }
 
         private static Button CreateAddMenuButton(string text, System.Action onPressed) {
