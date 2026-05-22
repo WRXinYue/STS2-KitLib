@@ -30,6 +30,7 @@ internal static partial class DevPanelUI {
         internal Control Root { get; }
         internal VBoxContainer MainContent { get; }
         internal VBoxContainer ExtContent { get; }
+        internal PanelContainer MainPanel { get; }
         internal PanelContainer ExtPanel { get; }
         internal Control ExtSlot { get; }
         internal Control Mover { get; }
@@ -40,6 +41,7 @@ internal static partial class DevPanelUI {
             Control clipHost,
             Control mainSlot,
             Control mover,
+            PanelContainer mainPanel,
             VBoxContainer mainContent,
             VBoxContainer extContent,
             PanelContainer extPanel,
@@ -49,6 +51,7 @@ internal static partial class DevPanelUI {
             _clipHost = clipHost;
             _mainSlot = mainSlot;
             Mover = mover;
+            MainPanel = mainPanel;
             MainContent = mainContent;
             ExtContent = extContent;
             ExtPanel = extPanel;
@@ -121,6 +124,7 @@ internal static partial class DevPanelUI {
             float totalW = _mainSlot.CustomMinimumSize.X + (ExtSlot.Visible ? ExtSlot.CustomMinimumSize.X : 0f);
             Mover.OffsetLeft = 0;
             Mover.OffsetRight = Mathf.Max(1f, totalW);
+            SpliceBrowserPanelRight(MainPanel, ExtSlot.Visible);
         }
     }
 
@@ -164,7 +168,7 @@ internal static partial class DevPanelUI {
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
 
-        var mainPanel = CreateBrowserPanelInner(mainW, joinFlushOnRight: true);
+        var mainPanel = CreateBrowserPanelInner(mainW, joinFlushOnRight: false);
         mainPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         mainSlot.AddChild(mainPanel);
 
@@ -194,6 +198,6 @@ internal static partial class DevPanelUI {
         root.AddChild(clipHost);
 
         return new DualColumnOverlayHandle(
-            options, root, clipHost, mainSlot, mover, mainContent, extContent, extPanel, extSlot);
+            options, root, clipHost, mainSlot, mover, mainPanel, mainContent, extContent, extPanel, extSlot);
     }
 }
