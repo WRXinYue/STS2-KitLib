@@ -56,8 +56,8 @@ internal static partial class EnemySelectUI {
             AddActions(host, [
                 new ContextRailAction(
                     MdiIcon.Plus,
-                    I18N.T("enemy.combatSidebar.addMenu", "Add enemies to combat"),
-                    OpenAddMenu),
+                    I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
+                    OpenAddEncounter),
             ]);
         }
 
@@ -87,88 +87,12 @@ internal static partial class EnemySelectUI {
             AddActions(host, killActions);
         }
 
-        private static void OpenAddMenu() {
+        private static void OpenAddEncounter() {
             var globalUi = NRun.Instance?.GlobalUi;
             if (globalUi == null)
                 return;
 
-            const string menuName = "DevModeCombatAddMenu";
-            ((Node)globalUi).GetNodeOrNull<Control>(menuName)?.QueueFree();
-
-            var backdrop = new ColorRect {
-                Name = menuName,
-                Color = new Color(0f, 0f, 0f, 0.25f),
-                MouseFilter = Control.MouseFilterEnum.Stop,
-                AnchorRight = 1,
-                AnchorBottom = 1,
-                ZIndex = 1290,
-            };
-            backdrop.GuiInput += ev => {
-                if (ev is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
-                    backdrop.QueueFree();
-            };
-
-            var panel = new PanelContainer {
-                AnchorLeft = 1,
-                AnchorRight = 1,
-                AnchorTop = 0.5f,
-                AnchorBottom = 0.5f,
-                OffsetLeft = -(DevPanelUI.ContextPaneW + 8),
-                OffsetRight = -8,
-                OffsetTop = -72,
-                OffsetBottom = 72,
-            };
-            panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
-                BgColor = DevModeTheme.PanelBg,
-                BorderColor = DevModeTheme.PanelBorder,
-                BorderWidthLeft = 1,
-                BorderWidthRight = 1,
-                BorderWidthTop = 1,
-                BorderWidthBottom = 1,
-                CornerRadiusTopLeft = 8,
-                CornerRadiusTopRight = 8,
-                CornerRadiusBottomLeft = 8,
-                CornerRadiusBottomRight = 8,
-                ContentMarginLeft = 8,
-                ContentMarginRight = 8,
-                ContentMarginTop = 8,
-                ContentMarginBottom = 8,
-            });
-
-            var vbox = new VBoxContainer();
-            vbox.AddThemeConstantOverride("separation", 4);
-            panel.AddChild(vbox);
-
-            vbox.AddChild(CreateAddMenuButton(
-                I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
-                () => {
-                    backdrop.QueueFree();
-                    ShowEncounterOverlay(globalUi, null, enc => RunSyncedCombatAdd(globalUi, enc, null));
-                }));
-
-            vbox.AddChild(CreateAddMenuButton(
-                I18N.T("enemy.combatSidebar.addMonster", "Add monster to combat"),
-                () => {
-                    backdrop.QueueFree();
-                    ShowMonsterSpawnOverlay(globalUi, monster => RunSyncedCombatAdd(globalUi, null, monster));
-                }));
-
-            backdrop.AddChild(panel);
-            ((Node)globalUi).AddChild(backdrop);
-        }
-
-        private static Button CreateAddMenuButton(string text, System.Action onPressed) {
-            var btn = new Button {
-                Text = text,
-                FocusMode = Control.FocusModeEnum.None,
-                MouseFilter = Control.MouseFilterEnum.Stop,
-            };
-            btn.AddThemeFontSizeOverride("font_size", 11);
-            btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-            btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-            btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
-            btn.Pressed += onPressed;
-            return btn;
+            ShowEncounterOverlay(globalUi, null, enc => RunSyncedCombatAdd(enc));
         }
     }
 }

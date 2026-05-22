@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using DevMode.Actions;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -88,97 +86,5 @@ internal static partial class EnemySelectUI {
             GrabEncounterSearchFocus(_extensionHost);
             DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
         }).CallDeferred();
-    }
-
-    internal static void ShowMonsterInExtension(NGlobalUi globalUi, Action<MonsterModel> onSelected) {
-        if (_mainDual == null || _extensionHost == null) {
-            ShowMonsterSpawnOverlay(globalUi, onSelected);
-            return;
-        }
-
-        Callable.From(() => {
-            bool alreadyOpen = _mainDual.ExtSlot.Visible;
-            _mainDual.KillExtCloseTween();
-            ClearExtensionHost();
-
-            BuildMonsterPicker(
-                _extensionHost,
-                onSelected,
-                closeOnSelect: true,
-                onBack: CloseExtensionPicker);
-
-            if (!alreadyOpen) {
-                _mainDual.PrepareExtensionVisible();
-                _mainDual.AnimateExtensionSlideIn();
-            }
-            else {
-                _mainDual.PrepareExtensionVisible();
-            }
-
-            DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
-        }).CallDeferred();
-    }
-
-    private static void BuildMonsterPicker(
-        VBoxContainer vbox,
-        Action<MonsterModel> onSelected,
-        bool closeOnSelect,
-        Action? onBack) {
-        var monsters = EnemyActions.GetAllMonsters();
-        if (monsters.Count == 0) {
-            vbox.AddChild(new Label {
-                Text = I18N.T("enemy.emptyMonsters", "No monsters found."),
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
-            return;
-        }
-
-        if (onBack != null) {
-            var backBtn = new Button {
-                Text = I18N.T("enemy.pickerBack", "Back"),
-                CustomMinimumSize = new Vector2(0, 32),
-                FocusMode = Control.FocusModeEnum.None,
-            };
-            backBtn.Pressed += onBack;
-            vbox.AddChild(backBtn);
-        }
-
-        vbox.AddChild(DevPanelUI.CreatePanelTitle(I18N.T("enemy.pickMonster", "Add monster to combat")));
-        vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
-
-        var (searchRowCtrl, searchBox) = DevPanelUI.CreateSearchRow(
-            I18N.T("enemy.searchMonsterPlaceholder", "Search monsters..."));
-        vbox.AddChild(searchRowCtrl);
-
-        var listBox = new VBoxContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        listBox.AddThemeConstantOverride("separation", 2);
-        vbox.AddChild(listBox);
-
-        var rows = new List<(Control cell, string searchKey)>();
-        foreach (var monster in monsters) {
-            var id = ((AbstractModel)monster).Id.Entry;
-            var title = monster.Title?.GetFormattedText();
-            var displayName = !string.IsNullOrEmpty(title) ? title : id;
-
-            var btn = DevPanelUI.CreateListItemButton(displayName);
-            var captured = monster;
-            btn.Pressed += () => {
-                onSelected(captured);
-                if (closeOnSelect)
-                    CloseExtensionPicker();
-            };
-            listBox.AddChild(btn);
-            rows.Add((btn, $"{displayName} {id}".ToLowerInvariant()));
-        }
-
-        searchBox.TextChanged += text => {
-            var query = text.Trim().ToLowerInvariant();
-            foreach (var (cell, key) in rows)
-                cell.Visible = string.IsNullOrEmpty(query) || key.Contains(query);
-        };
-
-        searchBox.GrabFocus();
     }
 }

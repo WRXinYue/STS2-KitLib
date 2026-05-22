@@ -47,37 +47,21 @@ internal static partial class EnemySelectUI {
                 host.AddChild(CreateCombatEnemyRow(enemy, onChanged));
         }
 
-        var addRow = new HBoxContainer();
-        addRow.AddThemeConstantOverride("separation", 6);
-
         var addEncounterBtn = new Button {
             Text = I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             CustomMinimumSize = new Vector2(0, 32),
             FocusMode = Control.FocusModeEnum.None,
         };
         addEncounterBtn.Pressed += () => ShowEncounterInExtension(
             globalUi,
             null,
-            enc => RunSyncedCombatAdd(globalUi, enc, null, onChanged),
+            enc => RunSyncedCombatAdd(enc, onChanged),
             new EncounterPickerOptions {
                 CloseOnSelect = true,
                 ShowTitle = false,
                 PickerTitle = I18N.T("enemy.combatSidebar.addEncounter", "Add encounter to combat"),
             });
-        addRow.AddChild(addEncounterBtn);
-
-        var addMonsterBtn = new Button {
-            Text = I18N.T("enemy.combatSidebar.addMonster", "Add monster to combat"),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0, 32),
-            FocusMode = Control.FocusModeEnum.None,
-        };
-        addMonsterBtn.Pressed += () => ShowMonsterInExtension(
-            globalUi,
-            monster => RunSyncedCombatAdd(globalUi, null, monster, onChanged));
-        addRow.AddChild(addMonsterBtn);
-        host.AddChild(addRow);
+        host.AddChild(addEncounterBtn);
 
         if (enemies.Count > 0) {
             var killAllBtn = new Button {
@@ -167,16 +151,9 @@ internal static partial class EnemySelectUI {
         }
     }
 
-    internal static void RunSyncedCombatAdd(
-        NGlobalUi globalUi,
-        EncounterModel? encounter,
-        MonsterModel? monster,
-        Action? onChanged = null) {
+    internal static void RunSyncedCombatAdd(EncounterModel encounter, Action? onChanged = null) {
         if (!MpCheatSession.InMultiplayerRun) {
-            if (encounter != null)
-                DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddEncounterMonsters(encounter), onChanged);
-            else if (monster != null)
-                DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddMonster(monster), onChanged);
+            DevPanelUI.RunCombatAction(() => CombatEnemyActions.AddEncounterMonsters(encounter), onChanged);
             return;
         }
 
@@ -192,21 +169,9 @@ internal static partial class EnemySelectUI {
         TaskHelper.RunSafely(SyncAsync());
 
         async System.Threading.Tasks.Task SyncAsync() {
-            string result;
-            if (encounter != null) {
-                result = MpCheatSession.IsHost
-                    ? await MpCheatCombatEnemyCoordinator.TryHostAddEncounterAsync(encounter)
-                    : await MpCheatCombatEnemyCoordinator.TryClientRequestAddEncounterAsync(encounter);
-            }
-            else if (monster != null) {
-                result = MpCheatSession.IsHost
-                    ? await MpCheatCombatEnemyCoordinator.TryHostAddMonsterAsync(monster)
-                    : await MpCheatCombatEnemyCoordinator.TryClientRequestAddMonsterAsync(monster);
-            }
-            else {
-                return;
-            }
-
+            var result = MpCheatSession.IsHost
+                ? await MpCheatCombatEnemyCoordinator.TryHostAddEncounterAsync(encounter)
+                : await MpCheatCombatEnemyCoordinator.TryClientRequestAddEncounterAsync(encounter);
             MainFile.Logger.Info($"[MpCheat] Combat add result: {result}");
             RefreshCombatContext();
             onChanged?.Invoke();
