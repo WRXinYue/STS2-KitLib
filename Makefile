@@ -27,9 +27,9 @@ STS2_GAME_BETA_VERSION ?= 0.105.1
 ZIP_BETA_TAG := -sts2beta-v$(STS2_GAME_BETA_VERSION)
 ZIP_NAME_BETA := build/DevMode-v$(VERSION)$(ZIP_BETA_TAG).zip
 
-.PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus nuget readme-nexus zip clean \
-        build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta \
-        launch launch-beta sync-launch sync-beta-run
+.PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip clean \
+        build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta upload-all-beta \
+        launch launch-beta sync-launch sync-beta-run upload-github upload-nexus upload-nuget
 
 help:
 	@echo "DevMode — targets"
@@ -56,15 +56,19 @@ help:
 	@echo "  pck-beta     dotnet publish to game mods + .pck (STS2 Steam beta)"
 	@echo ""
 	@echo "  zip          build + package build/DevMode-vX.X.X.zip"
-	@echo "  publish      zip + GitHub Release (requires gh CLI)"
-	@echo "  nexus        zip + upload to Nexus Mods (NEXUS_API_KEY + NEXUS_FILE_GROUP_ID)"
-	@echo "  nuget        zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE)"
-	@echo "  readme-nexus merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo ""
-	@echo "  zip-beta     build-beta + package …-sts2beta-v$(STS2_GAME_BETA_VERSION).zip"
-	@echo "  publish-beta zip-beta + GitHub Release for STS2 beta v$(STS2_GAME_BETA_VERSION)"
-	@echo "  nexus-beta   zip-beta + Nexus upload for STS2 beta v$(STS2_GAME_BETA_VERSION)"
-	@echo "  nuget-beta   zip-beta + NuGet push (STS2.DevMode.Beta) for STS2 beta v$(STS2_GAME_BETA_VERSION)"
+	@echo "  [upload]"
+	@echo "  upload-github  zip + GitHub Release (requires gh CLI; alias: publish)"
+	@echo "  upload-nexus   zip + upload to Nexus Mods (NEXUS_API_KEY + NEXUS_FILE_GROUP_ID; alias: nexus)"
+	@echo "  upload-nuget   zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE; alias: nuget)"
+	@echo "  upload-all     upload-github then upload-nexus then upload-nuget (one zip build)"
+	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
+	@echo ""
+	@echo "  zip-beta       build-beta + package …-sts2beta-v$(STS2_GAME_BETA_VERSION).zip"
+	@echo "  upload-github-beta  zip-beta + GitHub Release for STS2 beta v$(STS2_GAME_BETA_VERSION) (alias: publish-beta)"
+	@echo "  upload-nexus-beta   zip-beta + Nexus upload for STS2 beta v$(STS2_GAME_BETA_VERSION) (alias: nexus-beta)"
+	@echo "  upload-nuget-beta   zip-beta + NuGet push (STS2.DevMode.Beta) for STS2 beta v$(STS2_GAME_BETA_VERSION) (alias: nuget-beta)"
+	@echo "  upload-all-beta     upload-github-beta then upload-nexus-beta then upload-nuget-beta (one zip build)"
 	@echo ""
 	@echo "  clean        remove build/ + dotnet clean"
 
@@ -122,23 +126,29 @@ pck: deps
 pck-beta: deps
 	$(DOTNET) publish $(DEPLOY_TO_GAME) $(BETA_FLAG) $(MOD_MAIN)
 
-publish:
+publish upload-github:
 	$(PYTHON) scripts/publish_release.py $(if $(VERSION),--version $(VERSION),)
 
-publish-beta:
+publish-beta upload-github-beta:
 	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_release.py --beta $(if $(VERSION),--version $(VERSION),)
 
-nexus:
+nexus upload-nexus:
 	$(PYTHON) scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
 
-nexus-beta:
+nexus-beta upload-nexus-beta:
 	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nexus.py --beta $(if $(VERSION),--version $(VERSION),)
 
-nuget:
+nuget upload-nuget:
 	$(PYTHON) scripts/publish_nuget.py $(if $(VERSION),--version $(VERSION),)
 
-nuget-beta:
+nuget-beta upload-nuget-beta:
 	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nuget.py --beta $(if $(VERSION),--version $(VERSION),)
+
+upload-all: publish nexus
+	$(PYTHON) scripts/publish_nuget.py --skip-build $(if $(VERSION),--version $(VERSION),)
+
+upload-all-beta: publish-beta nexus-beta
+	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nuget.py --beta --skip-build $(if $(VERSION),--version $(VERSION),)
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py

@@ -28,4 +28,6 @@ Steps:
 
 5. **Stop here.** Do NOT run `make publish` or trigger any GitHub Release automatically.
    - Publishing is a manual step performed by the user.
-   - After tagging, tell the user the tag has been pushed and they can publish whenever ready with `make publish VERSION=VERSION`.
+   - After tagging, tell the user the tag has been pushed and they can publish whenever ready:
+     - `make upload-github VERSION=VERSION` — GitHub Release only
+     - `make upload-all VERSION=VERSION` — GitHub + Nexus + NuGet (one zip build)
