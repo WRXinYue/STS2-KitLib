@@ -1,5 +1,7 @@
 {
-  "menu.developerMode": "开发者模式",
+  "menu.developerMode": "开发模式 (DevMod)",
+  "menu.logsDevMod": "日志 (DevMod)",
+  "menu.feedbackDevMod": "Mod 反馈 (DevMod)",
 
   "devmenu.newTest": "新建测试",
   "devmenu.newTestWithSeed": "指定种子新建",

@@ -8,6 +8,7 @@ using DevMode.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace DevMode.UI;
 
@@ -37,13 +38,29 @@ internal static class LogViewerUI {
     }
 
     public static void Show(NGlobalUi globalUi) {
-        Remove(globalUi);
-
+        var parent = (Node)globalUi;
+        Remove(parent);
+        Action close = () => Remove(parent);
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
-            globalUi, RootName, PanelW, () => Remove(globalUi), contentSeparation: 8);
+            globalUi, RootName, PanelW, close, contentSeparation: 8);
+        BuildPanel(vbox, root, close);
+        parent.AddChild(root);
+        LogCollector.RefreshFileSnapshot();
+    }
 
+    public static void ShowOnMainMenu(NMainMenu mainMenu) {
+        var parent = mainMenu.GetTree().Root;
+        Remove(parent);
+        Action close = () => Remove(parent);
+        var (root, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 8);
+        LogCollector.AcknowledgeAlerts();
+        BuildPanel(vbox, root, close);
+        LogCollector.RefreshFileSnapshot();
+    }
+
+    private static void BuildPanel(VBoxContainer vbox, Control root, Action onClose) {
         // ── Header ──
-        BuildHeader(vbox, () => Remove(globalUi));
+        BuildHeader(vbox, onClose);
 
         // ── Level / search / rule chips (wired below; placed in filter sidebar) ──
         var chipAll = DevPanelUI.CreateFilterChip(I18N.T("log.filter.all", "All"), active: true);
@@ -484,15 +501,16 @@ internal static class LogViewerUI {
         var timer = new Timer { WaitTime = 1.0, Autostart = true };
         timer.Timeout += () => { if (LogCollector.IsDirty) Repopulate(); };
         root.AddChild(timer);
-
-        globalUi.AddChild(root);
-        LogCollector.RefreshFileSnapshot();
         Repopulate();
     }
 
-    public static void Remove(NGlobalUi globalUi) {
-        globalUi.GetNodeOrNull<Control>(RootName)?.QueueFree();
+    public static void Remove(NGlobalUi globalUi) => Remove((Node)globalUi);
+
+    public static void Remove(Node parent) {
+        parent.GetNodeOrNull<Control>(RootName)?.QueueFree();
     }
+
+    public static void HideAnywhere() => DevMainMenuOverlay.RemoveAnywhere(RootName);
 
     // ── Filtering ────────────────────────────────────────────────────────
 

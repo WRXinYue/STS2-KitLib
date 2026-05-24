@@ -1,5 +1,7 @@
 {
-  "menu.developerMode": "Developer Mode",
+  "menu.developerMode": "Dev Mode (DevMod)",
+  "menu.logsDevMod": "Logs (DevMod)",
+  "menu.feedbackDevMod": "Mod Feedback (DevMod)",
 
   "devmenu.newTest": "New Test",
   "devmenu.newTestWithSeed": "New Test (Seed)",

@@ -7,6 +7,7 @@ using DevMode.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace DevMode.UI;
 
@@ -22,11 +23,24 @@ internal static class FeedbackReportUI {
     private const int NoLogIndex = 0;
 
     public static void Show(NGlobalUi globalUi) {
-        Remove(globalUi);
-
+        var parent = (Node)globalUi;
+        Remove(parent);
+        Action close = () => Remove(parent);
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
-            globalUi, RootName, PanelW, () => Remove(globalUi), contentSeparation: 12);
+            globalUi, RootName, PanelW, close, contentSeparation: 12);
+        BuildPanel(vbox);
+        parent.AddChild(root);
+    }
 
+    public static void ShowOnMainMenu(NMainMenu mainMenu) {
+        var parent = mainMenu.GetTree().Root;
+        Remove(parent);
+        Action close = () => Remove(parent);
+        var (_, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 12);
+        BuildPanel(vbox);
+    }
+
+    private static void BuildPanel(VBoxContainer vbox) {
         // ── Title ──────────────────────────────────────────────────────────
         var titleBox = new VBoxContainer();
         titleBox.AddThemeConstantOverride("separation", 4);
@@ -143,13 +157,15 @@ internal static class FeedbackReportUI {
 
             TaskHelper.RunSafely(RunExport(req, exportBtn, statusLabel));
         };
-
-        ((Node)globalUi).AddChild(root);
     }
 
-    public static void Remove(NGlobalUi globalUi) {
-        ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
+    public static void Remove(NGlobalUi globalUi) => Remove((Node)globalUi);
+
+    public static void Remove(Node parent) {
+        parent.GetNodeOrNull<Control>(RootName)?.QueueFree();
     }
+
+    public static void HideAnywhere() => DevMainMenuOverlay.RemoveAnywhere(RootName);
 
     // ── Log file dropdown ─────────────────────────────────────────────────
 
