@@ -94,6 +94,7 @@ def main() -> int:
     print("  make sync-beta-launch  -- sync-beta + launch game")
     print("  make deploy    -- deploy from build/DevMode/ (after make build)")
     print("  make build     -- artifacts under build/DevMode/ only (no game copy)")
+    print("  make nuget     -- zip + NuGet pack/push (NUGET_API_KEY in .env)")
     return 0
 
 

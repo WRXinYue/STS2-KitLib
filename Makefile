@@ -27,8 +27,8 @@ STS2_GAME_BETA_VERSION ?= 0.105.1
 ZIP_BETA_TAG := -sts2beta-v$(STS2_GAME_BETA_VERSION)
 ZIP_NAME_BETA := build/DevMode-v$(VERSION)$(ZIP_BETA_TAG).zip
 
-.PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus readme-nexus zip clean \
-        build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta publish-beta \
+.PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus nuget readme-nexus zip clean \
+        build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta \
         launch launch-beta sync-launch sync-beta-run
 
 help:
@@ -58,11 +58,13 @@ help:
 	@echo "  zip          build + package build/DevMode-vX.X.X.zip"
 	@echo "  publish      zip + GitHub Release (requires gh CLI)"
 	@echo "  nexus        zip + upload to Nexus Mods (NEXUS_API_KEY + NEXUS_FILE_GROUP_ID)"
+	@echo "  nuget        zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE)"
 	@echo "  readme-nexus merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo ""
 	@echo "  zip-beta     build-beta + package …-sts2beta-v$(STS2_GAME_BETA_VERSION).zip"
 	@echo "  publish-beta zip-beta + GitHub Release for STS2 beta v$(STS2_GAME_BETA_VERSION)"
 	@echo "  nexus-beta   zip-beta + Nexus upload for STS2 beta v$(STS2_GAME_BETA_VERSION)"
+	@echo "  nuget-beta   zip-beta + NuGet push (STS2.DevMode.Beta) for STS2 beta v$(STS2_GAME_BETA_VERSION)"
 	@echo ""
 	@echo "  clean        remove build/ + dotnet clean"
 
@@ -131,6 +133,12 @@ nexus:
 
 nexus-beta:
 	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nexus.py --beta $(if $(VERSION),--version $(VERSION),)
+
+nuget:
+	$(PYTHON) scripts/publish_nuget.py $(if $(VERSION),--version $(VERSION),)
+
+nuget-beta:
+	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nuget.py --beta $(if $(VERSION),--version $(VERSION),)
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py
