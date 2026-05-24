@@ -77,6 +77,12 @@
     <EmbeddedResource Remove="$(MSBuildProjectName)\**" />
   </ItemGroup>
 
+  <!-- Embed manual Markdown (in-game docs) -->
+  <ItemGroup>
+    <EmbeddedResource Include="manual\eng\*.md" LogicalName="DevMode.Manual.eng.%(Filename)" />
+    <EmbeddedResource Include="manual\zhs\*.md" LogicalName="DevMode.Manual.zhs.%(Filename)" />
+  </ItemGroup>
+
   <!-- Embed localization JSON files into the DLL -->
   <ItemGroup>
     <EmbeddedResource Include="src\Localization\eng.json" LogicalName="DevMode.Localization.eng.json" />
@@ -142,12 +148,15 @@
       <DeployFiles Include="$(PublishDir)\$(ModId).dll" />
       <DeployFiles Include="$(PublishDir)\$(ModId).pck" Condition="Exists('$(PublishDir)\$(ModId).pck')" />
       <EditorFiles Include="$(MSBuildProjectDirectory)\editor\**\*" />
+      <ManualFiles Include="$(MSBuildProjectDirectory)\manual\**\*" />
     </ItemGroup>
     <MakeDir Directories="$(ModsDir)" />
     <MakeDir Directories="$(ModsDir)\editor" />
+    <MakeDir Directories="$(ModsDir)\manual" />
     <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(ModsDir)" SkipUnchangedFiles="true" />
     <Copy SourceFiles="$(PublishDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(PublishDir)\mod_manifest.json')" />
     <Copy SourceFiles="@(EditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(ManualFiles)" DestinationFolder="$(ModsDir)\manual\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
   <!-- Copy repo build artifacts to game mods (used by VS Code sync task) -->
@@ -158,12 +167,15 @@
       Text="ModsDir must be mods/$(ModId), not the entire mods folder ($(ModsDir))." />
     <ItemGroup>
       <RepoEditorFiles Include="$(MSBuildProjectDirectory)\editor\**\*" />
+      <RepoManualFiles Include="$(MSBuildProjectDirectory)\manual\**\*" />
     </ItemGroup>
     <MakeDir Directories="$(ModsDir)\" />
     <MakeDir Directories="$(ModsDir)\editor" />
+    <MakeDir Directories="$(ModsDir)\manual" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).pck" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).pck')" />
     <Copy SourceFiles="@(RepoEditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(RepoManualFiles)" DestinationFolder="$(ModsDir)\manual\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

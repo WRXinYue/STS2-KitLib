@@ -41,6 +41,14 @@ internal static class I18N {
         catch { return fmt; }
     }
 
+    /// <summary>Loaded language folder id: <c>eng</c> or <c>zhs</c>.</summary>
+    internal static string LangCode {
+        get {
+            EnsureLoaded();
+            return string.Equals(_loadedLang, "zhs", StringComparison.OrdinalIgnoreCase) ? "zhs" : "eng";
+        }
+    }
+
     // ── Internals ──
 
     private static void EnsureLoaded() {

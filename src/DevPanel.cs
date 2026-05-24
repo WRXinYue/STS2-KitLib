@@ -153,6 +153,7 @@ internal static class DevPanel {
 
         // Utility group — settings / tools
         DevPanelRegistry.Register("devmode.save", MdiIcon.ContentSave, I18N.T("panel.save", "Save / Load"), 100, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSaveLoadOverlay(gui, actions));
+        DevPanelRegistry.Register("devmode.manual", MdiIcon.From("book-open-variant"), I18N.T("panel.manual", "Manual"), 150, DevPanelTabGroup.Utility, _ => OpenManual());
         DevPanelRegistry.Register("devmode.settings", MdiIcon.Cog, I18N.T("panel.settings", "Settings"), 200, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSettingsOverlay(gui, actions), kind: DevPanelTabKind.Developer);
 
     }
@@ -306,6 +307,14 @@ internal static class DevPanel {
         FeedbackReportUI.Show(_globalUi);
     }
 
+    private static void OpenManual() {
+        if (_globalUi == null) return;
+        TryDismissCurrent();
+        DevModeState.ActivePanel = ActivePanel.Manual;
+
+        ManualUI.Show(_globalUi);
+    }
+
     private static void StartNewTest() {
         try {
             var game = NGame.Instance;
@@ -350,6 +359,7 @@ internal static class DevPanel {
             case ActivePanel.HarmonyAnalysis: OpenHarmonyAnalysis(); break;
             case ActivePanel.Frameworks: OpenFrameworks(); break;
             case ActivePanel.Feedback: OpenFeedback(); break;
+            case ActivePanel.Manual: OpenManual(); break;
             case ActivePanel.CardEdit: break;
         }
     }
