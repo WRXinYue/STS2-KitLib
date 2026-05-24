@@ -46,7 +46,7 @@ internal static class CardBrowserRightPanel {
         }
     }
 
-    /// <summary>Locks library stat editors when Duration is Permanent.</summary>
+    /// <summary>Locks library stat editors when Duration is Permanent (multiplayer add flow only).</summary>
     private sealed class LibraryAddUiState {
         public required CardModel Card { get; init; }
         public required LibraryAddStaging Staging { get; init; }
@@ -55,14 +55,14 @@ internal static class CardBrowserRightPanel {
         public bool MpAddCard;
 
         public void Refresh() {
-            var permanent = DevModeState.EffectDuration == EffectDuration.Permanent;
-            if (permanent)
+            var lockEdits = ShouldLockLibraryStatEdits;
+            if (lockEdits)
                 Staging.ResetToDefault(Card);
             var tooltip = I18N.T(
                 "cardBrowser.permLocksEdits",
                 "Card stat edits are disabled in Permanent mode.");
             foreach (var row in StatEditRows)
-                SetStatEditRowLocked(row, permanent, tooltip);
+                SetStatEditRowLocked(row, lockEdits, tooltip);
             RefreshMpDurHint();
         }
 
@@ -83,6 +83,9 @@ internal static class CardBrowserRightPanel {
                         "Multiplayer: Permanent is allowed for unedited cards.");
         }
     }
+
+    private static bool ShouldLockLibraryStatEdits =>
+        MpCheatSession.InMultiplayerRun && DevModeState.EffectDuration == EffectDuration.Permanent;
 
     internal static void Build(VBoxContainer container, Label statusLabel,
         CardModel card, RunState state, Player player, NGlobalUi globalUi, Action onCardEdited,
@@ -529,7 +532,7 @@ internal static class CardBrowserRightPanel {
 
         void ApplyPatch(CardEditTemplate patch, string singlePlayerOk, string? singlePlayerFail = null) {
             if (libraryAddStaging != null) {
-                if (DevModeState.EffectDuration == EffectDuration.Permanent)
+                if (ShouldLockLibraryStatEdits)
                     return;
                 libraryAddStaging.Template.MergePatch(patch);
                 libraryUi?.RefreshMpDurHintOnly();
@@ -661,7 +664,7 @@ internal static class CardBrowserRightPanel {
 
             var applyBtn = new Button { Text = I18N.T("cardEdit.applyEnchant", "Apply"), CustomMinimumSize = new Vector2(50, 26) };
             applyBtn.Pressed += () => {
-                if (libraryAddStaging != null && DevModeState.EffectDuration == EffectDuration.Permanent)
+                if (libraryAddStaging != null && ShouldLockLibraryStatEdits)
                     return;
                 int idx = enchantDropdown.Selected;
                 if (idx >= 0 && idx < enchantTypes.Count) {
@@ -673,7 +676,7 @@ internal static class CardBrowserRightPanel {
 
             var forceBtn = new Button { Text = I18N.T("cardEdit.forceEnchant", "Force"), CustomMinimumSize = new Vector2(50, 26) };
             forceBtn.Pressed += () => {
-                if (libraryAddStaging != null && DevModeState.EffectDuration == EffectDuration.Permanent)
+                if (libraryAddStaging != null && ShouldLockLibraryStatEdits)
                     return;
                 int idx = enchantDropdown.Selected;
                 if (idx >= 0 && idx < enchantTypes.Count) {
@@ -688,7 +691,7 @@ internal static class CardBrowserRightPanel {
 
             var clearBtn = new Button { Text = I18N.T("cardEdit.clearEnchant", "Clear Enchantment"), CustomMinimumSize = new Vector2(0, 26) };
             clearBtn.Pressed += () => {
-                if (libraryAddStaging != null && DevModeState.EffectDuration == EffectDuration.Permanent)
+                if (libraryAddStaging != null && ShouldLockLibraryStatEdits)
                     return;
                 CardEditActions.TryClearEnchantment(card);
                 statusLabel.Text = "Enchantment cleared.";
@@ -784,7 +787,7 @@ internal static class CardBrowserRightPanel {
 
         applyBtn.Pressed += () => {
             if (presetPicker.ItemCount == 0) { statusLabel.Text = "No preset."; return; }
-            if (libraryAddStaging != null && DevModeState.EffectDuration == EffectDuration.Permanent)
+            if (libraryAddStaging != null && ShouldLockLibraryStatEdits)
                 return;
             var pName = presetPicker.GetItemText(presetPicker.Selected);
             if (!CardEditPresetManager.Store.TryGet(pName, out var preset)) { statusLabel.Text = "Preset not found."; return; }

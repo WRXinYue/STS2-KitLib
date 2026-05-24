@@ -69,6 +69,7 @@ internal static partial class EnemySelectUI {
 
         internal void Rebuild() {
             _preview.Clear();
+            _list.CustomMinimumSize = Vector2.Zero;
             foreach (var child in _list.GetChildren())
                 ((Node)child).QueueFree();
 
@@ -81,6 +82,7 @@ internal static partial class EnemySelectUI {
 
                 if (filtered.Count == 0) {
                     _statusLabel.Text = I18N.T("enemy.emptyMonsters", "No monsters found.");
+                    RefreshPickerListScrollSize(_list);
                     return;
                 }
 
@@ -94,6 +96,7 @@ internal static partial class EnemySelectUI {
                         _preview.Clear));
                 }
                 _statusLabel.Text = I18N.T("enemy.pickerCountMonsters", "{0} monsters", filtered.Count);
+                RefreshPickerListScrollSize(_list);
                 return;
             }
 
@@ -103,6 +106,7 @@ internal static partial class EnemySelectUI {
 
             if (filteredEncounters.Count == 0) {
                 _statusLabel.Text = I18N.T("enemy.emptyEncounters", "No encounters found.");
+                RefreshPickerListScrollSize(_list);
                 return;
             }
 
@@ -117,7 +121,23 @@ internal static partial class EnemySelectUI {
                     _preview.Clear));
             }
             _statusLabel.Text = I18N.T("enemy.pickerCountEncounters", "{0} encounters", filteredEncounters.Count);
+            RefreshPickerListScrollSize(_list);
         }
+    }
+
+    private static void RefreshPickerListScrollSize(VBoxContainer list) {
+        Callable.From(() => {
+            if (!GodotObject.IsInstanceValid(list))
+                return;
+
+            list.CustomMinimumSize = Vector2.Zero;
+            if (list.GetChildCount() == 0)
+                return;
+
+            var height = list.GetCombinedMinimumSize().Y;
+            if (height > 0f)
+                list.CustomMinimumSize = new Vector2(0, height);
+        }).CallDeferred();
     }
 
     private static (ScrollContainer scroll, VBoxContainer list, Label status) CreatePickerListSection(
@@ -130,6 +150,7 @@ internal static partial class EnemySelectUI {
         };
         var list = new VBoxContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
         };
         list.AddThemeConstantOverride("separation", listSeparation);
         scroll.AddChild(list);
