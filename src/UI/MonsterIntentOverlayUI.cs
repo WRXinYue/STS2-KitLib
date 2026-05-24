@@ -214,8 +214,7 @@ internal static partial class MonsterIntentOverlayUI {
         }
 
         private void ApplySavedPanelLayout() {
-            float? x = SettingsStore.Current.CombatStatsMonsterIntentOverlayPosX;
-            float? y = SettingsStore.Current.CombatStatsMonsterIntentOverlayPosY;
+            var (x, y) = SettingsStore.GetCombatStatsMonsterIntentOverlayPosition();
             if (x == null || y == null)
                 return;
 

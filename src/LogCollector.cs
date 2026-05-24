@@ -9,15 +9,16 @@ namespace DevMode;
 /// <summary>
 /// Captures log entries emitted by the game's logging system into an in-memory ring buffer.
 /// Subscribe via <see cref="Log.LogCallback"/> so every Logger instance is covered.
-/// Opening the log viewer also hydrates from the on-disk session log under <c>user://logs/</c>.
+/// Opening the log viewer also hydrates from this process's mirrored log at
+/// <c>mod_data/DevMode/instances/{pid}/session.log</c>, falling back to <c>user://logs/</c>.
 /// </summary>
 internal static class LogCollector {
     public const int MaxLiveEntries = 2000;
     public const int MaxMergedEntries = 4000;
     internal const string LogViewerRootName = "DevModeLogViewer";
 
-    /// <summary>Injected at init; splits pre-DevMode file history from live callback capture.</summary>
-    public const string SessionBoundaryMarker = "── DevMode log capture started ──";
+    /// <summary>Legacy prefix; new sessions append <c>[pid=…]</c> via <see cref="DevModeInstance.SessionBoundaryMarker"/>.</summary>
+    public const string SessionBoundaryMarker = DevModeInstance.SessionBoundaryPrefix;
 
     public readonly record struct Entry(
         LogLevel Level,
@@ -45,11 +46,12 @@ internal static class LogCollector {
     }
 
     public static bool IsSessionBoundary(in Entry entry)
-        => entry.Text.Contains(SessionBoundaryMarker, StringComparison.Ordinal);
+        => DevModeInstance.ContainsSessionBoundary(entry.Text)
+           || entry.Text.Contains(SessionBoundaryMarker, StringComparison.Ordinal);
 
     public static void Initialize() {
         Log.LogCallback += OnLogReceived;
-        MainFile.Logger.Info(SessionBoundaryMarker);
+        MainFile.Logger.Info(DevModeInstance.SessionBoundaryMarker);
     }
 
     /// <summary>
@@ -57,6 +59,10 @@ internal static class LogCollector {
     /// </summary>
     public static void RefreshFileSnapshot() {
         var parsed = GameLogFileHydrator.ReadSessionLogEntries();
+        if (parsed.Count == 0) {
+            GameLogFileHydrator.InvalidateSessionLogPathCache();
+            parsed = GameLogFileHydrator.ReadSessionLogEntries();
+        }
         lock (_lock) {
             _fileEntries = parsed;
             _dirty = true;
@@ -64,6 +70,7 @@ internal static class LogCollector {
     }
 
     private static void OnLogReceived(LogLevel level, string text, int _) {
+        InstanceLogWriter.Append(level, text);
         lock (_lock) {
             _liveEntries.Add(new Entry(level, text, DateTime.Now));
             if (_liveEntries.Count > MaxLiveEntries)

@@ -34,21 +34,10 @@ internal static class FeedbackReportBuilder {
     /// Scans <c>user://logs/</c> for game log files, sorted newest first.
     /// Returns (display name, absolute path) pairs. Safe to call on any thread.
     /// </summary>
-    public static IReadOnlyList<(string DisplayName, string AbsPath)> ScanLogFiles() {
-        try {
-            var logsDir = Path.Combine(OS.GetUserDataDir(), "logs");
-            if (!Directory.Exists(logsDir))
-                return Array.Empty<(string, string)>();
-
-            return Directory.GetFiles(logsDir)
-                .OrderByDescending(File.GetLastWriteTime)
-                .Select(p => (Path.GetFileName(p), p))
-                .ToList();
-        }
-        catch {
-            return Array.Empty<(string, string)>();
-        }
-    }
+    public static IReadOnlyList<(string DisplayName, string AbsPath)> ScanLogFiles()
+        => GameLogFileHydrator.ScanLogFiles()
+            .Select(f => (f.DisplayName, f.AbsPath))
+            .ToList();
 
     /// <summary>
     /// Build the report ZIP synchronously. Run this on a background thread.

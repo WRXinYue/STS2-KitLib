@@ -21,6 +21,8 @@ public class MainFile {
     public static void Initialize() {
         Logger.Info("DevMode initializing...");
 
+        DevModeInstanceRegistry.Register();
+
         // Load persisted settings (theme, etc.) before anything else
         SettingsStore.Load();
 
@@ -28,7 +30,11 @@ public class MainFile {
         I18N.Initialize();
 
         // Start capturing log entries for the in-game log viewer
+        InstanceLogWriter.Initialize();
         LogCollector.Initialize();
+
+        if (DevModeInstanceRegistry.IsDualInstanceActive())
+            Logger.Info($"[DevMode] Dual-instance mode ({DevModeInstanceRegistry.ActiveInstanceCount()} processes).");
 
         ScriptManager.Initialize();
         ScriptBridge.Start();

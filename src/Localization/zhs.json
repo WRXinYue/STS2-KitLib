@@ -998,6 +998,10 @@
   "harmony.filter.hint": "（回车应用）",
 
   "log.title": "日志查看器",
+  "log.instance.subtitle": "本窗口 · PID {0} · {1}",
+  "log.instance.subtitleLive": "本窗口 · PID {0} · 实时捕获",
+  "log.instance.dualHint": "双开模式：本窗口写入 mod_data/DevMode/instances/{0}/session.log；Godot 仍共用 user://logs/。",
+  "log.instance.currentFileTag": "（本窗口）",
   "log.clear": "清空",
   "log.search": "过滤文本...",
   "log.filter.all": "全部",
@@ -1009,6 +1013,7 @@
   "log.copyAll": "复制全部",
   "log.openFolder": "打开文件夹",
   "log.openFolderTip": "在系统文件管理器中打开游戏日志目录（user://logs/）",
+  "log.openFolderTipInstance": "打开本窗口日志目录（mod_data/DevMode/instances/{0}/）",
   "log.count": "{0} 条",
   "log.count.withNoise": "{0} 条  •  已过滤 {1} 条",
   "log.filter.rules": "过滤",

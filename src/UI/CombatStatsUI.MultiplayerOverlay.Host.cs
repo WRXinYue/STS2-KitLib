@@ -198,8 +198,7 @@ internal static partial class CombatStatsUI {
         }
 
         private void ApplySavedPanelLayout() {
-            float? x = SettingsStore.Current.CombatStatsMpOverlayPosX;
-            float? y = SettingsStore.Current.CombatStatsMpOverlayPosY;
+            var (x, y) = SettingsStore.GetCombatStatsMpOverlayPosition();
             if (x == null || y == null)
                 return;
 

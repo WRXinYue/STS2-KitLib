@@ -797,7 +797,7 @@ internal static class LogViewerUI {
         => text.Replace("[", "[lb]");
 
     private static string GetGameLogsDirectory()
-        => GameLogFileHydrator.LogsDirectory;
+        => InstanceLogWriter.IsActive ? InstanceLogWriter.InstanceDirectory : GameLogFileHydrator.LogsDirectory;
 
     private static void OpenGameLogsFolder() {
         var dir = GetGameLogsDirectory();
@@ -831,7 +831,10 @@ internal static class LogViewerUI {
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(64, 26),
             Icon = MdiIcon.FolderOpen.Texture(14, DevModeTheme.Subtle),
-            TooltipText = I18N.T("log.openFolderTip", "Open the game log folder (user://logs/) in the system file manager"),
+            TooltipText = InstanceLogWriter.IsActive
+                ? I18N.T("log.openFolderTipInstance",
+                    "Open this window's log folder (mod_data/DevMode/instances/{0}/)", DevModeInstance.ProcessId)
+                : I18N.T("log.openFolderTip", "Open the game log folder (user://logs/) in the system file manager"),
         };
         ApplySmallFlatButton(openFolderBtn);
         openFolderBtn.Pressed += OpenGameLogsFolder;
@@ -856,6 +859,26 @@ internal static class LogViewerUI {
         row.AddChild(closeBtn);
 
         vbox.AddChild(row);
+
+        var instanceRow = new Label { Text = DevModeInstance.LogViewerSubtitle };
+        instanceRow.AddThemeFontSizeOverride("font_size", 10);
+        instanceRow.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        instanceRow.AddThemeConstantOverride("margin_left", 4);
+        vbox.AddChild(instanceRow);
+
+        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
+            var dualHint = new Label {
+                Text = I18N.T("log.instance.dualHint",
+                    "Dual-instance mode: this window writes to mod_data/DevMode/instances/{0}/session.log; Godot still shares user://logs/.",
+                    DevModeInstance.ProcessId),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            dualHint.AddThemeFontSizeOverride("font_size", 10);
+            dualHint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            dualHint.AddThemeConstantOverride("margin_left", 4);
+            vbox.AddChild(dualHint);
+        }
+
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
             Color = DevModeTheme.ButtonBgNormal,

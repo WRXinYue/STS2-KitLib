@@ -20,22 +20,29 @@ public static class SettingsStore {
     public static DevModeSettings Current { get; private set; } = new();
 
     public static void Load() {
-        try {
-            if (!File.Exists(FilePath)) {
-                Current = new DevModeSettings { RailIntroDismissed = false };
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                if (!File.Exists(FilePath)) {
+                    Current = new DevModeSettings { RailIntroDismissed = false };
+                    ApplyNormalRunModeFromSettings();
+                    Save();
+                    return;
+                }
+                var json = ReadSharedText(FilePath);
+                Current = JsonSerializer.Deserialize<DevModeSettings>(json, JsonOpts) ?? new();
+                ApplyRailLayoutDefaults();
                 ApplyNormalRunModeFromSettings();
-                Save();
                 return;
             }
-            var json = File.ReadAllText(FilePath);
-            Current = JsonSerializer.Deserialize<DevModeSettings>(json, JsonOpts) ?? new();
-            ApplyRailLayoutDefaults();
-            ApplyNormalRunModeFromSettings();
-        }
-        catch (Exception ex) {
-            MainFile.Logger.Warn($"SettingsStore load failed: {ex.Message}");
-            Current = new();
-            ApplyNormalRunModeFromSettings();
+            catch (IOException) when (attempt < 2) {
+                System.Threading.Thread.Sleep(40);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"SettingsStore load failed: {ex.Message}");
+                Current = new();
+                ApplyNormalRunModeFromSettings();
+                return;
+            }
         }
     }
 
@@ -57,9 +64,20 @@ public static class SettingsStore {
     }
 
     public static void SetCombatStatsMpOverlayPosition(float x, float y) {
+        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
+            DevModeInstance.SessionOverlay.MpOverlayPosX = x;
+            DevModeInstance.SessionOverlay.MpOverlayPosY = y;
+            return;
+        }
         Current.CombatStatsMpOverlayPosX = x;
         Current.CombatStatsMpOverlayPosY = y;
         Save();
+    }
+
+    public static (float? X, float? Y) GetCombatStatsMpOverlayPosition() {
+        if (DevModeInstanceRegistry.IsDualInstanceActive())
+            return (DevModeInstance.SessionOverlay.MpOverlayPosX, DevModeInstance.SessionOverlay.MpOverlayPosY);
+        return (Current.CombatStatsMpOverlayPosX, Current.CombatStatsMpOverlayPosY);
     }
 
     public static void SetCombatStatsMonsterIntentOverlayEnabled(bool enabled) {
@@ -68,9 +86,21 @@ public static class SettingsStore {
     }
 
     public static void SetCombatStatsMonsterIntentOverlayPosition(float x, float y) {
+        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
+            DevModeInstance.SessionOverlay.MonsterIntentOverlayPosX = x;
+            DevModeInstance.SessionOverlay.MonsterIntentOverlayPosY = y;
+            return;
+        }
         Current.CombatStatsMonsterIntentOverlayPosX = x;
         Current.CombatStatsMonsterIntentOverlayPosY = y;
         Save();
+    }
+
+    public static (float? X, float? Y) GetCombatStatsMonsterIntentOverlayPosition() {
+        if (DevModeInstanceRegistry.IsDualInstanceActive())
+            return (DevModeInstance.SessionOverlay.MonsterIntentOverlayPosX,
+                DevModeInstance.SessionOverlay.MonsterIntentOverlayPosY);
+        return (Current.CombatStatsMonsterIntentOverlayPosX, Current.CombatStatsMonsterIntentOverlayPosY);
     }
 
     public static bool ShouldShowRailIntroHint()
@@ -107,16 +137,29 @@ public static class SettingsStore {
     }
 
     public static void Save() {
-        try {
-            var dir = Path.GetDirectoryName(FilePath);
-            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-            var tmp = FilePath + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(Current, JsonOpts));
-            File.Move(tmp, FilePath, overwrite: true);
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                var dir = Path.GetDirectoryName(FilePath);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                var tmp = FilePath + ".tmp";
+                File.WriteAllText(tmp, JsonSerializer.Serialize(Current, JsonOpts));
+                File.Move(tmp, FilePath, overwrite: true);
+                return;
+            }
+            catch (IOException) when (attempt < 2) {
+                System.Threading.Thread.Sleep(40);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"SettingsStore save failed: {ex.Message}");
+                return;
+            }
         }
-        catch (Exception ex) {
-            MainFile.Logger.Warn($"SettingsStore save failed: {ex.Message}");
-        }
+    }
+
+    private static string ReadSharedText(string path) {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 }
 

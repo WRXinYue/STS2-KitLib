@@ -966,6 +966,10 @@
   "harmony.filter.hint": "(Enter to apply)",
 
   "log.title": "Log Viewer",
+  "log.instance.subtitle": "This window · PID {0} · {1}",
+  "log.instance.subtitleLive": "This window · PID {0} · live capture",
+  "log.instance.dualHint": "Dual-instance mode: this window writes to mod_data/DevMode/instances/{0}/session.log; Godot still shares user://logs/.",
+  "log.instance.currentFileTag": "(this window)",
   "log.clear": "Clear",
   "log.search": "Filter text...",
   "log.filter.all": "All",
@@ -977,6 +981,7 @@
   "log.copyAll": "Copy All",
   "log.openFolder": "Open Folder",
   "log.openFolderTip": "Open the game log folder (user://logs/) in the system file manager",
+  "log.openFolderTipInstance": "Open this window's log folder (mod_data/DevMode/instances/{0}/)",
   "log.count": "{0} entries",
   "log.count.withNoise": "{0} entries  •  {1} filtered",
   "log.filter.rules": "Filter",
