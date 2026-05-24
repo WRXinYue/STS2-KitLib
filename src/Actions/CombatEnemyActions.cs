@@ -138,6 +138,9 @@ internal static class CombatEnemyActions {
         }
         catch { /* no slots available */ }
 
+        if (slot == null && cs.Encounter is { HasScene: false })
+            LogSlotlessSummonWarning((AbstractModel)canonicalMonster);
+
         var creature = await CreatureCmd.Add(mutable, cs, CombatSide.Enemy, slot);
         MainFile.Logger.Info($"CombatEnemyActions: Added {((AbstractModel)canonicalMonster).Id.Entry} to combat");
 
@@ -161,11 +164,17 @@ internal static class CombatEnemyActions {
             await AddMonsterInternal(monster, mpSync: true);
     }
 
+    internal static void LogSlotlessSummonWarning(AbstractModel monster) =>
+        MainFile.Logger.Warn(
+            $"CombatEnemyActions: Added {monster.Id.Entry} to an encounter without slot markers " +
+            $"(Encounter.HasScene=false). Mid-combat summons (e.g. Ovicopter lay eggs) rely on auto-layout; " +
+            "prefer OVICOPTER_NORMAL or another slotted encounter for slot-based monsters.");
+
     /// <summary>
     /// Reposition all enemy NCreature nodes using the same algorithm as
     /// NCombatRoom.PositionEnemies (auto-layout for encounters without scene slots).
     /// </summary>
-    private static void RepositionEnemies(CombatState cs) {
+    internal static void RepositionEnemies(CombatState cs) {
         var combatRoom = NCombatRoom.Instance;
         if (combatRoom == null) return;
 
