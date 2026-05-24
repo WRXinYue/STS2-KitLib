@@ -50,8 +50,9 @@ internal static class MpAiTeammateHost {
 
         foreach (var player in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
             if (player.Creature.IsDead) continue;
-            if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
+            if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) continue;
+            if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
 
             if (!HasPlayableCard(player)) {
                 MpAiTeammateCombatActions.SignalEndTurn(player);

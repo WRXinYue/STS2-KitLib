@@ -55,6 +55,56 @@ internal static class PseudoCoopActionQueue {
         return false;
     }
 
+    internal static bool HasQueuedEndTurn(ulong netId) {
+        if (!TryGetPlayerQueueActions(netId, out var actions)) return false;
+        foreach (GameAction action in actions) {
+            if (action is EndPlayerTurnAction)
+                return true;
+        }
+
+        return false;
+    }
+
+    internal static bool HasPendingCombatActions(ulong netId) {
+        if (HasInFlightAction(netId)) return true;
+        if (HasQueuedNonEndTurnActions(netId)) return true;
+        return IsRunningPlayerDrivenNonEndTurn(netId);
+    }
+
+    static bool HasQueuedNonEndTurnActions(ulong netId) {
+        if (!TryGetPlayerQueueActions(netId, out var actions)) return false;
+        foreach (GameAction action in actions) {
+            if (action is not EndPlayerTurnAction)
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool IsRunningPlayerDrivenNonEndTurn(ulong netId) {
+        var running = RunManager.Instance?.ActionExecutor?.CurrentlyRunningAction;
+        if (running == null || running is EndPlayerTurnAction) return false;
+        if (ResolvePlayerNetId(running) != netId) return false;
+        return ActionQueueSet.IsGameActionPlayerDriven(running);
+    }
+
+    static bool TryGetPlayerQueueActions(ulong netId, out IList actions) {
+        actions = null!;
+        var set = RunManager.Instance?.ActionQueueSet;
+        if (set == null) return false;
+        if (QueuesField.GetValue(set) is not IList queues) return false;
+
+        foreach (var q in queues) {
+            if ((ulong)OwnerIdField.GetValue(q)! != netId) continue;
+            if (ActionsField.GetValue(q) is IList list) {
+                actions = list;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     internal static void MarkInFlight(ulong netId) {
         InFlightCounts.TryGetValue(netId, out var count);
         InFlightCounts[netId] = count + 1;
@@ -68,9 +118,6 @@ internal static class PseudoCoopActionQueue {
 
     internal static bool HasInFlightAction(ulong netId) =>
         InFlightCounts.TryGetValue(netId, out var count) && count > 0;
-
-    internal static bool HasPendingCombatActions(ulong netId) =>
-        HasQueuedActions(netId) || HasInFlightAction(netId);
 
     internal static void ClearInFlightAll() => InFlightCounts.Clear();
 

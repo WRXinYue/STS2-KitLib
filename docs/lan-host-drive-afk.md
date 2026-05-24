@@ -160,6 +160,7 @@ Select-String -Path "$env:APPDATA\SlayTheSpire2\logs\godot.log" `
 - 有 `LAN host preset applied`（或 Auto-applied）
 - 有 `[MpAiTeammate] GameLoop`（1000 由 AI 驱动）
 - 有 `Enqueued end turn netId=1000`（live ENet 同步路径）
+- **每个 round 至多 1 条** `Enqueued end turn netId=1000`（无 duplicate）
 - `Enqueued end turn` 在对应 `Player 1000 playing ... finished execution` **之后**
 - **无** `StateDivergence`
 - **无** `Ready end turn (live ENet)`（已废弃路径）
@@ -178,6 +179,12 @@ Select-String -Path "$env:APPDATA\SlayTheSpire2\logs\godot.log" `
 | 5 | in-flight 无效 | async Finalizer 过早 Clear | `AfterActionFinished` 锚点 |
 | 6 | phase 1 vs 2 | 主机未 preset + 客机单方面 ready enemy turn + `ClearInFlight(OwnerId)` 清错 | 双开自动 preset；移除客机 enemy-turn patch；`ResolvePlayerNetId` |
 | 7 | checksum 6 / StateDivergence（16:35） | host-only `SetReadyToEndTurn(1000)` → host 先进 phase 1，client 仍 play phase | `PseudoCoopHostEnqueuePatch` + 同步 `EndPlayerTurnAction` |
+| 8 | 同 round 两次 `Enqueued end turn` / strike 中途 enqueue | postfix 双路径重叠 + `HasPendingCombatActions` 未含 executing action | `ReadyPhantomPeersToEndTurn` 分离；`HasQueuedEndTurn` + `CanSignalEndTurn` 统一门控 |
+
+### Post-fix 验证（owner-routed enqueue，pid 205708/203024）
+
+- Round 1–2：**通过**（checksum 连续，无 phase 1 desync）
+- Round 3：checksum 27 `After enemy turn end` — `UndeadSpirit` 14 vs 17，属 **LustTravel2 边界**（非本次 DevMode 范围）
 
 ### #6 详情（2026-05-24 ~16:29）
 
@@ -192,6 +199,12 @@ Select-String -Path "$env:APPDATA\SlayTheSpire2\logs\godot.log" `
 - 根因：host-only `SetReadyToEndTurn` 不更新 client 本地 ready 集合；host 满足 `AllPlayersReadyToEndTurn()` 后进入 phase 1 + checksum 6，client 仍在 round 1 play phase
 - 修复：`PseudoCoopHostEnqueuePatch` 使 `PlayCard` / `EndPlayerTurn` 以 `action.OwnerId` 广播；live ENet 改回 `RequestEnqueue(EndPlayerTurnAction)`；live ENet 跳过 host-only `SetReadyToBeginEnemyTurn`
 
+### #8 详情（2026-05-24 ~16:44）
+
+- 主机 log：round 3 连续两条 `Enqueued end turn netId=1000 round=3`（`EnsureHostDrivenPeersEndTurn` + `ReadySimulatedPeersToEndTurn` 重叠）
+- round 2：`Enqueued end turn` 出现在 strike `began` 与 `finished` 之间（in-flight / executing action 门控不足）
+- 修复：postfix 仅 phantom 走 `SetReadyToEndTurn`；host-driven 统一 `CanSignalEndTurn`（pending + queued end turn + running player-driven action）
+
 ---
 
 ## 调试检查清单
@@ -199,15 +212,15 @@ Select-String -Path "$env:APPDATA\SlayTheSpire2\logs\godot.log" `
 1. 两边重启并加载最新 DLL。
 2. 主机 log：`LAN host preset applied` 或 `Auto-applied LAN host preset`。
 3. 客机 log：`AFK client enabled`。
-4. live ENet 路径应有 `Enqueued end turn netId=1000`；**不应**有 `Ready end turn (live ENet)`。
+4. live ENet 路径应有 `Enqueued end turn netId=1000`；**不应**有 `Ready end turn (live ENet)`；**同一 round 仅一条** end turn log。
 5. desync 时对照 `Enqueued end turn` / phase log 与 `Player 1000 playing` 顺序（须在 `finished execution` 之后）。
-6. UndeadSpirit 一致但 HP/牌堆不同 → 查 DevMode 时序，非 mod mutator。
+6. UndeadSpirit 一致但 HP/牌堆不同 → 查 DevMode 时序；checksum 27 敌人回合末 UndeadSpirit 分叉 → LustTravel2 边界。
 
 ---
 
 ## 与 LustTravel2 的边界
 
-UndeadSoul 等 mod 字段在 LustTravel2 仓库维护。多次 desync 中 **UndeadSpirit 两侧相同、敌人 HP/牌堆不同**，根因在 DevMode 战斗/end-turn 时序。
+UndeadSoul 等 mod 字段在 LustTravel2 仓库维护。DevMode #7 修复后 round 1–2 已通过；round 3 checksum 27（`After enemy turn end`）出现 `UndeadSpirit` 14 vs 17，需在 LustTravel2 侧调查 HpOrb/UndeadSoul 同步。
 
 ---
 

@@ -1,4 +1,3 @@
-using System.Linq;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
@@ -20,7 +19,7 @@ internal static class PseudoCoopEndPlayerTurnPatch {
         if (host == null || !LocalContext.IsMe(host)) return;
 
         PseudoCoopCombatReady.EnsureHostDrivenPeersEndTurn();
-        PseudoCoopCombatReady.ReadySimulatedPeersToEndTurn();
+        PseudoCoopCombatReady.ReadyPhantomPeersToEndTurn();
     }
 }
 
@@ -40,26 +39,22 @@ internal static class PseudoCoopCombatReady {
 
         foreach (var peer in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
             if (peer.Creature.IsDead) continue;
-            if (cm.IsPlayerReadyToEndTurn(peer)) continue;
-            if (PseudoCoopActionQueue.HasPendingCombatActions(peer.NetId)) continue;
             MpAiTeammateCombatActions.SignalEndTurn(peer);
         }
     }
 
-    internal static void ReadySimulatedPeersToEndTurn() {
+    /// <summary>Phantom/offline peers only; host-driven live ENet uses EnsureHostDrivenPeersEndTurn.</summary>
+    internal static void ReadyPhantomPeersToEndTurn() {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
 
         foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
+            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) continue;
             if (cm.IsPlayerReadyToEndTurn(peer)) continue;
 
-            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer))
-                MpAiTeammateCombatActions.SignalEndTurn(peer);
-            else {
-                cm.SetReadyToEndTurn(peer, canBackOut: false);
-                MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-end-turn netId={peer.NetId}.");
-            }
+            cm.SetReadyToEndTurn(peer, canBackOut: false);
+            MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-end-turn netId={peer.NetId}.");
         }
     }
 
