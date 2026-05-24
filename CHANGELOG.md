@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Main menu DevMod shortcuts** — On the title screen: **Logs (DevMod)** and **Mod Feedback (DevMod)** open the log viewer and feedback ZIP export without entering a run; in **Dev Mode (DevMod)**, **Unlock all progress** (with confirmation) reveals timeline epochs, ascension A10, and compendium entries on your save.
+- **In-game manual** — **Manual** rail panel with embedded help for each dev tool (replaces the separate Valaxy documentation site).
+- **Card browser** — Optional **show hidden cards** and safer preview for event-only cards; mod character pools in a dropdown; right-click a filter chip to **exclude** that tag; pool filters split into clearer rows.
+- **Card enchantment picker** — Expandable card grid when choosing enchantments during card edit.
+- **Logs** — Viewer loads earlier lines from the on-disk game log; clearer mod vs game source coloring; rail tab alerts when new Warn/Error entries arrive; peek tab blinks until you hover it once.
+- **Enemy intent tools** — Draggable in-combat intent overlay; **Enemy intents** DevPanel tab with next-turn preview rail; edit per-turn enemy intents in the enemy browser.
+- **Intent badges** on the combat context rail stack vertically when an enemy has multiple intents.
+- **Rooms panel** — Teleport to ancient shop locations from a slide-out submenu.
+- **AI Host** panel — AI-driven combat from the dev rail; **SyncBot** simulates multiplayer ACKs for solo dev testing.
+- **Pseudo co-op (Host)** — From Developer Mode main menu: one-click host with optional phantom player, map vote mirroring, and AI teammate in combat.
+- **Multiplayer cheat sync** — When hosting with multiplayer cheat enabled: synced cheats, card/relic/potion edits, combat enemy tools, powers, and per-player cheat flags across clients.
 - **Combat enemy context rail** — During fights, the game right Context Pane shows compact icons to add encounters/monsters, kill individual enemies, or kill all. Overlays handle search and selection.
 - **Combat Stats** panel — live per-combat damage statistics (dealt, taken, block, cards played, breakdowns by card/source/turn) via the game's `CombatHistory` API. Extended stats (overkill, blocked damage, energy, potions, debuffs, power damage, event timeline), run totals, current-vs-last comparison, JSON export, and `dmstats` console command. See `TODO.md` for remaining backlog (HUD, co-op polish).
 - **Combat Stats game right rail** — During fights, a slim pane on the right edge of the game shows live player contribution bars or a compact score breakdown; it updates in combat without opening the full stats panel. When the stats browser is nearly full width, the panel can merge flush with that rail.
