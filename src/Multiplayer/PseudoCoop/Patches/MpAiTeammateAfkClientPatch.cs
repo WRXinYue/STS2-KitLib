@@ -1,6 +1,5 @@
 using DevMode.Multiplayer.Cheat;
 using HarmonyLib;
-using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -15,7 +14,6 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
     static bool Prefix(GameAction action) {
         if (!MpAiTeammateAfkClient.IsEnabled) return true;
         if (RunManager.Instance?.NetService?.Type != NetGameType.Client) return true;
-        if (action is ReadyToBeginEnemyTurnAction) return true;
 
         var owner = ResolveOwner(action);
         if (!MpAiTeammateAfkClient.ShouldBlockLocalCombatInput(owner)) return true;
@@ -29,14 +27,5 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
         var player = Traverse.Create(action).Field<Player>("_player").Value;
         if (player != null) return player;
         return Traverse.Create(action).Property<Player>("Player").Value;
-    }
-}
-
-[HarmonyPatch(typeof(ActionQueueSynchronizer), "SetCombatState")]
-internal static class MpAiTeammateAfkCombatStatePatch {
-    [HarmonyPostfix]
-    static void Postfix(ActionSynchronizerCombatState combatState) {
-        if (combatState == ActionSynchronizerCombatState.EndTurnPhaseOne)
-            MpAiTeammateAfkClient.TrySignalReadyToBeginEnemyTurn();
     }
 }

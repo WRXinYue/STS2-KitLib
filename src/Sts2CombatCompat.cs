@@ -2,7 +2,6 @@ using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Combat.History;
-using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
@@ -54,11 +53,6 @@ internal static class Sts2CombatCompat {
     public static bool IsPlayerReadyToBeginEnemyTurn(CombatManager cm, Player player) {
         var method = AccessTools.Method(typeof(CombatManager), "IsPlayerReadyToBeginEnemyTurn", [typeof(Player)]);
         return method != null && (bool)method.Invoke(cm, [player])!;
-    }
-
-    public static Player? GetLocalPlayer() {
-        var players = RunManager.Instance?.DebugOnlyGetState()?.Players;
-        return players == null ? null : LocalContext.GetMe(players);
     }
 
     public static CombatState? GetCreatureCombatState(Creature creature) {
