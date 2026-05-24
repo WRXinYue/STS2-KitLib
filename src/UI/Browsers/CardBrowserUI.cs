@@ -326,19 +326,33 @@ internal static partial class CardBrowserUI {
         AddPoolChip("necrobinder", I18N.T("cardBrowser.poolNecrobinder", "Necrobinder"));
 
         // Mod characters: any character whose pool type isn't one of the 5 built-ins
-        var builtInPoolTypes = new System.Collections.Generic.HashSet<Type>
+        var builtInPoolTypes = new HashSet<Type>
         {
             typeof(IroncladCardPool), typeof(SilentCardPool), typeof(DefectCardPool),
             typeof(RegentCardPool),   typeof(NecrobinderCardPool)
         };
+        var modEntries = new List<(string key, string label)>();
         foreach (var character in ModelDb.AllCharacters) {
             var pool = character.CardPool;
             if (builtInPoolTypes.Contains(pool.GetType())) continue;
             var key = "mod_" + pool.Title;
             var capturedPool = pool;
             s.PoolFilterPredicates[key] = c => c.Pool == capturedPool;
-            try { AddPoolChip(key, character.Title.GetFormattedText()); }
-            catch { AddPoolChip(key, pool.Title); }
+            string label;
+            try { label = character.Title.GetFormattedText(); }
+            catch { label = pool.Title; }
+            modEntries.Add((key, label));
+        }
+        if (modEntries.Count > 0) {
+            var pf = s.ActivePoolFilters;
+            foreach (var (key, _) in modEntries) {
+                if (pf.Contains(key) || (pf.Count == 0 && defaultPoolKey == key))
+                    pf.Add(key);
+            }
+            s.PoolChipRow.AddChild(new ModPoolFilterDropdown(
+                modEntries,
+                s.ActivePoolFilters,
+                () => RebuildGrid(s, s.SearchInput.Text ?? "")));
         }
 
         // Colorless always last in the Character group
