@@ -40,10 +40,10 @@ internal static class LogViewerUI {
     public static void Show(NGlobalUi globalUi) {
         var parent = (Node)globalUi;
         Remove(parent);
-        Action close = () => Remove(parent);
+        void Close() => DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(parent));
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
-            globalUi, RootName, PanelW, close, contentSeparation: 8);
-        BuildPanel(vbox, root, close);
+            globalUi, RootName, PanelW, Close, contentSeparation: 8);
+        BuildPanel(vbox, root, Close);
         parent.AddChild(root);
         LogCollector.RefreshFileSnapshot();
     }

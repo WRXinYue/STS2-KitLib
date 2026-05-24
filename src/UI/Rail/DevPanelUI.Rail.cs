@@ -121,7 +121,7 @@ internal static partial class DevPanelUI {
                 if (idx >= 0)
                     _moveRailIndicator?.Invoke(idx, true);
                 t.OnActivate(globalUi);
-            });
+            }, () => DevPanelUI.IsRailTabPanelVisible(globalUi, t.Id));
         };
         railButtons.Add(btn);
         _railIconButtons.Add((btn, tab.Icon));

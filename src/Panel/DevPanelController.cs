@@ -45,11 +45,17 @@ internal sealed class DevPanelController {
     // ── Core operations ───────────────────────────────────────────────────
 
     /// <summary>
-    /// Switches to <paramref name="tabId"/>. No-op if that tab is already active.
-    /// Otherwise closes all open panels then runs <paramref name="openPanel"/>.
+    /// Switches to <paramref name="tabId"/>. No-op if that tab is already active and
+    /// <paramref name="isPanelVisible"/> is null or returns true. When the tab is marked
+    /// active but its panel was removed without <see cref="Deactivate"/> (e.g. header close),
+    /// pass <paramref name="isPanelVisible"/> so the panel can be reopened.
     /// </summary>
-    public void SwitchTo(string tabId, Action openPanel) {
-        if (_activeTabId == tabId) return;
+    public void SwitchTo(string tabId, Action openPanel, Func<bool>? isPanelVisible = null) {
+        if (_activeTabId == tabId) {
+            if (isPanelVisible?.Invoke() ?? true)
+                return;
+            Reset();
+        }
 
         _activeTabId = tabId;
         _closeAllPanels?.Invoke();
