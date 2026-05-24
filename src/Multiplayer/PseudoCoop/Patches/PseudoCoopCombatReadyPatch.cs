@@ -62,19 +62,15 @@ internal static class PseudoCoopCombatReady {
         var cm = CombatManager.Instance;
         if (cm is not { IsInProgress: true }) return;
 
-        var sync = RunManager.Instance?.ActionQueueSynchronizer;
-        if (sync == null) return;
+        if (RunManager.Instance?.ActionQueueSynchronizer == null) return;
 
         foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
             if (Sts2CombatCompat.IsPlayerReadyToBeginEnemyTurn(cm, peer)) continue;
             if (PseudoCoopActionQueue.HasQueuedReadyToBeginEnemyTurn(peer.NetId)) continue;
 
-            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) {
-                sync.RequestEnqueue(new ReadyToBeginEnemyTurnAction(peer));
-                MainFile.Logger.Info($"[PseudoCoop] Enqueued ready-to-begin-enemy-turn netId={peer.NetId}.");
-                continue;
-            }
+            // Live ENet AFK client enqueues after host Ready + phase-1 checkpoint (see #11).
+            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) continue;
 
             cm.SetReadyToBeginEnemyTurn(peer);
             MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-begin-enemy-turn netId={peer.NetId}.");

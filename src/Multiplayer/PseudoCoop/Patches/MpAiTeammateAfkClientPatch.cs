@@ -14,6 +14,7 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
     static bool Prefix(GameAction action) {
         if (!MpAiTeammateAfkClient.IsEnabled) return true;
         if (RunManager.Instance?.NetService?.Type != NetGameType.Client) return true;
+        if (action is ReadyToBeginEnemyTurnAction) return true;
 
         var owner = ResolveOwner(action);
         if (!MpAiTeammateAfkClient.ShouldBlockLocalCombatInput(owner)) return true;
@@ -27,5 +28,18 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
         var player = Traverse.Create(action).Field<Player>("_player").Value;
         if (player != null) return player;
         return Traverse.Create(action).Property<Player>("Player").Value;
+    }
+}
+
+[HarmonyPatch(typeof(ReadyToBeginEnemyTurnAction), "ExecuteAction")]
+internal static class MpAiTeammateAfkPeerReadyPatch {
+    [HarmonyPostfix]
+    static void Postfix(ReadyToBeginEnemyTurnAction __instance) {
+        if (RunManager.Instance?.NetService?.Type != NetGameType.Client) return;
+
+        var readyPlayer = Traverse.Create(__instance).Field<Player>("_player").Value;
+        if (readyPlayer == null) return;
+
+        MpAiTeammateAfkClient.TrySignalReadyToBeginEnemyTurnAfterPeerReady(readyPlayer);
     }
 }

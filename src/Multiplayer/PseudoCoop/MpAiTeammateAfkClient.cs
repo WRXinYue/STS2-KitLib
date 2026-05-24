@@ -1,8 +1,11 @@
 using DevMode.AI.AutoPlay;
 using DevMode.Multiplayer.Cheat;
 using DevMode.Settings;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Multiplayer.PseudoCoop;
 
@@ -43,5 +46,26 @@ internal static class MpAiTeammateAfkClient {
     public static bool ShouldBlockLocalCombatInput(Player? player) {
         if (!IsEnabled || player == null) return false;
         return LocalContext.IsMe(player);
+    }
+
+    /// <summary>
+    /// After a teammate ReadyToBeginEnemyTurn executes, enqueue local ready so phase-1
+    /// checksum runs first (matches vanilla client-initiated path in 205708/203024).
+    /// </summary>
+    public static void TrySignalReadyToBeginEnemyTurnAfterPeerReady(Player readyPlayer) {
+        if (!IsEnabled) return;
+        if (LocalContext.IsMe(readyPlayer)) return;
+
+        var cm = CombatManager.Instance;
+        if (cm is not { IsInProgress: true }) return;
+
+        var players = RunManager.Instance?.DebugOnlyGetState()?.Players;
+        var me = players == null ? null : LocalContext.GetMe(players);
+        if (me == null || me.Creature.IsDead) return;
+        if (Sts2CombatCompat.IsPlayerReadyToBeginEnemyTurn(cm, me)) return;
+        if (PseudoCoopActionQueue.HasQueuedReadyToBeginEnemyTurn(me.NetId)) return;
+
+        RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(new ReadyToBeginEnemyTurnAction(me));
+        MainFile.Logger.Info($"[MpAiTeammate] AFK client ready-to-begin-enemy-turn netId={me.NetId}.");
     }
 }
