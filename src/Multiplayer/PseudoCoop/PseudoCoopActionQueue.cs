@@ -65,6 +65,16 @@ internal static class PseudoCoopActionQueue {
         return false;
     }
 
+    internal static bool HasQueuedReadyToBeginEnemyTurn(ulong netId) {
+        if (!TryGetPlayerQueueActions(netId, out var actions)) return false;
+        foreach (GameAction action in actions) {
+            if (action is ReadyToBeginEnemyTurnAction)
+                return true;
+        }
+
+        return false;
+    }
+
     internal static bool HasPendingCombatActions(ulong netId) {
         if (HasInFlightAction(netId)) return true;
         if (HasQueuedNonEndTurnActions(netId)) return true;

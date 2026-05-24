@@ -1,5 +1,6 @@
 using DevMode.Multiplayer.Cheat;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -14,6 +15,7 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
     static bool Prefix(GameAction action) {
         if (!MpAiTeammateAfkClient.IsEnabled) return true;
         if (RunManager.Instance?.NetService?.Type != NetGameType.Client) return true;
+        if (action is ReadyToBeginEnemyTurnAction) return true;
 
         var owner = ResolveOwner(action);
         if (!MpAiTeammateAfkClient.ShouldBlockLocalCombatInput(owner)) return true;
@@ -30,5 +32,11 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
     }
 }
 
-// Live ENet AFK clients must not SetReadyToBeginEnemyTurn locally — host drives via
-// PseudoCoopCombatReady.ReadySimulatedPeersToBeginEnemyTurn (see docs/lan-host-drive-afk.md).
+[HarmonyPatch(typeof(ActionQueueSynchronizer), "SetCombatState")]
+internal static class MpAiTeammateAfkCombatStatePatch {
+    [HarmonyPostfix]
+    static void Postfix(ActionSynchronizerCombatState combatState) {
+        if (combatState == ActionSynchronizerCombatState.EndTurnPhaseOne)
+            MpAiTeammateAfkClient.TrySignalReadyToBeginEnemyTurn();
+    }
+}

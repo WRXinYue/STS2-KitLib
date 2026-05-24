@@ -28,7 +28,8 @@ internal static class PseudoCoopHostEnqueuePatch {
         if (!SimulatedPeerRegistry.IsHostDrivenPeer(action.OwnerId)) return true;
 
         if (action.ActionType == GameActionType.CombatPlayPhaseOnly
-            && __instance.CombatState == ActionSynchronizerCombatState.NotPlayPhase)
+            && __instance.CombatState == ActionSynchronizerCombatState.NotPlayPhase
+            && action is not ReadyToBeginEnemyTurnAction)
             return true;
 
         EnqueueActionMethod.Invoke(__instance, [action, action.OwnerId]);
