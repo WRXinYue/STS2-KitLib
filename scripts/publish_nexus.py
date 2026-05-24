@@ -391,19 +391,20 @@ def main() -> int:
         print(f"ERROR: zip still missing after build: {zip_path}", file=sys.stderr)
         return 1
 
-    # ── build file description: changelog only, converted to Nexus BBCode ─────
-    from md_to_nexus import convert_markdown  # noqa: PLC0415
-
-    notes_en = _changelog_section(_REPO_ROOT / "CHANGELOG.md", version)
-    notes_zh = _changelog_section(_REPO_ROOT / "CHANGELOG.zh-CN.md", version)
-    parts: list[str] = []
-    if notes_en:
-        parts.append(convert_markdown(notes_en))
-    if notes_zh:
-        parts.append(convert_markdown(notes_zh))
-    description = "\n\n[line]\n\n".join(parts)
+    # ── build file description ───────────────────────────────────────────────
     if args.beta:
-        description = _beta_notice_bbcode(sts2_beta_version) + description
+        description = _beta_notice_bbcode(sts2_beta_version)
+    else:
+        from md_to_nexus import convert_markdown  # noqa: PLC0415
+
+        notes_en = _changelog_section(_REPO_ROOT / "CHANGELOG.md", version)
+        notes_zh = _changelog_section(_REPO_ROOT / "CHANGELOG.zh-CN.md", version)
+        parts: list[str] = []
+        if notes_en:
+            parts.append(convert_markdown(notes_en))
+        if notes_zh:
+            parts.append(convert_markdown(notes_zh))
+        description = "\n\n[line]\n\n".join(parts)
 
     display_name = _nexus_display_name(version, beta=args.beta, sts2_beta_version=sts2_beta_version)
 
