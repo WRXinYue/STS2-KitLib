@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using DevMode;
+using DevMode.Actions;
 using DevMode.Settings;
 using Godot;
 using HarmonyLib;
@@ -91,6 +92,10 @@ internal static class DevMainMenuUI {
             DevMainMenuPseudoCoopUI.Show(mainMenu, Hide);
         });
 
+        AddButton(container, template, I18N.T("devmenu.unlockAll", "Unlock All Progress"), () => {
+            ShowUnlockAllConfirm(mainMenu);
+        });
+
         AddButton(container, template, I18N.T("devmenu.back", "Back"), Hide);
     }
 
@@ -115,6 +120,7 @@ internal static class DevMainMenuUI {
         if (_mainMenu == null || !GodotObject.IsInstanceValid(_mainMenu)) return;
 
         SaveSlotUI.Hide();
+        _mainMenu.GetTree().Root.GetNodeOrNull<Control>(UnlockAllOverlayName)?.QueueFree();
 
         foreach (var btn in _addedButtons) {
             if (GodotObject.IsInstanceValid(btn))
@@ -144,6 +150,107 @@ internal static class DevMainMenuUI {
     }
 
     private const string SeedOverlayName = "DevModeSeedInput";
+    private const string UnlockAllOverlayName = "DevModeUnlockAllConfirm";
+
+    private static void ShowUnlockAllConfirm(NMainMenu mainMenu) {
+        var root = mainMenu.GetTree().Root;
+        root.GetNodeOrNull<Control>(UnlockAllOverlayName)?.QueueFree();
+
+        var overlay = new Control {
+            Name = UnlockAllOverlayName,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            ZIndex = 2000,
+        };
+        overlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+
+        var backdrop = new ColorRect {
+            Color = new Color(0, 0, 0, 0.75f),
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        backdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        overlay.AddChild(backdrop);
+
+        var wrapper = new CenterContainer();
+        wrapper.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        overlay.AddChild(wrapper);
+
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(480, 0) };
+        panel.AddThemeStyleboxOverride("panel", CreateOverlayPanelStyle());
+        wrapper.AddChild(panel);
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 14);
+
+        var title = new Label {
+            Text = I18N.T("devmenu.unlockAll.confirmTitle", "Unlock All Progress?"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        title.AddThemeFontSizeOverride("font_size", 16);
+        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        vbox.AddChild(title);
+
+        vbox.AddChild(new ColorRect {
+            Color = DevModeTheme.Separator,
+            CustomMinimumSize = new Vector2(0, 1),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        });
+
+        var body = new Label {
+            Text = I18N.T("devmenu.unlockAll.confirmBody",
+                "Reveals all timeline epochs, ascension levels (A10), and compendium entries (cards, relics, potions, events, monsters, acts). This permanently modifies your save file."),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        body.AddThemeFontSizeOverride("font_size", 12);
+        body.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        vbox.AddChild(body);
+
+        var btnRow = new HBoxContainer();
+        btnRow.AddThemeConstantOverride("separation", 10);
+
+        var cancelBtn = new Button {
+            Text = I18N.T("restart.cancel", "Cancel"),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            FocusMode = Control.FocusModeEnum.None,
+        };
+        cancelBtn.Pressed += () => overlay.QueueFree();
+        btnRow.AddChild(cancelBtn);
+
+        var confirmBtn = new Button {
+            Text = I18N.T("devmenu.unlockAll.confirm", "Unlock"),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            FocusMode = Control.FocusModeEnum.None,
+        };
+        confirmBtn.Pressed += () => {
+            ProgressUnlockActions.UnlockAll();
+            mainMenu.RefreshButtons();
+            overlay.QueueFree();
+        };
+        btnRow.AddChild(confirmBtn);
+
+        vbox.AddChild(btnRow);
+        panel.AddChild(vbox);
+
+        root.AddChild(overlay);
+        cancelBtn.GrabFocus();
+    }
+
+    private static StyleBoxFlat CreateOverlayPanelStyle() => new() {
+        BgColor = new Color(0.12f, 0.12f, 0.15f, 0.98f),
+        CornerRadiusTopLeft = 8,
+        CornerRadiusTopRight = 8,
+        CornerRadiusBottomLeft = 8,
+        CornerRadiusBottomRight = 8,
+        ContentMarginLeft = 24,
+        ContentMarginRight = 24,
+        ContentMarginTop = 20,
+        ContentMarginBottom = 20,
+        BorderWidthTop = 1,
+        BorderWidthBottom = 1,
+        BorderWidthLeft = 1,
+        BorderWidthRight = 1,
+        BorderColor = new Color(0.35f, 0.35f, 0.45f, 0.7f),
+    };
 
     private static void ShowSeedInputOverlay(NMainMenu mainMenu, Action onNewTest) {
         var root = mainMenu.GetTree().Root;
@@ -168,23 +275,7 @@ internal static class DevMainMenuUI {
         overlay.AddChild(wrapper);
 
         var panel = new PanelContainer { CustomMinimumSize = new Vector2(440, 0) };
-        var panelStyle = new StyleBoxFlat {
-            BgColor = new Color(0.12f, 0.12f, 0.15f, 0.98f),
-            CornerRadiusTopLeft = 8,
-            CornerRadiusTopRight = 8,
-            CornerRadiusBottomLeft = 8,
-            CornerRadiusBottomRight = 8,
-            ContentMarginLeft = 24,
-            ContentMarginRight = 24,
-            ContentMarginTop = 20,
-            ContentMarginBottom = 20,
-            BorderWidthTop = 1,
-            BorderWidthBottom = 1,
-            BorderWidthLeft = 1,
-            BorderWidthRight = 1,
-            BorderColor = new Color(0.35f, 0.35f, 0.45f, 0.7f),
-        };
-        panel.AddThemeStyleboxOverride("panel", panelStyle);
+        panel.AddThemeStyleboxOverride("panel", CreateOverlayPanelStyle());
         wrapper.AddChild(panel);
 
         var vbox = new VBoxContainer();

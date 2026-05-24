@@ -16,6 +16,10 @@
   "devmenu.mpCheat.off": "Multiplayer cheat: OFF",
 
   "devmenu.pseudocoop": "Pseudo Co-op (Host)",
+  "devmenu.unlockAll": "Unlock All Progress",
+  "devmenu.unlockAll.confirmTitle": "Unlock All Progress?",
+  "devmenu.unlockAll.confirmBody": "Reveals all timeline epochs, ascension levels (A10), and compendium entries (cards, relics, potions, events, monsters, acts). This permanently modifies your save file.",
+  "devmenu.unlockAll.confirm": "Unlock",
   "devmenu.pseudocoop.title": "Pseudo Co-op (Host)",
   "devmenu.pseudocoop.desc": "DevMode one-click host and run start. You play locally; AI drives simulated teammates in combat.",
   "devmenu.pseudocoop.character": "Character",

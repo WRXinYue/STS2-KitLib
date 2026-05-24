@@ -16,6 +16,10 @@
   "devmenu.mpCheat.off": "联机作弊：关闭",
 
   "devmenu.pseudocoop": "伪联机（主机）",
+  "devmenu.unlockAll": "解锁全部进度",
+  "devmenu.unlockAll.confirmTitle": "解锁全部进度？",
+  "devmenu.unlockAll.confirmBody": "将解锁全部时间线节点、进阶等级（A10），以及图鉴内容（卡牌、遗物、药水、事件、怪物、幕）。此操作会永久修改当前存档进度。",
+  "devmenu.unlockAll.confirm": "确认解锁",
   "devmenu.pseudocoop.title": "伪联机（主机）",
   "devmenu.pseudocoop.desc": "DevMode 一键建房开跑。你本机手打；战斗由 AI 托管模拟队友。",
   "devmenu.pseudocoop.character": "角色",
