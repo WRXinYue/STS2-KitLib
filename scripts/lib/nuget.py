@@ -26,8 +26,10 @@ def resolve_source(explicit: str | None = None) -> str:
 def package_version(version: str, *, beta: bool, sts2_beta_version: str) -> str:
     if not beta:
         return version
-    safe = sts2_beta_version.strip().lstrip("v").replace(".", "")
-    return f"{version}-sts2beta.{safe}"
+    raw = sts2_beta_version.strip().lstrip("v")
+    # SemVer prerelease numeric identifiers must not have leading zeros (01051 is invalid).
+    parts = [str(int(p)) for p in raw.split(".") if p]
+    return f"{version}-sts2beta.{'.'.join(parts)}"
 
 
 def run_pack(
