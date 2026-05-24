@@ -2,11 +2,12 @@
 """Upload the mod zip to Nexus Mods using the v3 multipart upload API.
 
 Environment variables (required):
-    NEXUS_API_KEY       - Your personal API key from nexusmods.com/settings/api-keys
-    NEXUS_FILE_GROUP_ID - The file group ID from the mod's Files tab → "API Info"
+    NEXUS_API_KEY              - Your personal API key from nexusmods.com/settings/api-keys
+    NEXUS_FILE_GROUP_ID        - Main file group ID (stable/public build; Files tab → API Info)
+    NEXUS_FILE_GROUP_ID_BETA   - Optional file group ID for STS2 Steam beta builds (separate line)
 
 Usage:
-    python scripts/publish_nexus.py [--version X.Y.Z] [--dry-run]
+    python scripts/publish_nexus.py [--version X.Y.Z] [--beta] [--dry-run]
 """
 
 from __future__ import annotations
@@ -40,8 +41,36 @@ def _zip_path(version: str, *, beta: bool, sts2_beta_version: str) -> Path:
 def _beta_notice_bbcode(sts2_beta_version: str) -> str:
     return (
         f"[b]Requires Slay the Spire 2 Steam beta branch v{sts2_beta_version}.[/b] "
-        "Do not use on the public/stable game build.\n\n"
+        "Do not use on the public/stable game build.\n"
+        "If you are on the Release branch, download the Main file instead.\n\n"
     )
+
+
+def _resolve_nexus_group_id(*, beta: bool) -> str:
+    if beta:
+        return os.environ.get("NEXUS_FILE_GROUP_ID_BETA", "").strip()
+    return os.environ.get("NEXUS_FILE_GROUP_ID", "").strip()
+
+
+def _nexus_display_name(version: str, *, beta: bool, sts2_beta_version: str) -> str:
+    if beta:
+        safe = sts2_beta_version.strip().lstrip("v")
+        return f"DevMode.Compat.sts2beta-v{safe}"
+    return f"DevMode v{version}"
+
+
+def _nexus_attach_options(*, beta: bool) -> dict[str, object]:
+    if beta:
+        return {
+            "file_category": "optional",
+            "archive_existing": True,
+            "primary_mod_manager_download": False,
+        }
+    return {
+        "file_category": "main",
+        "archive_existing": True,
+        "primary_mod_manager_download": True,
+    }
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
@@ -322,7 +351,8 @@ def main() -> int:
 
     # ── check credentials ────────────────────────────────────────────────────
     api_key = os.environ.get("NEXUS_API_KEY", "").strip()
-    group_id = os.environ.get("NEXUS_FILE_GROUP_ID", "").strip()
+    group_id = _resolve_nexus_group_id(beta=args.beta)
+    attach = _nexus_attach_options(beta=args.beta)
 
     if not args.dry_run:
         if not api_key:
@@ -333,9 +363,15 @@ def main() -> int:
             )
             return 1
         if not group_id:
+            env_name = "NEXUS_FILE_GROUP_ID_BETA" if args.beta else "NEXUS_FILE_GROUP_ID"
+            hint = (
+                "Create an Optional file on your mod page first, then copy its group ID from API Info."
+                if args.beta
+                else "Find it on your mod's Files tab → API Info."
+            )
             print(
-                "ERROR: NEXUS_FILE_GROUP_ID environment variable is not set.\n"
-                "       Find it on your mod's Files tab → API Info.",
+                f"ERROR: {env_name} environment variable is not set.\n"
+                f"       {hint}",
                 file=sys.stderr,
             )
             return 1
@@ -369,15 +405,17 @@ def main() -> int:
     if args.beta:
         description = _beta_notice_bbcode(sts2_beta_version) + description
 
-    if args.beta:
-        display_name = f"DevMode v{version} (STS2 beta v{sts2_beta_version})"
-    else:
-        display_name = f"DevMode v{version}"
+    display_name = _nexus_display_name(version, beta=args.beta, sts2_beta_version=sts2_beta_version)
 
     if args.dry_run:
         print(f"\n[dry-run] Would upload: {zip_path}")
         print(f"[dry-run]   display_name : {display_name}")
         print(f"[dry-run]   version      : {version}")
+        print(f"[dry-run]   group_id     : {group_id or '(missing)'}")
+        print(f"[dry-run]   file_category: {attach['file_category']}")
+        print(
+            f"[dry-run]   primary_dl   : {attach['primary_mod_manager_download']}"
+        )
         print(f"[dry-run]   description  :\n{description[:300] or '(empty)'}")
         return 0
 
@@ -407,6 +445,10 @@ def main() -> int:
     step5_poll(upload_id, api_key)
 
     print("\n[6/6] Attaching file to mod page…")
+    print(
+        f"  Group {group_id}  category={attach['file_category']}  "
+        f"primary={attach['primary_mod_manager_download']}"
+    )
     file_uid = step6_update_mod_file(
         upload_id,
         group_id,
@@ -414,13 +456,14 @@ def main() -> int:
         name=display_name,
         version=version,
         description=description,
-        file_category="main",
-        archive_existing=True,
-        primary_mod_manager_download=True,
+        file_category=str(attach["file_category"]),
+        archive_existing=bool(attach["archive_existing"]),
+        primary_mod_manager_download=bool(attach["primary_mod_manager_download"]),
     )
 
     print(f"\nDone! File UID: {file_uid}")
-    print(f"      DevMode v{version} is now live on Nexus Mods.")
+    section = "Optional files" if args.beta else "Main files"
+    print(f"      {display_name} is now live on Nexus Mods ({section}).")
     return 0
 
 
