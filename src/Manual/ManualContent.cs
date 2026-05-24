@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -27,21 +26,8 @@ internal static class ManualContent {
         new("feedback", "panel.feedback"),
     };
 
-    private static readonly string ModDir =
-        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
-
     public static string LoadMarkdown(string topicId) {
         var lang = I18N.LangCode;
-        var external = Path.Combine(ModDir, "manual", lang, $"{topicId}.md");
-        if (File.Exists(external)) {
-            try {
-                return File.ReadAllText(external);
-            }
-            catch (Exception ex) {
-                MainFile.Logger.Warn($"[ManualContent] Failed to read '{external}': {ex.Message}");
-            }
-        }
-
         var resourceName = $"DevMode.Manual.{lang}.{topicId}";
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
         if (stream == null) {

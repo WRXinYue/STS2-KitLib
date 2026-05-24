@@ -162,13 +162,10 @@ ifeq ($(OS),Windows_NT)
 zip-beta: build-beta
 	@if exist build\dist rmdir /s /q build\dist
 	@mkdir build\dist\DevMode\editor
-	@mkdir build\dist\DevMode\manual
-	@mkdir build\dist\DevMode\scripts
 	@copy /y build\DevMode\DevMode.dll build\dist\DevMode\ >nul
 	@if exist build\DevMode\DevMode.pck copy /y build\DevMode\DevMode.pck build\dist\DevMode\ >nul
 	@copy /y build\DevMode\mod_manifest.json build\dist\DevMode\ >nul
 	@xcopy /s /y /q editor\* build\dist\DevMode\editor\ >nul
-	@xcopy /s /y /q manual\* build\dist\DevMode\manual\ >nul
 	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME_BETA)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/DevMode') for f in fs];z.close()"
 	@echo.
 	@echo Done: $(ZIP_NAME_BETA)  (STS2 Steam beta v$(STS2_GAME_BETA_VERSION))
@@ -177,13 +174,10 @@ zip-beta: build-beta
 zip: build
 	@if exist build\dist rmdir /s /q build\dist
 	@mkdir build\dist\DevMode\editor
-	@mkdir build\dist\DevMode\manual
-	@mkdir build\dist\DevMode\scripts
 	@copy /y build\DevMode\DevMode.dll build\dist\DevMode\ >nul
 	@if exist build\DevMode\DevMode.pck copy /y build\DevMode\DevMode.pck build\dist\DevMode\ >nul
 	@copy /y build\DevMode\mod_manifest.json build\dist\DevMode\ >nul
 	@xcopy /s /y /q editor\* build\dist\DevMode\editor\ >nul
-	@xcopy /s /y /q manual\* build\dist\DevMode\manual\ >nul
 	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/DevMode') for f in fs];z.close()"
 	@echo.
 	@echo Done: build\DevMode-v$(VERSION).zip
@@ -195,11 +189,10 @@ clean:
 else
 zip-beta: build-beta
 	rm -rf build/dist
-	mkdir -p $(DIST_DIR)/editor $(DIST_DIR)/manual $(DIST_DIR)/scripts
+	mkdir -p $(DIST_DIR)/editor
 	cp build/DevMode/DevMode.dll build/DevMode/mod_manifest.json $(DIST_DIR)/
 	@[ -f build/DevMode/DevMode.pck ] && cp build/DevMode/DevMode.pck $(DIST_DIR)/ || echo "Warning: DevMode.pck not found (Godot not configured) — skipping"
 	cp -R editor/. $(DIST_DIR)/editor/
-	cp -R manual/. $(DIST_DIR)/manual/
 	rm -f $(ZIP_NAME_BETA)
 	cd build/dist && zip -qr ../DevMode-v$(VERSION)$(ZIP_BETA_TAG).zip DevMode
 	@echo ""
@@ -208,11 +201,10 @@ zip-beta: build-beta
 
 zip: build
 	rm -rf build/dist
-	mkdir -p $(DIST_DIR)/editor $(DIST_DIR)/manual $(DIST_DIR)/scripts
+	mkdir -p $(DIST_DIR)/editor
 	cp build/DevMode/DevMode.dll build/DevMode/mod_manifest.json $(DIST_DIR)/
 	@[ -f build/DevMode/DevMode.pck ] && cp build/DevMode/DevMode.pck $(DIST_DIR)/ || echo "Warning: DevMode.pck not found (Godot not configured) — skipping"
 	cp -R editor/. $(DIST_DIR)/editor/
-	cp -R manual/. $(DIST_DIR)/manual/
 	rm -f $(ZIP_NAME)
 	cd build/dist && zip -qr ../DevMode-v$(VERSION).zip DevMode
 	@echo ""
