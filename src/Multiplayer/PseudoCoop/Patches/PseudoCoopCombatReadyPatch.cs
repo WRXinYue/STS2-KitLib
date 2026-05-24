@@ -19,6 +19,7 @@ internal static class PseudoCoopEndPlayerTurnPatch {
         var host = Traverse.Create(__instance).Field<Player>("_player").Value;
         if (host == null || !LocalContext.IsMe(host)) return;
 
+        PseudoCoopCombatReady.EnsureHostDrivenPeersEndTurn();
         PseudoCoopCombatReady.ReadySimulatedPeersToEndTurn();
     }
 }
@@ -33,16 +34,32 @@ internal static class PseudoCoopReadyEnemyTurnPatch {
 }
 
 internal static class PseudoCoopCombatReady {
+    internal static void EnsureHostDrivenPeersEndTurn() {
+        var cm = CombatManager.Instance;
+        if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
+
+        foreach (var peer in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
+            if (peer.Creature.IsDead) continue;
+            if (cm.IsPlayerReadyToEndTurn(peer)) continue;
+            if (PseudoCoopActionQueue.HasPendingCombatActions(peer.NetId)) continue;
+            MpAiTeammateCombatActions.SignalEndTurn(peer);
+        }
+    }
+
     internal static void ReadySimulatedPeersToEndTurn() {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetPeersNeedingSimulation()) {
+        foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
             if (cm.IsPlayerReadyToEndTurn(peer)) continue;
 
-            cm.SetReadyToEndTurn(peer, canBackOut: false);
-            MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-end-turn netId={peer.NetId}.");
+            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer))
+                MpAiTeammateCombatActions.SignalEndTurn(peer);
+            else {
+                cm.SetReadyToEndTurn(peer, canBackOut: false);
+                MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-end-turn netId={peer.NetId}.");
+            }
         }
     }
 
@@ -50,7 +67,7 @@ internal static class PseudoCoopCombatReady {
         var cm = CombatManager.Instance;
         if (cm is not { IsInProgress: true }) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetPeersNeedingSimulation()) {
+        foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
             cm.SetReadyToBeginEnemyTurn(peer);
             MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-begin-enemy-turn netId={peer.NetId}.");

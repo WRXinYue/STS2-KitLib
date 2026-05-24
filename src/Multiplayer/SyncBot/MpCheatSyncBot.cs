@@ -26,7 +26,7 @@ internal static class MpCheatSyncBot {
         if (player == null) return false;
         if (!IsEnabled && !MpAiTeammateHost.IsEnabled) return false;
         var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
-        return player.NetId != hostNetId && IsSimulatedPeer(player.NetId);
+        return player.NetId != hostNetId && SimulatedPeerRegistry.IsHostDrivenPeer(player.NetId);
     }
 
     public static void OnRunEnded() {

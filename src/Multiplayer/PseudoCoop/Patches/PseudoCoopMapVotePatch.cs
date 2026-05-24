@@ -33,7 +33,7 @@ internal static class PseudoCoopActReadyPatch {
         if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return;
         if (!LocalContext.IsMe(player)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetPeersNeedingSimulation()) {
+        foreach (var peer in SimulatedPeerRegistry.GetMapMirrorTargets()) {
             __instance.OnPlayerReady(peer);
             MainFile.Logger.Info($"[PseudoCoop] Auto act-ready vote netId={peer.NetId}.");
         }

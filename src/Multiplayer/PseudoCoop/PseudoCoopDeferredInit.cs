@@ -1,3 +1,4 @@
+using DevMode;
 using DevMode.Multiplayer.Cheat;
 using DevMode.Patches;
 using Godot;
@@ -26,8 +27,8 @@ internal static class PseudoCoopDeferredInit {
         var run = NRun.Instance;
         if (run == null) {
             RunLateMpCheatArm();
-            RunLateDevPanel();
             RunLateMpCheatPublish();
+            RunLateDevPanel();
             DevModeState.PseudoCoopAwaitingMapFinish = false;
             return;
         }
@@ -41,7 +42,16 @@ internal static class PseudoCoopDeferredInit {
 
     internal static void RunLateDevPanel() {
         DevModeState.PseudoCoopDeferHeavyUi = false;
-        GlobalUiReadyPatch.TryAttachDeferred(NRun.Instance?.GlobalUi, skipWarmup: true);
+        var globalUi = NRun.Instance?.GlobalUi;
+        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
+            MainFile.Logger.Info("[PseudoCoop] Map finish: minimal DevPanel (AI Host)…");
+            GlobalUiReadyPatch.TryAttachDualInstanceMinimal(globalUi);
+            MainFile.Logger.Info("[PseudoCoop] DevPanel attached (dual-instance minimal rail).");
+            return;
+        }
+
+        MainFile.Logger.Info("[PseudoCoop] Map finish: DevPanel…");
+        GlobalUiReadyPatch.TryAttachDeferred(globalUi, skipWarmup: true);
         MainFile.Logger.Info("[PseudoCoop] DevPanel attached (pseudo-coop skips asset warmup).");
     }
 
@@ -51,7 +61,13 @@ internal static class PseudoCoopDeferredInit {
             return;
         }
 
-        MpCheatSync.OnRunStarted();
+        MpCheatSession.TryArmSession("map_finish", allowWhileDeferredUi: true);
+        if (!MpCheatSession.SessionArmed) {
+            MainFile.Logger.Warn(
+                $"[PseudoCoop] MpCheat arm failed: {MpCheatSession.LastBlockReason ?? "unknown"}.");
+            return;
+        }
+
         MainFile.Logger.Info("[PseudoCoop] MpCheat armed (publish deferred until map).");
     }
 
@@ -63,6 +79,11 @@ internal static class PseudoCoopDeferredInit {
         }
 
         DevModeState.PseudoCoopDeferMpCheatPublish = false;
+        if (!MpCheatSession.SessionArmed) {
+            MainFile.Logger.Warn("[PseudoCoop] Map finish: MpCheat publish skipped (session not armed).");
+            return;
+        }
+
         MpCheatSync.TryPublishInitialHostConfig("pseudo_coop_map");
         MainFile.Logger.Info("[PseudoCoop] Map finish complete (MpCheat config published).");
     }

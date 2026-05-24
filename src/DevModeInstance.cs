@@ -22,6 +22,11 @@ internal static class DevModeInstance {
         public static float? MonsterIntentOverlayPosY { get; set; }
     }
 
+    /// <summary>LAN client AFK — per-process only (dual-instance shares settings.json).</summary>
+    internal static class SessionLan {
+        public static bool MpAiTeammateAfkClient { get; set; }
+    }
+
     internal static string LogViewerSubtitle {
         get {
             var file = GameLogFileHydrator.CurrentSessionLogFileName;

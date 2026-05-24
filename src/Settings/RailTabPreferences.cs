@@ -14,6 +14,7 @@ internal static class RailTabPreferences {
     public const string PrimaryKey = "Primary";
     public const string UtilityKey = "Utility";
     public const string SettingsTabId = "devmode.settings";
+    public const string AiHostTabId = "devmode.ai";
 
     public const string HarmonyAnalysisTabId = "devmode.harmonyAnalysis";
     public const string ScriptsTabId = "devmode.scripts";
@@ -41,6 +42,8 @@ internal static class RailTabPreferences {
             if (!IsAvailableInCurrentMode(tab))
                 continue;
             if (hidden.Contains(id) && id != SettingsTabId)
+                continue;
+            if (DevModeState.DualInstanceMinimalRail && id != AiHostTabId)
                 continue;
             result.Add(tab);
         }

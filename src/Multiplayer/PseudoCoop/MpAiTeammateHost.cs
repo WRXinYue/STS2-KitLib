@@ -28,6 +28,7 @@ internal static class MpAiTeammateHost {
         AiHostContext.Clear();
         _tickRunning = false;
         _loop = null;
+        PseudoCoopActionQueue.ClearInFlightAll();
     }
 
     public static void Poll(double delta, ref double accum) {
@@ -47,14 +48,13 @@ internal static class MpAiTeammateHost {
 
         SimulatedPeerRegistry.Refresh();
 
-        foreach (var player in state.Players) {
-            if (LocalContext.IsMe(player)) continue;
-            if (!SimulatedPeerRegistry.IsSimulatedPeer(player.NetId)) continue;
+        foreach (var player in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
             if (player.Creature.IsDead) continue;
+            if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
 
             if (!HasPlayableCard(player)) {
-                cm.SetReadyToEndTurn(player, canBackOut: false);
+                MpAiTeammateCombatActions.SignalEndTurn(player);
                 continue;
             }
 

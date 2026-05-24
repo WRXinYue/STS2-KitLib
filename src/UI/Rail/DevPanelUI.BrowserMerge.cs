@@ -16,18 +16,25 @@ internal static partial class DevPanelUI {
     private static bool _mergeLayoutPending;
     private static bool _widthMergeActive;
 
+    private static bool _mergeTrackingActive;
+    private static readonly Callable MergeLayoutCallable = Callable.From((Action)OnMergeLayoutChanged);
+
     internal static void WireBrowserPanelMergeTracking(NGlobalUi globalUi, PanelContainer panel) {
         UnwireBrowserPanelMergeTracking();
+        _mergeTrackingActive = true;
         _mergeGlobalUi = globalUi;
         _mergeBrowserPanel = panel;
         _mergeContent = panel.GetNodeOrNull<VBoxContainer>("Content");
 
-        panel.Resized += OnMergeLayoutChanged;
+        if (!panel.IsConnected(Control.SignalName.Resized, MergeLayoutCallable))
+            panel.Connect(Control.SignalName.Resized, MergeLayoutCallable);
         panel.TreeExiting += OnMergeBrowserPanelExiting;
 
         if (_mergeContent != null) {
-            _mergeContent.Resized += OnMergeLayoutChanged;
-            _mergeContent.MinimumSizeChanged += OnMergeLayoutChanged;
+            if (!_mergeContent.IsConnected(Control.SignalName.Resized, MergeLayoutCallable))
+                _mergeContent.Connect(Control.SignalName.Resized, MergeLayoutCallable);
+            if (!_mergeContent.IsConnected(Control.SignalName.MinimumSizeChanged, MergeLayoutCallable))
+                _mergeContent.Connect(Control.SignalName.MinimumSizeChanged, MergeLayoutCallable);
             WireScrollContainers(_mergeContent);
         }
 
@@ -35,12 +42,15 @@ internal static partial class DevPanelUI {
     }
 
     private static void UnwireBrowserPanelMergeTracking() {
-        if (_mergeBrowserPanel != null && GodotObject.IsInstanceValid(_mergeBrowserPanel)) {
-            _mergeBrowserPanel.Resized -= OnMergeLayoutChanged;
-        }
+        if (!_mergeTrackingActive)
+            return;
+
+        _mergeTrackingActive = false;
+        if (_mergeBrowserPanel != null && GodotObject.IsInstanceValid(_mergeBrowserPanel))
+            DisconnectMergeLayout(_mergeBrowserPanel, Control.SignalName.Resized);
         if (_mergeContent != null && GodotObject.IsInstanceValid(_mergeContent)) {
-            _mergeContent.Resized -= OnMergeLayoutChanged;
-            _mergeContent.MinimumSizeChanged -= OnMergeLayoutChanged;
+            DisconnectMergeLayout(_mergeContent, Control.SignalName.Resized);
+            DisconnectMergeLayout(_mergeContent, Control.SignalName.MinimumSizeChanged);
             UnwireScrollContainers(_mergeContent);
         }
         _mergeBrowserPanel = null;
@@ -49,18 +59,31 @@ internal static partial class DevPanelUI {
         _widthMergeActive = false;
     }
 
+    private static void DisconnectMergeLayout(GodotObject source, StringName signal) {
+        if (!GodotObject.IsInstanceValid(source)) return;
+        if (source.IsConnected(signal, MergeLayoutCallable))
+            source.Disconnect(signal, MergeLayoutCallable);
+    }
+
     private static void WireScrollContainers(Node parent) {
         foreach (var node in parent.GetChildren()) {
+            if (!GodotObject.IsInstanceValid(node))
+                continue;
             if (node is ScrollContainer scroll) {
-                scroll.Resized += OnMergeLayoutChanged;
-                if (scroll.GetVScrollBar() is Godot.Range vBar)
-                    vBar.Changed += OnMergeLayoutChanged;
+                if (!scroll.IsConnected(Control.SignalName.Resized, MergeLayoutCallable))
+                    scroll.Connect(Control.SignalName.Resized, MergeLayoutCallable);
+                if (scroll.GetVScrollBar() is Godot.Range vBar
+                    && !vBar.IsConnected(Godot.Range.SignalName.Changed, MergeLayoutCallable)) {
+                    vBar.Connect(Godot.Range.SignalName.Changed, MergeLayoutCallable);
+                }
                 if (scroll.GetChildCount() > 0 && scroll.GetChild(0) is Control inner) {
-                    inner.Resized += OnMergeLayoutChanged;
-                    inner.MinimumSizeChanged += OnMergeLayoutChanged;
+                    if (!inner.IsConnected(Control.SignalName.Resized, MergeLayoutCallable))
+                        inner.Connect(Control.SignalName.Resized, MergeLayoutCallable);
+                    if (!inner.IsConnected(Control.SignalName.MinimumSizeChanged, MergeLayoutCallable))
+                        inner.Connect(Control.SignalName.MinimumSizeChanged, MergeLayoutCallable);
                 }
             }
-            else if (node is Control c && node.GetChildCount() > 0) {
+            else if (node is Control && node.GetChildCount() > 0) {
                 WireScrollContainers(node);
             }
         }
@@ -68,13 +91,15 @@ internal static partial class DevPanelUI {
 
     private static void UnwireScrollContainers(Node parent) {
         foreach (var node in parent.GetChildren()) {
+            if (!GodotObject.IsInstanceValid(node))
+                continue;
             if (node is ScrollContainer scroll) {
-                scroll.Resized -= OnMergeLayoutChanged;
+                DisconnectMergeLayout(scroll, Control.SignalName.Resized);
                 if (scroll.GetVScrollBar() is Godot.Range vBar)
-                    vBar.Changed -= OnMergeLayoutChanged;
+                    DisconnectMergeLayout(vBar, Godot.Range.SignalName.Changed);
                 if (scroll.GetChildCount() > 0 && scroll.GetChild(0) is Control inner) {
-                    inner.Resized -= OnMergeLayoutChanged;
-                    inner.MinimumSizeChanged -= OnMergeLayoutChanged;
+                    DisconnectMergeLayout(inner, Control.SignalName.Resized);
+                    DisconnectMergeLayout(inner, Control.SignalName.MinimumSizeChanged);
                 }
             }
             else if (node is Control && node.GetChildCount() > 0) {

@@ -124,6 +124,9 @@ public static class DevModeState {
     /// <summary>Pseudo-coop: DevPanel + config publish run when <see cref="NMapScreen"/> opens.</summary>
     public static bool PseudoCoopAwaitingMapFinish { get; set; }
 
+    /// <summary>Dual-instance LAN: rail shows only AI Host; skips context pane and asset warmup.</summary>
+    public static bool DualInstanceMinimalRail { get; set; }
+
     public static bool InMenuPreview { get; set; }
 
     public static Action? OnMenuPreviewClosed { get; set; }
@@ -264,6 +267,7 @@ public static class DevModeState {
         PseudoCoopDeferHeavyUi = false;
         PseudoCoopDeferMpCheatPublish = false;
         PseudoCoopAwaitingMapFinish = false;
+        DualInstanceMinimalRail = false;
         InDevRun = false;
         ClearEnemyOverrides();
         ResetAllCheats();

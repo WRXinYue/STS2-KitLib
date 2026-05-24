@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using DevMode;
 using DevMode.Actions;
+using DevMode.Multiplayer.LanTest;
 using DevMode.Settings;
 using Godot;
 using HarmonyLib;
@@ -140,6 +141,7 @@ internal static class DevMainMenuUI {
     }
 
     static void OpenLanMultiplayer(NMainMenu mainMenu) {
+        DualInstanceTestBootstrap.EnsureCheatsEnabled("lan_multiplayer_open");
         Hide();
         var game = mainMenu.GetTree().Root.GetNodeOrNull<NGame>("Game")
             ?? NGame.Instance;

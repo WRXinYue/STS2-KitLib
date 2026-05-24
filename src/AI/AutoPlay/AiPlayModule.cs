@@ -19,18 +19,25 @@ internal sealed class AiPlayModule {
 
     public bool IsRunning => _cts != null;
 
+    public static bool IsAutoPlayAllowed => !MpCheatSession.InMultiplayerRun;
+
     public void OnRunStarted() {
-        if (!SettingsStore.Current.AutoPlayEnabled) return;
         if (MpCheatSession.InMultiplayerRun) {
-            MainFile.Logger.Info("[AiHost] Skipped auto-start in multiplayer (enable manually if needed).");
+            DisableMultiplayerAutoPlay();
             return;
         }
+        if (!SettingsStore.Current.AutoPlayEnabled) return;
         StartLoop();
     }
 
     public void OnRunEnded() => StopLoop();
 
     public void StartLoop() {
+        if (!IsAutoPlayAllowed) {
+            DisableMultiplayerAutoPlay();
+            return;
+        }
+
         StopLoop();
 
         _loop = new GameLoop(
@@ -55,13 +62,26 @@ internal sealed class AiPlayModule {
     }
 
     public void OnDecisionPoint(GamePhase phase) {
-        if (_loop == null || !SettingsStore.Current.AutoPlayEnabled) return;
+        if (!IsAutoPlayAllowed || _loop == null || !SettingsStore.Current.AutoPlayEnabled) return;
         TaskHelper.RunSafely(_loop.OnDecisionPointAsync(phase));
+    }
+
+    static void DisableMultiplayerAutoPlay() {
+        if (SettingsStore.Current.AutoPlayEnabled) {
+            SettingsStore.Current.AutoPlayEnabled = false;
+            SettingsStore.Save();
+        }
+        Instance.StopLoop();
+        MainFile.Logger.Info("[AiHost] AutoPlay disabled in multiplayer (use Host AI Teammate for phantom peers only).");
     }
 
     async Task RunPollLoop(CancellationToken ct) {
         while (!ct.IsCancellationRequested) {
             try {
+                if (!IsAutoPlayAllowed) {
+                    StopLoop();
+                    break;
+                }
                 if (_loop != null && AiPlayServices.StateProvider.IsRunActive) {
                     var phase = AiPlayServices.StateProvider.CurrentPhase;
                     if (phase != GamePhase.None)

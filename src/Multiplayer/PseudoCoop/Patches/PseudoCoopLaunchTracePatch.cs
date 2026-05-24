@@ -1,3 +1,4 @@
+using DevMode.Multiplayer.LanTest;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
@@ -18,7 +19,10 @@ internal static class PseudoCoopSetSceneTracePatch {
 internal static class PseudoCoopLaunchTracePatch {
     [HarmonyPostfix]
     [HarmonyPriority(Priority.Last)]
-    static void Postfix() => MainFile.Logger.Info("[PseudoCoop] RunManager.Launch postfixes done.");
+    static void Postfix() {
+        DualInstanceTestBootstrap.TryAutoLanPresetsOnLaunch();
+        MainFile.Logger.Info("[PseudoCoop] RunManager.Launch postfixes done.");
+    }
 }
 
 [HarmonyPatch(typeof(NRun), "_Ready")]

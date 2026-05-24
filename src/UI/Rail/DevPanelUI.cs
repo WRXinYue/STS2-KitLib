@@ -249,19 +249,21 @@ internal static partial class DevPanelUI {
         railVBox.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
 
         // ── Separator line ──
-        var sep = new HSeparator();
-        _railSepStyle = new StyleBoxFlat {
-            BgColor = ColSeparator,
-            ContentMarginTop = 0,
-            ContentMarginBottom = 0,
-            ContentMarginLeft = 4,
-            ContentMarginRight = 4
-        };
-        sep.AddThemeStyleboxOverride("separator", _railSepStyle);
-        sep.AddThemeConstantOverride("separation", 8);
-        railVBox.AddChild(sep);
+        if (!DevModeState.DualInstanceMinimalRail) {
+            var sep = new HSeparator();
+            _railSepStyle = new StyleBoxFlat {
+                BgColor = ColSeparator,
+                ContentMarginTop = 0,
+                ContentMarginBottom = 0,
+                ContentMarginLeft = 4,
+                ContentMarginRight = 4
+            };
+            sep.AddThemeStyleboxOverride("separator", _railSepStyle);
+            sep.AddThemeConstantOverride("separation", 8);
+            railVBox.AddChild(sep);
 
-        PopulateUtilityRailButtons(globalUi, railVBox, _railButtons);
+            PopulateUtilityRailButtons(globalUi, railVBox, _railButtons);
+        }
         WireRailIndicator(railIndicator, _railButtons);
 
         railWrapper.AddChild(railVBox);
@@ -347,7 +349,8 @@ internal static partial class DevPanelUI {
 
         RefreshRailHintPresentation();
 
-        AttachContextPane(globalUi);
+        if (!DevModeState.DualInstanceMinimalRail)
+            AttachContextPane(globalUi);
         ((Node)globalUi).AddChild(root);
     }
 

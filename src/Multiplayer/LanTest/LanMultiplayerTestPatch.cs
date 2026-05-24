@@ -1,3 +1,4 @@
+using DevMode.Settings;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
@@ -16,6 +17,7 @@ internal static class LanMultiplayerTestGuards {
 [HarmonyPatch(typeof(NMultiplayerTest), nameof(NMultiplayerTest.BeginRun))]
 internal static class LanMultiplayerTestBeginRunPatch {
     static void Prefix() {
+        DualInstanceTestBootstrap.EnsureCheatsEnabled("lan_begin_run");
         DevModeState.PseudoCoopDeferHeavyUi = true;
         DevModeState.PseudoCoopDeferMpCheatPublish = true;
         DevModeState.PseudoCoopAwaitingMapFinish = true;

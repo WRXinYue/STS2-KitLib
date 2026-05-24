@@ -54,6 +54,12 @@ public sealed class DevModeSettings {
     /// <summary>Host-only: SimpleStrategy drives simulated remote players in co-op combat.</summary>
     public bool MpAiTeammateEnabled { get; set; }
 
+    /// <summary>Host-only: also drive connected ENet teammates via action queue (client must enable AFK).</summary>
+    public bool MpAiTeammateDriveLiveEnet { get; set; }
+
+    /// <summary>Client-only: block local combat input; host AI enqueues actions for this player.</summary>
+    public bool MpAiTeammateAfkClient { get; set; }
+
     /// <summary>Include cards hidden from the official library (<c>ShouldShowInCardLibrary</c> false) in DevMode browsers.</summary>
     public bool ShowHiddenCards { get; set; }
 

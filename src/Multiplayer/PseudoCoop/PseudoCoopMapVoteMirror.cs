@@ -58,7 +58,7 @@ internal static class PseudoCoopMapVoteMirror {
                 source = accepting;
             }
 
-            var peers = SimulatedPeerRegistry.GetPeersNeedingSimulation().ToList();
+            var peers = SimulatedPeerRegistry.GetMapMirrorTargets().ToList();
             if (peers.Count == 0) {
                 MainFile.Logger.Warn(
                     $"[PseudoCoop] No simulated peers to mirror {destination.coord} "

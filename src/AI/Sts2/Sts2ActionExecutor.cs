@@ -117,18 +117,15 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             }
         }
 
-        // Simulated MP peers must use the action queue (CardCmd.AutoPlay bypasses sync).
-        if (MpCheatSession.InMultiplayerRun
-            && SimulatedPeerRegistry.IsSimulatedPeer(player.NetId)
-            && RunManager.Instance?.NetService?.Type == NetGameType.Host) {
+        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
             PseudoCoopActionQueue.EnsureQueueForPlayer(player);
-            // card.Owner may still reference host; bind action to the simulated player explicitly.
             var playAction = new MegaCrit.Sts2.Core.GameActions.PlayCardAction(
                 player,
                 NetCombatCard.FromModel(card),
                 card.Id,
                 target?.CombatId);
-            RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(playAction);
+            RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(playAction);
+            PseudoCoopActionQueue.MarkInFlight(player.NetId);
             return ActionResult.Ok($"Queued play [{card.Title}] netId={player.NetId}");
         }
 
@@ -143,6 +140,11 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         if (!Sts2CombatCompat.IsCombatPlayPhaseActive())
             return ActionResult.Fail("Not in play phase.");
+
+        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
+            MpAiTeammateCombatActions.SignalEndTurn(player);
+            return ActionResult.Ok($"Queued end turn netId={player.NetId}.");
+        }
 
         PlayerCmd.EndTurn(player, canBackOut: false);
         return ActionResult.Ok("Turn ended.");

@@ -25,12 +25,11 @@ internal partial class PseudoCoopMapFinishNode : Node {
                 _countdown = FramesBetweenSteps;
                 break;
             case 1:
-                MainFile.Logger.Info("[PseudoCoop] Map finish: DevPanel…");
-                PseudoCoopDeferredInit.RunLateDevPanel();
+                PseudoCoopDeferredInit.RunLateMpCheatPublish();
                 _countdown = FramesBetweenSteps;
                 break;
             case 2:
-                PseudoCoopDeferredInit.RunLateMpCheatPublish();
+                PseudoCoopDeferredInit.RunLateDevPanel();
                 DevModeState.PseudoCoopAwaitingMapFinish = false;
                 QueueFree();
                 break;

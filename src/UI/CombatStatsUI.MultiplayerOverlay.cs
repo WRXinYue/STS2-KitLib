@@ -27,6 +27,10 @@ internal static partial class CombatStatsUI {
     internal static void SyncMultiplayerOverlayState(NGlobalUi? globalUi = null) {
         if (globalUi != null)
             _mpOverlayGlobalUi = globalUi;
+        Callable.From(ApplyMultiplayerOverlayState).CallDeferred();
+    }
+
+    private static void ApplyMultiplayerOverlayState() {
         EnsureMultiplayerOverlayAttached();
 
         if (!IsMultiplayerOverlayEnabled() || !ShouldUseMultiplayerOverlay()) {

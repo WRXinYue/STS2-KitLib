@@ -70,6 +70,22 @@ public static class GlobalUiReadyPatch {
         EnsureProcessNodeOnly(globalUi);
     }
 
+    /// <summary>Dual-instance LAN: AI Host rail only (no context pane / warmup).</summary>
+    public static void TryAttachDualInstanceMinimal(NGlobalUi? globalUi) {
+        if (!DevModeState.IsActive) return;
+        if (DevModeState.PseudoCoopDeferHeavyUi) {
+            EnsureProcessNodeOnly(globalUi);
+            return;
+        }
+        if (globalUi == null) return;
+        if (_attached == globalUi) return;
+
+        DevModeState.DualInstanceMinimalRail = true;
+        _attached = globalUi;
+        DevPanel.Attach(globalUi);
+        EnsureProcessNodeOnly(globalUi);
+    }
+
     /// <summary>Start asset warmup after pseudo-coop late init (DevPanel already attached).</summary>
     public static void StartWarmupIfAttached() {
         if (_attached == null) return;

@@ -46,9 +46,9 @@ public static class MpCheatSession {
             Disarm("local_opt_out");
     }
 
-    public static void TryArmSession(string reason) {
+    public static void TryArmSession(string reason, bool allowWhileDeferredUi = false) {
         LastBlockReason = null;
-        if (DevModeState.PseudoCoopDeferHeavyUi) {
+        if (!allowWhileDeferredUi && DevModeState.PseudoCoopDeferHeavyUi) {
             LastBlockReason = "pseudo_coop_deferred";
             return;
         }

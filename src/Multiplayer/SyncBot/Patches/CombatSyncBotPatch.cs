@@ -33,7 +33,7 @@ internal static class CombatSyncBotPatch {
 
         SimulatedPeerRegistry.Refresh();
 
-        foreach (var player in SimulatedPeerRegistry.GetPeersNeedingSimulation()) {
+        foreach (var player in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
             if (player.PlayerCombatState == null || player.Creature.IsDead) continue;
 
@@ -41,7 +41,10 @@ internal static class CombatSyncBotPatch {
                 && player.PlayerCombatState.Hand?.Cards.Any(c => c.CanPlay(out _, out _)) == true)
                 continue;
 
-            cm.SetReadyToEndTurn(player, canBackOut: false);
+            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player))
+                MpAiTeammateCombatActions.SignalEndTurn(player);
+            else
+                cm.SetReadyToEndTurn(player, canBackOut: false);
         }
     }
 }

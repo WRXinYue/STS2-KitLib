@@ -158,8 +158,16 @@ internal static partial class CombatStatsUI {
                     CombatScoreCalculator.TotalScore(player),
                     maxScore,
                     isLeader: i == 0);
-                if (row.GetIndex() != i)
-                    _playerList.MoveChild(row, i);
+                if (row.GetIndex() != i) {
+                    var targetIndex = i;
+                    var rowRef = row;
+                    Callable.From(() => {
+                        if (!GodotObject.IsInstanceValid(_playerList) || !GodotObject.IsInstanceValid(rowRef))
+                            return;
+                        if (rowRef.GetIndex() != targetIndex)
+                            _playerList.MoveChild(rowRef, targetIndex);
+                    }).CallDeferred();
+                }
             }
 
             foreach (var child in _playerList.GetChildren()) {
