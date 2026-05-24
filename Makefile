@@ -144,10 +144,10 @@ nuget upload-nuget:
 nuget-beta upload-nuget-beta:
 	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nuget.py --beta $(if $(VERSION),--version $(VERSION),)
 
-upload-all: publish nexus
+upload-all: publish nexus nuget
 	$(PYTHON) scripts/publish_nuget.py --skip-build $(if $(VERSION),--version $(VERSION),)
 
-upload-all-beta: publish-beta nexus-beta
+upload-all-beta: publish-beta nexus-beta nuget-beta
 	STS2_GAME_BETA_VERSION=$(STS2_GAME_BETA_VERSION) $(PYTHON) scripts/publish_nuget.py --beta --skip-build $(if $(VERSION),--version $(VERSION),)
 
 readme-nexus:
