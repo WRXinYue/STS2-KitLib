@@ -63,6 +63,11 @@ public static class SettingsStore {
         Save();
     }
 
+    public static void SetGameContextPaneEnabled(bool enabled) {
+        Current.GameContextPaneEnabled = enabled;
+        Save();
+    }
+
     public static void SetCombatStatsMpOverlayPosition(float x, float y) {
         if (DevModeInstanceRegistry.IsDualInstanceActive()) {
             DevModeInstance.SessionOverlay.MpOverlayPosX = x;

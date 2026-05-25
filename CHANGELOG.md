@@ -8,6 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-05-25
+
+### Added
+
+- **LAN host-drive + AFK testing** — Run two game instances on one machine: the host plays while an AFK client receives AI-driven actions. Includes end-turn and enemy-turn ready sync, ally-target card support for AI teammates, and cleanup when host AI is toggled off mid-combat.
+- **DEVMODE main menu** — The title screen uses a single **DEVMODE** button; **Logs**, **Mod Feedback**, and **Multiplayer** (pseudo co-op, LAN test scene) are inside that menu.
+
+### Changed
+
+- **In-game right sidebar** defaults to **off** — turn on **In-game right sidebar** under **Settings → Game** to show the combat right rail (stats, enemy intent preview, combat tools).
+- **Enemy intent overlay** defaults to **off** — enable it from the **Enemy intents** panel when you want the draggable prediction float during fights.
+- Removed non-working **Card Library** and **Relic Collection** entries from the DEVMODE main menu.
+- **Settings** — Game options (right sidebar, speed, skip animations) appear above the sidebar layout section; **Show hidden cards** was removed from Settings (still available in the card browser).
+
+### Fixed
+
+- **Log viewer** — Closing and reopening from the header works again when the rail tab state was bypassed.
+- **STS2 Steam beta** — Additional API compatibility fixes on the beta game branch.
+
 ## [0.10.0] - 2026-05-24
 
 ### Added

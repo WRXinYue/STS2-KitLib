@@ -32,10 +32,17 @@ internal static partial class DevPanelUI {
         inner.AddChild(CreateSectionHeader(I18N.T("appearance.title", "Appearance")));
         inner.AddChild(CreateAppearanceSection(() => ShowSettingsOverlay(globalUi, actions)));
 
-        inner.AddChild(CreateRailLayoutSection(globalUi, actions));
-
         // ── Section: Game ──
         inner.AddChild(CreateSectionHeader(I18N.T("panel.section.game", "Game")));
+
+        inner.AddChild(CreateCheatToggle(
+            I18N.T("settings.gameContextPane", "In-game right sidebar"),
+            I18N.T("settings.gameContextPane.desc", "Show the right combat sidebar during fights (stats, enemy intent, combat tools)"),
+            () => SettingsStore.Current.GameContextPaneEnabled,
+            enabled => {
+                SettingsStore.SetGameContextPaneEnabled(enabled);
+                DevPanelUI.OnGameContextPaneSettingChanged();
+            }));
 
         var gameSpeedBtn = CreatePlainButton(I18N.T("panel.speed", "Speed: {0}", actions.GetGameSpeedLabel()), MdiIcon.SpeedometerMedium);
         gameSpeedBtn.Pressed += () => {
@@ -51,11 +58,7 @@ internal static partial class DevPanelUI {
         };
         inner.AddChild(skipAnimBtn);
 
-        inner.AddChild(CreateCheatToggle(
-            I18N.T("settings.showHiddenCards", "Show hidden cards"),
-            I18N.T("settings.showHiddenCards.desc", "Include dev-hidden cards in the DevMode card library"),
-            () => SettingsStore.Current.ShowHiddenCards,
-            SettingsStore.SetShowHiddenCards));
+        inner.AddChild(CreateRailLayoutSection(globalUi, actions));
 
         scroll.AddChild(inner);
         vbox.AddChild(scroll);

@@ -1,13 +1,9 @@
 {
-  "menu.developerMode": "开发模式 (DevMod)",
-  "menu.logsDevMod": "日志 (DevMod)",
-  "menu.feedbackDevMod": "Mod 反馈 (DevMod)",
+  "menu.developerMode": "DEVMODE",
 
   "devmenu.newTest": "新建测试",
   "devmenu.newTestWithSeed": "指定种子新建",
   "devmenu.loadSnapshot": "读取存档",
-  "devmenu.cardLibrary": "卡牌图鉴",
-  "devmenu.relicCollection": "遗物图鉴",
   "devmenu.back": "返回",
   "devmenu.persistNormalRun.disabled": "普通对局：禁用",
   "devmenu.persistNormalRun.devMode": "普通对局：开发模式",
@@ -18,6 +14,8 @@
   "devmenu.lanMultiplayer": "局域网联机",
 
   "devmenu.pseudocoop": "伪联机（主机）",
+  "devmenu.logs": "日志",
+  "devmenu.feedback": "Mod 反馈",
   "devmenu.unlockAll": "解锁全部进度",
   "devmenu.unlockAll.confirmTitle": "解锁全部进度？",
   "devmenu.unlockAll.confirmBody": "将解锁全部时间线节点、进阶等级（A10），以及图鉴内容（卡牌、遗物、药水、事件、怪物、幕）。此操作会永久修改当前存档进度。",
@@ -217,6 +215,8 @@
   "panel.settings": "设置",
   "settings.showHiddenCards": "显示隐藏卡牌",
   "settings.showHiddenCards.desc": "在 DevMode 卡牌库中包含官方隐藏的卡牌",
+  "settings.gameContextPane": "对局右侧栏",
+  "settings.gameContextPane.desc": "战斗中显示屏幕右侧栏（战斗统计、敌人意图、战斗工具等）",
   "panel.speed": "速度: {0}",
   "panel.skipAnim": "跳过动画: {0}",
 

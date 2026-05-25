@@ -127,10 +127,6 @@ public static class DevModeState {
     /// <summary>Dual-instance LAN: rail shows only AI Host; skips context pane and asset warmup.</summary>
     public static bool DualInstanceMinimalRail { get; set; }
 
-    public static bool InMenuPreview { get; set; }
-
-    public static Action? OnMenuPreviewClosed { get; set; }
-
     public static int MaxEnergy { get; set; } = 0;
 
     public static CardTarget CardTarget { get; set; } = CardTarget.Hand;

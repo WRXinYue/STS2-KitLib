@@ -69,8 +69,11 @@ public sealed class DevModeSettings {
     /// <summary>Whether the draggable top-right multiplayer combat score panel is shown.</summary>
     public bool CombatStatsMpOverlayEnabled { get; set; } = true;
 
+    /// <summary>Whether the in-game right context rail is shown during combat.</summary>
+    public bool GameContextPaneEnabled { get; set; }
+
     /// <summary>Whether the draggable enemy intent prediction panel is shown during combat.</summary>
-    public bool CombatStatsMonsterIntentOverlayEnabled { get; set; } = true;
+    public bool CombatStatsMonsterIntentOverlayEnabled { get; set; }
 
     /// <summary>Saved free position for the multiplayer score overlay (null = default top-right).</summary>
     public float? CombatStatsMpOverlayPosX { get; set; }

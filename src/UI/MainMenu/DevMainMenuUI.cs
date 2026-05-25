@@ -17,8 +17,6 @@ namespace DevMode.UI;
 
 internal sealed class DevMainMenuActions {
     public required Action OnNewTest { get; init; }
-    public required Action OnCardLibrary { get; init; }
-    public required Action OnRelicCollection { get; init; }
 }
 
 internal static class DevMainMenuUI {
@@ -94,9 +92,6 @@ internal static class DevMainMenuUI {
         if (!anySlot)
             loadBtn.SetEnabled(false);
 
-        AddButton(container, template, I18N.T("devmenu.cardLibrary", "Card Library"), () => { Hide(); actions.OnCardLibrary(); });
-        AddButton(container, template, I18N.T("devmenu.relicCollection", "Relic Collection"), () => { Hide(); actions.OnRelicCollection(); });
-
         NMainMenuTextButton? persistNormalRunBtn = null;
         persistNormalRunBtn = AddButton(container, template, GetPersistNormalRunModeLabel(), () => {
             AdvanceNormalRunMode();
@@ -108,6 +103,14 @@ internal static class DevMainMenuUI {
 
         AddButton(container, template, I18N.T("devmenu.unlockAll", "Unlock All Progress"), () => {
             ShowUnlockAllConfirm(mainMenu);
+        });
+
+        AddButton(container, template, I18N.T("devmenu.logs", "Logs"), () => {
+            LogViewerUI.ShowOnMainMenu(mainMenu);
+        });
+
+        AddButton(container, template, I18N.T("devmenu.feedback", "Mod Feedback"), () => {
+            FeedbackReportUI.ShowOnMainMenu(mainMenu);
         });
 
         AddButton(container, template, I18N.T("devmenu.back", "Back"), Hide);

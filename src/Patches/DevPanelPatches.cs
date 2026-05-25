@@ -121,11 +121,6 @@ public static class RelicCollectionEntryPressedPatch {
 public static class CardLibraryClosedPatch {
     public static void Postfix() {
         DevPanel.NotifyCardLibraryClosed();
-        if (DevModeState.InMenuPreview) {
-            DevModeState.OnMenuPreviewClosed?.Invoke();
-            DevModeState.OnMenuPreviewClosed = null;
-            DevModeState.InMenuPreview = false;
-        }
     }
 }
 
@@ -133,18 +128,13 @@ public static class CardLibraryClosedPatch {
 public static class RelicCollectionClosedPatch {
     public static void Postfix() {
         DevPanel.NotifyRelicCollectionClosed();
-        if (DevModeState.InMenuPreview) {
-            DevModeState.OnMenuPreviewClosed?.Invoke();
-            DevModeState.OnMenuPreviewClosed = null;
-            DevModeState.InMenuPreview = false;
-        }
     }
 }
 
 [HarmonyPatch(typeof(NCardLibraryGrid), "GetCardVisibility")]
 public static class CardVisibilityPatch {
     public static void Postfix(ref ModelVisibility __result) {
-        if (DevModeState.InDevRun || DevModeState.InMenuPreview) {
+        if (DevModeState.InDevRun) {
             __result = ModelVisibility.Visible;
             return;
         }
@@ -178,7 +168,7 @@ public static class RelicVisibilityPatch {
         IEnumerable<RelicModel> relics,
         ref HashSet<RelicModel> seenRelics,
         ref HashSet<RelicModel> unlockedRelics) {
-        if (!DevModeState.InDevRun && !DevModeState.InMenuPreview) return;
+        if (!DevModeState.InDevRun) return;
         foreach (var relic in relics) {
             seenRelics.Add(relic);
             unlockedRelics.Add(relic);
@@ -191,7 +181,7 @@ public static class RelicCategoryVisibilityPatch {
     public static void Prefix(
         ref HashSet<RelicModel> seenRelics,
         ref HashSet<RelicModel> allUnlockedRelics) {
-        if (!DevModeState.InDevRun && !DevModeState.InMenuPreview) return;
+        if (!DevModeState.InDevRun) return;
         foreach (var relic in ModelDb.AllRelics) {
             seenRelics.Add(relic);
             allUnlockedRelics.Add(relic);
@@ -201,7 +191,7 @@ public static class RelicCategoryVisibilityPatch {
 
 public static class AncientUnlockPatch {
     public static void Postfix(ActModel __instance, ref IEnumerable<AncientEventModel> __result) {
-        if (!DevModeState.InDevRun && !DevModeState.InMenuPreview) return;
+        if (!DevModeState.InDevRun) return;
         __result = __instance.AllAncients;
     }
 }

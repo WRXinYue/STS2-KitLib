@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DevMode.CombatStats;
 using DevMode.EnemyIntent;
+using DevMode.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -214,7 +215,19 @@ internal static partial class DevPanelUI {
     internal static void UpdateContextPaneVisibility() {
         if (!GodotObject.IsInstanceValid(_contextPane) || _contextHost == null)
             return;
-        SlideContextPane(_contextHost.ActiveHasContent);
+        bool show = SettingsStore.Current.GameContextPaneEnabled && _contextHost.ActiveHasContent;
+        SlideContextPane(show);
+    }
+
+    internal static void OnGameContextPaneSettingChanged() {
+        if (SettingsStore.Current.GameContextPaneEnabled) {
+            CombatStatsUI.RefreshDefaultGameContext();
+            EnemyIntentUI.RefreshDefaultContext();
+            EnemySelectUI.RefreshCombatContext();
+        }
+        UpdateContextPaneVisibility();
+        if (_contextGlobalUi != null)
+            NotifyBrowserContextLayoutChanged(_contextGlobalUi);
     }
 
     internal static void ResetContextPaneToDefault() {
@@ -277,10 +290,14 @@ internal static partial class DevPanelUI {
     }
 
     private static void OnCombatStatsTrackerChanged() {
+        if (!SettingsStore.Current.GameContextPaneEnabled)
+            return;
         EnqueueContextRefresh(intent: false);
     }
 
     private static void OnMonsterIntentTrackerChanged() {
+        if (!SettingsStore.Current.GameContextPaneEnabled)
+            return;
         EnqueueContextRefresh(intent: true);
     }
 

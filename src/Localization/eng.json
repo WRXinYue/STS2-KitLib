@@ -1,13 +1,9 @@
 {
-  "menu.developerMode": "Dev Mode (DevMod)",
-  "menu.logsDevMod": "Logs (DevMod)",
-  "menu.feedbackDevMod": "Mod Feedback (DevMod)",
+  "menu.developerMode": "DEVMODE",
 
   "devmenu.newTest": "New Test",
   "devmenu.newTestWithSeed": "New Test (Seed)",
   "devmenu.loadSnapshot": "Load Save",
-  "devmenu.cardLibrary": "Card Library",
-  "devmenu.relicCollection": "Relic Collection",
   "devmenu.back": "Back",
   "devmenu.persistNormalRun.disabled": "Normal run: disabled",
   "devmenu.persistNormalRun.devMode": "Normal run: Dev Mode",
@@ -18,6 +14,8 @@
   "devmenu.lanMultiplayer": "LAN Multiplayer",
 
   "devmenu.pseudocoop": "Pseudo Co-op (Host)",
+  "devmenu.logs": "Logs",
+  "devmenu.feedback": "Mod Feedback",
   "devmenu.unlockAll": "Unlock All Progress",
   "devmenu.unlockAll.confirmTitle": "Unlock All Progress?",
   "devmenu.unlockAll.confirmBody": "Reveals all timeline epochs, ascension levels (A10), and compendium entries (cards, relics, potions, events, monsters, acts). This permanently modifies your save file.",
@@ -217,6 +215,8 @@
   "panel.settings": "Settings",
   "settings.showHiddenCards": "Show hidden cards",
   "settings.showHiddenCards.desc": "Include dev-hidden cards in the DevMode card library",
+  "settings.gameContextPane": "In-game right sidebar",
+  "settings.gameContextPane.desc": "Show the right combat sidebar during fights (stats, enemy intent, combat tools)",
   "panel.speed": "Speed: {0}",
   "panel.skipAnim": "Skip Anim: {0}",
 
