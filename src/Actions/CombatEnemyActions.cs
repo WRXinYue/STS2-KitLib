@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using DevMode.EnemyIntent;
 using DevMode.Multiplayer.Cheat;
 using Godot;
+using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Actions;
 
@@ -19,6 +23,8 @@ namespace DevMode.Actions;
 /// Uses the game's <see cref="CreatureCmd"/> API (same as boss summon mechanics).
 /// </summary>
 internal static class CombatEnemyActions {
+    private const int MonsterVisualPreloadTimeoutMs = 30_000;
+
     /// <summary>Get the current combat state, or null if not in combat.</summary>
     public static CombatState? GetCombatState() {
         if (!RunContext.TryGetRunAndPlayer(out _, out var player)) return null;
@@ -100,32 +106,55 @@ internal static class CombatEnemyActions {
         error = null;
         if (GetCombatState() == null) {
             error = I18N.T("mpcheat.combatAdd.notInCombat", "Not in combat.");
+            LogCombatSnapshot("validate-fail:not-in-combat");
             return false;
         }
 
         if (!CombatManager.Instance.IsInProgress) {
             error = I18N.T("mpcheat.combatAdd.notInProgress", "Combat is not in progress.");
+            LogCombatSnapshot("validate-fail:not-in-progress");
             return false;
         }
 
         return true;
     }
 
+    private static void LogCombatSnapshot(string phase, CombatState? cs = null) {
+        cs ??= GetCombatState();
+        var state = RunManager.Instance?.DebugOnlyGetState();
+        bool inProgress = CombatManager.Instance?.IsInProgress ?? false;
+        var enc = cs?.Encounter;
+        string encId = enc != null ? ((AbstractModel)enc).Id.Entry : "null";
+        int aliveEnemies = cs?.Enemies?.Count(e => !e.IsDead) ?? -1;
+        string room = state?.CurrentRoom?.GetType().Name ?? "null";
+        MainFile.Logger.Info(
+            $"[DevMode.CombatAdd] {phase}: inProgress={inProgress} combatState={(cs != null)} " +
+            $"aliveEnemies={aliveEnemies} encounter={encId} hasScene={enc?.HasScene} " +
+            $"combatRoom={NCombatRoom.Instance != null} actFloor={state?.ActFloor} room={room}");
+    }
+
     private static async Task<Creature?> AddMonsterInternal(MonsterModel canonicalMonster, bool mpSync) {
+        string monsterId = ((AbstractModel)canonicalMonster).Id.Entry;
+        var sw = Stopwatch.StartNew();
+
         if (MpCheatSession.InMultiplayerRun && !mpSync) {
             MainFile.Logger.Warn(
-                $"CombatEnemyActions: Cannot add {((AbstractModel)canonicalMonster).Id.Entry} locally in multiplayer — use host combat sync.");
+                $"[DevMode.CombatAdd] blocked (mp, no sync): {monsterId}");
             return null;
         }
 
+        LogCombatSnapshot(
+            $"begin {monsterId} mpSync={mpSync} netMp={MpCheatSession.InMultiplayerRun}");
+
         var cs = GetCombatState();
         if (cs == null) {
-            MainFile.Logger.Info("CombatEnemyActions: Not in combat.");
+            MainFile.Logger.Warn($"[DevMode.CombatAdd] abort: not in combat ({monsterId}, {sw.ElapsedMilliseconds}ms)");
             return null;
         }
 
         if (!CombatManager.Instance.IsInProgress) {
-            MainFile.Logger.Info("CombatEnemyActions: Combat not in progress.");
+            MainFile.Logger.Warn(
+                $"[DevMode.CombatAdd] abort: combat not in progress ({monsterId}, {sw.ElapsedMilliseconds}ms)");
             return null;
         }
 
@@ -136,23 +165,41 @@ internal static class CombatEnemyActions {
             slot = cs.Encounter?.GetNextSlot(cs);
             if (string.IsNullOrEmpty(slot)) slot = null;
         }
-        catch { /* no slots available */ }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"[DevMode.CombatAdd] GetNextSlot failed: {ex.Message}");
+        }
+
+        MainFile.Logger.Info(
+            $"[DevMode.CombatAdd] slot={slot ?? "(auto)"} side={cs.CurrentSide} ({monsterId})");
 
         if (slot == null && cs.Encounter is { HasScene: false })
             LogSlotlessSummonWarning((AbstractModel)canonicalMonster);
 
         try {
-            var creature = await CreatureCmd.Add(mutable, cs, CombatSide.Enemy, slot);
-            MainFile.Logger.Info($"CombatEnemyActions: Added {((AbstractModel)canonicalMonster).Id.Entry} to combat");
+            if (!await TryPreloadMonsterVisualsAsync(monsterId, sw))
+                MainFile.Logger.Warn(
+                    $"[DevMode.CombatAdd] preload incomplete, Add may hitch ({monsterId})");
 
-            if (slot == null)
+            MainFile.Logger.Info($"[DevMode.CombatAdd] CreatureCmd.Add starting ({monsterId})");
+            var creature = await CreatureCmd.Add(mutable, cs, CombatSide.Enemy, slot)
+                .ConfigureAwait(false);
+            MainFile.Logger.Info(
+                $"[DevMode.CombatAdd] CreatureCmd.Add done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+
+            if (slot == null) {
+                MainFile.Logger.Info($"[DevMode.CombatAdd] RepositionEnemies starting ({monsterId})");
                 RepositionEnemies(cs);
+                MainFile.Logger.Info(
+                    $"[DevMode.CombatAdd] RepositionEnemies done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+            }
 
+            MainFile.Logger.Info(
+                $"[DevMode.CombatAdd] success: {monsterId} ({sw.ElapsedMilliseconds}ms)");
             return creature;
         }
         catch (Exception ex) {
             MainFile.Logger.Warn(
-                $"CombatEnemyActions: Failed to add {((AbstractModel)canonicalMonster).Id.Entry}: {ex.Message}");
+                $"[DevMode.CombatAdd] failed: {monsterId} ({sw.ElapsedMilliseconds}ms): {ex}");
             return null;
         }
     }
@@ -168,7 +215,56 @@ internal static class CombatEnemyActions {
         if (monsters == null || monsters.Count == 0) return;
 
         foreach (var monster in monsters)
-            await AddMonsterInternal(monster, mpSync: true);
+            await AddMonsterInternal(monster, mpSync);
+    }
+
+    private static string GetMonsterVisualScenePath(string monsterId) =>
+        SceneHelper.GetScenePath($"creature_visuals/{monsterId.ToLowerInvariant()}");
+
+    private static async Task<bool> TryPreloadMonsterVisualsAsync(string monsterId, Stopwatch sw) {
+        string path = GetMonsterVisualScenePath(monsterId);
+        if (PreloadManager.Cache.ContainsKey(path)) {
+            MainFile.Logger.Info($"[DevMode.CombatAdd] preload cache hit ({monsterId})");
+            return true;
+        }
+
+        if (!ResourceLoader.Exists(path)) {
+            MainFile.Logger.Warn($"[DevMode.CombatAdd] preload missing scene ({monsterId}): {path}");
+            return false;
+        }
+
+        MainFile.Logger.Info($"[DevMode.CombatAdd] preload threaded load ({monsterId}): {path}");
+        var err = ResourceLoader.LoadThreadedRequest(path, "PackedScene", true);
+        if (err != Error.Ok) {
+            MainFile.Logger.Warn($"[DevMode.CombatAdd] preload request failed ({monsterId}): {err}");
+            return false;
+        }
+
+        while (sw.ElapsedMilliseconds < MonsterVisualPreloadTimeoutMs) {
+            var status = ResourceLoader.LoadThreadedGetStatus(path);
+            switch (status) {
+                case ResourceLoader.ThreadLoadStatus.Loaded: {
+                    var resource = ResourceLoader.LoadThreadedGet(path);
+                    if (resource is PackedScene scene)
+                        PreloadManager.Cache.SetAsset(path, scene);
+                    MainFile.Logger.Info(
+                        $"[DevMode.CombatAdd] preload done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+                    return true;
+                }
+                case ResourceLoader.ThreadLoadStatus.Failed:
+                case ResourceLoader.ThreadLoadStatus.InvalidResource:
+                    MainFile.Logger.Warn(
+                        $"[DevMode.CombatAdd] preload failed ({monsterId}): status={status}");
+                    return false;
+                default:
+                    await Task.Delay(16).ConfigureAwait(false);
+                    break;
+            }
+        }
+
+        MainFile.Logger.Warn(
+            $"[DevMode.CombatAdd] preload timeout ({monsterId}, {MonsterVisualPreloadTimeoutMs}ms)");
+        return false;
     }
 
     internal static void LogSlotlessSummonWarning(AbstractModel monster) =>
@@ -202,7 +298,14 @@ internal static class CombatEnemyActions {
         // --- Replicate NCombatRoom.PositionEnemies ---
         float halfScreen = 960f / scaling;
         float padding = 70f;
-        float totalCreatureWidth = enemies.Sum(n => n.Visuals.Bounds.Size.X);
+        float totalCreatureWidth = enemies.Sum(n => {
+            try {
+                return n.Visuals!.Bounds.Size.X;
+            }
+            catch {
+                return 120f;
+            }
+        });
         float totalWidth = totalCreatureWidth + (enemies.Count - 1) * padding;
         float startX = (halfScreen - totalWidth) * 0.5f;
         startX = Math.Max(startX, 150f);
@@ -219,10 +322,18 @@ internal static class CombatEnemyActions {
         float x = startX;
         for (int i = 0; i < enemies.Count; i++) {
             var n = enemies[i];
+            float width;
+            try {
+                width = n.Visuals!.Bounds.Size.X;
+            }
+            catch {
+                width = 120f;
+            }
+
             n.Position = new Vector2(
-                x + n.Visuals.Bounds.Size.X * 0.5f,
+                x + width * 0.5f,
                 200f - ((i % 2 != 0) ? altY : 0f));
-            x += n.Visuals.Bounds.Size.X + padding;
+            x += width + padding;
         }
     }
 

@@ -156,6 +156,8 @@ internal static partial class EnemySelectUI {
     }
 
     internal static void RunSyncedCombatAddMonster(MonsterModel monster, Action? onChanged = null) {
+        MainFile.Logger.Info(
+            $"[DevMode.CombatAdd] UI request: {((AbstractModel)monster).Id.Entry} mp={MpCheatSession.InMultiplayerRun}");
         if (!MpCheatSession.InMultiplayerRun) {
             DevPanelUI.RunCombatAction(async () => { await CombatEnemyActions.AddMonster(monster); }, onChanged);
             return;

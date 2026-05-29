@@ -32,7 +32,12 @@ internal static class CombatSummonSlotRepositionPatch
         if (!string.IsNullOrEmpty(creature.SlotName))
             return;
 
-        if (creature.CombatState is CombatState cs)
+        if (creature.CombatState is CombatState cs) {
+            var id = creature.Monster != null
+                ? ((MegaCrit.Sts2.Core.Models.AbstractModel)creature.Monster).Id.Entry
+                : "?";
+            MainFile.Logger.Info($"[DevMode.CombatAdd] summon reposition hook: {id}");
             CombatEnemyActions.RepositionEnemies(cs);
+        }
     }
 }

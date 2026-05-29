@@ -150,10 +150,20 @@ internal static partial class DevPanelUI {
     private static async System.Threading.Tasks.Task WrapCombatAction(
         Func<System.Threading.Tasks.Task> action,
         Action? onCompleted) {
-        await action();
-        RefreshContextPane();
-        EnemySelectUI.RefreshMapCombatDetailIfOpen();
-        onCompleted?.Invoke();
+        MainFile.Logger.Info("[DevMode.CombatAdd] RunCombatAction starting");
+        try {
+            await action();
+            MainFile.Logger.Info("[DevMode.CombatAdd] RunCombatAction finished");
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"[DevMode.CombatAdd] RunCombatAction failed: {ex}");
+            throw;
+        }
+        finally {
+            RefreshContextPane();
+            EnemySelectUI.RefreshMapCombatDetailIfOpen();
+            onCompleted?.Invoke();
+        }
     }
 
     internal static void SetDefaultContextIds(params string[] ids) {
