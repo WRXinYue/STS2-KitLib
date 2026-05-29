@@ -8,17 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **地图 Dev 逻辑** — 重组至 `src/Map/` 与 `src/Patches/Map/`（`MapScreenReflection`、`VanillaMapNavigator`、`MapScreenUnlock`）。无玩家可见行为变化。
+## [0.11.1] - 2026-05-27
 
 ### Fixed
 
-- **战斗奖励界面** — 打开 DevMode 侧边栏面板时，不再清掉战斗结束奖励及其他仍留在 overlay 栈上的原版选择界面。
-- **地图跳转解锁范围** — DevMode 地图左键跳转后的全节点可点仅在本轮地图界面打开期间有效；关闭地图后恢复原版路径规则。解锁前仅可跳转原版可通行节点；关闭地图后保留待激活状态，下次打开即显示全解锁。
-- **地图点击** — 跳转改挂 `NMapPoint.OnRelease`（与原版一致），不再在 `_GuiInput` 按下阶段拦截（此前会导致所有点击失效）。诊断日志前缀：`[DevMode.MapJump]`。
-- **地图调试跳转** — 合并为单一作弊开关「地图调试跳转」；移除会话状态、Shift 武装及重复的 `FreeTravelFromDevRoomMap` 开发标志。
-- **地图调试跳转 — 先古房间** — 跳转改用 `EnterMapPointInternal`，新层起点先古节点会正确 `PullAncient()`，不再因 `EnterMapCoordDebug` 误抽普通事件。
+- **战斗中加怪** — 首次添加某种敌人时不再长时间卡住。
+- **战斗中加遭遇（联机）** — 主机同步添加整组遭遇时，各客户端能正确收到全部怪物。
+- **战斗奖励** — 打开 Dev 侧栏时不再导致战斗结束奖励界面消失。
+- **地图调试跳转** — 修复地图点击无反应；跳转到先古房间时正确进入先古遭遇（不再误进普通事件）；「全图可点」仅在地图界面打开时生效，关闭地图后恢复原版路线规则。
 
 ## [0.11.0] - 2026-05-25
 

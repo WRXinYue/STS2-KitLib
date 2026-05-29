@@ -8,17 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **Map dev logic** — Reorganized into `src/Map/` and `src/Patches/Map/` (`MapScreenReflection`, `VanillaMapNavigator`, `MapScreenUnlock`). No player-visible behavior change.
+## [0.11.1] - 2026-05-27
 
 ### Fixed
 
-- **Battle reward screen** — Opening a DevMode sidebar panel no longer clears post-combat rewards or other vanilla overlay pickers still on the stack.
-- **Map jump unlock scope** — Full map unlock after a DevMode map click jump applies only while the vanilla map screen is open; closing the map restores normal path travel rules. Dev jumps before unlock are limited to vanilla-travelable nodes; unlock state survives map close until the next open.
-- **Map click handling** — Dev map jumps hook `NMapPoint.OnRelease` (vanilla path) instead of `_GuiInput` on press, which had blocked all map clicks. Map-jump diagnostics log under `[DevMode.MapJump]`.
-- **Map debug jump** — Single cheat toggle (`Map Debug Jump`) controls free map jumps; removed session state, Shift+click arming, and duplicate `FreeTravelFromDevRoomMap` dev flag.
-- **Map debug jump — Ancient rooms** — Map jumps use `EnterMapPointInternal` so starting Ancient nodes call `PullAncient()` instead of a random event from `EnterMapCoordDebug`.
+- **Mid-combat add monster** — Adding a monster type for the first time no longer freezes the game for a long time.
+- **Mid-combat add encounter (multiplayer)** — When the host syncs an entire encounter, all clients receive every monster correctly.
+- **Battle rewards** — Opening the dev sidebar no longer dismisses the post-combat reward screen.
+- **Map debug jump** — Map clicks work again; jumping to an Ancient room enters the Ancient encounter (not a random event); free map travel while the map screen is open only, normal path rules return after you close the map.
 
 ## [0.11.0] - 2026-05-25
 
