@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-06-01
+
 ### Fixed
 
 - **安装包** — 官方 release zip 与 NuGet 包重新包含所需的 PCK 文件，Mod 加载器不再报 PCK 缺失，游戏内 Mod 列表可正常显示预览图。
