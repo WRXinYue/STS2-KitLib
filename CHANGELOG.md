@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Install packages** — Official release zips and NuGet packages again include the required PCK file, so the mod loader no longer reports a missing PCK and the in-game mod list shows the preview image.
+
 ## [0.11.1] - 2026-05-27
 
 ### Fixed
