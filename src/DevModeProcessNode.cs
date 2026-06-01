@@ -1,3 +1,4 @@
+using DevMode.Feedback;
 using DevMode.Patches;
 using DevMode.Scripts;
 using Godot;
@@ -23,6 +24,7 @@ internal partial class DevModeProcessNode : Node {
     }
 
     public override void _ExitTree() {
+        CrashRecoveryStore.MarkSessionCleanExit();
         InstanceLogWriter.Shutdown();
         DevModeInstanceRegistry.Unregister();
     }

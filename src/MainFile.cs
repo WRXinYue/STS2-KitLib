@@ -1,8 +1,9 @@
 using DevMode.AI;
 using DevMode.CombatStats;
-using DevMode.Multiplayer.Cheat;
 using DevMode.EnemyIntent;
+using DevMode.Feedback;
 using DevMode.Interop;
+using DevMode.Multiplayer.Cheat;
 using DevMode.Patches;
 using DevMode.Scripts;
 using DevMode.Settings;
@@ -32,6 +33,8 @@ public class MainFile {
         // Start capturing log entries for the in-game log viewer
         InstanceLogWriter.Initialize();
         LogCollector.Initialize();
+        CrashRecoveryHooks.Register();
+        CrashRecoveryStore.MarkSessionStarted();
 
         if (DevModeInstanceRegistry.IsDualInstanceActive())
             Logger.Info($"[DevMode] Dual-instance mode ({DevModeInstanceRegistry.ActiveInstanceCount()} processes).");

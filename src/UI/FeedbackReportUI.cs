@@ -22,25 +22,25 @@ internal static class FeedbackReportUI {
     // Sentinel index in the OptionButton meaning "do not attach a log file"
     private const int NoLogIndex = 0;
 
-    public static void Show(NGlobalUi globalUi) {
+    public static void Show(NGlobalUi globalUi, FeedbackPrefill? prefill = null) {
         var parent = (Node)globalUi;
         Remove(parent);
         Action close = () => Remove(parent);
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
             globalUi, RootName, PanelW, close, contentSeparation: 12);
-        BuildPanel(vbox);
+        BuildPanel(vbox, prefill);
         parent.AddChild(root);
     }
 
-    public static void ShowOnMainMenu(NMainMenu mainMenu) {
+    public static void ShowOnMainMenu(NMainMenu mainMenu, FeedbackPrefill? prefill = null) {
         var parent = mainMenu.GetTree().Root;
         HideAnywhere();
         Action close = HideAnywhere;
         var (_, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 12);
-        BuildPanel(vbox);
+        BuildPanel(vbox, prefill);
     }
 
-    private static void BuildPanel(VBoxContainer vbox) {
+    private static void BuildPanel(VBoxContainer vbox, FeedbackPrefill? prefill = null) {
         // ── Title ──────────────────────────────────────────────────────────
         var titleBox = new VBoxContainer();
         titleBox.AddThemeConstantOverride("separation", 4);
@@ -68,6 +68,8 @@ internal static class FeedbackReportUI {
             CustomMinimumSize = new Vector2(0, 28)
         };
         titleInput.AddThemeFontSizeOverride("font_size", 12);
+        if (prefill != null && !string.IsNullOrWhiteSpace(prefill.Value.Title))
+            titleInput.Text = prefill.Value.Title;
         form.AddChild(titleInput);
 
         // Description field
@@ -82,6 +84,8 @@ internal static class FeedbackReportUI {
         descInput.AddThemeFontSizeOverride("font_size", 11);
         descInput.AddThemeStyleboxOverride("normal", MakeInputStyle());
         descInput.AddThemeStyleboxOverride("focus", MakeInputFocusStyle());
+        if (prefill != null && !string.IsNullOrWhiteSpace(prefill.Value.Description))
+            descInput.Text = prefill.Value.Description;
         form.AddChild(descInput);
 
         vbox.AddChild(form);

@@ -102,6 +102,9 @@ public sealed class DevModeSettings {
 
     /// <summary>Prompt to restore from backup when mod character progress is missing after load.</summary>
     public bool PromptOnModCharacterProgressLoss { get; set; } = true;
+
+    /// <summary>Prompt to export feedback when an unhandled error or abnormal exit is detected.</summary>
+    public bool PromptOnCrashFeedback { get; set; } = true;
 }
 
 public static class ThemeNames {

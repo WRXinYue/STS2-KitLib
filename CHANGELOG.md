@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Crash recovery prompts** — When an unhandled error occurs in-game, DevMode shows a dialog to view logs or export a feedback ZIP (prefilled with crash summary). If the game exits abnormally, the main menu offers the same on next launch. Toggle under **Settings → Crash recovery**. Session markers live under `mod_data/DevMode/instances/{pid}/`.
 - **Progress protection** — On mod set fingerprint change, DevMode backs up the active profile's `progress.save` (and optional related saves) under `mod_data/DevMode/profile_backups/` before vanilla save filtering can run. Optional warn-only log when progress still references unloaded mods. Toggle under **Settings → Progress protection** or the title-screen **DEVMODE → Progress protection** panel (status + recent backups + one-click restore). Each backup row has a **Details** button to inspect account progress, per-character stats, epochs, compendium counts, and backup metadata.
 - **Progress protection startup prompt** — On main menu load, if mod character stats were filtered but a recoverable backup exists, DevMode offers a **Restore** / **Not now** dialog (toggle under **Progress protection** settings).
 - **Content browsers (mod source)** — Card, relic, potion, power, and event pickers include a **Mod source** filter to include or exclude game content and loaded mods. Detail views show **Source:** for the selected entry. The card browser remembers your mod-source filter across sessions.

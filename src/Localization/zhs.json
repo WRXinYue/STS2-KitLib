@@ -1136,5 +1136,24 @@
   "feedback.export": "导出报告 ZIP",
   "feedback.exporting": "生成中…",
   "feedback.success": "已保存：{0}",
-  "feedback.error": "导出失败：{0}"
+  "feedback.error": "导出失败：{0}",
+
+  "settings.section.crashRecovery": "崩溃恢复",
+  "crashRecovery.settings.prompt": "崩溃时提示导出反馈包",
+  "crashRecovery.settings.prompt.desc": "发生未捕获异常或上次会话异常退出时显示对话框",
+  "crashRecovery.startup.title": "上次会话可能异常退出",
+  "crashRecovery.startup.bodyOrphan": "游戏在上次会话中可能异常退出（PID {0}）。导出反馈 ZIP 以便将日志发给 Mod 作者。",
+  "crashRecovery.startup.notNow": "暂不",
+  "errorFeedback.prompt.title": "出现了问题",
+  "errorFeedback.prompt.body": "发生未处理的错误：\n\n{0}\n\n导出反馈 ZIP 以便将日志发给 Mod 作者。",
+  "errorFeedback.prompt.unknownError": "未知错误",
+  "errorFeedback.prompt.viewLogs": "查看日志",
+  "errorFeedback.prompt.exportReport": "导出反馈 ZIP",
+  "errorFeedback.prompt.dismiss": "关闭",
+  "errorFeedback.prefill.title.orphan": "游戏异常退出",
+  "errorFeedback.prefill.title.exception": "未处理错误：{0}",
+  "errorFeedback.prefill.header": "自动崩溃摘要：",
+  "errorFeedback.prefill.orphanDetail": "  上次会话（PID {0}）未正常关闭。",
+  "errorFeedback.prefill.stackTrace": "堆栈跟踪：",
+  "errorFeedback.prefill.stepsHint": "复现步骤："
 }

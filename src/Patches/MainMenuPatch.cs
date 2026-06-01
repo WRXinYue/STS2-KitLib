@@ -62,6 +62,9 @@ public static class MainMenuPatch {
         if (ProgressLossPromptUI.TryShowStartupPrompt(__instance))
             return;
 
+        if (CrashRecoveryPromptUI.TryShowStartupPrompt(__instance))
+            return;
+
         if (_devModeButton == null || !GodotObject.IsInstanceValid(_devModeButton))
             return;
 

@@ -60,6 +60,8 @@ internal static partial class DevPanelUI {
 
         ProgressGuardPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
 
+        CrashRecoveryPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
+
         inner.AddChild(CreateRailLayoutSection(globalUi, actions));
 
         scroll.AddChild(inner);
