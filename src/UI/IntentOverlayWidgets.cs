@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using DevMode.EnemyIntent;
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Intents;
 using MegaCrit.Sts2.Core.HoverTips;
@@ -18,6 +19,9 @@ internal static class IntentOverlayLayout {
 
 internal static class IntentTooltip {
     public static string Format(AbstractIntent intent, IReadOnlyList<Creature> targets, Creature owner) {
+        if (!MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+            return "";
+
         HoverTip tip = intent.GetHoverTip(targets, owner);
         var lines = new List<string>();
         string? title = tip.Title ?? intent.GetIntentLabel(targets, owner).GetFormattedText();
@@ -30,8 +34,10 @@ internal static class IntentTooltip {
 
     public static string FormatStep(MonsterIntentStep step, IReadOnlyList<Creature> targets, Creature owner) {
         var lines = new List<string> { step.MoveName };
-        foreach (AbstractIntent intent in step.Intents)
-            lines.Add(Format(intent, targets, owner));
+        if (MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState())) {
+            foreach (AbstractIntent intent in step.Intents)
+                lines.Add(Format(intent, targets, owner));
+        }
         if (step.IsUncertain)
             lines.Add(I18N.T("enemyIntent.uncertainHint", "Estimated — enemy AI may branch randomly."));
         else if (step.IsCurrent)
@@ -267,7 +273,8 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
             panel.Modulate = new Color(1f, 1f, 1f, 0.55f);
 
         panel.AddChild(intentsRow);
-        panel.TooltipText = IntentTooltip.FormatStep(step, targets, owner);
+        if (MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+            panel.TooltipText = IntentTooltip.FormatStep(step, targets, owner);
         return panel;
     }
 
@@ -322,12 +329,17 @@ internal sealed partial class IntentOverlayBadge : Control {
         _intent = intent;
         _targets = targets;
         _owner = owner;
-        TooltipText = IntentTooltip.Format(intent, targets, owner);
+        if (MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+            TooltipText = IntentTooltip.Format(intent, targets, owner);
+        else
+            TooltipText = "";
         UpdateVisuals();
     }
 
     private void UpdateVisuals() {
         if (_intent == null || _owner == null)
+            return;
+        if (!MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
             return;
 
         _animationName = _intent.GetAnimation(_targets, _owner);
@@ -352,6 +364,8 @@ internal sealed partial class IntentOverlayBadge : Control {
         AbstractIntent intent,
         IReadOnlyList<Creature> targets,
         Creature owner) {
+        if (!MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+            return "";
         if (intent is AttackIntent or StatusIntent)
             return intent.GetIntentLabel(targets, owner).GetFormattedText() ?? "";
         return "";

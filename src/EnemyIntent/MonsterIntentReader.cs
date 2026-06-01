@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DevMode.UI;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
@@ -31,11 +32,23 @@ internal static class MonsterIntentReader {
     private const int MaxPredictedTurns = 12;
     private static readonly Rng DummyRng = new(0);
 
-    public static IReadOnlyList<MonsterIntentEntry> CaptureCurrent(CombatState? state) {
+    internal static bool IsOverlayCombatReady(CombatState? state) {
         if (state == null || !CombatManager.Instance.IsInProgress)
+            return false;
+        if (LocalContext.GetMe(state.Players) == null)
+            return false;
+        foreach (Creature player in state.PlayerCreatures) {
+            if (player.IsAlive)
+                return true;
+        }
+        return false;
+    }
+
+    public static IReadOnlyList<MonsterIntentEntry> CaptureCurrent(CombatState? state) {
+        if (!IsOverlayCombatReady(state))
             return Array.Empty<MonsterIntentEntry>();
 
-        var targets = state.PlayerCreatures;
+        var targets = state!.PlayerCreatures;
         var entries = new List<MonsterIntentEntry>();
 
         foreach (Creature enemy in state.HittableEnemies) {
@@ -55,10 +68,10 @@ internal static class MonsterIntentReader {
 
     /// <summary>Predicted intent for the enemy turn after the one currently shown.</summary>
     public static IReadOnlyList<MonsterIntentEntry> CaptureNextTurn(CombatState? state) {
-        if (state == null || !CombatManager.Instance.IsInProgress)
+        if (!IsOverlayCombatReady(state))
             return Array.Empty<MonsterIntentEntry>();
 
-        var targets = state.PlayerCreatures;
+        var targets = state!.PlayerCreatures;
         var entries = new List<MonsterIntentEntry>();
 
         foreach (Creature enemy in state.HittableEnemies) {

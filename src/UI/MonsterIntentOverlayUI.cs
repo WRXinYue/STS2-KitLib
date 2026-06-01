@@ -53,9 +53,7 @@ internal static partial class MonsterIntentOverlayUI {
     private static bool ShouldShow() {
         if (!DevModeState.IsActive)
             return false;
-        if (CombatManager.Instance?.IsInProgress != true)
-            return false;
-        return CombatManager.Instance.DebugOnlyGetState() != null;
+        return MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState());
     }
 
     private static void EnsureAttached() {
@@ -76,11 +74,20 @@ internal static partial class MonsterIntentOverlayUI {
         _overlay = null;
         var overlay = new MonsterIntentOverlayHost();
         _overlay = overlay;
-        parent.AddChild(overlay);
         overlay.TreeExiting += () => {
             if (_overlay == overlay)
                 _overlay = null;
         };
+        Callable.From(() => {
+            if (_globalUi == null || !GodotObject.IsInstanceValid(_globalUi))
+                return;
+            var attachParent = (Node)_globalUi;
+            if (!GodotObject.IsInstanceValid(overlay) || overlay.GetParent() != null)
+                return;
+            if (attachParent.GetNodeOrNull<Control>(RootName) != null)
+                return;
+            attachParent.AddChild(overlay);
+        }).CallDeferred();
     }
 
     private static class Layout {
@@ -159,6 +166,7 @@ internal static partial class MonsterIntentOverlayUI {
 
         public void Refresh() {
             if (!IsEnabled() || !ShouldShow()) {
+                ClearEnemyRows();
                 HidePanel();
                 return;
             }
@@ -168,16 +176,24 @@ internal static partial class MonsterIntentOverlayUI {
             if (entries.Count == 0) {
                 ClearEnemyRows();
                 _panel.Visible = true;
-                MoveToFront();
+                MoveToFrontDeferred();
                 return;
             }
 
             IntentPreviewRows.Sync(_enemyList, entries, displayedOnly: false, IntentOverlayLayout.BadgeSize);
             _panel.Visible = true;
-            MoveToFront();
+            MoveToFrontDeferred();
         }
 
-        public void HidePanel() => _panel.Visible = false;
+        public void HidePanel() {
+            ClearEnemyRows();
+            _panel.Visible = false;
+        }
+
+        private void MoveToFrontDeferred() {
+            if (IsInsideTree())
+                Callable.From(MoveToFront).CallDeferred();
+        }
 
         private void ClearEnemyRows() {
             foreach (var child in _enemyList.GetChildren())
