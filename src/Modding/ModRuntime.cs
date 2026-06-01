@@ -69,10 +69,18 @@ internal static class ModRuntime {
             return Array.Empty<string>();
 
         var list = new List<string>(deps.Count);
+#if STS2_BETA
+        foreach (var dep in deps) {
+            if (string.IsNullOrEmpty(dep.id))
+                continue;
+            list.Add(string.IsNullOrEmpty(dep.minVersion) ? dep.id : $"{dep.id}>={dep.minVersion}");
+        }
+#else
         foreach (var dep in deps) {
             if (!string.IsNullOrEmpty(dep))
                 list.Add(dep);
         }
+#endif
 
         return list.Count == 0 ? Array.Empty<string>() : list.ToArray();
     }
