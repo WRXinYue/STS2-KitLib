@@ -34,8 +34,8 @@ internal static class FeedbackReportUI {
 
     public static void ShowOnMainMenu(NMainMenu mainMenu) {
         var parent = mainMenu.GetTree().Root;
-        Remove(parent);
-        Action close = () => Remove(parent);
+        HideAnywhere();
+        Action close = HideAnywhere;
         var (_, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 12);
         BuildPanel(vbox);
     }
@@ -161,9 +161,7 @@ internal static class FeedbackReportUI {
 
     public static void Remove(NGlobalUi globalUi) => Remove((Node)globalUi);
 
-    public static void Remove(Node parent) {
-        parent.GetNodeOrNull<Control>(RootName)?.QueueFree();
-    }
+    public static void Remove(Node parent) => HideAnywhere();
 
     public static void HideAnywhere() => DevMainMenuOverlay.RemoveAnywhere(RootName);
 

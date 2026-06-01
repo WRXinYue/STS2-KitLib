@@ -535,7 +535,7 @@ internal static partial class DevPanelUI {
         return container;
     }
 
-    private static Control CreateCheatToggle(string label, string? tooltip, Func<bool> getter, Action<bool> setter) {
+    internal static Control CreateCheatToggle(string label, string? tooltip, Func<bool> getter, Action<bool> setter) {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 4);
         row.CustomMinimumSize = new Vector2(0, 30);

@@ -100,6 +100,24 @@ internal static class DevMainMenuUI {
             ShowUnlockAllConfirm(mainMenu);
         });
 
+        AddButton(container, template, I18N.T("devmenu.diagnostics", "Diagnostics"), ShowDiagnosticsMenu);
+
+        AddButton(container, template, I18N.T("devmenu.progressGuard", "Progress protection"), () => {
+            ProgressGuardUI.ShowOnMainMenu(mainMenu);
+        });
+
+        AddButton(container, template, I18N.T("devmenu.back", "Back"), Hide);
+    }
+
+    static void ShowDiagnosticsMenu() {
+        if (_mainMenu == null || _buttonsContainer == null || _buttonTemplate == null)
+            return;
+
+        ClearAddedButtons();
+        var mainMenu = _mainMenu;
+        var container = _buttonsContainer;
+        var template = _buttonTemplate;
+
         AddButton(container, template, I18N.T("devmenu.logs", "Logs"), () => {
             LogViewerUI.ShowOnMainMenu(mainMenu);
         });
@@ -108,7 +126,7 @@ internal static class DevMainMenuUI {
             FeedbackReportUI.ShowOnMainMenu(mainMenu);
         });
 
-        AddButton(container, template, I18N.T("devmenu.back", "Back"), Hide);
+        AddButton(container, template, I18N.T("devmenu.back", "Back"), ShowRootMenu);
     }
 
     static void ShowMultiplayerMenu() {
@@ -222,10 +240,12 @@ internal static class DevMainMenuUI {
         SaveSlotUI.Hide();
         FeedbackReportUI.HideAnywhere();
         LogViewerUI.HideAnywhere();
+        ProgressGuardUI.HideAnywhere();
+        DevMainMenuPseudoCoopUI.HideAnywhere();
 
         var root = attachRoot ?? (Engine.GetMainLoop() as SceneTree)?.Root;
-        root?.GetNodeOrNull<Control>(SeedOverlayName)?.QueueFree();
-        root?.GetNodeOrNull<Control>(UnlockAllOverlayName)?.QueueFree();
+        DevMainMenuOverlay.RemoveAnywhere(SeedOverlayName);
+        DevMainMenuOverlay.RemoveAnywhere(UnlockAllOverlayName);
     }
 
     private static void RestoreStockButtons() {

@@ -58,6 +58,8 @@ internal static partial class DevPanelUI {
         };
         inner.AddChild(skipAnimBtn);
 
+        ProgressGuardPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
+
         inner.AddChild(CreateRailLayoutSection(globalUi, actions));
 
         scroll.AddChild(inner);

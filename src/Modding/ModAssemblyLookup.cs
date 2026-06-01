@@ -40,7 +40,7 @@ internal static class ModAssemblyLookup {
                 continue;
 
             var display = string.IsNullOrEmpty(man.name) ? man.id : man.name;
-            var info = new DevModeModInfo(man.id, display, man.version ?? "");
+            var info = new DevModeModInfo(man.id, display, man.version ?? "", ModRuntime.CopyDependencies(man));
             RegisterAssembliesForMod(mod, info, map);
         }
 

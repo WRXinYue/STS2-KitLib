@@ -6,7 +6,11 @@ using MegaCrit.Sts2.Core.Modding;
 namespace DevMode.Modding;
 
 /// <summary>Stable snapshot of one loaded mod (manifest-backed).</summary>
-internal readonly record struct DevModeModInfo(string Id, string DisplayName, string Version);
+internal readonly record struct DevModeModInfo(
+    string Id,
+    string DisplayName,
+    string Version,
+    IReadOnlyList<string> Dependencies);
 
 /// <summary>Read-only view of mods the game has already scanned and loaded.</summary>
 internal interface IModCatalog {
@@ -36,7 +40,7 @@ internal sealed class ModCatalog : IModCatalog {
             if (string.IsNullOrEmpty(id)) continue;
             var name = string.IsNullOrEmpty(man.name) ? id : man.name;
             var ver = man.version ?? "";
-            list.Add(new DevModeModInfo(id, name, ver));
+            list.Add(new DevModeModInfo(id, name, ver, ModRuntime.CopyDependencies(man)));
         }
 
         return list;
@@ -58,4 +62,18 @@ internal sealed class ModCatalog : IModCatalog {
 /// <summary>Game-backed mod catalog; safe to call from main thread after mod load.</summary>
 internal static class ModRuntime {
     public static IModCatalog Catalog => ModCatalog.Default;
+
+    internal static string[] CopyDependencies(ModManifest manifest) {
+        var deps = manifest.dependencies;
+        if (deps == null || deps.Count == 0)
+            return Array.Empty<string>();
+
+        var list = new List<string>(deps.Count);
+        foreach (var dep in deps) {
+            if (!string.IsNullOrEmpty(dep))
+                list.Add(dep);
+        }
+
+        return list.Count == 0 ? Array.Empty<string>() : list.ToArray();
+    }
 }

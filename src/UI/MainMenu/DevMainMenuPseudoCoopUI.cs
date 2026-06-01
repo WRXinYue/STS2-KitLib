@@ -264,4 +264,6 @@ internal static class DevMainMenuPseudoCoopUI {
         chk.AddThemeFontSizeOverride("font_size", 12);
         return chk;
     }
+
+    public static void HideAnywhere() => DevMainMenuOverlay.RemoveAnywhere(OverlayName);
 }

@@ -90,6 +90,12 @@ public sealed class DevModeSettings {
     /// <see langword="null"/> / <see langword="true"/> = intro dismissed.
     /// </summary>
     public bool? RailIntroDismissed { get; set; }
+
+    /// <summary>Back up active profile progress when the loaded mod set fingerprint changes.</summary>
+    public bool AutoBackupProgressOnModChange { get; set; } = true;
+
+    /// <summary>Warn when progress.save still contains data from mods removed since last launch.</summary>
+    public bool WarnOnRemovedModProgressResidue { get; set; } = true;
 }
 
 public static class ThemeNames {

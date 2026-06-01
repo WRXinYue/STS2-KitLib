@@ -141,6 +141,16 @@ public static class SettingsStore {
         Save();
     }
 
+    public static void SetAutoBackupProgressOnModChange(bool enabled) {
+        Current.AutoBackupProgressOnModChange = enabled;
+        Save();
+    }
+
+    public static void SetWarnOnRemovedModProgressResidue(bool enabled) {
+        Current.WarnOnRemovedModProgressResidue = enabled;
+        Save();
+    }
+
     public static void Save() {
         for (int attempt = 0; attempt < 3; attempt++) {
             try {

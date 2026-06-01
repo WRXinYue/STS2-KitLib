@@ -28,7 +28,7 @@ internal static class DevMainMenuOverlay {
         backdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         backdrop.GuiInput += e => {
             if (e is InputEventMouseButton { Pressed: true })
-                onClose();
+                Callable.From(onClose).CallDeferred();
         };
         root.AddChild(backdrop);
 
@@ -44,10 +44,16 @@ internal static class DevMainMenuOverlay {
     }
 
     internal static void Remove(Node attachRoot, string rootName) =>
-        attachRoot.GetNodeOrNull<Control>(rootName)?.QueueFree();
+        RemoveAnywhere(rootName);
 
     internal static void RemoveAnywhere(string rootName) {
         var tree = Engine.GetMainLoop() as SceneTree;
-        tree?.Root.FindChild(rootName, recursive: true, owned: false)?.QueueFree();
+        var root = tree?.Root;
+        if (root == null)
+            return;
+
+        // QueueFree is deferred; never loop FindChild — the node stays in-tree until end of frame.
+        foreach (var node in root.FindChildren(rootName, recursive: true, owned: false))
+            node.QueueFree();
     }
 }

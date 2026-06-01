@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Progress protection** — On mod set fingerprint change, DevMode backs up the active profile's `progress.save` (and optional related saves) under `mod_data/DevMode/profile_backups/` before vanilla save filtering can run. Optional warn-only log when progress still references unloaded mods. Toggle under **Settings → Progress protection** or the title-screen **DEVMODE → Progress protection** panel (status + recent backups + one-click restore). Each backup row has a **Details** button to inspect account progress, per-character stats, epochs, compendium counts, and backup metadata.
+
+### Changed
+
+- **DEVMODE main menu** — **Logs** and **Mod Feedback** are grouped under **Diagnostics**; **Progress protection** opens a dedicated panel from the title screen.
+
 ### Fixed
 
 - **DEVMODE main menu** — Re-entering the title-screen DEVMODE submenu after Mod Feedback and save/load no longer stacks stock menu buttons with dev entries; overlays are torn down on hide. (Thanks @Crimson707707 for the report.)
