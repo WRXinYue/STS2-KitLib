@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-02
+
 ### Added
 
 - **Crash recovery prompts** — When an unhandled error occurs in-game, DevMode shows a dialog to view logs or export a feedback ZIP (prefilled with crash summary). If the game exits abnormally, the main menu offers the same on next launch. Toggle under **Settings → Crash recovery**. Session markers live under `mod_data/DevMode/instances/{pid}/`.

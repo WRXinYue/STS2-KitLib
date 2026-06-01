@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-06-02
+
 ### Added
 
 - **进度保护** — mod 集指纹变化时，在 vanilla 存档过滤写盘前，将当前 profile 的 `progress.save`（及可选相关存档）备份到 `mod_data/DevMode/profile_backups/`；可选在 progress 仍含已卸载 mod 数据时仅写日志警告。可在 **设置 → 进度保护** 或标题画面 **DEVMODE → 进度保护** 面板中开关、查看状态与最近备份，并一键恢复 progress。每条备份可点 **详情** 查看账号进度、各角色统计、epochs、图鉴数量及备份元数据。
