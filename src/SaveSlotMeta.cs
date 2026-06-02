@@ -24,6 +24,9 @@ internal sealed class SaveSlotMeta {
     /// <summary>Loaded mods at save time, each entry is "Name vX.Y.Z".</summary>
     public List<string> ModList { get; set; } = new();
 
+    /// <summary>Optional AI/human debug label (e.g. "combat:ironclad-act1-boss"). Not shown in slot UI title.</summary>
+    public string DebugNotes { get; set; } = "";
+
     public string FormattedTime => SaveTime > 0
         ? DateTimeOffset.FromUnixTimeSeconds(SaveTime).LocalDateTime.ToString("MM/dd HH:mm")
         : "";

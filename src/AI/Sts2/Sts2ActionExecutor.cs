@@ -164,7 +164,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             }
             case TargetType.AnyPlayer:
             case TargetType.Self:
-                return card.IsValidTarget(player.Creature) ? player.Creature : null;
+                if (card.IsValidTarget(player.Creature))
+                    return player.Creature;
+                return player.Creature.IsAlive ? player.Creature : null;
             default:
                 return null;
         }

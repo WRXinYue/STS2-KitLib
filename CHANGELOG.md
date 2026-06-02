@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Dev sidebar keyboard shortcuts** — Toggle the sidebar, close the active panel, switch tabs, or lock the rail from the keyboard. Rebind under **Settings → Keyboard shortcuts** (conflicts with in-game shortcuts are rejected).
+- **Quick save / load** — **F5** quick-saves and **F9** quick-loads the current run (slot 0) during a run; rebind in **Settings → Keyboard shortcuts**. The **Save / Load** panel shows a dedicated **Quick Save** row at the top.
+- **Combat checkpoint nodes** — During combat, DevMode auto-saves checkpoints at combat start and each player turn start (with a `.combat.bin` sidecar for in-fight restore of HP, piles, etc., without a full `LoadRun`). **F8** replays from combat start, **F6** from the current turn start (rebind in **Settings → Keyboard shortcuts**). The **Save / Load** panel lists **This combat** nodes separately from quick save.
 
 ### Fixed
 

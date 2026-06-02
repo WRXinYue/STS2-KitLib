@@ -3,6 +3,7 @@ using DevMode.CombatStats;
 using DevMode.EnemyIntent;
 using DevMode.Feedback;
 using DevMode.Interop;
+using DevMode.Mcp;
 using DevMode.Multiplayer.Cheat;
 using DevMode.Patches;
 using DevMode.Scripts;
@@ -41,6 +42,7 @@ public class MainFile {
 
         ScriptManager.Initialize();
         ScriptBridge.Start();
+        McpBridge.Start();
 
         FrameworkBridge.Initialize();
         AiPlayInitializer.Initialize();

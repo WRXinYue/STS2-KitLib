@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DevMode;
+using DevMode.Combat;
+using DevMode.Settings;
 using Godot;
 
 namespace DevMode.UI;
@@ -53,9 +56,18 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
     }
 
     public override void _Ready() {
-        var ids = SaveSlotManager.GetAllSlotIds();
+        if (SaveSlotManager.HasQuickSnapshot) {
+            SelectSlot(SaveSlotManager.QuickSlotId);
+            return;
+        }
+
+        var ids = SaveSlotManager.GetAllSlotIds()
+            .Where(id => id != SaveSlotManager.QuickSlotId)
+            .ToList();
         if (ids.Count > 0)
             SelectSlot(ids[0]);
+        else if (_isSaveMode)
+            SelectSlot(SaveSlotManager.QuickSlotId);
     }
 
     public override void _ExitTree() {
@@ -204,17 +216,236 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             ((Node)child).QueueFree();
         _slotCards.Clear();
 
-        var ids = SaveSlotManager.GetAllSlotIds();
+        var quickCard = BuildQuickSlotCard();
+        _slotList.AddChild(quickCard);
+        _slotCards[SaveSlotManager.QuickSlotId] = quickCard;
 
-        if (ids.Count == 0 && _isSaveMode) {
-            // In save mode with no slots, automatically create a new one
+        _slotList.AddChild(BuildCombatSessionSection());
+
+        var ids = SaveSlotManager.GetAllSlotIds()
+            .Where(id => id != SaveSlotManager.QuickSlotId)
+            .ToList();
+
+        if (ids.Count == 0 && _isSaveMode)
             ids.Add(SaveSlotManager.NextSlotId());
-        }
 
         foreach (var id in ids) {
             var card = BuildSlotCard(id);
             _slotList.AddChild(card);
             _slotCards[id] = card;
+        }
+    }
+
+    private PanelContainer BuildQuickSlotCard() {
+        int slotId = SaveSlotManager.QuickSlotId;
+        var meta = SaveSlotManager.LoadMeta(slotId);
+        bool empty = meta == null;
+
+        var card = new PanelContainer {
+            CustomMinimumSize = new Vector2(228, 0),
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+
+        var normalStyle = MakeSlotCardStyle(false);
+        var hoverStyle = MakeSlotCardStyle(false, hover: true);
+        card.AddThemeStyleboxOverride("panel", normalStyle);
+
+        card.MouseEntered += () => {
+            if (_selectedSlot != slotId)
+                card.AddThemeStyleboxOverride("panel", hoverStyle);
+        };
+        card.MouseExited += () => {
+            if (_selectedSlot != slotId)
+                card.AddThemeStyleboxOverride("panel", normalStyle);
+        };
+
+        card.GuiInput += evt => {
+            if (evt is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                SelectSlot(slotId);
+            if (evt is InputEventMouseButton { DoubleClick: true, ButtonIndex: MouseButton.Left }) {
+                SelectSlot(slotId);
+                if (_confirmBtn is not { Disabled: true })
+                    OnConfirmPressed();
+            }
+        };
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 4);
+
+        var topRow = new HBoxContainer();
+        var nameLabel = new Label {
+            Text = SaveSlotManager.QuickSlotDisplayName,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            ClipText = true,
+        };
+        nameLabel.AddThemeFontSizeOverride("font_size", 14);
+        nameLabel.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        topRow.AddChild(nameLabel);
+
+        if (!empty) {
+            var timeLabel = new Label {
+                Text = meta!.FormattedTime,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+            timeLabel.AddThemeFontSizeOverride("font_size", 11);
+            timeLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            topRow.AddChild(timeLabel);
+        }
+        vbox.AddChild(topRow);
+
+        var hintLabel = new Label { Text = FormatQuickHint() };
+        hintLabel.AddThemeFontSizeOverride("font_size", 11);
+        hintLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        vbox.AddChild(hintLabel);
+
+        if (empty) {
+            var emptyLabel = new Label {
+                Text = I18N.T("snapshot.empty", "(empty)"),
+                HorizontalAlignment = HorizontalAlignment.Center,
+            };
+            emptyLabel.AddThemeFontSizeOverride("font_size", 12);
+            emptyLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            vbox.AddChild(emptyLabel);
+        }
+        else {
+            var statsRow = new HBoxContainer();
+            statsRow.AddThemeConstantOverride("separation", 12);
+
+            var floorLabel = new Label {
+                Text = I18N.T("snapshot.floorShort", "F{0}", meta!.TotalFloor),
+            };
+            floorLabel.AddThemeFontSizeOverride("font_size", 12);
+            floorLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            statsRow.AddChild(floorLabel);
+
+            var hpLabel = new Label {
+                Text = I18N.T("snapshot.hpShort", "{0}/{1}", meta.Hp, meta.MaxHp),
+            };
+            hpLabel.AddThemeFontSizeOverride("font_size", 12);
+            hpLabel.AddThemeColorOverride("font_color", HpColor(meta.Hp, meta.MaxHp));
+            statsRow.AddChild(hpLabel);
+
+            var goldLabel = new Label {
+                Text = I18N.T("snapshot.goldShort", "{0}g", meta.Gold),
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                HorizontalAlignment = HorizontalAlignment.Right,
+            };
+            goldLabel.AddThemeFontSizeOverride("font_size", 12);
+            goldLabel.AddThemeColorOverride("font_color", DevModeTheme.RarityRare);
+            statsRow.AddChild(goldLabel);
+            vbox.AddChild(statsRow);
+
+            vbox.AddChild(BuildMiniHpBar(meta.Hp, meta.MaxHp));
+        }
+
+        card.AddChild(vbox);
+        return card;
+    }
+
+    private static string FormatQuickHint() {
+        var saveKey = SettingsStore.GetHotkeyBinding(HotkeyActionId.QuickSave).FormatLabel();
+        var loadKey = SettingsStore.GetHotkeyBinding(HotkeyActionId.QuickLoad).FormatLabel();
+        return I18N.T("snapshot.quickHint", "{0} save · {1} load", saveKey, loadKey);
+    }
+
+    private Control BuildCombatSessionSection() {
+        var section = new VBoxContainer();
+        section.AddThemeConstantOverride("separation", 4);
+
+        var title = new Label {
+            Text = I18N.T("snapshot.combatSessionTitle", "This combat"),
+        };
+        title.AddThemeFontSizeOverride("font_size", 13);
+        title.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        section.AddChild(title);
+
+        var hint = new Label { Text = FormatCombatSessionHint() };
+        hint.AddThemeFontSizeOverride("font_size", 11);
+        hint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        section.AddChild(hint);
+
+        var nodes = CombatCheckpointStore.GetNodes()
+            .OrderByDescending(n => n.SaveTime)
+            .ToList();
+
+        if (nodes.Count == 0) {
+            var empty = new Label {
+                Text = I18N.T("snapshot.combatSessionEmpty", "(none yet)"),
+            };
+            empty.AddThemeFontSizeOverride("font_size", 12);
+            empty.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            section.AddChild(empty);
+            return section;
+        }
+
+        foreach (var node in nodes)
+            section.AddChild(BuildCombatNodeRow(node));
+
+        return section;
+    }
+
+    private static string FormatCombatSessionHint() {
+        var combatKey = SettingsStore.GetHotkeyBinding(HotkeyActionId.QuickReplayCombat).FormatLabel();
+        var turnKey = SettingsStore.GetHotkeyBinding(HotkeyActionId.QuickReplayTurn).FormatLabel();
+        return I18N.T(
+            "snapshot.combatSessionHint",
+            "{0} replay combat · {1} replay turn",
+            combatKey, turnKey);
+    }
+
+    private Control BuildCombatNodeRow(CombatCheckpointNode node) {
+        var row = new PanelContainer {
+            CustomMinimumSize = new Vector2(228, 0),
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        row.AddThemeStyleboxOverride("panel", MakeSlotCardStyle(false));
+
+        if (!_isSaveMode) {
+            var hoverStyle = MakeSlotCardStyle(false, hover: true);
+            row.MouseEntered += () => row.AddThemeStyleboxOverride("panel", hoverStyle);
+            row.MouseExited += () => row.AddThemeStyleboxOverride("panel", MakeSlotCardStyle(false));
+            row.GuiInput += evt => {
+                if (evt is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+                    OnCombatNodePressed(node.Id);
+            };
+        }
+
+        var inner = new HBoxContainer();
+        inner.AddThemeConstantOverride("separation", 8);
+
+        var label = new Label {
+            Text = node.Label,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            ClipText = true,
+        };
+        label.AddThemeFontSizeOverride("font_size", 12);
+        label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        inner.AddChild(label);
+
+        var time = new Label {
+            Text = CombatCheckpointStore.FormatNodeTime(node.SaveTime),
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+        time.AddThemeFontSizeOverride("font_size", 11);
+        time.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        inner.AddChild(time);
+
+        row.AddChild(inner);
+        return row;
+    }
+
+    private void OnCombatNodePressed(string nodeId) {
+        if (_isSaveMode)
+            return;
+        if (!CombatCheckpointStore.TryLoadNodeById(nodeId))
+            return;
+
+        if (_embedded) {
+            if (_onEmbeddedAfterLoadClose != null)
+                Callable.From(_onEmbeddedAfterLoadClose).CallDeferred();
+        }
+        else {
+            SaveSlotUI.Hide();
         }
     }
 
@@ -504,14 +735,21 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         }
 
         if (empty) {
+            var title = slotId == SaveSlotManager.QuickSlotId
+                ? SaveSlotManager.QuickSlotDisplayName
+                : I18N.T("snapshot.emptySlot", "Empty Save");
             SetDetail(
-                I18N.T("snapshot.emptySlot", "Empty Save"),
+                title,
                 "",
                 I18N.T("snapshot.floorDash", "Floor —"),
                 I18N.T("snapshot.hpDash", "HP —"),
                 I18N.T("snapshot.goldDash", "Gold —"),
                 "", "", "", "");
-            if (_nameInput != null) _nameInput.Text = "";
+            if (_nameInput != null) {
+                _nameInput.Text = slotId == SaveSlotManager.QuickSlotId && _isSaveMode
+                    ? SaveSlotManager.QuickSlotDisplayName
+                    : "";
+            }
             return;
         }
 

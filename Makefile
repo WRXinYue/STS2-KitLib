@@ -15,6 +15,32 @@ endif
 VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('DevMode.json',encoding='utf-8'))['version'])")
 
 MOD_MAIN := DevMode.csproj
+MCP_PROJECT := tools/DevMode.Mcp/DevMode.Mcp.csproj
+
+# Runtime identifier for self-contained tool publish (override: make build-tools TOOLS_RID=linux-x64)
+ifeq ($(OS),Windows_NT)
+TOOLS_RID ?= win-x64
+else
+UNAME_S := $(shell uname -s 2>/dev/null)
+UNAME_M := $(shell uname -m 2>/dev/null)
+ifeq ($(UNAME_S),Darwin)
+ifeq ($(UNAME_M),arm64)
+TOOLS_RID ?= osx-arm64
+else
+TOOLS_RID ?= osx-x64
+endif
+else
+ifeq ($(UNAME_M),aarch64)
+TOOLS_RID ?= linux-arm64
+else
+TOOLS_RID ?= linux-x64
+endif
+endif
+endif
+
+TOOLS_PUBLISH_DIR := build/tools/DevMode.Mcp/$(TOOLS_RID)/publish
+TOOLS_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(TOOLS_PUBLISH_DIR)
+DEPLOY_TOOLS := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployToolsToMods -p:DeployToolsFromRepoBuild=true -p:ToolsPublishDir=$(TOOLS_PUBLISH_DIR) -p:ToolsRid=$(TOOLS_RID)
 
 # Use -p: (not /p:) so Git Bash on Windows does not treat /p:... as a MSYS path.
 DEPLOY_TO_GAME := -p:DeployToGame=true
@@ -30,7 +56,7 @@ ZIP_NAME_BETA := build/DevMode-v$(VERSION)$(ZIP_BETA_TAG).zip
 
 .PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip clean \
         build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta upload-all-beta \
-        launch launch-beta sync-launch sync-beta-run upload-github upload-nexus upload-nuget
+        launch launch-beta sync-launch sync-beta-run dev-session compile-tools build-tools deploy-tools sync-tools upload-github upload-nexus upload-nuget
 
 help:
 	@echo "DevMode — targets"
@@ -42,12 +68,18 @@ help:
 	@echo ""
 	@echo "  sync         build to build/DevMode/, then copy into game mods/DevMode/ only"
 	@echo "  sync-launch  sync + launch game"
+	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
 	@echo "  sync-framework-mods  copy DevMode NuGet STS2-RitsuLib into game (overwrites other RitsuLib builds)"
 	@echo "  launch       launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)"
 	@echo "  build        publish to build/DevMode/ only (no game)"
 	@echo "  deploy       copy build/DevMode/ into game mods/DevMode/ (no republish)"
 	@echo "  compile      dotnet build to game mods (no .pck)"
 	@echo "  pck          dotnet publish to game mods + .pck"
+	@echo ""
+	@echo "  compile-tools dotnet build DevMode.Mcp Release (local MCP / Cursor)"
+	@echo "  build-tools  publish DevMode.Mcp self-contained exe to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
+	@echo "  deploy-tools copy MCP exe into game mods/DevMode/tools/ (requires make init)"
+	@echo "  sync-tools   build-tools + deploy-tools"
 	@echo ""
 	@echo "  sync-beta         build-beta + deploy-beta (STS2 Steam beta; Sts2Dir = beta install)"
 	@echo "  sync-beta-launch  sync-beta + launch game (same as LAUNCH=1 make sync-beta)"
@@ -117,6 +149,20 @@ launch launch-beta:
 	$(PYTHON) scripts/launch_sts2.py
 
 sync-launch: sync launch
+
+dev-session:
+	$(PYTHON) scripts/dev_session.py --sync --launch --wait-bridge 120
+
+compile-tools:
+	$(DOTNET) build $(MCP_PROJECT) -c Release
+
+build-tools:
+	$(DOTNET) publish $(MCP_PROJECT) $(TOOLS_PUBLISH_FLAGS)
+
+deploy-tools:
+	$(DEPLOY_TOOLS)
+
+sync-tools: build-tools deploy-tools
 
 compile-beta: deps
 	$(DOTNET) build $(DEPLOY_TO_GAME) $(BETA_FLAG) $(MOD_MAIN)

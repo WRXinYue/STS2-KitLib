@@ -12,6 +12,10 @@ internal static class DevPanelHotkeySettingsUI {
         (HotkeyActionId.NextTab, "hotkeys.nextTab", "Next tab"),
         (HotkeyActionId.PrevTab, "hotkeys.prevTab", "Previous tab"),
         (HotkeyActionId.LockRail, "hotkeys.lockRail", "Lock sidebar"),
+        (HotkeyActionId.QuickSave, "hotkeys.quickSave", "Quick save"),
+        (HotkeyActionId.QuickLoad, "hotkeys.quickLoad", "Quick load"),
+        (HotkeyActionId.QuickReplayCombat, "hotkeys.quickReplayCombat", "Replay combat"),
+        (HotkeyActionId.QuickReplayTurn, "hotkeys.quickReplayTurn", "Replay turn"),
     };
 
     private static readonly Dictionary<string, Button> BindingButtons = new(StringComparer.Ordinal);

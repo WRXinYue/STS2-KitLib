@@ -1,5 +1,6 @@
 using DevMode.Feedback;
 using DevMode.Hotkeys;
+using DevMode.Mcp;
 using DevMode.Patches;
 using DevMode.Scripts;
 using DevMode.Settings;
@@ -12,10 +13,13 @@ namespace DevMode;
 /// Drives RuntimeStatModifiers, AssetWarmupService, and script hot-reload each frame.
 /// </summary>
 internal partial class DevModeProcessNode : Node {
+    internal static DevModeProcessNode? Instance { get; private set; }
+
     private double _heartbeatAccum;
     private double _logFlushAccum;
 
     public override void _EnterTree() {
+        Instance = this;
         ProcessPriority = 128;
         SetProcessInput(true);
     }
@@ -23,7 +27,9 @@ internal partial class DevModeProcessNode : Node {
     public override void _Input(InputEvent @event) {
         if (HotkeyCapture.TryCapture(@event, GetViewport()))
             return;
-        DevPanelHotkeys.TryHandle(@event, GetViewport());
+        if (DevPanelHotkeys.TryHandle(@event, GetViewport()))
+            return;
+        QuickSlHotkeys.TryHandle(@event, GetViewport());
     }
 
     public override void _Process(double delta) {
@@ -44,7 +50,10 @@ internal partial class DevModeProcessNode : Node {
     }
 
     public override void _ExitTree() {
+        if (Instance == this)
+            Instance = null;
         CrashRecoveryStore.MarkSessionCleanExit();
+        McpBridge.Shutdown();
         InstanceLogWriter.Shutdown();
         DevModeInstanceRegistry.Unregister();
     }

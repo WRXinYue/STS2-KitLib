@@ -180,27 +180,62 @@ public static class SettingsStore {
             Current.HotkeyPrevTab = HotkeyDefaults.PrevTab.Clone();
         if (Current.HotkeyLockRail.KeyCode == 0)
             Current.HotkeyLockRail = HotkeyDefaults.LockRail.Clone();
+        if (Current.HotkeyQuickSave.KeyCode == 0)
+            Current.HotkeyQuickSave = HotkeyDefaults.QuickSave.Clone();
+        if (Current.HotkeyQuickLoad.KeyCode == 0)
+            Current.HotkeyQuickLoad = HotkeyDefaults.QuickLoad.Clone();
+        if (Current.HotkeyQuickReplayCombat.KeyCode == 0)
+            Current.HotkeyQuickReplayCombat = HotkeyDefaults.QuickReplayCombat.Clone();
+        if (Current.HotkeyQuickReplayTurn.KeyCode == 0)
+            Current.HotkeyQuickReplayTurn = HotkeyDefaults.QuickReplayTurn.Clone();
     }
 
     private static void ApplyHotkeySettingsMigration() {
-        if (Current.HotkeySettingsVersion >= 1)
-            return;
+        if (Current.HotkeySettingsVersion < 1) {
+            var legacyToggle = new HotkeyBinding { KeyCode = (int)Godot.Key.D, Ctrl = true, Shift = true };
+            if (Current.HotkeyToggleRail.EqualsBinding(legacyToggle))
+                Current.HotkeyToggleRail = HotkeyDefaults.ToggleRail.Clone();
 
-        var legacyToggle = new HotkeyBinding { KeyCode = (int)Godot.Key.D, Ctrl = true, Shift = true };
-        if (Current.HotkeyToggleRail.EqualsBinding(legacyToggle))
-            Current.HotkeyToggleRail = HotkeyDefaults.ToggleRail.Clone();
+            foreach (var actionId in HotkeyActionId.All) {
+                var binding = Current.GetHotkey(actionId);
+                if (actionId == HotkeyActionId.ClosePanel && binding.KeyCode == (int)Godot.Key.Escape)
+                    continue;
+                if (!HotkeyBinding.UsesGameShortcutKey(binding.Keycode))
+                    continue;
+                Current.SetHotkey(actionId, HotkeyDefaults.For(actionId));
+            }
 
-        foreach (var actionId in HotkeyActionId.All) {
-            var binding = Current.GetHotkey(actionId);
-            if (actionId == HotkeyActionId.ClosePanel && binding.KeyCode == (int)Godot.Key.Escape)
-                continue;
-            if (!HotkeyBinding.UsesGameShortcutKey(binding.Keycode))
-                continue;
-            Current.SetHotkey(actionId, HotkeyDefaults.For(actionId));
+            Current.HotkeySettingsVersion = 1;
+            Save();
         }
 
-        Current.HotkeySettingsVersion = 1;
-        Save();
+        if (Current.HotkeySettingsVersion < 2) {
+            if (Current.HotkeyQuickSave.KeyCode == 0)
+                Current.HotkeyQuickSave = HotkeyDefaults.QuickSave.Clone();
+            if (Current.HotkeyQuickLoad.KeyCode == 0)
+                Current.HotkeyQuickLoad = HotkeyDefaults.QuickLoad.Clone();
+            Current.HotkeySettingsVersion = 2;
+            Save();
+        }
+
+        if (Current.HotkeySettingsVersion < 3) {
+            if (Current.HotkeyQuickRestartTurn.KeyCode == 0)
+                Current.HotkeyQuickRestartTurn = HotkeyDefaults.QuickReplayCombat.Clone();
+            Current.HotkeySettingsVersion = 3;
+            Save();
+        }
+
+        if (Current.HotkeySettingsVersion < 4) {
+            if (Current.HotkeyQuickReplayCombat.KeyCode == 0) {
+                Current.HotkeyQuickReplayCombat = Current.HotkeyQuickRestartTurn.KeyCode != 0
+                    ? Current.HotkeyQuickRestartTurn.Clone()
+                    : HotkeyDefaults.QuickReplayCombat.Clone();
+            }
+            if (Current.HotkeyQuickReplayTurn.KeyCode == 0)
+                Current.HotkeyQuickReplayTurn = HotkeyDefaults.QuickReplayTurn.Clone();
+            Current.HotkeySettingsVersion = 4;
+            Save();
+        }
     }
 
     public static void SetShowHiddenCards(bool enabled) {

@@ -2,7 +2,7 @@
   <Import Project="local.props" Condition="Exists('local.props')" />
 
   <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);packages/**;**/.godot/**;icons/**;extern/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);packages/**;**/.godot/**;icons/**;extern/**;tools/**</DefaultItemExcludes>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>true</ImplicitUsings>
     <LangVersion>12.0</LangVersion>
@@ -204,5 +204,25 @@
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).pck" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).pck')" />
     <Copy SourceFiles="@(RepoEditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <!-- Copy repo-built MCP stdio proxy into mods/DevMode/tools/ (make deploy-tools) -->
+  <PropertyGroup>
+    <ToolsRid Condition="'$(ToolsRid)' == ''">win-x64</ToolsRid>
+    <ToolsPublishDir Condition="'$(ToolsPublishDir)' == ''">$(RepoRoot)build/tools/DevMode.Mcp/$(ToolsRid)/publish</ToolsPublishDir>
+  </PropertyGroup>
+
+  <Target Name="DeployToolsToMods" DependsOnTargets="CheckLocalProps">
+    <Error Condition="'$(DeployToolsFromRepoBuild)' != 'true'" Text="Set DeployToolsFromRepoBuild=true (e.g. make deploy-tools)." />
+    <PropertyGroup>
+      <_ToolsMcpExe Condition="'$(OS)' == 'Windows_NT'">$(ToolsPublishDir)\DevMode.Mcp.exe</_ToolsMcpExe>
+      <_ToolsMcpExe Condition="'$(OS)' != 'Windows_NT'">$(ToolsPublishDir)/DevMode.Mcp</_ToolsMcpExe>
+      <_ToolsMcpDest Condition="'$(OS)' == 'Windows_NT'">$(ModsDir)\tools\DevMode.Mcp.exe</_ToolsMcpDest>
+      <_ToolsMcpDest Condition="'$(OS)' != 'Windows_NT'">$(ModsDir)/tools/DevMode.Mcp</_ToolsMcpDest>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(_ToolsMcpExe)')" Text="MCP tool missing: $(_ToolsMcpExe). Run make build-tools first." />
+    <MakeDir Directories="$(ModsDir)/tools" />
+    <Copy SourceFiles="$(_ToolsMcpExe)" DestinationFiles="$(_ToolsMcpDest)" SkipUnchangedFiles="true" />
+    <Message Text="Deployed MCP tool to $(_ToolsMcpDest)" Importance="high" />
   </Target>
 </Project>

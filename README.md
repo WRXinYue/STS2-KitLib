@@ -35,6 +35,7 @@ Install from [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) or bu
 - **Hooks** — Trigger → Condition → Action rules (e.g. add a card on combat start, apply a power on draw)
 - **Scripts** — SpireScratch visual scripting (Blockly); live reload via WebSocket
 - **AI Host** — Rule-based bot for **solo** runs (map, combat, rewards). Disabled during multiplayer hand-play to avoid desync; use Pseudo Co-op / LAN presets instead (see below)
+- **MCP** — Expose game state and actions to MCP clients while the game is running — see **[MCP](#mcp)**
 
 ### Developer & debug
 
@@ -206,6 +207,111 @@ These features are **opt-in** from DevPanel → **AI Host**. They do not change 
 **Dual-instance LAN (recommended):** launch host + client on the same machine → presets apply automatically; host logs `LAN host preset applied`, client logs `AFK client enabled`.
 
 Detailed architecture, verification checklist, and desync history: **[docs/lan-host-drive-afk.md](./docs/lan-host-drive-afk.md)** · [docs index](./docs/README.md)
+
+## MCP
+
+Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Claude Desktop, IDE MCP plugins, etc.) to a running STS2 session with DevMode loaded. DevMode starts an in-game HTTP bridge on port **9877**; the stdio proxy in `tools/DevMode.Mcp` forwards MCP messages to that bridge.
+
+**Requires:** Slay the Spire 2 running with **DevMode** loaded (start the game before or keep it running while the client connects).
+
+### Tools
+
+- **`get_game_state`** — Current run snapshot (HP, gold, deck, combat, enemies, …)
+- **`combat_action`** — Play a card, end turn, or use a potion
+- **`map_action`** — Map node, rewards, events, shop, rest
+- **`dev_get_session`** — Run active, game phase, dev-run flag, blocking startup prompts
+- **`dev_list_save_slots`** — Save slots with metadata and `debugNotes` for AI selection
+- **`dev_tag_save_slot`** — Set `debugNotes` on a slot (e.g. `combat:ironclad-act1-boss`)
+- **`dev_load_save_slot`** — Load a DevMode save (async; poll `dev_get_session`)
+- **`dev_start_test_run`** — New test run from main menu (opens character select; optional seed)
+- **`dev_list_cards`** — List cards in deck / hand / draw / discard / exhaust (or all piles)
+- **`dev_add_card`** — Add a card to a pile (`card_id`, `target`, `duration`, `upgrade_levels`)
+- **`dev_remove_card`** — Remove a card by `card_id` or `pile_index` from a pile
+- **`dev_list_monsters`** — List monster model IDs (for `dev_add_monster`)
+- **`dev_list_enemies`** — List enemies currently in combat (index, HP, monsterId)
+- **`dev_add_monster`** — Add a monster mid-combat (DevMode enemy panel / `dmenemy spawn`)
+- **`dev_set_cheat`** — Toggle cheats or set multipliers (`freeze_enemies`, `damage_multiplier`, …)
+- **`dev_set_stat`** — Set gold/energy/HP values or enable stat locks
+
+More detail: **[tools/DevMode.Mcp/README.md](./tools/DevMode.Mcp/README.md)**
+
+### Agent debug loop
+
+Bootstrap a session (deploy mod, launch game, wait for bridge):
+
+```bash
+make dev-session
+```
+
+Typical MCP agent flow after the bridge is ready:
+
+1. **`dev_list_save_slots`** — Pick a slot by `debugNotes`, `name`, floor, or character.
+2. **`dev_load_save_slot`** — Load the chosen slot, **or** **`dev_start_test_run`** when no suitable save exists (character select is manual in this MVP).
+3. Poll **`dev_get_session`** every 1–2s until `runActive` is `true` (load is async; allow up to ~30s).
+4. **`get_game_state`** + **`combat_action`** / **`map_action`** to drive the run.
+
+Before a debugging session, tag saves with **`dev_tag_save_slot`** so agents can pick the right snapshot later. Suggested `debugNotes` format: `combat:ironclad-act1-boss`, `map:shop-test`.
+
+**Known blockers**
+
+- Startup **crash recovery** or **progress loss** prompts must be dismissed manually (`blockingPrompts` in `dev_get_session`).
+- `GET /health` can respond while the Godot main thread is stuck; if MCP tool calls time out, stop and investigate.
+- After changing mod code, run **`make sync`** and restart the game.
+
+**Not in this MVP:** auto character select, hang watchdog (kill/restart/reload), or autonomous code fixes.
+
+### Client configuration
+
+Add a **`devmode`** entry under `mcpServers` in your MCP client config (stdio transport). This is **one server among many** — keep your existing entries and only add or update the `devmode` block. Exact config file path depends on the client; see its MCP documentation.
+
+Build the proxy once (or let the platform launcher scripts build it for you):
+
+```bash
+dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
+```
+
+Paste the `devmode` block below into your existing MCP client config (merge with your other `mcpServers` entries).
+
+**Cross-platform development** (`dotnet exec`; paths are relative to the repo / workspace root):
+
+```json
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "dotnet",
+      "args": [
+        "exec",
+        "tools/DevMode.Mcp/bin/Release/net8.0/DevMode.Mcp.dll",
+        "--",
+        "--port",
+        "9877"
+      ]
+    },
+    "your-other-mcp-server": {
+      "command": "...",
+      "args": ["..."]
+    }
+  }
+}
+```
+
+Requires **.NET 8** runtime (`dotnet --list-runtimes` should include `Microsoft.NETCore.App 8.x`).
+
+**Optional launchers** (auto-build if the DLL is missing):
+
+- Windows: [`.cursor/run-devmode-mcp.bat`](./.cursor/run-devmode-mcp.bat) — `"command": "cmd"`, `"args": ["/c", ".cursor\\run-devmode-mcp.bat"]`
+- macOS / Linux: [`.cursor/run-devmode-mcp.sh`](./.cursor/run-devmode-mcp.sh) — `"command": "bash"`, `"args": [".cursor/run-devmode-mcp.sh"]` (run `chmod +x .cursor/run-devmode-mcp.sh` once)
+
+**Published proxy** (after `dotnet publish`; adjust the path):
+
+```json
+"devmode": {
+  "command": "C:/path/to/DevMode.Mcp.exe",
+  "args": ["--port", "9877"]
+}
+```
+
+On macOS / Linux, point `command` at the published binary (no `.exe`). Custom port: pass `--port` on the proxy **and** change `McpConfig.Port` in the mod if you rebuild DevMode.
 
 ## Contributing
 

@@ -64,12 +64,6 @@ Megacrit **beta 合入 stable** 或 bump 游戏版本后过一遍：
 - **beta 包**：`Sts2Beta=true` + `make sync-beta`，对照 beta 安装目录源码。
 - 两套都要测：**BYRDONIS_ELITE（或任意无槽位战）→ mid-combat 加 Ovicopter → 等下蛋**，确认不抛 `EncounterSlots is null`。
 
-### 4. 对外说明（issue / 群友）
-
-- 用了 DevMode 在无槽位战里塞 Ovicopter → **DevMode 兼容问题**，不是 LustTravel2。
-- 正常地图 `OVICOPTER_NORMAL` → 有 `EncounterSlots`，不是同一条 crash 链。
-- 群友「产卵 + 打死小苍蝇 + 卡死」且**未**用 DevMode 换怪 → 另查 FoxHime 耐力/async，需 log。
-
 ## 参考
 
 - 战斗统计：`src/CombatStats/`、`src/UI/CombatStatsUI*.cs`

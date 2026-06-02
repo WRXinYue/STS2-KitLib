@@ -17,6 +17,8 @@ using MegaCrit.Sts2.Core.Saves;
 namespace DevMode;
 
 internal static class SaveSlotManager {
+    internal const int QuickSlotId = 0;
+
     private static string SnapshotDir => DataPaths.SnapshotsDir;
 
     private static readonly Regex SlotMetaPattern = new(@"^slot(\d+)_meta\.json$", RegexOptions.Compiled);
@@ -43,60 +45,81 @@ internal static class SaveSlotManager {
 
     // ──────── Quick save (slot 0, convenience for hotkey/console) ────────
 
-    public static bool QuickSave() => SaveToSlot(0);
+    internal static string QuickSlotDisplayName =>
+        I18N.T("snapshot.quickName", "Quick Save");
 
-    public static bool QuickLoad() => LoadFromSlot(0);
+    public static bool QuickSave() => SaveToSlot(QuickSlotId, QuickSlotDisplayName);
 
-    public static bool HasQuickSnapshot => HasSlot(0);
+    public static bool QuickLoad() => LoadFromSlot(QuickSlotId);
 
-    // ──────── Slot save / load / delete ────────
+    public static bool HasQuickSnapshot => HasSlot(QuickSlotId);
 
-    public static bool SaveToSlot(int slot, string name = "") {
+    // ──────── Snapshot files (used by combat checkpoints and slots) ────────
+
+    internal static bool SaveSnapshotToFiles(string savePath, string metaPath, string name) {
         var rm = RunManager.Instance;
         var state = rm?.DebugOnlyGetState();
-        if (state == null) return false;
+        if (state == null)
+            return false;
 
         try {
-            Directory.CreateDirectory(SnapshotDir);
+            var dir = Path.GetDirectoryName(savePath);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
 
             var save = rm!.ToSave(state.CurrentRoom);
             var json = SaveManager.ToJson(save);
-            AtomicWrite(SlotPath(slot), json);
+            AtomicWrite(savePath, json);
 
             var meta = CaptureMetaFromState(state, name);
-            AtomicWrite(MetaPath(slot), JsonSerializer.Serialize(meta));
-
-            MainFile.Logger.Info($"SaveSlotManager: Saved to slot {slot}.");
+            AtomicWrite(metaPath, JsonSerializer.Serialize(meta));
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"SaveSlotManager: Save slot {slot} failed: {ex.Message}");
+            MainFile.Logger.Warn($"SaveSlotManager: Save snapshot failed: {ex.Message}");
             return false;
         }
     }
 
-    public static bool LoadFromSlot(int slot) {
+    internal static bool LoadFromFile(string savePath) {
         try {
-            var path = SlotPath(slot);
-            if (!File.Exists(path)) {
-                MainFile.Logger.Warn($"SaveSlotManager: Slot {slot} is empty.");
+            if (!File.Exists(savePath)) {
+                MainFile.Logger.Warn($"SaveSlotManager: Snapshot missing: {savePath}");
                 return false;
             }
 
-            var json = File.ReadAllText(path);
+            var json = File.ReadAllText(savePath);
             var result = SaveManager.FromJson<SerializableRun>(json);
             if (result.SaveData == null) {
-                MainFile.Logger.Warn($"SaveSlotManager: Failed to deserialize slot {slot}.");
+                MainFile.Logger.Warn("SaveSlotManager: Failed to deserialize snapshot.");
                 return false;
             }
 
             return LoadFromSave(result.SaveData);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"SaveSlotManager: Load slot {slot} failed: {ex.Message}");
+            MainFile.Logger.Warn($"SaveSlotManager: Load snapshot failed: {ex.Message}");
             return false;
         }
     }
+
+    internal static SaveSlotMeta? LoadMetaFromFile(string metaPath) {
+        if (!File.Exists(metaPath))
+            return null;
+        try {
+            return JsonSerializer.Deserialize<SaveSlotMeta>(File.ReadAllText(metaPath));
+        }
+        catch {
+            return null;
+        }
+    }
+
+    // ──────── Slot save / load / delete ────────
+
+    public static bool SaveToSlot(int slot, string name = "") =>
+        SaveSnapshotToFiles(SlotPath(slot), MetaPath(slot), name);
+
+    public static bool LoadFromSlot(int slot) => LoadFromFile(SlotPath(slot));
 
     public static bool DeleteSlot(int slot) {
         try {
@@ -135,6 +158,22 @@ internal static class SaveSlotManager {
         meta.Name = name;
         try { AtomicWrite(MetaPath(slot), JsonSerializer.Serialize(meta)); }
         catch (Exception ex) { MainFile.Logger.Warn($"SaveSlotManager: Rename slot {slot} failed: {ex.Message}"); }
+    }
+
+    public static bool SetDebugNotes(int slot, string notes) {
+        if (!HasSlot(slot))
+            return false;
+
+        var meta = LoadMeta(slot) ?? new SaveSlotMeta();
+        meta.DebugNotes = notes ?? "";
+        try {
+            AtomicWrite(MetaPath(slot), JsonSerializer.Serialize(meta));
+            return true;
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"SaveSlotManager: Set debug notes for slot {slot} failed: {ex.Message}");
+            return false;
+        }
     }
 
     // ──────── Helpers ────────
