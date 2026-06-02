@@ -79,8 +79,8 @@ Default port is **9877** (must match `McpConfig.Port` in the mod). Override with
 
 ## Tools
 
-- `get_game_state`
-- `combat_action`
+- `get_game_state` — includes `combat.playerPowers`, `combat.phase`, `combat.isPlayPhaseActive`, `combat.enemies[].index` + `powers[].modelId`
+- `combat_action` — `play_card` success includes `afterState` (unless `queued: true` in pseudo-coop)
 - `map_action`
 - `dev_get_session`
 - `dev_list_save_slots`

@@ -7,7 +7,8 @@ namespace DevMode.Mcp.Tools;
 internal sealed class GameStateTool : IMcpTool {
     public string Name => "get_game_state";
     public string Description =>
-        "Get the current STS2 game state including HP, gold, deck, relics, and combat info.";
+        "Get the current STS2 game state including HP, gold, deck, relics, and combat info. " +
+        "In combat, includes combat.playerPowers (id, modelId, amount), combat.phase, and enemies with index.";
     public string InputSchemaJson => """
     {
         "type": "object",

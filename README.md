@@ -216,8 +216,8 @@ Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Cl
 
 ### Tools
 
-- **`get_game_state`** — Current run snapshot (HP, gold, deck, combat, enemies, …)
-- **`combat_action`** — Play a card, end turn, or use a potion
+- **`get_game_state`** — Current run snapshot (HP, gold, deck, combat, enemies, …). In combat: `playerPowers[]` (`id`, `modelId`, `amount`), `phase` / `isPlayPhaseActive`, `enemies[].index` + `powers[]`
+- **`combat_action`** — Play a card, end turn, or use a potion. `play_card` success returns `afterState` (player powers + enemy HP) unless pseudo-coop queued
 - **`map_action`** — Map node, rewards, events, shop, rest
 - **`dev_get_session`** — Run active, game phase, dev-run flag, blocking startup prompts
 - **`dev_list_save_slots`** — Save slots with metadata and `debugNotes` for AI selection

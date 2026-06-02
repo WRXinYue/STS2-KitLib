@@ -11,12 +11,12 @@ internal sealed class Sts2McpTools {
     public Sts2McpTools(GameBridgeClient bridge) => _bridge = bridge;
 
     [McpServerTool(Name = "get_game_state", ReadOnly = true), Description(
-        "Get the current STS2 game state including HP, gold, deck, relics, and combat info.")]
+        "Get the current STS2 game state. In combat includes playerPowers, phase, and indexed enemies with powers.")]
     public Task<string> GetGameState(CancellationToken cancellationToken) =>
         _bridge.CallToolAsync("get_game_state", new JsonObject(), cancellationToken);
 
     [McpServerTool(Name = "combat_action"), Description(
-        "Execute a combat action in STS2: play a card from hand or end the turn.")]
+        "Execute a combat action. play_card success returns afterState unless pseudo-coop queued.")]
     public Task<string> CombatAction(
         [Description("The combat action to perform: play_card, end_turn, or use_potion.")]
         string action,

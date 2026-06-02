@@ -3,13 +3,15 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using DevMode.AI;
 using DevMode.AI.Core.Schema;
+using DevMode.AI.Sts2.Snapshots;
 
 namespace DevMode.Mcp.Tools;
 
 internal sealed class CombatActionTool : IMcpTool {
     public string Name => "combat_action";
     public string Description =>
-        "Execute a combat action in STS2: play a card from hand or end the turn.";
+        "Execute a combat action in STS2: play a card from hand or end the turn. " +
+        "play_card success includes afterState (playerPowers + enemies) unless queued in pseudo-coop.";
     public string InputSchemaJson => """
     {
         "type": "object",
@@ -61,9 +63,21 @@ internal sealed class CombatActionTool : IMcpTool {
             return new JsonObject { ["error"] = $"Unknown action: {actionStr}" };
 
         var result = await AiPlayServices.ActionExecutor.ExecuteAsync(gameAction);
-        return new JsonObject {
+
+        var response = new JsonObject {
             ["success"] = result.Success,
             ["message"] = result.Message,
         };
+
+        if (actionStr == "play_card" && result.Success) {
+            if (result.Message?.Contains("Queued play", StringComparison.OrdinalIgnoreCase) == true) {
+                response["queued"] = true;
+            }
+            else if (RunContext.TryGetRunAndPlayer(out _, out var player)) {
+                response["afterState"] = GameSnapshot.CaptureCombatAfterState(player);
+            }
+        }
+
+        return response;
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using MegaCrit.Sts2.Core.Combat;
@@ -37,6 +38,23 @@ internal static class GameSnapshot
         var room = state.CurrentRoom;
         if (room != null)
             obj["roomType"] = room.RoomType.ToString();
+
+        return obj;
+    }
+
+    /// <summary>Post-action combat fragment for MCP <c>afterState</c> (player powers + enemy HP/powers).</summary>
+    internal static JsonObject CaptureCombatAfterState(Player player)
+    {
+        var obj = new JsonObject
+        {
+            ["playerPowers"] = player.Creature != null
+                ? CapturePowers(player.Creature.Powers)
+                : new JsonArray(),
+        };
+
+        var cs = CombatManager.Instance?.DebugOnlyGetState();
+        if (cs != null)
+            obj["enemies"] = CaptureEnemiesBrief(cs);
 
         return obj;
     }
@@ -83,15 +101,20 @@ internal static class GameSnapshot
 
     private static JsonObject CaptureCombat(Player player, PlayerCombatState combatState)
     {
+        var isPlayPhase = Sts2CombatCompat.IsCombatPlayPhaseActive();
         var combat = new JsonObject
         {
             ["maxEnergy"] = player.MaxEnergy,
             ["currentEnergy"] = combatState.Energy,
             ["drawPileCount"] = combatState.DrawPile?.Cards.Count() ?? 0,
             ["discardPileCount"] = combatState.DiscardPile?.Cards.Count() ?? 0,
+            ["isPlayPhaseActive"] = isPlayPhase,
+            ["phase"] = isPlayPhase ? "PlayPhase" : "NotPlayPhase",
+            ["playerPowers"] = player.Creature != null
+                ? CapturePowers(player.Creature.Powers)
+                : new JsonArray(),
         };
 
-        // Hand
         var hand = new JsonArray();
         if (combatState.Hand?.Cards != null)
         {
@@ -111,22 +134,46 @@ internal static class GameSnapshot
         }
         combat["hand"] = hand;
 
-        // Enemies
-        var combatManager = CombatManager.Instance;
-        var cs = combatManager?.DebugOnlyGetState();
+        var cs = CombatManager.Instance?.DebugOnlyGetState();
         if (cs != null)
             combat["enemies"] = CaptureEnemies(cs);
 
         return combat;
     }
 
+    private static JsonArray CapturePowers(IEnumerable<PowerModel?> powers)
+    {
+        var arr = new JsonArray();
+        foreach (var power in powers)
+        {
+            if (power == null) continue;
+
+            var entry = new JsonObject
+            {
+                ["id"] = power.GetType().Name,
+                ["amount"] = power.Amount,
+            };
+            try {
+                var modelId = power.Id.Entry;
+                if (!string.IsNullOrWhiteSpace(modelId))
+                    entry["modelId"] = modelId;
+            }
+            catch { }
+
+            arr.Add(entry);
+        }
+        return arr;
+    }
+
     private static JsonArray CaptureEnemies(CombatState cs)
     {
         var arr = new JsonArray();
+        var index = 0;
         foreach (var enemy in cs.Enemies)
         {
             var obj = new JsonObject
             {
+                ["index"] = index++,
                 ["currentHp"] = enemy.CurrentHp,
                 ["maxHp"] = enemy.MaxHp,
                 ["block"] = enemy.Block,
@@ -142,19 +189,26 @@ internal static class GameSnapshot
                 obj["intents"] = intents;
             }
 
-            // Powers / buffs
-            var powers = new JsonArray();
-            foreach (var power in enemy.Powers)
-            {
-                powers.Add(new JsonObject
-                {
-                    ["id"] = power.GetType().Name,
-                    ["amount"] = power.Amount,
-                });
-            }
-            obj["powers"] = powers;
-
+            obj["powers"] = CapturePowers(enemy.Powers);
             arr.Add(obj);
+        }
+        return arr;
+    }
+
+    private static JsonArray CaptureEnemiesBrief(CombatState cs)
+    {
+        var arr = new JsonArray();
+        var index = 0;
+        foreach (var enemy in cs.Enemies)
+        {
+            arr.Add(new JsonObject
+            {
+                ["index"] = index++,
+                ["currentHp"] = enemy.CurrentHp,
+                ["maxHp"] = enemy.MaxHp,
+                ["block"] = enemy.Block,
+                ["powers"] = CapturePowers(enemy.Powers),
+            });
         }
         return arr;
     }
