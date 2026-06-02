@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-06-02
+
 ### Added
 
 - **开发侧栏快捷键** — 可用键盘展开/收起侧栏、关闭当前面板、切换 Tab 或锁定侧栏。可在 **设置 → 键盘快捷键** 中重绑（与游戏快捷键冲突时会被拒绝）。

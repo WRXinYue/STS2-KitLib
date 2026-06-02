@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-06-02
+
 ### Added
 
 - **Dev sidebar keyboard shortcuts** — Toggle the sidebar, close the active panel, switch tabs, or lock the rail from the keyboard. Rebind under **Settings → Keyboard shortcuts** (conflicts with in-game shortcuts are rejected).

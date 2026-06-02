@@ -3,7 +3,7 @@
   "name": "DevMode",
   "author": "WRXinYue",
   "description": "Adds DevMode to the main menu for testing with customizable relics, cards, gold, and encounters.",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "has_pck": true,
   "has_dll": true,
   "dependencies": [],
