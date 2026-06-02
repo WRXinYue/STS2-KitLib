@@ -36,6 +36,7 @@ Install from [url=https://github.com/WRXinYue/STS2-DevMode/releases]Releases[/ur
 [*][b]Hooks[/b] — Trigger → Condition → Action rules (e.g. add a card on combat start, apply a power on draw)
 [*][b]Scripts[/b] — SpireScratch visual scripting (Blockly); live reload via WebSocket
 [*][b]AI Host[/b] — Rule-based bot for [b]solo[/b] runs (map, combat, rewards). Disabled during multiplayer hand-play to avoid desync; use Pseudo Co-op / LAN presets instead (see below)
+[*][b]MCP[/b] — Expose game state and actions to MCP clients while the game is running — see [b][url=#mcp]MCP[/url][/b]
 [/list]
 
 [b]Developer & debug[/b]
@@ -239,6 +240,167 @@ These features are [b]opt-in[/b] from DevPanel → [b]AI Host[/b]. They do not c
 
 Detailed architecture, verification checklist, and desync history: [b][url=./docs/lan-host-drive-afk.md]docs/lan-host-drive-afk.md[/url][/b] · [url=./docs/README.md]docs index[/url]
 
+[b]MCP[/b]
+
+Connect any [url=https://modelcontextprotocol.io]Model Context Protocol[/url] client (Claude Desktop, IDE MCP plugins, etc.) to a running STS2 session with DevMode loaded. DevMode starts an in-game HTTP bridge on port [b]9877[/b]; the stdio proxy in [i]tools/DevMode.Mcp[/i] (built with the official [url=https://csharp.sdk.modelcontextprotocol.io/]MCP C# SDK[/url]) forwards MCP messages to [i]http://127.0.0.1:9877/messages[/i].
+
+[b]Requires:[/b] Slay the Spire 2 running with [b]DevMode[/b] loaded for tool execution (start the game before or keep it running while the client connects). Tool listing works without the game.
+
+[b]Tools[/b]
+
+[list]
+[*][b][i]get[i]game[/i]state[/i][/b] — Current run snapshot (HP, gold, deck, combat, enemies, …). In combat: [i]playerPowers[][/i] ([i]id[/i], [i]modelId[/i], [i]amount[/i]), [i]phase[/i] / [i]isPlayPhaseActive[/i], [i]enemies[].index[/i] + [i]powers[][/i]
+[*][b][i]combat[i]action[/i][/b] — Play a card, end turn, or use a potion. [i]play[/i]card[/i] success returns [i]afterState[/i] (player powers + enemy HP) unless pseudo-coop queued
+[*][b][i]map_action[/i][/b] — Map node, rewards, events, shop, rest
+[*][b][i]dev[i]get[/i]session[/i][/b] — Run active, game phase, dev-run flag, blocking startup prompts
+[*][b][i]dev[i]list[/i]save_slots[/i][/b] — Save slots with metadata and [i]debugNotes[/i] for AI selection
+[*][b][i]dev[i]tag[/i]save_slot[/i][/b] — Set [i]debugNotes[/i] on a slot (e.g. [i]combat:ironclad-act1-boss[/i])
+[*][b][i]dev[i]load[/i]save[i]slot[/i][/b] — Load a DevMode save (async; poll [i]dev[/i]get_session[/i])
+[*][b][i]dev[i]start[/i]test_run[/i][/b] — New test run from main menu (opens character select; optional seed)
+[*][b][i]dev[i]list[/i]cards[/i][/b] — List cards in deck / hand / draw / discard / exhaust (or all piles)
+[*][b][i]dev[i]add[/i]card[/i][/b] — Add a card to a pile ([i]card[i]id[/i], [i]target[/i], [i]duration[/i], [i]upgrade[/i]levels[/i])
+[*][b][i]dev[i]remove[/i]card[/i][/b] — Remove a card by [i]card[i]id[/i] or [i]pile[/i]index[/i] from a pile
+[*][b][i]dev[i]list[/i]monsters[/i][/b] — List monster model IDs (for [i]dev[i]add[/i]monster[/i])
+[*][b][i]dev[i]list[/i]enemies[/i][/b] — List enemies currently in combat (index, HP, monsterId)
+[*][b][i]dev[i]add[/i]monster[/i][/b] — Add a monster mid-combat (DevMode enemy panel / [i]dmenemy spawn[/i])
+[*][b][i]dev[i]set[/i]cheat[/i][/b] — Toggle cheats or set multipliers ([i]freeze[i]enemies[/i], [i]damage[/i]multiplier[/i], …)
+[*][b][i]dev[i]set[/i]stat[/i][/b] — Set gold/energy/HP values or enable stat locks
+[/list]
+
+Health check: [i]GET http://127.0.0.1:9877/health[/i]
+
+[b]Agent debug loop[/b]
+
+Bootstrap a session (deploy mod, launch game, wait for bridge):
+
+[code]
+make dev-session
+[/code]
+
+Typical MCP agent flow after the bridge is ready:
+
+[list=1]
+[*][b][i]dev[i]list[/i]save_slots[/i][/b] — Pick a slot by [i]debugNotes[/i], [i]name[/i], floor, or character.
+[*][b][i]dev[i]load[/i]save[i]slot[/i][/b] — Load the chosen slot, [b]or[/b] [b][i]dev[/i]start[i]test[/i]run[/i][/b] when no suitable save exists (character select is manual in this MVP).
+[*]Poll [b][i]dev[i]get[/i]session[/i][/b] every 1–2s until [i]runActive[/i] is [i]true[/i] (load is async; allow up to ~30s).
+[*][b][i]get[i]game[/i]state[/i][/b] + [b][i]combat[i]action[/i][/b] / [b][i]map[/i]action[/i][/b] to drive the run.
+[/list]
+
+Before a debugging session, tag saves with [b][i]dev[i]tag[/i]save_slot[/i][/b] so agents can pick the right snapshot later. Suggested [i]debugNotes[/i] format: [i]combat:ironclad-act1-boss[/i], [i]map:shop-test[/i].
+
+[b]Known blockers[/b]
+
+[list]
+[*]Startup [b]crash recovery[/b] or [b]progress loss[/b] prompts must be dismissed manually ([i]blockingPrompts[/i] in [i]dev[i]get[/i]session[/i]).
+[*][i]GET /health[/i] can respond while the Godot main thread is stuck; if MCP tool calls time out, stop and investigate.
+[*]After changing mod code, run [b][i]make sync[/i][/b] and restart the game.
+[/list]
+
+[b]Not in this MVP:[/b] auto character select, hang watchdog (kill/restart/reload), or autonomous code fixes.
+
+[b]Build proxy[/b]
+
+Local dev (DLL; used by [i]dotnet exec[/i] config below):
+
+[code]
+dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
+[/code]
+
+Self-contained executable (repo Makefile; default RID is your host OS):
+
+[code]
+make build-tools
+[/code]
+
+Output: [i]build/tools/DevMode.Mcp/&lt;rid&gt;/publish/DevMode.Mcp.exe[/i] (Windows) or [i]DevMode.Mcp[/i] (macOS/Linux).
+
+Cross-compile manually, for example:
+
+[code]
+dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+[/code]
+
+[b]Client configuration[/b]
+
+Add a [b][i]devmode[/i][/b] entry under [i]mcpServers[/i] in your MCP client config (stdio transport). This is [b]one server among many[/b] — keep your existing entries and only add or update the [i]devmode[/i] block. Exact config file path depends on the client; see its MCP documentation.
+
+Paste one of the blocks below into your existing MCP client config (merge with your other [i]mcpServers[/i] entries). Default port is [b]9877[/b] (must match [i]McpConfig.Port[/i] in the mod). Override with [i]--port[/i] on the proxy only if you also change the mod source and rebuild DevMode.
+
+[b]Cross-platform development[/b] ([i]dotnet exec[/i]; paths are relative to the repo / workspace root):
+
+[code]
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "dotnet",
+      "args": [
+        "exec",
+        "tools/DevMode.Mcp/bin/Release/net8.0/DevMode.Mcp.dll",
+        "--",
+        "--port",
+        "9877"
+      ]
+    },
+    "your-other-mcp-server": {
+      "command": "...",
+      "args": ["..."]
+    }
+  }
+}
+[/code]
+
+Requires [b].NET 8[/b] runtime ([i]dotnet --list-runtimes[/i] should include [i]Microsoft.NETCore.App 8.x[/i]).
+
+[b]Optional launchers[/b] (auto-build if the DLL is missing):
+
+[list]
+[*]Windows: [[i].cursor/run-devmode-mcp.bat[/i]](./.cursor/run-devmode-mcp.bat) — [i]"command": "cmd"[/i], [i]"args": ["/c", ".cursor\\run-devmode-mcp.bat"][/i]
+[*]macOS / Linux: [[i].cursor/run-devmode-mcp.sh[/i]](./.cursor/run-devmode-mcp.sh) — [i]"command": "bash"[/i], [i]"args": [".cursor/run-devmode-mcp.sh"][/i] (run [i]chmod +x .cursor/run-devmode-mcp.sh[/i] once)
+[/list]
+
+[b]Published proxy[/b] (after [i]make build-tools[/i] or [i]dotnet publish[/i]; adjust the path):
+
+Windows:
+
+[code]
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "C:/path/to/DevMode.Mcp.exe",
+      "args": ["--port", "9877"]
+    }
+  }
+}
+[/code]
+
+macOS / Linux:
+
+[code]
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "/path/to/DevMode.Mcp",
+      "args": ["--port", "9877"]
+    }
+  }
+}
+[/code]
+
+[b]HTTP bridge (manual test)[/b]
+
+With the game running and DevMode loaded:
+
+[code]
+curl -s http://127.0.0.1:9877/health
+[/code]
+
+[code]
+curl -s -X POST http://127.0.0.1:9877/messages \
+  -H "Content-Type: application/json" \
+  -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"dev_get_session\",\"arguments\":{}}}"
+[/code]
+
 [b]Contributing[/b]
 
 See [b][url=CONTRIBUTING.md]CONTRIBUTING.md[/url][/b] for collaboration norms, K&R brace style, formatting commands, and localization, or open an issue / PR on [url=https://github.com/WRXinYue/STS2-DevMode]GitHub[/url].
@@ -295,6 +457,7 @@ See [url=https://github.com/WRXinYue/STS2-DevMode/blob/main/CHANGELOG.md]CHANGEL
 [*][b]钩子[/b] — 「触发器 → 条件 → 动作」规则（如战斗开始加牌、抽牌时施加能力）
 [*][b]脚本[/b] — SpireScratch 可视化积木（Blockly）；WebSocket 热重载
 [*][b]AI 托管[/b] — 规则 AI 驱动 [b]单人[/b] run（地图、战斗、奖励）。联机手打时自动禁用，避免 desync；联机请用下方 Pseudo Co-op / LAN 预设
+[*][b]MCP[/b] — 游戏运行时向 MCP 客户端暴露状态与操作 — 见 [b][url=#mcp]MCP[/url][/b]
 [/list]
 
 [b]开发者与调试[/b]
@@ -497,6 +660,167 @@ macOS / Linux 下 [i]%AppData%[/i] 对应游戏账号作用域的用户数据目
 [b]LAN 双开（推荐）：[/b] 同机启动主机 + 客机 → 自动应用 preset；主机 log 见 [i]LAN host preset applied[/i]，客机见 [i]AFK client enabled[/i]。
 
 架构说明、复测标准与历史 desync 记录：[b][url=./docs/lan-host-drive-afk.md]docs/lan-host-drive-afk.md[/url][/b] · [url=./docs/README.md]文档索引[/url]
+
+[b]MCP[/b]
+
+通过 [url=https://modelcontextprotocol.io]Model Context Protocol[/url] 将 run 状态与操作暴露给任意 MCP 客户端（Claude Desktop、IDE MCP 插件等）。Mod 内 HTTP 桥接默认监听 [b]9877[/b]；[i]tools/DevMode.Mcp[/i] 中的 stdio 代理（基于官方 [url=https://csharp.sdk.modelcontextprotocol.io/]MCP C# SDK[/url]）将 MCP 消息转发到 [i]http://127.0.0.1:9877/messages[/i]。
+
+[b]前提：[/b] 执行工具调用时，《杀戮尖塔 2》须已运行且 [b]DevMode[/b] 已加载（先开游戏，或保持游戏运行后再连接 MCP 客户端）。列出工具名称无需启动游戏。
+
+[b]工具[/b]
+
+[list]
+[*][b][i]get[i]game[/i]state[/i][/b] — 当前 run 快照（生命、金币、牌组、战斗、敌人等）。战斗中含 [i]playerPowers[][/i]（[i]id[/i]、[i]modelId[/i]、[i]amount[/i]）、[i]phase[/i] / [i]isPlayPhaseActive[/i]、[i]enemies[].index[/i] 与 [i]powers[][/i]
+[*][b][i]combat[i]action[/i][/b] — 出牌、结束回合、使用药水。[i]play[/i]card[/i] 成功时返回 [i]afterState[/i]（玩家 power + 敌人 HP），伪联机排队时不含
+[*][b][i]map_action[/i][/b] — 地图节点、奖励、事件、商店、休息
+[*][b][i]dev[i]get[/i]session[/i][/b] — run 是否活跃、游戏阶段、Dev 模式标志、阻塞型启动弹窗
+[*][b][i]dev[i]list[/i]save_slots[/i][/b] — 存档列表（含 [i]debugNotes[/i]，供 AI 选档）
+[*][b][i]dev[i]tag[/i]save_slot[/i][/b] — 为存档设置 [i]debugNotes[/i]（如 [i]combat:ironclad-act1-boss[/i]）
+[*][b][i]dev[i]load[/i]save[i]slot[/i][/b] — 读取 DevMode 存档（异步；需轮询 [i]dev[/i]get_session[/i]）
+[*][b][i]dev[i]start[/i]test_run[/i][/b] — 从主菜单新开测试 run（打开角色选择；可选 seed）
+[*][b][i]dev[i]list[/i]cards[/i][/b] — 列出 deck / hand / draw / discard / exhaust 牌堆（或全部）
+[*][b][i]dev[i]add[/i]card[/i][/b] — 向牌堆加牌（[i]card[i]id[/i]、[i]target[/i]、[i]duration[/i]、[i]upgrade[/i]levels[/i]）
+[*][b][i]dev[i]remove[/i]card[/i][/b] — 按 [i]card[i]id[/i] 或 [i]pile[/i]index[/i] 从牌堆删牌
+[*][b][i]dev[i]list[/i]monsters[/i][/b] — 列出怪物 model ID（供 [i]dev[i]add[/i]monster[/i] 使用）
+[*][b][i]dev[i]list[/i]enemies[/i][/b] — 列出当前战斗中的敌人（index、HP、monsterId）
+[*][b][i]dev[i]add[/i]monster[/i][/b] — 战中添加指定怪物（同 DevMode 敌人面板 / [i]dmenemy spawn[/i]）
+[*][b][i]dev[i]set[/i]cheat[/i][/b] — 切换作弊开关或设置倍率（[i]freeze[i]enemies[/i]、[i]damage[/i]multiplier[/i] 等）
+[*][b][i]dev[i]set[/i]stat[/i][/b] — 设置金币/能量/生命等数值，或启用 stat lock
+[/list]
+
+健康检查：[i]GET http://127.0.0.1:9877/health[/i]
+
+[b]Agent 调试流程[/b]
+
+一键部署、启动游戏并等待 MCP bridge：
+
+[code]
+make dev-session
+[/code]
+
+Bridge 就绪后，典型 MCP Agent 流程：
+
+[list=1]
+[*][b][i]dev[i]list[/i]save_slots[/i][/b] — 按 [i]debugNotes[/i]、[i]name[/i]、楼层或角色选档。
+[*][b][i]dev[i]load[/i]save[i]slot[/i][/b] 加载所选存档，[b]或[/b] 无合适存档时 [b][i]dev[/i]start[i]test[/i]run[/i][/b]（本 MVP 需手动选角色）。
+[*]每 1–2 秒轮询 [b][i]dev[i]get[/i]session[/i][/b]，直到 [i]runActive[/i] 为 [i]true[/i]（读档异步，最多约 30 秒）。
+[*]使用 [b][i]get[i]game[/i]state[/i][/b] + [b][i]combat[i]action[/i][/b] / [b][i]map[/i]action[/i][/b] 驱动 run。
+[/list]
+
+调试前可用 [b][i]dev[i]tag[/i]save_slot[/i][/b] 标注存档用途，便于 Agent 后续自动选档。建议 [i]debugNotes[/i] 格式：[i]combat:ironclad-act1-boss[/i]、[i]map:shop-test[/i]。
+
+[b]已知阻塞[/b]
+
+[list]
+[*]启动时的[b]崩溃恢复[/b]或[b]进度丢失[/b]弹窗需手动关闭（[i]dev[i]get[/i]session[/i] 的 [i]blockingPrompts[/i] 会提示）。
+[*][i]GET /health[/i] 在主线程卡死时仍可能返回 ok；若 MCP 工具调用超时，应停止自动化并排查。
+[*]修改 mod 代码后需 [b][i]make sync[/i][/b] 并重启游戏。
+[/list]
+
+[b]本 MVP 不含：[/b] 自动选角色、卡死看门狗（杀进程/重启/读档）、自动改代码闭环。
+
+[b]编译代理[/b]
+
+本地开发（DLL；供下方 [i]dotnet exec[/i] 配置使用）：
+
+[code]
+dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
+[/code]
+
+自包含可执行文件（仓库 Makefile；默认 RID 为当前系统）：
+
+[code]
+make build-tools
+[/code]
+
+输出路径：[i]build/tools/DevMode.Mcp/&lt;rid&gt;/publish/DevMode.Mcp.exe[/i]（Windows）或 [i]DevMode.Mcp[/i]（macOS/Linux）。
+
+手动交叉编译示例：
+
+[code]
+dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+[/code]
+
+[b]客户端配置[/b]
+
+在 MCP 客户端配置的 [i]mcpServers[/i] 下[b]新增或更新 [i]devmode[/i] 条目[/b]（stdio 传输）。这只是众多 MCP 服务器中的一个——[b]保留你已有的其他条目[/b]，只改 [i]devmode[/i] 块。配置文件路径因客户端而异，请参阅该客户端的 MCP 文档。
+
+将下方任一配置块粘贴进现有 MCP 客户端配置（与已有 [i]mcpServers[/i] 条目合并）。默认端口 [b]9877[/b]（须与 mod 内 [i]McpConfig.Port[/i] 一致）。若改端口，代理的 [i]--port[/i] 须与 mod 源码一并修改并重新编译 DevMode。
+
+[b]跨平台开发[/b]（[i]dotnet exec[/i]；路径相对于仓库 / 工作区根目录）：
+
+[code]
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "dotnet",
+      "args": [
+        "exec",
+        "tools/DevMode.Mcp/bin/Release/net8.0/DevMode.Mcp.dll",
+        "--",
+        "--port",
+        "9877"
+      ]
+    },
+    "your-other-mcp-server": {
+      "command": "...",
+      "args": ["..."]
+    }
+  }
+}
+[/code]
+
+需要 [b].NET 8[/b] 运行时（[i]dotnet --list-runtimes[/i] 中应有 [i]Microsoft.NETCore.App 8.x[/i]）。
+
+[b]可选启动脚本[/b]（缺少 DLL 时自动 build）：
+
+[list]
+[*]Windows：[[i].cursor/run-devmode-mcp.bat[/i]](./.cursor/run-devmode-mcp.bat) — [i]"command": "cmd"[/i], [i]"args": ["/c", ".cursor\\run-devmode-mcp.bat"][/i]
+[*]macOS / Linux：[[i].cursor/run-devmode-mcp.sh[/i]](./.cursor/run-devmode-mcp.sh) — [i]"command": "bash"[/i], [i]"args": [".cursor/run-devmode-mcp.sh"][/i]（首次执行 [i]chmod +x .cursor/run-devmode-mcp.sh[/i]）
+[/list]
+
+[b]已 publish 的代理[/b]（[i]make build-tools[/i] 或 [i]dotnet publish[/i] 后；按实际路径修改 [i]command[/i]）：
+
+Windows：
+
+[code]
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "C:/path/to/DevMode.Mcp.exe",
+      "args": ["--port", "9877"]
+    }
+  }
+}
+[/code]
+
+macOS / Linux：
+
+[code]
+{
+  "mcpServers": {
+    "devmode": {
+      "command": "/path/to/DevMode.Mcp",
+      "args": ["--port", "9877"]
+    }
+  }
+}
+[/code]
+
+[b]HTTP 桥接（手动测试）[/b]
+
+游戏已运行且 DevMode 已加载时：
+
+[code]
+curl -s http://127.0.0.1:9877/health
+[/code]
+
+[code]
+curl -s -X POST http://127.0.0.1:9877/messages \
+  -H "Content-Type: application/json" \
+  -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"dev_get_session\",\"arguments\":{}}}"
+[/code]
 
 [b]协作与贡献[/b]
 
