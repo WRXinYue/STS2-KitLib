@@ -47,6 +47,12 @@ internal static class ErrorFeedbackPromptUI {
             node.QueueFree();
     }
 
+    private static void Acknowledge() {
+        ShownForSession = true;
+        CrashRecoveryStore.ClearPendingReport();
+        HideAnywhere();
+    }
+
     private static void Show(Node attachRoot, CrashReport report) {
         if (!GodotObject.IsInstanceValid(attachRoot))
             return;
@@ -61,10 +67,10 @@ internal static class ErrorFeedbackPromptUI {
             CrashRecoveryStore.FormatPromptBody(report),
             onViewLogs: () => OpenLogs(attachRoot),
             onExport: () => {
-                HideAnywhere();
+                Acknowledge();
                 OpenFeedback(attachRoot, prefill);
             },
-            onDismiss: HideAnywhere);
+            onDismiss: Acknowledge);
 
         attachRoot.AddChild(overlay);
     }

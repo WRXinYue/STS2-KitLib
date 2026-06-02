@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dev sidebar keyboard shortcuts** — Toggle the sidebar, close the active panel, switch tabs, or lock the rail from the keyboard. Rebind under **Settings → Keyboard shortcuts** (conflicts with in-game shortcuts are rejected).
 
+### Fixed
+
+- **Crash recovery prompt** — Exporting a feedback ZIP or dismissing the dialog no longer leaves a stale pending report, so the main-menu prompt does not reappear every launch. Normal game quit now clears the session marker more reliably.
+
 ## [0.12.0] - 2026-06-02
 
 ### Added

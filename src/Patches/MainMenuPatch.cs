@@ -1,4 +1,5 @@
 using System;
+using DevMode.Feedback;
 using DevMode.UI;
 using Godot;
 using HarmonyLib;
@@ -16,6 +17,7 @@ public static class MainMenuPatch {
     [HarmonyPrefix]
     [HarmonyPatch("_Ready")]
     public static void AddDevModeButtonPrefix(NMainMenu __instance) {
+        CrashRecoveryHooks.EnsureLifecycleNode();
         _mainMenuRef = __instance;
 
         var settingsBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/SettingsButton");

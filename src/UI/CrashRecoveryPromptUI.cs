@@ -62,15 +62,16 @@ internal static class CrashRecoveryPromptUI {
             titleText,
             CrashRecoveryStore.FormatPromptBody(report),
             onExport: () => {
+                Acknowledge();
                 HideAnywhere();
                 FeedbackReportUI.ShowOnMainMenu(mainMenu, prefill);
             },
-            onDismiss: Dismiss);
+            onDismiss: Acknowledge);
 
         root.AddChild(overlay);
     }
 
-    private static void Dismiss() {
+    private static void Acknowledge() {
         DismissedForSession = true;
         CrashRecoveryStore.ClearPendingReport();
         HideAnywhere();

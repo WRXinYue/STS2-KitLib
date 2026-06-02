@@ -75,8 +75,12 @@ internal static class CrashRecoveryStore {
     }
 
     internal static CrashReport? TryConsumePendingReport() {
-        lock (FileLock)
-            return TryReadPendingReportLocked();
+        lock (FileLock) {
+            var report = TryReadPendingReportLocked();
+            if (report != null)
+                TryDelete(PendingReportPath);
+            return report;
+        }
     }
 
     internal static void ClearPendingReport() {
