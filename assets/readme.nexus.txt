@@ -352,13 +352,6 @@ Paste one of the blocks below into your existing MCP client config (merge with y
 
 Requires [b].NET 8[/b] runtime ([i]dotnet --list-runtimes[/i] should include [i]Microsoft.NETCore.App 8.x[/i]).
 
-[b]Optional launchers[/b] (auto-build if the DLL is missing):
-
-[list]
-[*]Windows: [[i].cursor/run-devmode-mcp.bat[/i]](./.cursor/run-devmode-mcp.bat) — [i]"command": "cmd"[/i], [i]"args": ["/c", ".cursor\\run-devmode-mcp.bat"][/i]
-[*]macOS / Linux: [[i].cursor/run-devmode-mcp.sh[/i]](./.cursor/run-devmode-mcp.sh) — [i]"command": "bash"[/i], [i]"args": [".cursor/run-devmode-mcp.sh"][/i] (run [i]chmod +x .cursor/run-devmode-mcp.sh[/i] once)
-[/list]
-
 [b]Published proxy[/b] (after [i]make build-tools[/i] or [i]dotnet publish[/i]; adjust the path):
 
 Windows:
@@ -772,13 +765,6 @@ dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --se
 [/code]
 
 需要 [b].NET 8[/b] 运行时（[i]dotnet --list-runtimes[/i] 中应有 [i]Microsoft.NETCore.App 8.x[/i]）。
-
-[b]可选启动脚本[/b]（缺少 DLL 时自动 build）：
-
-[list]
-[*]Windows：[[i].cursor/run-devmode-mcp.bat[/i]](./.cursor/run-devmode-mcp.bat) — [i]"command": "cmd"[/i], [i]"args": ["/c", ".cursor\\run-devmode-mcp.bat"][/i]
-[*]macOS / Linux：[[i].cursor/run-devmode-mcp.sh[/i]](./.cursor/run-devmode-mcp.sh) — [i]"command": "bash"[/i], [i]"args": [".cursor/run-devmode-mcp.sh"][/i]（首次执行 [i]chmod +x .cursor/run-devmode-mcp.sh[/i]）
-[/list]
 
 [b]已 publish 的代理[/b]（[i]make build-tools[/i] 或 [i]dotnet publish[/i] 后；按实际路径修改 [i]command[/i]）：
 

@@ -314,11 +314,6 @@ Paste one of the blocks below into your existing MCP client config (merge with y
 
 Requires **.NET 8** runtime (`dotnet --list-runtimes` should include `Microsoft.NETCore.App 8.x`).
 
-**Optional launchers** (auto-build if the DLL is missing):
-
-- Windows: [`.cursor/run-devmode-mcp.bat`](./.cursor/run-devmode-mcp.bat) — `"command": "cmd"`, `"args": ["/c", ".cursor\\run-devmode-mcp.bat"]`
-- macOS / Linux: [`.cursor/run-devmode-mcp.sh`](./.cursor/run-devmode-mcp.sh) — `"command": "bash"`, `"args": [".cursor/run-devmode-mcp.sh"]` (run `chmod +x .cursor/run-devmode-mcp.sh` once)
-
 **Published proxy** (after `make build-tools` or `dotnet publish`; adjust the path):
 
 Windows:

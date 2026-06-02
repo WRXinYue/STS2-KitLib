@@ -314,11 +314,6 @@ dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --se
 
 需要 **.NET 8** 运行时（`dotnet --list-runtimes` 中应有 `Microsoft.NETCore.App 8.x`）。
 
-**可选启动脚本**（缺少 DLL 时自动 build）：
-
-- Windows：[`.cursor/run-devmode-mcp.bat`](./.cursor/run-devmode-mcp.bat) — `"command": "cmd"`, `"args": ["/c", ".cursor\\run-devmode-mcp.bat"]`
-- macOS / Linux：[`.cursor/run-devmode-mcp.sh`](./.cursor/run-devmode-mcp.sh) — `"command": "bash"`, `"args": [".cursor/run-devmode-mcp.sh"]`（首次执行 `chmod +x .cursor/run-devmode-mcp.sh`）
-
 **已 publish 的代理**（`make build-tools` 或 `dotnet publish` 后；按实际路径修改 `command`）：
 
 Windows：
