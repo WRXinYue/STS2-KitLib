@@ -27,7 +27,7 @@ internal static class LogCollector {
         bool IsFromFile = false,
         bool HasWallClockTime = true);
 
-    private static readonly List<Entry> _liveEntries = new();
+    private static readonly Queue<Entry> _liveEntries = new();
     private static List<Entry> _fileEntries = [];
     private static readonly object _lock = new();
     private static volatile bool _dirty;
@@ -70,11 +70,11 @@ internal static class LogCollector {
     }
 
     private static void OnLogReceived(LogLevel level, string text, int _) {
-        InstanceLogWriter.Append(level, text);
+        InstanceLogWriter.Enqueue(text);
         lock (_lock) {
-            _liveEntries.Add(new Entry(level, text, DateTime.Now));
-            if (_liveEntries.Count > MaxLiveEntries)
-                _liveEntries.RemoveAt(0);
+            _liveEntries.Enqueue(new Entry(level, text, DateTime.Now));
+            while (_liveEntries.Count > MaxLiveEntries)
+                _liveEntries.Dequeue();
 
             if (level >= LogLevel.Warn && !IsAlertsSuppressed())
                 _unseenAlertSeverity = MaxSeverity(_unseenAlertSeverity, level);
@@ -100,8 +100,14 @@ internal static class LogCollector {
 
     /// <summary>Returns a merged snapshot of file-hydrated and live entries (thread-safe copy).</summary>
     public static List<Entry> GetSnapshot() {
-        lock (_lock)
-            return MergeEntries(_fileEntries, _liveEntries);
+        List<Entry> fileCopy;
+        Entry[] liveCopy;
+        lock (_lock) {
+            fileCopy = _fileEntries;
+            liveCopy = _liveEntries.ToArray();
+        }
+
+        return MergeEntries(fileCopy, liveCopy);
     }
 
     public static void Clear() {
@@ -115,10 +121,10 @@ internal static class LogCollector {
 
     public static void MarkClean() => _dirty = false;
 
-    private static List<Entry> MergeEntries(List<Entry> fileEntries, List<Entry> liveEntries) {
+    private static List<Entry> MergeEntries(List<Entry> fileEntries, Entry[] liveEntries) {
         int fileBoundaryIndex = FindLastBoundaryIndex(fileEntries);
 
-        var merged = new List<Entry>(fileEntries.Count + liveEntries.Count);
+        var merged = new List<Entry>(fileEntries.Count + liveEntries.Length);
 
         if (fileBoundaryIndex < 0) {
             AppendUnique(merged, fileEntries);
@@ -128,7 +134,7 @@ internal static class LogCollector {
             for (int i = 0; i < fileBoundaryIndex; i++)
                 merged.Add(fileEntries[i]);
 
-            if (liveEntries.Count > 0) {
+            if (liveEntries.Length > 0) {
                 AppendUnique(merged, liveEntries);
             }
             else {
@@ -176,6 +182,17 @@ internal static class LogCollector {
     }
 
     private static void AppendUnique(List<Entry> merged, List<Entry> entries, List<Entry>? skipFingerprints = null) {
+        var seen = skipFingerprints != null
+            ? BuildFingerprintSet(skipFingerprints)
+            : BuildFingerprintSet(merged);
+
+        foreach (var entry in entries) {
+            if (seen.Add(Fingerprint(entry)))
+                merged.Add(entry);
+        }
+    }
+
+    private static void AppendUnique(List<Entry> merged, Entry[] entries, List<Entry>? skipFingerprints = null) {
         var seen = skipFingerprints != null
             ? BuildFingerprintSet(skipFingerprints)
             : BuildFingerprintSet(merged);

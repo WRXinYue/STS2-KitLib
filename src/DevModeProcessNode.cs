@@ -13,6 +13,7 @@ namespace DevMode;
 /// </summary>
 internal partial class DevModeProcessNode : Node {
     private double _heartbeatAccum;
+    private double _logFlushAccum;
 
     public override void _EnterTree() {
         ProcessPriority = 128;
@@ -30,6 +31,12 @@ internal partial class DevModeProcessNode : Node {
         if (_heartbeatAccum >= 2.0) {
             _heartbeatAccum = 0;
             DevModeInstanceRegistry.Heartbeat();
+        }
+
+        _logFlushAccum += delta;
+        if (_logFlushAccum >= InstanceLogWriter.FlushIntervalSeconds) {
+            _logFlushAccum = 0;
+            InstanceLogWriter.TryFlush();
         }
 
         GlobalUiReadyPatch.Process(delta);
