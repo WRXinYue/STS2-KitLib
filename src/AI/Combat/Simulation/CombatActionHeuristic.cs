@@ -146,34 +146,23 @@ internal static class CombatActionHeuristic {
     }
 
     static int ScoreVulnerableSetup(CombatState state, SimCombatAction action, CombatHandCard card) {
-        var primary = CombatSetupEvaluator.PrimaryAttackTargetIndex(state);
-
         if (action.EnemyIndex >= 0) {
             var value = CombatSetupEvaluator.ComputeVulnerableSetupValue(
                 state, action.HandIndex, action.EnemyIndex);
             if (value <= 0) return int.MinValue + 4;
-            var score = 90 + value * 4 + card.Damage * 2;
-            if (action.EnemyIndex != primary)
-                score -= 40;
-            return score;
+            return value + card.Damage * 2;
         }
 
         int best = 0;
-        int bestIndex = -1;
         foreach (var enemyIndex in OrderedAttackTargets(state)) {
             var value = CombatSetupEvaluator.ComputeVulnerableSetupValue(
                 state, action.HandIndex, enemyIndex);
-            if (value > best) {
+            if (value > best)
                 best = value;
-                bestIndex = enemyIndex;
-            }
         }
 
         if (best <= 0) return int.MinValue + 4;
-        var heuristic = 90 + best * 4 + card.Damage * 2;
-        if (bestIndex >= 0 && bestIndex != primary)
-            heuristic -= 40;
-        return heuristic;
+        return best + card.Damage * 2;
     }
 
     static int ScoreAttack(CombatState state, SimCombatAction action, CombatHandCard card) {

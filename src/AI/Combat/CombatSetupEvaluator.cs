@@ -25,35 +25,19 @@ internal static class CombatSetupEvaluator {
         if (targetEnemy != null && EnemyTargetPriority.IsMinion(targetEnemy)
             && EnemyTargetPriority.HasAliveNonMinion(snapshot["combat"]?["enemies"]?.AsArray()))
             return 0;
+        if (vulnCardIndex < 0)
+            return 0;
 
-        var attackHand = vulnCardIndex >= 0 ? HandWithoutIndex(hand, vulnCardIndex) : hand;
-        var immediateDamage = CapFollowupForTarget(
-            CombatCardStats.EstimateFollowupAttackDamage(attackHand, energy), targetEnemy);
-        var energyAfter = energy - vulnCost;
-        if (energyAfter < 0) return 0;
+        var state = CombatState.FromSnapshot(snapshot);
+        if (vulnCardIndex >= state.Hand.Count)
+            return 0;
 
-        var followupDamage = CapFollowupForTarget(
-            CombatCardStats.EstimateFollowupAttackDamage(attackHand, energyAfter), targetEnemy);
-        var vulnHit = vulnCard != null ? CombatCardStats.ResolveDamage(vulnCard) : 0;
-        var setupPayoff = vulnHit + (int)Math.Round(followupDamage * 1.5f);
-        var value = setupPayoff - immediateDamage + vulnStacks * 4;
+        var enemies = snapshot["combat"]?["enemies"]?.AsArray();
+        int enemyIndex = ResolveCombatIndex(enemies, targetEnemy);
+        if (enemyIndex < 0)
+            return 0;
 
-        var canLethal = LethalChecker.CanLethal(snapshot, out _);
-        var incoming = IntentCalculator.TotalIncomingDamage(snapshot);
-        var net = IntentCalculator.NetDamageAfterBlock(snapshot);
-        var urgency = IntentCalculator.BlockUrgency(snapshot);
-
-        if (!canLethal && incoming > 0)
-            value += urgency / 4 + net / 3;
-
-        if (targetEnemy != null) {
-            var hp = targetEnemy["currentHp"]?.GetValue<int>() ?? 0;
-            var maxHp = targetEnemy["maxHp"]?.GetValue<int>() ?? 1;
-            if (maxHp > 0 && hp <= maxHp * 0.3f && canLethal)
-                value = value * 2 / 3;
-        }
-
-        return Math.Max(0, value);
+        return ComputeVulnerableSetupValue(state, vulnCardIndex, enemyIndex);
     }
 
     public static int ComputeVulnerableSetupValue(CombatState state, int handIndex, int enemyIndex) {
@@ -66,7 +50,6 @@ internal static class CombatSetupEvaluator {
         if (!AppliesVulnerable(card))
             return 0;
 
-        var stacks = Math.Max(card.Profile.AppliedVulnerable, 1);
         var target = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == enemyIndex);
         if (target == null)
             return 0;
@@ -76,28 +59,23 @@ internal static class CombatSetupEvaluator {
         if (target.IsMinion && state.Enemies.Any(e => e.IsAlive && !e.IsMinion))
             return 0;
 
-        if (ShouldSkipVulnerableForKillLine(state, handIndex, enemyIndex))
-            return 0;
+        return Math.Max(0, ComputeVulnerableSetupSimDelta(state, handIndex, enemyIndex));
+    }
 
-        var hand = state.ToHandJson();
-        var attackHand = HandWithoutIndex(hand, handIndex);
-        var immediate = CapFollowupForTarget(
-            CombatCardStats.EstimateFollowupAttackDamage(attackHand, state.Energy), target);
-        var energyAfter = state.Energy - card.Cost;
-        if (energyAfter < 0) return 0;
+    /// <summary>Terminal score delta: greedy attacks after vuln first vs skipping the vuln card.</summary>
+    static int ComputeVulnerableSetupSimDelta(CombatState state, int handIndex, int enemyIndex) {
+        int withoutVuln = EvaluateGreedyLineTerminal(state, handIndex);
+        var afterVuln = CombatSimulator.Apply(
+            state,
+            new SimCombatAction(SimActionKind.PlayCard, handIndex, enemyIndex));
+        int withVuln = EvaluateGreedyLineTerminal(afterVuln);
+        return withVuln - withoutVuln;
+    }
 
-        var followup = CapFollowupForTarget(
-            CombatCardStats.EstimateFollowupAttackDamage(attackHand, energyAfter), target);
-        var payoff = card.Damage + (int)Math.Round(followup * 1.5f);
-        var value = payoff - immediate + stacks * 4;
-
-        if (ThreatModel.IncomingDamage(state) > 0 && !ThreatModel.IsFatalIfUnblocked(state))
-            value += stacks * 2;
-
-        if (enemyIndex == PrimaryAttackTargetIndex(state))
-            value += stacks * 3 + 6;
-
-        return Math.Max(0, value);
+    static int EvaluateGreedyLineTerminal(CombatState state, int excludeHandIndex = -1) {
+        var midTurn = SimulateGreedyAttacks(state, excludeHandIndex);
+        var afterTurn = CombatTurnResolver.ResolveEndTurn(midTurn);
+        return CombatEvaluator.EvaluateTerminal(afterTurn);
     }
 
     public static int ComputeBestVulnerableDeferValue(
@@ -164,7 +142,7 @@ internal static class CombatSetupEvaluator {
 
             bool worthOpening = false;
             foreach (var enemy in state.Enemies.Where(e => e.IsAlive && e.Vulnerable <= 0)) {
-                if (!ShouldSkipVulnerableForKillLine(state, i, enemy.Index)) {
+                if (ComputeVulnerableSetupValue(state, i, enemy.Index) > 0) {
                     worthOpening = true;
                     break;
                 }
@@ -236,141 +214,18 @@ internal static class CombatSetupEvaluator {
         return Math.Max(0, total);
     }
 
-    /// <summary>Greedy kill count when attacks can be routed across enemies (excludes one hand card).</summary>
-    public static int EstimateGreedyKillCount(CombatState state, int excludeHandIndex = -1) {
-        var hp = state.Enemies
-            .Where(e => e.IsAlive)
-            .ToDictionary(e => e.Index, e => e.EffectiveHp);
+    static int ResolveCombatIndex(JsonArray? enemies, JsonObject? targetEnemy) {
+        if (enemies == null || targetEnemy == null)
+            return -1;
 
-        if (hp.Count == 0)
-            return 0;
-
-        var attacks = new List<(int Cost, int Damage, bool IsAoe)>();
-        for (int i = 0; i < state.Hand.Count; i++) {
-            if (i == excludeHandIndex)
+        for (int i = 0; i < enemies.Count; i++) {
+            if (enemies[i] is not JsonObject enemy)
                 continue;
-
-            var card = state.Hand[i];
-            if (!CombatCardCost.CanAfford(card, state) || !card.IsAttack || card.Damage <= 0)
-                continue;
-
-            attacks.Add((
-                CombatCardCost.EffectiveCost(card, state.Modifiers),
-                CombatDamageCalc.OutgoingDamage(card, state, 0),
-                card.IsAoe));
+            if (ReferenceEquals(enemy, targetEnemy))
+                return EnemyIndexResolver.CombatIndex(enemy, i);
         }
 
-        attacks.Sort((a, b) => b.Damage.CompareTo(a.Damage));
-
-        int energy = state.Energy;
-        int kills = 0;
-        foreach (var (cost, damage, isAoe) in attacks) {
-            if (cost > energy || damage <= 0)
-                continue;
-
-            energy -= cost;
-            if (isAoe) {
-                foreach (var idx in hp.Keys.ToList()) {
-                    if (damage >= hp[idx]) {
-                        kills++;
-                        hp.Remove(idx);
-                    }
-                    else {
-                        hp[idx] -= damage;
-                    }
-                }
-
-                continue;
-            }
-
-            int? killIdx = null;
-            foreach (var kv in hp.OrderBy(e => {
-                var enemy = state.Enemies.FirstOrDefault(en => en.Index == e.Key);
-                return enemy?.IsMinion == true ? 1 : 0;
-            }).ThenByDescending(e => {
-                var enemy = state.Enemies.FirstOrDefault(en => en.Index == e.Key);
-                return enemy?.IntentDamage ?? 0;
-            }).ThenBy(e => e.Value)) {
-                if (damage >= kv.Value) {
-                    killIdx = kv.Key;
-                    break;
-                }
-            }
-
-            if (killIdx != null) {
-                kills++;
-                hp.Remove(killIdx.Value);
-                continue;
-            }
-
-            var chip = hp.OrderBy(e => e.Value).First();
-            hp[chip.Key] = Math.Max(0, chip.Value - damage);
-        }
-
-        return kills;
-    }
-
-    static bool ShouldSkipVulnerableForKillLine(CombatState state, int vulnHandIndex, int vulnEnemyIndex) {
-        if (CanFocusKillPrimaryWithoutVuln(state, vulnHandIndex))
-            return true;
-
-        if (state.AliveEnemyCount < 2)
-            return false;
-
-        int killsWithout = EstimateGreedyKillCount(state, vulnHandIndex);
-        if (killsWithout <= 0)
-            return false;
-
-        var afterVuln = CombatSimulator.Apply(
-            state,
-            new SimCombatAction(SimActionKind.PlayCard, vulnHandIndex, vulnEnemyIndex));
-        int killsWithVulnFirst = EstimateGreedyKillCount(afterVuln);
-        if (killsWithVulnFirst < killsWithout)
-            return true;
-
-        if (killsWithVulnFirst == killsWithout) {
-            int damageWithout = EstimateGreedyTotalDamage(state, vulnHandIndex);
-            int damageWith = EstimateGreedyTotalDamage(afterVuln);
-            if (damageWith <= damageWithout)
-                return true;
-
-            int incomingWithout = IncomingAfterGreedyAttacks(state, vulnHandIndex);
-            int incomingWith = IncomingAfterGreedyAttacks(afterVuln);
-            if (incomingWith > incomingWithout)
-                return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>True when attacks (excluding vuln card) can kill the primary non-minion this turn.</summary>
-    static bool CanFocusKillPrimaryWithoutVuln(CombatState state, int excludeHandIndex) {
-        var primaryIdx = PrimaryAttackTargetIndex(state);
-        var primary = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == primaryIdx);
-        if (primary == null || primary.IsMinion)
-            return false;
-
-        var attacks = CollectGreedyAttacks(state, excludeHandIndex);
-        if (attacks.Count == 0)
-            return false;
-
-        int energy = state.Energy;
-        int total = 0;
-        foreach (var (_, cost, damage, _) in attacks) {
-            if (cost > energy)
-                continue;
-            energy -= cost;
-            total += CombatDamageCalc.OutgoingDamage(damage, state.Modifiers, primary.Vulnerable);
-            if (total >= primary.EffectiveHp)
-                return true;
-        }
-
-        return false;
-    }
-
-    static int IncomingAfterGreedyAttacks(CombatState state, int excludeHandIndex = -1) {
-        var after = SimulateGreedyAttacks(state, excludeHandIndex);
-        return ThreatModel.IncomingDamage(after);
+        return targetEnemy["index"]?.GetValue<int>() ?? -1;
     }
 
     static CombatState SimulateGreedyAttacks(CombatState state, int excludeHandIndex = -1) {
@@ -435,83 +290,6 @@ internal static class CombatSetupEvaluator {
         return s;
     }
 
-    static List<(int HandIndex, int Cost, int Damage, bool IsAoe)> CollectGreedyAttacks(
-        CombatState state,
-        int excludeHandIndex) {
-        var attacks = new List<(int, int, int, bool)>();
-        for (int i = 0; i < state.Hand.Count; i++) {
-            if (i == excludeHandIndex)
-                continue;
-
-            var card = state.Hand[i];
-            if (!CombatCardCost.CanAfford(card, state) || !card.IsAttack || card.Damage <= 0)
-                continue;
-
-            attacks.Add((
-                i,
-                CombatCardCost.EffectiveCost(card, state.Modifiers),
-                card.Damage,
-                card.IsAoe));
-        }
-
-        attacks.Sort((a, b) => CombatDamageCalc
-            .OutgoingDamage(b.Item3, state.Modifiers)
-            .CompareTo(CombatDamageCalc.OutgoingDamage(a.Item3, state.Modifiers)));
-        return attacks;
-    }
-
-    static int EstimateGreedyTotalDamage(CombatState state, int excludeHandIndex = -1) {
-        var hp = state.Enemies
-            .Where(e => e.IsAlive)
-            .ToDictionary(e => e.Index, e => e.EffectiveHp);
-
-        var attacks = new List<(int Cost, int Damage, bool IsAoe)>();
-        for (int i = 0; i < state.Hand.Count; i++) {
-            if (i == excludeHandIndex)
-                continue;
-
-            var card = state.Hand[i];
-            if (!CombatCardCost.CanAfford(card, state) || !card.IsAttack || card.Damage <= 0)
-                continue;
-
-            attacks.Add((
-                CombatCardCost.EffectiveCost(card, state.Modifiers),
-                CombatDamageCalc.OutgoingDamage(card, state, 0),
-                card.IsAoe));
-        }
-
-        attacks.Sort((a, b) => b.Damage.CompareTo(a.Damage));
-
-        int energy = state.Energy;
-        int total = 0;
-        foreach (var (cost, damage, isAoe) in attacks) {
-            if (cost > energy || damage <= 0)
-                continue;
-
-            energy -= cost;
-            if (isAoe) {
-                total += damage * hp.Count;
-                continue;
-            }
-
-            total += damage;
-        }
-
-        return total;
-    }
-
-    static int CapFollowupForTarget(int rawDamage, JsonObject? targetEnemy) {
-        if (targetEnemy == null)
-            return rawDamage;
-
-        var hp = targetEnemy["currentHp"]?.GetValue<int>() ?? 0;
-        var block = targetEnemy["block"]?.GetValue<int>() ?? 0;
-        return Math.Min(rawDamage, Math.Max(0, hp + block));
-    }
-
-    static int CapFollowupForTarget(int rawDamage, CombatEnemy target) =>
-        Math.Min(rawDamage, Math.Max(0, target.EffectiveHp));
-
     static bool AppliesVulnerable(CombatHandCard card) =>
         card.Profile.AppliedVulnerable > 0
         || card.Profile.Flags.HasFlag(CardMechanicFlags.AppliesVulnerable);
@@ -519,15 +297,4 @@ internal static class CombatSetupEvaluator {
     static bool AppliesVulnerable(CardMechanicProfile profile) =>
         profile.AppliedVulnerable > 0
         || profile.Flags.HasFlag(CardMechanicFlags.AppliesVulnerable);
-
-    static JsonArray HandWithoutIndex(JsonArray hand, int skipIndex) {
-        var arr = new JsonArray();
-        for (int i = 0; i < hand.Count; i++) {
-            if (i == skipIndex) continue;
-            if (hand[i]?.DeepClone() is JsonNode clone)
-                arr.Add(clone);
-        }
-
-        return arr;
-    }
 }

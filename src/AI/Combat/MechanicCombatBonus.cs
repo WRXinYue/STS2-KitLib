@@ -59,16 +59,27 @@ internal static class MechanicCombatBonus {
                 && EnemyTargetPriority.HasAliveNonMinion(snapshot["combat"]?["enemies"]?.AsArray())) {
                 bonus -= CombatScoreWeights.RedundantDebuffPenalty * 3;
             }
-            else {
-                var existing = CombatPowerReader.GetVulnerable(targetEnemy);
-                if (existing <= 0) {
-                    var followup = CombatCardStats.EstimateFollowupAttackDamage(hand, energy);
-                    bonus += CombatScoreWeights.VulnerableSetupBase
-                        + profile.AppliedVulnerable * CombatScoreWeights.VulnerablePerStack
-                        + followup / 3;
-                }
-                else {
-                    bonus -= CombatScoreWeights.RedundantDebuffPenalty;
+            else if (CombatPowerReader.GetVulnerable(targetEnemy) > 0) {
+                bonus -= CombatScoreWeights.RedundantDebuffPenalty;
+            }
+            else if (hand != null) {
+                var state = CombatState.FromSnapshot(snapshot);
+                int handIndex = FindHandIndex(hand, card);
+                if (handIndex >= 0) {
+                    int setupBonus = 0;
+                    if (targetEnemy != null) {
+                        int enemyIndex = ResolveSetupEnemyIndex(
+                            snapshot["combat"]?["enemies"]?.AsArray(), targetEnemy);
+                        if (enemyIndex >= 0)
+                            setupBonus = CombatSetupEvaluator.ComputeVulnerableSetupValue(state, handIndex, enemyIndex);
+                    }
+                    else {
+                        foreach (var enemy in state.Enemies.Where(e => e.IsAlive && e.Vulnerable <= 0))
+                            setupBonus = Math.Max(setupBonus,
+                                CombatSetupEvaluator.ComputeVulnerableSetupValue(state, handIndex, enemy.Index));
+                    }
+
+                    bonus += setupBonus;
                 }
             }
         }
@@ -155,6 +166,36 @@ internal static class MechanicCombatBonus {
             return true;
         }
         return false;
+    }
+
+    static int FindHandIndex(JsonArray hand, JsonObject card) {
+        for (int i = 0; i < hand.Count; i++) {
+            if (ReferenceEquals(hand[i], card))
+                return i;
+        }
+
+        var cardId = card["id"]?.GetValue<string>();
+        if (string.IsNullOrEmpty(cardId))
+            return -1;
+
+        for (int i = 0; i < hand.Count; i++) {
+            if (hand[i] is JsonObject entry && entry["id"]?.GetValue<string>() == cardId)
+                return i;
+        }
+
+        return -1;
+    }
+
+    static int ResolveSetupEnemyIndex(JsonArray? enemies, JsonObject targetEnemy) {
+        if (enemies == null)
+            return targetEnemy["index"]?.GetValue<int>() ?? -1;
+
+        for (int i = 0; i < enemies.Count; i++) {
+            if (enemies[i] is JsonObject enemy && ReferenceEquals(enemy, targetEnemy))
+                return EnemyIndexResolver.CombatIndex(enemy, i);
+        }
+
+        return targetEnemy["index"]?.GetValue<int>() ?? -1;
     }
 
     public static bool IsSetupSkill(CardMechanicProfile profile) =>
