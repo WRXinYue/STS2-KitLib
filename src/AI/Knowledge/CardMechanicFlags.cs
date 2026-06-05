@@ -22,4 +22,6 @@ public enum CardMechanicFlags : ulong {
     HasBlock = 1 << 14,
     AppliesVulnerable = 1 << 15,
     AppliesWeak = 1 << 16,
+    /// <summary>Adds random or generated cards into the draw pile (e.g. Pillage).</summary>
+    AddsCardsToDeck = 1 << 17,
 }

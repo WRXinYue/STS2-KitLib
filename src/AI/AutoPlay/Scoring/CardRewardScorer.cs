@@ -7,7 +7,7 @@ using DevMode.AI.Planning;
 namespace DevMode.AI.AutoPlay.Scoring;
 
 public static class CardRewardScorer {
-    const int MinPickScore = 9;
+    const int MinPickScore = 6;
 
     public static GameAction PickBest(JsonObject snapshot) {
         var offered = snapshot["offeredCards"]?.AsArray();
@@ -17,7 +17,7 @@ public static class CardRewardScorer {
 
         if (offered == null || offered.Count == 0) {
             if (ShouldSkip(metrics, plan, snapshot))
-                return Skip("No offers — skip (lean deck)");
+                return SkipAction(metrics, plan, 0, SkipScore(metrics, plan, snapshot));
             return new GameAction {
                 Type = ActionType.PickCardReward,
                 TargetIndex = 0,
@@ -38,8 +38,9 @@ public static class CardRewardScorer {
             }
         }
 
-        if (bestIdx < 0 || bestScore < MinPickScore || bestScore < skipScore)
-            return Skip($"Skip (best {bestScore} < threshold {Math.Max(MinPickScore, skipScore)})");
+        int threshold = Math.Max(MinPickScore, skipScore);
+        if (bestIdx < 0 || bestScore < threshold)
+            return SkipAction(metrics, plan, bestScore, threshold);
 
         var name = FindOfferName(offered, bestIdx);
         return new GameAction {
@@ -63,48 +64,16 @@ public static class CardRewardScorer {
         SkipScore(metrics, plan, snapshot) > 0;
 
     static int SkipScore(DeckMetrics metrics, DeckPlan plan, JsonObject snapshot) {
-        var floor = snapshot["totalFloor"]?.GetValue<int>() ?? 0;
-        var actIndex = snapshot["actIndex"]?.GetValue<int>() ?? 0;
-
-        var score = (int)Math.Round(DeckPlanInferer.DilutionPenalty(metrics.DeckSize, plan));
-        score += (int)Math.Round(plan.ThinPreference * 14f);
-
-        if (metrics.StarterBloat <= 0 && metrics.MeanValue >= 12f)
-            score += 10;
-        if (metrics.RemovalUplift < DeckEvaluator.MinRemovalUplift && metrics.MeanValue >= 10f)
-            score += 8;
-
-        if (actIndex >= 2 && metrics.DeckSize > plan.TargetDeckSize + 2)
-            score += 15;
-        if (floor > 30 && metrics.DeckSize > 20)
-            score += 10;
-        if (metrics.DeckSize > plan.TargetDeckSize + 5)
-            score += 12;
-
-        if (metrics.StarterBloat >= 3)
-            score -= 8;
-
-        if (metrics.StrikeSurplus >= 3)
-            score -= 10;
-        if (metrics.ThinGap >= 3)
-            score += metrics.ThinGap * 2;
-        if (metrics.CardsNeedingBurn >= 5 && plan.IsExhaustFocused)
-            score += 8;
-
-        if (metrics.BlockDeficit >= 2)
-            score -= 6;
-        if (metrics.DrawDeficit >= 2 && metrics.DeckSize > plan.TargetDeckSize)
-            score -= 4;
-        if (metrics.BlockDeficit == 0 && metrics.DrawDeficit == 0 && metrics.MeanValue >= 12f)
-            score += 4;
-
+        int score = DeckEvaluator.SkipOpportunityCost(metrics, plan, snapshot);
         score += CodexPriorCatalog.GetSkipThresholdOffset(snapshot);
-
         return score;
     }
 
-    static GameAction Skip(string reason) => new() {
-        Type = ActionType.SkipCardReward,
-        Reason = reason,
-    };
+    static GameAction SkipAction(DeckMetrics metrics, DeckPlan plan, int bestScore, int threshold) {
+        int quality = DeckEvaluator.DeckQualityScore(metrics, plan);
+        return new GameAction {
+            Type = ActionType.SkipCardReward,
+            Reason = $"Skip (best={bestScore} need={threshold} quality={quality} thin={metrics.ThinGap} survival={metrics.SurvivalGap})",
+        };
+    }
 }

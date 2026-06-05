@@ -78,6 +78,24 @@ public static class DeckSynergyEvaluator {
         return score;
     }
 
+    public static int ScoreDeckDilutionOffer(
+        JsonObject card,
+        DeckPlan plan,
+        DeckMetrics metrics,
+        JsonArray? deck) {
+        var profile = ResolveCardProfile(card);
+        if (!profile.Flags.HasFlag(CardMechanicFlags.AddsCardsToDeck))
+            return 0;
+
+        int penalty = 6 + metrics.ThinGap * 4;
+        if (DeckEvaluator.HasTransformCore(deck))
+            penalty += 10;
+        penalty += (int)Math.Round(plan.ThinPreference * 8f);
+        if (metrics.BlockDeficit == 0 && metrics.DrawDeficit == 0)
+            penalty += 6;
+        return -penalty;
+    }
+
     public static int ScoreRelic(string? relicId, DeckPlan plan, JsonObject? snapshot) {
         if (string.IsNullOrWhiteSpace(relicId))
             return 0;

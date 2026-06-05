@@ -57,6 +57,10 @@ internal static class OfficialMechanicProbe {
             || card.GetType().Name.Contains("PrimalForce", StringComparison.Ordinal))
             flags |= CardMechanicFlags.TransformsHandAttacks;
 
+        if (string.Equals(card.Id.Entry, "PILLAGE", StringComparison.OrdinalIgnoreCase)
+            || card.GetType().Name.Contains("Pillage", StringComparison.Ordinal))
+            flags |= CardMechanicFlags.AddsCardsToDeck;
+
         return flags;
     }
 
@@ -352,6 +356,9 @@ internal static class OfficialMechanicProbe {
             flags |= CardMechanicFlags.HasStarCost;
         if (ContainsAny(upper, "ALLENEMY", "ALL_ENEMY"))
             flags |= CardMechanicFlags.Aoe;
+
+        if (ContainsAny(upper, "PILLAGE", "ADDCARDTODECK", "ADDS_CARD"))
+            flags |= CardMechanicFlags.AddsCardsToDeck;
 
         return flags;
     }

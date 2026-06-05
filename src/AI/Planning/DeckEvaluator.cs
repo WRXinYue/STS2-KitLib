@@ -173,4 +173,96 @@ public static class DeckEvaluator {
         1 => 2,
         _ => 0,
     };
+
+    /// <summary>Single scalar for comparing deck states (higher = stronger deck).</summary>
+    public static int DeckQualityScore(DeckMetrics metrics, DeckPlan plan) {
+        int score = metrics.TotalValue;
+        score += (int)Math.Round(metrics.MeanValue * 2f);
+        score -= (int)Math.Round(DeckPlanInferer.DilutionPenalty(metrics.DeckSize, plan) * 10f);
+        score -= metrics.SurvivalGap * 3;
+        score -= metrics.StarterBloat * 3;
+        score += (int)Math.Round(metrics.ConsistencyScore * 10f);
+        if (plan.IsExhaustFocused)
+            score -= metrics.CardsNeedingBurn * 2;
+        return score;
+    }
+
+    /// <summary>
+    /// Opportunity cost of adding one more card — derived from the same quality model as marginal picks.
+    /// </summary>
+    public static int SkipOpportunityCost(DeckMetrics metrics, DeckPlan plan, JsonObject? snapshot = null) {
+        int score = (int)Math.Round(plan.ThinPreference * 14f);
+        score += (int)Math.Round(DeckPlanInferer.DilutionPenalty(metrics.DeckSize, plan) * 8f);
+        score += metrics.ThinGap * 3;
+        score += Math.Max(0, metrics.DeckSize - plan.TargetDeckSize) * 2;
+
+        if (metrics.DeckSize > 0) {
+            int qualityPerCard = DeckQualityScore(metrics, plan) / metrics.DeckSize;
+            score += Math.Max(0, qualityPerCard - 12) * 2;
+        }
+
+        if (metrics.SurvivalGap == 0)
+            score += 5;
+
+        if (plan.IsExhaustFocused && metrics.CardsNeedingBurn >= 5)
+            score += 8;
+
+        if (snapshot != null) {
+            var actIndex = snapshot["actIndex"]?.GetValue<int>() ?? 0;
+            var floor = snapshot["totalFloor"]?.GetValue<int>() ?? 0;
+            if (actIndex >= 2 && metrics.DeckSize > plan.TargetDeckSize + 2)
+                score += 15;
+            if (floor > 30 && metrics.DeckSize > 20)
+                score += 10;
+            if (metrics.DeckSize > plan.TargetDeckSize + 5)
+                score += 12;
+        }
+
+        if (metrics.StarterBloat >= 3)
+            score -= 8;
+        if (metrics.StrikeSurplus >= 3)
+            score -= 10;
+
+        if (metrics.BlockDeficit >= 2 && metrics.SurvivalGap >= 2)
+            score -= 6;
+        else if (metrics.BlockDeficit >= 3)
+            score -= 6;
+
+        if (metrics.DrawDeficit >= 2 && metrics.DeckSize <= plan.TargetDeckSize)
+            score -= 4;
+
+        return score;
+    }
+
+    /// <summary>Quality delta from hypothetically adding one offered card to the deck.</summary>
+    public static int MarginalPickScore(JsonObject snapshot, DeckPlan plan, JsonObject offeredCard) {
+        var before = Evaluate(snapshot, plan);
+        var after = Evaluate(WithAddedCard(snapshot, offeredCard), plan);
+        return DeckQualityScore(after, plan) - DeckQualityScore(before, plan);
+    }
+
+    public static bool HasTransformCore(JsonArray? deck) {
+        if (deck == null) return false;
+        foreach (var node in deck) {
+            if (node is not JsonObject card) continue;
+            var profile = CardMechanicIndex.InferFromSnapshot(card);
+            if (profile.Flags.HasFlag(CardMechanicFlags.TransformsHandAttacks)
+                || profile.Flags.HasFlag(CardMechanicFlags.TransformsCards))
+                return true;
+        }
+        return false;
+    }
+
+    static JsonObject WithAddedCard(JsonObject snapshot, JsonObject card) {
+        var clone = snapshot.DeepClone() as JsonObject ?? new JsonObject();
+        var deck = clone["deck"]?.AsArray() ?? new JsonArray();
+        var newDeck = new JsonArray();
+        foreach (var node in deck) {
+            if (node != null)
+                newDeck.Add(node.DeepClone());
+        }
+        newDeck.Add(card.DeepClone());
+        clone["deck"] = newDeck;
+        return clone;
+    }
 }
