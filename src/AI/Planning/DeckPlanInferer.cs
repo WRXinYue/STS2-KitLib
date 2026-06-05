@@ -63,9 +63,6 @@ public static class DeckPlanInferer {
         if (hasThinRelic)
             builder.ThinPreference += 0.2f;
 
-        if (actIndex == 0 && floor < 15)
-            builder.ThinPreference -= 0.15f;
-
         if (actIndex >= 2 && deckSize > 22)
             builder.ThinPreference += 0.3f;
 

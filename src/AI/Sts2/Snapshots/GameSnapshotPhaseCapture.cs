@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using DevMode.AI.Core.Schema;
+using DevMode.AI.Planning;
 using DevMode.AI.Knowledge;
 using DevMode.AI.Sts2.Helpers;
 using DevMode.Actions;
@@ -39,7 +40,7 @@ internal static class GameSnapshotPhaseCapture
                 CaptureRelicSelection(obj, state);
                 break;
             case GamePhase.CardReward:
-                CaptureCardReward(obj, state);
+                CaptureCardReward(obj, state, player);
                 break;
             case GamePhase.MapSelection:
                 CaptureMapNodes(obj, state);
@@ -146,7 +147,7 @@ internal static class GameSnapshotPhaseCapture
         return "combat_reward";
     }
 
-    static void CaptureCardReward(JsonObject obj, RunState state)
+    static void CaptureCardReward(JsonObject obj, RunState state, Player player)
     {
         var screen = OverlayPhaseHelper.FindCardRewardScreen();
         if (screen == null) return;
@@ -172,6 +173,39 @@ internal static class GameSnapshotPhaseCapture
             NChooseACardSelectionScreen => "choose",
             _ => "reward",
         };
+
+        CaptureNextFightPreview(obj, state, player);
+    }
+
+    static void CaptureNextFightPreview(JsonObject obj, RunState state, Player player) {
+        var route = NextFightRoute.Resolve(state, player);
+        if (route.Count == 0)
+            return;
+
+        var preview = new JsonArray();
+        foreach (var fight in route) {
+            var enemyArr = new JsonArray();
+            foreach (var enemy in fight.Enemies) {
+                enemyArr.Add(new JsonObject {
+                    ["index"] = enemy.Index,
+                    ["monsterId"] = enemy.MonsterId,
+                    ["hp"] = enemy.CurrentHp,
+                    ["intentDamage"] = enemy.IntentDamage,
+                    ["nonDamageThreat"] = enemy.NonDamageThreat,
+                    ["isMinion"] = enemy.IsMinion,
+                });
+            }
+
+            preview.Add(new JsonObject {
+                ["roomType"] = fight.RoomType.ToString(),
+                ["encounterId"] = fight.EncounterId,
+                ["weight"] = fight.Weight,
+                ["incomingTurn1"] = fight.IncomingTurn1,
+                ["enemies"] = enemyArr,
+            });
+        }
+
+        obj["nextFightPreview"] = preview;
     }
 
     static void CaptureMapNodes(JsonObject obj, RunState state)

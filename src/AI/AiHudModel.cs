@@ -119,14 +119,24 @@ public static class AiHudModel {
     static string BuildCardRewardStrategy(JsonObject snapshot) {
         var plan = DeckPlanInferer.Infer(snapshot);
         var metrics = DeckEvaluator.Evaluate(snapshot, plan);
+        var preview = snapshot["nextFightPreview"]?.AsArray();
+        var fightHint = preview != null && preview.Count > 0
+            ? preview[0]?["roomType"]?.GetValue<string>() ?? "?"
+            : null;
 
-        if (metrics.ThinGap >= 3 || metrics.StarterBloat >= 3)
-            return I18N.T("ai.hud.strategy.reward.thin", "Deck is thick — lean toward skip or high-value picks");
+        if (fightHint != null)
+            return I18N.T(
+                "ai.hud.strategy.reward.nextFight",
+                "Score offers vs next fights ({0}); pick only when total > 0",
+                fightHint);
 
         if (metrics.BlockDeficit >= 2)
             return I18N.T("ai.hud.strategy.reward.block", "Low block sources — favor transitional defense");
 
-        return I18N.T("ai.hud.strategy.reward.default", "Pick card that fits deck plan (mean value {0:0.#})", metrics.MeanValue);
+        return I18N.T(
+            "ai.hud.strategy.reward.default",
+            "Marginal deck quality + next-fight sim; skip when score <= 0 (mean {0:0.#})",
+            metrics.MeanValue);
     }
 
     static string BuildShopStrategy(JsonObject snapshot) {

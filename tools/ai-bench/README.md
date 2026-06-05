@@ -108,7 +108,24 @@ If beam picks Defend but `scorer-alts` ranks Strike higher, that is normal — b
 
 **Potions**: logged only on use as `potion pick [ID:+score] card=<best card score>`. Emergency path is **unmodeled** heal/block only (e.g. FRUIT); simulatable BLOCK/BLOOD/FIRE/etc. compete in beam. Fallback non-sim potions need `score >= card + 8`, max one per turn. Beam and fallback share `PotionUseScoring` (secure-kill block defer, full-energy buff penalty, debuff defer, retain waste).
 
-### Sim limitation fixes (Phase A + B)
+### Card reward macro EV
+
+Pick/skip uses **pure marginal score** (`best > 0`); no `MinPickScore` or skip-threshold gates.
+
+| Log pattern | Meaning |
+|-------------|---------|
+| `card pick [NAME:+score] marginal=N nextFight=F vs=ENCOUNTER` | Picked offer; `nextFight` is sim delta vs baseline deck |
+| `card skip best=B marginal=M nextFight=F` | All offers scored ≤ 0 |
+| Snapshot `nextFightPreview[]` | Weighted route combats (up to 3) with `incomingTurn1` |
+
+Scoring stack per offer: `MarginalPickScore` + synergy + dilution + codex + **NextFightDeckEvaluator** (8 shuffle MC samples × shallow beam depth 3 per weighted combat node).
+
+Manual checks (`scenarios.json`):
+
+1. **Weak dilute offer** — TRUE_GRIT / duplicate strike skipped when total ≤ 0.
+2. **Block before elite** — low block deck favors block offer when `nextFightPreview` shows Elite with high `incomingTurn1`.
+3. **Offense before killable fight** — thin deck favors damage when beam lethal on stub encounter.
+
 
 Manual spot-checks:
 

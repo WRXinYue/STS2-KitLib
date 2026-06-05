@@ -1,14 +1,11 @@
-using System;
 using System.Text.Json.Nodes;
+using DevMode.AI;
 using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
 using DevMode.AI.Planning;
 
 namespace DevMode.AI.AutoPlay.Scoring;
 
 public static class CardRewardScorer {
-    const int MinPickScore = 6;
-
     public static GameAction PickBest(JsonObject snapshot) {
         var offered = snapshot["offeredCards"]?.AsArray();
         var deckSize = snapshot["deck"]?.AsArray()?.Count ?? 0;
@@ -16,8 +13,6 @@ public static class CardRewardScorer {
         var metrics = DeckEvaluator.Evaluate(snapshot, plan);
 
         if (offered == null || offered.Count == 0) {
-            if (ShouldSkip(metrics, plan, snapshot))
-                return SkipAction(metrics, plan, 0, SkipScore(metrics, plan, snapshot));
             return new GameAction {
                 Type = ActionType.PickCardReward,
                 TargetIndex = 0,
@@ -27,26 +22,29 @@ public static class CardRewardScorer {
 
         int bestIdx = -1;
         int bestScore = int.MinValue;
-        int skipScore = SkipScore(metrics, plan, snapshot);
+        int bestMarginal = 0;
+        int bestNextFight = 0;
 
         for (int i = 0; i < offered.Count; i++) {
             if (offered[i] is not JsonObject card) continue;
-            int score = MacroScorerHelper.ScoreCardOffer(card, plan, deckSize, snapshot);
-            if (score > bestScore) {
-                bestScore = score;
+            var breakdown = MacroScorerHelper.ScoreCardOfferBreakdown(card, plan, deckSize, snapshot);
+            if (breakdown.Total > bestScore) {
+                bestScore = breakdown.Total;
+                bestMarginal = breakdown.Marginal;
+                bestNextFight = breakdown.NextFight;
                 bestIdx = card["index"]?.GetValue<int>() ?? i;
             }
         }
 
-        int threshold = Math.Max(MinPickScore, skipScore);
-        if (bestIdx < 0 || bestScore < threshold)
-            return SkipAction(metrics, plan, bestScore, threshold);
+        if (bestIdx < 0 || bestScore <= 0)
+            return SkipAction(metrics, plan, bestScore, bestMarginal, bestNextFight);
 
         var name = FindOfferName(offered, bestIdx);
+        LogPick(snapshot, name, bestScore, bestMarginal, bestNextFight);
         return new GameAction {
             Type = ActionType.PickCardReward,
             TargetIndex = bestIdx,
-            Reason = $"Card pick [{name}] score={bestScore}",
+            Reason = $"Card pick [{name}] score={bestScore} marginal={bestMarginal} nextFight={bestNextFight}",
         };
     }
 
@@ -60,20 +58,27 @@ public static class CardRewardScorer {
         return $"card {targetIdx}";
     }
 
-    static bool ShouldSkip(DeckMetrics metrics, DeckPlan plan, JsonObject snapshot) =>
-        SkipScore(metrics, plan, snapshot) > 0;
-
-    static int SkipScore(DeckMetrics metrics, DeckPlan plan, JsonObject snapshot) {
-        int score = DeckEvaluator.SkipOpportunityCost(metrics, plan, snapshot);
-        score += CodexPriorCatalog.GetSkipThresholdOffset(snapshot);
-        return score;
-    }
-
-    static GameAction SkipAction(DeckMetrics metrics, DeckPlan plan, int bestScore, int threshold) {
+    static GameAction SkipAction(
+        DeckMetrics metrics,
+        DeckPlan plan,
+        int bestScore,
+        int marginal,
+        int nextFight) {
         int quality = DeckEvaluator.DeckQualityScore(metrics, plan);
+        AiDecisionLog.Record("AutoPlay",
+            $"card skip best={bestScore} marginal={marginal} nextFight={nextFight} quality={quality}");
         return new GameAction {
             Type = ActionType.SkipCardReward,
-            Reason = $"Skip (best={bestScore} need={threshold} quality={quality} thin={metrics.ThinGap} survival={metrics.SurvivalGap})",
+            Reason = $"Skip (best={bestScore} marginal={marginal} nextFight={nextFight} quality={quality})",
         };
+    }
+
+    static void LogPick(JsonObject snapshot, string name, int score, int marginal, int nextFight) {
+        var preview = snapshot["nextFightPreview"]?.AsArray();
+        var fightHint = preview != null && preview.Count > 0
+            ? preview[0]?["encounterId"]?.GetValue<string>() ?? "?"
+            : "none";
+        AiDecisionLog.Record("AutoPlay",
+            $"card pick [{name}:+{score}] marginal={marginal} nextFight={nextFight} vs={fightHint}");
     }
 }

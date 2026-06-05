@@ -5,22 +5,43 @@ using DevMode.AI.Planning;
 
 namespace DevMode.AI.AutoPlay.Scoring;
 
+internal readonly record struct CardOfferBreakdown(
+    int Marginal,
+    int Synergy,
+    int Dilution,
+    int Early,
+    int Codex,
+    int NextFight) {
+    public int Total => Marginal + Synergy + Dilution + Early + Codex + NextFight;
+}
+
 internal static class MacroScorerHelper {
     public static int RarityScore(string? rarity) => DeckCardScoring.RarityScore(rarity);
 
-    public static int ScoreCardOffer(JsonObject card, DeckPlan plan, int deckSize, JsonObject? snapshot = null) {
-        if (snapshot == null)
-            return ScoreCardOfferAbsolute(card, plan, deckSize);
+    public static int ScoreCardOffer(JsonObject card, DeckPlan plan, int deckSize, JsonObject? snapshot = null) =>
+        ScoreCardOfferBreakdown(card, plan, deckSize, snapshot).Total;
+
+    public static CardOfferBreakdown ScoreCardOfferBreakdown(
+        JsonObject card,
+        DeckPlan plan,
+        int deckSize,
+        JsonObject? snapshot = null) {
+        if (snapshot == null) {
+            int absolute = ScoreCardOfferAbsolute(card, plan, deckSize);
+            return new CardOfferBreakdown(absolute, 0, 0, 0, 0, 0);
+        }
 
         var metrics = DeckEvaluator.Evaluate(snapshot, plan);
         var deck = snapshot["deck"]?.AsArray();
 
-        int score = DeckEvaluator.MarginalPickScore(snapshot, plan, card);
-        score += DeckSynergyEvaluator.ScoreCard(card, plan, snapshot);
-        score += DeckSynergyEvaluator.ScoreDeckDilutionOffer(card, plan, metrics, deck);
-        score += EarlyCardRewardAdjustments.Score(card, snapshot);
-        score += ScaledCodexBonus(card, snapshot, metrics);
-        return score;
+        int marginal = DeckEvaluator.MarginalPickScore(snapshot, plan, card);
+        int synergy = DeckSynergyEvaluator.ScoreCard(card, plan, snapshot);
+        int dilution = DeckSynergyEvaluator.ScoreDeckDilutionOffer(card, plan, metrics, deck);
+        int early = EarlyCardRewardAdjustments.Score(card, snapshot);
+        int codex = ScaledCodexBonus(card, snapshot, metrics);
+        int nextFight = NextFightDeckEvaluator.ScoreOfferDelta(snapshot, card, plan);
+
+        return new CardOfferBreakdown(marginal, synergy, dilution, early, codex, nextFight);
     }
 
     static int ScoreCardOfferAbsolute(JsonObject card, DeckPlan plan, int deckSize) {

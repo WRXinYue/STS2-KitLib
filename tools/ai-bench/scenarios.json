@@ -132,6 +132,21 @@
       "encounterId": "NIBBITS_NORMAL",
       "note": "Simulatable potions (FLEX/WEAK/FIRE/ENERGY) should appear in beam LINE= before naked-end; no standalone potion pick log when planner chooses UsePotion. WEAK before attacks on same →eN.",
       "logPatterns": ["LINE=", "FLEX", "WEAK", "beam d=", "Potion#"]
+    },
+    {
+      "id": "card_reward_marginal_skip",
+      "note": "Card reward skips when best offer total score <= 0; log card skip with marginal and nextFight breakdown.",
+      "logPatterns": ["card skip", "marginal=", "nextFight="]
+    },
+    {
+      "id": "card_reward_next_fight_block",
+      "note": "Before elite on route, low-block deck should pick block/defend offers over dilute skills when nextFight delta favors survival.",
+      "logPatterns": ["card pick", "nextFight=", "nextFightPreview"]
+    },
+    {
+      "id": "card_reward_next_fight_offense",
+      "note": "Thin deck with killable next encounter should favor damage offers; nextFight positive on offense cards.",
+      "logPatterns": ["card pick", "nextFight=", "marginal="]
     }
   ]
 }
