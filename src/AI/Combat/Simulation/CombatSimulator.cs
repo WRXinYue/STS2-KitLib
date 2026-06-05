@@ -11,6 +11,9 @@ public static class CombatSimulator {
         if (action.Kind == SimActionKind.EndTurn)
             return CombatTurnResolver.ResolveEndTurn(state);
 
+        if (action.Kind == SimActionKind.UsePotion)
+            return PotionSimulator.Apply(state, action.PotionSlot, action.EnemyIndex, action.McBranch);
+
         if (action.HandIndex < 0 || action.HandIndex >= state.Hand.Count)
             return state;
 
@@ -36,21 +39,21 @@ public static class CombatSimulator {
         hand.RemoveAt(action.HandIndex);
 
         if (card.IsAttack && card.Damage > 0) {
-            if (card.IsAoe || card.TargetType is "AllEnemy") {
+            if (card.IsAoe || CombatTargetTypes.IsAllEnemies(card.TargetType)) {
                 var aoeDamage = CombatDamageCalc.OutgoingDamage(card, state);
-                ApplyAoeDamage(enemies, aoeDamage);
+                CombatEffectApplier.ApplyAoeDamage(enemies, aoeDamage);
             } else if (action.EnemyIndex >= 0) {
                 var target = FindEnemy(enemies, action.EnemyIndex);
                 var damage = CombatDamageCalc.OutgoingDamage(card, state, target?.Vulnerable ?? 0);
-                ApplySingleDamage(enemies, action.EnemyIndex, damage);
+                CombatEffectApplier.ApplySingleDamage(enemies, action.EnemyIndex, damage);
             }
         }
 
         if (card.Profile.AppliedVulnerable > 0)
-            ApplyDebuff(enemies, action, card.IsAoe, "VULNERABLE", card.Profile.AppliedVulnerable);
+            CombatEffectApplier.ApplyDebuff(enemies, action.EnemyIndex, card.IsAoe, "VULNERABLE", card.Profile.AppliedVulnerable);
 
         if (card.Profile.AppliedWeak > 0)
-            ApplyDebuff(enemies, action, card.IsAoe, "WEAK", card.Profile.AppliedWeak);
+            CombatEffectApplier.ApplyDebuff(enemies, action.EnemyIndex, card.IsAoe, "WEAK", card.Profile.AppliedWeak);
 
         if (card.IsSkill) {
             if (card.Block > 0)
@@ -196,28 +199,6 @@ public static class CombatSimulator {
         return ReindexHand(result);
     }
 
-    static void ApplyAoeDamage(List<CombatEnemy> enemies, int damage) {
-        for (int i = 0; i < enemies.Count; i++) {
-            if (!enemies[i].IsAlive) continue;
-            var before = enemies[i];
-            enemies[i] = ApplyDamageToEnemy(enemies[i], damage);
-            if (before.IsAlive && !enemies[i].IsAlive && !before.IsMinion)
-                ThreatModel.OnPrimaryEnemyKilled(enemies, i);
-        }
-    }
-
-    static void ApplySingleDamage(List<CombatEnemy> enemies, int targetIndex, int damage) {
-        for (int i = 0; i < enemies.Count; i++) {
-            if (enemies[i].Index != targetIndex && i != targetIndex) continue;
-            if (!enemies[i].IsAlive) continue;
-            var before = enemies[i];
-            enemies[i] = ApplyDamageToEnemy(enemies[i], damage);
-            if (before.IsAlive && !enemies[i].IsAlive && !before.IsMinion)
-                ThreatModel.OnPrimaryEnemyKilled(enemies, i);
-            return;
-        }
-    }
-
     static CombatEnemy? FindEnemy(List<CombatEnemy> enemies, int targetIndex) {
         foreach (var enemy in enemies) {
             if (!enemy.IsAlive) continue;
@@ -226,39 +207,5 @@ public static class CombatSimulator {
         }
 
         return null;
-    }
-
-    static CombatEnemy ApplyDamageToEnemy(CombatEnemy enemy, int damage) {
-        var scaled = damage;
-        var remaining = Math.Max(0, scaled - enemy.Block);
-        var newBlock = Math.Max(0, enemy.Block - scaled);
-        var newHp = Math.Max(0, enemy.CurrentHp - remaining);
-        return enemy.WithHp(newHp, newBlock, newHp > 0);
-    }
-
-    static void ApplyDebuff(
-        List<CombatEnemy> enemies,
-        SimCombatAction action,
-        bool isAoe,
-        string token,
-        int amount) {
-        if (isAoe) {
-            for (int i = 0; i < enemies.Count; i++) {
-                if (!enemies[i].IsAlive) continue;
-                enemies[i] = token == "VULNERABLE"
-                    ? enemies[i].WithPowers(enemies[i].Vulnerable + amount, enemies[i].Weak)
-                    : enemies[i].WithPowers(enemies[i].Vulnerable, enemies[i].Weak + amount);
-            }
-            return;
-        }
-
-        if (action.EnemyIndex < 0) return;
-        for (int i = 0; i < enemies.Count; i++) {
-            if (enemies[i].Index != action.EnemyIndex && i != action.EnemyIndex) continue;
-            enemies[i] = token == "VULNERABLE"
-                ? enemies[i].WithPowers(enemies[i].Vulnerable + amount, enemies[i].Weak)
-                : enemies[i].WithPowers(enemies[i].Vulnerable, enemies[i].Weak + amount);
-            return;
-        }
     }
 }

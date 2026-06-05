@@ -23,8 +23,6 @@ public static class CombatTurnResolver {
             (retained, discard) = CombatPileSimulator.DiscardHand(state.Hand, discard);
         }
 
-        block = 0;
-
         foreach (var enemy in enemies.OrderBy(e => e.ActOrder).ToList()) {
             if (!enemy.IsAlive) continue;
 
@@ -111,10 +109,13 @@ public static class CombatTurnResolver {
                 rngCounter);
         rngCounter = drawCounter;
 
+        // Block absorbs during enemy phase; clears at start of the next player turn.
+        block = 0;
+
         return state with {
             PlayerHp = Math.Max(0, hp),
             PlayerBlock = block,
-            Energy = state.MaxEnergy,
+            Energy = RelicCombatRules.NextTurnEnergy(state),
             TurnNumber = state.TurnNumber + 1,
             Hand = hand,
             DrawPile = drawAfter,

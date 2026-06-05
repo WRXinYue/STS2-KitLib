@@ -9,4 +9,5 @@ public enum RelicCombatEffectKind {
     AppliesPower,
     DrawOnHandEmpty,
     StartOfCombatBlock,
+    RetainEnergyOnTurnStart,
 }

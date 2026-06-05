@@ -57,88 +57,24 @@ public static class IntentCalculator {
     }
 
     /// <summary>0–100 scale for how urgently block is needed (scoring).</summary>
-    public static int BlockUrgency(JsonObject snapshot) {
-        var net = NetDamageAfterBlock(snapshot);
+    public static int BlockUrgency(JsonObject snapshot) =>
+        BlockUrgencyFromState(CombatState.FromSnapshot(snapshot));
+
+    public static int BlockUrgencyFromState(CombatState state) {
+        var net = ThreatModel.NetDamageAfterBlock(state);
         if (net <= 0) return 0;
 
-        var effectiveHp = EffectiveHp(snapshot);
+        var effectiveHp = ThreatModel.EffectiveHp(state);
         var ratio = (float)net / effectiveHp;
         var urgency = (int)(ratio * 60f);
         if (net >= effectiveHp) urgency += 40;
-        if (HpRatio(snapshot) < 0.45f) urgency += 15;
-        if (AliveEnemyCount(snapshot) >= 2) urgency += 10;
+        if (state.PlayerMaxHp > 0 && (float)state.PlayerHp / state.PlayerMaxHp < 0.45f) urgency += 15;
+        if (state.AliveEnemyCount >= 2) urgency += 10;
         return Math.Clamp(urgency, 0, 100);
     }
 
-    public static bool NeedsBlock(JsonObject snapshot) {
-        var net = NetDamageAfterBlock(snapshot);
-        if (net <= 0) return false;
-
-        var effectiveHp = EffectiveHp(snapshot);
-        if (net >= effectiveHp) return true;
-
-        var floor = snapshot["totalFloor"]?.GetValue<int>() ?? 0;
-        if (floor <= BlockThreatEvaluator.EarlyFloorMax
-            && net >= BlockThreatEvaluator.EarlyBlockThreshold)
-            return true;
-
-        if (CanEliminateIncomingThreats(snapshot))
-            return false;
-
-        if (LethalChecker.CanLethal(snapshot, out _)) {
-            if (net <= Math.Max(6, effectiveHp / 5)) return false;
-            if (HpRatio(snapshot) > 0.65f && net < effectiveHp / 3) return false;
-        }
-
-        var thresholdRatio = Math.Max(8, (int)(effectiveHp * 0.2f));
-        return net >= thresholdRatio || net >= effectiveHp - 15;
-    }
-
-    /// <summary>
-    /// True when this turn's max single-target damage can kill every enemy that would hit us.
-    /// Multi-attacker fights still require block unless all threats are lethal this turn.
-    /// </summary>
-    static bool CanEliminateIncomingThreats(JsonObject snapshot) {
-        var state = CombatState.FromSnapshot(snapshot);
-        var threats = state.Enemies
-            .Where(e => e.IsAlive && e.IntentDamage > 0)
-            .ToList();
-
-        if (threats.Count == 0) return true;
-
-        var net = ThreatModel.NetDamageAfterBlock(state);
-        if (net <= 0) return true;
-
-        int maxDamage = SimLethalChecker.EstimateMaxDamage(state);
-
-        if (AoeDamageEstimator.CanAoeLethalAll(state)
-            && threats.All(t => AoeDamageEstimator.EstimateAoeKills(state, AoeDamageEstimator.MaxAoeDamage(state)) > 0))
-            return net <= BlockThreatEvaluator.SafeLethalNetMax;
-
-        if (ThreatModel.CanEliminateAllThreats(state, maxDamage)
-            && SimLethalChecker.CanLethal(state, out _))
-            return net <= BlockThreatEvaluator.SafeLethalNetMax;
-
-        foreach (var threat in threats.OrderByDescending(t => t.IntentDamage)) {
-            var afterKill = CombatSimulator.Apply(
-                state,
-                new SimCombatAction(SimActionKind.PlayCard, FindKillCardIndex(state, threat.Index), threat.Index));
-            if (ThreatModel.IncomingDamage(afterKill) == 0
-                && ThreatModel.NetDamageAfterBlock(afterKill) <= BlockThreatEvaluator.SafeLethalNetMax)
-                return true;
-        }
-
-        return false;
-    }
-
-    static int FindKillCardIndex(CombatState state, int targetIndex) {
-        for (int i = 0; i < state.Hand.Count; i++) {
-            var card = state.Hand[i];
-            if (!card.CanPlay || !card.IsAttack || card.Cost > state.Energy) continue;
-            return i;
-        }
-        return 0;
-    }
+    public static bool NeedsBlock(JsonObject snapshot) =>
+        BlockDefensePolicy.NeedsBlock(snapshot);
 
     public static float HpRatio(JsonObject snapshot) {
         var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;

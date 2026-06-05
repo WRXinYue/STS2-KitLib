@@ -44,6 +44,7 @@ COMBAT_HOOKS = {
     "AfterCardDiscarded",
     "AfterCardExhausted",
     "ModifyAttackHitCount",
+    "ShouldPlayerResetEnergy",
 }
 
 SIMULATABLE_KINDS = {
@@ -55,6 +56,7 @@ SIMULATABLE_KINDS = {
     "AppliesPower",
     "DrawOnHandEmpty",
     "StartOfCombatBlock",
+    "RetainEnergyOnTurnStart",
 }
 
 VAR_RE = re.compile(r"new\s+(\w+Var)\(([^)]*)\)")
@@ -167,6 +169,15 @@ def parse_max_energy_delta(body: str, canonical: dict[str, int | float]) -> dict
     return {"kind": "MaxEnergyDelta", "delta": int(delta)}
 
 
+def parse_retain_energy(body: str) -> dict | None:
+    if not SHOULD_FLUSH_FALSE_RE.search(body):
+        return None
+    effect: dict = {"kind": "RetainEnergyOnTurnStart"}
+    if ROUND_EQ_ONE_RE.search(body):
+        effect["minCombatRound"] = 2
+    return effect
+
+
 def parse_energy_gain_delta(body: str, canonical: dict[str, int | float]) -> dict | None:
     m = ENERGY_GAIN_DELTA_RE.search(body)
     if not m:
@@ -230,6 +241,8 @@ def parse_relic(path: Path) -> dict | None:
     flush_body = extract_method_body(text, "ShouldFlush")
     if flush_body and SHOULD_FLUSH_FALSE_RE.search(flush_body):
         add({"kind": "RetainHandOnEndTurn"})
+
+    add(parse_retain_energy(extract_method_body(text, "ShouldPlayerResetEnergy")))
 
     empty_body = extract_method_body(text, "AfterHandEmptied")
     if empty_body and DRAW_RE.search(empty_body):

@@ -1,9 +1,13 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using DevMode.AI.Combat;
 
 namespace DevMode.AI.Combat.Simulation;
 
 public static class SimLethalChecker {
+    const int SecureKillSearchDepth = 8;
+
     public static bool CanLethal(CombatState state, out int targetIndex) {
         targetIndex = -1;
 
@@ -42,9 +46,108 @@ public static class SimLethalChecker {
         int best = 0;
         foreach (var enemy in state.Enemies.Where(e => e.IsAlive)) {
             if (LethalExclusions.ShouldSkip(enemy)) continue;
-            best = System.Math.Max(best, LethalDamageSolver.MaxSingleTargetDamage(state, enemy.Index));
+            best = Math.Max(best, LethalDamageSolver.MaxSingleTargetDamage(state, enemy.Index));
         }
 
         return best;
+    }
+
+    public static bool CanKillEnemyThisAction(CombatState state, int handIndex, int enemyIndex) {
+        if (handIndex < 0 || handIndex >= state.Hand.Count) return false;
+
+        var card = state.Hand[handIndex];
+        if (!card.IsAttack || card.Damage <= 0) return false;
+
+        var target = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == enemyIndex);
+        if (target == null) return false;
+
+        if (card.IsAoe) {
+            int dmg = CombatDamageCalc.OutgoingDamage(card, state);
+            return AoeDamageEstimator.EstimateAoeKills(state, dmg) > 0
+                && state.Enemies.Where(e => e.IsAlive && e.IntentDamage > 0)
+                    .All(e => dmg * (e.Vulnerable > 0 ? 1.5f : 1f) >= e.EffectiveHp);
+        }
+
+        int outgoing = CombatDamageCalc.OutgoingDamage(card, state, target.Vulnerable);
+        return outgoing >= target.EffectiveHp;
+    }
+
+    public static bool CanClearIncomingThisTurn(CombatState state) {
+        if (ThreatModel.IncomingDamage(state) == 0)
+            return true;
+
+        return SearchSecureKill(state, SecureKillSearchDepth, requireZeroIncoming: true);
+    }
+
+    public static bool CanSecureKillThisTurn(CombatState state) {
+        if (ThreatModel.NetDamageAfterBlock(state) <= BlockDefensePolicy.SafeChipNetMax)
+            return true;
+
+        if (ThreatModel.IncomingDamage(state) == 0)
+            return ThreatModel.NetDamageAfterBlock(state) <= BlockDefensePolicy.SafeChipNetMax;
+
+        return SearchSecureKill(state, SecureKillSearchDepth, requireZeroIncoming: true);
+    }
+
+    static bool SearchSecureKill(CombatState state, int depth, bool requireZeroIncoming) {
+        if (state.AliveEnemyCount == 0)
+            return true;
+
+        if (requireZeroIncoming && ThreatModel.IncomingDamage(state) == 0)
+            return ThreatModel.NetDamageAfterBlock(state) <= BlockDefensePolicy.SafeChipNetMax;
+
+        if (depth <= 0)
+            return false;
+
+        if (AoeDamageEstimator.CanAoeLethalAll(state)) {
+            var aoe = AoeDamageEstimator.FindBestAoeLethalAction(state);
+            if (aoe != null) {
+                var afterAoe = CombatSimulator.Apply(state, aoe);
+                if (SearchSecureKill(afterAoe, depth - 1, requireZeroIncoming))
+                    return true;
+            }
+        }
+
+        foreach (var action in EnumerateKillActions(state)) {
+            var next = CombatSimulator.Apply(state, action);
+            if (SearchSecureKill(next, depth - 1, requireZeroIncoming))
+                return true;
+        }
+
+        return false;
+    }
+
+    static IEnumerable<SimCombatAction> EnumerateKillActions(CombatState state) {
+        var threats = state.Enemies
+            .Where(e => e.IsAlive && e.IntentDamage > 0)
+            .OrderByDescending(e => e.IntentDamage)
+            .ThenBy(e => e.EffectiveHp)
+            .ToList();
+
+        if (threats.Count == 0) {
+            foreach (var enemy in state.Enemies.Where(e => e.IsAlive && ThreatModel.IsViableAttackTarget(state, e))) {
+                for (int i = 0; i < state.Hand.Count; i++) {
+                    var card = state.Hand[i];
+                    if (!CombatCardCost.CanAfford(card, state) || !card.IsAttack) continue;
+                    yield return new SimCombatAction(SimActionKind.PlayCard, i, enemy.Index);
+                }
+            }
+
+            yield break;
+        }
+
+        foreach (var threat in threats) {
+            for (int i = 0; i < state.Hand.Count; i++) {
+                var card = state.Hand[i];
+                if (!CombatCardCost.CanAfford(card, state) || !card.IsAttack || card.Damage <= 0) continue;
+
+                if (card.IsAoe) {
+                    yield return new SimCombatAction(SimActionKind.PlayCard, i, -1);
+                    continue;
+                }
+
+                yield return new SimCombatAction(SimActionKind.PlayCard, i, threat.Index);
+            }
+        }
     }
 }

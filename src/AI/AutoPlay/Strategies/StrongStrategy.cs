@@ -9,7 +9,7 @@ namespace DevMode.AI.AutoPlay.Strategies;
 
 /// <summary>
 /// Deck-plan-aware strategy for solo A10-capable play.
-/// Macro phases delegate to dedicated scorers; combat uses shallow search + lethal check.
+/// Macro phases delegate to dedicated scorers; combat uses beam-only search (no lethal fast-path).
 /// </summary>
 public sealed class StrongStrategy : IDecisionMaker {
     public Task<GameAction> DecideAsync(JsonObject snapshot, GamePhase phase) {
@@ -31,11 +31,19 @@ public sealed class StrongStrategy : IDecisionMaker {
     }
 
     static GameAction DecideCombat(JsonObject snapshot) {
-        var potion = PotionScorer.TryUsePotion(snapshot);
-        if (potion != null)
-            return potion;
+        var emergency = PotionScorer.TryEmergencyPotion(snapshot);
+        if (emergency != null)
+            return emergency;
 
-        return CombatSearch.PickBestMove(snapshot)
+        var move = CombatSearch.PickBestMove(snapshot);
+        if (move != null && move.Type != ActionType.EndTurn)
+            return move;
+
+        var fallback = PotionScorer.TryFallbackPotion(snapshot);
+        if (fallback != null)
+            return fallback;
+
+        return move
             ?? CombatScorer.PickBestCombatMove(snapshot)
             ?? new GameAction { Type = ActionType.EndTurn, Reason = "No combat move" };
     }

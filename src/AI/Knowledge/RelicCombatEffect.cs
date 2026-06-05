@@ -9,7 +9,8 @@ public sealed record RelicCombatEffect(
     int Block = 0,
     string? PowerId = null,
     int PowerAmount = 1,
-    int? MaxCombatRound = null);
+    int? MaxCombatRound = null,
+    int? MinCombatRound = null);
 
 public sealed record RelicCombatProfile(
     string Id,

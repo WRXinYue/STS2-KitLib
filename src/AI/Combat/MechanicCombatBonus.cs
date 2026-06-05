@@ -74,6 +74,19 @@ internal static class MechanicCombatBonus {
         || profile.Flags.HasFlag(CardMechanicFlags.AppliesWeak);
 }
 
+internal static class CombatEvalWeights {
+    public const int MidTurnNetMultiplier = 6;
+    public const int MidTurnLowHpNetBonus = 2;
+    public const int TerminalHpMultiplier = 8;
+    public const int TerminalNetPenalty = 12;
+    public const int TerminalFullBlockBonus = 80;
+    public const int TerminalBlockRewardPerPoint = 3;
+    public const int BlockCoverPerPoint = 4;
+    public const int LowHpNextTurnPenalty = 2;
+    public const int UnusedEnergyExposedNetPenalty = 6;
+    public const int UnsafeAttackPenaltyPerNet = 8;
+}
+
 internal static class CombatScoreWeights {
     public const int FreeTransformBonus = 12;
     public const int TurnOpenTransformBonus = 40;

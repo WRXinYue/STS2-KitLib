@@ -13,11 +13,15 @@ public sealed record CombatMoveScore(
     public static string FormatMoveLabel(GameAction action) {
         if (action.Type == ActionType.EndTurn)
             return "EndTurn";
+        if (action.Type == ActionType.UsePotion) {
+            var target = action.SecondaryIndex >= 0 ? $"→e{action.SecondaryIndex}" : "";
+            return $"Potion#{action.TargetIndex}{target}";
+        }
         if (action.Type != ActionType.PlayCard)
             return action.Type.ToString();
 
-        var target = action.SecondaryIndex >= 0 ? $"→e{action.SecondaryIndex}" : "";
-        return $"Play#{action.TargetIndex}{target}";
+        var playTarget = action.SecondaryIndex >= 0 ? $"→e{action.SecondaryIndex}" : "";
+        return $"Play#{action.TargetIndex}{playTarget}";
     }
 }
 

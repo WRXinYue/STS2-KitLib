@@ -23,11 +23,13 @@ internal static class CombatSetupEvaluator {
             return 0;
 
         var attackHand = vulnCardIndex >= 0 ? HandWithoutIndex(hand, vulnCardIndex) : hand;
-        var immediateDamage = CombatCardStats.EstimateFollowupAttackDamage(attackHand, energy);
+        var immediateDamage = CapFollowupForTarget(
+            CombatCardStats.EstimateFollowupAttackDamage(attackHand, energy), targetEnemy);
         var energyAfter = energy - vulnCost;
         if (energyAfter < 0) return 0;
 
-        var followupDamage = CombatCardStats.EstimateFollowupAttackDamage(attackHand, energyAfter);
+        var followupDamage = CapFollowupForTarget(
+            CombatCardStats.EstimateFollowupAttackDamage(attackHand, energyAfter), targetEnemy);
         var vulnHit = vulnCard != null ? CombatCardStats.ResolveDamage(vulnCard) : 0;
         var setupPayoff = vulnHit + (int)Math.Round(followupDamage * 1.5f);
         var value = setupPayoff - immediateDamage + vulnStacks * 4;
@@ -69,16 +71,21 @@ internal static class CombatSetupEvaluator {
 
         var hand = state.ToHandJson();
         var attackHand = HandWithoutIndex(hand, handIndex);
-        var immediate = CombatCardStats.EstimateFollowupAttackDamage(attackHand, state.Energy);
+        var immediate = CapFollowupForTarget(
+            CombatCardStats.EstimateFollowupAttackDamage(attackHand, state.Energy), target);
         var energyAfter = state.Energy - card.Cost;
         if (energyAfter < 0) return 0;
 
-        var followup = CombatCardStats.EstimateFollowupAttackDamage(attackHand, energyAfter);
+        var followup = CapFollowupForTarget(
+            CombatCardStats.EstimateFollowupAttackDamage(attackHand, energyAfter), target);
         var payoff = card.Damage + (int)Math.Round(followup * 1.5f);
         var value = payoff - immediate + stacks * 4;
 
         if (ThreatModel.IncomingDamage(state) > 0 && !ThreatModel.IsFatalIfUnblocked(state))
             value += stacks * 2;
+
+        if (enemyIndex == PrimaryAttackTargetIndex(state))
+            value += stacks * 3 + 6;
 
         return Math.Max(0, value);
     }
@@ -148,6 +155,75 @@ internal static class CombatSetupEvaluator {
 
         return debt;
     }
+
+    /// <summary>Primary focus for single-target attacks this turn (matches beam target ordering).</summary>
+    public static int PrimaryAttackTargetIndex(CombatState state) =>
+        state.Enemies
+            .Where(e => ThreatModel.IsViableAttackTarget(state, e))
+            .OrderByDescending(e => e.IsMinion ? 0 : 1)
+            .ThenBy(e => e.EffectiveHp)
+            .ThenByDescending(e => e.IntentDamage)
+            .ThenByDescending(e => ThreatModel.NextTurnAttackOn(e))
+            .Select(e => e.Index)
+            .FirstOrDefault();
+
+    public static int ComputeWastedVulnerablePenalty(CombatState state) {
+        if (state.AliveEnemyCount < 2)
+            return 0;
+
+        var focus = PrimaryAttackTargetIndex(state);
+        if (focus < 0)
+            return 0;
+
+        var focusDamage = EstimateGreedyAttackDamageOn(state, focus);
+        if (focusDamage <= 0)
+            return 0;
+
+        int penalty = 0;
+        foreach (var enemy in state.Enemies) {
+            if (!enemy.IsAlive || enemy.Vulnerable <= 0 || enemy.Index == focus)
+                continue;
+            penalty += enemy.Vulnerable * 10 + Math.Min(30, focusDamage / 2);
+        }
+
+        return penalty;
+    }
+
+    public static int EstimateGreedyAttackDamageOn(CombatState state, int enemyIndex) {
+        var target = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == enemyIndex);
+        if (target == null)
+            return 0;
+
+        int energy = state.Energy;
+        int total = 0;
+        foreach (var card in state.Hand.OrderByDescending(c => c.Damage)) {
+            if (!CombatCardCost.CanAfford(card, state))
+                continue;
+            if (!card.IsAttack || card.Damage <= 0)
+                continue;
+
+            int cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
+            if (cost > energy)
+                continue;
+
+            energy -= cost;
+            total += CombatDamageCalc.OutgoingDamage(card, state, target.Vulnerable);
+        }
+
+        return total;
+    }
+
+    static int CapFollowupForTarget(int rawDamage, JsonObject? targetEnemy) {
+        if (targetEnemy == null)
+            return rawDamage;
+
+        var hp = targetEnemy["currentHp"]?.GetValue<int>() ?? 0;
+        var block = targetEnemy["block"]?.GetValue<int>() ?? 0;
+        return Math.Min(rawDamage, Math.Max(0, hp + block));
+    }
+
+    static int CapFollowupForTarget(int rawDamage, CombatEnemy target) =>
+        Math.Min(rawDamage, Math.Max(0, target.EffectiveHp));
 
     static bool AppliesVulnerable(CombatHandCard card) =>
         card.Profile.AppliedVulnerable > 0

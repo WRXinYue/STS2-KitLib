@@ -1,0 +1,126 @@
+{
+  "potions": {
+    "FLEX_POTION": {
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "GainStrength", "amount": 5 }
+      ]
+    },
+    "STRENGTH_POTION": {
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "GainStrength", "amount": 2 }
+      ]
+    },
+    "DEXTERITY_POTION": {
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "GainDexterity", "amount": 2 }
+      ]
+    },
+    "WEAK_POTION": {
+      "simulatable": true,
+      "targetType": "AnyEnemy",
+      "effects": [
+        { "kind": "ApplyWeak", "amount": 3 }
+      ]
+    },
+    "VULNERABLE_POTION": {
+      "simulatable": true,
+      "targetType": "AnyEnemy",
+      "effects": [
+        { "kind": "ApplyVulnerable", "amount": 3 }
+      ]
+    },
+    "FIRE_POTION": {
+      "simulatable": true,
+      "targetType": "AnyEnemy",
+      "effects": [
+        { "kind": "DamageSingle", "amount": 20 }
+      ]
+    },
+    "BLOCK_POTION": {
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "GainBlock", "amount": 12 }
+      ]
+    },
+    "ENERGY_POTION": {
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "GainEnergy", "amount": 2 }
+      ]
+    },
+    "SWIFT_POTION": {
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "DrawCards", "amount": 3 }
+      ]
+    },
+    "COLORLESS_POTION": {
+      "simulatable": true,
+      "targetType": "Self",
+      "random": {
+        "kind": "AddCardsFromPool",
+        "pool": "COLORLESS",
+        "pickCount": 1,
+        "offerCount": 3,
+        "mcSamples": 3
+      }
+    },
+    "ATTACK_POTION": {
+      "simulatable": true,
+      "targetType": "Self",
+      "random": {
+        "kind": "AddCardsFromPool",
+        "pool": "ATTACK",
+        "pickCount": 1,
+        "offerCount": 3,
+        "mcSamples": 3
+      }
+    },
+    "SKILL_POTION": {
+      "simulatable": true,
+      "targetType": "Self",
+      "random": {
+        "kind": "AddCardsFromPool",
+        "pool": "SKILL",
+        "pickCount": 1,
+        "offerCount": 3,
+        "mcSamples": 3
+      }
+    },
+    "POWER_POTION": {
+      "simulatable": true,
+      "targetType": "Self",
+      "random": {
+        "kind": "AddCardsFromPool",
+        "pool": "POWER",
+        "pickCount": 1,
+        "offerCount": 3,
+        "mcSamples": 3
+      }
+    },
+    "POISON_POTION": {
+      "simulatable": false
+    },
+    "FOCUS_POTION": {
+      "simulatable": false
+    },
+    "STAR_POTION": {
+      "simulatable": false
+    },
+    "GIGANTIFICATION_POTION": {
+      "simulatable": false
+    },
+    "SHACKLING_POTION": {
+      "simulatable": false
+    }
+  }
+}

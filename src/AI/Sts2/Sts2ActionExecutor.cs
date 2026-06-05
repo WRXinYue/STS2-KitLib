@@ -164,13 +164,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         switch (card.TargetType) {
             case TargetType.AnyEnemy: {
-                var enemies = combatState.HittableEnemies.ToList();
-                if (enemies.Count == 0) return null;
-                if (targetIndex >= 0 && targetIndex < enemies.Count) {
-                    var preferred = enemies[targetIndex];
-                    if (card.IsValidTarget(preferred)) return preferred;
-                }
-                return enemies.FirstOrDefault(card.IsValidTarget);
+                if (combatState.HittableEnemies.Any() == false)
+                    return null;
+                return CombatTargetResolver.ResolveEnemy(combatState, card, targetIndex);
             }
             case TargetType.AnyAlly: {
                 var allies = combatState.PlayerCreatures.Where(c => c.IsAlive);
@@ -710,8 +706,8 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             if (combatState != null)
             {
                 target = potion.TargetType == TargetType.AnyEnemy
-                    ? combatState.HittableEnemies.ElementAtOrDefault(
-                        targetIndex >= 0 ? targetIndex : 0)
+                    ? CombatTargetResolver.ResolveHittableEnemy(
+                        combatState, targetIndex >= 0 ? targetIndex : 0)
                     : combatState.PlayerCreatures.FirstOrDefault(c => c.IsAlive);
             }
         }

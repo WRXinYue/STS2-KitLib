@@ -96,6 +96,42 @@
       "relicIds": ["SNECKO_EYE"],
       "note": "+2 hand draw each turn + Confused power from relic data; draw-pile planning uses EV cost.",
       "logPatterns": ["NEXT=", "POST_PLAY=", "POLL="]
+    },
+    {
+      "id": "block_with_energy_incoming",
+      "encounterId": "LEAF_SLIME_M",
+      "note": "Beam ConsiderLeaf regression: E>0, affordable Defend/skill block in hand, IN>0 and net incoming not fully blocked — play block (beam d>=1), not beam end or attack-only. PLAY= should list block; POST_BLK= higher than naked EndTurn line. E=0 after spending is OK; E>0 with beam end while block was affordable is a fail.",
+      "logPatterns": ["IN=", "E=", "PLAY=", "POST_BLK=", "beam d=", "beam end"]
+    },
+    {
+      "id": "vuln_same_target_multi",
+      "encounterId": "NIBBITS_NORMAL",
+      "note": "Multi-enemy vuln setup: debuff skills (TAUNT/Bash) must pick an enemy target in beam sim; vuln should land on primary focus (LINE= shows TAUNT→eN then Strike→eN same N). scorer-alts →eN should match pick SecondaryIndex (no spurious search). Wasted vuln on A while focusing B should be penalized.",
+      "logPatterns": ["LINE=", "defer-vuln-setup", "→e", "scorer="]
+    },
+    {
+      "id": "no_lethal_fast_path",
+      "encounterId": "NIBBITS_NORMAL",
+      "note": "Planner must not use lethal/aoe-lethal/lethal-transform shortcuts; all picks tagged beam d= or beam end. Grep log for absence of [lethal].",
+      "logPatterns": ["beam d=", "beam end"]
+    },
+    {
+      "id": "block_full_before_attack",
+      "encounterId": "BYGONE_EFFIGY_ELITE",
+      "note": "When IN>=12 and affordable block covers incoming, LINE should lead with DEFEND/BLOOD_WALL or POST_BLK>=IN before attack-heavy paths. Fail: POST_BLK<<IN with attack-only LINE.",
+      "logPatterns": ["IN=", "POST_BLK=", "LINE=", "DEFEND", "beam d="]
+    },
+    {
+      "id": "block_then_kill_next",
+      "encounterId": "BYGONE_EFFIGY_ELITE",
+      "note": "When cannot secure-kill this turn (CanSkipBlockForKill false), prefer block-first lines; next turn POST_PLAY should enable kill with stable HP.",
+      "logPatterns": ["IN=", "POST_BLK=", "POST_PLAY=", "LINE="]
+    },
+    {
+      "id": "potion_beam_timing",
+      "encounterId": "NIBBITS_NORMAL",
+      "note": "Simulatable potions (FLEX/WEAK/FIRE/ENERGY) should appear in beam LINE= before naked-end; no standalone potion pick log when planner chooses UsePotion. WEAK before attacks on same →eN.",
+      "logPatterns": ["LINE=", "FLEX", "WEAK", "beam d=", "Potion#"]
     }
   ]
 }

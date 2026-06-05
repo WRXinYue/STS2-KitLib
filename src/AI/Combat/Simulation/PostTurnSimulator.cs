@@ -15,7 +15,7 @@ public static class PostTurnSimulator {
             return CombatEvaluator.EvaluateTerminal(afterTurn);
 
         int baseline = CombatEvaluator.EvaluateTerminal(afterTurn);
-        var playable = afterTurn.Hand.Count(c => c.CanPlay && c.Cost <= afterTurn.Energy);
+        var playable = CombatCardCost.CountAffordable(afterTurn);
         if (playable == 0)
             return baseline;
 
@@ -38,7 +38,7 @@ public static class PostTurnSimulator {
                 if (sw.ElapsedMilliseconds >= timeBudgetMs)
                     break;
 
-                if (state.Energy <= 0 || !state.Hand.Any(c => c.CanPlay && c.Cost <= state.Energy)) {
+                if (state.Energy <= 0 || !CombatCardCost.HasAffordablePlay(state)) {
                     int terminal = CombatEvaluator.EvaluateTerminal(state);
                     best = Math.Max(best, terminal);
                     continue;
@@ -54,8 +54,7 @@ public static class PostTurnSimulator {
                         continue;
                     }
 
-                    bool exhausted = next.Energy <= 0
-                        || !next.Hand.Any(c => c.CanPlay && c.Cost <= next.Energy);
+                    bool exhausted = next.Energy <= 0 || !CombatCardCost.HasAffordablePlay(next);
                     int score = exhausted
                         ? CombatEvaluator.EvaluateTerminal(next)
                         : CombatEvaluator.EvaluateMidTurn(next);

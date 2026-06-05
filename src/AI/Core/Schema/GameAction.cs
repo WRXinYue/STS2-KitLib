@@ -10,7 +10,7 @@ public sealed record GameAction
     /// <summary>Primary target index (e.g. card index in hand, map node index).</summary>
     public int TargetIndex { get; init; } = -1;
 
-    /// <summary>Secondary target index (e.g. enemy index for a targeted attack).</summary>
+    /// <summary>Secondary target: combat enemy index (0-based slot in <c>CombatState.Enemies</c>, matches snapshot <c>enemy["index"]</c>).</summary>
     public int SecondaryIndex { get; init; } = -1;
 
     /// <summary>Human-readable explanation of why this action was chosen.</summary>

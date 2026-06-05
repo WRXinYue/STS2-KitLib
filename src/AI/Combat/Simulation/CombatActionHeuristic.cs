@@ -13,6 +13,9 @@ internal static class CombatActionHeuristic {
         if (action.Kind == SimActionKind.EndTurn)
             return ScoreEndTurn(state);
 
+        if (action.Kind == SimActionKind.UsePotion)
+            return ScorePotionUse(state, action);
+
         if (action.HandIndex < 0 || action.HandIndex >= state.Hand.Count)
             return int.MinValue;
 
@@ -48,6 +51,14 @@ internal static class CombatActionHeuristic {
         QuickScore(state, action) <= int.MinValue + 1;
 
     static int ScoreHandTransform(CombatState state, SimCombatAction action, CombatHandCard card) {
+        var net = ThreatModel.NetDamageAfterBlock(state);
+        if (net >= BlockThreatEvaluator.LateBlockThreshold
+            && BlockDefensePolicy.NeedsBlock(state)) {
+            var after = CombatSimulator.Apply(state, action);
+            if (!SimLethalChecker.CanSecureKillThisTurn(after))
+                return int.MinValue;
+        }
+
         var hand = state.ToHandJson();
         var delta = CombatTransformSimulator.EstimateTurnDamageDelta(hand, card.ToJson(), state.Energy);
         if (delta <= 0) {
@@ -61,26 +72,39 @@ internal static class CombatActionHeuristic {
     }
 
     static int ScoreVulnerableSetup(CombatState state, SimCombatAction action, CombatHandCard card) {
+        var primary = CombatSetupEvaluator.PrimaryAttackTargetIndex(state);
+
         if (action.EnemyIndex >= 0) {
             var value = CombatSetupEvaluator.ComputeVulnerableSetupValue(
                 state, action.HandIndex, action.EnemyIndex);
             if (value <= 0) return 5;
-            return 90 + value * 4 + card.Damage * 2;
+            var score = 90 + value * 4 + card.Damage * 2;
+            if (action.EnemyIndex != primary)
+                score -= 40;
+            return score;
         }
 
         int best = 0;
+        int bestIndex = -1;
         foreach (var enemyIndex in OrderedAttackTargets(state)) {
             var value = CombatSetupEvaluator.ComputeVulnerableSetupValue(
                 state, action.HandIndex, enemyIndex);
-            if (value > best) best = value;
+            if (value > best) {
+                best = value;
+                bestIndex = enemyIndex;
+            }
         }
 
         if (best <= 0) return 5;
-        return 90 + best * 4 + card.Damage * 2;
+        var heuristic = 90 + best * 4 + card.Damage * 2;
+        if (bestIndex >= 0 && bestIndex != primary)
+            heuristic -= 40;
+        return heuristic;
     }
 
     static int ScoreAttack(CombatState state, SimCombatAction action, CombatHandCard card) {
         var score = card.Damage * 3;
+        var net = ThreatModel.NetDamageAfterBlock(state);
         var target = ResolveTarget(state, action.EnemyIndex);
         if (target != null) {
             if (target.Vulnerable <= 0) {
@@ -105,8 +129,113 @@ internal static class CombatActionHeuristic {
             score += kills * 80;
         }
 
-        if (ThreatModel.IsFatalIfUnblocked(state) && ThreatModel.NetDamageAfterBlock(state) > card.Damage)
+        score -= UnsafeAttackPenalty(state, action, card, net);
+
+        if (ThreatModel.IsFatalIfUnblocked(state) && net > card.Damage)
             score -= 40;
+
+        return score;
+    }
+
+    /// <summary>Heavy penalty while net damage is uncovered; kills/AOE wipes exempt.</summary>
+    static int UnsafeAttackPenalty(
+        CombatState state,
+        SimCombatAction action,
+        CombatHandCard card,
+        int net) {
+        if (net <= 0)
+            return 0;
+
+        if (card.IsAoe && AoeDamageEstimator.CanAoeLethalAll(state))
+            return net * 2;
+
+        if (action.EnemyIndex >= 0
+            && SimLethalChecker.CanKillEnemyThisAction(state, action.HandIndex, action.EnemyIndex))
+            return net * 2;
+
+        if (SimLethalChecker.CanSecureKillThisTurn(state))
+            return net * 2;
+
+        if (!BlockDefensePolicy.NeedsBlock(state))
+            return net * 3;
+
+        return net * CombatEvalWeights.UnsafeAttackPenaltyPerNet;
+    }
+
+    static int ScorePotionUse(CombatState state, SimCombatAction action) {
+        if (action.PotionSlot < 0)
+            return int.MinValue;
+
+        var potion = state.Potions.FirstOrDefault(p => p.Slot == action.PotionSlot);
+        if (potion == null)
+            return int.MinValue;
+
+        if (!PotionCombatEffectData.TryGetProfile(potion.Id, out var profile) || !profile.Simulatable)
+            return int.MinValue;
+
+        int score = 20;
+
+        if (profile.Random != null) {
+            score += 25;
+            if (ThreatModel.IsFatalIfUnblocked(state))
+                score += 10;
+            return score;
+        }
+
+        foreach (var effect in profile.Effects) {
+            switch (effect.Kind) {
+                case PotionCombatEffectKind.GainBlock:
+                    var net = ThreatModel.NetDamageAfterBlock(state);
+                    if (ThreatModel.IsFatalIfUnblocked(state))
+                        score += 70 + Math.Min(effect.Amount, net) * 3;
+                    else if (net > 0)
+                        score += 25 + Math.Min(effect.Amount, net) * 2;
+                    break;
+
+                case PotionCombatEffectKind.GainEnergy:
+                    if (state.Energy < state.MaxEnergy)
+                        score += state.Energy >= state.MaxEnergy - 1 ? 35 : 20;
+                    else
+                        score -= 20;
+                    break;
+
+                case PotionCombatEffectKind.DrawCards:
+                    score += 15 + effect.Amount * 4;
+                    break;
+
+                case PotionCombatEffectKind.GainStrength:
+                case PotionCombatEffectKind.GainDexterity:
+                    if (state.Energy >= state.MaxEnergy && !ThreatModel.IsFatalIfUnblocked(state)
+                        && ThreatModel.NetDamageAfterBlock(state) <= 0)
+                        score -= 25;
+                    else
+                        score += 30 + effect.Amount * 6;
+                    break;
+
+                case PotionCombatEffectKind.ApplyWeak:
+                case PotionCombatEffectKind.ApplyVulnerable:
+                    score += 28 + effect.Amount * 6;
+                    if (action.EnemyIndex >= 0) {
+                        var primary = CombatSetupEvaluator.PrimaryAttackTargetIndex(state);
+                        if (action.EnemyIndex != primary)
+                            score -= 30;
+                    }
+                    break;
+
+                case PotionCombatEffectKind.DamageSingle:
+                    score += effect.Amount * 2;
+                    if (action.EnemyIndex >= 0) {
+                        var target = ResolveTarget(state, action.EnemyIndex);
+                        if (target != null && effect.Amount >= target.EffectiveHp)
+                            score += 180;
+                    }
+                    break;
+
+                case PotionCombatEffectKind.DamageAll:
+                    score += effect.Amount * state.AliveEnemyCount;
+                    break;
+            }
+        }
 
         return score;
     }
@@ -115,15 +244,17 @@ internal static class CombatActionHeuristic {
         var net = ThreatModel.NetDamageAfterBlock(state);
         if (net <= 0) return 5;
 
-        var effective = Math.Min(card.Block, net);
-        var score = 25 + effective * 3;
+        var effective = Math.Min(CombatDamageCalc.OutgoingBlock(card, state), net);
+        var score = 40 + effective * 5;
         if (ThreatModel.IsFatalIfUnblocked(state))
-            score += 50;
+            score += 80;
+        if (BlockDefensePolicy.CanFullyBlock(state))
+            score += 20;
         return score;
     }
 
     static int ScoreEndTurn(CombatState state) {
-        var playable = state.Hand.Count(c => c.CanPlay && c.Cost <= state.Energy);
+        var playable = CombatCardCost.CountAffordable(state);
         if (playable == 0)
             return 50;
 
@@ -131,8 +262,14 @@ internal static class CombatActionHeuristic {
         if (ThreatModel.IsFatalIfUnblocked(state))
             return int.MinValue;
 
+        if (BlockDefensePolicy.ShouldPrioritizeBlock(state))
+            return int.MinValue + 1;
+
         if (net > 0 && state.PlayerBlock < net)
             return 5;
+
+        if (net <= 0 && ThreatModel.IncomingDamage(state) > 0)
+            return 40;
 
         var nextPressure = ThreatModel.ScaledNextTurnPressure(state);
         if (ThreatModel.IncomingDamage(state) == 0 && nextPressure >= 8)

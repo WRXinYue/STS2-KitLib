@@ -413,10 +413,11 @@ bestToBoss(p) = nodeScore(p, ctx) + max_{c ∈ children} ( edgeBonus(p,c) + best
 
 ```
 DecideCombat:
-  1. PotionScorer.TryUsePotion  → 有则 UsePotion
-  2. CombatSearch.PickBestMove  → 浅层搜索
-  3. CombatScorer.PickBestCombatMove → 单步启发式
-  4. EndTurn
+  1. PotionScorer.TryEmergencyPotion  → fatal heal / block
+  2. CombatSearch.PickBestMove  → beam-only planner
+  3. PotionScorer.TryFallbackPotion  → non-simulatable potions
+  4. CombatScorer.PickBestCombatMove → fallback
+  5. EndTurn
 ```
 
 ### PotionScorer（战斗：全瓶打分，取最高 ≥25）
@@ -465,15 +466,23 @@ DecideCombat:
 | `ComputeVulnerableDeferValue` | 挂易伤+过回合价值：后续攻击×1.5 估算、incoming/urgency、残血可斩则减分 |
 | `ComputeVulnerableDeferOpportunityCost` | 攻击牌机会成本：`max(0, deferValue − attackDamage) / 2` |
 
+### BlockDefensePolicy
+
+集中挡牌 vs 击杀权衡（snapshot + sim 共用）：
+
+| API | 语义 |
+| --- | --- |
+| `NeedsBlock` | fatal / early floor / 阈值 / 低 HP；**仅** `CanSkipBlockForKill` 为 true 时豁免 |
+| `CanSkipBlockForKill` | 本回合 sim 证明清威胁且 `net≤0`（`SimLethalChecker.CanSecureKillThisTurn`） |
+| `CanFullyBlock` / `ShouldPrioritizeBlock` | 手牌可负担格挡是否覆盖 net |
+| `FullBlockValue` | Evaluator / ConsiderLeaf 挡满潜力分 |
+
 ### IntentCalculator
 
 ```
 TotalIncomingDamage = Σ 存活敌人 intentDamage
 NetDamageAfterBlock = max(0, incoming − playerBlock)
-EstimateStatusDamage = Σ playerPowers（BURN/POISON/INFEST/DOOM 的 amount）
-NeedsBlock：fatal 始终 true；floor≤15 且 net≥6 为 true（早期小伤害也挡）
-CanEliminateIncomingThreats：仅单攻击敌人、本回合可斩杀、且 net≤8 时才因斩杀跳过防守
-CanLethal 豁免：net ≤ max(6, effectiveHp/5) 或（HP>65% 且 net < effectiveHp/3）时不挡
+NeedsBlock → BlockDefensePolicy（无 CanLethal blanket 豁免）
 BlockUrgency 0–100 驱动攻击惩罚与 EndTurn 惩罚
 ```
 
@@ -653,15 +662,15 @@ flowchart LR
 
 | 参数 | 典型值 |
 | --- | --- |
-| 时间预算 | 480–650 ms |
+| 时间预算 | 560–730 ms |
 | 最大深度 | 10–16（玩家出牌步，不含敌人回合） |
-| Beam 宽度 | 24–48 |
+| Beam 宽度 | 28–52 |
 | 每节点展开上限 | 20–56（`GenerateOrdered` 启发式截断） |
 | 下回合模拟 | `PostTurnSimulator` 独立 mini-beam（打满下回合能量） |
 
-`CombatActionHeuristic` 为 beam 排序：斩杀目标 > 易伤 setup > 挡牌 > 攻击；负收益变形剪枝。叶节点用 `EvaluateTerminal`（模拟回合结束受伤）区分「先挡后打」与「裸结束」。
+`CombatActionHeuristic` 为 beam 排序：未挡满时剪枝非击杀攻击；挡牌 > 易伤 setup > 击杀攻击。叶节点用 survival-first `EvaluateTerminal` + `ConsiderLeaf` 满挡奖励区分「挡满结束」与「换血快攻」。
 
-**快捷路径**（在 beam 之前）：`SimLethalChecker.CanLethalAfterTransform` → `AoeDamageEstimator` 群杀 → `CanLethal`；**`ShouldSuppressTransform` 为 true 时跳过**（有 incoming 且非安全斩杀时不抢先变形/攻击）。
+**无 lethal 快捷路径**：所有 combat poll 走 beam；日志仅 `[beam d=…]` / `[beam end …]`，不出现 `[lethal]` / `[aoe-lethal]` / `[lethal-transform]`。
 
 **L4 打牌节奏**（pile + shuffle + beam）：
 

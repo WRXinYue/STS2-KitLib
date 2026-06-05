@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using DevMode.AI.Knowledge;
 
 namespace DevMode.AI.Combat.Simulation;
 
 public static class LegalActionGenerator {
+    public const int MaxMcBranches = 3;
+
     public static IEnumerable<SimCombatAction> Generate(CombatState state) {
         bool anyPlay = false;
 
@@ -28,18 +32,46 @@ public static class LegalActionGenerator {
             var card = state.Hand[i];
             if (!CombatCardCost.CanAfford(card, state)) continue;
 
-            if (card.IsAoe || card.TargetType is "AllEnemy") {
+            if (card.IsAoe || CombatTargetTypes.IsAllEnemies(card.TargetType)) {
                 yield return new SimCombatAction(SimActionKind.PlayCard, i, -1);
                 continue;
             }
 
-            if (card.TargetType is "AnyEnemy" or "AllEnemy" or "" && card.IsAttack) {
+            if (CombatTargetTypes.NeedsEnemyTarget(card)) {
                 foreach (var enemyIndex in OrderedAttackTargets(state))
                     yield return new SimCombatAction(SimActionKind.PlayCard, i, enemyIndex);
                 continue;
             }
 
             yield return new SimCombatAction(SimActionKind.PlayCard, i, -1);
+        }
+
+        foreach (var action in GeneratePotionActions(state))
+            yield return action;
+    }
+
+    static IEnumerable<SimCombatAction> GeneratePotionActions(CombatState state) {
+        if (state.PotionUsedThisTurn || state.Potions.Count == 0)
+            yield break;
+
+        foreach (var potion in state.Potions) {
+            if (!PotionCombatEffectData.TryGetProfile(potion.Id, out var profile) || !profile.Simulatable)
+                continue;
+
+            if (profile.Random != null) {
+                int samples = Math.Min(profile.Random.McSamples, MaxMcBranches);
+                for (int branch = 1; branch <= samples; branch++)
+                    yield return new SimCombatAction(SimActionKind.UsePotion, PotionSlot: potion.Slot, McBranch: branch);
+                continue;
+            }
+
+            if (PotionSimulator.NeedsEnemyTarget(profile.TargetType)) {
+                foreach (var enemyIndex in OrderedAttackTargets(state))
+                    yield return new SimCombatAction(SimActionKind.UsePotion, PotionSlot: potion.Slot, EnemyIndex: enemyIndex);
+                continue;
+            }
+
+            yield return new SimCombatAction(SimActionKind.UsePotion, PotionSlot: potion.Slot);
         }
     }
 

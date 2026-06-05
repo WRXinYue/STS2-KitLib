@@ -310,6 +310,18 @@
       "simulatable": false,
       "needsManual": true
     },
+    "ICE_CREAM": {
+      "hooks": [
+        "ShouldPlayerResetEnergy"
+      ],
+      "effects": [
+        {
+          "kind": "RetainEnergyOnTurnStart",
+          "minCombatRound": 2
+        }
+      ],
+      "simulatable": true
+    },
     "INTIMIDATING_HELMET": {
       "hooks": [
         "BeforeCardPlayed"

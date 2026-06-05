@@ -131,6 +131,8 @@
                       Condition="Exists('src\AI\Data\monster-move-effects.json')" />
     <EmbeddedResource Include="src\AI\Data\relic-combat-effects.json" LogicalName="DevMode.AI.relic-combat-effects.json"
                       Condition="Exists('src\AI\Data\relic-combat-effects.json')" />
+    <EmbeddedResource Include="src\AI\Data\potion-combat-effects.json" LogicalName="DevMode.AI.potion-combat-effects.json"
+                      Condition="Exists('src\AI\Data\potion-combat-effects.json')" />
   </ItemGroup>
 
   <ItemGroup>

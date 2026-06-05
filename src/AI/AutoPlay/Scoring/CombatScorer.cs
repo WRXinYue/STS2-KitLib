@@ -38,6 +38,8 @@ public static class CombatScorer {
         var lowHp = hpRatio < 0.4f;
         var needsBlock = IntentCalculator.NeedsBlock(snapshot);
         var canLethal = LethalChecker.CanLethal(snapshot, out _);
+        var canSecureKill = BlockDefensePolicy.CanSkipBlockForKill(snapshot);
+        var simState = CombatState.FromSnapshot(snapshot);
         var incoming = IntentCalculator.TotalIncomingDamage(snapshot);
         var netIncoming = IntentCalculator.NetDamageAfterBlock(snapshot);
         var enemies = combat["enemies"]?.AsArray();
@@ -53,19 +55,24 @@ public static class CombatScorer {
                 if (cost > energy) continue;
 
                 var targetType = card["targetType"]?.GetValue<string>() ?? "";
-                if (targetType is "AnyEnemy" or "AllEnemy") {
-                    var targetCount = enemies?.Count ?? 1;
-                    for (var t = 0; t < Math.Max(targetCount, 1); t++) {
-                        var move = PlayCard(i, t, card);
-                        yield return ScoreCardDetailed(snapshot, move, card, hand, energy,
-                            lowHp, hpRatio, needsBlock, canLethal, incoming, netIncoming,
-                            multiEnemy, enemies, t);
+                var profile = CombatCardStats.ResolveProfile(card);
+                if (CombatTargetTypes.IsAnyEnemy(targetType)
+                    || CombatTargetTypes.AppliesDirectedDebuff(profile)) {
+                    var targetIndices = EnemyIndexResolver.ViableCombatIndices(enemies).ToList();
+                    if (targetIndices.Count == 0)
+                        targetIndices.Add(0);
+
+                    foreach (var combatIndex in targetIndices) {
+                        var move = PlayCard(i, combatIndex, card);
+                        yield return ScoreCardDetailed(snapshot, simState, move, card, hand, energy,
+                            lowHp, hpRatio, needsBlock, canLethal, canSecureKill, incoming, netIncoming,
+                            multiEnemy, enemies, combatIndex);
                     }
                 }
                 else {
                     var move = PlayCard(i, -1, card);
-                    yield return ScoreCardDetailed(snapshot, move, card, hand, energy,
-                        lowHp, hpRatio, needsBlock, canLethal, incoming, netIncoming,
+                    yield return ScoreCardDetailed(snapshot, simState, move, card, hand, energy,
+                        lowHp, hpRatio, needsBlock, canLethal, canSecureKill, incoming, netIncoming,
                         multiEnemy, enemies, -1);
                 }
             }
@@ -81,6 +88,7 @@ public static class CombatScorer {
 
     static CombatMoveScore ScoreCardDetailed(
         JsonObject snapshot,
+        CombatState simState,
         GameAction move,
         JsonObject card,
         JsonArray? hand,
@@ -89,6 +97,7 @@ public static class CombatScorer {
         float hpRatio,
         bool needsBlock,
         bool canLethal,
+        bool canSecureKill,
         int incoming,
         int netIncoming,
         bool multiEnemy,
@@ -108,7 +117,8 @@ public static class CombatScorer {
             cardId,
             card["cardType"]?.GetValue<string>(),
             card["keywords"]?.AsArray());
-        var isAoe = tags.Contains(AiTag.Aoe) || card["targetType"]?.GetValue<string>() is "AllEnemy";
+        var isAoe = tags.Contains(AiTag.Aoe)
+            || CombatTargetTypes.IsAllEnemies(card["targetType"]?.GetValue<string>());
         var isBlockCard = hasBlock || tags.Contains(AiTag.Block);
         var blockUrgency = IntentCalculator.BlockUrgency(snapshot);
         var fatalIfUnblocked = IntentCalculator.IsFatalIfUnblocked(snapshot);
@@ -147,15 +157,25 @@ public static class CombatScorer {
         if (isAttack) {
             builder.Add("attack", 20 + cost * 5 + damageValue);
             builder.Add("target", TargetEnemyBonus(enemies, targetIndex, incoming));
+
+            var thisCardKills = targetIndex >= 0
+                && SimLethalChecker.CanKillEnemyThisAction(simState, move.TargetIndex, targetIndex);
+
             if (needsBlock) {
                 builder.Add("attack-unsafe", -(blockUrgency / 2 + Math.Max(0, netIncoming - damageValue) / 2));
-                if (canLethal && !fatalIfUnblocked)
+                if (thisCardKills && (canSecureKill || netIncoming <= 0))
+                    builder.Add("lethal", 25);
+                else if (thisCardKills && !fatalIfUnblocked)
+                    builder.Add("lethal-risky", 8);
+            }
+            else {
+                if (shouldScoreBlock && netIncoming > 0)
+                    builder.Add("attack-unsafe", -netIncoming / 3);
+
+                if (thisCardKills || (canLethal && canSecureKill))
                     builder.Add("lethal", 25);
                 else if (canLethal)
                     builder.Add("lethal-risky", 8);
-            }
-            else if (canLethal) {
-                builder.Add("lethal", 25);
             }
 
             if (CombatTransformSimulator.IsTransformableAttack(card)
@@ -199,7 +219,7 @@ public static class CombatScorer {
 
         if (suppressTransform
             && profile.Flags.HasFlag(CardMechanicFlags.TransformsHandAttacks)
-            && !(canLethal && !fatalIfUnblocked)) {
+            && !(canSecureKill && !fatalIfUnblocked)) {
             var discount = (int)Math.Round(
                 CombatScoreWeights.TransformThreatDiscountMax * blockUrgency / 100f);
             if (discount > 0)
@@ -257,12 +277,8 @@ public static class CombatScorer {
         return new CombatMoveScore(action with { Reason = $"EndTurn score={score}" }, score, terms);
     }
 
-    static JsonObject? ResolveTargetEnemy(JsonArray? enemies, int targetIndex) {
-        if (enemies == null || enemies.Count == 0) return null;
-        if (targetIndex >= 0 && targetIndex < enemies.Count)
-            return enemies[targetIndex]?.AsObject();
-        return enemies[0]?.AsObject();
-    }
+    static JsonObject? ResolveTargetEnemy(JsonArray? enemies, int combatIndex) =>
+        EnemyIndexResolver.FindByCombatIndex(enemies, combatIndex);
 
     static bool IsSelfDamageCard(string cardId) {
         var upper = cardId.ToUpperInvariant();
@@ -287,7 +303,9 @@ public static class CombatScorer {
         var maxHp = target["maxHp"]?.GetValue<int>() ?? 1;
         var lowEnemy = maxHp > 0 && hp <= maxHp * 0.25;
         var bonus = lowEnemy ? 30 : 5;
-        bonus += EnemyTargetPriority.TargetBias(enemies, targetIndex);
+        var arraySlot = EnemyIndexResolver.ArraySlot(enemies, targetIndex);
+        bonus += EnemyTargetPriority.TargetBias(
+            enemies, arraySlot >= 0 ? arraySlot : targetIndex);
 
         if (incoming == 0) {
             var steps = target["intentSteps"]?.AsArray();

@@ -9,7 +9,8 @@ public static class BlockThreatEvaluator {
     public const int EarlyFloorMax = 15;
     public const int EarlyBlockThreshold = 6;
     public const int LateBlockThreshold = 8;
-    public const int SafeLethalNetMax = 8;
+    [Obsolete("Use BlockDefensePolicy.CanSkipBlockForKill instead.")]
+    public const int SafeLethalNetMax = 0;
     public const float ThreatDiscountFloor = 0.4f;
 
     public static bool HasIncomingDamage(JsonObject snapshot) =>
@@ -20,27 +21,15 @@ public static class BlockThreatEvaluator {
         return floor <= EarlyFloorMax ? EarlyBlockThreshold : LateBlockThreshold;
     }
 
-    public static bool ShouldScoreBlock(JsonObject snapshot) {
-        if (IntentCalculator.NeedsBlock(snapshot))
-            return true;
-
-        var net = IntentCalculator.NetDamageAfterBlock(snapshot);
-        return net >= EarlyBlockThresholdFor(snapshot);
-    }
+    public static bool ShouldScoreBlock(JsonObject snapshot) =>
+        BlockDefensePolicy.ShouldScoreBlock(snapshot);
 
     /// <summary>True only for fatal or real NeedsBlock threat (not mild score-block alone).</summary>
     public static bool ShouldSuppressTransform(JsonObject snapshot) {
         if (IntentCalculator.IsFatalIfUnblocked(snapshot))
             return true;
 
-        if (!IntentCalculator.NeedsBlock(snapshot))
-            return false;
-
-        if (LethalChecker.CanLethal(snapshot, out _)
-            && !IntentCalculator.IsFatalIfUnblocked(snapshot))
-            return false;
-
-        return true;
+        return BlockDefensePolicy.NeedsBlock(snapshot);
     }
 
     /// <summary>Threat discount for transform follow-up (1.0 = safe, floor 0.4 under high urgency).</summary>

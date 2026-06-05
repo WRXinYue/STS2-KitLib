@@ -57,6 +57,57 @@ After L4 pile simulation, combat logs should include:
 
 Spot-check Leaf Slime: AI should rush before discard reshuffle mixes in Slimed; `POLL=` should correlate with bad `POST_PLAY=` on early EndTurn lines.
 
+### Beam block / ConsiderLeaf (`block_with_energy_incoming`)
+
+After `CombatPlanner` changes, spot-check any turn with **incoming attack + affordable block still in hand**:
+
+| Signal | Pass | Fail |
+| --- | --- | --- |
+| Decision tag | `beam d=1` (or deeper) playing Defend/skill | `beam end` while `E>0` and block was playable |
+| Threat | `IN=` > 0, net damage not already blocked | Ignores block when `NeedsBlock` or `ShouldScoreBlock` would apply |
+| Sim outlook | `POST_BLK=` rises on block lines vs naked end | Attack-only or end-turn with block left unplayed |
+| Lethal shortcut | Only `beam d=` / `beam end` tags | Any `[lethal]`, `[aoe-lethal]`, or `[lethal-transform]` tag |
+
+Any Act 1 fight works (e.g. Leaf Slime, Jaw Worm); no relic required. Enable verbose combat log in DevMode settings.
+
+### No lethal fast-path (`no_lethal_fast_path`)
+
+All combat polls go through beam search. After deploy, grep `godot.log` — there should be **no** `[lethal]`, `[aoe-lethal]`, or `[lethal-transform]` decision tags. Kills should still appear as `[beam d=N s=…]` with kill cards in `LINE=`.
+
+### Block full before attack (`block_full_before_attack`)
+
+When `IN>=12` and hand can afford enough block to cover net incoming, expect:
+
+- `LINE=` starting with `DEFEND` / block skill, or
+- End-of-turn `POST_BLK>=IN` before attack-heavy sequences
+
+Fail: `BLOOD_WALL>PRIMAL>STRIKE` with `POST_BLK=5` while `IN=25`.
+
+### Block then kill next (`block_then_kill_next`)
+
+When the AI cannot secure-kill this turn without taking damage, it should block first (`POST_BLK` covers `IN` or `net=0`), then use high `POST_PLAY` on the following turn. HP should stay healthier than repeated `[lethal]` chip-attack lines.
+
+**Verbose log fields** (one line per pick):
+
+| Field | Meaning |
+| --- | --- |
+| `[beam d=N s=…]` / `[beam end s=…]` | Planner beam depth + leaf score (actual pick reason) |
+| `scorer=…` | Same-step CombatScorer score for the picked action (may differ from beam) |
+| `scorer-alts:` | Top single-step alternatives from CombatScorer (not beam path) |
+| `LINE=Card→e0>…` | Full beam path the planner evaluated (first action is what gets played) |
+| `SETUP=` | Setup debt from `CombatSetupEvaluator` (vuln deferral pressure) |
+| `VULN=` | Count of affordable vuln-applying cards in hand |
+| `ICE=` | 1 if energy retained next turn (Ice Cream etc.) |
+| `POST_PLAY=` / `POST_BLK=` | Expected damage/block after simulating end turn (only when pick is EndTurn) |
+
+If beam picks Defend but `scorer-alts` ranks Strike higher, that is normal — beam optimizes multi-step leaf score, not single-step scorer.
+
+**Vuln / multi-enemy** (`vuln_same_target_multi`): debuff skills must target an enemy in sim (`CombatTargetTypes.NeedsEnemyTarget`); `LINE=TAUNT→e0>Strike→e0` — same `eN` on setup and attacks. Mismatch or `(search)` on targeted debuffs indicates index or target-enumeration regression.
+
+**Combat index**: `SecondaryIndex` / `→eN` = 0-based slot in `CombatState.Enemies` (same as snapshot). Not the UI log's 1-based index. After a kill, `e1` still means the second slot — executor resolves via `CombatTargetResolver`, not shortened `HittableEnemies` position.
+
+**Potions**: logged only on use as `potion pick [ID:+score] card=<best card score>`. Non-emergency potions need `score >= card + 8`, max one per turn; full-energy FLEX/buff deferred; weak debuff deferred when hand can attack and incoming is low.
+
 ### Sim limitation fixes (Phase A + B)
 
 Manual spot-checks:
@@ -89,3 +140,14 @@ Spot-checks (`scenarios.json`):
 1. **Unceasing Top** — empty hand mid-turn triggers extra draw in `CombatSimulator`.
 2. **Runic Pyramid** — `EndTurn` retains hand (no flush to discard).
 3. **Snecko Eye** — +2 draw per turn + Confused merged from `relic-combat-effects.json` when not already in `playerPowers`.
+
+### Beam potion sim (`potion_beam_timing`)
+
+Deterministic potions (FLEX, WEAK, FIRE, BLOCK, ENERGY, SWIFT) and random pick-one potions (COLORLESS/ATTACK/SKILL/POWER) are expanded in beam via `potion-combat-effects.json`. Emergency heal/block still uses `PotionScorer.TryEmergencyPotion` before planner.
+
+Verbose log checks:
+
+1. **`LINE=`** — simulatable potions appear in beam path (e.g. `Strike>FLEX>Strike`, `WEAK→e0>Strike→e0`), not only standalone `potion pick`.
+2. **`Potion#`** — planner pick uses slot index; `→eN` when enemy-targeted.
+3. **`COLORLESS#2`** — random potion MC branch in beam path (branch not sent to executor; replan next poll).
+4. **No early waste** — FLEX at full energy with no incoming should lose to `Strike>…` lines when damage matters.

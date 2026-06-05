@@ -63,6 +63,27 @@ public static class RelicCombatRules {
         return total;
     }
 
+    public static bool RetainsEnergyOnTurnStart(IReadOnlyList<string> relicIds, int combatRound) {
+        foreach (var profile in RelicCombatEffectData.GetProfiles(relicIds)) {
+            foreach (var effect in profile.Effects) {
+                if (effect.Kind != RelicCombatEffectKind.RetainEnergyOnTurnStart)
+                    continue;
+                if (effect.MinCombatRound.HasValue && combatRound < effect.MinCombatRound.Value)
+                    continue;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static int NextTurnEnergy(CombatState state) {
+        int nextRound = state.TurnNumber + 1;
+        if (RetainsEnergyOnTurnStart(state.RelicIds, nextRound))
+            return Math.Min(999, state.Energy + state.MaxEnergy);
+        return state.MaxEnergy;
+    }
+
     public static int StartOfCombatBlock(IReadOnlyList<string> relicIds) {
         int block = 0;
         foreach (var profile in RelicCombatEffectData.GetProfiles(relicIds)) {

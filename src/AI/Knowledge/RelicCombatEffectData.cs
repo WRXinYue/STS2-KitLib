@@ -77,7 +77,8 @@ internal static class RelicCombatEffectData {
             obj["block"]?.GetValue<int>() ?? 0,
             obj["powerId"]?.GetValue<string>(),
             obj["amount"]?.GetValue<int>() ?? 1,
-            obj["maxCombatRound"]?.GetValue<int>());
+            obj["maxCombatRound"]?.GetValue<int>(),
+            obj["minCombatRound"]?.GetValue<int>());
     }
 
     static void EnsureLoaded() {

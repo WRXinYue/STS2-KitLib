@@ -37,4 +37,16 @@ internal static class CombatCardCost {
 
     public static bool CanAfford(CombatHandCard card, CombatState state) =>
         card.CanPlay && EffectiveCost(card, state.Modifiers) <= state.Energy;
+
+    public static int CountAffordable(CombatState state) {
+        int count = 0;
+        foreach (var card in state.Hand) {
+            if (CanAfford(card, state))
+                count++;
+        }
+
+        return count;
+    }
+
+    public static bool HasAffordablePlay(CombatState state) => CountAffordable(state) > 0;
 }

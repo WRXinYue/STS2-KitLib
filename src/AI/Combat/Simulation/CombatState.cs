@@ -22,6 +22,8 @@ public sealed record CombatState(
     IReadOnlyList<PlayerCombatModifier> Modifiers,
     IReadOnlyList<CombatEnemy> Enemies,
     IReadOnlyList<string> RelicIds,
+    IReadOnlyList<CombatPotionSlot> Potions,
+    bool PotionUsedThisTurn = false,
     uint ShuffleRngSeed = 0,
     int ShuffleRngCounter = 0,
     uint EnergyCostRngSeed = 0,
@@ -49,6 +51,7 @@ public sealed record CombatState(
         var enemies = ParseEnemies(combat?["enemies"]?.AsArray());
         var (shuffleSeed, shuffleCounter) = ParseShuffleRng(combat?["rngShuffle"]?.AsObject());
         var (energyCostSeed, energyCostCounter) = ParseShuffleRng(combat?["rngEnergyCosts"]?.AsObject());
+        var potions = ParsePotions(snapshot["potions"]?.AsArray());
 
         if (turnNumber <= 1 && block == 0) {
             var relicBlock = RelicCombatRules.StartOfCombatBlock(relicIds);
@@ -58,7 +61,8 @@ public sealed record CombatState(
 
         return new CombatState(
             hp, maxHp, block, energy, maxEnergy, statusDamage, turnNumber,
-            hand, draw, discard, exhaust, modifiers, enemies, relicIds,
+            hand, draw, discard, exhaust, modifiers, enemies, relicIds, potions,
+            false,
             shuffleSeed, shuffleCounter, energyCostSeed, energyCostCounter);
     }
 
@@ -89,11 +93,29 @@ public sealed record CombatState(
     public CombatState WithEnergyCostRng(uint seed, int counter) =>
         this with { EnergyCostRngSeed = seed, EnergyCostRngCounter = counter };
 
+    public CombatState WithPotions(IReadOnlyList<CombatPotionSlot> potions, bool potionUsedThisTurn) =>
+        this with { Potions = potions, PotionUsedThisTurn = potionUsedThisTurn };
+
     public JsonArray ToHandJson() {
         var arr = new JsonArray();
         foreach (var card in Hand)
             arr.Add(card.ToJson());
         return arr;
+    }
+
+    static List<CombatPotionSlot> ParsePotions(JsonArray? arr) {
+        var potions = new List<CombatPotionSlot>();
+        if (arr == null) return potions;
+
+        foreach (var node in arr) {
+            if (node is not JsonObject potion) continue;
+            var id = potion["id"]?.GetValue<string>() ?? "";
+            if (string.IsNullOrWhiteSpace(id)) continue;
+            var slot = potion["slot"]?.GetValue<int>() ?? potions.Count;
+            potions.Add(new CombatPotionSlot(slot, id));
+        }
+
+        return potions;
     }
 
     static List<CombatPileCard> ParsePile(JsonArray? arr) {
@@ -133,7 +155,7 @@ public sealed record CombatState(
             var tags = CardCatalog.ResolveTags(
                 id, card["cardType"]?.GetValue<string>(), card["keywords"]?.AsArray());
             var targetType = card["targetType"]?.GetValue<string>() ?? "";
-            var isAoe = tags.Contains(AiTag.Aoe) || targetType is "AllEnemy";
+            var isAoe = tags.Contains(AiTag.Aoe) || CombatTargetTypes.IsAllEnemies(targetType);
 
             hand.Add(new CombatHandCard(
                 i,

@@ -69,7 +69,7 @@ public static class LethalDamageSolver {
                 i,
                 cost,
                 CombatDamageCalc.OutgoingDamage(damage, [], vulnerable),
-                targetType is "AllEnemy"));
+                CombatTargetTypes.IsAllEnemies(targetType)));
         }
 
         return attacks;

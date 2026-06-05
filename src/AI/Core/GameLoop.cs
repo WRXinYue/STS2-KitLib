@@ -2,6 +2,7 @@ using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using DevMode.AI;
+using DevMode.AI.AutoPlay.Scoring;
 using DevMode.AI.Core.Schema;
 
 namespace DevMode.AI.Core;
@@ -43,6 +44,7 @@ public sealed class GameLoop
         _lastActionUtc = DateTime.MinValue;
         _repeatFailFingerprint = null;
         _repeatFailCount = 0;
+        PotionScorer.ResetTurnTracking();
     }
 
     /// <summary>
@@ -113,6 +115,9 @@ public sealed class GameLoop
 
             if (decidePhase == GamePhase.Combat && action.Type == ActionType.EndTurn)
                 _endTurnPending = true;
+
+            if (decidePhase == GamePhase.Combat && action.Type == ActionType.UsePotion)
+                PotionScorer.NotifyPotionUsed();
         }
         catch (Exception ex)
         {
