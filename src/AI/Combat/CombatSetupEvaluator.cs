@@ -81,7 +81,6 @@ internal static class CombatSetupEvaluator {
         if (candidate.Incoming != baseline.Incoming) {
             int incomingCmp = CompareIncomingTrade(
                 baseline.Incoming, candidate.Incoming,
-                baseline.EnemyHp, candidate.EnemyHp,
                 baseline.FocusHp, candidate.FocusHp,
                 baseline.FutureIncoming0, candidate.FutureIncoming0,
                 baseline.FutureIncoming1, candidate.FutureIncoming1,
@@ -108,8 +107,6 @@ internal static class CombatSetupEvaluator {
     static int CompareIncomingTrade(
         int baselineIncoming,
         int candidateIncoming,
-        int baselineEnemyHp,
-        int candidateEnemyHp,
         int baselineFocusHp,
         int candidateFocusHp,
         int baselineF0,
@@ -125,23 +122,23 @@ internal static class CombatSetupEvaluator {
 
         int extra = candidateIncoming - baselineIncoming;
         int futureRelief = (baselineF0 - candidateF0) + (baselineF1 - candidateF1) + (baselineF2 - candidateF2);
-        int hpGain = baselineEnemyHp - candidateEnemyHp;
         int focusGain = baselineFocusHp - candidateFocusHp;
-        int slack = Math.Clamp(futureRelief / 2 + hpGain / 3 + focusGain / 2, 0, 24);
-        if (extra <= slack && (hpGain > 0 || futureRelief > 0 || focusGain > 0))
+        int benefit = focusGain + futureRelief;
+        if (extra <= benefit && benefit > 0)
             return 1;
         return baselineIncoming - candidateIncoming;
     }
 
-    public static int LineRankScore(CombatLineOutcome outcome) {
+    public static int LineRankScore(CombatLineOutcome outcome, ThreatModel.LineScoreWeights weights) {
+        long cap = Math.Max(weights.IncomingCap, 1);
         long score =
-            (1000L - Math.Clamp(outcome.Incoming, 0, 999)) * 1_000_000
-            + (1000L - Math.Clamp(outcome.FutureIncoming0, 0, 999)) * 10_000
-            + (1000L - Math.Clamp(outcome.FutureIncoming1, 0, 999)) * 1_000
-            + (1000L - Math.Clamp(outcome.FutureIncoming2, 0, 999))
-            + (1000L - Math.Clamp(outcome.FocusHp, 0, 999)) * 10
-            + (1000L - Math.Clamp(outcome.EnemyHp, 0, 9999)) / 10
-            + Math.Clamp(outcome.PlayerHpAfterTurn, 0, 99);
+            (cap - Math.Min(outcome.Incoming, cap)) * weights.IncomingUnit * cap * cap
+            + (cap - Math.Min(outcome.FutureIncoming0, cap)) * weights.FutureUnit * cap
+            + (cap - Math.Min(outcome.FutureIncoming1, cap)) * Math.Max(1, weights.FutureUnit / 2)
+            + (cap - Math.Min(outcome.FutureIncoming2, cap)) * Math.Max(1, weights.FutureUnit / 4)
+            + (cap - Math.Min(outcome.FocusHp, cap)) * weights.FocusUnit
+            + (cap * 10 - Math.Min(outcome.EnemyHp, cap * 10))
+            + outcome.PlayerHpAfterTurn;
         return score > int.MaxValue ? int.MaxValue - 1 : (int)score;
     }
 
@@ -165,16 +162,8 @@ internal static class CombatSetupEvaluator {
             afterTurn.PlayerHp);
     }
 
-    static int ScoreMidTurn(CombatState s) {
-        int incoming = ThreatModel.IncomingDamage(s);
-        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(s);
-        int future0 = ThreatModel.PressureAtIntentStep(afterPhase, 0);
-        int future1 = ThreatModel.PressureAtIntentStep(afterPhase, 1);
-        int future2 = ThreatModel.PressureAtIntentStep(afterPhase, 2);
-        int enemyHp = s.Enemies.Where(e => e.IsAlive).Sum(e => e.EffectiveHp);
-        int focusHp = FocusHpAfter(s, PrimaryAttackTargetIndex(s));
-        return -incoming * 1000 - future0 * 250 - future1 * 100 - future2 * 40 - enemyHp - focusHp * 12;
-    }
+    static int ScoreMidTurn(CombatState s) =>
+        ThreatModel.MidTurnScore(s, PrimaryAttackTargetIndex(s));
 
     /// <summary>Sim delta: play vuln first vs skip vuln card, compared by explicit line metrics.</summary>
     static int ComputeVulnerableSetupSimDelta(CombatState state, int handIndex, int enemyIndex) {
@@ -339,7 +328,7 @@ internal static class CombatSetupEvaluator {
         state.Enemies
             .Where(e => ThreatModel.IsViableAttackTarget(state, e))
             .OrderByDescending(e => e.IsMinion ? 0 : 1)
-            .ThenByDescending(e => ThreatModel.FocusThreatScore(e))
+            .ThenByDescending(e => ThreatModel.FocusThreatScore(e, state))
             .ThenByDescending(e => e.CurrentHp)
             .ThenBy(e => e.EffectiveHp);
 
@@ -347,10 +336,8 @@ internal static class CombatSetupEvaluator {
     public static int PrimaryAttackTargetIndex(CombatState state) =>
         OrderEnemiesByThreat(state).Select(e => e.Index).FirstOrDefault();
 
-    public static int FocusHpAfter(CombatState state, int focusIndex) {
-        var focus = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIndex);
-        return focus?.CurrentHp ?? 0;
-    }
+    public static int FocusHpAfter(CombatState state, int focusIndex) =>
+        ThreatModel.FocusHp(state, focusIndex);
 
     public static int ComputeWastedVulnerablePenalty(CombatState state) {
         if (state.AliveEnemyCount < 2)
@@ -428,7 +415,7 @@ internal static class CombatSetupEvaluator {
                 focusEnemy = s.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIndex);
             }
 
-            incomingSlack = focusEnemy != null ? ThreatModel.IncomingTradeSlack(focusEnemy) : 0;
+            incomingSlack = focusEnemy != null ? ThreatModel.IncomingTradeSlack(focusEnemy, s) : 0;
 
             SimCombatAction? bestAction = null;
             int bestScore = int.MinValue;
@@ -518,7 +505,7 @@ internal static class CombatSetupEvaluator {
                     focusScores = s.Enemies.Where(e => e.IsAlive).Select(e => new {
                         e.Index,
                         e.MonsterId,
-                        score = ThreatModel.FocusThreatScore(e),
+                        score = ThreatModel.FocusThreatScore(e, s),
                         peak = ThreatModel.PeakScheduledDamage(e),
                     }).ToArray(),
                     incomingAfter = bestIncoming,

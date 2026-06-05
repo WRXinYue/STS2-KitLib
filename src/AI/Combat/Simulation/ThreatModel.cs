@@ -11,6 +11,65 @@ public static class ThreatModel {
     /// <summary>Future enemy rounds compared in line outcome (after the current line resolves).</summary>
     public const int LineFutureHorizonTurns = 3;
 
+    /// <summary>Encounter-derived units for line/beam packing and mid-turn tie-breaks.</summary>
+    public readonly record struct LineScoreWeights(
+        int IncomingUnit,
+        int FutureUnit,
+        int FocusUnit,
+        int IncomingCap);
+
+    public static LineScoreWeights WeightsFor(CombatState state) {
+        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
+        int thisIn = IncomingDamage(state);
+        int nextP = PressureAtIntentStep(afterPhase, 0);
+        int horizonSum = 0;
+        for (int i = 0; i <= LineFutureHorizonTurns; i++)
+            horizonSum += PressureAtIntentStep(afterPhase, i);
+
+        int incomingUnit = Math.Max(1, Math.Max(thisIn, nextP));
+        int futureUnit = Math.Max(1, horizonSum / (LineFutureHorizonTurns + 1));
+        int focusUnit = Math.Max(1, state.Enemies.Where(e => e.IsAlive).Sum(e => e.CurrentHp)
+            / Math.Max(1, state.AliveEnemyCount));
+        int cap = Math.Max(incomingUnit, thisIn + nextP);
+
+        return new LineScoreWeights(incomingUnit, futureUnit, focusUnit, cap);
+    }
+
+    public static int FocusHp(CombatState state, int focusIndex) {
+        var focus = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIndex);
+        return focus?.CurrentHp ?? 0;
+    }
+
+    /// <summary>Mid-turn heuristic score for greedy attack tie-breaks (weights from live threat).</summary>
+    public static int MidTurnScore(CombatState state, int focusIndex) {
+        var w = WeightsFor(state);
+        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
+        int incoming = IncomingDamage(state);
+        int future0 = PressureAtIntentStep(afterPhase, 0);
+        int future1 = PressureAtIntentStep(afterPhase, 1);
+        int future2 = PressureAtIntentStep(afterPhase, 2);
+        int enemyHp = state.Enemies.Where(e => e.IsAlive).Sum(e => e.EffectiveHp);
+        int focusHp = FocusHp(state, focusIndex);
+        return -incoming * w.IncomingUnit
+            - future0 * w.FutureUnit
+            - future1 * Math.Max(1, w.FutureUnit / 2)
+            - future2 * Math.Max(1, w.FutureUnit / 4)
+            - enemyHp
+            - focusHp * w.FocusUnit;
+    }
+
+    /// <summary>Acceptable extra this-turn incoming when focus progress justifies it.</summary>
+    public static int IncomingTradeSlack(CombatEnemy focus, CombatState state) {
+        if (!focus.IsAlive)
+            return 0;
+
+        int poke = focus.IntentDamage + focus.NonDamageThreat;
+        int peak = PeakScheduledDamage(focus);
+        int horizon = HorizonThreatForEnemy(focus, 1, LineFutureHorizonTurns);
+        int perStep = horizon / Math.Max(1, LineFutureHorizonTurns);
+        return Math.Max(poke, Math.Max(peak, perStep));
+    }
+
     public static int IncomingDamage(CombatState state) =>
         state.Enemies
             .Where(e => e.IsAlive && e.EffectiveIncoming > 0)
@@ -84,29 +143,43 @@ public static class ThreatModel {
         return total;
     }
 
-    /// <summary>Focus-fire priority from future peak damage and HP, not this-turn poke alone.</summary>
-    public static int FocusThreatScore(CombatEnemy enemy) {
+    /// <summary>Focus-fire priority relative to the alive enemy threat pool.</summary>
+    public static int FocusThreatScore(CombatEnemy enemy, CombatState state) {
         if (!enemy.IsAlive)
             return 0;
 
-        int peakFuture = PeakScheduledDamage(enemy);
-        int summedFuture = 0;
-        for (int i = 1; i <= LineFutureHorizonTurns && i < enemy.IntentSteps.Length; i++) {
-            var step = enemy.IntentSteps[i];
-            int dmg = ResolveStepDamage(enemy, step);
-            summedFuture += dmg + step.NonDamageThreat;
-        }
+        var alive = state.Enemies
+            .Where(e => e.IsAlive && IsViableAttackTarget(state, e))
+            .ToList();
+        if (alive.Count == 0)
+            return 0;
 
+        int peak = PeakScheduledDamage(enemy);
+        int horizon = HorizonThreatForEnemy(enemy, 1, LineFutureHorizonTurns);
         int thisTurn = enemy.IntentDamage + enemy.NonDamageThreat;
-        bool pokeOnly = enemy.CurrentHp <= 14
-            && thisTurn > 0
-            && peakFuture <= thisTurn + 2;
-        int thisTurnWeight = pokeOnly ? thisTurn / 4 : enemy.CurrentHp >= 25 ? thisTurn / 2 : thisTurn;
 
-        int hpFactor = enemy.CurrentHp >= 28 ? 4 : enemy.CurrentHp >= 18 ? 3 : 2;
-        int peakWeight = enemy.CurrentHp >= 22 ? 10 : 5;
+        int poolPeak = 0;
+        foreach (var e in alive)
+            poolPeak = Math.Max(poolPeak, PeakScheduledDamage(e));
+        int poolHorizon = alive.Sum(e => HorizonThreatForEnemy(e, 1, LineFutureHorizonTurns));
+        int poolHp = alive.Where(e => !e.IsMinion).Sum(e => e.CurrentHp);
+        if (poolHp <= 0)
+            poolHp = alive.Sum(e => e.CurrentHp);
 
-        return peakFuture * peakWeight + summedFuture * 2 + enemy.CurrentHp * hpFactor + thisTurnWeight;
+        int avgHp = poolHp / alive.Count;
+        bool smallPoke = thisTurn > 0
+            && peak <= Math.Max(thisTurn, poolPeak / Math.Max(2, alive.Count))
+            && enemy.CurrentHp <= avgHp;
+
+        int peakTerm = poolPeak > 0 ? peak * 1000 / poolPeak : peak * 100;
+        int horizonTerm = poolHorizon > 0 ? horizon * 1000 / poolHorizon : horizon * 100;
+        int hpTerm = poolHp > 0 ? enemy.CurrentHp * 1000 / poolHp : enemy.CurrentHp * 100;
+        int pokeDenom = Math.Max(1, poolPeak + thisTurn);
+        int thisTerm = smallPoke
+            ? thisTurn * 250 / pokeDenom
+            : thisTurn * 500 / pokeDenom;
+
+        return peakTerm + horizonTerm + hpTerm + thisTerm;
     }
 
     /// <summary>Max attack damage in upcoming intent steps (includes move-profile fallback).</summary>
@@ -136,10 +209,6 @@ public static class ThreatModel {
             dmg = (int)Math.Round(dmg * EnemyThreatWeights.NextTurnUncertainMultiplier);
         return dmg;
     }
-
-    /// <summary>How much extra this-turn incoming is acceptable when hitting the horizon focus target.</summary>
-    public static int IncomingTradeSlack(CombatEnemy focus) =>
-        Math.Clamp(FocusThreatScore(focus) / 4, 5, 14);
 
     /// <summary>Positive when horizon A is better (lower incoming) than horizon B.</summary>
     public static int CompareFutureIncoming(

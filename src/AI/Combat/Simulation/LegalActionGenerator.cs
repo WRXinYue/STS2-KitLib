@@ -36,7 +36,9 @@ public static class LegalActionGenerator {
         if (next.AliveEnemyCount == 0)
             return int.MaxValue;
 
-        return CombatSetupEvaluator.LineRankScore(CombatSetupEvaluator.EvaluateLine(next));
+        return CombatSetupEvaluator.LineRankScore(
+            CombatSetupEvaluator.EvaluateLine(next),
+            ThreatModel.WeightsFor(state));
     }
 
     static IEnumerable<SimCombatAction> GenerateRaw(CombatState state) {
