@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
 
 namespace DevMode.AI.Combat;
 
@@ -39,8 +38,7 @@ public static class LethalChecker {
             .Select(x => (
                 x.Index,
                 Cost: x.Card!["cost"]?.GetValue<int>() ?? 99,
-                Damage: x.Card!["damage"]?.GetValue<int>()
-                    ?? GuessDamage(x.Card!)))
+                Damage: CombatCardStats.ResolveDamage(x.Card!)))
             .OrderByDescending(x => x.Damage)
             .ToList();
 
@@ -55,19 +53,43 @@ public static class LethalChecker {
         return total;
     }
 
-    static bool IsAttack(JsonObject card) {
-        var type = card["cardType"]?.GetValue<string>() ?? "";
-        if (type.Contains("Attack", StringComparison.OrdinalIgnoreCase)) return true;
-        return (card["damage"]?.GetValue<int>() ?? 0) > 0;
+    public static bool CanLethalAfterTransform(JsonObject snapshot, out int targetIndex, out int transformIndex) {
+        targetIndex = -1;
+        transformIndex = -1;
+        var combat = snapshot["combat"]?.AsObject();
+        var hand = combat?["hand"]?.AsArray();
+        var energy = combat?["currentEnergy"]?.GetValue<int>() ?? 0;
+        var enemies = combat?["enemies"]?.AsArray();
+        if (hand == null || enemies == null) return false;
+
+        transformIndex = CombatTransformSimulator.FindHandAttackTransformIndex(hand);
+        if (transformIndex < 0) return false;
+
+        var skill = hand[transformIndex]?.AsObject();
+        if (skill == null) return false;
+        if (CombatTransformSimulator.CountTransformableAttacks(hand) == 0) return false;
+
+        var projected = CombatTransformSimulator.ProjectHandAfterTransform(hand, skill);
+        var skillCost = skill["cost"]?.GetValue<int>() ?? 0;
+        var energyAfter = Math.Max(0, energy - skillCost);
+
+        for (var t = 0; t < enemies.Count; t++) {
+            if (enemies[t] is not JsonObject enemy) continue;
+            if (enemy["isAlive"]?.GetValue<bool>() == false) continue;
+
+            var hp = enemy["currentHp"]?.GetValue<int>() ?? 0;
+            var block = enemy["block"]?.GetValue<int>() ?? 0;
+            var damageNeeded = hp + block;
+            if (damageNeeded <= 0) continue;
+
+            if (EstimateMaxDamage(projected, energyAfter, t) >= damageNeeded) {
+                targetIndex = t;
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    static int GuessDamage(JsonObject card) {
-        var tags = CardCatalog.ResolveTags(
-            card["id"]?.GetValue<string>(),
-            card["cardType"]?.GetValue<string>(),
-            card["keywords"]?.AsArray());
-        if (tags.Contains(AiTag.Attack))
-            return 6 + (card["cost"]?.GetValue<int>() ?? 0) * 3;
-        return 0;
-    }
+    static bool IsAttack(JsonObject card) => CombatCardStats.IsAttackCard(card);
 }

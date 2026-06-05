@@ -394,9 +394,19 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         }
 
         // No more buttons to click — click Proceed (same as official AutoSlay).
+        if (NMapScreen.Instance is { IsOpen: true } && screen.IsComplete) {
+            ResetRewardTracking();
+            return ActionResult.Ok("Rewards complete; map is open.");
+        }
+
         var proceedBtn = UIHelper.FindFirst<NProceedButton>((Node)screen);
         if (proceedBtn != null)
         {
+            if (NMapScreen.Instance is { IsOpen: true }) {
+                ResetRewardTracking();
+                return ActionResult.Ok("Map already open.");
+            }
+
             _log("CollectReward: all rewards collected — clicking proceed.");
             await UIHelper.Click(proceedBtn);
             // Wait up to 5s for screen to close or map to open.
@@ -408,7 +418,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             return ActionResult.Ok("Proceed clicked.");
         }
 
-        return ActionResult.Ok("Waiting for rewards screen to settle.");
+        return ActionResult.Fail("Rewards screen has no clickable buttons yet.");
     }
 
     private void ResetRewardTracking()

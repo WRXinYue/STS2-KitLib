@@ -70,7 +70,7 @@ public static class CombatScorer {
             }
         }
 
-        yield return BuildEndTurn("End turn", ScoreEndTurn(needsBlock, incoming), snapshot);
+        yield return BuildEndTurn("End turn", ScoreEndTurn(needsBlock, incoming, snapshot), snapshot);
     }
 
     public static IEnumerable<(GameAction Action, int Score)> ScoreLegalMoves(JsonObject snapshot) {
@@ -108,25 +108,29 @@ public static class CombatScorer {
             card["cardType"]?.GetValue<string>(),
             card["keywords"]?.AsArray());
         var isAoe = tags.Contains(AiTag.Aoe) || card["targetType"]?.GetValue<string>() is "AllEnemy";
+        var isBlockCard = hasBlock || tags.Contains(AiTag.Block);
+        var blockUrgency = IntentCalculator.BlockUrgency(snapshot);
+        var fatalIfUnblocked = IntentCalculator.IsFatalIfUnblocked(snapshot);
 
         var builder = new ScoreBuilder();
 
-        if (needsBlock && (isSkill || hasBlock) && !canLethal) {
+        if (needsBlock && (isSkill || isBlockCard)) {
             var blockNeeded = Math.Max(0, netIncoming);
             if (blockNeeded > 0) {
                 var effectiveBlock = Math.Min(blockValue, blockNeeded);
-                builder.Add("block", 20 + effectiveBlock);
-                if (incoming >= 15) builder.Add("big-hit", 10);
+                builder.Add("block", 25 + effectiveBlock * 2);
+                if (incoming >= 15) builder.Add("big-hit", 12);
+                if (fatalIfUnblocked) builder.Add("fatal", 25);
                 if (blockValue > blockNeeded + 5)
-                    builder.Add("overblock", -(blockValue - blockNeeded) * 2);
+                    builder.Add("overblock", -(blockValue - blockNeeded));
             }
         }
-        else if ((isSkill || hasBlock) && (!needsBlock || canLethal) && !MechanicCombatBonus.IsSetupSkill(profile)) {
+        else if ((isSkill || isBlockCard) && !needsBlock && !MechanicCombatBonus.IsSetupSkill(profile)) {
             builder.Add("skill-no-block-need", -CombatScoreWeights.NonSetupSkillPenalty);
         }
 
-        if (lowHp && isSkill && needsBlock && !canLethal)
-            builder.Add("low-hp-skill", 15);
+        if (lowHp && (isSkill || isBlockCard) && needsBlock)
+            builder.Add("low-hp-skill", 20);
 
         if (IsSelfDamageCard(cardId) && hpRatio < 0.65f)
             builder.Add("self-dmg", -30);
@@ -134,11 +138,19 @@ public static class CombatScorer {
         if (isAttack) {
             builder.Add("attack", 20 + cost * 5 + damageValue);
             builder.Add("target", TargetEnemyBonus(enemies, targetIndex));
-            if (canLethal) builder.Add("lethal", 25);
-            else if (needsBlock && incoming > damageValue) builder.Add("attack-while-block-need", -5);
+            if (needsBlock) {
+                builder.Add("attack-unsafe", -(blockUrgency / 2 + Math.Max(0, netIncoming - damageValue) / 2));
+                if (canLethal && !fatalIfUnblocked)
+                    builder.Add("lethal", 25);
+                else if (canLethal)
+                    builder.Add("lethal-risky", 8);
+            }
+            else if (canLethal) {
+                builder.Add("lethal", 25);
+            }
         }
         else if (isSkill)
-            builder.Add("skill", 15 + cost * 2 + (needsBlock ? blockValue / 2 : 0));
+            builder.Add("skill", 15 + cost * 2 + (needsBlock ? blockValue : 0));
         else
             builder.Add("other", 10);
 
@@ -149,6 +161,8 @@ public static class CombatScorer {
         builder.Add("cost", -Math.Max(0, cost - 1) * 2);
 
         var mechBonus = MechanicCombatBonus.Score(snapshot, card, profile, hand, targetEnemy, energy);
+        if (needsBlock && blockUrgency >= 40 && (isAttack || MechanicCombatBonus.IsSetupSkill(profile)))
+            mechBonus = mechBonus * 2 / 3;
         builder.Add("mechanic", mechBonus);
 
         var cardName = card["name"]?.GetValue<string>() ?? cardId;
@@ -161,10 +175,10 @@ public static class CombatScorer {
         });
     }
 
-    static int ScoreEndTurn(bool needsBlock, int incoming) {
+    static int ScoreEndTurn(bool needsBlock, int incoming, JsonObject snapshot) {
         var score = EndTurnBaseScore;
         if (needsBlock && incoming > 0)
-            score -= 15;
+            score -= 15 + IntentCalculator.BlockUrgency(snapshot) / 4;
         return score;
     }
 

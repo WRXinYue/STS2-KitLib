@@ -133,8 +133,15 @@ public sealed class GameLoop
         return _endTurnPending;
     }
 
-    static bool IsCombatContext(GamePhase phase, JsonObject snapshot) =>
-        phase == GamePhase.Combat || snapshot["combat"]?.AsObject() != null;
+    static bool IsCombatContext(GamePhase phase, JsonObject snapshot) {
+        if (phase == GamePhase.Combat)
+            return true;
+
+        // PlayerCombatState lingers in snapshots after combat ends; only treat as active
+        // combat while the play phase is still running (player can act).
+        var combat = snapshot["combat"]?.AsObject();
+        return combat?["isPlayPhaseActive"]?.GetValue<bool>() == true;
+    }
 
     bool IsDuplicateAction(string fingerprint) {
         if (_lastFingerprint == null) return false;

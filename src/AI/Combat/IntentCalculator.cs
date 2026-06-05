@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 
@@ -58,48 +59,89 @@ public static class IntentCalculator {
         return enemies.Count(e => e?["isAlive"]?.GetValue<bool>() != false);
     }
 
+    public static int EffectiveHp(JsonObject snapshot) {
+        var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
+        var statusThreat = EstimateStatusDamage(snapshot);
+        return Math.Max(1, hp - statusThreat);
+    }
+
+    public static bool IsFatalIfUnblocked(JsonObject snapshot) {
+        var net = NetDamageAfterBlock(snapshot);
+        return net >= EffectiveHp(snapshot);
+    }
+
+    /// <summary>0–100 scale for how urgently block is needed (scoring).</summary>
+    public static int BlockUrgency(JsonObject snapshot) {
+        var net = NetDamageAfterBlock(snapshot);
+        if (net <= 0) return 0;
+
+        var effectiveHp = EffectiveHp(snapshot);
+        var ratio = (float)net / effectiveHp;
+        var urgency = (int)(ratio * 60f);
+        if (net >= effectiveHp) urgency += 40;
+        if (HpRatio(snapshot) < 0.45f) urgency += 15;
+        if (AliveEnemyCount(snapshot) >= 2) urgency += 10;
+        return Math.Clamp(urgency, 0, 100);
+    }
+
     public static bool NeedsBlock(JsonObject snapshot) {
         var net = NetDamageAfterBlock(snapshot);
         if (net <= 0) return false;
 
-        if (LethalChecker.CanLethal(snapshot, out _))
+        var effectiveHp = EffectiveHp(snapshot);
+        if (net >= effectiveHp) return true;
+
+        if (CanEliminateIncomingThreats(snapshot))
             return false;
 
-        if (CanRaceKill(snapshot))
-            return false;
+        if (LethalChecker.CanLethal(snapshot, out _)) {
+            if (net <= Math.Max(6, effectiveHp / 5)) return false;
+            if (HpRatio(snapshot) > 0.65f && net < effectiveHp / 3) return false;
+        }
 
-        var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
-        var statusThreat = EstimateStatusDamage(snapshot);
-        var effectiveHp = Math.Max(1, hp - statusThreat);
-
-        var thresholdRatio = Math.Max(12, (int)(effectiveHp * 0.25f));
-        return net >= thresholdRatio || net >= effectiveHp - 10;
+        var thresholdRatio = Math.Max(8, (int)(effectiveHp * 0.2f));
+        return net >= thresholdRatio || net >= effectiveHp - 15;
     }
 
-    static bool CanRaceKill(JsonObject snapshot) {
+    /// <summary>
+    /// True when this turn's max single-target damage can kill every enemy that would hit us.
+    /// Multi-attacker fights still require block unless all threats are lethal this turn.
+    /// </summary>
+    static bool CanEliminateIncomingThreats(JsonObject snapshot) {
         var combat = snapshot["combat"]?.AsObject();
         var hand = combat?["hand"]?.AsArray();
         var energy = combat?["currentEnergy"]?.GetValue<int>() ?? 0;
         var enemies = combat?["enemies"]?.AsArray();
         if (hand == null || enemies == null) return false;
 
-        var maxDamage = LethalChecker.EstimateMaxDamage(hand, energy, 0);
-        if (maxDamage <= 0) return false;
-
+        var threats = new List<int>();
         foreach (var node in enemies) {
             if (node is not JsonObject enemy) continue;
             if (enemy["isAlive"]?.GetValue<bool>() == false) continue;
-
-            var intent = enemy["intentDamage"]?.GetValue<int>() ?? 0;
-            if (intent <= 0) continue;
-
-            var hp = enemy["currentHp"]?.GetValue<int>() ?? 0;
-            var block = enemy["block"]?.GetValue<int>() ?? 0;
-            if (maxDamage >= hp + block)
-                return true;
+            if ((enemy["intentDamage"]?.GetValue<int>() ?? 0) <= 0) continue;
+            threats.Add((enemy["currentHp"]?.GetValue<int>() ?? 0)
+                + (enemy["block"]?.GetValue<int>() ?? 0));
         }
 
-        return false;
+        if (threats.Count == 0) return true;
+        if (threats.Count > 1) return false;
+
+        return EstimateMaxOffense(hand, energy) >= threats[0];
+    }
+
+    static int EstimateMaxOffense(JsonArray hand, int energy) {
+        var max = LethalChecker.EstimateMaxDamage(hand, energy, 0);
+        var transformIndex = CombatTransformSimulator.FindHandAttackTransformIndex(hand);
+        if (transformIndex < 0) return max;
+
+        var skill = hand[transformIndex]?.AsObject();
+        if (skill == null) return max;
+
+        var projected = CombatTransformSimulator.ProjectHandAfterTransform(hand, skill);
+        var skillCost = skill["cost"]?.GetValue<int>() ?? 0;
+        var afterTransform = LethalChecker.EstimateMaxDamage(
+            projected, Math.Max(0, energy - skillCost), 0);
+        return Math.Max(max, afterTransform);
     }
 
     public static float HpRatio(JsonObject snapshot) {

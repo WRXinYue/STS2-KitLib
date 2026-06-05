@@ -14,7 +14,20 @@ public static class CombatSearch {
     const int MaxDepth = 2;
 
     public static GameAction? PickBestMove(JsonObject snapshot) {
-        if (LethalChecker.CanLethal(snapshot, out var lethalTarget)) {
+        var mustBlock = IntentCalculator.IsFatalIfUnblocked(snapshot);
+
+        if (!mustBlock && LethalChecker.CanLethalAfterTransform(snapshot, out var transformTarget, out var transformIndex)) {
+            var transformFirst = new GameAction {
+                Type = ActionType.PlayCard,
+                TargetIndex = transformIndex,
+                SecondaryIndex = -1,
+                Reason = $"Lethal setup: transform → enemy {transformTarget}",
+            };
+            LogSimplePick(snapshot, transformFirst, "lethal-transform");
+            return transformFirst;
+        }
+
+        if (!mustBlock && LethalChecker.CanLethal(snapshot, out var lethalTarget)) {
             var lethalMove = FindLethalMove(snapshot, lethalTarget);
             if (lethalMove != null) {
                 var lethal = lethalMove with { Reason = $"Lethal on enemy {lethalTarget}" };
@@ -104,7 +117,7 @@ public static class CombatSearch {
         var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
         var netDamage = IntentCalculator.NetDamageAfterBlock(snapshot);
         var statusDamage = IntentCalculator.EstimateStatusDamage(snapshot);
-        var score = hp - netDamage * 2 - statusDamage * 2;
+        var score = hp - netDamage * 3 - statusDamage * 2;
 
         var combat = snapshot["combat"]?.AsObject();
         var enemies = combat?["enemies"]?.AsArray();
@@ -135,48 +148,60 @@ public static class CombatSearch {
             var card = hand[idx]?.AsObject();
             var cost = card?["cost"]?.GetValue<int>() ?? 0;
             combat["currentEnergy"] = Math.Max(0, energy - cost);
-            hand.RemoveAt(idx);
 
             if (card != null) {
                 var profile = CombatCardStats.ResolveProfile(card);
-                var damage = CombatCardStats.ResolveDamage(card);
-                var isAttack = CombatCardStats.IsAttackCard(card);
-                var tags = CardCatalog.ResolveTags(
-                    card["id"]?.GetValue<string>(),
-                    card["cardType"]?.GetValue<string>(),
-                    card["keywords"]?.AsArray());
-                var isAoe = tags.Contains(AiTag.Aoe)
-                    || card["targetType"]?.GetValue<string>() is "AllEnemy";
 
-                if (isAttack && damage > 0) {
-                    ApplyDamageToEnemies(combat, damage, play.SecondaryIndex, isAoe);
+                if (CombatTransformSimulator.IsHandAttackTransform(profile)) {
+                    CombatTransformSimulator.ApplyHandAttackTransform(hand, idx);
                 }
-
-                if (profile.AppliedVulnerable > 0) {
-                    var enemies = combat["enemies"]?.AsArray();
-                    var target = ResolveSimTarget(enemies, play.SecondaryIndex, isAoe);
-                    if (target != null)
-                        CombatPowerReader.ApplyPower(target, "VULNERABLE", profile.AppliedVulnerable);
+                else {
+                    hand.RemoveAt(idx);
+                    ApplyPlayedCardEffects(combat, card, profile, play);
                 }
-
-                if (profile.AppliedWeak > 0) {
-                    var enemies = combat["enemies"]?.AsArray();
-                    var target = ResolveSimTarget(enemies, play.SecondaryIndex, isAoe);
-                    if (target != null)
-                        CombatPowerReader.ApplyPower(target, "WEAK", profile.AppliedWeak);
-                }
-
-                if (CombatCardStats.IsSkillCard(card)) {
-                    var blockGain = CombatCardStats.ResolveBlock(card);
-                    if (blockGain > 0)
-                        combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + blockGain;
-                    else if (!MechanicCombatBonus.IsSetupSkill(profile))
-                        combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + 5;
-                }
+            }
+            else {
+                hand.RemoveAt(idx);
             }
         }
 
         return clone;
+    }
+
+    static void ApplyPlayedCardEffects(JsonObject combat, JsonObject card, CardMechanicProfile profile, GameAction play) {
+        var damage = CombatCardStats.ResolveDamage(card);
+        var isAttack = CombatCardStats.IsAttackCard(card);
+        var tags = CardCatalog.ResolveTags(
+            card["id"]?.GetValue<string>(),
+            card["cardType"]?.GetValue<string>(),
+            card["keywords"]?.AsArray());
+        var isAoe = tags.Contains(AiTag.Aoe)
+            || card["targetType"]?.GetValue<string>() is "AllEnemy";
+
+        if (isAttack && damage > 0)
+            ApplyDamageToEnemies(combat, damage, play.SecondaryIndex, isAoe);
+
+        if (profile.AppliedVulnerable > 0) {
+            var enemies = combat["enemies"]?.AsArray();
+            var target = ResolveSimTarget(enemies, play.SecondaryIndex, isAoe);
+            if (target != null)
+                CombatPowerReader.ApplyPower(target, "VULNERABLE", profile.AppliedVulnerable);
+        }
+
+        if (profile.AppliedWeak > 0) {
+            var enemies = combat["enemies"]?.AsArray();
+            var target = ResolveSimTarget(enemies, play.SecondaryIndex, isAoe);
+            if (target != null)
+                CombatPowerReader.ApplyPower(target, "WEAK", profile.AppliedWeak);
+        }
+
+        if (CombatCardStats.IsSkillCard(card)) {
+            var blockGain = CombatCardStats.ResolveBlock(card);
+            if (blockGain > 0)
+                combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + blockGain;
+            else if (!MechanicCombatBonus.IsSetupSkill(profile))
+                combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + 5;
+        }
     }
 
     static JsonObject? ResolveSimTarget(JsonArray? enemies, int targetIndex, bool isAoe) {

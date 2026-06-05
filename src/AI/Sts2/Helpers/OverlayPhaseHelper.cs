@@ -1,8 +1,13 @@
+using System.Linq;
 using Godot;
+using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
+using MegaCrit.Sts2.Core.Rewards;
 
 namespace DevMode.AI.Sts2.Helpers;
 
@@ -13,6 +18,25 @@ internal static class OverlayPhaseHelper {
 
     public static bool HasActiveRelicSelectionScreen() =>
         FindRelicSelectionScreen() != null;
+
+    /// <summary>
+    /// Terminal <see cref="NRewardsScreen"/> stays on the overlay stack after proceed opens the map.
+    /// Treat as map selection once rewards are drained and the map is visible.
+    /// </summary>
+    public static bool RewardsReadyForMap(NRewardsScreen screen, Player? player) {
+        if (NMapScreen.Instance is not { IsOpen: true })
+            return false;
+
+        if (screen.IsComplete)
+            return true;
+
+        return !HasClickableRewards(screen, player?.HasOpenPotionSlots ?? false);
+    }
+
+    public static bool HasClickableRewards(NRewardsScreen screen, bool hasPotionSlots) =>
+        UIHelper.FindAll<NRewardButton>((Node)screen)
+            .Any(b => b.IsEnabled
+                && (b.Reward is not PotionReward || hasPotionSlots));
 
     public static Node? FindCardRewardScreen() {
         var stack = NOverlayStack.Instance;

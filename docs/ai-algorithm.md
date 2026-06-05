@@ -388,8 +388,9 @@ DecideCombat:
 TotalIncomingDamage = Σ 存活敌人 intentDamage
 NetDamageAfterBlock = max(0, incoming − playerBlock)
 EstimateStatusDamage = Σ playerPowers（BURN/POISON/INFEST/DOOM 的 amount）
-NeedsBlock = false 当 net≤0，或 CanLethal，或 CanRaceKill（手牌 maxDamage ≥ 有攻击意图敌人的 hp+block）
-否则 net ≥ max(12, effectiveHp×0.25) 或 net ≥ effectiveHp−10（effectiveHp = currentHp − statusDamage）
+NeedsBlock = false 当 net≤0，或 CanEliminateIncomingThreats（仅 **单个** 攻击敌人且本回合 maxDamage 可斩杀）
+CanLethal 不再无条件跳过防守：仅当 net ≤ max(6, effectiveHp/5) 或（HP>65% 且 net < effectiveHp/3）时不挡
+fatal（net ≥ effectiveHp）时始终 NeedsBlock；BlockUrgency 0–100 驱动攻击惩罚与 EndTurn 惩罚
 ```
 
 ### CombatScorer（单步）
@@ -400,8 +401,9 @@ NeedsBlock = false 当 net≤0，或 CanLethal，或 CanRaceKill（手牌 maxDam
 
 | 情况 | 加分 |
 | --- | --- |
-| NeedsBlock 且 Skill/有 block（非可斩杀） | 20 + min(block, netIncoming)；incoming≥15 再 +10；过度挡 penalize |
-| !NeedsBlock 或 CanLethal 时的挡牌 | −40 |
+| NeedsBlock 且 Skill/挡牌 | 25 + min(block, net)×2；incoming≥15 再 +12；fatal 再 +25 |
+| NeedsBlock 时 Attack | −BlockUrgency/2 − max(0, net−damage)/2；可斩杀但会死 → lethal-risky +8 而非 +25 |
+| !NeedsBlock 时的挡牌 | −40 |
 | 低 HP 且 Skill 且 NeedsBlock | +15 |
 | 自损牌（HEMOKINESIS 等）且 HP<65% | −30 |
 | Attack | 20 + cost×5 + damage + 目标加成（残血敌 +30）；CanLethal +25 |
@@ -415,7 +417,7 @@ NeedsBlock = false 当 net≤0，或 CanLethal，或 CanRaceKill（手牌 maxDam
 
 | 机制 | 来源 | 效果 |
 | --- | --- | --- |
-| `TransformsHandAttacks` | 原始力量等 | 手牌攻击数 ×8；0 费再 +12 |
+| `TransformsHandAttacks` | 原始力量等 | 每张可变形攻击的 **实际伤害增益**（→ 巨石 16/20 减原攻击伤）+ 变形后本回合可打出的攻击伤害/2；0 费 +12，有能量 +20 |
 | `AppliesVulnerable` | DynamicVar 探测（痛击等） | 无易伤时：18 + 层数×8 + 后续攻击伤害/3；已有易伤 −12 |
 | `AppliesWeak` | DynamicVar | 类似，权重略低 |
 | Setup Skill | 上述机制牌 | **不再**吃「非挡牌 Skill −40」惩罚 |
@@ -442,7 +444,9 @@ Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数（日志中
 3. `EvaluateLeaf`：偏向高 HP、低 netDamage/statusDamage、低敌人总 HP；存活敌数 ×5 惩罚。
 4. 时间允许时对最优首牌再试第二张 refinement。
 
-`SimulateAfterPlay`：扣能量/移除手牌；伤害用 `ResolveDamage`；**易伤目标伤害 ×1.5**；模拟施加 `AppliedVulnerable/Weak`；仍不模拟抽牌与复杂 powers。
+`SimulateAfterPlay`：扣能量/移除手牌；伤害用 `ResolveDamage`；**原始力量等变形牌**将手牌攻击替换为巨石（16/20 伤）；**易伤目标伤害 ×1.5**；模拟施加 `AppliedVulnerable/Weak`；仍不模拟抽牌与复杂 powers。
+
+**Lethal**：若变形后手牌可斩杀，优先出原始力量（`CanLethalAfterTransform`），再按攻击牌斩杀。
 
 ---
 

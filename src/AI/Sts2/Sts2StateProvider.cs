@@ -42,14 +42,16 @@ public sealed class Sts2StateProvider : IGameStateProvider
             var overlay = NOverlayStack.Instance?.Peek();
             if (overlay != null)
             {
-                // Terminal NRewardsScreen stays on stack until next room — skip to map if open.
-                if (overlay is NRewardsScreen && NMapScreen.Instance is { IsOpen: true })
-                    return GamePhase.MapSelection;
+                if (overlay is NRewardsScreen rewardsScreen) {
+                    TryGetRunAndPlayer(out _, out var player);
+                    if (OverlayPhaseHelper.RewardsReadyForMap(rewardsScreen, player))
+                        return GamePhase.MapSelection;
+                    return GamePhase.RewardScreen;
+                }
 
                 return overlay switch
                 {
                     NChooseARelicSelection => GamePhase.RelicSelection,
-                    NRewardsScreen        => GamePhase.RewardScreen,
                     NCardRewardSelectionScreen => GamePhase.CardReward,
                     NDeckCardSelectScreen => GamePhase.CardReward,
                     NChooseACardSelectionScreen => GamePhase.CardReward,
