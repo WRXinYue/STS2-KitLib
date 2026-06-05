@@ -47,15 +47,43 @@ internal static partial class DevPanelUI {
         var recommendBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         recommendBox.AddThemeConstantOverride("separation", 4);
 
-        var terminal = new TextEdit {
-            Editable = false,
-            WrapMode = TextEdit.LineWrappingMode.Boundary,
-            CustomMinimumSize = new Vector2(0, 180),
+        var terminalHint = new Label {
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            ScrollFitContentHeight = false,
         };
-        terminal.AddThemeFontSizeOverride("font_size", 11);
+        terminalHint.AddThemeFontSizeOverride("font_size", 12);
+        terminalHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+
+        var terminalError = new Label {
+            Visible = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        terminalError.AddThemeFontSizeOverride("font_size", 11);
+        terminalError.AddThemeColorOverride("font_color", DevModeTheme.RarityCurse);
+
+        void RefreshTerminalHint() {
+            var logName = GameLogFileHydrator.CurrentSessionLogFileName;
+            terminalHint.Text = string.IsNullOrEmpty(logName)
+                ? I18N.T(
+                    "ai.terminal.externalHintNoFile",
+                    "AI decisions are written to the session log. Open a system terminal to tail them live.")
+                : I18N.T(
+                    "ai.terminal.externalHint",
+                    "Tail AI decisions in your system terminal ({0}). Full log: DevMode → Logs.",
+                    logName);
+        }
+
+        var openTerminalBtn = CreatePlainButton(
+            I18N.T("ai.terminal.openExternal", "Open in System Terminal"),
+            MdiIcon.Console);
+        openTerminalBtn.Pressed += () => {
+            terminalError.Visible = false;
+            if (!AiLogTerminalLauncher.TryOpen(out var error)) {
+                terminalError.Text = error ?? I18N.T("ai.terminal.launchFailed", "Could not start a system terminal.");
+                terminalError.Visible = true;
+            }
+        };
 
         void RefreshMonitor() {
             statusLabel.Text = AiHostPanelModel.BuildStatusText();
@@ -73,11 +101,7 @@ internal static partial class DevPanelUI {
                 recommendBox.AddChild(tipLabel);
             }
 
-            var text = AiHostPanelModel.BuildTerminalText();
-            if (terminal.Text != text) {
-                terminal.Text = text;
-                terminal.SetCaretLine(terminal.GetLineCount() - 1);
-            }
+            RefreshTerminalHint();
         }
 
         inner.AddChild(CreateSectionHeader(I18N.T("ai.status.section", "AI Status")));
@@ -85,7 +109,9 @@ internal static partial class DevPanelUI {
         inner.AddChild(CreateSectionHeader(I18N.T("ai.recommend.section", "Mode hints")));
         inner.AddChild(recommendBox);
         inner.AddChild(CreateSectionHeader(I18N.T("ai.terminal.section", "AI Terminal")));
-        inner.AddChild(terminal);
+        inner.AddChild(terminalHint);
+        inner.AddChild(openTerminalBtn);
+        inner.AddChild(terminalError);
         RefreshMonitor();
 
         var refreshTimer = new Timer { WaitTime = 0.5, Autostart = true };

@@ -205,11 +205,13 @@ RemovalUplift = (MeanValue - WorstValue)
 
 - 启动时在 `ModelDb.Init` 之后索引全卡（`AiKnowledgeBootstrap` + `ModelDbInitPatch`）。
 - `CardTagRules` 从 **卡 id 前缀**、**CardType**、**CardKeyword**（Exhaust/Retain 等）推断 tag，避免逐卡硬编码。
+- `CardMechanicIndex` + `OfficialMechanicProbe`：CardKeyword / DynamicVars / 类型图 / LocString key / 字段引用 → `CardMechanicFlags`；`DeckSynergyEvaluator` 按机制类型算 deck 协同；**仅无结构信号时**才用英文描述 fallback。
 - Mod 可通过 `ICardTagProvider` 合并额外 tag。
 
-### RelicCatalog
+### RelicCatalog / RelicMechanicIndex
 
 - 从遗物 id 推断 tag（如 Exhaust、Thin），用于 `DeckPlanInferer` 与遗物评分。
+- `RelicMechanicIndex` 通过 `OfficialMechanicProbe` 解析 `RelicModel` 结构与 loc key（如 `HeftyTablet` → 稀有三选一 + Injury）；描述文本为最后兜底。
 
 ---
 
@@ -351,9 +353,9 @@ bestToBoss(p) = nodeScore(p, ctx) + max_{c ∈ children} ( edgeBonus(p,c) + best
 
 - 识别 Neow（`eventId` 或 option `textKey` 含 NEOW）。
 - 快照 `eventOptions[]` 含 `optionKey`（`EventOptionInfer`：textKey/modelId/中文标题）。
-- 评分：`keyword baseline` + `GetEventOptionBonus(eventId, optionKey)` + 遗物选项 `GetRelicBonus(..., event)`。
+- 评分：`keyword baseline` + `GetEventOptionBonus`（无 event prior 时 fallback `GetRelicBonus`）+ **`DeckSynergyEvaluator` 机制分**（遗物/卡选项）。
 - 当 event prior `n≥20` 时 Codex 权重 ×1.5（`codex_primary` 模式，keyword 降为 baseline 10）。
-- Reason 日志：`Neow pick [title] score=N key=LEAD_PAPERWEIGHT codex=+3 relic=+9`。
+- Reason 日志：`Neow pick [title] score=N key=HEFTY_TABLET codex=+4 synergy=+12 codex_primary`。
 - 普通事件同样接 `GetEventOptionBonus`；无 prior 时保留关键词兜底。
 
 ---
@@ -435,7 +437,8 @@ Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数。
 
 `AiPlayModule` 每 500ms 轮询当前 phase；`GameLoop` 在决策前：
 
-- **Combat** 且 `isPlayPhaseActive=false` → 跳过（等敌方回合/动画）
+- **Combat** 且 `isPlayPhaseActive=false` → 跳过（等敌方回合/动画）；`Sts2StateProvider` 在 `CombatManager.IsInProgress` 时仍返回 `Combat`（避免敌方回合误判为 `Unknown` → `AdvanceOverlay` 刷屏）
+- **快照含 combat 段** 时，`ShouldSkipCombatPoll` 与出牌后 fingerprint 等待同样生效（兜底）
 - **EndTurn 已提交**（`_endTurnPending`）→ 跳过，直到 phase 变化或 play phase 结束
 - **PlayCard / UsePotion 后**（`_awaitingCombatUpdate`）→ 跳过，直到战斗 fingerprint（能量 + 手牌 id/cost/canPlay）变化或 5s 超时；避免 500ms poll 在动画/扣费完成前连打多张牌
 - **相同 fingerprint**（phase+action+target）2s 内 → 跳过（避免 EndTurn 刷屏、Rest 双动作）

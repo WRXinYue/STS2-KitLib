@@ -10,12 +10,17 @@ internal static class MacroScorerHelper {
     public static int RarityScore(string? rarity) => DeckCardScoring.RarityScore(rarity);
 
     public static int ScoreCardOffer(JsonObject card, DeckPlan plan, int deckSize, JsonObject? snapshot = null) {
-        var score = DeckCardScoring.ScoreInDeck(card, plan, new DeckComposition(0, 0, 0));
+        var deck = snapshot?["deck"]?.AsArray();
+        var composition = deck != null
+            ? DeckCardScoring.AnalyzeComposition(deck)
+            : new DeckComposition(0, 0, 0);
+        var score = DeckCardScoring.ScoreInDeck(card, plan, composition);
         score -= (int)Math.Round(DeckPlanInferer.DilutionPenalty(deckSize + 1, plan));
         var characterId = snapshot?["characterId"]?.GetValue<string>();
         var cardId = card["id"]?.GetValue<string>();
         var context = snapshot?["shopOffers"] != null ? "shop" : "combat_reward";
         score += CodexPriorCatalog.GetCardBonus(characterId, cardId, context);
+        score += DeckSynergyEvaluator.ScoreCard(card, plan, snapshot);
         return score;
     }
 
@@ -27,8 +32,8 @@ internal static class MacroScorerHelper {
             return -100;
 
         var score = RarityScore(relic["rarity"]?.GetValue<string>());
-        foreach (var tag in RelicCatalog.ResolveTags(id))
-            score += (int)Math.Round(plan.GetWeight(tag) * 3f);
+        score += DeckSynergyEvaluator.RelicTagPlanScore(id, plan);
+        score += DeckSynergyEvaluator.ScoreRelic(id, plan, snapshot);
 
         var characterId = snapshot?["characterId"]?.GetValue<string>();
         score += CodexPriorCatalog.GetRelicBonus(characterId, id, RelicContext(snapshot));

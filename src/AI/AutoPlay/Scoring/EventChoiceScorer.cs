@@ -63,9 +63,9 @@ public static class EventChoiceScorer {
 
         var keyPart = string.IsNullOrEmpty(b.OptionKey) ? "" : $" key={b.OptionKey}";
         var codexPart = b.Codex != 0 ? $" codex={(b.Codex >= 0 ? "+" : "")}{b.Codex}" : "";
-        var relicPart = b.Relic != 0 ? $" relic={(b.Relic >= 0 ? "+" : "")}{b.Relic}" : "";
+        var synergyPart = b.Synergy != 0 ? $" synergy={(b.Synergy >= 0 ? "+" : "")}{b.Synergy}" : "";
         var modePart = b.CodexPrimary ? " codex_primary" : "";
-        return $"{prefix} [{title}] score={score}{keyPart}{codexPart}{relicPart}{modePart}";
+        return $"{prefix} [{title}] score={score}{keyPart}{codexPart}{synergyPart}{modePart}";
     }
 
     static bool InferNeowFromOptions(JsonArray options) {
@@ -82,27 +82,43 @@ public static class EventChoiceScorer {
         var characterId = snapshot["characterId"]?.GetValue<string>();
         var eventId = snapshot["eventId"]?.GetValue<string>() ?? "";
         var optionKey = EventOptionInfer.OptionKey(opt);
+        var relicId = EventOptionInfer.RelicId(opt);
 
         var keyword = isNeow ? NeowKeywordScore(opt, plan) : GenericKeywordScore(opt);
+
         var codex = 0;
         var codexN = 0;
         if (!string.IsNullOrEmpty(optionKey))
             codex = CodexPriorCatalog.GetEventOptionBonus(characterId, eventId, optionKey, out codexN);
+        if (codex == 0 && !string.IsNullOrEmpty(relicId))
+            codex = CodexPriorCatalog.GetRelicBonus(characterId, relicId, "event");
 
-        var relic = 0;
-        var relicId = EventOptionInfer.RelicId(opt);
-        if (!string.IsNullOrEmpty(relicId))
-            relic = CodexPriorCatalog.GetRelicBonus(characterId, relicId, "event");
+        var synergy = ScoreOptionSynergy(opt, relicId, plan, snapshot);
 
         var codexPrimary = codexN >= CodexPrimarySampleThreshold && codex != 0;
         if (codexPrimary)
             codex = (int)Math.Round(codex * 1.5f);
 
         var total = codexPrimary
-            ? CodexPrimaryBaseline + codex + relic
-            : keyword + codex + relic;
+            ? CodexPrimaryBaseline + codex + synergy
+            : keyword + codex + synergy;
 
-        return new EventOptionBreakdown(total, keyword, codex, relic, optionKey, codexPrimary);
+        return new EventOptionBreakdown(total, keyword, codex, synergy, optionKey, codexPrimary);
+    }
+
+    static int ScoreOptionSynergy(JsonObject opt, string? relicId, DeckPlan plan, JsonObject snapshot) {
+        if (!string.IsNullOrEmpty(relicId))
+            return DeckSynergyEvaluator.ScoreRelic(relicId, plan, snapshot)
+                + DeckSynergyEvaluator.RelicTagPlanScore(relicId, plan);
+
+        var cardLike = new JsonObject {
+            ["id"] = opt["modelId"]?.GetValue<string>() ?? opt["optionKey"]?.GetValue<string>() ?? "",
+            ["cardType"] = opt["cardType"]?.GetValue<string>() ?? "",
+            ["cost"] = opt["cost"]?.GetValue<int>() ?? 0,
+        };
+        if (string.IsNullOrWhiteSpace(cardLike["id"]?.GetValue<string>()))
+            return 0;
+        return DeckSynergyEvaluator.ScoreCard(cardLike, plan, snapshot);
     }
 
     static int NeowKeywordScore(JsonObject opt, DeckPlan plan) {
@@ -117,8 +133,7 @@ public static class EventChoiceScorer {
         if (text.Contains("CARD", StringComparison.Ordinal)
             || text.Contains("COFFER", StringComparison.Ordinal)
             || text.Contains("COLORLESS", StringComparison.Ordinal)
-            || text.Contains("PAPERWEIGHT", StringComparison.Ordinal)
-            || text.Contains("TABLET", StringComparison.Ordinal))
+            || text.Contains("PAPERWEIGHT", StringComparison.Ordinal))
             score += 10;
         if (text.Contains("POTION", StringComparison.Ordinal)
             || text.Contains("PHIAL", StringComparison.Ordinal)
@@ -153,7 +168,7 @@ public static class EventChoiceScorer {
         int Total,
         int Keyword,
         int Codex,
-        int Relic,
+        int Synergy,
         string? OptionKey,
         bool CodexPrimary);
 }

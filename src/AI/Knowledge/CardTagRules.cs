@@ -64,6 +64,7 @@ public static class CardTagRules {
         if (CardEditActions.GetDamage(card) > 0 && card.EnergyCost.Canonical <= 1)
             tags.Add(AiTag.Attack);
 
+        MergeIndexedTags(id, tags);
         return tags.Count > 0 ? [.. tags] : [AiTag.Utility];
     }
 
@@ -89,6 +90,14 @@ public static class CardTagRules {
             }
         }
 
+        MergeIndexedTags(id, tags);
         return tags.Count > 0 ? [.. tags] : [AiTag.Utility];
+    }
+
+    static void MergeIndexedTags(string id, HashSet<AiTag> tags) {
+        if (!CardMechanicIndex.TryGet(id, out var profile))
+            return;
+        foreach (var tag in profile.DerivedTags)
+            tags.Add(tag);
     }
 }

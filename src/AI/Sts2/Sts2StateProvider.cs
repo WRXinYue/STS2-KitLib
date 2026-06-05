@@ -37,6 +37,8 @@ public sealed class Sts2StateProvider : IGameStateProvider
             if (OverlayPhaseHelper.HasActiveRelicSelectionScreen())
                 return GamePhase.RelicSelection;
 
+            var cm = CombatManager.Instance;
+
             var overlay = NOverlayStack.Instance?.Peek();
             if (overlay != null)
             {
@@ -52,15 +54,16 @@ public sealed class Sts2StateProvider : IGameStateProvider
                     NDeckCardSelectScreen => GamePhase.CardReward,
                     NChooseACardSelectionScreen => GamePhase.CardReward,
                     NGameOverScreen       => GamePhase.GameOver,
-                    _                     => GamePhase.Unknown,
+                    _                     => cm is { IsInProgress: true }
+                        ? GamePhase.Combat
+                        : GamePhase.Unknown,
                 };
             }
 
             if (!TryGetRunAndPlayer(out var state, out _))
                 return GamePhase.None;
 
-            var cm = CombatManager.Instance;
-            if (Sts2CombatCompat.IsCombatPlayPhase(cm))
+            if (cm is { IsInProgress: true })
                 return GamePhase.Combat;
 
             // Post-combat: wait for rewards overlay to appear

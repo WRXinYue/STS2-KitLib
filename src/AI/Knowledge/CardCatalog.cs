@@ -95,8 +95,14 @@ public static class CardCatalog {
 
     public static IReadOnlyList<AiTag> ResolveTags(string? id, string? cardType = null, System.Text.Json.Nodes.JsonArray? keywords = null) {
         AiKnowledgeBootstrap.EnsureRegistered();
-        if (TryGet(id, out var entry))
-            return entry.Tags;
+        if (TryGet(id, out var entry)) {
+            var tags = new HashSet<AiTag>(entry.Tags);
+            if (CardMechanicIndex.TryGet(id, out var profile)) {
+                foreach (var tag in profile.DerivedTags)
+                    tags.Add(tag);
+            }
+            return [.. tags];
+        }
 
         var inferred = CardTagRules.InferTagsFromSnapshot(id, cardType, keywords);
         return CardTagProviderHub.MergeTags(id, inferred);

@@ -60,12 +60,6 @@ public sealed class GameLoop
             var phase = phaseOverride ?? _state.CurrentPhase;
             if (phase == GamePhase.None) return;
 
-            if (phase != GamePhase.Combat) {
-                _endTurnPending = false;
-                _awaitingCombatUpdate = false;
-                _preActionCombatFingerprint = null;
-            }
-
             var snapshot = _state.TakeSnapshot();
             if (snapshot == null)
             {
@@ -78,10 +72,21 @@ public sealed class GameLoop
                 snapshot = new JsonObject();
             }
 
+            var inCombat = IsCombatContext(phase, snapshot);
+            if (!inCombat) {
+                _endTurnPending = false;
+                _awaitingCombatUpdate = false;
+                _preActionCombatFingerprint = null;
+            }
+
             if (ShouldSkipCombatPoll(phase, snapshot))
                 return;
 
-            var action = await _decisionMaker.DecideAsync(snapshot, phase);
+            var decidePhase = inCombat && phase is GamePhase.Unknown or GamePhase.Combat
+                ? GamePhase.Combat
+                : phase;
+
+            var action = await _decisionMaker.DecideAsync(snapshot, decidePhase);
 
             var fingerprint = $"{phase}:{action.Type}:{action.TargetIndex}:{action.SecondaryIndex}";
             if (IsDuplicateAction(fingerprint))
@@ -96,9 +101,9 @@ public sealed class GameLoop
             var result = await _executor.ExecuteAsync(action);
             if (!result.Success) {
                 _log($"GameLoop: Action failed — {result.Message}");
-                if (phase == GamePhase.Combat && action.Type == ActionType.EndTurn)
+                if (decidePhase == GamePhase.Combat && action.Type == ActionType.EndTurn)
                     _endTurnPending = true;
-                if (phase == GamePhase.Combat
+                if (decidePhase == GamePhase.Combat
                     && action.Type is ActionType.PlayCard or ActionType.UsePotion)
                     _awaitingCombatUpdate = false;
                 return;
@@ -107,11 +112,11 @@ public sealed class GameLoop
             _lastFingerprint = fingerprint;
             _lastActionUtc = DateTime.UtcNow;
 
-            if (phase == GamePhase.Combat && action.Type == ActionType.EndTurn) {
+            if (decidePhase == GamePhase.Combat && action.Type == ActionType.EndTurn) {
                 _endTurnPending = true;
                 _awaitingCombatUpdate = false;
             }
-            else if (phase == GamePhase.Combat
+            else if (decidePhase == GamePhase.Combat
                      && action.Type is ActionType.PlayCard or ActionType.UsePotion) {
                 _preActionCombatFingerprint = CombatFingerprint.FromSnapshot(snapshot);
                 _awaitingCombatUpdate = true;
@@ -128,7 +133,7 @@ public sealed class GameLoop
     }
 
     bool ShouldSkipCombatPoll(GamePhase phase, JsonObject snapshot) {
-        if (phase != GamePhase.Combat) return false;
+        if (!IsCombatContext(phase, snapshot)) return false;
 
         var combat = snapshot["combat"]?.AsObject();
         if (combat?["isPlayPhaseActive"]?.GetValue<bool>() == false) {
@@ -152,6 +157,9 @@ public sealed class GameLoop
 
         return elapsed < CombatUpdateTimeoutMs;
     }
+
+    static bool IsCombatContext(GamePhase phase, JsonObject snapshot) =>
+        phase == GamePhase.Combat || snapshot["combat"]?.AsObject() != null;
 
     bool IsDuplicateAction(string fingerprint) {
         if (_lastFingerprint == null) return false;
