@@ -148,8 +148,9 @@ internal static class CombatActionHeuristic {
             score += 100;
 
         var afterMid = SimulateGreedyPlaysForHeuristic(after);
-        if (ThreatModel.IncomingDamage(afterMid) <= 0)
-            score += 80;
+        var lineBefore = CombatSetupEvaluator.EvaluateLine(state);
+        var lineAfter = CombatSetupEvaluator.EvaluateLine(afterMid);
+        score += CombatSetupEvaluator.CompareLines(lineBefore, lineAfter) * 8;
 
         return score;
     }
@@ -174,33 +175,108 @@ internal static class CombatActionHeuristic {
 
     static CombatState GreedyAttacksOnce(CombatState state) {
         var s = state;
+        int primary = CombatSetupEvaluator.PrimaryAttackTargetIndex(s);
+
         for (int i = 0; i < s.Hand.Count; i++) {
             var card = s.Hand[i];
             if (!CombatCardCost.CanAfford(card, s) || !card.IsAttack || card.Damage <= 0)
                 continue;
 
-            int bestEnemy = -1;
+            var focusEnemy = s.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == primary);
+            int slack = focusEnemy != null ? ThreatModel.IncomingTradeSlack(focusEnemy) : 0;
+
+            SimCombatAction? bestAction = null;
+            int bestIncoming = int.MaxValue;
+            int bestFuture0 = int.MaxValue;
+            int bestFuture1 = int.MaxValue;
+            int bestFuture2 = int.MaxValue;
             int bestScore = int.MinValue;
-            foreach (var enemy in s.Enemies.Where(e => ThreatModel.IsViableAttackTarget(s, e))) {
+            bool bestHitsPrimary = false;
+
+            foreach (var enemy in CombatSetupEvaluator.OrderEnemiesByThreat(s)) {
                 int dmg = CombatDamageCalc.OutgoingDamage(card, s, enemy.Vulnerable);
                 if (dmg <= 0) continue;
-                int score = dmg * 3 + enemy.IntentDamage * 12;
-                if (dmg >= enemy.EffectiveHp) {
-                    score += 200;
-                    if (enemy.IntentDamage > 0)
-                        score += 500;
-                }
-                if (score > bestScore) {
+
+                var next = CombatSimulator.Apply(
+                    s, new SimCombatAction(SimActionKind.PlayCard, i, enemy.Index));
+                bool hitsPrimary = enemy.Index == primary;
+                var future = FuturePressureFromMidTurnHeuristic(next);
+                int incoming = ThreatModel.IncomingDamage(next);
+                int score = ScoreMidTurnHeuristic(next);
+
+                if (PreferGreedyAttackTarget(
+                        incoming, future.f0, future.f1, future.f2, score, hitsPrimary,
+                        bestIncoming, bestFuture0, bestFuture1, bestFuture2, bestScore, bestHitsPrimary,
+                        slack)) {
+                    bestIncoming = incoming;
+                    bestFuture0 = future.f0;
+                    bestFuture1 = future.f1;
+                    bestFuture2 = future.f2;
                     bestScore = score;
-                    bestEnemy = enemy.Index;
+                    bestHitsPrimary = hitsPrimary;
+                    bestAction = new SimCombatAction(SimActionKind.PlayCard, i, enemy.Index);
                 }
             }
 
-            if (bestEnemy >= 0)
-                return CombatSimulator.Apply(s, new SimCombatAction(SimActionKind.PlayCard, i, bestEnemy));
+            if (bestAction != null)
+                return CombatSimulator.Apply(s, bestAction);
         }
 
         return s;
+    }
+
+    static (int f0, int f1, int f2) FuturePressureFromMidTurnHeuristic(CombatState state) {
+        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
+        return (
+            ThreatModel.PressureAtIntentStep(afterPhase, 0),
+            ThreatModel.PressureAtIntentStep(afterPhase, 1),
+            ThreatModel.PressureAtIntentStep(afterPhase, 2));
+    }
+
+    static int ScoreMidTurnHeuristic(CombatState s) {
+        int incoming = ThreatModel.IncomingDamage(s);
+        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(s);
+        int future0 = ThreatModel.PressureAtIntentStep(afterPhase, 0);
+        int future1 = ThreatModel.PressureAtIntentStep(afterPhase, 1);
+        int enemyHp = s.Enemies.Where(e => e.IsAlive).Sum(e => e.EffectiveHp);
+        return -incoming * 1000 - future0 * 250 - future1 * 100 - enemyHp;
+    }
+
+    static bool PreferGreedyAttackTarget(
+        int incoming,
+        int future0,
+        int future1,
+        int future2,
+        int score,
+        bool hitsPrimary,
+        int bestIncoming,
+        int bestFuture0,
+        int bestFuture1,
+        int bestFuture2,
+        int bestScore,
+        bool bestHitsPrimary,
+        int incomingSlack) {
+        if (incoming != bestIncoming) {
+            if (incoming < bestIncoming) {
+                if (bestHitsPrimary && !hitsPrimary && bestIncoming - incoming <= incomingSlack)
+                    return false;
+                return true;
+            }
+            if (hitsPrimary && !bestHitsPrimary && incoming - bestIncoming <= incomingSlack)
+                return true;
+            return false;
+        }
+
+        if (hitsPrimary != bestHitsPrimary)
+            return hitsPrimary;
+
+        int futureCmp = ThreatModel.CompareFutureIncoming(
+            future0, future1, future2,
+            bestFuture0, bestFuture1, bestFuture2);
+        if (futureCmp != 0)
+            return futureCmp > 0;
+
+        return score > bestScore;
     }
 
     static int ScoreVulnerableSetup(CombatState state, SimCombatAction action, CombatHandCard card) {

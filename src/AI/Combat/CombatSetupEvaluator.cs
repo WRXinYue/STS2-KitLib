@@ -119,7 +119,7 @@ internal static class CombatSetupEvaluator {
         int extra = candidateIncoming - baselineIncoming;
         int futureRelief = (baselineF0 - candidateF0) + (baselineF1 - candidateF1) + (baselineF2 - candidateF2);
         int hpGain = baselineEnemyHp - candidateEnemyHp;
-        int slack = Math.Clamp(futureRelief / 3 + hpGain / 8, 0, 12);
+        int slack = Math.Clamp(futureRelief / 2 + hpGain / 3, 0, 16);
         if (extra <= slack && (hpGain > 0 || futureRelief > 0))
             return 1;
         return baselineIncoming - candidateIncoming;
@@ -127,13 +127,13 @@ internal static class CombatSetupEvaluator {
 
     public static int LineRankScore(CombatLineOutcome outcome) {
         long score =
-            (1000L - Math.Clamp(outcome.Incoming, 0, 999)) * 1_000_000_000
-            + (1000L - Math.Clamp(outcome.FutureIncoming0, 0, 999)) * 1_000_000
+            (1000L - Math.Clamp(outcome.Incoming, 0, 999)) * 1_000_000
+            + (1000L - Math.Clamp(outcome.FutureIncoming0, 0, 999)) * 10_000
             + (1000L - Math.Clamp(outcome.FutureIncoming1, 0, 999)) * 1_000
             + (1000L - Math.Clamp(outcome.FutureIncoming2, 0, 999))
-            + (10_000L - Math.Clamp(outcome.EnemyHp, 0, 9999)) / 100
+            + (1000L - Math.Clamp(outcome.EnemyHp, 0, 9999)) / 10
             + Math.Clamp(outcome.PlayerHpAfterTurn, 0, 99);
-        return score > int.MaxValue ? int.MaxValue : (int)score;
+        return score > int.MaxValue ? int.MaxValue - 1 : (int)score;
     }
 
     public static CombatLineOutcome WipeOutcome(CombatState state) =>
@@ -155,9 +155,10 @@ internal static class CombatSetupEvaluator {
 
     static int ScoreMidTurn(CombatState s) {
         int incoming = ThreatModel.IncomingDamage(s);
-        int future0 = ThreatModel.PressureAtIntentStep(s, 1);
-        int future1 = ThreatModel.PressureAtIntentStep(s, 2);
-        int future2 = ThreatModel.PressureAtIntentStep(s, 3);
+        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(s);
+        int future0 = ThreatModel.PressureAtIntentStep(afterPhase, 0);
+        int future1 = ThreatModel.PressureAtIntentStep(afterPhase, 1);
+        int future2 = ThreatModel.PressureAtIntentStep(afterPhase, 2);
         int enemyHp = s.Enemies.Where(e => e.IsAlive).Sum(e => e.EffectiveHp);
         return -incoming * 1000 - future0 * 250 - future1 * 100 - future2 * 40 - enemyHp;
     }
@@ -320,15 +321,12 @@ internal static class CombatSetupEvaluator {
         return debt;
     }
 
-    /// <summary>Threat-ordered enemies for focus fire (horizon pressure, then this-turn attack, then HP).</summary>
+    /// <summary>Threat-ordered enemies for focus fire (future peak threat and HP over this-turn poke).</summary>
     public static IEnumerable<CombatEnemy> OrderEnemiesByThreat(CombatState state) =>
         state.Enemies
             .Where(e => ThreatModel.IsViableAttackTarget(state, e))
             .OrderByDescending(e => e.IsMinion ? 0 : 1)
-            .ThenByDescending(e => ThreatModel.HorizonThreatForEnemy(
-                e, 0, ThreatModel.LineFutureHorizonTurns + 1))
-            .ThenByDescending(e => e.IntentDamage + e.NonDamageThreat)
-            .ThenByDescending(e => ThreatModel.NextTurnPressureOn(e))
+            .ThenByDescending(e => ThreatModel.FocusThreatScore(e))
             .ThenByDescending(e => e.CurrentHp)
             .ThenBy(e => e.EffectiveHp);
 
@@ -453,7 +451,7 @@ internal static class CombatSetupEvaluator {
                     continue;
                 }
 
-                foreach (var enemy in s.Enemies.Where(e => ThreatModel.IsViableAttackTarget(s, e))) {
+                foreach (var enemy in OrderEnemiesByThreat(s)) {
                     int dmg = CombatDamageCalc.OutgoingDamage(card, s, enemy.Vulnerable);
                     if (dmg <= 0) continue;
 
@@ -492,6 +490,13 @@ internal static class CombatSetupEvaluator {
                     monsterId = tgt?.MonsterId,
                     isMinion = tgt?.IsMinion,
                     hp = tgt?.CurrentHp,
+                    lockedFocus = primary,
+                    focusScores = s.Enemies.Where(e => e.IsAlive).Select(e => new {
+                        e.Index,
+                        e.MonsterId,
+                        score = ThreatModel.FocusThreatScore(e),
+                        peak = ThreatModel.PeakScheduledDamage(e),
+                    }).ToArray(),
                     incomingAfter = bestIncoming,
                     future0 = bestFuture0,
                     future1 = bestFuture1,
@@ -508,10 +513,13 @@ internal static class CombatSetupEvaluator {
         return s;
     }
 
-    static (int f0, int f1, int f2) FuturePressureFromMidTurn(CombatState state) => (
-        ThreatModel.PressureAtIntentStep(state, 1),
-        ThreatModel.PressureAtIntentStep(state, 2),
-        ThreatModel.PressureAtIntentStep(state, 3));
+    static (int f0, int f1, int f2) FuturePressureFromMidTurn(CombatState state) {
+        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
+        return (
+            ThreatModel.PressureAtIntentStep(afterPhase, 0),
+            ThreatModel.PressureAtIntentStep(afterPhase, 1),
+            ThreatModel.PressureAtIntentStep(afterPhase, 2));
+    }
 
     static bool IsBetterAttackStep(
         int incoming,
@@ -528,12 +536,18 @@ internal static class CombatSetupEvaluator {
         bool bestHitsPrimary,
         int incomingSlack) {
         if (incoming != bestIncoming) {
-            if (incoming < bestIncoming)
+            if (incoming < bestIncoming) {
+                if (bestHitsPrimary && !hitsPrimary && bestIncoming - incoming <= incomingSlack)
+                    return false;
                 return true;
+            }
             if (hitsPrimary && !bestHitsPrimary && incoming - bestIncoming <= incomingSlack)
                 return true;
             return false;
         }
+
+        if (hitsPrimary != bestHitsPrimary)
+            return hitsPrimary;
 
         int futureCmp = ThreatModel.CompareFutureIncoming(
             future0, future1, future2,
@@ -543,8 +557,6 @@ internal static class CombatSetupEvaluator {
 
         if (score != bestScore)
             return score > bestScore;
-        if (hitsPrimary != bestHitsPrimary)
-            return hitsPrimary;
         return false;
     }
 

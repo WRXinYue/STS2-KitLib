@@ -126,7 +126,7 @@ public static class CombatBeamSearch {
             return false;
 
         int currentLen = currentPath?.Count ?? 0;
-        return candidatePath.Count > currentLen;
+        return candidatePath.Count < currentLen;
     }
 
     static int RankLine(CombatState state) {

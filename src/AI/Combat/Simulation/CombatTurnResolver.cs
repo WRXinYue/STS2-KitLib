@@ -177,6 +177,16 @@ public static class CombatTurnResolver {
         return (draw, discard, rngCounter);
     }
 
+    /// <summary>Advance intent chains after the enemy phase without applying damage or pile effects.</summary>
+    public static CombatState ProjectAfterEnemyPhase(CombatState state) {
+        var enemies = new List<CombatEnemy>(state.Enemies.Count);
+        foreach (var enemy in state.Enemies) {
+            enemies.Add(enemy.IsAlive ? AdvanceEnemyIntent(enemy) : enemy);
+        }
+
+        return state with { Enemies = enemies };
+    }
+
     static CombatEnemy AdvanceEnemyIntent(CombatEnemy enemy) {
         if (enemy.IntentSteps.Length <= 1)
             return enemy;
