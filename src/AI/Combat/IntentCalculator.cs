@@ -101,7 +101,7 @@ public static class IntentCalculator {
     static bool CanEliminateIncomingThreats(JsonObject snapshot) {
         var state = CombatState.FromSnapshot(snapshot);
         var threats = state.Enemies
-            .Where(e => e.IsAlive && e.IntentDamage > 0)
+            .Where(e => e.IsAlive && e.EffectiveIncoming > 0)
             .ToList();
 
         if (threats.Count == 0) return true;
@@ -119,7 +119,7 @@ public static class IntentCalculator {
             && SimLethalChecker.CanLethal(state, out _))
             return net <= BlockThreatEvaluator.SafeLethalNetMax;
 
-        foreach (var threat in threats.OrderByDescending(t => t.IntentDamage)) {
+        foreach (var threat in threats.OrderByDescending(t => t.EffectiveIncoming)) {
             var afterKill = CombatSimulator.Apply(
                 state,
                 new SimCombatAction(SimActionKind.PlayCard, FindKillCardIndex(state, threat.Index), threat.Index));

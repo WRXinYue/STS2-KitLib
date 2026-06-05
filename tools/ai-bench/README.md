@@ -37,3 +37,12 @@ powershell -File tools/ai-bench/run-bench.ps1 -LogPath "C:\path\to\godot.log"
 | `cause` | Death room or `victory` |
 
 Target: **≥40–50%** win rate per character at A10 after tuning.
+
+## Scenario regression
+
+`scenarios.json` lists key summon/minion encounters (Obscura, Ovicopter, Fabricator, etc.). After policy changes, spot-check combat logs for:
+
+- `flags=HasIllusionRevive` targets should show `bias=-60`
+- Summoner fights should show `bias=35` on primary
+
+Tune non-damage weights in `EnemyThreatWeights.cs` and re-run A10 bench.

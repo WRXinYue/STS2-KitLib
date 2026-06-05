@@ -6,7 +6,10 @@ public static class SimLethalChecker {
     public static bool CanLethal(CombatState state, out int targetIndex) {
         targetIndex = -1;
 
-        foreach (var enemy in state.Enemies.OrderByDescending(e => !e.IsMinion).ThenBy(e => e.CurrentHp)) {
+        foreach (var enemy in state.Enemies
+                     .OrderByDescending(e => e.IsMinion && e.MechanicFlags.HasFlag(Knowledge.EnemyMechanicFlags.HasIllusionRevive) ? 0 : 1)
+                     .ThenByDescending(e => !e.IsMinion)
+                     .ThenBy(e => e.CurrentHp)) {
             if (!enemy.IsAlive) continue;
             if (EstimateMaxDamage(state) < enemy.EffectiveHp) continue;
             targetIndex = enemy.Index;

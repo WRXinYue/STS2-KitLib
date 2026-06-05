@@ -1,0 +1,34 @@
+{
+  "monsters": {
+    "TWO_TAILED_RAT": {
+      "addFlags": ["PeerSummon"]
+    },
+    "TOUGH_EGG": {
+      "addFlags": ["HatchesInPlace", "IsSecondaryEnemy"]
+    },
+    "TEST_SUBJECT": {
+      "addFlags": ["CanBossPhaseRespawn"]
+    },
+    "PARAFRIGHT": {
+      "addFlags": ["HasIllusionRevive", "IsSecondaryEnemy"]
+    },
+    "EYE_WITH_TEETH": {
+      "addFlags": ["HasIllusionRevive", "IsSecondaryEnemy"]
+    },
+    "OVICOPTER": {
+      "spawnedMonsterIds": ["TOUGH_EGG"]
+    },
+    "THE_OBSCURA": {
+      "spawnedMonsterIds": ["PARAFRIGHT"]
+    },
+    "FOGMOG": {
+      "spawnedMonsterIds": ["EYE_WITH_TEETH"]
+    },
+    "FABRICATOR": {
+      "spawnedMonsterIds": ["ZAPBOT", "GUARDBOT", "LASERBOT"]
+    },
+    "LIVING_FOG": {
+      "spawnedMonsterIds": ["GAS_BOMB"]
+    }
+  }
+}

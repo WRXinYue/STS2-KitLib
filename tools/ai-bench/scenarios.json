@@ -1,0 +1,30 @@
+{
+  "description": "Key encounter scenarios for minion/summon targeting regression.",
+  "scenarios": [
+    {
+      "id": "obscura_illusion",
+      "encounterId": "THE_OBSCURA",
+      "note": "Illusion minion (Parafright) should be deprioritized; focus TheObscura."
+    },
+    {
+      "id": "ovicopter_eggs",
+      "encounterId": "OVICOPTER",
+      "note": "Disposable ToughEgg minions; kill Ovicopter first."
+    },
+    {
+      "id": "fabricator_bots",
+      "encounterId": "FABRICATOR",
+      "note": "Summoned bots with MinionPower; kill Fabricator."
+    },
+    {
+      "id": "rat_peer_summon",
+      "encounterId": "TWO_TAILED_RAT",
+      "note": "Peer summon without MinionPower; no minion wipe heuristic."
+    },
+    {
+      "id": "fogmog_illusion",
+      "encounterId": "FOGMOG",
+      "note": "EyeWithTeeth illusion revive loop."
+    }
+  ]
+}

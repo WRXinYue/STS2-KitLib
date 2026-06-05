@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using DevMode.AI.Knowledge;
+using DevMode.AI.Combat;
 
 namespace DevMode.AI.Combat.Simulation;
 
@@ -78,17 +79,23 @@ public sealed record CombatState(
             if (enemiesArr[i] is not JsonObject e) continue;
             var steps = ParseIntentSteps(e["intentSteps"]?.AsArray());
 
+            var flags = EnemyMechanicResolver.ResolveFlags(e);
+            var nonDamage = EnemyMechanicResolver.ResolveNonDamageThreat(e);
+
             enemies.Add(new CombatEnemy(
                 e["index"]?.GetValue<int>() ?? i,
                 e["currentHp"]?.GetValue<int>() ?? 0,
                 e["maxHp"]?.GetValue<int>() ?? 1,
                 e["block"]?.GetValue<int>() ?? 0,
                 e["isAlive"]?.GetValue<bool>() != false,
-                e["isMinion"]?.GetValue<bool>() == true,
+                EnemyTargetPriority.IsMinion(e),
                 e["intentDamage"]?.GetValue<int>() ?? 0,
                 CombatPowerReader.GetVulnerable(e),
                 CombatPowerReader.GetWeak(e),
-                steps));
+                steps,
+                flags,
+                nonDamage,
+                e["summonerIndex"]?.GetValue<int>() ?? -1));
         }
 
         return enemies;
@@ -101,13 +108,29 @@ public sealed record CombatState(
         var steps = new List<CombatIntentStep>();
         foreach (var node in arr) {
             if (node is not JsonObject step) continue;
+            var intentTypes = ParseIntentTypeStrings(step["intentTypes"]?.AsArray());
             steps.Add(new CombatIntentStep(
                 step["moveId"]?.GetValue<string>() ?? "",
                 step["intentDamage"]?.GetValue<int>() ?? 0,
-                step["isUncertain"]?.GetValue<bool>() == true));
+                step["isUncertain"]?.GetValue<bool>() == true,
+                intentTypes,
+                step["nonDamageThreat"]?.GetValue<int>() ?? 0));
         }
 
         return steps.Take(3).ToArray();
+    }
+
+    static string[] ParseIntentTypeStrings(JsonArray? arr) {
+        if (arr == null || arr.Count == 0)
+            return [];
+
+        var types = new List<string>();
+        foreach (var node in arr) {
+            if (node?.GetValue<string>() is { } tag && !string.IsNullOrWhiteSpace(tag))
+                types.Add(tag);
+        }
+
+        return types.ToArray();
     }
 
     static int EstimateStatusDamage(JsonArray? powers) {

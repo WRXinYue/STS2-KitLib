@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using DevMode.AI.Knowledge;
 using DevMode.UI;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
@@ -90,10 +91,19 @@ internal static class MonsterIntentReader {
                 }
             }
 
+            var intentTypes = new JsonArray();
+            int nonDamage = 0;
+            foreach (var intent in step.Intents) {
+                intentTypes.Add(intent.IntentType.ToString());
+                nonDamage += EnemyThreatWeights.IntentWeight(intent.IntentType);
+            }
+
             arr.Add(new JsonObject {
                 ["moveId"] = step.MoveId,
                 ["intentDamage"] = damage,
                 ["isUncertain"] = step.IsUncertain,
+                ["intentTypes"] = intentTypes,
+                ["nonDamageThreat"] = nonDamage,
             });
         }
 

@@ -1,16 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using DevMode.AI.Combat;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
 using DevMode.AI.Knowledge;
+using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using DevMode.EnemyIntent;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.AI.Sts2.Snapshots;
@@ -239,6 +240,17 @@ internal static class GameSnapshot
                 obj["intents"] = intents;
                 obj["intentDamage"] = intentDamage;
                 obj["intentBlock"] = intentBlock;
+
+                var intentTags = new JsonArray();
+                int nonDamageThreat = 0;
+                foreach (var intent in enemy.Monster.NextMove.Intents) {
+                    if (intent.IntentType == IntentType.Hidden) continue;
+                    intentTags.Add(intent.IntentType.ToString());
+                    nonDamageThreat += EnemyThreatWeights.IntentWeight(intent.IntentType);
+                }
+
+                obj["intentTags"] = intentTags;
+                obj["nonDamageThreat"] = nonDamageThreat;
             }
 
             try {
@@ -249,8 +261,14 @@ internal static class GameSnapshot
             catch { }
 
             obj["powers"] = CapturePowers(enemy.Powers);
+
+            var mechanicFlags = EnemyMechanicResolver.ResolveFlags(obj);
+            obj["mechanicFlags"] = mechanicFlags.ToString();
+
             arr.Add(obj);
         }
+
+        CombatEnemyGraph.ObserveAndEnrich(arr);
         return arr;
     }
 

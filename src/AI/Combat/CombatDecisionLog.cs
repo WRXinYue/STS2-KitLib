@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
+using DevMode.AI.Combat.Simulation;
 using DevMode.AI.Core.Schema;
+using DevMode.AI.Knowledge;
 using DevMode.Settings;
 
 namespace DevMode.AI.Combat;
@@ -25,11 +27,16 @@ public static class CombatDecisionLog {
         var combat = snapshot["combat"]?.AsObject();
         var energy = combat?["currentEnergy"]?.GetValue<int>() ?? 0;
         var handCount = combat?["hand"]?.AsArray()?.Count ?? 0;
+        var threatLine = FormatEnemyThreat(snapshot);
 
         var sb = new StringBuilder();
         sb.Append("Combat pick ");
         sb.Append(FormatPicked(picked, ranked));
         sb.Append($" | E={energy} hand={handCount}");
+        if (!string.IsNullOrWhiteSpace(threatLine))
+            sb.Append(' ').Append(threatLine);
+        if (picked.TargetIndex >= 0)
+            sb.Append(FormatTargetBias(combat?["enemies"]?.AsArray(), picked.TargetIndex));
         if (!string.IsNullOrWhiteSpace(searchNote))
             sb.Append(' ').Append(searchNote);
 
@@ -49,6 +56,25 @@ public static class CombatDecisionLog {
         }
 
         AiDecisionLog.Record("AutoPlay", sb.ToString());
+    }
+
+    static string FormatEnemyThreat(JsonObject snapshot) {
+        var state = CombatState.FromSnapshot(snapshot);
+        var incoming = ThreatModel.IncomingDamage(state);
+        var nonDamage = state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
+        var next = ThreatModel.NextTurnIncoming(state);
+        return $"IN={incoming} ND={nonDamage} NXT={next}";
+    }
+
+    static string FormatTargetBias(JsonArray? enemies, int targetIndex) {
+        if (enemies == null || targetIndex < 0 || targetIndex >= enemies.Count)
+            return "";
+
+        var target = enemies[targetIndex]?.AsObject();
+        var id = target?["monsterId"]?.GetValue<string>() ?? "?";
+        var bias = MinionEngagementPolicy.TargetBias(enemies, targetIndex);
+        var flags = EnemyMechanicResolver.ResolveFlags(target);
+        return $" tgt={id} bias={bias} flags={flags}";
     }
 
     static string FormatPicked(GameAction picked, IReadOnlyList<CombatMoveScore> ranked) {

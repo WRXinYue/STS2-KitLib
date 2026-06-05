@@ -36,6 +36,7 @@ internal static class McpBridge {
         Tools.Register(new DevAddCardTool());
         Tools.Register(new DevRemoveCardTool());
         Tools.Register(new DevListMonstersTool());
+        Tools.Register(new DevDumpMonsterMechanicsTool());
         Tools.Register(new DevListEnemiesTool());
         Tools.Register(new DevAddMonsterTool());
         Tools.Register(new DevSetCheatTool());

@@ -514,9 +514,38 @@ BlockUrgency 0–100 驱动攻击惩罚与 EndTurn 惩罚
 
 Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数（日志中显示 `mod:+N`）。
 
-### EnemyTargetPriority
+### Enemy Intelligence Layer
 
-`isMinion`（`IsSecondaryEnemy`）标记爪牙。STS2 可直接击杀召唤者，故**优先打非爪牙**（召唤者 +35 / 爪牙 −30）；`OrderByPriority` 与 `LethalChecker` 先检查召唤者再按 HP 排序。
+启动时镜像卡牌 `CardMechanicIndex`：`MonsterMechanicIndex` 从 `ModelDb.AllEncounters` 枚举怪物，经 `OfficialMonsterProbe` + `MonsterMoveScanner` 探测：
+
+| 探测源 | 输出 |
+| --- | --- |
+| 类型图（`IllusionPower` / `MinionPower` / `AdaptablePower`） | `EnemyMechanicFlags` |
+| 状态机 Intent 扫描（`SetUpForCombat` 后遍历 `MoveState`） | 每怪 `moveId → IntentType[]` |
+| Encounter 共现 + `monster-probe-overrides.json` | `spawnedMonsterIds[]` |
+
+运行时快照 enrich（`GameSnapshot.CaptureEnemies`）：
+
+- `mechanicFlags`、`intentTags[]`、`nonDamageThreat`
+- `intentSteps[]` 扩展为 `{ moveId, intentDamage, intentTypes[], nonDamageThreat, isUncertain }`
+- `CombatEnemyGraph` 观测召唤并写入 `summonerIndex`
+
+**验证**：MCP `dev_dump_monster_mechanics`；`tools/monster-probe-dump/dump-monster-mechanics.ps1` 导出 JSON。
+
+**调优边界**：当前数据支持权重网格（`EnemyThreatWeights`）+ `tools/ai-bench` 胜率；不支持端到端 ML（缺目标选择标签）。场景回归见 `tools/ai-bench/scenarios.json`。
+
+### EnemyTargetPriority / MinionEngagementPolicy
+
+`isMinion`（`IsSecondaryEnemy` + power）标记爪牙。`MinionEngagementPolicy` 按 `mechanicFlags` 动态偏置（替代固定 ±30）：
+
+| 场景 | 偏置 |
+| --- | --- |
+| 标准爪牙 + 主人存活 | 主人 +35，爪牙 −30 |
+| `HasIllusionRevive`（Parafright 等） | 爪牙 −60，模拟层不 wipe |
+| `PeerSummon`（TwoTailedRat） | 正常 HP/伤害排序 |
+| 高 debuff 威胁爪牙 | −10 ~ +15（按 `nonDamageThreat`） |
+
+`ThreatModel.EffectiveIncoming` = `intentDamage + nonDamageThreat`；`NextTurnIncoming` 在 `isUncertain` 时 ×1.15。`OrderByPriority` 与 `LethalChecker` 使用上述策略。
 
 ### LethalChecker
 
@@ -545,11 +574,12 @@ flowchart LR
 | --- | --- | --- |
 | 威胁静态求和 | `incoming` 不因击杀重算 | `ThreatModel`：只计存活且 `intentDamage>0`；模拟击杀后自动下降 |
 | AOE 当单体枚举 | `AllEnemy` 按每个 target 重复评分 | `LegalActionGenerator` 单动作 + `CombatSimulator` 群伤一次转移 |
-| 召唤语义缺失 | 打爪牙不打主人 | `EnemyTargetPriority` + 主怪死后 `ThreatModel.OnPrimaryEnemyKilled` |
+| 召唤语义缺失 | 打爪牙不打主人 | `MonsterMechanicIndex` + `MinionEngagementPolicy` + 主怪死后 `ThreatModel.OnPrimaryEnemyKilled`（跳过幻象爪牙） |
 | 评分与局面混用 | 一套启发式既评牌又评回合末 | `CombatScorer`（单步/fallback）与 `CombatEvaluator`（叶节点局面）分离 |
 | 浅层搜索 | depth 1–2 或全枚举不剪枝 | `CombatPlanner` beam（160ms / depth 4 / width 10） |
 | 仅本回合 intent | 不看下回合高伤 | 快照 `intentSteps[]` + `CombatEvaluator` 下回合权重 |
-| 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | 快照 + `CardMechanicProfile`；文档列出「故意不模拟」边界 |
+| 非伤害 intent 忽略 | debuff/summon 不计威胁 | `nonDamageThreat` + `EnemyThreatWeights` |
+| 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | 快照 + `CardMechanicProfile` + `MonsterMechanicProfile`；文档列出「故意不模拟」边界 |
 
 **已知局限**（不假装完美）：敌人行动顺序仍用 sum（未做按位 `SequentialIncoming`）；`CombatSimulator` 不模拟抽牌、复杂 power、完整 buff 结算；`SimLethalChecker.EstimateMaxDamage` 为贪心上界；beam 宽度与效用权重需 `tools/ai-bench` 实战调参。
 
@@ -577,7 +607,9 @@ flowchart LR
 
 **NeedsBlock 与多攻击者**：`CanEliminateIncomingThreats` 不再要求单一威胁；可 AOE/逐个斩杀全部 `intentDamage>0` 敌人，或模拟击杀最高 intent 后 `Incoming` 归零且 net ≤ `SafeLethalNetMax`。
 
-快照 enrich：`GameSnapshot.CaptureEnemies` 调用 `MonsterIntentReader.CaptureIntentSteps`，每敌最多 3 步 `{ moveId, intentDamage, isUncertain }`。
+快照 enrich：`GameSnapshot.CaptureEnemies` 调用 `MonsterIntentReader.CaptureIntentSteps`，每敌最多 3 步 `{ moveId, intentDamage, intentTypes[], nonDamageThreat, isUncertain }`。
+
+**战斗日志**（`AiCombatVerboseLog`）：`CombatDecisionLog` 额外输出 `IN=` / `ND=` / `NXT=` 与 `tgt= bias= flags=` 便于 bench 调参。
 
 `CombatScorer` 保留为 **fallback**（beam 无结果时）及 mod `IAiMoveModifier` 单步估价基线。
 

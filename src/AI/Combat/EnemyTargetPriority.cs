@@ -1,16 +1,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using DevMode.AI.Knowledge;
 
 namespace DevMode.AI.Combat;
 
 /// <summary>
-/// STS2: prefer primary enemies (summoners) over minions — killing the owner ends the threat.
+/// STS2: prefer primary enemies (summoners) over disposable minions.
+/// Target bias delegated to <see cref="MinionEngagementPolicy"/>.
 /// </summary>
 public static class EnemyTargetPriority {
     public static bool IsMinion(JsonObject? enemy) {
         if (enemy == null) return false;
         if (enemy["isMinion"]?.GetValue<bool>() == true) return true;
+
+        var flags = EnemyMechanicResolver.ResolveFlags(enemy);
+        if (flags.HasFlag(EnemyMechanicFlags.IsSecondaryEnemy))
+            return true;
 
         var powers = enemy["powers"]?.AsArray();
         if (powers == null) return false;
@@ -33,21 +39,19 @@ public static class EnemyTargetPriority {
         return enemies.Any(e => IsAlive(e?.AsObject()) && IsMinion(e?.AsObject()));
     }
 
-    public static int TargetBias(JsonArray? enemies, int targetIndex) {
-        if (!HasAliveMinion(enemies) || targetIndex < 0) return 0;
-        var target = enemies![targetIndex]?.AsObject();
-        if (!IsAlive(target)) return 0;
-        return IsMinion(target) ? -30 : 35;
-    }
+    public static int TargetBias(JsonArray? enemies, int targetIndex) =>
+        MinionEngagementPolicy.TargetBias(enemies, targetIndex);
 
     public static IEnumerable<int> OrderByPriority(JsonArray enemies) {
         var alive = Enumerable.Range(0, enemies.Count)
             .Where(i => IsAlive(enemies[i]?.AsObject()))
             .ToList();
-        if (!HasAliveMinion(enemies)) return alive;
+
+        if (!alive.Any(i => MinionEngagementPolicy.TargetBias(enemies, i) < 0))
+            return alive.OrderBy(i => enemies[i]?["currentHp"]?.GetValue<int>() ?? int.MaxValue);
 
         return alive
-            .OrderByDescending(i => IsMinion(enemies[i]?.AsObject()) ? 0 : 1)
+            .OrderByDescending(i => MinionEngagementPolicy.TargetBias(enemies, i))
             .ThenBy(i => enemies[i]?["currentHp"]?.GetValue<int>() ?? int.MaxValue);
     }
 }
