@@ -77,4 +77,39 @@ public static class DeckCardScoring {
 
         return score;
     }
+
+    /// <summary>Smith / in-combat upgrade prompts — favors core mechanics over strikes.</summary>
+    public static int ScoreUpgradeCandidate(
+        JsonObject card,
+        DeckPlan plan,
+        DeckComposition composition,
+        JsonObject? snapshot = null) {
+        var idUpper = (card["id"]?.GetValue<string>() ?? "").ToUpperInvariant();
+        int score = ScoreInDeck(card, plan, composition);
+
+        if (snapshot != null)
+            score += DeckSynergyEvaluator.ScoreCard(card, plan, snapshot);
+
+        var profile = CardMechanicIndex.InferFromSnapshot(card);
+        if (profile.Flags.HasFlag(CardMechanicFlags.TransformsHandAttacks))
+            score += 45;
+        else if (profile.Flags.HasFlag(CardMechanicFlags.TransformsCards))
+            score += 25;
+        if (profile.Flags.HasFlag(CardMechanicFlags.AppliesVulnerable))
+            score += 12;
+        if (profile.Flags.HasFlag(CardMechanicFlags.Aoe))
+            score += 8;
+
+        if (idUpper.Contains("STRIKE", StringComparison.Ordinal))
+            score -= 50;
+        else if (idUpper.Contains("DEFEND", StringComparison.Ordinal))
+            score -= 35;
+
+        var rarityUpper = (card["rarity"]?.GetValue<string>() ?? "").ToUpperInvariant();
+        if (rarityUpper.Contains("BASIC", StringComparison.Ordinal)
+            || rarityUpper.Contains("STARTER", StringComparison.Ordinal))
+            score -= 18;
+
+        return score;
+    }
 }

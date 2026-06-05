@@ -4,7 +4,9 @@ using System.Text.Json.Nodes;
 
 namespace DevMode.AI.Combat;
 
-/// <summary>Prioritize minions over summoners while minions are alive (STS2 MinionPower / IsSecondaryEnemy).</summary>
+/// <summary>
+/// STS2: prefer primary enemies (summoners) over minions — killing the owner ends the threat.
+/// </summary>
 public static class EnemyTargetPriority {
     public static bool IsMinion(JsonObject? enemy) {
         if (enemy == null) return false;
@@ -35,7 +37,7 @@ public static class EnemyTargetPriority {
         if (!HasAliveMinion(enemies) || targetIndex < 0) return 0;
         var target = enemies![targetIndex]?.AsObject();
         if (!IsAlive(target)) return 0;
-        return IsMinion(target) ? 35 : -30;
+        return IsMinion(target) ? -30 : 35;
     }
 
     public static IEnumerable<int> OrderByPriority(JsonArray enemies) {
@@ -44,6 +46,8 @@ public static class EnemyTargetPriority {
             .ToList();
         if (!HasAliveMinion(enemies)) return alive;
 
-        return alive.OrderByDescending(i => IsMinion(enemies[i]?.AsObject()) ? 1 : 0);
+        return alive
+            .OrderByDescending(i => IsMinion(enemies[i]?.AsObject()) ? 0 : 1)
+            .ThenBy(i => enemies[i]?["currentHp"]?.GetValue<int>() ?? int.MaxValue);
     }
 }

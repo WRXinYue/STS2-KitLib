@@ -35,7 +35,7 @@ flowchart TD
 | 快照 | 把 Run / 战斗 / UI 状态序列化为 `JsonObject` | `GameSnapshot`, `GameSnapshotPhaseCapture` |
 | 规划 | 根据牌组 / 遗物 / 层数推断「想要什么牌」 | `DeckPlanInferer`, `DeckPlan` |
 | 评分 | 各阶段选最优 `GameAction` | `*Scorer`, `CombatScorer` |
-| 战斗搜索 | 浅层模拟 + 斩杀检测 | `CombatSearch`, `LethalChecker` |
+| 战斗搜索 | 不可变状态 + beam 搜索 + 斩杀检测 | `CombatPlanner`, `CombatSearch`, `LethalChecker` |
 | 执行 | 点击 UI / 出牌 / 购货 | `Sts2ActionExecutor` |
 
 **策略解析顺序**（Companion / 多人场景同样适用）：`netId` 注册表 → 角色 `CharacterAiRegistry` → 默认 `StrongStrategy`（`AutoPlayStrategy=Simple` 时回退 `SimpleStrategy`）。
@@ -75,7 +75,7 @@ flowchart TD
 | `currentEnergy` | 当前能量 |
 | `playerBlock` | 玩家格挡 |
 | `hand[]` | 手牌（canPlay、cost、damage、block、targetType） |
-| `enemies[]` | 敌人 HP、block、intentDamage、intentBlock、isAlive |
+| `enemies[]` | 敌人 HP、block、intentDamage、intentBlock、isAlive、`intentSteps[]`（下 1–2 回合预测） |
 
 ### 阶段扩展（`GameSnapshotPhaseCapture`）
 
@@ -296,9 +296,11 @@ skipScore = ThinPreference×14
 
 | context | 行为 |
 | --- | --- |
-| `upgrade` | 选 `ScoreInDeck` 最高、未升满的卡 |
+| `upgrade` | 选 `ScoreUpgradeCandidate` 最高、未升满的卡（与 `AiCombatCardSelector` 篝火 smith 同源） |
 | `remove` | 选 `ScoreInDeck` **最低**的卡（与 DeckEvaluator 同一套评分） |
 | 其他 | 委托 `CardRewardScorer` |
+
+篝火 smith 实际由 `CardSelectCmd` → `AiCombatCardSelector` 选牌（非 UI 点击路径时也走同一评分）。`ScoreUpgradeCandidate = ScoreInDeck + 机制协同 + 变形/脆弱加分 − strike/defend/基础牌惩罚`。
 
 ### ShopScorer
 
@@ -490,7 +492,7 @@ BlockUrgency 0–100 驱动攻击惩罚与 EndTurn 惩罚
 | 易伤 setup（痛击等） | `defer-vuln-setup` 动态加分；攻击侧 `defer-vuln` 机会成本 |
 | 低 HP 且 Skill 且 NeedsBlock | +15 |
 | 自损牌（HEMOKINESIS 等）且 HP<65% | −30 |
-| Attack | 20 + cost×5 + damage + 目标加成（残血敌 +30）；CanLethal +25 |
+| Attack | 20 + cost×5 + damage + 目标加成（残血敌 +30；有存活爪牙时召唤者 +35、爪牙 −30）；CanLethal +25 |
 | Skill | 15 + cost×2 +（NeedsBlock 时 block/2） |
 | AOE / 多敌 Attack | +12 / +15；多敌无谓 Defend −20 |
 | 高费 | −(cost−1)×2 |
@@ -512,25 +514,72 @@ BlockUrgency 0–100 驱动攻击惩罚与 EndTurn 惩罚
 
 Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数（日志中显示 `mod:+N`）。
 
+### EnemyTargetPriority
+
+`isMinion`（`IsSecondaryEnemy`）标记爪牙。STS2 可直接击杀召唤者，故**优先打非爪牙**（召唤者 +35 / 爪牙 −30）；`OrderByPriority` 与 `LethalChecker` 先检查召唤者再按 HP 排序。
+
 ### LethalChecker
 
-对每个存活敌人：若 `EstimateMaxDamage(手牌, 能量)` ≥ `hp + block`，判定可斩杀并返回 targetIndex。`EstimateMaxDamage` 按伤害降序贪心消耗能量（含 id 猜测伤害）。
+对每个存活敌人（经 `OrderByPriority` 排序）：若 `EstimateMaxDamage(手牌, 能量)` ≥ `hp + block`，判定可斩杀并返回 targetIndex。`EstimateMaxDamage` 按伤害降序贪心消耗能量（含 id 猜测伤害）。
 
-### CombatSearch（浅层搜索）
+### Combat Simulation Layer
+
+战斗层采用 **Immutable State → Legal Actions → Apply → Evaluate → Bounded Search** 前向模拟。动机是修正常见 STS 战斗 bot 的静态威胁求和、AOE 误枚举、召唤目标错误等问题；模块位于 `src/AI/Combat/Simulation/`，`CombatSearch.PickBestMove` 仅委托 `CombatPlanner`。
+
+```mermaid
+flowchart LR
+    snap[GameSnapshot] --> state[CombatState.FromSnapshot]
+    state --> legal[LegalActionGenerator]
+    legal --> sim[CombatSimulator.Apply]
+    sim --> next[Next CombatState]
+    next --> eval[CombatEvaluator]
+    next --> beam[CombatPlanner beam search]
+    beam --> action[GameAction]
+```
+
+#### 设计原则与常见局限
+
+常见 STS 战斗 bot 往往在以下环节失真；DevMode 模拟层针对这些点做了显式建模：
+
+| 常见局限 | 典型表现 | DevMode 做法 |
+| --- | --- | --- |
+| 威胁静态求和 | `incoming` 不因击杀重算 | `ThreatModel`：只计存活且 `intentDamage>0`；模拟击杀后自动下降 |
+| AOE 当单体枚举 | `AllEnemy` 按每个 target 重复评分 | `LegalActionGenerator` 单动作 + `CombatSimulator` 群伤一次转移 |
+| 召唤语义缺失 | 打爪牙不打主人 | `EnemyTargetPriority` + 主怪死后 `ThreatModel.OnPrimaryEnemyKilled` |
+| 评分与局面混用 | 一套启发式既评牌又评回合末 | `CombatScorer`（单步/fallback）与 `CombatEvaluator`（叶节点局面）分离 |
+| 浅层搜索 | depth 1–2 或全枚举不剪枝 | `CombatPlanner` beam（160ms / depth 4 / width 10） |
+| 仅本回合 intent | 不看下回合高伤 | 快照 `intentSteps[]` + `CombatEvaluator` 下回合权重 |
+| 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | 快照 + `CardMechanicProfile`；文档列出「故意不模拟」边界 |
+
+**已知局限**（不假装完美）：敌人行动顺序仍用 sum（未做按位 `SequentialIncoming`）；`CombatSimulator` 不模拟抽牌、复杂 power、完整 buff 结算；`SimLethalChecker.EstimateMaxDamage` 为贪心上界；beam 宽度与效用权重需 `tools/ai-bench` 实战调参。
+
+| 类型 | 职责 |
+| --- | --- |
+| `CombatState` | 不可变战斗状态（玩家 HP/block/能量、手牌、敌人 intent） |
+| `LegalActionGenerator` | 枚举合法动作；`AllEnemy` / AOE **只生成一个动作**（`SecondaryIndex=-1`） |
+| `CombatSimulator` | `Apply(action)`：扣能量、单体/群伤、变形、易伤/虚弱、挡牌；主怪死后爪牙 `MarkDead` |
+| `ThreatModel` | `Incoming` = 存活且 `intentDamage>0` 的敌人求和；击杀后自动重算；`IntentCalculator` 桥接 |
+| `AoeDamageEstimator` | 群伤斩杀判定、`FindBestAoeLethalAction` |
+| `CombatEvaluator` | 叶节点多因子效用（HP、netDamage×3/4、下回合 intent、敌 HP、易伤、浪费能量） |
+| `CombatPlanner` | beam search + 时间预算；输出路径首步 |
+
+**CombatPlanner 参数**：
 
 | 参数 | 值 |
 | --- | --- |
-| 时间预算 | 80 ms |
-| 最大深度 | 2 张牌 |
+| 时间预算 | 160 ms |
+| 最大深度 | 4（玩家出牌，不含敌人回合） |
+| Beam 宽度 | 10 |
 
-1. 先尝试 `CanLethalAfterTransform` / `CanLethal` 捷径，但 **`ShouldSuppressTransform` 为 true 时跳过**（有 incoming 且非安全斩杀时不抢先变形/攻击）。
-2. 对每个根节点 `PlayCard`：`SimulateAfterPlay`（扣能量、移除手牌、简化伤害/block）→ 再评一手 follow-up → `leafScore = rootScore + max(followUp)/2 + EvaluateLeaf`。
-3. `EvaluateLeaf`：偏向高 HP、低 netDamage/statusDamage、低敌人总 HP；有 incoming 时 netDamage 惩罚 ×4（否则 ×3）；存活敌数 ×5 惩罚；敌人已挂易伤略加分（支撑 Bash→EndTurn）。
-4. 时间允许时对最优首牌再试第二张 refinement。
+**快捷路径**（在 beam 之前）：`SimLethalChecker.CanLethalAfterTransform` → `AoeDamageEstimator` 群杀 → `CanLethal`；**`ShouldSuppressTransform` 为 true 时跳过**（有 incoming 且非安全斩杀时不抢先变形/攻击）。
 
-`SimulateAfterPlay`：扣能量/移除手牌；伤害用 `ResolveDamage`；**原始力量等变形牌**将手牌攻击替换为巨石（16/20 伤）；**易伤目标伤害 ×1.5**；模拟施加 `AppliedVulnerable/Weak`；仍不模拟抽牌与复杂 powers。
+**故意不模拟**（渐进补全）：抽牌堆、RNG、完整敌人回合出牌与 buff 结算、复杂 power 互动。`intentSteps[]` 仅用于评估下回合威胁权重，不推进敌人状态机。
 
-**Lethal**：仅当无 suppress 时，变形后手牌可斩杀则优先原始力量（`CanLethalAfterTransform`），再按攻击牌斩杀。
+**NeedsBlock 与多攻击者**：`CanEliminateIncomingThreats` 不再要求单一威胁；可 AOE/逐个斩杀全部 `intentDamage>0` 敌人，或模拟击杀最高 intent 后 `Incoming` 归零且 net ≤ `SafeLethalNetMax`。
+
+快照 enrich：`GameSnapshot.CaptureEnemies` 调用 `MonsterIntentReader.CaptureIntentSteps`，每敌最多 3 步 `{ moveId, intentDamage, isUncertain }`。
+
+`CombatScorer` 保留为 **fallback**（beam 无结果时）及 mod `IAiMoveModifier` 单步估价基线。
 
 ---
 

@@ -1,35 +1,21 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using DevMode.AI.Combat.Simulation;
 
 namespace DevMode.AI.Combat;
 
 public static class IntentCalculator {
-    public static int TotalIncomingDamage(JsonObject snapshot) {
-        var combat = snapshot["combat"]?.AsObject();
-        var enemies = combat?["enemies"]?.AsArray();
-        if (enemies == null) return 0;
-
-        var total = 0;
-        foreach (var node in enemies) {
-            if (node is not JsonObject enemy) continue;
-            if (enemy["isAlive"]?.GetValue<bool>() == false) continue;
-            total += enemy["intentDamage"]?.GetValue<int>() ?? 0;
-        }
-        return total;
-    }
+    public static int TotalIncomingDamage(JsonObject snapshot) =>
+        ThreatModel.IncomingDamage(snapshot);
 
     public static int PlayerBlock(JsonObject snapshot) {
         var combat = snapshot["combat"]?.AsObject();
         return combat?["playerBlock"]?.GetValue<int>() ?? 0;
     }
 
-    public static int NetDamageAfterBlock(JsonObject snapshot) {
-        var incoming = TotalIncomingDamage(snapshot);
-        var block = PlayerBlock(snapshot);
-        return Math.Max(0, incoming - block);
-    }
+    public static int NetDamageAfterBlock(JsonObject snapshot) =>
+        ThreatModel.NetDamageAfterBlock(snapshot);
 
     public static int EstimateStatusDamage(JsonObject snapshot) {
         var combat = snapshot["combat"]?.AsObject();
@@ -113,47 +99,45 @@ public static class IntentCalculator {
     /// Multi-attacker fights still require block unless all threats are lethal this turn.
     /// </summary>
     static bool CanEliminateIncomingThreats(JsonObject snapshot) {
-        var combat = snapshot["combat"]?.AsObject();
-        var hand = combat?["hand"]?.AsArray();
-        var energy = combat?["currentEnergy"]?.GetValue<int>() ?? 0;
-        var enemies = combat?["enemies"]?.AsArray();
-        if (hand == null || enemies == null) return false;
-
-        var threats = new List<int>();
-        foreach (var node in enemies) {
-            if (node is not JsonObject enemy) continue;
-            if (enemy["isAlive"]?.GetValue<bool>() == false) continue;
-            if ((enemy["intentDamage"]?.GetValue<int>() ?? 0) <= 0) continue;
-            threats.Add((enemy["currentHp"]?.GetValue<int>() ?? 0)
-                + (enemy["block"]?.GetValue<int>() ?? 0));
-        }
+        var state = CombatState.FromSnapshot(snapshot);
+        var threats = state.Enemies
+            .Where(e => e.IsAlive && e.IntentDamage > 0)
+            .ToList();
 
         if (threats.Count == 0) return true;
-        if (threats.Count > 1) return false;
 
-        var net = NetDamageAfterBlock(snapshot);
+        var net = ThreatModel.NetDamageAfterBlock(state);
         if (net <= 0) return true;
 
-        if (!LethalChecker.CanLethal(snapshot, out _))
-            return false;
+        int maxDamage = SimLethalChecker.EstimateMaxDamage(state);
 
-        return net <= BlockThreatEvaluator.SafeLethalNetMax
-            && EstimateMaxOffense(hand, energy) >= threats[0];
+        if (AoeDamageEstimator.CanAoeLethalAll(state)
+            && threats.All(t => AoeDamageEstimator.EstimateAoeKills(state, AoeDamageEstimator.MaxAoeDamage(state)) > 0))
+            return net <= BlockThreatEvaluator.SafeLethalNetMax;
+
+        if (ThreatModel.CanEliminateAllThreats(state, maxDamage)
+            && SimLethalChecker.CanLethal(state, out _))
+            return net <= BlockThreatEvaluator.SafeLethalNetMax;
+
+        foreach (var threat in threats.OrderByDescending(t => t.IntentDamage)) {
+            var afterKill = CombatSimulator.Apply(
+                state,
+                new SimCombatAction(SimActionKind.PlayCard, FindKillCardIndex(state, threat.Index), threat.Index));
+            if (ThreatModel.IncomingDamage(afterKill) == 0
+                && ThreatModel.NetDamageAfterBlock(afterKill) <= BlockThreatEvaluator.SafeLethalNetMax)
+                return true;
+        }
+
+        return false;
     }
 
-    static int EstimateMaxOffense(JsonArray hand, int energy) {
-        var max = LethalChecker.EstimateMaxDamage(hand, energy, 0);
-        var transformIndex = CombatTransformSimulator.FindHandAttackTransformIndex(hand);
-        if (transformIndex < 0) return max;
-
-        var skill = hand[transformIndex]?.AsObject();
-        if (skill == null) return max;
-
-        var projected = CombatTransformSimulator.ProjectHandAfterTransform(hand, skill);
-        var skillCost = skill["cost"]?.GetValue<int>() ?? 0;
-        var afterTransform = LethalChecker.EstimateMaxDamage(
-            projected, Math.Max(0, energy - skillCost), 0);
-        return Math.Max(max, afterTransform);
+    static int FindKillCardIndex(CombatState state, int targetIndex) {
+        for (int i = 0; i < state.Hand.Count; i++) {
+            var card = state.Hand[i];
+            if (!card.CanPlay || !card.IsAttack || card.Cost > state.Energy) continue;
+            return i;
+        }
+        return 0;
     }
 
     public static float HpRatio(JsonObject snapshot) {

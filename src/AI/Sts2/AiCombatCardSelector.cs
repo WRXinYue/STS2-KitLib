@@ -43,7 +43,10 @@ internal sealed class AiCombatCardSelector : ICardSelector {
         var isUpgrade = list.All(c => c.IsUpgradable);
 
         var ranked = isUpgrade
-            ? list.OrderBy(CombatCardSelectScoring.UpgradePriority).ThenBy(c => c.EnergyCost.Canonical)
+            ? list.Where(c => c.CurrentUpgradeLevel < c.MaxUpgradeLevel
+                && !CombatCardSelectScoring.IsStatusOrCurse(c, c.Id.Entry ?? ""))
+                .OrderByDescending(c => CombatCardSelectScoring.UpgradeScore(c, context))
+                .ThenByDescending(c => (int)c.Rarity)
             : list.OrderBy(c => CombatCardSelectScoring.KeepScore(c, context))
                 .ThenBy(c => c.EnergyCost.Canonical);
 
@@ -76,6 +79,10 @@ internal sealed class AiCombatCardSelector : ICardSelector {
 
     void LogPick(string kind, IReadOnlyList<CardModel> picked, HandSelectContext context) {
         var parts = picked.Select(c => {
+            if (kind == "upgrade") {
+                var upgrade = CombatCardSelectScoring.UpgradeScore(c, context);
+                return $"{c.Title}(upgrade={upgrade})";
+            }
             var keep = CombatCardSelectScoring.KeepScore(c, context);
             return $"{c.Title}(keep={keep})";
         });
@@ -139,26 +146,39 @@ internal static class CombatCardSelectScoring {
         return score;
     }
 
-    /// <summary>Lower = upgrade first (unupgraded strikes/defends).</summary>
-    public static int UpgradePriority(CardModel card) {
+    /// <summary>Higher = upgrade first (core build cards over strikes).</summary>
+    public static int UpgradeScore(CardModel card, HandSelectContext context) {
+        if (card.CurrentUpgradeLevel >= card.MaxUpgradeLevel)
+            return int.MinValue;
+
         var id = card.Id.Entry ?? "";
-        var upper = id.ToUpperInvariant();
+        if (IsStatusOrCurse(card, id.ToUpperInvariant()))
+            return int.MinValue;
 
-        if (card.CurrentUpgradeLevel > 0)
-            return 100;
+        if (context.HasSnapshot) {
+            var cardJson = SnapshotCardJson.FromCard(card);
+            return DeckCardScoring.ScoreUpgradeCandidate(
+                cardJson, context.Plan, context.Composition, context.Snapshot);
+        }
 
-        if (upper.Contains("STRIKE", StringComparison.Ordinal))
-            return 0;
-        if (upper.Contains("DEFEND", StringComparison.Ordinal))
-            return 1;
-        if (card.Rarity == CardRarity.Basic)
-            return 2;
-        if (card.Rarity == CardRarity.Common)
-            return 3;
-        return 10;
+        return FallbackUpgradeScore(card, id);
     }
 
-    static bool IsStatusOrCurse(CardModel card, string idUpper) {
+    static int FallbackUpgradeScore(CardModel card, string id) {
+        var upper = id.ToUpperInvariant();
+        int score = card.Rarity switch {
+            CardRarity.Rare => 70,
+            CardRarity.Uncommon => 45,
+            CardRarity.Common => 25,
+            CardRarity.Basic => 8,
+            _ => 30,
+        };
+        if (upper.Contains("STRIKE", StringComparison.Ordinal)) score -= 50;
+        if (upper.Contains("DEFEND", StringComparison.Ordinal)) score -= 35;
+        return score;
+    }
+
+    internal static bool IsStatusOrCurse(CardModel card, string idUpper) {
         if (card.Rarity == CardRarity.Curse)
             return true;
 

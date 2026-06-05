@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 using DevMode.UI;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
@@ -67,6 +68,38 @@ internal static class MonsterIntentReader {
     }
 
     /// <summary>Predicted intent for the enemy turn after the one currently shown.</summary>
+    /// <summary>Intent chain for AI snapshot enrichment (up to 3 predicted enemy turns).</summary>
+    internal static JsonArray CaptureIntentSteps(
+        Creature enemy,
+        IReadOnlyList<Creature> targets,
+        int maxSteps = 3) {
+        var arr = new JsonArray();
+        if (enemy.Monster is not { } monster)
+            return arr;
+
+        var steps = PredictSteps(monster, enemy);
+        for (int i = 0; i < Math.Min(maxSteps, steps.Count); i++) {
+            var step = steps[i];
+            int damage = 0;
+            foreach (var intent in step.Intents) {
+                if (intent is AttackIntent attack) {
+                    try {
+                        damage += attack.GetTotalDamage(targets, enemy);
+                    }
+                    catch { }
+                }
+            }
+
+            arr.Add(new JsonObject {
+                ["moveId"] = step.MoveId,
+                ["intentDamage"] = damage,
+                ["isUncertain"] = step.IsUncertain,
+            });
+        }
+
+        return arr;
+    }
+
     public static IReadOnlyList<MonsterIntentEntry> CaptureNextTurn(CombatState? state) {
         if (!IsOverlayCombatReady(state))
             return Array.Empty<MonsterIntentEntry>();

@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
 using DevMode.AI.Knowledge;
+using DevMode.EnemyIntent;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -239,6 +240,13 @@ internal static class GameSnapshot
                 obj["intentDamage"] = intentDamage;
                 obj["intentBlock"] = intentBlock;
             }
+
+            try {
+                var steps = MonsterIntentReader.CaptureIntentSteps(enemy, targets);
+                if (steps.Count > 0)
+                    obj["intentSteps"] = steps;
+            }
+            catch { }
 
             obj["powers"] = CapturePowers(enemy.Powers);
             arr.Add(obj);
