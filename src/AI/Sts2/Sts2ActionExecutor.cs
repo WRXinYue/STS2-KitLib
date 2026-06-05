@@ -232,9 +232,21 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             }
         }
 
-        // Post-combat: don't click room ProceedButton — wait for rewards overlay.
+        var root = ((SceneTree)Engine.GetMainLoop()).Root;
+
+        var restRoom = root.GetNodeOrNull<NRestSiteRoom>(
+            "/root/Game/RootSceneContainer/Run/RoomContainer/RestSiteRoom");
+        if (restRoom?.ProceedButton is { IsEnabled: true } restProceed)
+        {
+            await UIHelper.Click(restProceed);
+            return ActionResult.Ok("Left rest site.");
+        }
+
+        // Post-combat only: wait for rewards overlay — not for shop/rest/event rooms.
         var cm = CombatManager.Instance;
-        if (cm != null && !cm.IsInProgress)
+        var isPostCombatRoom = _stateProvider.TryGetRunAndPlayer(out var state, out _)
+            && state.CurrentRoom?.RoomType is RoomType.Monster or RoomType.Elite or RoomType.Boss;
+        if (isPostCombatRoom && cm != null && !cm.IsInProgress)
         {
             bool appeared = await UIHelper.WaitUntil(() =>
                 NOverlayStack.Instance?.Peek() is NRewardsScreen
@@ -246,7 +258,6 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
                 : ActionResult.Fail("Timed out waiting for post-combat screen.");
         }
 
-        var root = ((SceneTree)Engine.GetMainLoop()).Root;
         var roomContainer = root.GetNodeOrNull("/root/Game/RootSceneContainer/Run/RoomContainer");
         if (roomContainer != null)
         {
@@ -383,14 +394,16 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             if (btn == null)
                 break;
 
+            var discardSlot = -1;
             if (btn.Reward is PotionReward potionReward) {
                 if (!hasPotionSlots) {
                     if (player == null)
                         return ActionResult.Fail("No player for potion reward.");
 
                     var incomingId = potionReward.Potion?.Id.Entry;
-                    if (!PotionInventoryScorer.ShouldMakeRoom(incomingId, snapshot, out var discardSlot)) {
+                    if (!PotionInventoryScorer.ShouldMakeRoom(incomingId, snapshot, out discardSlot)) {
                         _attemptedRewardButtons.Add(btn);
+                        _log($"CollectReward: skip potion [{incomingId}] (not worth replacing belt slot).");
                         continue;
                     }
 
@@ -408,8 +421,16 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             await UIHelper.Click(btn);
             clicked++;
 
-            if (!await RewardScreenHelper.WaitForClaimAsync(screen, btn, TimeSpan.FromSeconds(10)))
+            if (!await RewardScreenHelper.WaitForClaimAsync(screen, btn, TimeSpan.FromSeconds(10))) {
+                if (btn.Reward is PotionReward && player != null
+                    && await PotionRewardHelper.TryResolveFullBeltPrompt(player, snapshot, discardSlot)) {
+                    snapshot = _stateProvider.TakeSnapshot();
+                    hasPotionSlots = player.HasOpenPotionSlots;
+                    continue;
+                }
+
                 return ActionResult.Fail("Timed out waiting for reward claim.");
+            }
 
             var top = NOverlayStack.Instance?.Peek();
             if (top != null && top != (IOverlayScreen)screen)

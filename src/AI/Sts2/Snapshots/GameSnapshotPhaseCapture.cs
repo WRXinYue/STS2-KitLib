@@ -15,6 +15,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Events;
 using MegaCrit.Sts2.Core.Nodes.RestSite;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
@@ -49,7 +50,20 @@ internal static class GameSnapshotPhaseCapture
             case GamePhase.RestSite:
                 CaptureRestOptions(obj);
                 break;
+            case GamePhase.RewardScreen:
+                CaptureRewardsScreen(obj, player);
+                break;
         }
+    }
+
+    static void CaptureRewardsScreen(JsonObject obj, Player player) {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return;
+        if (NOverlayStack.Instance?.Peek() is not NRewardsScreen screen)
+            return;
+
+        obj["rewardsHaveCollectable"] = OverlayPhaseHelper.HasClickableRewards(
+            screen, player.HasOpenPotionSlots, obj);
     }
 
     static void CaptureEventChoice(JsonObject obj, RunState state)

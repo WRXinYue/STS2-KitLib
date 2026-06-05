@@ -418,7 +418,8 @@ DecideCombat:
 
 | 场景 | 行为 |
 | --- | --- |
-| 奖励屏瓶满 | `CollectReward` 前 `ShouldMakeRoom` → `DiscardPotion` 最弱 slot，再收 |
+| 奖励屏瓶满 | `ShouldMakeRoom` → 先 `DiscardPotion` 最弱 slot 再收；不值替换则 `DismissRewards`；UI 弹选瓶时 `PotionRewardHelper` 点 holder |
+| 篝火 | 每访仅一次：Heal/Smith 禁用后只 `Proceed`；`Proceed()` 优先点篝火 Proceed，不走战后等待 |
 | 商店瓶满 | `ShopScorer` 先 `DiscardPotion` 再买；购买分 = `ValueOffer − cost/25` |
 | 腾槽条件 | `incomingValue > lowestHeld + 8` |
 

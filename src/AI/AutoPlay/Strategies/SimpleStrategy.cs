@@ -33,7 +33,7 @@ public sealed class SimpleStrategy : IDecisionMaker
             GamePhase.EventChoice => EventChoiceScorer.PickBest(snapshot),
             GamePhase.Shop => DecideShop(snapshot),
             GamePhase.RestSite => DecideRest(snapshot),
-            GamePhase.RewardScreen => new GameAction { Type = ActionType.CollectReward, TargetIndex = 0, Reason = "Collect first reward" },
+            GamePhase.RewardScreen => RewardScorer.PickBest(snapshot),
             GamePhase.RelicSelection => RelicScorer.PickBest(snapshot),
             GamePhase.PostCombatTransition => new GameAction { Type = ActionType.Proceed, Reason = "Advance post-combat screen" },
             GamePhase.TreasureRoom => new GameAction { Type = ActionType.HandleTreasureRoom, Reason = "Open chest and collect" },

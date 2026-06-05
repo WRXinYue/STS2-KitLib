@@ -15,6 +15,8 @@ public static class RestScorer {
             return new GameAction { Type = ActionType.Proceed, Reason = "Leave rest site" };
 
         var options = snapshot["restOptions"]?.AsArray();
+        if (IsRestChoiceConsumed(options))
+            return new GameAction { Type = ActionType.Proceed, Reason = "Leave rest site (action used)" };
         var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
         var maxHp = snapshot["maxHp"]?.GetValue<int>() ?? 1;
         var hpRatio = maxHp > 0 ? (float)hp / maxHp : 1f;
@@ -29,16 +31,8 @@ public static class RestScorer {
         int healIdx = FindOption(options, "HEAL", "REST");
         int smithIdx = FindOption(options, "SMITH", "UPGRADE");
 
-        if (healIdx < 0) {
-            if (smithIdx >= 0 && hpRatio >= 0.75f && HasUpgradeTarget(snapshot, plan)) {
-                return new GameAction {
-                    Type = ActionType.UpgradeCard,
-                    TargetIndex = smithIdx,
-                    Reason = "Smith after heal",
-                };
-            }
+        if (healIdx < 0)
             return new GameAction { Type = ActionType.Proceed, Reason = "Leave rest site (heal used)" };
-        }
 
         var urgentHealThreshold = pathPressure ? 0.65f : 0.55f;
         if (hpRatio < urgentHealThreshold || (hpRatio < 0.7f && eliteAhead)) {
@@ -110,6 +104,28 @@ public static class RestScorer {
 
         var point = state.Map?.GetPoint(cached.NextCoord);
         return point?.PointType == MapPointType.Elite;
+    }
+
+    static bool IsRestChoiceConsumed(JsonArray? options) {
+        if (options == null) return false;
+
+        foreach (var node in options) {
+            if (node is not JsonObject opt) continue;
+            if (opt["enabled"]?.GetValue<bool>() != false) continue;
+            var id = opt["optionId"]?.GetValue<string>() ?? "";
+            if (IsRestActionId(id))
+                return true;
+        }
+
+        return false;
+    }
+
+    static bool IsRestActionId(string id) {
+        var upper = id.ToUpperInvariant();
+        return upper.Contains("HEAL", StringComparison.Ordinal)
+            || upper.Contains("REST", StringComparison.Ordinal)
+            || upper.Contains("SMITH", StringComparison.Ordinal)
+            || upper.Contains("UPGRADE", StringComparison.Ordinal);
     }
 
     static int FindOption(JsonArray options, params string[] ids) {
