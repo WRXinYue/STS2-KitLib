@@ -33,22 +33,29 @@ public static class AiHudModel {
         var profile = AiHudRunForecast.AnalyzeDeck(snapshot);
         var style = AiHudRunForecast.StyleLabel(profile.Style);
 
-        if (AiHudRunForecast.IsBigDeck(profile))
+        if (AiHudRunForecast.MeetsOfficialBig(profile))
             return I18N.T(
                 "ai.hud.deck.profile.big",
-                "Deck: {0} · {1}/{2} cards (+{3}) · mean {4:0.#} · prefer skip",
+                "Deck: {0} · {1} cards (≥{2}) · mean {3:0.#}",
                 style,
                 profile.DeckSize,
-                profile.TargetSize,
-                profile.ThinGap,
+                AiHudRunForecast.OfficialBigDeckMin,
+                profile.MeanValue);
+
+        if (AiHudRunForecast.MeetsOfficialSmall(profile))
+            return I18N.T(
+                "ai.hud.deck.profile.small",
+                "Deck: {0} · {1} cards (≤{2}) · mean {3:0.#}",
+                style,
+                profile.DeckSize,
+                AiHudRunForecast.OfficialSmallDeckMax,
                 profile.MeanValue);
 
         return I18N.T(
-            "ai.hud.deck.profile.small",
-            "Deck: {0} · {1}/{2} cards · mean {3:0.#}",
+            "ai.hud.deck.profile.mid",
+            "Deck: {0} · {1} cards (21–39) · mean {2:0.#}",
             style,
             profile.DeckSize,
-            profile.TargetSize,
             profile.MeanValue);
     }
 
@@ -220,10 +227,10 @@ public static class AiHudModel {
             : null;
         var routeScore = NextFightDeckEvaluator.GetBaselineRouteScore(snapshot, plan);
 
-        if (AiHudRunForecast.IsBigDeck(profile))
+        if (AiHudRunForecast.MeetsOfficialBig(profile))
             return I18N.T(
                 "ai.hud.strategy.reward.big",
-                "Big deck — skip unless marginal+next-fight > 0 (route EV {0})",
+                "Big deck (≥40) — skip unless marginal+next-fight > 0 (route EV {0})",
                 routeScore);
 
         if (fightHint != null)
@@ -233,10 +240,10 @@ public static class AiHudModel {
                 fightHint,
                 routeScore);
 
-        if (profile.ThinGap < 0)
+        if (profile.ThinGap < 0 || AiHudRunForecast.MeetsOfficialSmall(profile))
             return I18N.T(
                 "ai.hud.strategy.reward.small",
-                "Small deck — take high marginal picks (route EV {0})",
+                "Small deck (≤20) — take high marginal picks (route EV {0})",
                 routeScore);
 
         return I18N.T(
@@ -280,8 +287,8 @@ public static class AiHudModel {
 
     static string BuildEventStrategy(JsonObject snapshot) {
         var profile = AiHudRunForecast.AnalyzeDeck(snapshot);
-        if (AiHudRunForecast.IsBigDeck(profile))
-            return I18N.T("ai.hud.strategy.event.big", "Big deck — favor remove/transform; avoid bloat");
+        if (AiHudRunForecast.MeetsOfficialBig(profile))
+            return I18N.T("ai.hud.strategy.event.big", "Big deck (≥40) — favor remove/transform; avoid bloat");
         if (profile.IsExhaustFocused)
             return I18N.T("ai.hud.strategy.event.small", "Small deck — favor exhaust synergies and removal");
         return I18N.T("ai.hud.strategy.event", "Evaluate options by deck synergy and codex priors");

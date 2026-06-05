@@ -8,6 +8,11 @@ namespace DevMode.AI;
 
 /// <summary>Heuristic deck profile and run prognosis for the in-game HUD.</summary>
 public static class AiHudRunForecast {
+    /// <summary>Matches <c>BigDeck</c> bronze badge threshold.</summary>
+    public const int OfficialBigDeckMin = 40;
+    /// <summary>Matches <c>TinyDeck</c> bronze badge threshold.</summary>
+    public const int OfficialSmallDeckMax = 20;
+
     public enum DeckStyle {
         Big,
         Small,
@@ -35,9 +40,9 @@ public static class AiHudRunForecast {
         var plan = DeckPlanInferer.Infer(snapshot);
         var metrics = DeckEvaluator.Evaluate(snapshot, plan);
         return new DeckProfile(
-            InferStyle(plan, metrics),
+            InferStyle(metrics),
             metrics.DeckSize,
-            plan.TargetDeckSize,
+            OfficialSmallDeckMax,
             metrics.MeanValue,
             plan.ThinPreference,
             metrics.ThinGap,
@@ -79,13 +84,17 @@ public static class AiHudRunForecast {
             lethal);
     }
 
-    static DeckStyle InferStyle(DeckPlan plan, DeckMetrics metrics) {
-        if (metrics.ThinGap >= 2
-            || metrics.DeckSize > plan.TargetDeckSize
-            || metrics.DeckSize >= plan.TargetDeckSize - 1 && plan.ThinPreference >= 0.45f)
+    static DeckStyle InferStyle(DeckMetrics metrics) {
+        if (metrics.DeckSize >= OfficialBigDeckMin)
             return DeckStyle.Big;
 
-        return DeckStyle.Small;
+        if (metrics.DeckSize <= OfficialSmallDeckMax)
+            return DeckStyle.Small;
+
+        // Official badges only define <=20 and >=40; project the middle band toward the nearer threshold.
+        int toBig = OfficialBigDeckMin - metrics.DeckSize;
+        int toSmall = metrics.DeckSize - OfficialSmallDeckMax;
+        return toBig <= toSmall ? DeckStyle.Big : DeckStyle.Small;
     }
 
     static float EstimateWinRate(
@@ -109,9 +118,9 @@ public static class AiHudRunForecast {
         rate += (hp - 0.55f) * 0.35f;
         rate -= Math.Clamp(metrics.SurvivalGap / 20f, 0f, 0.15f);
 
-        if (profile.Style == DeckStyle.Big && profile.ThinGap >= 5)
+        if (profile.Style == DeckStyle.Big && profile.DeckSize >= OfficialBigDeckMin)
             rate -= 0.06f;
-        else if (profile.Style == DeckStyle.Small || profile.IsExhaustFocused)
+        else if (profile.Style == DeckStyle.Small && profile.DeckSize <= OfficialSmallDeckMax)
             rate += 0.03f;
 
         if (mapPlan != null)
@@ -142,4 +151,10 @@ public static class AiHudRunForecast {
     };
 
     public static bool IsBigDeck(DeckProfile profile) => profile.Style == DeckStyle.Big;
+
+    public static bool MeetsOfficialBig(DeckProfile profile) =>
+        profile.DeckSize >= OfficialBigDeckMin;
+
+    public static bool MeetsOfficialSmall(DeckProfile profile) =>
+        profile.DeckSize <= OfficialSmallDeckMax;
 }
