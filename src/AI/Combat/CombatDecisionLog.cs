@@ -66,7 +66,10 @@ public static class CombatDecisionLog {
         var incoming = ThreatModel.IncomingDamage(state);
         var nonDamage = state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
         var next = ThreatModel.NextTurnIncoming(state);
-        return $"IN={incoming} ND={nonDamage} NXT={next}";
+        var junk = DeckPollutionEvaluator.JunkCount(state);
+        var poll = DeckPollutionEvaluator.ProjectedPollutionCost(state);
+        var play = DeckPollutionEvaluator.ExpectedPlayableDamage(state);
+        return $"IN={incoming} ND={nonDamage} NXT={next} JUNK={junk} POLL={poll} PLAY={play}";
     }
 
     static string FormatTargetBias(JsonArray? enemies, int targetIndex) {

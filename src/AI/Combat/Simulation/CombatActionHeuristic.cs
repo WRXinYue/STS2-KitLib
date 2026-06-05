@@ -26,8 +26,11 @@ internal static class CombatActionHeuristic {
         if (AppliesVulnerable(card))
             return ScoreVulnerableSetup(state, action, card);
 
-        if (card.IsAttack && card.Damage > 0)
+        if (card.IsAttack && card.Damage > 0) {
+            if (ShouldPruneIllusionAttack(state, action))
+                return int.MinValue;
             return ScoreAttack(state, action, card);
+        }
 
         if (card.Block > 0)
             return ScoreBlock(state, card);
@@ -91,9 +94,10 @@ internal static class CombatActionHeuristic {
                 score += 220;
             score += Math.Max(0, 60 - target.EffectiveHp);
             score += target.IntentDamage * 3;
-            score += target.NonDamageThreat / 2;
             if (target.IsMinion)
                 score -= 25;
+
+            score += ThreatEconomy.KillBeforeHitBonus(target, state);
         }
 
         if (card.IsAoe) {
@@ -130,8 +134,20 @@ internal static class CombatActionHeuristic {
         if (net > 0 && state.PlayerBlock < net)
             return 5;
 
+        var nextPressure = ThreatModel.ScaledNextTurnPressure(state);
+        if (ThreatModel.IncomingDamage(state) == 0 && nextPressure >= 8)
+            return 5 - nextPressure / 2;
+
         var debt = CombatSetupEvaluator.ComputeSetupDebt(state);
         return 15 - playable * 3 - debt;
+    }
+
+    static bool ShouldPruneIllusionAttack(CombatState state, SimCombatAction action) {
+        if (action.EnemyIndex < 0)
+            return false;
+
+        var target = ResolveTarget(state, action.EnemyIndex);
+        return target != null && !ThreatModel.IsViableAttackTarget(state, target);
     }
 
     static CombatEnemy? ResolveTarget(CombatState state, int enemyIndex) {
@@ -147,10 +163,11 @@ internal static class CombatActionHeuristic {
 
     static IEnumerable<int> OrderedAttackTargets(CombatState state) =>
         state.Enemies
-            .Where(e => e.IsAlive)
+            .Where(e => ThreatModel.IsViableAttackTarget(state, e))
             .OrderByDescending(e => e.IsMinion ? 0 : 1)
             .ThenBy(e => e.EffectiveHp)
             .ThenByDescending(e => e.IntentDamage)
+            .ThenByDescending(e => ThreatModel.NextTurnAttackOn(e))
             .Take(4)
             .Select(e => e.Index);
 

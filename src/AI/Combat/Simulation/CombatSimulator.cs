@@ -9,7 +9,7 @@ namespace DevMode.AI.Combat.Simulation;
 public static class CombatSimulator {
     public static CombatState Apply(CombatState state, SimCombatAction action) {
         if (action.Kind == SimActionKind.EndTurn)
-            return state;
+            return CombatTurnResolver.ResolveEndTurn(state);
 
         if (action.HandIndex < 0 || action.HandIndex >= state.Hand.Count)
             return state;

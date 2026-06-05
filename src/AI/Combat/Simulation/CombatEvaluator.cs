@@ -11,20 +11,20 @@ public static class CombatEvaluator {
     public static int EvaluateMidTurn(CombatState state) {
         var incoming = ThreatModel.IncomingDamage(state);
         var net = ThreatModel.NetDamageAfterBlock(state);
-        var nextIncoming = ThreatModel.NextTurnIncoming(state);
         var netMultiplier = incoming > 0 ? 4 : 3;
 
         int score = state.PlayerHp * 2;
         score -= net * netMultiplier;
         score -= state.StatusDamage * 2;
-        score -= nextIncoming / 2;
-        score -= ThreatModel.TotalNonDamageThreat(state) / 3;
+        score -= ThreatEconomy.TotalPressure(state) / 4;
+        score += DeckPollutionEvaluator.ExpectedPlayableDamage(state) / 2;
 
         foreach (var enemy in state.Enemies) {
             if (!enemy.IsAlive) continue;
             score -= enemy.CurrentHp * 2;
             score -= enemy.IntentDamage * 3;
-            score -= enemy.NonDamageThreat;
+            if (incoming == 0)
+                score -= enemy.NonDamageThreat / 4;
             if (enemy.Vulnerable > 0)
                 score += Math.Min(16, enemy.Vulnerable * 5);
         }
@@ -53,8 +53,8 @@ public static class CombatEvaluator {
         if (hpAfter <= 0)
             return -1200;
 
-        if (net <= 0 && state.PlayerBlock > 0)
-            score += Math.Min(state.PlayerBlock, 20) * 2;
+        if (incoming > 0 && net <= 0 && state.PlayerBlock > 0)
+            score += Math.Min(state.PlayerBlock, incoming) * 2;
 
         foreach (var enemy in state.Enemies.Where(e => e.IsAlive)) {
             score -= enemy.CurrentHp * 2;
@@ -63,6 +63,8 @@ public static class CombatEvaluator {
 
         score -= state.AliveEnemyCount * 10;
         score -= ThreatModel.NextTurnIncoming(state);
+        score -= DeckPollutionEvaluator.ImmediatePollutionCost(state) / 2;
+        score += DeckPollutionEvaluator.ExpectedPlayableDamage(state);
         score -= state.Energy * 5;
         score -= CombatSetupEvaluator.ComputeSetupDebt(state);
 

@@ -45,10 +45,11 @@ public static class LegalActionGenerator {
 
     static IEnumerable<int> OrderedAttackTargets(CombatState state) {
         return state.Enemies
-            .Where(e => e.IsAlive)
+            .Where(e => ThreatModel.IsViableAttackTarget(state, e))
             .OrderByDescending(e => e.IsMinion ? 0 : 1)
             .ThenBy(e => e.EffectiveHp)
             .ThenByDescending(e => e.IntentDamage)
+            .ThenByDescending(e => ThreatModel.NextTurnAttackOn(e))
             .Take(4)
             .Select(e => e.Index);
     }

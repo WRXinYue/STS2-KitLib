@@ -76,10 +76,29 @@ public static class MonsterMechanicIndex {
     static JsonArray SerializeMoves(IReadOnlyList<MonsterMoveProfile> moves) {
         var arr = new JsonArray();
         foreach (var move in moves) {
+            var effects = new JsonArray();
+            foreach (var effect in move.Effects) {
+                var obj = new JsonObject {
+                    ["kind"] = effect.Kind.ToString(),
+                };
+                if (!string.IsNullOrWhiteSpace(effect.CardId))
+                    obj["cardId"] = effect.CardId;
+                if (effect.Count > 0)
+                    obj["count"] = effect.Count;
+                if (!string.IsNullOrWhiteSpace(effect.Pile))
+                    obj["pile"] = effect.Pile;
+                if (!string.IsNullOrWhiteSpace(effect.SpawnMonsterId))
+                    obj["spawnMonsterId"] = effect.SpawnMonsterId;
+                if (!string.IsNullOrWhiteSpace(effect.PowerId))
+                    obj["powerId"] = effect.PowerId;
+                effects.Add(obj);
+            }
+
             arr.Add(new JsonObject {
                 ["moveId"] = move.MoveId,
                 ["intentTypes"] = new JsonArray(
                     move.IntentTypes.Select(t => JsonValue.Create(t.ToString())).ToArray()),
+                ["effects"] = effects,
             });
         }
 

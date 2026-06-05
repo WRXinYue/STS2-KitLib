@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using DevMode.AI.Combat;
+using DevMode.AI.Combat.Simulation;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
 using DevMode.AI.Knowledge;
@@ -145,7 +146,7 @@ public static class CombatScorer {
 
         if (isAttack) {
             builder.Add("attack", 20 + cost * 5 + damageValue);
-            builder.Add("target", TargetEnemyBonus(enemies, targetIndex));
+            builder.Add("target", TargetEnemyBonus(enemies, targetIndex, incoming));
             if (needsBlock) {
                 builder.Add("attack-unsafe", -(blockUrgency / 2 + Math.Max(0, netIncoming - damageValue) / 2));
                 if (canLethal && !fatalIfUnblocked)
@@ -224,6 +225,12 @@ public static class CombatScorer {
         if (needsBlock && incoming > 0)
             score -= 15 + IntentCalculator.BlockUrgency(snapshot) / 4;
 
+        if (incoming == 0) {
+            var next = ThreatModel.NextTurnIncoming(CombatState.FromSnapshot(snapshot));
+            if (next >= 8)
+                score -= next / 2;
+        }
+
         var combat = snapshot["combat"]?.AsObject();
         var enemies = combat?["enemies"]?.AsArray();
         if (enemies != null) {
@@ -263,18 +270,44 @@ public static class CombatScorer {
             || upper.Contains("OFFERING");
     }
 
-    static int TargetEnemyBonus(JsonArray? enemies, int targetIndex) {
+    static int TargetEnemyBonus(JsonArray? enemies, int targetIndex, int incoming) {
         if (enemies == null || enemies.Count == 0)
             return 0;
 
         JsonObject? target = ResolveTargetEnemy(enemies, targetIndex);
         if (target == null) return 0;
 
+        if (LethalExclusions.ShouldSkip(target)
+            && enemies.Any(e => e is JsonObject o
+                && o["isAlive"]?.GetValue<bool>() != false
+                && !LethalExclusions.ShouldSkip(o)))
+            return -60;
+
         var hp = target["currentHp"]?.GetValue<int>() ?? 0;
         var maxHp = target["maxHp"]?.GetValue<int>() ?? 1;
         var lowEnemy = maxHp > 0 && hp <= maxHp * 0.25;
         var bonus = lowEnemy ? 30 : 5;
         bonus += EnemyTargetPriority.TargetBias(enemies, targetIndex);
+
+        if (incoming == 0) {
+            var steps = target["intentSteps"]?.AsArray();
+            if (steps != null && steps.Count > 1
+                && steps[1] is JsonObject nextStep) {
+                var nextAtk = nextStep["intentDamage"]?.GetValue<int>() ?? 0;
+                if (nextAtk >= 6)
+                    bonus += Math.Min(40, nextAtk * 3);
+            }
+
+            var monsterId = target["monsterId"]?.GetValue<string>();
+            var moveId = target["nextMoveId"]?.GetValue<string>();
+            foreach (var effect in MoveEffectIndex.GetEffects(monsterId, moveId)) {
+                if (effect.Kind == MonsterMoveEffectKind.StatusInject)
+                    bonus += effect.Count * 2;
+                if (effect.Kind == MonsterMoveEffectKind.Summon)
+                    bonus += 12;
+            }
+        }
+
         return bonus;
     }
 

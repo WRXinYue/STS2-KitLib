@@ -545,7 +545,7 @@ Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数（日志中
 | `PeerSummon`（TwoTailedRat） | 正常 HP/伤害排序 |
 | 高 debuff 威胁爪牙 | −10 ~ +15（按 `nonDamageThreat`） |
 
-`ThreatModel.EffectiveIncoming` = `intentDamage`（挡牌/净伤仅计攻击）；`nonDamageThreat` 单独用于目标偏置与 beam 施压。`NextTurnIncoming` 仅看下一步 `intentDamage`，`isUncertain` 时 ×1.15。`OrderByPriority` 与 `LethalChecker` 使用上述策略。
+`ThreatModel.EffectiveIncoming` = `intentDamage`（挡牌/净伤仅计攻击）。`nonDamageThreat`（塞牌/debuff）与 `NextTurnIncoming`（下一步攻击）分开：`ScaledNonDamagePressure` 在「本回合无攻击、下回合大伤害」时降权；`ScaledNextTurnPressure` 在安全回合给满下回合攻击权重以推动 kill-before-hit。幻象爪牙（`HasIllusionRevive`）在主体存活时不进入 beam 攻击枚举。`OrderByPriority` 与 `LethalChecker` 使用上述策略。
 
 ### LethalChecker
 
@@ -554,6 +554,45 @@ Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数（日志中
 ### Combat Simulation Layer
 
 战斗层采用 **Immutable State → Legal Actions → Apply → Evaluate → Bounded Search** 前向模拟。动机是修正常见 STS 战斗 bot 的静态威胁求和、AOE 误枚举、召唤目标错误等问题；模块位于 `src/AI/Combat/Simulation/`，`CombatSearch.PickBestMove` 仅委托 `CombatPlanner`。
+
+#### 架构思路：为何从权重走向 Deck EV
+
+早期做法把 `nonDamageThreat`（塞牌 / debuff / 召唤）压成单一 magic number（`EnemyThreatWeights`），与 `intentDamage` 相加后触发挡牌。这在官方 STS2 语义下是错的：
+
+| 威胁类型 | 官方 Intent | 实际机制 | 典型代表 |
+| --- | --- | --- | --- |
+| HP 伤害 | `AttackIntent` | `DamageCmd` | FOGMOG `SWIPE_MOVE` 8–9 |
+| 塞状态牌 | `StatusIntent(count)` | `CardPileCmd.AddToCombatAndPreview<T>` | `EyeWithTeeth` → 3× `DAZED` → Discard |
+| 牌面 affliction | `CardDebuffIntent` | `PowerCmd.Apply<SmoggyPower>` 等 | LivingFog、VineShambler |
+| 数值 debuff | `DebuffIntent` | `ShrinkPower` 等 | ShrinkerBeetle（**不塞牌**） |
+
+Intent 只有 UI 元数据；牌 ID、目标堆、power 类型都在 move handler 的 imperative C# 里。因此 L3 的核心思路是：
+
+1. **解析 move → 效果**（`MoveEffectIndex` = 运行时 intent 扫描 + `monster-move-effects.json` 静态提取）
+2. **在战斗堆上推进**（`CombatTurnResolver`：`EndTurn` 时弃牌、敌人行动、塞牌、召唤、抽 5）
+3. **同尺比较路径效用**（`ThreatEconomy`：HP 伤害 vs 污染 EV vs power debuff，而非混在一个 `incoming` 里）
+
+塞牌的真实代价是「未来抽到废牌、少打伤害」，不是「本回合挨打」；应在 `DeckPollutionEvaluator` 里用堆组成估算，并与 `KillBeforeHitBonus`（下回合攻击）放在同一把尺子上比。
+
+```mermaid
+flowchart TD
+    official[Official_Monsters_CSharp] --> extractor[extract-move-effects.py]
+    extractor --> json[monster-move-effects.json]
+    probe[MonsterMoveScanner] --> index[MoveEffectIndex]
+    json --> index
+
+    snapshot[GameSnapshot] --> piles[draw_discard_exhaust]
+    piles --> state[CombatState]
+    index --> resolver[CombatTurnResolver]
+    state --> resolver
+    resolver --> nextState[Next_CombatState]
+    nextState --> beam[CombatPlanner]
+    nextState --> economy[ThreatEconomy]
+    economy --> eval[CombatEvaluator]
+    beam --> action[GameAction]
+```
+
+**决策流**：beam 展开玩家出牌 → 叶节点 `EndTurn` 时先跑 `CombatTurnResolver`（模拟敌人回合与抽牌）→ 在**推进后状态**上由 `CombatEvaluator` + `ThreatEconomy` 评分。这样 FOGMOG 召唤回合能「看到」：若不过牌 rush 雾菇，下回合会挨 9 点且每回合多 3 张 Dazed，而非把 debuff 当成 8 点 incoming 去挡。
 
 ```mermaid
 flowchart LR
@@ -578,20 +617,25 @@ flowchart LR
 | 评分与局面混用 | 一套启发式既评牌又评回合末 | `CombatScorer`（单步/fallback）与 `CombatEvaluator`（叶节点局面）分离 |
 | 浅层搜索 | depth 1–2 或全枚举不剪枝 | `CombatPlanner` 迭代加深 beam + `CombatActionHeuristic` 走法排序 |
 | 仅本回合 intent | 不看下回合高伤 | 快照 `intentSteps[]` + `CombatEvaluator` 下回合权重 |
-| 非伤害 intent 忽略 | debuff/summon 不计威胁 | `nonDamageThreat` + `EnemyThreatWeights` |
-| 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | 快照 + `CardMechanicProfile` + `MonsterMechanicProfile`；文档列出「故意不模拟」边界 |
+| 非伤害 intent 忽略 | debuff/summon 不计威胁 | `MoveEffectIndex` + `ThreatEconomy` + `DeckPollutionEvaluator` |
+| 塞牌 vs 攻击不同尺 | 挡牌应对 debuff/塞牌 | `EffectiveIncoming` 仅攻击；污染 EV 单独计入 `POLL=` |
+| 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | `monster-move-effects.json`（官方 handler 提取）+ `MonsterMechanicProfile.effects[]` |
 
-**已知局限**（不假装完美）：敌人行动顺序仍用 sum（未做按位 `SequentialIncoming`）；`CombatSimulator` 不模拟抽牌、复杂 power、完整 buff 结算；`SimLethalChecker.EstimateMaxDamage` 为贪心上界；beam 宽度与效用权重需 `tools/ai-bench` 实战调参。
+**已知局限**（不假装完美）：敌人行动顺序为固定索引序（非完整协程时序）；抽牌为**确定性**顺序（无 RNG 分支）；仅白名单 power（Shrink/Smog/Tangle/Bind）；`SimLethalChecker.EstimateMaxDamage` 为贪心上界。
 
 | 类型 | 职责 |
 | --- | --- |
-| `CombatState` | 不可变战斗状态（玩家 HP/block/能量、手牌、敌人 intent） |
-| `LegalActionGenerator` | 枚举合法动作；`AllEnemy` / AOE **只生成一个动作**（`SecondaryIndex=-1`） |
-| `CombatSimulator` | `Apply(action)`：扣能量、单体/群伤、变形、易伤/虚弱、挡牌；主怪死后爪牙 `MarkDead` |
-| `ThreatModel` | `Incoming` = 存活且 `intentDamage>0` 的敌人求和；击杀后自动重算；`IntentCalculator` 桥接 |
+| `CombatState` | 不可变战斗状态（HP/block/能量、手牌、draw/discard/exhaust、modifiers、敌人 intent/moveId） |
+| `MoveEffectIndex` | 合并运行时 intent 与 `monster-move-effects.json` 静态 handler 效果 |
+| `CombatTurnResolver` | `EndTurn` 推进：弃牌→敌人行动（伤害/塞牌/召唤）→抽 5 |
+| `DeckPollutionEvaluator` | 堆内废牌数、`ProjectedPollutionCost`、`ExpectedPlayableDamage` |
+| `ThreatEconomy` | HP + 污染 + power debuff 同尺比较；`KillBeforeHitBonus` |
+| `LegalActionGenerator` | 枚举合法动作；幻象爪牙在主体存活时不可攻击 |
+| `CombatSimulator` | `Apply(action)` 出牌模拟；`EndTurn` 委托 `CombatTurnResolver` |
+| `ThreatModel` | `Incoming` = 仅 `intentDamage`；`ScaledNonDamagePressure` → `ThreatEconomy` |
 | `AoeDamageEstimator` | 群伤斩杀判定、`FindBestAoeLethalAction` |
-| `CombatEvaluator` | 叶节点多因子效用（HP、netDamage×3/4、下回合 intent、敌 HP、易伤、浪费能量） |
-| `CombatPlanner` | beam search + 时间预算；输出路径首步 |
+| `CombatEvaluator` | 叶节点效用含 `ThreatEconomy` 与 `ExpectedPlayableDamage` |
+| `CombatPlanner` | beam search；`EndTurn` 叶节点在 resolver 后状态评分 |
 
 **CombatPlanner 参数**（按可出牌数自适应，迭代加深 3→6→…→MaxDepth）：
 
@@ -606,13 +650,15 @@ flowchart LR
 
 **快捷路径**（在 beam 之前）：`SimLethalChecker.CanLethalAfterTransform` → `AoeDamageEstimator` 群杀 → `CanLethal`；**`ShouldSuppressTransform` 为 true 时跳过**（有 incoming 且非安全斩杀时不抢先变形/攻击）。
 
-**故意不模拟**（渐进补全）：抽牌堆、RNG、完整敌人回合出牌与 buff 结算、复杂 power 互动。`intentSteps[]` 仅用于评估下回合威胁权重，不推进敌人状态机。
+**故意不模拟**（L3 后仍保留）：抽牌 RNG / 精确 shuffle、ThievingHopper 偷牌、完整 Hook 链、多玩家时序。已模拟：draw/discard/exhaust 牌面、确定性抽 5、`StatusInject` 塞牌、`Summon` 虚拟单位、白名单 power debuff。
+
+**效果数据**：`tools/monster-move-effect-dump/extract-move-effects.py` 从官方 `Monsters/*.cs` 提取 `AddToCombatAndPreview` / `CreatureCmd.Add` / `PowerCmd.Apply`；嵌入 `src/AI/Data/monster-move-effects.json`。
 
 **NeedsBlock 与多攻击者**：`CanEliminateIncomingThreats` 不再要求单一威胁；可 AOE/逐个斩杀全部 `intentDamage>0` 敌人，或模拟击杀最高 intent 后 `Incoming` 归零且 net ≤ `SafeLethalNetMax`。
 
 快照 enrich：`GameSnapshot.CaptureEnemies` 调用 `MonsterIntentReader.CaptureIntentSteps`，每敌最多 3 步 `{ moveId, intentDamage, intentTypes[], nonDamageThreat, isUncertain }`。
 
-**战斗日志**（`AiCombatVerboseLog`）：`CombatDecisionLog` 额外输出 `IN=` / `ND=` / `NXT=` 与 `tgt= bias= flags=` 便于 bench 调参。
+**战斗日志**（`AiCombatVerboseLog`）：`CombatDecisionLog` 输出 `IN=` / `ND=` / `NXT=` / `JUNK=` / `POLL=` / `PLAY=` 与 `tgt= bias= flags=` 便于 bench 调参。
 
 `CombatScorer` 保留为 **fallback**（beam 无结果时）及 mod `IAiMoveModifier` 单步估价基线。
 

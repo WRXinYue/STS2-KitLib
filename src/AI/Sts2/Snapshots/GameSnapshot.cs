@@ -9,6 +9,7 @@ using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using DevMode.EnemyIntent;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
@@ -149,11 +150,24 @@ internal static class GameSnapshot
             }
         }
         combat["hand"] = hand;
+        combat["drawPile"] = CapturePile(combatState.DrawPile);
+        combat["discardPile"] = CapturePile(combatState.DiscardPile);
+        combat["exhaustPile"] = CapturePile(combatState.ExhaustPile);
 
         if (cs != null)
             combat["enemies"] = CaptureEnemies(cs, player);
 
         return combat;
+    }
+
+    private static JsonArray CapturePile(CardPile? pile) {
+        var arr = new JsonArray();
+        if (pile?.Cards == null) return arr;
+
+        foreach (var card in pile.Cards)
+            arr.Add(SnapshotCardJson.FromCard(card));
+
+        return arr;
     }
 
     private static JsonArray CapturePowers(IEnumerable<PowerModel?> powers)

@@ -7,20 +7,21 @@ using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 
 namespace DevMode.AI.Knowledge;
 
-/// <summary>Offline scan of monster move state machines (intent types per move).</summary>
+/// <summary>Offline scan of monster move state machines (intent types + static effects per move).</summary>
 internal static class MonsterMoveScanner {
     public static IReadOnlyList<MonsterMoveProfile> ScanMoves(MonsterModel canonical) {
         try {
             var monster = canonical.ToMutable();
             monster.SetUpForCombat();
-            return ScanMachine(monster.MoveStateMachine);
+            var monsterId = monster.Id.Entry ?? "";
+            return ScanMachine(monster.MoveStateMachine, monsterId);
         }
         catch {
             return Array.Empty<MonsterMoveProfile>();
         }
     }
 
-    static IReadOnlyList<MonsterMoveProfile> ScanMachine(MonsterMoveStateMachine? machine) {
+    static IReadOnlyList<MonsterMoveProfile> ScanMachine(MonsterMoveStateMachine? machine, string monsterId) {
         if (machine?.States == null || machine.States.Count == 0)
             return Array.Empty<MonsterMoveProfile>();
 
@@ -39,10 +40,46 @@ internal static class MonsterMoveScanner {
                 .Distinct()
                 .ToList();
 
-            profiles.Add(new MonsterMoveProfile(moveId, intentTypes));
+            var effects = MoveEffectIndex.MergeWithRuntimeIntents(monsterId, moveId, move.Intents)
+                .ToList();
+            EnrichFromStaticData(monsterId, moveId, effects);
+
+            profiles.Add(new MonsterMoveProfile(moveId, intentTypes, effects));
         }
 
         return profiles;
+    }
+
+    static void EnrichFromStaticData(string monsterId, string moveId, List<MonsterMoveEffect> effects) {
+        var staticEffects = MonsterMoveEffectData.GetEffects(monsterId, moveId);
+        if (staticEffects.Count == 0)
+            return;
+
+        for (int i = 0; i < effects.Count; i++) {
+            var runtime = effects[i];
+            var match = staticEffects.FirstOrDefault(s => s.Kind == runtime.Kind);
+            if (match == null) continue;
+
+            effects[i] = runtime with {
+                CardId = match.CardId ?? runtime.CardId,
+                Count = match.Count > 0 ? match.Count : runtime.Count,
+                Pile = !string.IsNullOrWhiteSpace(match.Pile) ? match.Pile : runtime.Pile,
+                SpawnMonsterId = match.SpawnMonsterId ?? runtime.SpawnMonsterId,
+                PowerId = match.PowerId ?? runtime.PowerId,
+                AttackDamageMultiplier = match.AttackDamageMultiplier != 1f
+                    ? match.AttackDamageMultiplier
+                    : runtime.AttackDamageMultiplier,
+                SkillCostPenalty = match.SkillCostPenalty > 0 ? match.SkillCostPenalty : runtime.SkillCostPenalty,
+                AttackCostPenalty = match.AttackCostPenalty > 0 ? match.AttackCostPenalty : runtime.AttackCostPenalty,
+                BoundCardsPerTurn = match.BoundCardsPerTurn > 0 ? match.BoundCardsPerTurn : runtime.BoundCardsPerTurn,
+                IsNonDeterministic = match.IsNonDeterministic || runtime.IsNonDeterministic,
+            };
+        }
+
+        foreach (var extra in staticEffects) {
+            if (!effects.Any(e => e.Kind == extra.Kind))
+                effects.Add(extra);
+        }
     }
 
     public static EnemyMechanicFlags FlagsFromMoves(IReadOnlyList<MonsterMoveProfile> moves) {
@@ -56,6 +93,7 @@ internal static class MonsterMoveScanner {
                     IntentType.Buff => EnemyMechanicFlags.HasBuffIntent,
                     IntentType.Heal => EnemyMechanicFlags.HasHealIntent,
                     IntentType.DeathBlow => EnemyMechanicFlags.HasDeathBlow,
+                    IntentType.StatusCard => EnemyMechanicFlags.HasStatusCardIntent,
                     _ => EnemyMechanicFlags.None,
                 };
             }

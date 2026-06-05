@@ -1,10 +1,11 @@
 {
-  "description": "Key encounter scenarios for minion/summon targeting regression.",
+  "description": "Key encounter scenarios for minion/summon targeting and deck-pollution regression.",
   "scenarios": [
     {
       "id": "obscura_illusion",
       "encounterId": "THE_OBSCURA",
-      "note": "Illusion minion (Parafright) should be deprioritized; focus TheObscura."
+      "note": "Illusion minion (Parafright) should be deprioritized; focus TheObscura.",
+      "logPatterns": ["flags=HasIllusionRevive", "bias=-60"]
     },
     {
       "id": "ovicopter_eggs",
@@ -24,7 +25,26 @@
     {
       "id": "fogmog_illusion",
       "encounterId": "FOGMOG",
-      "note": "EyeWithTeeth illusion revive loop."
+      "note": "Rush FOGMOG on summon/debuff turns; never target EYE_WITH_TEETH while primary alive; avoid block when IN=0.",
+      "logPatterns": ["tgt=FOGMOG", "flags=HasIllusionRevive", "JUNK=", "POLL="]
+    },
+    {
+      "id": "slime_status",
+      "encounterId": "LEAF_SLIME_M",
+      "note": "StatusIntent Slimed injection; attack over defend when kill-before-hit wins.",
+      "logPatterns": ["POLL=", "PLAY="]
+    },
+    {
+      "id": "living_fog_affliction",
+      "encounterId": "LIVING_FOG",
+      "note": "CardDebuff SmoggyPower affliction modeled via ThreatEconomy power cost.",
+      "logPatterns": ["ND=", "POLL="]
+    },
+    {
+      "id": "shrinker_debuff",
+      "encounterId": "SHRINKER_BEETLE",
+      "note": "DebuffStrong shrink is power debuff not block trigger; IN=0 on debuff turn.",
+      "logPatterns": ["IN=0", "flags=HasDebuffIntent"]
     }
   ]
 }

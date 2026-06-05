@@ -1,0 +1,217 @@
+{
+  "moves": {
+    "CHOMPER": {
+      "SCREECH_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "DAZED",
+          "count": 3,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "EYE_WITH_TEETH": {
+      "DISTRACT_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "DAZED",
+          "count": 3,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "FOGMOG": {
+      "ILLUSION_MOVE": [
+        {
+          "kind": "Summon",
+          "spawnMonsterId": "EYE_WITH_TEETH"
+        }
+      ]
+    },
+    "HAUNTED_SHIP": {
+      "HAUNT_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "DAZED",
+          "count": 0,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "LEAF_SLIME_M": {
+      "STICKY_SHOT": [
+        {
+          "kind": "StatusInject",
+          "cardId": "SLIMED",
+          "count": 2,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "LEAF_SLIME_S": {
+      "GOOP_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "SLIMED",
+          "count": 1,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "LIVING_FOG": {
+      "ADVANCED_GAS_MOVE": [
+        {
+          "kind": "PowerAffliction",
+          "powerId": "SMOGGY",
+          "skillCostPenalty": 1
+        }
+      ],
+      "BLOAT_MOVE": [
+        {
+          "kind": "Summon",
+          "spawnMonsterId": "GAS_BOMB"
+        }
+      ]
+    },
+    "MECHA_KNIGHT": {
+      "FLAMETHROWER_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "BURN",
+          "count": 4,
+          "pile": "Hand"
+        }
+      ]
+    },
+    "MYTE": {
+      "TOXIC_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "TOXIC",
+          "count": 2,
+          "pile": "Hand"
+        }
+      ]
+    },
+    "OVICOPTER": {
+      "LAY_EGGS_MOVE": [
+        {
+          "kind": "Summon",
+          "spawnMonsterId": "TOUGH_EGG"
+        }
+      ]
+    },
+    "PHROG_PARASITE": {
+      "INFECT_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "INFECTION",
+          "count": 3,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "QUEEN": {
+      "PUPPET_STRINGS_MOVE": [
+        {
+          "kind": "PowerAffliction",
+          "powerId": "CHAINS_OF_BINDING",
+          "boundCardsPerTurn": 3
+        }
+      ]
+    },
+    "SHRINKER_BEETLE": {
+      "SHRINKER_MOVE": [
+        {
+          "kind": "PowerDebuff",
+          "powerId": "SHRINK",
+          "attackDamageMultiplier": 0.7
+        }
+      ]
+    },
+    "SLIMED_BERSERKER": {
+      "VOMIT_ICHOR_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "SLIMED",
+          "count": 10,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "TEST_SUBJECT": {
+      "BURNING_GROWL_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "BURN",
+          "count": 0,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "THE_OBSCURA": {
+      "ILLUSION_MOVE": [
+        {
+          "kind": "Summon",
+          "spawnMonsterId": "PARAFRIGHT"
+        }
+      ]
+    },
+    "THIEVING_HOPPER": {
+      "THIEVERY_MOVE": [
+        {
+          "kind": "PowerAffliction",
+          "powerId": "SWIPE",
+          "isNonDeterministic": true
+        }
+      ]
+    },
+    "TWIG_SLIME_M": {
+      "STICKY_SHOT_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "SLIMED",
+          "count": 1,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "TWO_TAILED_RAT": {
+      "CALL_FOR_BACKUP_MOVE": [
+        {
+          "kind": "Summon",
+          "spawnMonsterId": "TWO_TAILED_RAT"
+        }
+      ]
+    },
+    "VANTOM": {
+      "DISMEMBER_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "WOUND",
+          "count": 3,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "VINE_SHAMBLER": {
+      "GRASPING_VINES_MOVE": [
+        {
+          "kind": "PowerAffliction",
+          "powerId": "TANGLED",
+          "attackCostPenalty": 1
+        }
+      ]
+    },
+    "WRIGGLER": {
+      "WRIGGLE_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "INFECTION",
+          "count": 1,
+          "pile": "Discard"
+        }
+      ]
+    }
+  }
+}

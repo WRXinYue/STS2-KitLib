@@ -38,6 +38,37 @@ public static class ThreatModel {
     public static int TotalNonDamageThreat(CombatState state) =>
         state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
 
+    public static int NextTurnAttackOn(CombatEnemy enemy) {
+        if (enemy.IntentSteps.Length < 2)
+            return 0;
+
+        var step = enemy.IntentSteps[1];
+        var damage = step.IntentDamage;
+        if (step.IsUncertain)
+            damage = (int)Math.Round(damage * EnemyThreatWeights.NextTurnUncertainMultiplier);
+        return damage;
+    }
+
+    /// <summary>Next-turn attack weight — full when safe this turn so kill-before-hit is valued.</summary>
+    public static int ScaledNextTurnPressure(CombatState state) {
+        var next = NextTurnIncoming(state);
+        return IncomingDamage(state) > 0 ? next / 2 : next;
+    }
+
+    /// <summary>Card-stuff/debuff pressure — prefers deck EV model when piles are available.</summary>
+    public static int ScaledNonDamagePressure(CombatState state) =>
+        ThreatEconomy.ScaledNonDamagePressure(state);
+
+    public static bool IsViableAttackTarget(CombatState state, CombatEnemy enemy) {
+        if (!enemy.IsAlive)
+            return false;
+        if (!enemy.MechanicFlags.HasFlag(EnemyMechanicFlags.HasIllusionRevive))
+            return true;
+
+        return !state.Enemies.Any(e =>
+            e.IsAlive && !e.MechanicFlags.HasFlag(EnemyMechanicFlags.HasIllusionRevive));
+    }
+
     public static int AliveThreatCount(CombatState state) =>
         state.Enemies.Count(e => e.IsAlive && e.IntentDamage > 0);
 

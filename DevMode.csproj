@@ -127,6 +127,8 @@
                       Condition="Exists('src\AI\Data\potion-tiers.json')" />
     <EmbeddedResource Include="src\AI\Data\monster-probe-overrides.json" LogicalName="DevMode.AI.monster-probe-overrides.json"
                       Condition="Exists('src\AI\Data\monster-probe-overrides.json')" />
+    <EmbeddedResource Include="src\AI\Data\monster-move-effects.json" LogicalName="DevMode.AI.monster-move-effects.json"
+                      Condition="Exists('src\AI\Data\monster-move-effects.json')" />
   </ItemGroup>
 
   <ItemGroup>

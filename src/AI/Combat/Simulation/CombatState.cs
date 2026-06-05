@@ -12,8 +12,14 @@ public sealed record CombatState(
     int PlayerMaxHp,
     int PlayerBlock,
     int Energy,
+    int MaxEnergy,
     int StatusDamage,
+    int TurnNumber,
     IReadOnlyList<CombatHandCard> Hand,
+    IReadOnlyList<CombatPileCard> DrawPile,
+    IReadOnlyList<CombatPileCard> DiscardPile,
+    IReadOnlyList<CombatPileCard> ExhaustPile,
+    IReadOnlyList<PlayerCombatModifier> Modifiers,
     IReadOnlyList<CombatEnemy> Enemies) {
 
     public int AliveEnemyCount => Enemies.Count(e => e.IsAlive);
@@ -24,12 +30,20 @@ public sealed record CombatState(
         var maxHp = snapshot["maxHp"]?.GetValue<int>() ?? 1;
         var block = combat?["playerBlock"]?.GetValue<int>() ?? 0;
         var energy = combat?["currentEnergy"]?.GetValue<int>() ?? 0;
+        var maxEnergy = combat?["maxEnergy"]?.GetValue<int>() ?? 3;
         var statusDamage = EstimateStatusDamage(combat?["playerPowers"]?.AsArray());
+        var turnNumber = combat?["turnNumber"]?.GetValue<int>() ?? 1;
 
         var hand = ParseHand(combat?["hand"]?.AsArray());
+        var draw = ParsePile(combat?["drawPile"]?.AsArray());
+        var discard = ParsePile(combat?["discardPile"]?.AsArray());
+        var exhaust = ParsePile(combat?["exhaustPile"]?.AsArray());
+        var modifiers = ParseModifiers(combat?["playerPowers"]?.AsArray());
         var enemies = ParseEnemies(combat?["enemies"]?.AsArray());
 
-        return new CombatState(hp, maxHp, block, energy, statusDamage, hand, enemies);
+        return new CombatState(
+            hp, maxHp, block, energy, maxEnergy, statusDamage, turnNumber,
+            hand, draw, discard, exhaust, modifiers, enemies);
     }
 
     public CombatState WithPlayer(int hp, int block, int energy) =>
@@ -41,11 +55,56 @@ public sealed record CombatState(
     public CombatState WithEnemies(IReadOnlyList<CombatEnemy> enemies) =>
         this with { Enemies = enemies };
 
+    public CombatState WithPiles(
+        IReadOnlyList<CombatPileCard> draw,
+        IReadOnlyList<CombatPileCard> discard,
+        IReadOnlyList<CombatPileCard> exhaust) =>
+        this with { DrawPile = draw, DiscardPile = discard, ExhaustPile = exhaust };
+
+    public CombatState WithModifiers(IReadOnlyList<PlayerCombatModifier> modifiers) =>
+        this with { Modifiers = modifiers };
+
+    public CombatState WithTurn(int turnNumber, int energy, int maxEnergy) =>
+        this with { TurnNumber = turnNumber, Energy = energy, MaxEnergy = maxEnergy };
+
     public JsonArray ToHandJson() {
         var arr = new JsonArray();
         foreach (var card in Hand)
             arr.Add(card.ToJson());
         return arr;
+    }
+
+    static List<CombatPileCard> ParsePile(JsonArray? arr) {
+        var pile = new List<CombatPileCard>();
+        if (arr == null) return pile;
+
+        foreach (var node in arr) {
+            if (node is JsonObject card)
+                pile.Add(CombatPileCard.FromJson(card));
+        }
+
+        return pile;
+    }
+
+    static List<PlayerCombatModifier> ParseModifiers(JsonArray? powers) {
+        var mods = new List<PlayerCombatModifier>();
+        if (powers == null) return mods;
+
+        foreach (var node in powers) {
+            if (node is not JsonObject power) continue;
+            var id = (power["modelId"]?.GetValue<string>()
+                ?? power["id"]?.GetValue<string>() ?? "").ToUpperInvariant();
+            if (id.Contains("SHRINK", StringComparison.Ordinal))
+                mods.Add(PlayerCombatModifier.Shrink());
+            else if (id.Contains("SMOG", StringComparison.Ordinal))
+                mods.Add(PlayerCombatModifier.Smoggy());
+            else if (id.Contains("TANGLE", StringComparison.Ordinal))
+                mods.Add(PlayerCombatModifier.Tangled());
+            else if (id.Contains("CHAIN", StringComparison.Ordinal) && id.Contains("BIND", StringComparison.Ordinal))
+                mods.Add(PlayerCombatModifier.ChainsOfBinding());
+        }
+
+        return mods;
     }
 
     static List<CombatHandCard> ParseHand(JsonArray? handArr) {
@@ -72,7 +131,9 @@ public sealed record CombatState(
                 targetType,
                 card["canPlay"]?.GetValue<bool>() != false,
                 profile,
-                isAoe));
+                isAoe,
+                card["hasRetain"]?.GetValue<bool>() == true,
+                card["hasExhaust"]?.GetValue<bool>() == true));
         }
 
         return hand;
@@ -102,7 +163,9 @@ public sealed record CombatState(
                 steps,
                 flags,
                 nonDamage,
-                e["summonerIndex"]?.GetValue<int>() ?? -1));
+                e["summonerIndex"]?.GetValue<int>() ?? -1,
+                e["monsterId"]?.GetValue<string>() ?? "",
+                e["nextMoveId"]?.GetValue<string>() ?? ""));
         }
 
         return enemies;

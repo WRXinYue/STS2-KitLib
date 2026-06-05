@@ -91,7 +91,8 @@ public static class CombatPlanner {
 
                 foreach (var action in LegalActionGenerator.GenerateOrdered(node.State, config.MaxActionsPerNode)) {
                     if (action.Kind == SimActionKind.EndTurn) {
-                        int endScore = CombatEvaluator.EvaluateTerminal(node.State);
+                        var afterTurn = CombatTurnResolver.ResolveEndTurn(node.State);
+                        int endScore = CombatEvaluator.EvaluateTerminal(afterTurn);
                         if (endScore > bestScore) {
                             bestScore = endScore;
                             bestPath = node.Path;

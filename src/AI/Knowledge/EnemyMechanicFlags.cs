@@ -23,4 +23,6 @@ public enum EnemyMechanicFlags : ulong {
     HasDeathBlow = 1 << 9,
     /// <summary>SummonIntent but in-place transform (ToughEgg hatch).</summary>
     HatchesInPlace = 1 << 10,
+    /// <summary>StatusIntent — adds Dazed/Slimed etc. to combat piles.</summary>
+    HasStatusCardIntent = 1 << 11,
 }

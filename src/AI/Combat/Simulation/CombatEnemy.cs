@@ -15,7 +15,9 @@ public sealed record CombatEnemy(
     CombatIntentStep[] IntentSteps,
     EnemyMechanicFlags MechanicFlags = EnemyMechanicFlags.None,
     int NonDamageThreat = 0,
-    int SummonerIndex = -1) {
+    int SummonerIndex = -1,
+    string MonsterId = "",
+    string NextMoveId = "") {
     public int EffectiveHp => CurrentHp + Block;
 
     /// <summary>HP damage this turn — debuff/summon pressure uses <see cref="NonDamageThreat"/> separately.</summary>
@@ -27,6 +29,14 @@ public sealed record CombatEnemy(
 
     public CombatEnemy WithIntent(int intentDamage) =>
         this with { IntentDamage = intentDamage };
+
+    public CombatEnemy WithMove(string nextMoveId, int intentDamage, int nonDamageThreat, CombatIntentStep[] steps) =>
+        this with {
+            NextMoveId = nextMoveId,
+            IntentDamage = intentDamage,
+            NonDamageThreat = nonDamageThreat,
+            IntentSteps = steps,
+        };
 
     public CombatEnemy WithPowers(int vulnerable, int weak) =>
         this with { Vulnerable = vulnerable, Weak = weak };

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
 using DevMode.Actions;
+using DevMode.AI.Combat.Simulation;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
@@ -26,6 +28,9 @@ internal static class SnapshotCardJson {
         foreach (var kw in card.Keywords)
             keywords.Add(kw.ToString());
         obj["keywords"] = keywords;
+        obj["isStatus"] = CombatJunkCard.IsJunkId(card.Id.Entry, card.Rarity.ToString());
+        obj["hasRetain"] = card.Keywords.Contains(CardKeyword.Retain);
+        obj["hasExhaust"] = card.Keywords.Contains(CardKeyword.Exhaust);
 
         var damage = CardEditActions.GetDamage(card);
         if (damage.HasValue)
