@@ -153,7 +153,7 @@ internal static class CombatSetupEvaluator {
         int focusIdx = PrimaryAttackTargetIndex(midTurn);
         var focusMid = midTurn.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIdx);
         return new CombatLineOutcome(
-            ThreatModel.IncomingDamage(midTurn),
+            ThreatModel.NetDamageAfterBlock(midTurn),
             ThreatModel.PressureAtIntentStep(afterTurn, 0),
             ThreatModel.PressureAtIntentStep(afterTurn, 1),
             ThreatModel.PressureAtIntentStep(afterTurn, 2),
@@ -241,7 +241,47 @@ internal static class CombatSetupEvaluator {
             playedTransform = true;
         }
 
-        return SimulateGreedyAttacks(s, excludeHandIndex);
+        return SimulateGreedyBlock(SimulateGreedyAttacks(s, excludeHandIndex), excludeHandIndex);
+    }
+
+    static CombatState SimulateGreedyBlock(CombatState state, int excludeHandIndex = -1) {
+        var s = state;
+        string? excludeId = excludeHandIndex >= 0 && excludeHandIndex < state.Hand.Count
+            ? state.Hand[excludeHandIndex].Id
+            : null;
+
+        while (ThreatModel.NetDamageAfterBlock(s) > 0) {
+            if (BlockDefensePolicy.CanSkipBlockForKill(s))
+                break;
+
+            int bestHand = -1;
+            int bestCover = 0;
+
+            for (int i = 0; i < s.Hand.Count; i++) {
+                var card = s.Hand[i];
+                if (excludeId != null && card.Id == excludeId)
+                    continue;
+                if (!CombatCardCost.CanAfford(card, s))
+                    continue;
+
+                int block = CombatDamageCalc.OutgoingBlock(card, s);
+                if (block <= 0)
+                    continue;
+
+                int cover = Math.Min(block, ThreatModel.NetDamageAfterBlock(s));
+                if (cover > bestCover) {
+                    bestCover = cover;
+                    bestHand = i;
+                }
+            }
+
+            if (bestHand < 0 || bestCover <= 0)
+                break;
+
+            s = CombatSimulator.Apply(s, new SimCombatAction(SimActionKind.PlayCard, bestHand, -1));
+        }
+
+        return s;
     }
 
     public static int ComputeBestVulnerableDeferValue(
@@ -438,7 +478,7 @@ internal static class CombatSetupEvaluator {
                     var next = CombatSimulator.Apply(s, new SimCombatAction(SimActionKind.PlayCard, i, -1));
                     var future = FuturePressureFromMidTurn(next);
                     if (IsBetterAttackStep(
-                            ThreatModel.IncomingDamage(next),
+                            ThreatModel.NetDamageAfterBlock(next),
                             future.f0, future.f1, future.f2,
                             ScoreMidTurn(next),
                             FocusHpAfter(next, primary),
@@ -447,7 +487,7 @@ internal static class CombatSetupEvaluator {
                             bestFocusHp, bestScore, bestHitsPrimary,
                             incomingSlack)) {
                         bestScore = ScoreMidTurn(next);
-                        bestIncoming = ThreatModel.IncomingDamage(next);
+                        bestIncoming = ThreatModel.NetDamageAfterBlock(next);
                         bestFuture0 = future.f0;
                         bestFuture1 = future.f1;
                         bestFuture2 = future.f2;
@@ -469,7 +509,7 @@ internal static class CombatSetupEvaluator {
                     var future = FuturePressureFromMidTurn(next);
                     int focusHp = FocusHpAfter(next, primary);
                     if (IsBetterAttackStep(
-                            ThreatModel.IncomingDamage(next),
+                            ThreatModel.NetDamageAfterBlock(next),
                             future.f0, future.f1, future.f2,
                             ScoreMidTurn(next),
                             focusHp,
@@ -478,7 +518,7 @@ internal static class CombatSetupEvaluator {
                             bestFocusHp, bestScore, bestHitsPrimary,
                             incomingSlack)) {
                         bestScore = ScoreMidTurn(next);
-                        bestIncoming = ThreatModel.IncomingDamage(next);
+                        bestIncoming = ThreatModel.NetDamageAfterBlock(next);
                         bestFuture0 = future.f0;
                         bestFuture1 = future.f1;
                         bestFuture2 = future.f2;

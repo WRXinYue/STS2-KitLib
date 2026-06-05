@@ -44,7 +44,7 @@ public static class ThreatModel {
     public static int MidTurnScore(CombatState state, int focusIndex) {
         var w = WeightsFor(state);
         var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
-        int incoming = IncomingDamage(state);
+        int incoming = NetDamageAfterBlock(state);
         int future0 = PressureAtIntentStep(afterPhase, 0);
         int future1 = PressureAtIntentStep(afterPhase, 1);
         int future2 = PressureAtIntentStep(afterPhase, 2);

@@ -527,10 +527,23 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         if (NOverlayStack.Instance?.Peek() is not NRewardsScreen screen)
             return ActionResult.Fail("Rewards screen not open.");
 
-        var proceedBtn = UIHelper.FindFirst<NProceedButton>((Node)screen);
-        if (proceedBtn == null) return ActionResult.Fail("No proceed button on rewards.");
+        if (NMapScreen.Instance is { IsOpen: true } && screen.IsComplete)
+            return ActionResult.Ok("Rewards complete; map is open.");
 
+        var proceedBtn = UIHelper.FindFirst<NProceedButton>((Node)screen);
+        if (proceedBtn == null)
+            return ActionResult.Fail("No proceed button on rewards.");
+
+        _log("DismissRewards: clicking proceed.");
+        await UIHelper.WaitUntil(
+            () => proceedBtn.IsEnabled || screen.IsComplete,
+            TimeSpan.FromSeconds(10));
         await UIHelper.Click(proceedBtn);
+        await UIHelper.WaitUntil(
+            () => !GodotObject.IsInstanceValid((Node)screen)
+                  || NOverlayStack.Instance?.Peek() != (IOverlayScreen)screen
+                  || (NMapScreen.Instance?.IsOpen ?? false),
+            TimeSpan.FromSeconds(10));
         return ActionResult.Ok("Dismissed rewards.");
     }
 

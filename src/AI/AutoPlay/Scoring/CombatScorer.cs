@@ -165,7 +165,8 @@ public static class CombatScorer {
         if (lowHp && (isSkill || isBlockCard) && needsBlock)
             builder.Add("low-hp-skill", 20);
 
-        if (IsSelfDamageCard(cardId) && hpRatio < 0.65f)
+        if (IsSelfDamageCard(cardId) && hpRatio < 0.65f
+            && !(hasBlock && needsBlock && blockValue >= netIncoming))
             builder.Add("self-dmg", -30);
 
         if (isAttack) {
@@ -297,7 +298,7 @@ public static class CombatScorer {
     static bool IsSelfDamageCard(string cardId) {
         var upper = cardId.ToUpperInvariant();
         return upper.Contains("HEMOKINESIS") || upper.Contains("BLOODLETTING")
-            || upper.Contains("OFFERING");
+            || upper.Contains("BLOOD_WALL") || upper.Contains("OFFERING");
     }
 
     static int TargetEnemyBonus(JsonArray? enemies, int targetIndex, int incoming) {
