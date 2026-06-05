@@ -55,15 +55,21 @@ internal static class MechanicCombatBonus {
         }
 
         if (profile.AppliedVulnerable > 0) {
-            var existing = CombatPowerReader.GetVulnerable(targetEnemy);
-            if (existing <= 0) {
-                var followup = CombatCardStats.EstimateFollowupAttackDamage(hand, energy);
-                bonus += CombatScoreWeights.VulnerableSetupBase
-                    + profile.AppliedVulnerable * CombatScoreWeights.VulnerablePerStack
-                    + followup / 3;
+            if (targetEnemy != null && EnemyTargetPriority.IsMinion(targetEnemy)
+                && EnemyTargetPriority.HasAliveNonMinion(snapshot["combat"]?["enemies"]?.AsArray())) {
+                bonus -= CombatScoreWeights.RedundantDebuffPenalty * 3;
             }
             else {
-                bonus -= CombatScoreWeights.RedundantDebuffPenalty;
+                var existing = CombatPowerReader.GetVulnerable(targetEnemy);
+                if (existing <= 0) {
+                    var followup = CombatCardStats.EstimateFollowupAttackDamage(hand, energy);
+                    bonus += CombatScoreWeights.VulnerableSetupBase
+                        + profile.AppliedVulnerable * CombatScoreWeights.VulnerablePerStack
+                        + followup / 3;
+                }
+                else {
+                    bonus -= CombatScoreWeights.RedundantDebuffPenalty;
+                }
             }
         }
 

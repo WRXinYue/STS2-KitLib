@@ -22,6 +22,9 @@ internal static class CombatSetupEvaluator {
             return 0;
         if (CombatPowerReader.GetVulnerable(targetEnemy) > 0)
             return 0;
+        if (targetEnemy != null && EnemyTargetPriority.IsMinion(targetEnemy)
+            && EnemyTargetPriority.HasAliveNonMinion(snapshot["combat"]?["enemies"]?.AsArray()))
+            return 0;
 
         var attackHand = vulnCardIndex >= 0 ? HandWithoutIndex(hand, vulnCardIndex) : hand;
         var immediateDamage = CapFollowupForTarget(
@@ -68,6 +71,9 @@ internal static class CombatSetupEvaluator {
         if (target == null)
             return 0;
         if (target.Vulnerable > 0)
+            return 0;
+
+        if (target.IsMinion && state.Enemies.Any(e => e.IsAlive && !e.IsMinion))
             return 0;
 
         if (ShouldSkipVulnerableForKillLine(state, handIndex, enemyIndex))
@@ -278,7 +284,13 @@ internal static class CombatSetupEvaluator {
             }
 
             int? killIdx = null;
-            foreach (var kv in hp.OrderBy(e => e.Value)) {
+            foreach (var kv in hp.OrderBy(e => {
+                var enemy = state.Enemies.FirstOrDefault(en => en.Index == e.Key);
+                return enemy?.IsMinion == true ? 1 : 0;
+            }).ThenByDescending(e => {
+                var enemy = state.Enemies.FirstOrDefault(en => en.Index == e.Key);
+                return enemy?.IntentDamage ?? 0;
+            }).ThenBy(e => e.Value)) {
                 if (damage >= kv.Value) {
                     killIdx = kv.Key;
                     break;
@@ -299,6 +311,9 @@ internal static class CombatSetupEvaluator {
     }
 
     static bool ShouldSkipVulnerableForKillLine(CombatState state, int vulnHandIndex, int vulnEnemyIndex) {
+        if (CanFocusKillPrimaryWithoutVuln(state, vulnHandIndex))
+            return true;
+
         if (state.AliveEnemyCount < 2)
             return false;
 
@@ -318,9 +333,131 @@ internal static class CombatSetupEvaluator {
             int damageWith = EstimateGreedyTotalDamage(afterVuln);
             if (damageWith <= damageWithout)
                 return true;
+
+            int incomingWithout = IncomingAfterGreedyAttacks(state, vulnHandIndex);
+            int incomingWith = IncomingAfterGreedyAttacks(afterVuln);
+            if (incomingWith > incomingWithout)
+                return true;
         }
 
         return false;
+    }
+
+    /// <summary>True when attacks (excluding vuln card) can kill the primary non-minion this turn.</summary>
+    static bool CanFocusKillPrimaryWithoutVuln(CombatState state, int excludeHandIndex) {
+        var primaryIdx = PrimaryAttackTargetIndex(state);
+        var primary = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == primaryIdx);
+        if (primary == null || primary.IsMinion)
+            return false;
+
+        var attacks = CollectGreedyAttacks(state, excludeHandIndex);
+        if (attacks.Count == 0)
+            return false;
+
+        int energy = state.Energy;
+        int total = 0;
+        foreach (var (_, cost, damage, _) in attacks) {
+            if (cost > energy)
+                continue;
+            energy -= cost;
+            total += CombatDamageCalc.OutgoingDamage(damage, state.Modifiers, primary.Vulnerable);
+            if (total >= primary.EffectiveHp)
+                return true;
+        }
+
+        return false;
+    }
+
+    static int IncomingAfterGreedyAttacks(CombatState state, int excludeHandIndex = -1) {
+        var after = SimulateGreedyAttacks(state, excludeHandIndex);
+        return ThreatModel.IncomingDamage(after);
+    }
+
+    static CombatState SimulateGreedyAttacks(CombatState state, int excludeHandIndex = -1) {
+        var s = state;
+        string? excludeId = excludeHandIndex >= 0 && excludeHandIndex < state.Hand.Count
+            ? state.Hand[excludeHandIndex].Id
+            : null;
+
+        bool played = true;
+        while (played) {
+            played = false;
+            int bestHand = -1;
+            int bestEnemy = -1;
+            int bestScore = int.MinValue;
+
+            for (int i = 0; i < s.Hand.Count; i++) {
+                var card = s.Hand[i];
+                if (excludeId != null && card.Id == excludeId)
+                    continue;
+                if (!CombatCardCost.CanAfford(card, s) || !card.IsAttack || card.Damage <= 0)
+                    continue;
+
+                if (card.IsAoe) {
+                    int score = CombatDamageCalc.OutgoingDamage(card, s) * s.AliveEnemyCount;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestHand = i;
+                        bestEnemy = -1;
+                    }
+
+                    continue;
+                }
+
+                foreach (var enemy in s.Enemies.Where(e => ThreatModel.IsViableAttackTarget(s, e))) {
+                    int dmg = CombatDamageCalc.OutgoingDamage(card, s, enemy.Vulnerable);
+                    if (dmg <= 0) continue;
+
+                    int score = dmg * 3;
+                    if (dmg >= enemy.EffectiveHp)
+                        score += 200;
+                    score += enemy.IntentDamage * 4;
+                    if (!enemy.IsMinion)
+                        score += 50;
+                    else
+                        score -= 30;
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestHand = i;
+                        bestEnemy = enemy.Index;
+                    }
+                }
+            }
+
+            if (bestHand < 0)
+                break;
+
+            s = CombatSimulator.Apply(s, new SimCombatAction(SimActionKind.PlayCard, bestHand, bestEnemy));
+            played = true;
+        }
+
+        return s;
+    }
+
+    static List<(int HandIndex, int Cost, int Damage, bool IsAoe)> CollectGreedyAttacks(
+        CombatState state,
+        int excludeHandIndex) {
+        var attacks = new List<(int, int, int, bool)>();
+        for (int i = 0; i < state.Hand.Count; i++) {
+            if (i == excludeHandIndex)
+                continue;
+
+            var card = state.Hand[i];
+            if (!CombatCardCost.CanAfford(card, state) || !card.IsAttack || card.Damage <= 0)
+                continue;
+
+            attacks.Add((
+                i,
+                CombatCardCost.EffectiveCost(card, state.Modifiers),
+                card.Damage,
+                card.IsAoe));
+        }
+
+        attacks.Sort((a, b) => CombatDamageCalc
+            .OutgoingDamage(b.Item3, state.Modifiers)
+            .CompareTo(CombatDamageCalc.OutgoingDamage(a.Item3, state.Modifiers)));
+        return attacks;
     }
 
     static int EstimateGreedyTotalDamage(CombatState state, int excludeHandIndex = -1) {

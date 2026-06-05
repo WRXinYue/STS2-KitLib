@@ -39,6 +39,11 @@ public static class EnemyTargetPriority {
         return enemies.Any(e => IsAlive(e?.AsObject()) && IsMinion(e?.AsObject()));
     }
 
+    public static bool HasAliveNonMinion(JsonArray? enemies) {
+        if (enemies == null) return false;
+        return enemies.Any(e => IsAlive(e?.AsObject()) && !IsMinion(e?.AsObject()));
+    }
+
     public static int TargetBias(JsonArray? enemies, int targetIndex) =>
         MinionEngagementPolicy.TargetBias(enemies, targetIndex);
 
