@@ -52,18 +52,24 @@ public static class CombatPlanner {
         var sw = Stopwatch.StartNew();
 
         BeamResult? best = null;
-        for (int depth = 3; depth <= config.MaxDepth; depth += 2) {
+        for (int depth = 5; depth <= config.MaxDepth; depth += 2) {
             if (sw.ElapsedMilliseconds >= config.TimeBudgetMs)
                 break;
 
             var result = RunBeam(state, depth, config, sw);
-            if (result.Path is { Count: > 0 })
+            if (result.HasResult)
                 best = result;
         }
 
         if (best is { Path: { Count: > 0 } path, Score: var beamScore, Depth: var beamDepth }) {
             var action = ToGameAction(path[0], state, $"Planner score={beamScore}");
             LogPick(snapshot, action, $"beam d={beamDepth} s={beamScore}");
+            return action;
+        }
+
+        if (best is { Path: { Count: 0 }, Score: var endOnlyScore }) {
+            var action = EndTurn($"Planner score={endOnlyScore}");
+            LogPick(snapshot, action, $"beam end s={endOnlyScore}");
             return action;
         }
 
@@ -92,7 +98,20 @@ public static class CombatPlanner {
                 foreach (var action in LegalActionGenerator.GenerateOrdered(node.State, config.MaxActionsPerNode)) {
                     if (action.Kind == SimActionKind.EndTurn) {
                         var afterTurn = CombatTurnResolver.ResolveEndTurn(node.State);
-                        int endScore = CombatEvaluator.EvaluateTerminal(afterTurn);
+                        if (afterTurn.AliveEnemyCount == 0) {
+                            int wipeScore = CombatEvaluator.EvaluateTerminal(afterTurn);
+                            if (wipeScore > bestScore) {
+                                bestScore = wipeScore;
+                                bestPath = node.Path;
+                                bestDepth = depth;
+                            }
+                            continue;
+                        }
+
+                        int postBudget = Math.Max(
+                            120,
+                            config.TimeBudgetMs - (int)sw.ElapsedMilliseconds);
+                        int endScore = PostTurnSimulator.ScoreLine(afterTurn, postBudget, sw);
                         if (endScore > bestScore) {
                             bestScore = endScore;
                             bestPath = node.Path;
@@ -159,7 +178,7 @@ public static class CombatPlanner {
     static GameAction? FindLethalPlay(CombatState state, int targetIndex) {
         for (int i = 0; i < state.Hand.Count; i++) {
             var card = state.Hand[i];
-            if (!card.CanPlay || !card.IsAttack || card.Cost > state.Energy) continue;
+            if (!card.IsAttack || !CombatCardCost.CanAfford(card, state)) continue;
             return ToGameAction(new SimCombatAction(SimActionKind.PlayCard, i, targetIndex), state, "Lethal attack");
         }
         return null;
@@ -185,14 +204,16 @@ public static class CombatPlanner {
 
     readonly record struct BeamNode(CombatState State, List<SimCombatAction> Path, int Score);
 
-    readonly record struct BeamResult(List<SimCombatAction>? Path, int Score, int Depth);
+    readonly record struct BeamResult(List<SimCombatAction>? Path, int Score, int Depth) {
+        public bool HasResult => Path != null && Score > int.MinValue;
+    }
 
     readonly record struct BeamConfig(int MaxDepth, int BeamWidth, int TimeBudgetMs, int MaxActionsPerNode) {
         public static BeamConfig ForHand(int playableCards) {
-            int depth = Math.Clamp(playableCards + 1, 6, 10);
-            int width = Math.Clamp(playableCards * 3, 14, 28);
-            int budget = playableCards >= 6 ? 320 : playableCards >= 4 ? 260 : 200;
-            int actions = Math.Clamp(playableCards * 4, 12, 36);
+            int depth = Math.Clamp(playableCards + 3, 10, 16);
+            int width = Math.Clamp(playableCards * 4, 24, 48);
+            int budget = playableCards >= 6 ? 650 : playableCards >= 4 ? 550 : 480;
+            int actions = Math.Clamp(playableCards * 5, 20, 56);
             return new(depth, width, budget, actions);
         }
     }

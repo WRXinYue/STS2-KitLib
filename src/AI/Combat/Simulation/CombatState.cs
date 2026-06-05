@@ -20,7 +20,9 @@ public sealed record CombatState(
     IReadOnlyList<CombatPileCard> DiscardPile,
     IReadOnlyList<CombatPileCard> ExhaustPile,
     IReadOnlyList<PlayerCombatModifier> Modifiers,
-    IReadOnlyList<CombatEnemy> Enemies) {
+    IReadOnlyList<CombatEnemy> Enemies,
+    uint ShuffleRngSeed = 0,
+    int ShuffleRngCounter = 0) {
 
     public int AliveEnemyCount => Enemies.Count(e => e.IsAlive);
 
@@ -40,10 +42,12 @@ public sealed record CombatState(
         var exhaust = ParsePile(combat?["exhaustPile"]?.AsArray());
         var modifiers = ParseModifiers(combat?["playerPowers"]?.AsArray());
         var enemies = ParseEnemies(combat?["enemies"]?.AsArray());
+        var (shuffleSeed, shuffleCounter) = ParseShuffleRng(combat?["rngShuffle"]?.AsObject());
 
         return new CombatState(
             hp, maxHp, block, energy, maxEnergy, statusDamage, turnNumber,
-            hand, draw, discard, exhaust, modifiers, enemies);
+            hand, draw, discard, exhaust, modifiers, enemies,
+            shuffleSeed, shuffleCounter);
     }
 
     public CombatState WithPlayer(int hp, int block, int energy) =>
@@ -66,6 +70,9 @@ public sealed record CombatState(
 
     public CombatState WithTurn(int turnNumber, int energy, int maxEnergy) =>
         this with { TurnNumber = turnNumber, Energy = energy, MaxEnergy = maxEnergy };
+
+    public CombatState WithShuffleRng(uint seed, int counter) =>
+        this with { ShuffleRngSeed = seed, ShuffleRngCounter = counter };
 
     public JsonArray ToHandJson() {
         var arr = new JsonArray();
@@ -92,16 +99,9 @@ public sealed record CombatState(
 
         foreach (var node in powers) {
             if (node is not JsonObject power) continue;
-            var id = (power["modelId"]?.GetValue<string>()
-                ?? power["id"]?.GetValue<string>() ?? "").ToUpperInvariant();
-            if (id.Contains("SHRINK", StringComparison.Ordinal))
-                mods.Add(PlayerCombatModifier.Shrink());
-            else if (id.Contains("SMOG", StringComparison.Ordinal))
-                mods.Add(PlayerCombatModifier.Smoggy());
-            else if (id.Contains("TANGLE", StringComparison.Ordinal))
-                mods.Add(PlayerCombatModifier.Tangled());
-            else if (id.Contains("CHAIN", StringComparison.Ordinal) && id.Contains("BIND", StringComparison.Ordinal))
-                mods.Add(PlayerCombatModifier.ChainsOfBinding());
+            var mapped = PlayerCombatModifierRegistry.FromSnapshot(power);
+            if (mapped != null)
+                mods.Add(mapped);
         }
 
         return mods;
@@ -165,7 +165,8 @@ public sealed record CombatState(
                 nonDamage,
                 e["summonerIndex"]?.GetValue<int>() ?? -1,
                 e["monsterId"]?.GetValue<string>() ?? "",
-                e["nextMoveId"]?.GetValue<string>() ?? ""));
+                e["nextMoveId"]?.GetValue<string>() ?? "",
+                ActOrder: i));
         }
 
         return enemies;
@@ -201,6 +202,13 @@ public sealed record CombatState(
         }
 
         return types.ToArray();
+    }
+
+    static (uint Seed, int Counter) ParseShuffleRng(JsonObject? rng) {
+        if (rng == null) return (0, 0);
+        var seed = rng["seed"]?.GetValue<uint>() ?? 0;
+        var counter = rng["counter"]?.GetValue<int>() ?? 0;
+        return (seed, counter);
     }
 
     static int EstimateStatusDamage(JsonArray? powers) {

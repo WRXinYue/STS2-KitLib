@@ -17,7 +17,7 @@ internal static class CombatActionHeuristic {
             return int.MinValue;
 
         var card = state.Hand[action.HandIndex];
-        if (!card.CanPlay || card.Cost > state.Energy)
+        if (!CombatCardCost.CanAfford(card, state))
             return int.MinValue;
 
         if (CombatTransformSimulator.IsHandAttackTransform(card.Profile))

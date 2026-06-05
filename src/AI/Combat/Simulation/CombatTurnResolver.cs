@@ -14,12 +14,13 @@ public static class CombatTurnResolver {
         var exhaust = state.ExhaustPile.ToList();
         var modifiers = state.Modifiers.ToList();
         var enemies = state.Enemies.ToList();
+        var rngCounter = state.ShuffleRngCounter;
 
         var (retained, newDiscard) = CombatPileSimulator.DiscardHand(state.Hand, discard);
         discard = newDiscard;
         block = 0;
 
-        foreach (var enemy in enemies.OrderBy(e => e.Index).ToList()) {
+        foreach (var enemy in enemies.OrderBy(e => e.ActOrder).ToList()) {
             if (!enemy.IsAlive) continue;
 
             var moveId = string.IsNullOrWhiteSpace(enemy.NextMoveId)
@@ -34,10 +35,12 @@ public static class CombatTurnResolver {
                         break;
                     case MonsterMoveEffectKind.StatusInject:
                         if (!string.IsNullOrWhiteSpace(effect.CardId) && effect.Count > 0) {
-                            if (string.Equals(effect.Pile, "Draw", StringComparison.OrdinalIgnoreCase))
-                                draw = CombatPileSimulator.InjectStatus(draw, effect.CardId, effect.Count);
-                            else
-                                discard = CombatPileSimulator.InjectStatus(discard, effect.CardId, effect.Count);
+                            (draw, discard, rngCounter) = ApplyStatusInject(
+                                draw,
+                                discard,
+                                effect,
+                                state.ShuffleRngSeed,
+                                rngCounter);
                         }
                         break;
                     case MonsterMoveEffectKind.Summon:
@@ -75,11 +78,15 @@ public static class CombatTurnResolver {
             ThreatModel.OnPrimaryEnemyKilled(enemies, i);
         }
 
-        var (hand, drawAfter, discardAfter) = CombatPileSimulator.DrawHand(
+        (List<CombatHandCard> hand, List<CombatPileCard> drawAfter, List<CombatPileCard> discardAfter, int drawCounter) =
+            CombatPileSimulator.DrawHand(
             retained,
             draw,
             discard,
-            CombatPileSimulator.BaseHandDrawCount);
+            CombatPileSimulator.BaseHandDrawCount,
+            state.ShuffleRngSeed,
+            rngCounter);
+        rngCounter = drawCounter;
 
         return state with {
             PlayerHp = Math.Max(0, hp),
@@ -92,6 +99,7 @@ public static class CombatTurnResolver {
             ExhaustPile = exhaust,
             Modifiers = modifiers,
             Enemies = enemies,
+            ShuffleRngCounter = rngCounter,
         };
     }
 
@@ -107,22 +115,34 @@ public static class CombatTurnResolver {
         return (Math.Max(0, hp - net), newBlock);
     }
 
-    static PlayerCombatModifier MapPowerModifier(MonsterMoveEffect effect) {
-        if (string.Equals(effect.PowerId, "SHRINK", StringComparison.OrdinalIgnoreCase))
-            return PlayerCombatModifier.Shrink();
-        if (string.Equals(effect.PowerId, "SMOGGY", StringComparison.OrdinalIgnoreCase))
-            return PlayerCombatModifier.Smoggy();
-        if (string.Equals(effect.PowerId, "TANGLED", StringComparison.OrdinalIgnoreCase))
-            return PlayerCombatModifier.Tangled();
-        if (string.Equals(effect.PowerId, "CHAINS_OF_BINDING", StringComparison.OrdinalIgnoreCase))
-            return PlayerCombatModifier.ChainsOfBinding();
+    static PlayerCombatModifier MapPowerModifier(MonsterMoveEffect effect) =>
+        PlayerCombatModifierRegistry.FromMoveEffect(effect);
 
-        return new PlayerCombatModifier(
-            effect.PowerId ?? "UNKNOWN",
-            effect.AttackDamageMultiplier,
-            effect.SkillCostPenalty,
-            effect.AttackCostPenalty,
-            effect.BoundCardsPerTurn);
+    static (List<CombatPileCard> draw, List<CombatPileCard> discard, int rngCounter) ApplyStatusInject(
+        List<CombatPileCard> draw,
+        List<CombatPileCard> discard,
+        MonsterMoveEffect effect,
+        uint shuffleSeed,
+        int rngCounter) {
+        var pile = effect.Pile ?? "Discard";
+        bool random = pile.Contains("Random", StringComparison.OrdinalIgnoreCase);
+        var target = pile.Replace("Random", "", StringComparison.OrdinalIgnoreCase);
+
+        if (string.Equals(target, "Draw", StringComparison.OrdinalIgnoreCase)) {
+            if (random)
+                (draw, rngCounter) = CombatPileSimulator.InjectStatusAtRandom(
+                    draw, effect.CardId!, effect.Count, shuffleSeed, rngCounter);
+            else
+                draw = CombatPileSimulator.InjectStatus(draw, effect.CardId!, effect.Count);
+            return (draw, discard, rngCounter);
+        }
+
+        if (random)
+            (discard, rngCounter) = CombatPileSimulator.InjectStatusAtRandom(
+                discard, effect.CardId!, effect.Count, shuffleSeed, rngCounter);
+        else
+            discard = CombatPileSimulator.InjectStatus(discard, effect.CardId!, effect.Count);
+        return (draw, discard, rngCounter);
     }
 
     static CombatEnemy AdvanceEnemyIntent(CombatEnemy enemy) {

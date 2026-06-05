@@ -42,6 +42,10 @@ public static class CombatDecisionLog {
             sb.Append(FormatTargetBias(combat?["enemies"]?.AsArray(), enemyIndex));
         if (!string.IsNullOrWhiteSpace(searchNote))
             sb.Append(' ').Append(searchNote);
+        if (picked.Type == ActionType.EndTurn) {
+            var afterTurn = CombatTurnResolver.ResolveEndTurn(CombatState.FromSnapshot(snapshot));
+            sb.Append(' ').Append(FormatPostEndTurnPreview(afterTurn));
+        }
 
         var alts = ranked
             .Where(x => x.Action.Type != picked.Type
@@ -69,8 +73,14 @@ public static class CombatDecisionLog {
         var junk = DeckPollutionEvaluator.JunkCount(state);
         var poll = DeckPollutionEvaluator.ProjectedPollutionCost(state);
         var play = DeckPollutionEvaluator.ExpectedPlayableDamage(state);
-        return $"IN={incoming} ND={nonDamage} NXT={next} JUNK={junk} POLL={poll} PLAY={play}";
+        var peek = DrawPlanner.FormatPeekSummary(state);
+        var reshuf = DrawPlanner.WillReshuffle(state, CombatPileSimulator.BaseHandDrawCount) ? 1 : 0;
+        var outlook = PileRhythmEvaluator.DrawPileOutlook(state);
+        return $"IN={incoming} ND={nonDamage} NXT={next} JUNK={junk} POLL={poll} PLAY={play} {peek} RESHUF={reshuf} OUTLOOK={outlook}";
     }
+
+    internal static string FormatPostEndTurnPreview(CombatState afterTurn) =>
+        $"POST_PLAY={DeckPollutionEvaluator.ExpectedPlayableDamage(afterTurn)} POST_BLK={DeckPollutionEvaluator.ExpectedPlayableBlock(afterTurn)}";
 
     static string FormatTargetBias(JsonArray? enemies, int targetIndex) {
         if (enemies == null || targetIndex < 0 || targetIndex >= enemies.Count)

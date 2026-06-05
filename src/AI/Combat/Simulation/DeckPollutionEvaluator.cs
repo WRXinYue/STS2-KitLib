@@ -38,8 +38,7 @@ public static class DeckPollutionEvaluator {
         int total = 0;
         foreach (var card in state.Hand) {
             if (!card.IsAttack || card.Damage <= 0) continue;
-            if (card.Cost > state.Energy) continue;
-            if (!card.CanPlay) continue;
+            if (!CombatCardCost.CanAfford(card, state)) continue;
 
             var damage = card.Damage;
             foreach (var mod in state.Modifiers)
@@ -55,14 +54,8 @@ public static class DeckPollutionEvaluator {
         foreach (var card in state.Hand) {
             if (!card.IsSkill || card.Block <= 0) continue;
 
-            var cost = card.Cost;
-            foreach (var mod in state.Modifiers) {
-                if (card.IsSkill)
-                    cost += mod.SkillCostPenalty;
-            }
-
-            if (cost > state.Energy) continue;
-            total += card.Block;
+            if (CombatCardCost.EffectiveCost(card, state.Modifiers) > state.Energy) continue;
+            total += CombatCardCost.EffectiveBlock(card.Block, state.Modifiers);
         }
 
         return total;

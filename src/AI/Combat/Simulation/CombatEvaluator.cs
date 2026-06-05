@@ -18,6 +18,7 @@ public static class CombatEvaluator {
         score -= state.StatusDamage * 2;
         score -= ThreatEconomy.TotalPressure(state) / 4;
         score += DeckPollutionEvaluator.ExpectedPlayableDamage(state) / 2;
+        score += PileRhythmEvaluator.RemainingTurnPotential(state) / 4;
 
         foreach (var enemy in state.Enemies) {
             if (!enemy.IsAlive) continue;
@@ -65,7 +66,8 @@ public static class CombatEvaluator {
         score -= ThreatModel.NextTurnIncoming(state);
         score -= DeckPollutionEvaluator.ImmediatePollutionCost(state) / 2;
         score += DeckPollutionEvaluator.ExpectedPlayableDamage(state);
-        score -= state.Energy * 5;
+        score += DeckPollutionEvaluator.ExpectedPlayableBlock(state) / 2;
+        score += PileRhythmEvaluator.DrawPileOutlook(state) / 3;
         score -= CombatSetupEvaluator.ComputeSetupDebt(state);
 
         return score;

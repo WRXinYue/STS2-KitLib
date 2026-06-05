@@ -15,13 +15,18 @@ public static class CombatSimulator {
             return state;
 
         var card = state.Hand[action.HandIndex];
-        if (!card.CanPlay || card.Cost > state.Energy)
+        if (!CombatCardCost.CanAfford(card, state))
             return state;
 
-        var energy = state.Energy - card.Cost;
+        var energy = state.Energy - CombatCardCost.EffectiveCost(card, state.Modifiers);
         var hand = state.Hand.ToList();
+        var draw = state.DrawPile.ToList();
+        var discard = state.DiscardPile.ToList();
+        var exhaust = state.ExhaustPile.ToList();
         var enemies = state.Enemies.ToList();
         var block = state.PlayerBlock;
+        var rngCounter = state.ShuffleRngCounter;
+        var pileEffects = CardPileEffectResolver.ResolveAll(card.Id);
 
         if (CombatTransformSimulator.IsHandAttackTransform(card.Profile)) {
             hand = ApplyHandTransform(hand, action.HandIndex);
@@ -37,25 +42,122 @@ public static class CombatSimulator {
                 ApplySingleDamage(enemies, action.EnemyIndex, card.Damage);
         }
 
-        if (card.Profile.AppliedVulnerable > 0) {
+        if (card.Profile.AppliedVulnerable > 0)
             ApplyDebuff(enemies, action, card.IsAoe, "VULNERABLE", card.Profile.AppliedVulnerable);
-        }
 
-        if (card.Profile.AppliedWeak > 0) {
+        if (card.Profile.AppliedWeak > 0)
             ApplyDebuff(enemies, action, card.IsAoe, "WEAK", card.Profile.AppliedWeak);
-        }
 
         if (card.IsSkill) {
             if (card.Block > 0)
-                block += card.Block;
+                block += CombatCardCost.EffectiveBlock(card.Block, state.Modifiers);
             else if (!MechanicCombatBonus.IsSetupSkill(card.Profile))
                 block += 5;
         }
 
+        var pileCard = CombatPileSimulator.HandToPile(card);
+        if (card.HasExhaust || card.Profile.Flags.HasFlag(CardMechanicFlags.Exhaust))
+            exhaust = CombatPileSimulator.AddToBottom(exhaust, pileCard);
+        else
+            discard = CombatPileSimulator.AddToBottom(discard, pileCard);
+
+        if (pileEffects.Discard > 0)
+            (hand, discard) = DiscardFromHand(hand, discard, pileEffects.Discard, state);
+
+        if (pileEffects.Draw > 0) {
+            (hand, draw, discard, rngCounter) = CombatPileSimulator.DrawCards(
+                hand, draw, discard, pileEffects.Draw,
+                state.ShuffleRngSeed, rngCounter);
+        } else {
+            hand = ReindexHand(hand);
+        }
+
+        if (pileEffects.Scry > 0)
+            draw = ApplyScry(draw, pileEffects.Scry);
+
+        (draw, discard) = CombatPileManipulator.ApplyOnPlay(state, card.Id, draw, discard);
+
         return state
             .WithPlayer(state.PlayerHp, block, energy)
             .WithHand(hand)
-            .WithEnemies(enemies);
+            .WithEnemies(enemies)
+            .WithPiles(draw, discard, exhaust)
+            .WithShuffleRng(state.ShuffleRngSeed, rngCounter);
+    }
+
+    static (List<CombatHandCard> hand, List<CombatPileCard> discard) DiscardFromHand(
+        List<CombatHandCard> hand,
+        List<CombatPileCard> discard,
+        int count,
+        CombatState state) {
+        for (int i = 0; i < count && hand.Count > 0; i++) {
+            int idx = PickWorstHandIndex(hand, state);
+            if (idx < 0) break;
+            discard = CombatPileSimulator.AddToBottom(discard, CombatPileSimulator.HandToPile(hand[idx]));
+            hand.RemoveAt(idx);
+        }
+
+        return (ReindexHand(hand), discard);
+    }
+
+    static int PickWorstHandIndex(List<CombatHandCard> hand, CombatState state) {
+        int worst = -1;
+        int worstScore = int.MaxValue;
+        var incoming = ThreatModel.IncomingDamage(state);
+
+        for (int i = 0; i < hand.Count; i++) {
+            var c = hand[i];
+            if (c.HasRetain) continue;
+
+            int score = 0;
+            if (c.IsAttack && c.Damage > 0)
+                score += c.Damage * 2 + (incoming > 0 ? 6 : 0);
+            score += c.Block;
+            if (c.Cost <= state.Energy)
+                score += 3;
+
+            if (score < worstScore) {
+                worstScore = score;
+                worst = i;
+            }
+        }
+
+        return worst >= 0 ? worst : hand.Count > 0 ? 0 : -1;
+    }
+
+    static List<CombatPileCard> ApplyScry(List<CombatPileCard> draw, int scryCount) {
+        if (scryCount <= 0 || draw.Count == 0)
+            return draw;
+
+        var pile = draw.ToList();
+        int window = Math.Min(scryCount, pile.Count);
+        int worstIdx = 0;
+        int worstScore = int.MaxValue;
+
+        for (int i = 0; i < window; i++) {
+            int score = PileCardUtility(pile[i]);
+            if (score < worstScore) {
+                worstScore = score;
+                worstIdx = i;
+            }
+        }
+
+        var bottom = pile[worstIdx];
+        pile.RemoveAt(worstIdx);
+        pile.Add(bottom);
+        return pile;
+    }
+
+    static int PileCardUtility(CombatPileCard card) {
+        if (card.IsStatus) return -20;
+        return card.Damage + card.Block - card.Cost;
+    }
+
+    static List<CombatHandCard> ReindexHand(List<CombatHandCard> hand) {
+        var result = new List<CombatHandCard>(hand.Count);
+        for (int i = 0; i < hand.Count; i++)
+            result.Add(hand[i] with { HandIndex = i });
+        return result;
     }
 
     static List<CombatHandCard> ApplyHandTransform(List<CombatHandCard> hand, int skillIndex) {
@@ -80,7 +182,7 @@ public static class CombatSimulator {
                 });
         }
 
-        return result;
+        return ReindexHand(result);
     }
 
     static void ApplyAoeDamage(List<CombatEnemy> enemies, int damage) {
@@ -138,5 +240,4 @@ public static class CombatSimulator {
             return;
         }
     }
-
 }

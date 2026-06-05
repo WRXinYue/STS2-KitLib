@@ -26,7 +26,7 @@ public static class LegalActionGenerator {
     static IEnumerable<SimCombatAction> GenerateRaw(CombatState state) {
         for (int i = 0; i < state.Hand.Count; i++) {
             var card = state.Hand[i];
-            if (!card.CanPlay || card.Cost > state.Energy) continue;
+            if (!CombatCardCost.CanAfford(card, state)) continue;
 
             if (card.IsAoe || card.TargetType is "AllEnemy") {
                 yield return new SimCombatAction(SimActionKind.PlayCard, i, -1);

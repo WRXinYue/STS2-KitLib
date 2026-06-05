@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
+using DevMode.AI.Combat.Simulation;
 
 namespace DevMode.AI.Combat;
 
@@ -23,7 +24,7 @@ public static class LethalChecker {
             var damageNeeded = hp + block;
             if (damageNeeded <= 0) continue;
 
-            if (EstimateMaxDamage(hand, energy, t) >= damageNeeded) {
+            if (LethalDamageSolver.MaxSingleTargetDamage(hand, energy, t, enemies) >= damageNeeded) {
                 targetIndex = t;
                 return true;
             }
@@ -32,27 +33,8 @@ public static class LethalChecker {
         return false;
     }
 
-    public static int EstimateMaxDamage(JsonArray hand, int energy, int targetIndex) {
-        var attacks = hand
-            .Select((node, i) => (Index: i, Card: node?.AsObject()))
-            .Where(x => x.Card != null && IsAttack(x.Card!))
-            .Select(x => (
-                x.Index,
-                Cost: x.Card!["cost"]?.GetValue<int>() ?? 99,
-                Damage: CombatCardStats.ResolveDamage(x.Card!)))
-            .OrderByDescending(x => x.Damage)
-            .ToList();
-
-        var remaining = energy;
-        var total = 0;
-        foreach (var atk in attacks) {
-            if (atk.Cost > remaining) continue;
-            remaining -= atk.Cost;
-            total += atk.Damage;
-        }
-
-        return total;
-    }
+    public static int EstimateMaxDamage(JsonArray hand, int energy, int targetIndex, JsonArray? enemies = null) =>
+        LethalDamageSolver.MaxSingleTargetDamage(hand, energy, targetIndex, enemies);
 
     public static bool CanLethalAfterTransform(JsonObject snapshot, out int targetIndex, out int transformIndex) {
         targetIndex = -1;
@@ -84,7 +66,7 @@ public static class LethalChecker {
             var damageNeeded = hp + block;
             if (damageNeeded <= 0) continue;
 
-            if (EstimateMaxDamage(projected, energyAfter, t) >= damageNeeded) {
+            if (LethalDamageSolver.MaxSingleTargetDamage(projected, energyAfter, t, enemies) >= damageNeeded) {
                 targetIndex = t;
                 return true;
             }

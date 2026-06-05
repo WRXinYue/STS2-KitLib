@@ -17,7 +17,7 @@ public static class AoeDamageEstimator {
     public static int MaxAoeDamage(CombatState state) {
         int best = 0;
         foreach (var card in state.Hand) {
-            if (!card.CanPlay || card.Cost > state.Energy) continue;
+            if (!CombatCardCost.CanAfford(card, state)) continue;
             if (!card.IsAttack || !card.IsAoe) continue;
             best = Math.Max(best, card.Damage);
         }
@@ -41,7 +41,7 @@ public static class AoeDamageEstimator {
 
         for (int i = 0; i < state.Hand.Count; i++) {
             var card = state.Hand[i];
-            if (!card.CanPlay || card.Cost > state.Energy) continue;
+            if (!CombatCardCost.CanAfford(card, state)) continue;
             if (!card.IsAttack || !card.IsAoe) continue;
             if (card.Damage <= 0) continue;
 

@@ -212,6 +212,54 @@
           "pile": "Discard"
         }
       ]
+    },
+    "NOISEBOT": {
+      "NOISE_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "DAZED",
+          "count": 1,
+          "pile": "Discard"
+        },
+        {
+          "kind": "StatusInject",
+          "cardId": "DAZED",
+          "count": 1,
+          "pile": "DrawRandom"
+        }
+      ]
+    },
+    "SOUL_FYSH": {
+      "BECKON_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "BECKON",
+          "count": 1,
+          "pile": "DrawRandom"
+        },
+        {
+          "kind": "StatusInject",
+          "cardId": "BECKON",
+          "count": 1,
+          "pile": "Discard"
+        }
+      ]
+    },
+    "THE_INSATIABLE": {
+      "LIQUIFY_GROUND_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "FRANTIC_ESCAPE",
+          "count": 3,
+          "pile": "DrawRandom"
+        },
+        {
+          "kind": "StatusInject",
+          "cardId": "FRANTIC_ESCAPE",
+          "count": 3,
+          "pile": "DiscardRandom"
+        }
+      ]
     }
   }
 }

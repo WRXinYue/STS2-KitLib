@@ -17,7 +17,8 @@ public sealed record CombatEnemy(
     int NonDamageThreat = 0,
     int SummonerIndex = -1,
     string MonsterId = "",
-    string NextMoveId = "") {
+    string NextMoveId = "",
+    int ActOrder = 0) {
     public int EffectiveHp => CurrentHp + Block;
 
     /// <summary>HP damage this turn — debuff/summon pressure uses <see cref="NonDamageThreat"/> separately.</summary>

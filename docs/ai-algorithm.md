@@ -75,6 +75,9 @@ flowchart TD
 | `currentEnergy` | 当前能量 |
 | `playerBlock` | 玩家格挡 |
 | `hand[]` | 手牌（canPlay、cost、damage、block、targetType） |
+| `drawPile[]` / `discardPile[]` / `exhaustPile[]` | 牌堆顺序（index 0 = 顶） |
+| `rngShuffle` | `{ seed, counter }` — 官方 `RunRngType.Shuffle` 流，用于模拟回洗 |
+| `turnNumber` | 战斗回合数（`CombatState.RoundNumber`） |
 | `enemies[]` | 敌人 HP、block、intentDamage、intentBlock、isAlive、`intentSteps[]`（下 1–2 回合预测） |
 
 ### 阶段扩展（`GameSnapshotPhaseCapture`）
@@ -621,7 +624,7 @@ flowchart LR
 | 塞牌 vs 攻击不同尺 | 挡牌应对 debuff/塞牌 | `EffectiveIncoming` 仅攻击；污染 EV 单独计入 `POLL=` |
 | 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | `monster-move-effects.json`（官方 handler 提取）+ `MonsterMechanicProfile.effects[]` |
 
-**已知局限**（不假装完美）：敌人行动顺序为固定索引序（非完整协程时序）；抽牌为**确定性**顺序（无 RNG 分支）；仅白名单 power（Shrink/Smog/Tangle/Bind）；`SimLethalChecker.EstimateMaxDamage` 为贪心上界。
+**已知局限**（不假装完美）：敌人行动顺序按快照 `enemies[]` 列表序（`ActOrder`），非完整协程时序；回洗 / Random 注入在无 `rngShuffle` seed 时用牌堆哈希确定性 RNG（与官方战斗 RNG 可能不一致）；Swipe / Confused 等非确定性 power 仍跳过；未建模的 player power 忽略。
 
 | 类型 | 职责 |
 | --- | --- |
@@ -631,7 +634,13 @@ flowchart LR
 | `DeckPollutionEvaluator` | 堆内废牌数、`ProjectedPollutionCost`、`ExpectedPlayableDamage` |
 | `ThreatEconomy` | HP + 污染 + power debuff 同尺比较；`KillBeforeHitBonus` |
 | `LegalActionGenerator` | 枚举合法动作；幻象爪牙在主体存活时不可攻击 |
-| `CombatSimulator` | `Apply(action)` 出牌模拟；`EndTurn` 委托 `CombatTurnResolver` |
+| `CombatSimulator` | `Apply(action)` 出牌模拟（弃牌/消耗/抽牌/控顶）；`EndTurn` 委托 `CombatTurnResolver` |
+| `DrawPlanner` | 顶牌 `PeekTop`、`WillReshuffle`、抽牌堆期望伤害/格挡 |
+| `CombatPileManipulator` | Headbutt 等：与 `AiCombatCardSelector` 同尺 `CombatDiscardPickScorer` 选弃牌堆顶牌 |
+| `PlayerCombatModifierRegistry` | 快照 / move effect → Shrink/Smog/Tangle/Bind/Weak/Frail 等战斗修正 |
+| `PostTurnSimulator` | EndTurn 前完整下回合 mini-beam（职业级节奏） |
+| `CardPileEffectResolver` | 官方 DynamicVar → draw/discard/scry 数量 |
+| `PileRhythmEvaluator` | 顶牌视野 + 回洗风险的牌堆节奏分 |
 | `ThreatModel` | `Incoming` = 仅 `intentDamage`；`ScaledNonDamagePressure` → `ThreatEconomy` |
 | `AoeDamageEstimator` | 群伤斩杀判定、`FindBestAoeLethalAction` |
 | `CombatEvaluator` | 叶节点效用含 `ThreatEconomy` 与 `ExpectedPlayableDamage` |
@@ -641,16 +650,30 @@ flowchart LR
 
 | 参数 | 典型值 |
 | --- | --- |
-| 时间预算 | 200–320 ms |
-| 最大深度 | 6–10（玩家出牌步，不含敌人回合） |
-| Beam 宽度 | 14–28 |
-| 每节点展开上限 | 12–36（`GenerateOrdered` 启发式截断） |
+| 时间预算 | 480–650 ms |
+| 最大深度 | 10–16（玩家出牌步，不含敌人回合） |
+| Beam 宽度 | 24–48 |
+| 每节点展开上限 | 20–56（`GenerateOrdered` 启发式截断） |
+| 下回合模拟 | `PostTurnSimulator` 独立 mini-beam（打满下回合能量） |
 
 `CombatActionHeuristic` 为 beam 排序：斩杀目标 > 易伤 setup > 挡牌 > 攻击；负收益变形剪枝。叶节点用 `EvaluateTerminal`（模拟回合结束受伤）区分「先挡后打」与「裸结束」。
 
 **快捷路径**（在 beam 之前）：`SimLethalChecker.CanLethalAfterTransform` → `AoeDamageEstimator` 群杀 → `CanLethal`；**`ShouldSuppressTransform` 为 true 时跳过**（有 incoming 且非安全斩杀时不抢先变形/攻击）。
 
-**故意不模拟**（L3 后仍保留）：抽牌 RNG / 精确 shuffle、ThievingHopper 偷牌、完整 Hook 链、多玩家时序。已模拟：draw/discard/exhaust 牌面、确定性抽 5、`StatusInject` 塞牌、`Summon` 虚拟单位、白名单 power debuff。
+**L4 打牌节奏**（pile + shuffle + beam）：
+
+- 抽牌堆非空时：`DrawPlanner.PeekTop` 精确预知下 N 张；`CombatSimulator` 出牌更新 discard/exhaust。
+- 抽牌堆空且弃牌堆非空：`CombatPileSimulator.ReshuffleIfNeeded` 使用官方 `StableShuffle(Rng.Shuffle)`，beam 分支各自携带 `ShuffleRngCounter`。
+- 日志：`NEXT=` 顶牌、`RESHUF=1` 将回洗、`POST_PLAY=` / `POST_BLK=` 过回合后新手牌期望、`OUTLOOK=` 牌堆节奏价值。
+
+**L5 职业级模拟**（pro pile + full next-turn beam）：
+
+- `PostTurnSimulator`：`EndTurn` 评分前对**整段下回合**做 mini-beam（打满能量或无可出牌），而非仅 2 张。
+- `CardPileEffectResolver`：从官方 `DynamicVars` 解析 draw/discard/scry 数量；`CombatSimulator` 模拟弃牌、窥视沉底。
+- `PileRhythmEvaluator`：10 张顶牌视野 + 回洗污染惩罚，接入 `EvaluateMidTurn` / `EvaluateTerminal`。
+- **Beam 参数（职业级）**：深度 10–16、宽度 24–48、预算 480–650 ms；迭代加深从 depth 5 起。
+
+**故意不模拟**（L4 后仍保留）：ThievingHopper 偷牌、完整 Hook 链、多玩家时序、Scry UI、Innate/PerfectFit 回合初排序。已模拟：draw/discard/exhaust 牌面、官方 shuffle RNG、确定性顶抽、`StatusInject` 塞牌、`Summon`、控顶启发式、白名单 power debuff。
 
 **效果数据**：`tools/monster-move-effect-dump/extract-move-effects.py` 从官方 `Monsters/*.cs` 提取 `AddToCombatAndPreview` / `CreatureCmd.Add` / `PowerCmd.Apply`；嵌入 `src/AI/Data/monster-move-effects.json`。
 
@@ -658,7 +681,7 @@ flowchart LR
 
 快照 enrich：`GameSnapshot.CaptureEnemies` 调用 `MonsterIntentReader.CaptureIntentSteps`，每敌最多 3 步 `{ moveId, intentDamage, intentTypes[], nonDamageThreat, isUncertain }`。
 
-**战斗日志**（`AiCombatVerboseLog`）：`CombatDecisionLog` 输出 `IN=` / `ND=` / `NXT=` / `JUNK=` / `POLL=` / `PLAY=` 与 `tgt= bias= flags=` 便于 bench 调参。
+**战斗日志**（`AiCombatVerboseLog`）：`CombatDecisionLog` 输出 `IN=` / `ND=` / `NXT=` / `JUNK=` / `POLL=` / `PLAY=` / `NEXT=` / `RESHUF=` / `POST_PLAY=` 与 `tgt= bias= flags=` 便于 bench 调参。
 
 `CombatScorer` 保留为 **fallback**（beam 无结果时）及 mod `IAiMoveModifier` 单步估价基线。
 

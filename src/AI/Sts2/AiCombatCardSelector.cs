@@ -8,6 +8,7 @@ using DevMode.AI.Knowledge;
 using DevMode.AI.Planning;
 using DevMode.AI.Sts2.Snapshots;
 using DevMode.Actions;
+using DevMode.AI.Combat.Simulation;
 using MegaCrit.Sts2.Core.Entities.CardRewardAlternatives;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
@@ -42,13 +43,17 @@ internal sealed class AiCombatCardSelector : ICardSelector {
         var context = BuildContext();
         var isUpgrade = list.All(c => c.IsUpgradable);
 
+        bool topDeckPick = !isUpgrade && CombatDiscardPickScorer.IsTopDeckPickFromDiscard(list, count);
         var ranked = isUpgrade
             ? list.Where(c => c.CurrentUpgradeLevel < c.MaxUpgradeLevel
                 && !CombatCardSelectScoring.IsStatusOrCurse(c, c.Id.Entry ?? ""))
                 .OrderByDescending(c => CombatCardSelectScoring.UpgradeScore(c, context))
                 .ThenByDescending(c => (int)c.Rarity)
-            : list.OrderBy(c => CombatCardSelectScoring.KeepScore(c, context))
-                .ThenBy(c => c.EnergyCost.Canonical);
+            : topDeckPick
+                ? list.OrderByDescending(c => CombatCardSelectScoring.KeepScore(c, context))
+                    .ThenBy(c => c.EnergyCost.Canonical)
+                : list.OrderBy(c => CombatCardSelectScoring.KeepScore(c, context))
+                    .ThenBy(c => c.EnergyCost.Canonical);
 
         var picked = ranked.Take(count).ToList();
         LogPick(isUpgrade ? "upgrade" : "exhaust/discard", picked, context);

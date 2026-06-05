@@ -25,6 +25,8 @@ internal static class CombatSummonFactory {
         var steps = BuildIntentSteps(profile, 3);
         var first = steps.Length > 0 ? steps[0] : null;
 
+        int actOrder = existing.Count == 0 ? 0 : existing.Max(e => e.ActOrder) + 1;
+
         return new CombatEnemy(
             newIndex,
             DefaultHp(spawnMonsterId),
@@ -40,7 +42,8 @@ internal static class CombatSummonFactory {
             first?.NonDamageThreat ?? 0,
             summonerIndex,
             spawnMonsterId,
-            first?.MoveId ?? "");
+            first?.MoveId ?? "",
+            actOrder);
     }
 
     static int DefaultHp(string monsterId) =>

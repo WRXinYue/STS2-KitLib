@@ -45,6 +45,12 @@
       "encounterId": "SHRINKER_BEETLE",
       "note": "DebuffStrong shrink is power debuff not block trigger; IN=0 on debuff turn.",
       "logPatterns": ["IN=0", "flags=HasDebuffIntent"]
+    },
+    {
+      "id": "deck_rhythm_shuffle",
+      "encounterId": "LEAF_SLIME_M",
+      "note": "Draw-pile peek and reshuffle scoring; rush before RESHUF=1 fills hand with Slimed.",
+      "logPatterns": ["NEXT=", "RESHUF=", "POST_PLAY=", "OUTLOOK="]
     }
   ]
 }

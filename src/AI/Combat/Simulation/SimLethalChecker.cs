@@ -12,7 +12,7 @@ public static class SimLethalChecker {
                      .ThenBy(e => e.CurrentHp)) {
             if (!enemy.IsAlive) continue;
             if (LethalExclusions.ShouldSkip(enemy)) continue;
-            if (EstimateMaxDamage(state) < enemy.EffectiveHp) continue;
+            if (LethalDamageSolver.MaxSingleTargetDamage(state, enemy.Index) < enemy.EffectiveHp) continue;
             targetIndex = enemy.Index;
             return true;
         }
@@ -27,7 +27,7 @@ public static class SimLethalChecker {
         for (int i = 0; i < state.Hand.Count; i++) {
             var card = state.Hand[i];
             if (!CombatTransformSimulator.IsHandAttackTransform(card.Profile)) continue;
-            if (!card.CanPlay || card.Cost > state.Energy) continue;
+            if (!CombatCardCost.CanAfford(card, state)) continue;
 
             var projected = CombatSimulator.Apply(state, new SimCombatAction(SimActionKind.PlayCard, i, -1));
             if (!CanLethal(projected, out targetIndex)) continue;
@@ -39,17 +39,12 @@ public static class SimLethalChecker {
     }
 
     public static int EstimateMaxDamage(CombatState state) {
-        int total = 0;
-        int energy = state.Energy;
-
-        foreach (var card in state.Hand.OrderByDescending(c => c.Damage)) {
-            if (!card.CanPlay || !card.IsAttack || card.Cost > energy) continue;
-            if (card.IsAoe && AoeDamageEstimator.EstimateAoeKills(state, card.Damage) > 0)
-                return int.MaxValue / 4;
-            total += card.Damage;
-            energy -= card.Cost;
+        int best = 0;
+        foreach (var enemy in state.Enemies.Where(e => e.IsAlive)) {
+            if (LethalExclusions.ShouldSkip(enemy)) continue;
+            best = System.Math.Max(best, LethalDamageSolver.MaxSingleTargetDamage(state, enemy.Index));
         }
 
-        return total;
+        return best;
     }
 }

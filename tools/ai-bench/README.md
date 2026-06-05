@@ -46,3 +46,24 @@ Target: **≥40–50%** win rate per character at A10 after tuning.
 - Summoner fights should show `bias=35` on primary
 
 Tune non-damage weights in `EnemyThreatWeights.cs` and re-run A10 bench.
+
+### Deck rhythm / shuffle (`deck_rhythm_shuffle`)
+
+After L4 pile simulation, combat logs should include:
+
+- `NEXT=` — top cards in draw pile (peek)
+- `RESHUF=1` — next hand draw would reshuffle discard
+- `POST_PLAY=` / `POST_BLK=` — expected damage/block after simulated EndTurn
+
+Spot-check Leaf Slime: AI should rush before discard reshuffle mixes in Slimed; `POLL=` should correlate with bad `POST_PLAY=` on early EndTurn lines.
+
+### Sim limitation fixes (Phase A + B)
+
+Manual spot-checks:
+
+1. **Lethal solver** — three 1-cost 6-dmg strikes + 3 energy → `MaxSingleTargetDamage == 18`.
+2. **Shuffle fallback** — empty draw + discard, `shuffleSeed=0` → stable `StableShuffle`; debug log once.
+3. **Enemy act order** — snapshot list order (`ActOrder`), not combat `index`.
+4. **Random inject** — Noisebot / Soul Fysh / Insatiable moves use `rngShuffle` counter for `DrawRandom` / `DiscardRandom` placement.
+5. **Headbutt pick** — discard-pile single-select uses highest `KeepScore` (live + sim); exhaust/discard still lowest.
+6. **Power registry** — snapshot `playerPowers` maps Weak/Frail/Shrink/Smog/Tangle/Bind into `CombatCardCost` / `ThreatEconomy`.

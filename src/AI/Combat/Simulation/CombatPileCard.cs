@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json.Nodes;
 using DevMode.AI.Combat;
 
@@ -12,7 +13,12 @@ public sealed record CombatPileCard(
     string CardType,
     bool IsStatus,
     bool HasRetain,
-    bool HasExhaust) {
+    bool HasExhaust) : IComparable<CombatPileCard> {
+    public int CompareTo(CombatPileCard? other) {
+        if (other is null) return 1;
+        var idCmp = string.Compare(Id, other.Id, StringComparison.Ordinal);
+        return idCmp != 0 ? idCmp : string.Compare(Name, other.Name, StringComparison.Ordinal);
+    }
     public static CombatPileCard FromJson(JsonObject card) {
         var id = card["id"]?.GetValue<string>() ?? "";
         return new CombatPileCard(

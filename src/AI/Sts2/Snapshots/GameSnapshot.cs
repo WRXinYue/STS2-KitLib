@@ -44,7 +44,7 @@ internal static class GameSnapshot
 
         var combatState = player.PlayerCombatState;
         if (combatState != null)
-            obj["combat"] = CaptureCombat(player, combatState);
+            obj["combat"] = CaptureCombat(state, player, combatState);
 
         var room = state.CurrentRoom;
         if (room != null)
@@ -119,7 +119,7 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonObject CaptureCombat(Player player, PlayerCombatState combatState)
+    private static JsonObject CaptureCombat(RunState runState, Player player, PlayerCombatState combatState)
     {
         var isPlayPhase = Sts2CombatCompat.IsCombatPlayPhaseActive();
         var cs = CombatManager.Instance?.DebugOnlyGetState();
@@ -134,9 +134,16 @@ internal static class GameSnapshot
             ["isPlayPhaseActive"] = isPlayPhase,
             ["phase"] = isPlayPhase ? "PlayPhase" : "NotPlayPhase",
             ["playerBlock"] = playerBlock,
+            ["turnNumber"] = cs?.RoundNumber ?? 1,
             ["playerPowers"] = player.Creature != null
                 ? CapturePowers(player.Creature.Powers)
                 : new JsonArray(),
+        };
+
+        combat["rngShuffle"] = new JsonObject
+        {
+            ["seed"] = runState.Rng.Shuffle.Seed,
+            ["counter"] = runState.Rng.Shuffle.Counter,
         };
 
         var hand = new JsonArray();
