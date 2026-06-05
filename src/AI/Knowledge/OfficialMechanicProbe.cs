@@ -291,6 +291,8 @@ internal static class OfficialMechanicProbe {
         if (upper.Contains("FORGE", StringComparison.Ordinal)) return CardMechanicFlags.HasForge;
         if (upper.Contains("STAR", StringComparison.Ordinal)) return CardMechanicFlags.HasStarCost;
         if (upper.Contains("REPEAT", StringComparison.Ordinal)) return CardMechanicFlags.HasDamage;
+        if (upper.Contains("VULNERABLE", StringComparison.Ordinal)) return CardMechanicFlags.AppliesVulnerable;
+        if (upper.Contains("WEAK", StringComparison.Ordinal)) return CardMechanicFlags.AppliesWeak;
         return CardMechanicFlags.None;
     }
 

@@ -45,6 +45,9 @@ public sealed partial class DevModeSettings {
     /// <summary>AI托管操作间隔（毫秒）。</summary>
     public int AutoPlayDelayMs { get; set; } = 800;
 
+    /// <summary>Log combat score breakdown (top alternatives) to AutoPlay terminal.</summary>
+    public bool AiCombatVerboseLog { get; set; } = true;
+
     /// <summary>Weight for Spire Codex community priors (0 = off, 1 = default).</summary>
     public float CodexPriorWeight { get; set; } = 1f;
 

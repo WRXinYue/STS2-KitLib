@@ -9,26 +9,25 @@ using DevMode.AI.Knowledge;
 
 namespace DevMode.AI.AutoPlay.Scoring;
 
-/// <summary>Scores legal combat moves from a JSON snapshot (vanilla heuristics + mod modifiers).</summary>
+/// <summary>Scores legal combat moves from a JSON snapshot (mechanic-aware heuristics + mod modifiers).</summary>
 public static class CombatScorer {
     const int EndTurnBaseScore = -10;
 
     public static GameAction? PickBestCombatMove(JsonObject snapshot) {
-        var best = ScoreLegalMoves(snapshot)
-            .OrderByDescending(x => x.Score)
-            .FirstOrDefault();
-        return best.Action;
+        var ranked = ScoreLegalMovesDetailed(snapshot).ToList();
+        var best = ranked.FirstOrDefault();
+        return best?.Action;
     }
 
-    public static IEnumerable<(GameAction Action, int Score)> ScoreLegalMoves(JsonObject snapshot) {
+    public static IEnumerable<CombatMoveScore> ScoreLegalMovesDetailed(JsonObject snapshot) {
         var combat = snapshot["combat"]?.AsObject();
         if (combat == null) {
-            yield return (EndTurn("No combat"), EndTurnBaseScore);
+            yield return BuildEndTurn("No combat", EndTurnBaseScore, snapshot);
             yield break;
         }
 
         if (!HasAliveEnemy(combat)) {
-            yield return (EndTurn("No enemies"), EndTurnBaseScore);
+            yield return BuildEndTurn("No enemies", EndTurnBaseScore, snapshot);
             yield break;
         }
 
@@ -52,47 +51,39 @@ public static class CombatScorer {
                 var cost = card["cost"]?.GetValue<int>() ?? 99;
                 if (cost > energy) continue;
 
-                var cardType = card["cardType"]?.GetValue<string>() ?? "";
                 var targetType = card["targetType"]?.GetValue<string>() ?? "";
-                var isAttack = cardType.Contains("Attack", StringComparison.OrdinalIgnoreCase)
-                    || (card["damage"]?.GetValue<int>() ?? 0) > 0;
-                var isSkill = cardType.Contains("Skill", StringComparison.OrdinalIgnoreCase);
-                var hasBlock = (card["block"]?.GetValue<int>() ?? 0) > 0;
-
                 if (targetType is "AnyEnemy" or "AllEnemy") {
                     var targetCount = enemies?.Count ?? 1;
                     for (var t = 0; t < Math.Max(targetCount, 1); t++) {
                         var move = PlayCard(i, t, card);
-                        var score = ScoreCard(snapshot, move, card, isAttack, isSkill, hasBlock,
-                            lowHp, hpRatio, needsBlock, canLethal, incoming, netIncoming, multiEnemy, enemies, t);
-                        score = AiMoveModifierHub.ApplyModifiers(snapshot, move, score);
-                        yield return (move, score);
+                        yield return ScoreCardDetailed(snapshot, move, card, hand, energy,
+                            lowHp, hpRatio, needsBlock, canLethal, incoming, netIncoming,
+                            multiEnemy, enemies, t);
                     }
                 }
                 else {
                     var move = PlayCard(i, -1, card);
-                    var score = ScoreCard(snapshot, move, card, isAttack, isSkill, hasBlock,
-                        lowHp, hpRatio, needsBlock, canLethal, incoming, netIncoming, multiEnemy, enemies, -1);
-                    score = AiMoveModifierHub.ApplyModifiers(snapshot, move, score);
-                    yield return (move, score);
+                    yield return ScoreCardDetailed(snapshot, move, card, hand, energy,
+                        lowHp, hpRatio, needsBlock, canLethal, incoming, netIncoming,
+                        multiEnemy, enemies, -1);
                 }
             }
         }
 
-        var end = EndTurn("End turn");
-        var endScore = AiMoveModifierHub.ApplyModifiers(snapshot, end, EndTurnBaseScore);
-        if (needsBlock && incoming > 0)
-            endScore -= 15;
-        yield return (end, endScore);
+        yield return BuildEndTurn("End turn", ScoreEndTurn(needsBlock, incoming), snapshot);
     }
 
-    static int ScoreCard(
+    public static IEnumerable<(GameAction Action, int Score)> ScoreLegalMoves(JsonObject snapshot) {
+        foreach (var scored in ScoreLegalMovesDetailed(snapshot))
+            yield return (scored.Action, scored.Score);
+    }
+
+    static CombatMoveScore ScoreCardDetailed(
         JsonObject snapshot,
         GameAction move,
         JsonObject card,
-        bool isAttack,
-        bool isSkill,
-        bool hasBlock,
+        JsonArray? hand,
+        int energy,
         bool lowHp,
         float hpRatio,
         bool needsBlock,
@@ -102,11 +93,15 @@ public static class CombatScorer {
         bool multiEnemy,
         JsonArray? enemies,
         int targetIndex) {
+        var profile = CombatCardStats.ResolveProfile(card);
         var cost = card["cost"]?.GetValue<int>() ?? 1;
-        var score = 0;
-        var blockValue = card["block"]?.GetValue<int>() ?? 0;
-        var damageValue = card["damage"]?.GetValue<int>() ?? 0;
+        var damageValue = CombatCardStats.ResolveDamage(card);
+        var blockValue = CombatCardStats.ResolveBlock(card);
         var cardId = card["id"]?.GetValue<string>() ?? "";
+        var isAttack = CombatCardStats.IsAttackCard(card);
+        var isSkill = CombatCardStats.IsSkillCard(card);
+        var hasBlock = blockValue > 0;
+        var targetEnemy = ResolveTargetEnemy(enemies, targetIndex);
 
         var tags = CardCatalog.ResolveTags(
             cardId,
@@ -114,49 +109,79 @@ public static class CombatScorer {
             card["keywords"]?.AsArray());
         var isAoe = tags.Contains(AiTag.Aoe) || card["targetType"]?.GetValue<string>() is "AllEnemy";
 
+        var builder = new ScoreBuilder();
+
         if (needsBlock && (isSkill || hasBlock) && !canLethal) {
             var blockNeeded = Math.Max(0, netIncoming);
             if (blockNeeded > 0) {
                 var effectiveBlock = Math.Min(blockValue, blockNeeded);
-                score += 20 + effectiveBlock;
-                if (incoming >= 15) score += 10;
+                builder.Add("block", 20 + effectiveBlock);
+                if (incoming >= 15) builder.Add("big-hit", 10);
                 if (blockValue > blockNeeded + 5)
-                    score -= (blockValue - blockNeeded) * 2;
+                    builder.Add("overblock", -(blockValue - blockNeeded) * 2);
             }
         }
-        else if ((isSkill || hasBlock) && (!needsBlock || canLethal)) {
-            score -= 40;
+        else if ((isSkill || hasBlock) && (!needsBlock || canLethal) && !MechanicCombatBonus.IsSetupSkill(profile)) {
+            builder.Add("skill-no-block-need", -CombatScoreWeights.NonSetupSkillPenalty);
         }
 
         if (lowHp && isSkill && needsBlock && !canLethal)
-            score += 15;
+            builder.Add("low-hp-skill", 15);
 
         if (IsSelfDamageCard(cardId) && hpRatio < 0.65f)
-            score -= 30;
+            builder.Add("self-dmg", -30);
 
         if (isAttack) {
-            score += 20 + cost * 5 + damageValue;
-            score += TargetEnemyBonus(enemies, targetIndex);
-
-            if (canLethal)
-                score += 25;
-            else if (needsBlock && incoming > damageValue)
-                score -= 5;
+            builder.Add("attack", 20 + cost * 5 + damageValue);
+            builder.Add("target", TargetEnemyBonus(enemies, targetIndex));
+            if (canLethal) builder.Add("lethal", 25);
+            else if (needsBlock && incoming > damageValue) builder.Add("attack-while-block-need", -5);
         }
         else if (isSkill)
-            score += 15 + cost * 2 + (needsBlock ? blockValue / 2 : 0);
+            builder.Add("skill", 15 + cost * 2 + (needsBlock ? blockValue / 2 : 0));
         else
-            score += 10;
+            builder.Add("other", 10);
 
-        if (isAoe && multiEnemy)
-            score += 12;
-        if (multiEnemy && isAttack)
-            score += 15;
-        if (multiEnemy && hasBlock && !needsBlock)
-            score -= 20;
+        if (isAoe && multiEnemy) builder.Add("aoe", 12);
+        if (multiEnemy && isAttack) builder.Add("multi", 15);
+        if (multiEnemy && hasBlock && !needsBlock) builder.Add("multi-defend", -20);
 
-        score -= Math.Max(0, cost - 1) * 2;
+        builder.Add("cost", -Math.Max(0, cost - 1) * 2);
+
+        var mechBonus = MechanicCombatBonus.Score(snapshot, card, profile, hand, targetEnemy, energy);
+        builder.Add("mechanic", mechBonus);
+
+        var cardName = card["name"]?.GetValue<string>() ?? cardId;
+        var withMods = AiMoveModifierHub.ApplyModifiers(snapshot, move, builder.Total);
+        if (withMods != builder.Total)
+            builder.Add("mod", withMods - builder.Total);
+
+        return builder.Build(move with {
+            Reason = $"{cardName} score={withMods} [{builder.FormatTerms()}]",
+        });
+    }
+
+    static int ScoreEndTurn(bool needsBlock, int incoming) {
+        var score = EndTurnBaseScore;
+        if (needsBlock && incoming > 0)
+            score -= 15;
         return score;
+    }
+
+    static CombatMoveScore BuildEndTurn(string reason, int baseScore, JsonObject snapshot) {
+        var action = new GameAction { Type = ActionType.EndTurn, Reason = reason };
+        var score = AiMoveModifierHub.ApplyModifiers(snapshot, action, baseScore);
+        var terms = new List<string> { $"base:{baseScore}" };
+        if (score != baseScore)
+            terms.Add($"mod:{score - baseScore:+0;-0;0}");
+        return new CombatMoveScore(action with { Reason = $"EndTurn score={score}" }, score, terms);
+    }
+
+    static JsonObject? ResolveTargetEnemy(JsonArray? enemies, int targetIndex) {
+        if (enemies == null || enemies.Count == 0) return null;
+        if (targetIndex >= 0 && targetIndex < enemies.Count)
+            return enemies[targetIndex]?.AsObject();
+        return enemies[0]?.AsObject();
     }
 
     static bool IsSelfDamageCard(string cardId) {
@@ -169,11 +194,7 @@ public static class CombatScorer {
         if (enemies == null || enemies.Count == 0)
             return 0;
 
-        JsonObject? target = null;
-        if (targetIndex >= 0 && targetIndex < enemies.Count)
-            target = enemies[targetIndex]?.AsObject();
-
-        target ??= enemies[0]?.AsObject();
+        JsonObject? target = ResolveTargetEnemy(enemies, targetIndex);
         if (target == null) return 0;
 
         var hp = target["currentHp"]?.GetValue<int>() ?? 0;
@@ -193,11 +214,6 @@ public static class CombatScorer {
         Type = ActionType.PlayCard,
         TargetIndex = handIndex,
         SecondaryIndex = targetIndex,
-        Reason = $"Scored play [{card["name"]?.GetValue<string>()}]",
-    };
-
-    static GameAction EndTurn(string reason) => new() {
-        Type = ActionType.EndTurn,
-        Reason = reason,
+        Reason = card["name"]?.GetValue<string>() ?? card["id"]?.GetValue<string>() ?? "?",
     };
 }

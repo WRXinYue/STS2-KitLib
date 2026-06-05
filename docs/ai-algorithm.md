@@ -411,7 +411,20 @@ NeedsBlock = false 当 net≤0，或 CanLethal，或 CanRaceKill（手牌 maxDam
 
 **EndTurn** 基础分 −10；NeedsBlock 且 incoming>0 再 −15。
 
-Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数。
+**机制驱动加分**（`MechanicCombatBonus`，权重在 `CombatScoreWeights`，非按 card id 写死）：
+
+| 机制 | 来源 | 效果 |
+| --- | --- | --- |
+| `TransformsHandAttacks` | 原始力量等 | 手牌攻击数 ×8；0 费再 +12 |
+| `AppliesVulnerable` | DynamicVar 探测（痛击等） | 无易伤时：18 + 层数×8 + 后续攻击伤害/3；已有易伤 −12 |
+| `AppliesWeak` | DynamicVar | 类似，权重略低 |
+| Setup Skill | 上述机制牌 | **不再**吃「非挡牌 Skill −40」惩罚 |
+
+伤害读取：`CombatCardStats.ResolveDamage` — 快照 `damage` 缺失时回退 `CardMechanicIndex.Damage`（修复巨石 0 伤评分）。
+
+**战斗日志**（`AiCombatVerboseLog=true`，默认开）：每次出牌记录 top pick + 最多 4 个备选，含分项 `[attack:+31, mechanic:+48, …]`。见 `CombatDecisionLog`。
+
+Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数（日志中显示 `mod:+N`）。
 
 ### LethalChecker
 
@@ -429,7 +442,7 @@ Mod 可通过 `IAiMoveModifier.ModifyScore` 调整任意 move 分数。
 3. `EvaluateLeaf`：偏向高 HP、低 netDamage/statusDamage、低敌人总 HP；存活敌数 ×5 惩罚。
 4. 时间允许时对最优首牌再试第二张 refinement。
 
-`SimulateAfterPlay` 对 AOE/AllEnemy 攻击对所有存活敌人扣血；仍不模拟抽牌与复杂 powers。
+`SimulateAfterPlay`：扣能量/移除手牌；伤害用 `ResolveDamage`；**易伤目标伤害 ×1.5**；模拟施加 `AppliedVulnerable/Weak`；仍不模拟抽牌与复杂 powers。
 
 ---
 

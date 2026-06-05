@@ -19,6 +19,8 @@ public sealed class GameLoop
     private bool _endTurnPending;
     private string? _lastFingerprint;
     private DateTime _lastActionUtc = DateTime.MinValue;
+    private string? _repeatFailFingerprint;
+    private int _repeatFailCount;
 
     public int ActionDelayMs { get; set; } = 800;
 
@@ -38,6 +40,8 @@ public sealed class GameLoop
         _endTurnPending = false;
         _lastFingerprint = null;
         _lastActionUtc = DateTime.MinValue;
+        _repeatFailFingerprint = null;
+        _repeatFailCount = 0;
     }
 
     /// <summary>
@@ -94,9 +98,13 @@ public sealed class GameLoop
                 _log($"GameLoop: Action failed — {result.Message}");
                 if (decidePhase == GamePhase.Combat && action.Type == ActionType.EndTurn)
                     _endTurnPending = true;
+                else if (decidePhase == GamePhase.Combat && await TryRecoverFromRepeatedFailureAsync(fingerprint))
+                    return;
                 return;
             }
 
+            _repeatFailFingerprint = null;
+            _repeatFailCount = 0;
             _lastFingerprint = fingerprint;
             _lastActionUtc = DateTime.UtcNow;
 
@@ -132,5 +140,34 @@ public sealed class GameLoop
         if (_lastFingerprint == null) return false;
         if (_lastFingerprint != fingerprint) return false;
         return (DateTime.UtcNow - _lastActionUtc).TotalMilliseconds < 2000;
+    }
+
+    async Task<bool> TryRecoverFromRepeatedFailureAsync(string fingerprint) {
+        if (_repeatFailFingerprint == fingerprint)
+            _repeatFailCount++;
+        else {
+            _repeatFailFingerprint = fingerprint;
+            _repeatFailCount = 1;
+        }
+
+        if (_repeatFailCount < 3)
+            return false;
+
+        _log("GameLoop: repeated play failure — ending turn");
+        _repeatFailFingerprint = null;
+        _repeatFailCount = 0;
+
+        var endTurn = new GameAction { Type = ActionType.EndTurn, Reason = "Fallback after repeated failure" };
+        var result = await _executor.ExecuteAsync(endTurn);
+        if (!result.Success) {
+            _log($"GameLoop: Action failed — {result.Message}");
+            _endTurnPending = true;
+            return true;
+        }
+
+        _lastFingerprint = $"{GamePhase.Combat}:{ActionType.EndTurn}:-1:-1";
+        _lastActionUtc = DateTime.UtcNow;
+        _endTurnPending = true;
+        return true;
     }
 }

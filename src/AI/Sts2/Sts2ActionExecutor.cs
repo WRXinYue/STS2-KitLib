@@ -106,13 +106,13 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             return ActionResult.Fail($"Invalid card index: {cardIndex} (hand size: {hand?.Count ?? 0})");
 
         var card = hand[cardIndex];
-
-        if (!card.CanPlay(out var reason, out _))
-            return ActionResult.Fail($"Card [{card.Title}] cannot be played: {reason}");
-
         var target = ResolveCardTarget(player, card, targetIndex);
-        if (target == null && card.TargetType.IsSingleTarget())
+
+        if (target == null && card.TargetType is TargetType.AnyEnemy or TargetType.AnyAlly)
             return ActionResult.Fail($"Card [{card.Title}] needs a target but none was resolved.");
+
+        if (!card.CanPlayTargeting(target))
+            return ActionResult.Fail($"Card [{card.Title}] cannot be played.");
 
         if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
             PseudoCoopActionQueue.EnsureQueueForPlayer(player);
@@ -176,9 +176,8 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             }
             case TargetType.AnyPlayer:
             case TargetType.Self:
-                if (card.IsValidTarget(player.Creature))
-                    return player.Creature;
-                return player.Creature.IsAlive ? player.Creature : null;
+                // Self-target cards use null creature (matches NCardPlay.TryManualPlay).
+                return null;
             default:
                 return null;
         }

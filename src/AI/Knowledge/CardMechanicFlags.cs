@@ -20,4 +20,6 @@ public enum CardMechanicFlags : ulong {
     Aoe = 1 << 12,
     HasDamage = 1 << 13,
     HasBlock = 1 << 14,
+    AppliesVulnerable = 1 << 15,
+    AppliesWeak = 1 << 16,
 }

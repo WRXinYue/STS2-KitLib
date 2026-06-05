@@ -16,7 +16,9 @@ public sealed record CardMechanicProfile(
     int? Damage,
     int? Block,
     string CardType,
-    IReadOnlyList<AiTag> DerivedTags);
+    IReadOnlyList<AiTag> DerivedTags,
+    int AppliedVulnerable = 0,
+    int AppliedWeak = 0);
 
 /// <summary>Indexes official card mechanics from <see cref="ModelDb.AllCards"/> at startup.</summary>
 public static class CardMechanicIndex {
@@ -101,6 +103,10 @@ public static class CardMechanicIndex {
         var derived = new HashSet<AiTag>(CardTagRules.InferTags(card));
         derived.UnionWith(TagsFromFlags(flags));
 
+        var (appliedVuln, appliedWeak) = ReadAppliedEnemyPowers(card);
+        if (appliedVuln > 0) flags |= CardMechanicFlags.AppliesVulnerable;
+        if (appliedWeak > 0) flags |= CardMechanicFlags.AppliesWeak;
+
         return new CardMechanicProfile(
             id,
             flags,
@@ -109,7 +115,23 @@ public static class CardMechanicIndex {
             CardEditActions.GetDamage(card),
             CardEditActions.GetBlock(card),
             card.Type.ToString(),
-            [.. derived]);
+            [.. derived],
+            appliedVuln,
+            appliedWeak);
+    }
+
+    static (int Vulnerable, int Weak) ReadAppliedEnemyPowers(CardModel card) {
+        int vuln = 0, weak = 0;
+        foreach (var key in CardEditActions.GetDynamicVarKeys(card)) {
+            var amount = CardEditActions.GetDynamicVar(card, key) ?? 0;
+            if (amount <= 0) continue;
+            var upper = key.ToUpperInvariant();
+            if (upper.Contains("VULNERABLE", StringComparison.Ordinal))
+                vuln = Math.Max(vuln, amount);
+            if (upper.Contains("WEAK", StringComparison.Ordinal))
+                weak = Math.Max(weak, amount);
+        }
+        return (vuln, weak);
     }
 
     static IEnumerable<AiTag> TagsFromFlags(CardMechanicFlags flags) {
@@ -124,6 +146,9 @@ public static class CardMechanicIndex {
             yield return AiTag.Scaling;
         if (flags.HasFlag(CardMechanicFlags.HasDamage)) yield return AiTag.Attack;
         if (flags.HasFlag(CardMechanicFlags.HasBlock)) yield return AiTag.Block;
+        if (flags.HasFlag(CardMechanicFlags.AppliesVulnerable)
+            || flags.HasFlag(CardMechanicFlags.AppliesWeak))
+            yield return AiTag.Setup;
     }
 
     static void EnsureInitialized() {

@@ -17,6 +17,15 @@ internal static class AiLogTerminalLauncher {
         }
 
         var psCommand = BuildPowerShellCommand(path);
+        var pwsh = ResolvePowerShell7Path();
+
+        if (pwsh != null) {
+            if (TryStartProcess(pwsh, $"-NoLogo -NoExit -Command \"{psCommand}\""))
+                return true;
+            if (TryStartProcess("wt.exe", $"-w 0 \"{pwsh}\" -NoLogo -NoExit -Command \"{psCommand}\""))
+                return true;
+        }
+
         if (TryStartProcess("wt.exe", $"-w 0 powershell -NoLogo -NoExit -Command \"{psCommand}\""))
             return true;
         if (TryStartProcess("powershell.exe", $"-NoLogo -NoExit -Command \"{psCommand}\""))
@@ -41,6 +50,35 @@ internal static class AiLogTerminalLauncher {
     static string BuildPowerShellCommand(string logPath) {
         var escaped = logPath.Replace("'", "''");
         return $"Get-Content -LiteralPath '{escaped}' -Wait -Tail 40 | Where-Object {{ $_ -match '{FilterPattern}' }}";
+    }
+
+    static string? ResolvePowerShell7Path() {
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var candidates = new[] {
+            Path.Combine(programFiles, "PowerShell", "7", "pwsh.exe"),
+            Path.Combine(Environment.GetEnvironmentVariable("ProgramFiles(x86)") ?? "", "PowerShell", "7", "pwsh.exe"),
+        };
+
+        foreach (var candidate in candidates) {
+            if (!string.IsNullOrEmpty(candidate) && File.Exists(candidate))
+                return candidate;
+        }
+
+        return FindOnPath("pwsh.exe");
+    }
+
+    static string? FindOnPath(string fileName) {
+        var pathEnv = Environment.GetEnvironmentVariable("PATH");
+        if (string.IsNullOrEmpty(pathEnv))
+            return null;
+
+        foreach (var dir in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)) {
+            var full = Path.Combine(dir.Trim(), fileName);
+            if (File.Exists(full))
+                return full;
+        }
+
+        return null;
     }
 
     static bool TryStartProcess(string fileName, string arguments) {

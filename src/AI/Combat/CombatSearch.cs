@@ -16,59 +16,88 @@ public static class CombatSearch {
     public static GameAction? PickBestMove(JsonObject snapshot) {
         if (LethalChecker.CanLethal(snapshot, out var lethalTarget)) {
             var lethalMove = FindLethalMove(snapshot, lethalTarget);
-            if (lethalMove != null)
-                return lethalMove with { Reason = $"Lethal on enemy {lethalTarget}" };
+            if (lethalMove != null) {
+                var lethal = lethalMove with { Reason = $"Lethal on enemy {lethalTarget}" };
+                LogSimplePick(snapshot, lethal, "lethal");
+                return lethal;
+            }
+        }
+
+        var rootMoves = CombatScorer.ScoreLegalMovesDetailed(snapshot).ToList();
+        if (rootMoves.Count == 0) {
+            var fallback = CombatScorer.PickBestCombatMove(snapshot);
+            if (fallback != null)
+                LogSimplePick(snapshot, fallback, "fallback");
+            return fallback;
         }
 
         var sw = Stopwatch.StartNew();
-        var rootMoves = CombatScorer.ScoreLegalMoves(snapshot).ToList();
-        if (rootMoves.Count == 0)
-            return CombatScorer.PickBestCombatMove(snapshot);
+        var best = rootMoves.OrderByDescending(x => x.Score).First();
+        var bestLeaf = best.Score;
 
-        (GameAction Action, int Score) best = rootMoves[0];
-
-        foreach (var (action, score) in rootMoves) {
-            if (action.Type != ActionType.PlayCard) {
-                if (score > best.Score) best = (action, score);
+        foreach (var scored in rootMoves) {
+            if (scored.Action.Type != ActionType.PlayCard) {
+                if (scored.Score > bestLeaf) {
+                    bestLeaf = scored.Score;
+                    best = scored;
+                }
                 continue;
             }
 
             if (sw.ElapsedMilliseconds >= TimeBudgetMs) break;
 
-            var simulated = SimulateAfterPlay(snapshot, action);
-            var followUps = CombatScorer.ScoreLegalMoves(simulated).ToList();
-            var leafScore = score + (followUps.Count > 0 ? followUps.Max(x => x.Score) / 2 : 0);
+            var simulated = SimulateAfterPlay(snapshot, scored.Action);
+            var followUps = CombatScorer.ScoreLegalMovesDetailed(simulated).ToList();
+            var leafScore = scored.Score + (followUps.Count > 0 ? followUps.Max(x => x.Score) / 2 : 0);
             leafScore += EvaluateLeaf(simulated);
 
-            if (leafScore > best.Score)
-                best = (action, leafScore);
+            if (leafScore > bestLeaf) {
+                bestLeaf = leafScore;
+                best = scored with { Score = leafScore };
+            }
         }
 
         if (sw.ElapsedMilliseconds < TimeBudgetMs && MaxDepth >= 2)
-            best = RefineWithSecondPlay(snapshot, best, sw);
+            best = RefineWithSecondPlay(snapshot, best, rootMoves, sw);
 
-        return best.Action;
+        var picked = best.Action with {
+            Reason = best.Action.Reason ?? CombatMoveScore.FormatMoveLabel(best.Action),
+        };
+
+        var ranked = rootMoves
+            .OrderByDescending(x => x.Score)
+            .ToList();
+        CombatDecisionLog.LogPick(snapshot, picked, ranked, $"search={best.Score}");
+
+        return picked;
     }
 
-    static (GameAction Action, int Score) RefineWithSecondPlay(
+    static void LogSimplePick(JsonObject snapshot, GameAction action, string note) {
+        if (!CombatDecisionLog.VerboseEnabled) return;
+        AiDecisionLog.Record("AutoPlay", $"Combat pick {CombatMoveScore.FormatMoveLabel(action)} ({note})");
+    }
+
+    static CombatMoveScore RefineWithSecondPlay(
         JsonObject snapshot,
-        (GameAction Action, int Score) current,
+        CombatMoveScore current,
+        List<CombatMoveScore> rootMoves,
         Stopwatch sw) {
         if (current.Action.Type != ActionType.PlayCard)
             return current;
 
+        var best = current;
         var afterFirst = SimulateAfterPlay(snapshot, current.Action);
-        foreach (var (action, score) in CombatScorer.ScoreLegalMoves(afterFirst)) {
+        foreach (var scored in CombatScorer.ScoreLegalMovesDetailed(afterFirst)) {
             if (sw.ElapsedMilliseconds >= TimeBudgetMs) break;
-            if (action.Type != ActionType.PlayCard) continue;
+            if (scored.Action.Type != ActionType.PlayCard) continue;
 
-            var afterSecond = SimulateAfterPlay(afterFirst, action);
-            var total = current.Score + score + EvaluateLeaf(afterSecond);
-            if (total > current.Score)
-                current = (current.Action, total);
+            var afterSecond = SimulateAfterPlay(afterFirst, scored.Action);
+            var total = current.Score + scored.Score + EvaluateLeaf(afterSecond);
+            if (total > best.Score)
+                best = current with { Score = total };
         }
 
-        return current;
+        return best;
     }
 
     static int EvaluateLeaf(JsonObject snapshot) {
@@ -109,12 +138,12 @@ public static class CombatSearch {
             hand.RemoveAt(idx);
 
             if (card != null) {
-                var cardType = card["cardType"]?.GetValue<string>() ?? "";
-                var damage = card["damage"]?.GetValue<int>() ?? 0;
-                var isAttack = cardType.Contains("Attack", StringComparison.OrdinalIgnoreCase) || damage > 0;
+                var profile = CombatCardStats.ResolveProfile(card);
+                var damage = CombatCardStats.ResolveDamage(card);
+                var isAttack = CombatCardStats.IsAttackCard(card);
                 var tags = CardCatalog.ResolveTags(
                     card["id"]?.GetValue<string>(),
-                    cardType,
+                    card["cardType"]?.GetValue<string>(),
                     card["keywords"]?.AsArray());
                 var isAoe = tags.Contains(AiTag.Aoe)
                     || card["targetType"]?.GetValue<string>() is "AllEnemy";
@@ -123,14 +152,39 @@ public static class CombatSearch {
                     ApplyDamageToEnemies(combat, damage, play.SecondaryIndex, isAoe);
                 }
 
-                if (cardType.Contains("Skill", StringComparison.OrdinalIgnoreCase)) {
-                    var blockGain = card["block"]?.GetValue<int>() ?? 5;
-                    combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + blockGain;
+                if (profile.AppliedVulnerable > 0) {
+                    var enemies = combat["enemies"]?.AsArray();
+                    var target = ResolveSimTarget(enemies, play.SecondaryIndex, isAoe);
+                    if (target != null)
+                        CombatPowerReader.ApplyPower(target, "VULNERABLE", profile.AppliedVulnerable);
+                }
+
+                if (profile.AppliedWeak > 0) {
+                    var enemies = combat["enemies"]?.AsArray();
+                    var target = ResolveSimTarget(enemies, play.SecondaryIndex, isAoe);
+                    if (target != null)
+                        CombatPowerReader.ApplyPower(target, "WEAK", profile.AppliedWeak);
+                }
+
+                if (CombatCardStats.IsSkillCard(card)) {
+                    var blockGain = CombatCardStats.ResolveBlock(card);
+                    if (blockGain > 0)
+                        combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + blockGain;
+                    else if (!MechanicCombatBonus.IsSetupSkill(profile))
+                        combat["playerBlock"] = (combat["playerBlock"]?.GetValue<int>() ?? 0) + 5;
                 }
             }
         }
 
         return clone;
+    }
+
+    static JsonObject? ResolveSimTarget(JsonArray? enemies, int targetIndex, bool isAoe) {
+        if (enemies == null || enemies.Count == 0) return null;
+        if (isAoe) return enemies[0]?.AsObject();
+        if (targetIndex >= 0 && targetIndex < enemies.Count)
+            return enemies[targetIndex]?.AsObject();
+        return enemies[0]?.AsObject();
     }
 
     static void ApplyDamageToEnemies(JsonObject combat, int damage, int targetIndex, bool isAoe) {
@@ -151,10 +205,11 @@ public static class CombatSearch {
         if (enemy == null) return;
         if (enemy["isAlive"]?.GetValue<bool>() == false) return;
 
+        var scaled = (int)Math.Round(damage * CombatPowerReader.AttackDamageMultiplier(enemy));
         var hp = enemy["currentHp"]?.GetValue<int>() ?? 0;
         var block = enemy["block"]?.GetValue<int>() ?? 0;
-        var remaining = Math.Max(0, damage - block);
-        enemy["block"] = Math.Max(0, block - damage);
+        var remaining = Math.Max(0, scaled - block);
+        enemy["block"] = Math.Max(0, block - scaled);
         enemy["currentHp"] = Math.Max(0, hp - remaining);
         if (hp - remaining <= 0)
             enemy["isAlive"] = false;
@@ -169,14 +224,10 @@ public static class CombatSearch {
             var card = hand[i]?.AsObject();
             if (card == null) continue;
             if (card["canPlay"]?.GetValue<bool>() == false) continue;
-
-            var type = card["cardType"]?.GetValue<string>() ?? "";
-            if (!type.Contains("Attack", StringComparison.OrdinalIgnoreCase)
-                && (card["damage"]?.GetValue<int>() ?? 0) <= 0)
-                continue;
+            if (!CombatCardStats.IsAttackCard(card)) continue;
 
             var cost = card["cost"]?.GetValue<int>() ?? 99;
-            var energy = combat["currentEnergy"]?.GetValue<int>() ?? 0;
+            var energy = combat!["currentEnergy"]?.GetValue<int>() ?? 0;
             if (cost > energy) continue;
 
             return new GameAction {
