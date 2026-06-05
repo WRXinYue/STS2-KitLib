@@ -1,0 +1,109 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using DevMode.AI.Core;
+using MegaCrit.Sts2.Core.Models;
+
+namespace DevMode.AI.Knowledge;
+
+public interface ICardTagProvider {
+    bool AppliesTo(string? cardId);
+    IReadOnlyList<AiTag> GetExtraTags(string cardId);
+}
+
+public static class CardTagProviderHub {
+    static readonly List<ICardTagProvider> Providers = [];
+
+    public static void Register(ICardTagProvider provider) {
+        Providers.Add(provider);
+        MainFile.Logger.Info($"[AiKnowledge] Card tag provider registered type={provider.GetType().Name}.");
+    }
+
+    public static IReadOnlyList<AiTag> MergeTags(string? cardId, IReadOnlyList<AiTag> baseTags) {
+        if (string.IsNullOrWhiteSpace(cardId) || Providers.Count == 0)
+            return baseTags;
+
+        var merged = new HashSet<AiTag>(baseTags);
+        foreach (var provider in Providers) {
+            if (!provider.AppliesTo(cardId)) continue;
+            try {
+                foreach (var tag in provider.GetExtraTags(cardId))
+                    merged.Add(tag);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"[AiKnowledge] Tag provider {provider.GetType().Name} failed: {ex.Message}");
+            }
+        }
+
+        return merged.Count > 0 ? [.. merged] : baseTags;
+    }
+}
+
+public sealed record CardCatalogEntry(
+    string Id,
+    string Name,
+    int Cost,
+    string CardType,
+    string Rarity,
+    string? Pool,
+    IReadOnlyList<AiTag> Tags);
+
+public static class CardCatalog {
+    static readonly Dictionary<string, CardCatalogEntry> ById = new(StringComparer.OrdinalIgnoreCase);
+    static bool _initialized;
+
+    public static void Initialize() {
+        if (_initialized) return;
+
+        foreach (var card in ModelDb.AllCards) {
+            try {
+                var id = card.Id.Entry ?? "";
+                if (string.IsNullOrWhiteSpace(id)) continue;
+
+                string? pool = null;
+                try { pool = card.Pool?.Title; } catch { }
+
+                var baseTags = CardTagRules.InferTags(card);
+                var tags = CardTagProviderHub.MergeTags(id, baseTags);
+
+                ById[id] = new CardCatalogEntry(
+                    id,
+                    card.Title,
+                    card.EnergyCost.Canonical,
+                    card.Type.ToString(),
+                    card.Rarity.ToString(),
+                    pool,
+                    tags);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"[AiKnowledge] Skipped card {card.Id.Entry}: {ex.Message}");
+            }
+        }
+
+        _initialized = true;
+        MainFile.Logger.Info($"[AiKnowledge] CardCatalog indexed {ById.Count} cards.");
+    }
+
+    public static bool TryGet(string? id, out CardCatalogEntry entry) {
+        entry = null!;
+        if (string.IsNullOrWhiteSpace(id)) return false;
+        return ById.TryGetValue(id, out entry!);
+    }
+
+    public static CardCatalogEntry? GetOrNull(string? id) =>
+        TryGet(id, out var entry) ? entry : null;
+
+    public static IReadOnlyList<AiTag> ResolveTags(string? id, string? cardType = null, System.Text.Json.Nodes.JsonArray? keywords = null) {
+        AiKnowledgeBootstrap.EnsureRegistered();
+        if (TryGet(id, out var entry))
+            return entry.Tags;
+
+        var inferred = CardTagRules.InferTagsFromSnapshot(id, cardType, keywords);
+        return CardTagProviderHub.MergeTags(id, inferred);
+    }
+
+    internal static void ClearForTests() {
+        ById.Clear();
+        _initialized = false;
+    }
+}

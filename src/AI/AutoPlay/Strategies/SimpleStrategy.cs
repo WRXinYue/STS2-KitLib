@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using DevMode.AI.AutoPlay.Scoring;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
 
@@ -28,11 +30,11 @@ public sealed class SimpleStrategy : IDecisionMaker
             GamePhase.Combat => DecideCombat(snapshot),
             GamePhase.MapSelection => new GameAction { Type = ActionType.SelectMapNode, TargetIndex = 0, Reason = "First available node" },
             GamePhase.CardReward => DecideCardReward(snapshot),
-            GamePhase.EventChoice => new GameAction { Type = ActionType.SelectEventChoice, TargetIndex = 0, Reason = "First event option" },
+            GamePhase.EventChoice => EventChoiceScorer.PickBest(snapshot),
             GamePhase.Shop => DecideShop(snapshot),
             GamePhase.RestSite => DecideRest(snapshot),
             GamePhase.RewardScreen => new GameAction { Type = ActionType.CollectReward, TargetIndex = 0, Reason = "Collect first reward" },
-            GamePhase.RelicSelection => new GameAction { Type = ActionType.PickRelic, TargetIndex = 0, Reason = "First relic" },
+            GamePhase.RelicSelection => RelicScorer.PickBest(snapshot),
             GamePhase.PostCombatTransition => new GameAction { Type = ActionType.Proceed, Reason = "Advance post-combat screen" },
             GamePhase.TreasureRoom => new GameAction { Type = ActionType.HandleTreasureRoom, Reason = "Open chest and collect" },
             GamePhase.Unknown => new GameAction { Type = ActionType.AdvanceOverlay, Reason = "Unrecognized overlay" },
@@ -71,8 +73,10 @@ public sealed class SimpleStrategy : IDecisionMaker
                 if (type.Contains("Skill") && cost <= energy)
                     return new GameAction
                     {
-                        Type = ActionType.PlayCard, TargetIndex = i,
-                        Reason = $"Low HP — play skill [{card["name"]}]"
+                        Type = ActionType.PlayCard,
+                        TargetIndex = i,
+                        SecondaryIndex = 0,
+                        Reason = $"Low HP — play skill [{card["name"]}]",
                     };
             }
         }
@@ -106,12 +110,16 @@ public sealed class SimpleStrategy : IDecisionMaker
         {
             var card = hand[i]!.AsObject();
             var cost = card["cost"]?.GetValue<int>() ?? 99;
-            if (cost <= energy)
-                return new GameAction
-                {
-                    Type = ActionType.PlayCard, TargetIndex = i,
-                    Reason = $"Play [{card["name"]}]"
-                };
+            if (cost > energy) continue;
+
+            var targetType = card["targetType"]?.GetValue<string>() ?? "";
+            return new GameAction
+            {
+                Type = ActionType.PlayCard,
+                TargetIndex = i,
+                SecondaryIndex = targetType.Contains("Enemy") ? 0 : -1,
+                Reason = $"Play [{card["name"]}]",
+            };
         }
 
         return new GameAction { Type = ActionType.EndTurn, Reason = "No playable cards" };

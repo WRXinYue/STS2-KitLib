@@ -1,4 +1,5 @@
 using HarmonyLib;
+using System.Linq;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -39,8 +40,15 @@ internal static class PseudoCoopCombatReady {
 
         foreach (var peer in SimulatedPeerRegistry.GetHostDrivenCombatPeers()) {
             if (peer.Creature.IsDead) continue;
+            if (HasPlayableCard(peer)) continue;
+            if (PseudoCoopActionQueue.HasPendingCombatActions(peer.NetId)) continue;
             MpAiTeammateCombatActions.SignalEndTurnForHostDrivenPeer(peer);
         }
+    }
+
+    static bool HasPlayableCard(Player player) {
+        var hand = player.PlayerCombatState?.Hand?.Cards;
+        return hand != null && hand.Any(c => c.CanPlay(out _, out _));
     }
 
     /// <summary>Phantom/offline peers only; host-driven live ENet uses EnsureHostDrivenPeersEndTurn.</summary>

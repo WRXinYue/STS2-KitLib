@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using DevMode.AI.Core;
+using DevMode.AI.Knowledge;
+using DevMode.AI.Planning;
 using DevMode.Multiplayer.Cheat;
 using DevMode.Multiplayer.PseudoCoop;
 using DevMode.Multiplayer.SyncBot;
@@ -68,6 +70,12 @@ public static class CompanionBridge {
 
     public static void RegisterMoveModifier(IAiMoveModifier modifier) =>
         AiMoveModifierHub.Register(modifier);
+
+    public static void RegisterDeckPlanContributor(IDeckPlanContributor contributor) =>
+        DeckPlanContributorHub.Register(contributor);
+
+    public static void RegisterCardTagProvider(ICardTagProvider provider) =>
+        CardTagProviderHub.Register(provider);
 
     public static bool TryEnsurePseudoCoopPreset() {
         if (!IsAvailable) return false;

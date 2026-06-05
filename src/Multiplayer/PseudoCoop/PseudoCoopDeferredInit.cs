@@ -1,6 +1,8 @@
 using DevMode;
 using DevMode.Multiplayer.Cheat;
+using DevMode.Multiplayer.LanTest;
 using DevMode.Patches;
+using DevMode.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 
@@ -46,13 +48,19 @@ internal static class PseudoCoopDeferredInit {
         if (DevModeInstanceRegistry.IsDualInstanceActive()) {
             MainFile.Logger.Info("[PseudoCoop] Map finish: minimal DevPanel (AI Host)…");
             GlobalUiReadyPatch.TryAttachDualInstanceMinimal(globalUi);
-            MainFile.Logger.Info("[PseudoCoop] DevPanel attached (dual-instance minimal rail).");
-            return;
+        }
+        else {
+            MainFile.Logger.Info("[PseudoCoop] Map finish: DevPanel…");
+            GlobalUiReadyPatch.TryAttachDeferred(globalUi, skipWarmup: true);
         }
 
-        MainFile.Logger.Info("[PseudoCoop] Map finish: DevPanel…");
-        GlobalUiReadyPatch.TryAttachDeferred(globalUi, skipWarmup: true);
-        MainFile.Logger.Info("[PseudoCoop] DevPanel attached (pseudo-coop skips asset warmup).");
+        if (DevPanelUI.IsRailAttached)
+            MainFile.Logger.Info("[PseudoCoop] DevPanel attached.");
+        else
+            MainFile.Logger.Warn("[PseudoCoop] DevPanel attach skipped (DevMode inactive or UI unavailable).");
+
+        if (DevModeInstanceRegistry.IsDualInstanceActive())
+            DualInstanceTestBootstrap.TryAutoLanPresetsOnLaunch();
     }
 
     internal static void RunLateMpCheatArm() {

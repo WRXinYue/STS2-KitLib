@@ -8,10 +8,12 @@ namespace DevMode.Multiplayer.PseudoCoop.Patches;
 internal static class MpAiTeammatePollPatch {
     static double _accum;
     static double _companionAccum;
+    static double _lanLocalAccum;
 
     [HarmonyPostfix]
     static void Postfix(double delta) {
         MpAiTeammateHost.Poll(delta, ref _accum);
         CompanionDecisionHost.Poll(delta, ref _companionAccum);
+        LanLocalDecisionHost.Poll(delta, ref _lanLocalAccum);
     }
 }

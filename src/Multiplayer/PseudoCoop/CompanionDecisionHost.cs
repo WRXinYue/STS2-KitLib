@@ -8,7 +8,6 @@ using DevMode.AI.Core.Schema;
 using DevMode.Companion;
 using DevMode.Multiplayer.Cheat;
 using DevMode.Settings;
-using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
@@ -30,17 +29,14 @@ internal static class CompanionDecisionHost {
         GamePhase.RelicSelection,
         GamePhase.PostCombatTransition,
         GamePhase.TreasureRoom,
-        GamePhase.Unknown,
     ];
 
-    public static bool IsEnabled =>
-        SettingsStore.Current.MpAiTeammateEnabled
-        && MpCheatSession.IsHost
-        && MpCheatSession.InMultiplayerRun;
+    public static bool IsEnabled => LanAiOwnership.ShouldRunCompanionHost;
 
     public static void OnRunEnded() {
         _tickRunning = false;
         _loops.Clear();
+        AiDecisionGate.Reset();
     }
 
     public static void Poll(double delta, ref double accum) {
@@ -51,31 +47,38 @@ internal static class CompanionDecisionHost {
         accum = 0;
 
         if (_tickRunning) return;
-
-        var cm = CombatManager.Instance;
-        if (cm != null && Sts2CombatCompat.IsCombatPlayPhase(cm))
-            return;
+        if (AiDecisionGate.IsCombatInProgress) return;
+        if (!AiDecisionGate.TryEnter()) return;
 
         var phase = AiPlayServices.StateProvider.CurrentPhase;
-        if (phase is GamePhase.None or GamePhase.Combat or GamePhase.GameOver or GamePhase.Victory)
+        if (phase is GamePhase.None or GamePhase.Combat or GamePhase.GameOver or GamePhase.Victory) {
+            AiDecisionGate.Exit();
             return;
+        }
 
-        if (!NonCombatPhases.Contains(phase))
+        if (!NonCombatPhases.Contains(phase)) {
+            AiDecisionGate.Exit();
             return;
+        }
 
         var state = RunManager.Instance?.DebugOnlyGetState();
-        if (state == null) return;
+        if (state == null) {
+            AiDecisionGate.Exit();
+            return;
+        }
 
         foreach (var player in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
-            if (!ShouldRunNonCombatFor(player)) continue;
+            if (!ShouldRunNonCombatFor(player, phase)) continue;
 
             _tickRunning = true;
             TaskHelper.RunSafely(RunDecisionAsync(player, phase));
             return;
         }
+
+        AiDecisionGate.Exit();
     }
 
-    static bool ShouldRunNonCombatFor(Player player) {
+    static bool ShouldRunNonCombatFor(Player player, GamePhase phase) {
         if (CompanionNonCombatRegistry.IsEnabled(player.NetId))
             return true;
 
@@ -95,6 +98,7 @@ internal static class CompanionDecisionHost {
         finally {
             AiHostContext.Clear();
             _tickRunning = false;
+            AiDecisionGate.Exit();
         }
     }
 

@@ -157,7 +157,7 @@ internal static class DevMainMenuUI {
     }
 
     static void OpenLanMultiplayer(NMainMenu mainMenu) {
-        DualInstanceTestBootstrap.EnsureCheatsEnabled("lan_multiplayer_open");
+        DualInstanceTestBootstrap.EnsureMultiplayerDevActive("lan_multiplayer_open");
         Hide();
         var game = mainMenu.GetTree().Root.GetNodeOrNull<NGame>("Game")
             ?? NGame.Instance;

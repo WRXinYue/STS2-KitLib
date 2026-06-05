@@ -34,7 +34,7 @@ Install from [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) or bu
 
 - **Hooks** — Trigger → Condition → Action rules (e.g. add a card on combat start, apply a power on draw)
 - **Scripts** — SpireScratch visual scripting (Blockly); live reload via WebSocket
-- **AI Host** — Rule-based bot for **solo** runs (map, combat, rewards). Disabled during multiplayer hand-play to avoid desync; use Pseudo Co-op / LAN presets instead (see below)
+- **AI Host** — Rule-based bot for **solo** runs (map, combat, rewards). Default **StrongStrategy** (DeckPlan + combat search); set `AutoPlayStrategy: Simple` in settings for legacy heuristics. Disabled during multiplayer hand-play to avoid desync; use Pseudo Co-op / LAN presets instead (see below)
 - **MCP** — Expose game state and actions to MCP clients while the game is running — see **[MCP](#mcp)**
 
 ### Developer & debug
@@ -199,7 +199,7 @@ On macOS/Linux, `%AppData%` is the game’s account-scoped user data directory (
 
 These features are **opt-in** from DevPanel → **AI Host**. They do not change vanilla solo hand-play or draw speed unless you enable AI / cheats yourself.
 
-- **AI Host (solo)** — `SimpleStrategy` drives your character locally. Use for single-player automation.
+- **AI Host (solo)** — `StrongStrategy` (default) drives your character locally: DeckPlan macro scoring, shallow combat search, lethal checks. Set `AutoPlayStrategy` to `Simple` for legacy heuristics. Use for single-player automation.
 - **SyncBot** — Simulates remote peer ACKs and default choices on one machine; optional phantom player (NetId 1001). Use for host-only co-op smoke tests without a second client.
 - **Pseudo Co-op preset** — Hand-play host + AI teammate for phantom/offline peers via action queue. Use for solo host with simulated teammate.
 - **LAN host-drive + AFK** — Host hand-plays local player; AI enqueues combat for connected ENet client; client AFK blocks local combat input; map votes mirrored. Use for two game instances on one PC (auto preset on dual launch).
@@ -234,7 +234,22 @@ CompanionBridge.RegisterMoveModifier(myMoveModifier);
 CompanionBridge.RegisterStrategy(netId, overrideStrategy);
 ```
 
-**Strategy resolution order:** per-`netId` registry → `CharacterAiRegistry` by character model id → `SimpleStrategy` fallback.
+**Strategy resolution order:** per-`netId` registry → `CharacterAiRegistry` by character model id → `StrongStrategy` fallback (`Simple` if `AutoPlayStrategy=Simple`).
+
+### DeckPlan and character packs
+
+`DeckPlanInferer` builds a weight vector (thin/thick, attack, block, exhaust, scaling, …) from deck + relics + ascension. Vanilla characters register `IDeckPlanContributor` packs under `src/AI/Characters/Vanilla/`.
+
+Mods can adjust deck planning and card tags:
+
+```csharp
+CompanionBridge.RegisterDeckPlanContributor(myDeckPlanContributor);
+CompanionBridge.RegisterCardTagProvider(myCardTagProvider);
+```
+
+`ICardTagProvider` merges extra tags into `CardCatalog` for macro scoring. `IDeckPlanContributor.AdjustPlan` mutates `DeckPlan.Builder` before each macro decision.
+
+A10 regression seeds: `tools/ai-bench/` (fixed seed list + log parser). Algorithm details: **[docs/ai-algorithm.md](./docs/ai-algorithm.md)**.
 
 ### Snapshot extensions
 

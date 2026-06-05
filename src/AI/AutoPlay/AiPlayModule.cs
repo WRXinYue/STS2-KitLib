@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DevMode.AI.Planning;
 using DevMode.AI.AutoPlay.Strategies;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
@@ -33,6 +34,7 @@ internal sealed class AiPlayModule {
     public void OnRunEnded() {
         StopLoop();
         AiDecisionLog.Clear();
+        MapPathPlanner.ClearCache();
     }
 
     public void StartLoop() {
@@ -45,7 +47,7 @@ internal sealed class AiPlayModule {
 
         var strategy = AiPlayServices.StateProvider.TryGetRunAndPlayer(out _, out var me)
             ? StrategyResolver.Resolve(me)
-            : new SimpleStrategy();
+            : StrategyResolver.Resolve(0, null);
 
         _loop = new GameLoop(
             AiPlayServices.StateProvider,
@@ -63,6 +65,7 @@ internal sealed class AiPlayModule {
     }
 
     public void StopLoop() {
+        _loop?.ResetDedupeState();
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;

@@ -4,9 +4,11 @@ using System.Text.Json.Nodes;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.AI.Sts2.Snapshots;
@@ -28,6 +30,7 @@ internal static class GameSnapshot
             ["currentHp"] = player.Creature.CurrentHp,
             ["maxHp"] = player.Creature.MaxHp,
             ["characterId"] = player.Character.Id.Entry ?? "",
+            ["ascensionLevel"] = state.AscensionLevel,
             ["deck"] = CaptureDeck(player),
             ["relics"] = CaptureRelics(player),
             ["potions"] = CapturePotions(player),
@@ -41,6 +44,7 @@ internal static class GameSnapshot
         if (room != null)
             obj["roomType"] = room.RoomType.ToString();
 
+        GameSnapshotPhaseCapture.Enrich(obj, state, player, phase);
         AiSnapshotHub.Enrich(obj, player, phase);
         return obj;
     }
@@ -66,17 +70,7 @@ internal static class GameSnapshot
     {
         var arr = new JsonArray();
         foreach (var c in player.Deck.Cards)
-        {
-            arr.Add(new JsonObject
-            {
-                ["id"] = c.Id.Entry,
-                ["name"] = c.Title,
-                ["cost"] = c.EnergyCost.Canonical,
-                ["upgradeLevel"] = c.CurrentUpgradeLevel,
-                ["maxUpgradeLevel"] = c.MaxUpgradeLevel,
-                ["cardType"] = c.Type.ToString(),
-            });
-        }
+            arr.Add(SnapshotCardJson.FromCard(c));
         return arr;
     }
 
@@ -84,7 +78,14 @@ internal static class GameSnapshot
     {
         var arr = new JsonArray();
         foreach (var r in player.Relics)
-            arr.Add(JsonValue.Create(r.Title.GetFormattedText()));
+        {
+            arr.Add(new JsonObject
+            {
+                ["id"] = SafeRelicId(r),
+                ["name"] = r.Title.GetFormattedText(),
+                ["rarity"] = SafeRelicRarity(r),
+            });
+        }
         return arr;
     }
 
@@ -105,6 +106,9 @@ internal static class GameSnapshot
     private static JsonObject CaptureCombat(Player player, PlayerCombatState combatState)
     {
         var isPlayPhase = Sts2CombatCompat.IsCombatPlayPhaseActive();
+        var cs = CombatManager.Instance?.DebugOnlyGetState();
+        var playerBlock = player.Creature?.Block ?? 0;
+
         var combat = new JsonObject
         {
             ["maxEnergy"] = player.MaxEnergy,
@@ -113,6 +117,7 @@ internal static class GameSnapshot
             ["discardPileCount"] = combatState.DiscardPile?.Cards.Count() ?? 0,
             ["isPlayPhaseActive"] = isPlayPhase,
             ["phase"] = isPlayPhase ? "PlayPhase" : "NotPlayPhase",
+            ["playerBlock"] = playerBlock,
             ["playerPowers"] = player.Creature != null
                 ? CapturePowers(player.Creature.Powers)
                 : new JsonArray(),
@@ -123,23 +128,15 @@ internal static class GameSnapshot
         {
             foreach (var c in combatState.Hand.Cards)
             {
-                var cardObj = new JsonObject
-                {
-                    ["id"] = c.Id.Entry,
-                    ["name"] = c.Title,
-                    ["cost"] = c.EnergyCost.Canonical,
-                    ["cardType"] = c.Type.ToString(),
-                    ["targetType"] = c.TargetType.ToString(),
-                };
+                var cardObj = SnapshotCardJson.FromCard(c);
                 cardObj["canPlay"] = c.CanPlay(out _, out _);
                 hand.Add(cardObj);
             }
         }
         combat["hand"] = hand;
 
-        var cs = CombatManager.Instance?.DebugOnlyGetState();
         if (cs != null)
-            combat["enemies"] = CaptureEnemies(cs);
+            combat["enemies"] = CaptureEnemies(cs, player);
 
         return combat;
     }
@@ -168,10 +165,12 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CaptureEnemies(CombatState cs)
+    private static JsonArray CaptureEnemies(CombatState cs, Player player)
     {
         var arr = new JsonArray();
+        var targets = cs.PlayerCreatures.ToList();
         var index = 0;
+
         foreach (var enemy in cs.Enemies)
         {
             var obj = new JsonObject
@@ -187,9 +186,30 @@ internal static class GameSnapshot
             {
                 obj["nextMoveId"] = enemy.Monster.NextMove.Id;
                 var intents = new JsonArray();
+                int intentDamage = 0;
+                int intentBlock = 0;
+
                 foreach (var intent in enemy.Monster.NextMove.Intents)
+                {
                     intents.Add(intent.ToString());
+                    if (intent.IntentType == IntentType.Hidden) continue;
+
+                    if (intent is AttackIntent attack)
+                    {
+                        try {
+                            intentDamage += attack.GetTotalDamage(targets, enemy);
+                        }
+                        catch { }
+                    }
+                    else if (intent.IntentType == IntentType.Defend)
+                    {
+                        intentBlock += 5;
+                    }
+                }
+
                 obj["intents"] = intents;
+                obj["intentDamage"] = intentDamage;
+                obj["intentBlock"] = intentBlock;
             }
 
             obj["powers"] = CapturePowers(enemy.Powers);
@@ -214,5 +234,15 @@ internal static class GameSnapshot
             });
         }
         return arr;
+    }
+
+    static string SafeRelicId(RelicModel relic) {
+        try { return relic.Id.Entry ?? ""; }
+        catch { return ""; }
+    }
+
+    static string SafeRelicRarity(RelicModel relic) {
+        try { return relic.Rarity.ToString(); }
+        catch { return ""; }
     }
 }

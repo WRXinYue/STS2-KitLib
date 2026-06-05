@@ -31,10 +31,12 @@ internal static class MpAiTeammateHost {
     public static void OnRunEnded() {
         AiHostContext.Clear();
         _tickRunning = false;
+        AiDecisionGate.Reset();
         _loops.Clear();
         _enqueueStreak.Clear();
         PseudoCoopActionQueue.ClearInFlightAll();
         CompanionDecisionHost.OnRunEnded();
+        LanLocalDecisionHost.OnRunEnded();
         AiDecisionLog.Clear();
     }
 
@@ -43,6 +45,10 @@ internal static class MpAiTeammateHost {
             _enqueueStreak[netId] = (cardId, entry.Streak + 1);
         else
             _enqueueStreak[netId] = (cardId, 1);
+    }
+
+    internal static void NotifyCombatActionFinished(ulong netId) {
+        ResetPlayStreak(netId);
     }
 
     static void ResetPlayStreak(ulong netId) => _enqueueStreak.Remove(netId);
@@ -74,17 +80,26 @@ internal static class MpAiTeammateHost {
         accum = 0;
 
         if (_tickRunning) return;
+        if (!AiDecisionGate.TryEnter()) return;
 
         var cm = CombatManager.Instance;
-        if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
+        if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) {
+            AiDecisionGate.Exit();
+            return;
+        }
 
         var state = RunManager.Instance?.DebugOnlyGetState();
-        if (state == null) return;
+        if (state == null) {
+            AiDecisionGate.Exit();
+            return;
+        }
 
         SimulatedPeerRegistry.Refresh();
 
         foreach (var player in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
+            if (LanAiOwnership.IsLocalPlayer(player)) continue;
             if (player.Creature.IsDead) continue;
+            PseudoCoopActionQueue.ClearStaleInFlight(player.NetId);
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
             if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) continue;
             if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
@@ -102,20 +117,18 @@ internal static class MpAiTeammateHost {
                 continue;
             }
 
-            if (!ShouldActForPlayer(player, cm)) continue;
-
             _tickRunning = true;
             TaskHelper.RunSafely(RunCombatDecisionAsync(player));
             return;
         }
+
+        AiDecisionGate.Exit();
     }
 
     static bool HasPlayableCard(Player player) {
         var hand = player.PlayerCombatState?.Hand?.Cards;
         return hand != null && hand.Any(c => c.CanPlay(out _, out _));
     }
-
-    static bool ShouldActForPlayer(Player player, CombatManager cm) => HasPlayableCard(player);
 
     static async Task RunCombatDecisionAsync(Player player) {
         try {
@@ -129,6 +142,7 @@ internal static class MpAiTeammateHost {
         finally {
             AiHostContext.Clear();
             _tickRunning = false;
+            AiDecisionGate.Exit();
         }
     }
 

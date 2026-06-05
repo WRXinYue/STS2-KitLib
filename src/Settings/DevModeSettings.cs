@@ -39,8 +39,14 @@ public sealed partial class DevModeSettings {
     /// <summary>AI托管：规则策略代打（STS2-AI SimpleStrategy）。</summary>
     public bool AutoPlayEnabled { get; set; }
 
+    /// <summary>Solo AutoPlay strategy: <c>Strong</c> (default) or <c>Simple</c>.</summary>
+    public string AutoPlayStrategy { get; set; } = "Strong";
+
     /// <summary>AI托管操作间隔（毫秒）。</summary>
     public int AutoPlayDelayMs { get; set; } = 800;
+
+    /// <summary>Weight for Spire Codex community priors (0 = off, 1 = default).</summary>
+    public float CodexPriorWeight { get; set; } = 1f;
 
     /// <summary>Host-only: simulate remote MpCheat ACKs without a second game instance.</summary>
     public bool SyncBotEnabled { get; set; }

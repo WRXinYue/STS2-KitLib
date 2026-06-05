@@ -1,0 +1,10 @@
+[
+  { "character": "IRONCLAD", "ascension": 10, "seed": "A10_IRON_001" },
+  { "character": "IRONCLAD", "ascension": 10, "seed": "A10_IRON_002" },
+  { "character": "SILENT", "ascension": 10, "seed": "A10_SILENT_001" },
+  { "character": "SILENT", "ascension": 10, "seed": "A10_SILENT_002" },
+  { "character": "DEFECT", "ascension": 10, "seed": "A10_DEFECT_001" },
+  { "character": "DEFECT", "ascension": 10, "seed": "A10_DEFECT_002" },
+  { "character": "NECROBINDER", "ascension": 10, "seed": "A10_NECRO_001" },
+  { "character": "REGENT", "ascension": 10, "seed": "A10_REGENT_001" }
+]

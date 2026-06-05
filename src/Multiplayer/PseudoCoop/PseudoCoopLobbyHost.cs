@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using DevMode.Multiplayer.LanTest;
 using DevMode.Multiplayer.SyncBot;
 using DevMode.Settings;
 using Godot;
@@ -68,6 +69,7 @@ internal static class PseudoCoopLobbyHost {
 
             // Do not Push char select onto the main-menu stack: SetCurrentScene frees the menu
             // while StartNewMultiplayerRun is still running, which can tear down the embark flow.
+            DualInstanceTestBootstrap.EnsureMultiplayerDevActive("pseudo_coop_host");
             DevModeState.PseudoCoopLaunchPending = true;
             DevModeState.PseudoCoopDeferHeavyUi = true;
             DevModeState.PseudoCoopDeferMpCheatPublish = true;

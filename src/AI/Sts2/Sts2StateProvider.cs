@@ -16,6 +16,7 @@ using MegaCrit.Sts2.Core.Runs;
 using DevMode.AI;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
+using DevMode.Multiplayer.Cheat;
 using DevMode.AI.Sts2.Helpers;
 using DevMode.AI.Sts2.Snapshots;
 
@@ -30,6 +31,12 @@ public sealed class Sts2StateProvider : IGameStateProvider
     {
         get
         {
+            // Card / relic picks must win over background map even when NMapScreen is open (LAN Neow).
+            if (OverlayPhaseHelper.HasActiveCardRewardScreen())
+                return GamePhase.CardReward;
+            if (OverlayPhaseHelper.HasActiveRelicSelectionScreen())
+                return GamePhase.RelicSelection;
+
             var overlay = NOverlayStack.Instance?.Peek();
             if (overlay != null)
             {
@@ -42,6 +49,8 @@ public sealed class Sts2StateProvider : IGameStateProvider
                     NChooseARelicSelection => GamePhase.RelicSelection,
                     NRewardsScreen        => GamePhase.RewardScreen,
                     NCardRewardSelectionScreen => GamePhase.CardReward,
+                    NDeckCardSelectScreen => GamePhase.CardReward,
+                    NChooseACardSelectionScreen => GamePhase.CardReward,
                     NGameOverScreen       => GamePhase.GameOver,
                     _                     => GamePhase.Unknown,
                 };
@@ -104,8 +113,15 @@ public sealed class Sts2StateProvider : IGameStateProvider
         if (AiHostContext.TryGetControlledPlayer(state, out player))
             return true;
 
-        player = LocalContext.GetMe((IEnumerable<Player>)state.Players)
-            ?? state.Players.FirstOrDefault();
+        player = LocalContext.GetMe((IEnumerable<Player>)state.Players);
+        if (player != null)
+            return true;
+
+        // Never guess player 1 in multiplayer — causes cross-driving between LanLocal / MpAi / Companion.
+        if (MpCheatSession.InMultiplayerRun)
+            return false;
+
+        player = state.Players.FirstOrDefault();
         return player != null;
     }
 }

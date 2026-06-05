@@ -68,6 +68,13 @@ internal static class AiHostPanelModel {
                     : I18N.T("ai.status.off", "off")));
         }
 
+        if (MpCheatSession.InMultiplayerRun && LanLocalDecisionHost.IsEnabled) {
+            lines.Add(I18N.T(
+                "ai.status.lanLocal",
+                "LAN local AI (Neow/rewards): {0}",
+                I18N.T("ai.status.on", "on")));
+        }
+
         var companions = CompanionBridge.ListCompanions();
         if (companions.Count > 0) {
             var summary = string.Join(", ", companions.Select(c =>
@@ -91,7 +98,17 @@ internal static class AiHostPanelModel {
             tips.Add(I18N.T("ai.rec.normalRun", "Title screen → DEVMODE → set Normal run to Dev Mode or Cheat Mode."));
 
         if (DevModeState.DualInstanceMinimalRail)
-            tips.Add(I18N.T("ai.rec.minimalRail", "Dual-instance mode shows AI Host only; use a full Dev run for all sidebar panels."));
+            tips.Add(I18N.T("ai.rec.minimalRail", "Dual-instance rail shows AI Host + Logs; use a full Dev run for all panels."));
+
+        if (MpCheatSession.InMultiplayerRun && LanLocalDecisionHost.IsEnabled)
+            tips.Add(I18N.T(
+                "ai.rec.lanLocal",
+                "LAN: Neow and reward screens are automated locally; host still hand-plays combat."));
+
+        if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost && !LanLocalDecisionHost.IsEnabled)
+            tips.Add(I18N.T(
+                "ai.rec.lanLocalOff",
+                "Apply LAN host preset (AI Host panel) to auto-pick Neow and rewards on both windows."));
 
         if (DevModeState.PseudoCoopDeferHeavyUi)
             tips.Add(I18N.T("ai.rec.deferUi", "Finish Neow and open the map once — the sidebar attaches after deferred init."));

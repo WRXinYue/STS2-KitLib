@@ -31,7 +31,10 @@ internal static class PseudoCoopNRunReadyTracePatch {
     static void Prefix() => MainFile.Logger.Info("[PseudoCoop] NRun._Ready starting…");
 
     [HarmonyPostfix]
-    static void Postfix() => MainFile.Logger.Info("[PseudoCoop] NRun._Ready complete.");
+    static void Postfix() {
+        DualInstanceTestBootstrap.TryAutoLanPresetsOnLaunch();
+        MainFile.Logger.Info("[PseudoCoop] NRun._Ready complete.");
+    }
 }
 
 [HarmonyPatch(typeof(RunManager), nameof(RunManager.EnterAct))]

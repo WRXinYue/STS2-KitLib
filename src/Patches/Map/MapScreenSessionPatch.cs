@@ -1,6 +1,11 @@
+using DevMode.AI.AutoPlay;
+using DevMode.AI.Planning;
 using DevMode.Map;
+using DevMode.Settings;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace DevMode.Patches.Map;
 
@@ -9,6 +14,7 @@ public static class MapScreenOpenPatch {
     public static void Postfix(NMapScreen __instance) {
         if (!DevModeState.IsActive) return;
         MapScreenUnlock.OnOpened(__instance);
+        MapAiPathOverlayHelper.TryApplyAiPathOverlay(__instance);
     }
 }
 
@@ -17,5 +23,24 @@ public static class MapScreenClosePatch {
     public static void Postfix(NMapScreen __instance) {
         if (!DevModeState.IsActive) return;
         MapScreenUnlock.OnClosed(__instance);
+        MapPathOverlay.Clear(__instance);
+        MapPathPlanner.ClearCache();
+    }
+}
+
+static class MapAiPathOverlayHelper {
+    internal static void TryApplyAiPathOverlay(NMapScreen screen) {
+        if (!AiPlayModule.Instance.IsRunning || !SettingsStore.Current.AutoPlayEnabled)
+            return;
+
+        var rm = RunManager.Instance;
+        var state = rm?.DebugOnlyGetState();
+        var player = LocalContext.GetMe(state);
+        if (state == null || player == null) return;
+
+        var plan = MapPathPlanner.Plan(state, player, forceRefresh: true);
+        if (plan == null || plan.Edges.Count == 0) return;
+
+        MapPathOverlay.Apply(screen, plan.Edges);
     }
 }

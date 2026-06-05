@@ -8,6 +8,19 @@ namespace DevMode.Multiplayer.LanTest;
 
 /// <summary>Defaults for same-machine dual-instance LAN multiplayer testing.</summary>
 internal static class DualInstanceTestBootstrap {
+    /// <summary>
+    /// LAN / pseudo-coop dev sessions need the rail even when settings have Normal run disabled.
+    /// In-memory only — does not write settings.json.
+    /// </summary>
+    public static void EnsureMultiplayerDevActive(string reason) {
+        if (DevModeState.NormalRunMode == NormalRunMode.Disabled) {
+            DevModeState.NormalRunMode = NormalRunMode.DevPanel;
+            MainFile.Logger.Info($"[LanTest] DevMode active for multiplayer dev session ({reason}).");
+        }
+
+        EnsureCheatsEnabled(reason);
+    }
+
     public static void EnsureCheatsEnabled(string reason) {
         if (!DevModeInstanceRegistry.IsDualInstanceActive())
             return;
@@ -30,7 +43,6 @@ internal static class DualInstanceTestBootstrap {
     /// <summary>Dual-instance LAN: auto-apply host-drive + client AFK presets so half-config cannot desync.</summary>
     internal static void TryAutoLanPresetsOnLaunch() {
         if (!DevModeInstanceRegistry.IsDualInstanceActive()) return;
-        if (!MpCheatSession.InMultiplayerRun) return;
 
         var netType = RunManager.Instance?.NetService?.Type;
         if (netType == NetGameType.Host) {

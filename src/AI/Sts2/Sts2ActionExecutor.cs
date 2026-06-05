@@ -29,6 +29,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
+using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
@@ -66,14 +67,14 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             ActionType.PlayCard => await PlayCard(player, action.TargetIndex, action.SecondaryIndex),
             ActionType.EndTurn => EndTurn(player),
             ActionType.SelectMapNode => await SelectMapNode(state, action.TargetIndex),
-            ActionType.PickCardReward => PickCardReward(action.TargetIndex),
+            ActionType.PickCardReward => await PickCardReward(action.TargetIndex),
             ActionType.SkipCardReward => await SkipCardReward(),
             ActionType.SelectEventChoice => await SelectEventChoice(action.TargetIndex),
             ActionType.PurchaseShopItem => await PurchaseShopItem(action.TargetIndex),
             ActionType.RemoveCardAtShop => await RemoveCardAtShop(),
             ActionType.LeaveShop => await LeaveShop(),
-            ActionType.Rest => await SelectRestSiteOption(0),
-            ActionType.UpgradeCard => await SelectRestSiteOption(1),
+            ActionType.Rest => await SelectRestSiteOption(action.TargetIndex),
+            ActionType.UpgradeCard => await SelectRestSiteOption(action.TargetIndex),
             ActionType.UsePotion => UsePotion(player, action.TargetIndex, action.SecondaryIndex),
             ActionType.CollectReward => await CollectReward(action.TargetIndex),
             ActionType.DismissRewards => await DismissRewards(),
@@ -96,6 +97,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         if (!Sts2CombatCompat.IsCombatPlayPhaseActive())
             return ActionResult.Fail("Not in play phase.");
+
+        if (LanAiOwnership.IsHostHandPlayLocal(player))
+            return ActionResult.Fail("LAN host local combat is hand-play only.");
 
         var hand = combatState.Hand?.Cards.ToList();
         if (hand == null || cardIndex < 0 || cardIndex >= hand.Count)
@@ -134,6 +138,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         if (!Sts2CombatCompat.IsCombatPlayPhaseActive())
             return ActionResult.Fail("Not in play phase.");
+
+        if (LanAiOwnership.IsHostHandPlayLocal(player))
+            return ActionResult.Fail("LAN host local combat is hand-play only.");
 
         if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
             MpAiTeammateCombatActions.SignalEndTurn(player);
@@ -250,25 +257,82 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Rewards ────────
 
-    private static ActionResult PickCardReward(int cardIndex)
+    private async Task<ActionResult> PickCardReward(int cardIndex)
     {
-        if (NOverlayStack.Instance?.Peek() is not NCardRewardSelectionScreen screen)
+        var screen = OverlayPhaseHelper.FindCardRewardScreen();
+        if (screen == null)
             return ActionResult.Fail("Card reward screen not open.");
 
-        var holders = UIHelper.FindAll<NCardHolder>((Node)screen);
-        if (holders.Count == 0) return ActionResult.Fail("No card rewards found.");
+        if (screen is NChooseACardSelectionScreen chooseScreen) {
+            var holders = UIHelper.FindAll<NCardHolder>((Node)chooseScreen)
+                .Where(h => GodotObject.IsInstanceValid(h) && h.Visible && h.CardModel != null)
+                .ToList();
+            if (holders.Count == 0) return ActionResult.Fail("No choose-a-card options found.");
 
-        var idx = cardIndex >= 0 && cardIndex < holders.Count ? cardIndex : 0;
-        holders[idx].EmitSignal(NCardHolder.SignalName.Pressed, holders[idx]);
-        return ActionResult.Ok($"Picked card reward {idx}.");
+            var idx = cardIndex >= 0 && cardIndex < holders.Count ? cardIndex : 0;
+            // Screen ignores presses for 350ms after open.
+            await Task.Delay(400);
+            holders[idx].EmitSignal(NCardHolder.SignalName.Pressed, holders[idx]);
+            return ActionResult.Ok($"Picked choose-a-card option {idx}.");
+        }
+
+        if (screen is NCardRewardSelectionScreen cardRewardScreen) {
+            var holders = UIHelper.FindAll<NCardHolder>((Node)cardRewardScreen);
+            if (holders.Count == 0) return ActionResult.Fail("No card rewards found.");
+
+            var idx = cardIndex >= 0 && cardIndex < holders.Count ? cardIndex : 0;
+            holders[idx].EmitSignal(NCardHolder.SignalName.Pressed, holders[idx]);
+            return ActionResult.Ok($"Picked card reward {idx}.");
+        }
+
+        if (screen is NDeckCardSelectScreen deckScreen) {
+            var holders = UIHelper.FindAll<NCardHolder>(deckScreen)
+                .Where(h => GodotObject.IsInstanceValid(h) && h.Visible)
+                .ToList();
+            if (holders.Count == 0) return ActionResult.Fail("No deck card choices found.");
+
+            var idx = cardIndex >= 0 && cardIndex < holders.Count ? cardIndex : 0;
+            var holder = holders[idx];
+            holder.EmitSignal(NCardHolder.SignalName.Pressed, holder);
+
+            var confirm = UIHelper.FindFirst<NProceedButton>(deckScreen);
+            if (confirm is { IsEnabled: true }) {
+                await UIHelper.Click(confirm);
+                return ActionResult.Ok($"Confirmed deck card choice {idx}.");
+            }
+
+            return ActionResult.Ok($"Selected deck card {idx} (awaiting confirm).");
+        }
+
+        return ActionResult.Fail($"Unsupported card reward screen: {screen.GetType().Name}");
     }
 
     private async Task<ActionResult> SkipCardReward()
     {
-        if (NOverlayStack.Instance?.Peek() is not NCardRewardSelectionScreen screen)
+        var screen = OverlayPhaseHelper.FindCardRewardScreen();
+        if (screen == null)
             return ActionResult.Fail("Card reward screen not open.");
 
-        var node = (Node)screen;
+        if (screen is NChooseACardSelectionScreen chooseScreen) {
+            var skip = UIHelper.FindFirst<NChoiceSelectionSkipButton>(chooseScreen);
+            if (skip is { Visible: true, IsEnabled: true }) {
+                await UIHelper.Click(skip);
+                return ActionResult.Ok("Skipped choose-a-card screen.");
+            }
+        }
+
+        if (screen is NDeckCardSelectScreen deckScreen) {
+            var deckBack = UIHelper.FindFirst<NBackButton>(deckScreen);
+            if (deckBack != null) {
+                await UIHelper.Click(deckBack);
+                return ActionResult.Ok("Cancelled deck card selection.");
+            }
+        }
+
+        if (screen is not NCardRewardSelectionScreen cardRewardScreen)
+            return ActionResult.Fail("Card reward screen not open.");
+
+        var node = (Node)cardRewardScreen;
         var backBtn = UIHelper.FindFirst<NBackButton>(node);
         if (backBtn != null)
         {
@@ -412,20 +476,38 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     private async Task<ActionResult> PickRelic(int relicIndex)
     {
-        if (NOverlayStack.Instance?.Peek() is not NChooseARelicSelection screen)
+        var screen = OverlayPhaseHelper.FindRelicSelectionScreen();
+        if (screen == null)
             return ActionResult.Fail("Relic selection screen not open.");
 
-        var clickables = UIHelper.FindAll<NClickableControl>((Node)screen);
-        if (clickables.Count == 0)
-            return ActionResult.Fail("No relic choices found.");
+        var entries = UIHelper.FindAll<NRelicCollectionEntry>((Node)screen)
+            .Where(e => e.Visible).ToList();
+        if (entries.Count > 0) {
+            var idx = relicIndex >= 0 && relicIndex < entries.Count ? relicIndex : 0;
+            var entry = entries[idx];
+            if (entry is NClickableControl clickable)
+                await UIHelper.Click(clickable);
+            else
+                return ActionResult.Fail("Relic entry is not clickable.");
+            return ActionResult.Ok($"Picked relic option {idx}.");
+        }
 
-        var idx = relicIndex >= 0 && relicIndex < clickables.Count ? relicIndex : 0;
-        await UIHelper.Click(clickables[idx]);
-        return ActionResult.Ok($"Picked relic option {idx}.");
+        var holders = UIHelper.FindAll<NTreasureRoomRelicHolder>((Node)screen)
+            .Where(h => h.IsEnabled && h.Visible).ToList();
+        if (holders.Count > 0) {
+            var idx = relicIndex >= 0 && relicIndex < holders.Count ? relicIndex : 0;
+            await UIHelper.Click(holders[idx]);
+            return ActionResult.Ok($"Picked relic holder {idx}.");
+        }
+
+        return ActionResult.Fail("No relic choices found.");
     }
 
     private async Task<ActionResult> AdvanceOverlay()
     {
+        if (OverlayPhaseHelper.FindCardRewardScreen() != null)
+            return await PickCardReward(0);
+
         var proceed = await Proceed();
         if (proceed.Success) return proceed;
 
@@ -466,15 +548,18 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         var room = FindMerchantRoom();
         if (room == null) return ActionResult.Fail("Shop not found.");
 
-        var slots = room.Inventory?.GetAllSlots()
-            .Where(s => s is not NMerchantCardRemoval && s.Entry.IsStocked && s.Entry.EnoughGold)
-            .ToList();
+        var affordable = new List<NMerchantSlot>();
+        foreach (var slot in room.Inventory!.GetAllSlots()) {
+            if (!slot.Entry.IsStocked || !slot.Entry.EnoughGold) continue;
+            if (slot is NMerchantCardRemoval) continue;
+            affordable.Add(slot);
+        }
 
-        if (slots == null || slots.Count == 0) return ActionResult.Fail("No affordable items.");
+        if (affordable.Count == 0) return ActionResult.Fail("No affordable items.");
 
-        var idx = itemIndex >= 0 && itemIndex < slots.Count ? itemIndex : 0;
-        await slots[idx].Entry.OnTryPurchaseWrapper(room.Inventory.Inventory);
-        return ActionResult.Ok($"Purchased item (cost: {slots[idx].Entry.Cost}).");
+        var idx = itemIndex >= 0 && itemIndex < affordable.Count ? itemIndex : 0;
+        await affordable[idx].Entry.OnTryPurchaseWrapper(room.Inventory.Inventory);
+        return ActionResult.Ok($"Purchased item (cost: {affordable[idx].Entry.Cost}).");
     }
 
     private async Task<ActionResult> RemoveCardAtShop()
@@ -518,13 +603,18 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             "/root/Game/RootSceneContainer/Run/RoomContainer/RestSiteRoom");
         if (room == null) return ActionResult.Fail("Rest site not found.");
 
-        var buttons = UIHelper.FindAll<NRestSiteButton>(room)
-            .Where(b => b.Option.IsEnabled).ToList();
+        var buttons = UIHelper.FindAll<NRestSiteButton>(room).ToList();
         if (buttons.Count == 0) return ActionResult.Fail("No rest options available.");
 
-        var idx = optionIndex >= 0 && optionIndex < buttons.Count ? optionIndex : 0;
-        await UIHelper.Click(buttons[idx]);
-        return ActionResult.Ok($"Selected rest option: {buttons[idx].Option.GetType().Name}");
+        if (optionIndex < 0 || optionIndex >= buttons.Count)
+            return ActionResult.Fail($"Invalid rest option index: {optionIndex}.");
+
+        var button = buttons[optionIndex];
+        if (!button.Option.IsEnabled)
+            return ActionResult.Fail($"Rest option {optionIndex} is disabled.");
+
+        await UIHelper.Click(button);
+        return ActionResult.Ok($"Selected rest option: {button.Option.GetType().Name}");
     }
 
     // ──────── Potions ────────

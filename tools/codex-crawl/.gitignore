@@ -1,0 +1,5 @@
+# Spire Codex crawl output (SQLite + run JSON + exports)
+data/
+
+# uv
+.venv/

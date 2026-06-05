@@ -8,8 +8,11 @@ internal static class MpAiTeammateActionFlightPatch {
     internal static void OnActionEnd(GameAction action) {
         if (action == null) return;
         var netId = PseudoCoopActionQueue.ResolvePlayerNetId(action);
-        if (netId != 0)
-            PseudoCoopActionQueue.ClearInFlight(netId);
+        if (netId == 0) return;
+
+        PseudoCoopActionQueue.ClearInFlight(netId);
+        if (action is PlayCardAction or EndPlayerTurnAction)
+            MpAiTeammateHost.NotifyCombatActionFinished(netId);
     }
 }
 

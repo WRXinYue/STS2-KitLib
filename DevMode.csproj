@@ -121,6 +121,8 @@
     <EmbeddedResource Include="src\Localization\eng.json" LogicalName="DevMode.Localization.eng.json" />
     <EmbeddedResource Include="src\Localization\zhs.json" LogicalName="DevMode.Localization.zhs.json" />
     <EmbeddedResource Include="src\Data\harmony-patch-registry.json" LogicalName="DevMode.Data.harmony-patch-registry.json" />
+    <EmbeddedResource Include="src\AI\Data\codex-priors.json" LogicalName="DevMode.AI.codex-priors.json"
+                      Condition="Exists('src\AI\Data\codex-priors.json')" />
   </ItemGroup>
 
   <ItemGroup>
