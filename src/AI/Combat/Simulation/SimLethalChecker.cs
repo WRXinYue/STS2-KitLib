@@ -1,4 +1,5 @@
 using System.Linq;
+using DevMode.AI.Combat;
 
 namespace DevMode.AI.Combat.Simulation;
 
@@ -7,10 +8,10 @@ public static class SimLethalChecker {
         targetIndex = -1;
 
         foreach (var enemy in state.Enemies
-                     .OrderByDescending(e => e.IsMinion && e.MechanicFlags.HasFlag(Knowledge.EnemyMechanicFlags.HasIllusionRevive) ? 0 : 1)
-                     .ThenByDescending(e => !e.IsMinion)
+                     .OrderByDescending(e => !e.IsMinion)
                      .ThenBy(e => e.CurrentHp)) {
             if (!enemy.IsAlive) continue;
+            if (LethalExclusions.ShouldSkip(enemy)) continue;
             if (EstimateMaxDamage(state) < enemy.EffectiveHp) continue;
             targetIndex = enemy.Index;
             return true;

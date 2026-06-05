@@ -70,17 +70,36 @@ public static class MinionEngagementPolicy {
         if (primary == null) return false;
         if (EnemyTargetPriority.IsMinion(primary)) return false;
 
+        var primaryId = primary["monsterId"]?.GetValue<string>();
+        MonsterMechanicIndex.TryGet(primaryId, out var primaryProfile);
+
         for (int i = 0; i < enemies.Count; i++) {
             if (i == primaryIndex) continue;
-            if (!EnemyTargetPriority.IsAlive(enemies[i]?.AsObject())) continue;
-            if (!EnemyTargetPriority.IsMinion(enemies[i]?.AsObject())) continue;
+            var ally = enemies[i]?.AsObject();
+            if (!EnemyTargetPriority.IsAlive(ally)) continue;
 
-            var summoner = enemies[i]?["summonerIndex"]?.GetValue<int>() ?? -1;
-            if (summoner == primaryIndex)
+            if (EnemyTargetPriority.IsMinion(ally)) {
+                var summoner = enemies[i]?["summonerIndex"]?.GetValue<int>() ?? -1;
+                if (summoner == primaryIndex)
+                    return true;
+                continue;
+            }
+
+            var allyId = ally?["monsterId"]?.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(allyId) || string.IsNullOrWhiteSpace(primaryId))
+                continue;
+
+            if (primaryProfile.Flags.HasFlag(EnemyMechanicFlags.CanSummonAllies)
+                && primaryProfile.SpawnedMonsterIds.Any(id =>
+                    string.Equals(id, allyId, StringComparison.OrdinalIgnoreCase)))
                 return true;
         }
 
-        return EnemyTargetPriority.HasAliveMinion(enemies);
+        if (primaryProfile.Flags.HasFlag(EnemyMechanicFlags.CanSummonAllies)
+            && EnemyTargetPriority.HasAliveMinion(enemies))
+            return true;
+
+        return false;
     }
 
     public static bool ShouldWipeMinionsOnPrimaryKill(JsonObject? killedEnemy) {

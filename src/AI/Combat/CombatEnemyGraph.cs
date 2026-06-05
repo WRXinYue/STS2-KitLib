@@ -39,6 +39,9 @@ public static class CombatEnemyGraph {
                 for (int i = _lastEnemyCount; i < enemies.Count; i++)
                     SummonerByIndex[i] = summoner;
             }
+            else {
+                LinkNewEnemiesBySpawnPriors(enemies, _lastEnemyCount);
+            }
         }
 
         _lastEnemyCount = enemies.Count;
@@ -88,6 +91,30 @@ public static class CombatEnemyGraph {
         }
 
         return -1;
+    }
+
+    static void LinkNewEnemiesBySpawnPriors(JsonArray enemies, int firstNewIndex) {
+        for (int i = firstNewIndex; i < enemies.Count; i++) {
+            if (enemies[i] is not JsonObject spawned) continue;
+            var spawnedId = spawned["monsterId"]?.GetValue<string>();
+            if (string.IsNullOrWhiteSpace(spawnedId)) continue;
+
+            for (int p = 0; p < enemies.Count; p++) {
+                if (p == i) continue;
+                if (enemies[p] is not JsonObject primary) continue;
+                if (!EnemyTargetPriority.IsAlive(primary)) continue;
+                if (EnemyTargetPriority.IsMinion(primary)) continue;
+
+                var primaryId = primary["monsterId"]?.GetValue<string>();
+                if (!MonsterMechanicIndex.TryGet(primaryId, out var profile)) continue;
+                if (!profile.SpawnedMonsterIds.Any(id =>
+                        string.Equals(id, spawnedId, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                SummonerByIndex[i] = p;
+                break;
+            }
+        }
     }
 
     static int FindLikelySummoner(JsonArray enemies, int oldCount, int newCount) {

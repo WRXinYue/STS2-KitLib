@@ -16,6 +16,7 @@ public static class LethalChecker {
         foreach (var t in EnemyTargetPriority.OrderByPriority(enemies)) {
             if (enemies[t] is not JsonObject enemy) continue;
             if (enemy["isAlive"]?.GetValue<bool>() == false) continue;
+            if (LethalExclusions.ShouldSkip(enemy)) continue;
 
             var hp = enemy["currentHp"]?.GetValue<int>() ?? 0;
             var block = enemy["block"]?.GetValue<int>() ?? 0;
@@ -76,6 +77,7 @@ public static class LethalChecker {
         foreach (var t in EnemyTargetPriority.OrderByPriority(enemies)) {
             if (enemies[t] is not JsonObject enemy) continue;
             if (enemy["isAlive"]?.GetValue<bool>() == false) continue;
+            if (LethalExclusions.ShouldSkip(enemy)) continue;
 
             var hp = enemy["currentHp"]?.GetValue<int>() ?? 0;
             var block = enemy["block"]?.GetValue<int>() ?? 0;

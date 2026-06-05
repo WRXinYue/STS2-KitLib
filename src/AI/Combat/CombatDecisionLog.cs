@@ -35,8 +35,11 @@ public static class CombatDecisionLog {
         sb.Append($" | E={energy} hand={handCount}");
         if (!string.IsNullOrWhiteSpace(threatLine))
             sb.Append(' ').Append(threatLine);
-        if (picked.TargetIndex >= 0)
-            sb.Append(FormatTargetBias(combat?["enemies"]?.AsArray(), picked.TargetIndex));
+        int enemyIndex = picked.Type == ActionType.PlayCard && picked.SecondaryIndex >= 0
+            ? picked.SecondaryIndex
+            : -1;
+        if (enemyIndex >= 0)
+            sb.Append(FormatTargetBias(combat?["enemies"]?.AsArray(), enemyIndex));
         if (!string.IsNullOrWhiteSpace(searchNote))
             sb.Append(' ').Append(searchNote);
 
