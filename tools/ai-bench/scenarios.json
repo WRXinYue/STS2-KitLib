@@ -51,6 +51,30 @@
       "encounterId": "LEAF_SLIME_M",
       "note": "Draw-pile peek and reshuffle scoring; rush before RESHUF=1 fills hand with Slimed.",
       "logPatterns": ["NEXT=", "RESHUF=", "POST_PLAY=", "OUTLOOK="]
+    },
+    {
+      "id": "living_shield_enrage",
+      "encounterId": "LIVING_SHIELD",
+      "note": "Enemy Strength buff before attack; IN= should reflect buffed damage after enrage move.",
+      "logPatterns": ["IN=", "flags=HasBuffIntent"]
+    },
+    {
+      "id": "wriggler_strength",
+      "encounterId": "WRIGGLER",
+      "note": "Self Strength buff; lethal/block scoring uses CombatDamageCalc when player has Strength.",
+      "logPatterns": ["PLAY=", "IN="]
+    },
+    {
+      "id": "obscura_team_buff",
+      "encounterId": "THE_OBSCURA",
+      "note": "AllyStrength on team before minion attacks; ActOrder + ordered move effects.",
+      "logPatterns": ["IN=", "flags=HasBuffIntent"]
+    },
+    {
+      "id": "thieving_hopper_steal",
+      "encounterId": "THIEVING_HOPPER",
+      "note": "Steal removes high-value card from draw/discard; POLL= drops after steal turn.",
+      "logPatterns": ["POLL=", "IN="]
     }
   ]
 }

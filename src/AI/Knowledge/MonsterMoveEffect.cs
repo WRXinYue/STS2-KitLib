@@ -11,4 +11,6 @@ public sealed record MonsterMoveEffect(
     int SkillCostPenalty = 0,
     int AttackCostPenalty = 0,
     int BoundCardsPerTurn = 0,
+    int Damage = 0,
+    int StrengthDelta = 0,
     bool IsNonDeterministic = false);

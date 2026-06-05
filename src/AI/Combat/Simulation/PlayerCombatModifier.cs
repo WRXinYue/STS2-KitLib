@@ -4,9 +4,12 @@ public sealed record PlayerCombatModifier(
     string PowerId,
     float AttackDamageMultiplier = 1f,
     float BlockMultiplier = 1f,
+    int AttackDamageFlat = 0,
+    int BlockFlat = 0,
     int SkillCostPenalty = 0,
     int AttackCostPenalty = 0,
-    int BoundCardsPerTurn = 0) {
+    int BoundCardsPerTurn = 0,
+    bool ConfusedDrawCostEv = false) {
     public static PlayerCombatModifier Shrink() =>
         new("SHRINK", AttackDamageMultiplier: 0.7f);
 
@@ -24,4 +27,13 @@ public sealed record PlayerCombatModifier(
 
     public static PlayerCombatModifier Frail() =>
         new("FRAIL", BlockMultiplier: 0.75f);
+
+    public static PlayerCombatModifier Strength(int amount) =>
+        new("STRENGTH", AttackDamageFlat: amount);
+
+    public static PlayerCombatModifier Dexterity(int amount) =>
+        new("DEXTERITY", BlockFlat: amount);
+
+    public static PlayerCombatModifier Confused() =>
+        new("CONFUSED", ConfusedDrawCostEv: true);
 }

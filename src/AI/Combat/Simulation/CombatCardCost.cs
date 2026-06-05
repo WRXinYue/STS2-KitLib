@@ -32,15 +32,8 @@ internal static class CombatCardCost {
         return cost;
     }
 
-    public static int EffectiveBlock(int block, IReadOnlyList<PlayerCombatModifier> modifiers) {
-        if (block <= 0)
-            return 0;
-
-        var scaled = (float)block;
-        foreach (var mod in modifiers)
-            scaled *= mod.BlockMultiplier;
-        return System.Math.Max(0, (int)System.Math.Round(scaled));
-    }
+    public static int EffectiveBlock(int block, IReadOnlyList<PlayerCombatModifier> modifiers) =>
+        CombatDamageCalc.OutgoingBlock(block, modifiers);
 
     public static bool CanAfford(CombatHandCard card, CombatState state) =>
         card.CanPlay && EffectiveCost(card, state.Modifiers) <= state.Energy;

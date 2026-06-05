@@ -40,10 +40,7 @@ public static class DeckPollutionEvaluator {
             if (!card.IsAttack || card.Damage <= 0) continue;
             if (!CombatCardCost.CanAfford(card, state)) continue;
 
-            var damage = card.Damage;
-            foreach (var mod in state.Modifiers)
-                damage = (int)Math.Round(damage * mod.AttackDamageMultiplier);
-            total += Math.Max(0, damage);
+            total += CombatDamageCalc.OutgoingDamage(card, state);
         }
 
         return total;
@@ -55,7 +52,7 @@ public static class DeckPollutionEvaluator {
             if (!card.IsSkill || card.Block <= 0) continue;
 
             if (CombatCardCost.EffectiveCost(card, state.Modifiers) > state.Energy) continue;
-            total += CombatCardCost.EffectiveBlock(card.Block, state.Modifiers);
+            total += CombatDamageCalc.OutgoingBlock(card, state);
         }
 
         return total;

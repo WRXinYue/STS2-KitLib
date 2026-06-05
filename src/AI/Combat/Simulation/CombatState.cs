@@ -22,7 +22,9 @@ public sealed record CombatState(
     IReadOnlyList<PlayerCombatModifier> Modifiers,
     IReadOnlyList<CombatEnemy> Enemies,
     uint ShuffleRngSeed = 0,
-    int ShuffleRngCounter = 0) {
+    int ShuffleRngCounter = 0,
+    uint EnergyCostRngSeed = 0,
+    int EnergyCostRngCounter = 0) {
 
     public int AliveEnemyCount => Enemies.Count(e => e.IsAlive);
 
@@ -43,11 +45,12 @@ public sealed record CombatState(
         var modifiers = ParseModifiers(combat?["playerPowers"]?.AsArray());
         var enemies = ParseEnemies(combat?["enemies"]?.AsArray());
         var (shuffleSeed, shuffleCounter) = ParseShuffleRng(combat?["rngShuffle"]?.AsObject());
+        var (energyCostSeed, energyCostCounter) = ParseShuffleRng(combat?["rngEnergyCosts"]?.AsObject());
 
         return new CombatState(
             hp, maxHp, block, energy, maxEnergy, statusDamage, turnNumber,
             hand, draw, discard, exhaust, modifiers, enemies,
-            shuffleSeed, shuffleCounter);
+            shuffleSeed, shuffleCounter, energyCostSeed, energyCostCounter);
     }
 
     public CombatState WithPlayer(int hp, int block, int energy) =>
@@ -73,6 +76,9 @@ public sealed record CombatState(
 
     public CombatState WithShuffleRng(uint seed, int counter) =>
         this with { ShuffleRngSeed = seed, ShuffleRngCounter = counter };
+
+    public CombatState WithEnergyCostRng(uint seed, int counter) =>
+        this with { EnergyCostRngSeed = seed, EnergyCostRngCounter = counter };
 
     public JsonArray ToHandJson() {
         var arr = new JsonArray();
@@ -166,7 +172,8 @@ public sealed record CombatState(
                 e["summonerIndex"]?.GetValue<int>() ?? -1,
                 e["monsterId"]?.GetValue<string>() ?? "",
                 e["nextMoveId"]?.GetValue<string>() ?? "",
-                ActOrder: i));
+                ActOrder: i,
+                Strength: CombatPowerReader.GetStrength(e)));
         }
 
         return enemies;

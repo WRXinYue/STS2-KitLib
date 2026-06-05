@@ -146,6 +146,12 @@ internal static class GameSnapshot
             ["counter"] = runState.Rng.Shuffle.Counter,
         };
 
+        combat["rngEnergyCosts"] = new JsonObject
+        {
+            ["seed"] = runState.Rng.CombatEnergyCosts.Seed,
+            ["counter"] = runState.Rng.CombatEnergyCosts.Counter,
+        };
+
         var hand = new JsonArray();
         if (combatState.Hand?.Cards != null)
         {

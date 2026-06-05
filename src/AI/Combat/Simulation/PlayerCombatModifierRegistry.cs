@@ -56,13 +56,20 @@ public static class PlayerCombatModifierRegistry {
         if (id.Contains("FRAIL", StringComparison.Ordinal))
             return PlayerCombatModifier.Frail();
 
+        if (id.Contains("STRENGTH", StringComparison.Ordinal))
+            return PlayerCombatModifier.Strength(Math.Max(0, amount));
+
+        if (id.Contains("DEXTERITY", StringComparison.Ordinal))
+            return PlayerCombatModifier.Dexterity(Math.Max(0, amount));
+
+        if (id.Contains("CONFUS", StringComparison.Ordinal))
+            return PlayerCombatModifier.Confused();
+
         return null;
     }
 
     static bool IsNonDeterministic(string id) =>
-        id.Contains("SWIPE", StringComparison.Ordinal)
-        || id.Contains("THIEV", StringComparison.Ordinal)
-        || id.Contains("CONFUS", StringComparison.Ordinal);
+        id.Contains("THIEV", StringComparison.Ordinal);
 
     static string NormalizeId(JsonObject power) =>
         (power["modelId"]?.GetValue<string>()

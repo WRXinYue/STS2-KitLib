@@ -36,10 +36,14 @@ public static class CombatSimulator {
         hand.RemoveAt(action.HandIndex);
 
         if (card.IsAttack && card.Damage > 0) {
-            if (card.IsAoe || card.TargetType is "AllEnemy")
-                ApplyAoeDamage(enemies, card.Damage);
-            else if (action.EnemyIndex >= 0)
-                ApplySingleDamage(enemies, action.EnemyIndex, card.Damage);
+            if (card.IsAoe || card.TargetType is "AllEnemy") {
+                var aoeDamage = CombatDamageCalc.OutgoingDamage(card, state);
+                ApplyAoeDamage(enemies, aoeDamage);
+            } else if (action.EnemyIndex >= 0) {
+                var target = FindEnemy(enemies, action.EnemyIndex);
+                var damage = CombatDamageCalc.OutgoingDamage(card, state, target?.Vulnerable ?? 0);
+                ApplySingleDamage(enemies, action.EnemyIndex, damage);
+            }
         }
 
         if (card.Profile.AppliedVulnerable > 0)
@@ -50,7 +54,7 @@ public static class CombatSimulator {
 
         if (card.IsSkill) {
             if (card.Block > 0)
-                block += CombatCardCost.EffectiveBlock(card.Block, state.Modifiers);
+                block += CombatDamageCalc.OutgoingBlock(card, state);
             else if (!MechanicCombatBonus.IsSetupSkill(card.Profile))
                 block += 5;
         }
@@ -207,8 +211,18 @@ public static class CombatSimulator {
         }
     }
 
+    static CombatEnemy? FindEnemy(List<CombatEnemy> enemies, int targetIndex) {
+        foreach (var enemy in enemies) {
+            if (!enemy.IsAlive) continue;
+            if (enemy.Index == targetIndex)
+                return enemy;
+        }
+
+        return null;
+    }
+
     static CombatEnemy ApplyDamageToEnemy(CombatEnemy enemy, int damage) {
-        var scaled = (int)Math.Round(damage * (enemy.Vulnerable > 0 ? 1.5f : 1f));
+        var scaled = damage;
         var remaining = Math.Max(0, scaled - enemy.Block);
         var newBlock = Math.Max(0, enemy.Block - scaled);
         var newHp = Math.Max(0, enemy.CurrentHp - remaining);

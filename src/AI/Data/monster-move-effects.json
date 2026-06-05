@@ -1,12 +1,390 @@
 {
   "moves": {
+    "ASSASSIN_RUBY_RAIDER": {
+      "KILLSHOT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "AXEBOT": {
+      "BOOT_UP_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "ONE_TWO_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SHARPEN_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 4
+        }
+      ],
+      "HAMMER_UPPERCUT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "AXE_RUBY_RAIDER": {
+      "SWING_1": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SWING_2": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BIG_SWING": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "BOWLBUG_EGG": {
+      "BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "BOWLBUG_NECTAR": {
+      "THRASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BUFF_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "THRASH2_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "BOWLBUG_ROCK": {
+      "HEADBUTT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "BOWLBUG_SILK": {
+      "TRASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "BRUTE_RUBY_RAIDER": {
+      "BEAT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ROAR_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 3
+        }
+      ]
+    },
+    "BYGONE_EFFIGY": {
+      "WAKE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 10
+        }
+      ],
+      "SLASHES_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "BYRDONIS": {
+      "PECK_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SWOOP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "CALCIFIED_CULTIST": {
+      "DARK_STRIKE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "CEREMONIAL_BEAST": {
+      "PLOW_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "STOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "CRUSH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
     "CHOMPER": {
+      "CLAMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "SCREECH_MOVE": [
         {
           "kind": "StatusInject",
           "cardId": "DAZED",
           "count": 3,
           "pile": "Discard"
+        }
+      ]
+    },
+    "CORPSE_SLUG": {
+      "WHIP_SLAP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "GLOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "CROSSBOW_RUBY_RAIDER": {
+      "FIRE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "CRUSHER": {
+      "THRASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ENLARGING_STRIKE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BUG_STING_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ADAPT_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "GUARDED_STRIKE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "CUBEX_CONSTRUCT": {
+      "CHARGE_UP_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ],
+      "REPEATER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ],
+      "REPEATER_MOVE_2": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ],
+      "EXPEL_BLAST": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "DAMP_CULTIST": {
+      "DARK_STRIKE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "DECIMILLIPEDE_SEGMENT": {
+      "WRITHE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BULK_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "CONSTRICT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "DEVOTED_SCULPTOR": {
+      "SAVAGE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "DOORMAKER": {
+      "HUNGER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SCRUTINY_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "GRASP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "ENTOMANCER": {
+      "PHEROMONE_SPIT_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ],
+      "BEES_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SPEAR_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "EXOSKELETON": {
+      "SKITTER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "MANDIBLE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ENRAGE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
         }
       ]
     },
@@ -20,15 +398,249 @@
         }
       ]
     },
+    "FABRICATOR": {
+      "FABRICATING_STRIKE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "DISINTEGRATE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "FAKE_MERCHANT_MONSTER": {
+      "SWIPE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SPEW_COINS_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "THROW_RELIC_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ENRAGE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
+    "FLAIL_KNIGHT": {
+      "WAR_CHANT": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 3
+        }
+      ],
+      "RAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "FLYCONID": {
+      "FRAIL_SPORES_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SMASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
     "FOGMOG": {
       "ILLUSION_MOVE": [
         {
           "kind": "Summon",
           "spawnMonsterId": "EYE_WITH_TEETH"
         }
+      ],
+      "SWIPE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "SWIPE_RANDOM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "HEADBUTT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "FOSSIL_STALKER": {
+      "TACKLE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "LATCH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "LASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "FROG_KNIGHT": {
+      "FOR_THE_QUEEN": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 5
+        }
+      ],
+      "STRIKE_DOWN_EVIL": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "TONGUE_LASH": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BEETLE_CHARGE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "FUZZY_WURM_CRAWLER": {
+      "FIRST_ACID_GOOP": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ACID_GOOP": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "INHALE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 7
+        }
+      ]
+    },
+    "GAS_BOMB": {
+      "EXPLODE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "GLOBE_HEAD": {
+      "THUNDER_STRIKE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SHOCKING_SLAP": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "GALVANIC_BURST": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
+    "GREMLIN_MERC": {
+      "GIMME_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "DOUBLE_SMASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "HEHE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
       ]
     },
     "HAUNTED_SHIP": {
+      "RAMMING_SPEED_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SWIPE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "STOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "HAUNT_MOVE": [
         {
           "kind": "StatusInject",
@@ -38,7 +650,173 @@
         }
       ]
     },
+    "HUNTER_KILLER": {
+      "BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PUNCTURE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "INFESTED_PRISM": {
+      "JAB_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "RADIATE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "WHIRLWIND_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PULSATE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "INKLET": {
+      "JAB_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "WHIRLWIND_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PIERCING_GAZE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "KIN_FOLLOWER": {
+      "QUICK_SLASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BOOMERANG_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "POWER_DANCE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "KIN_PRIEST": {
+      "ORB_OF_FRAILTY_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ORB_OF_WEAKNESS_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BEAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "RITUAL_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "KNOWLEDGE_DEMON": {
+      "SLAP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "KNOWLEDGE_OVERWHELMING_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PONDER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "LAGAVULIN_MATRIARCH": {
+      "SLASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SLASH2_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "DISEMBOWEL_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SOUL_SIPHON_MOVE": [
+        {
+          "kind": "AllyStrength",
+          "strengthDelta": -2
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
     "LEAF_SLIME_M": {
+      "CLUMP_SHOT": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "STICKY_SHOT": [
         {
           "kind": "StatusInject",
@@ -49,6 +827,12 @@
       ]
     },
     "LEAF_SLIME_S": {
+      "BUTT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "GOOP_MOVE": [
         {
           "kind": "StatusInject",
@@ -61,6 +845,10 @@
     "LIVING_FOG": {
       "ADVANCED_GAS_MOVE": [
         {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
           "kind": "PowerAffliction",
           "powerId": "SMOGGY",
           "skillCostPenalty": 1
@@ -70,16 +858,124 @@
         {
           "kind": "Summon",
           "spawnMonsterId": "GAS_BOMB"
+        },
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SUPER_GAS_BLAST_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "LIVING_SHIELD": {
+      "SHIELD_SLAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SMASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "LOUSE_PROGENITOR": {
+      "WEB_CANNON_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "POUNCE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "CURL_AND_GROW_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 5
+        }
+      ]
+    },
+    "MAGI_KNIGHT": {
+      "FIRST_POWER_SHIELD_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "MAGIC_BOMB": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "RAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "MAWLER": {
+      "RIP_AND_TEAR_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "CLAW_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
         }
       ]
     },
     "MECHA_KNIGHT": {
+      "CHARGE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "FLAMETHROWER_MOVE": [
         {
           "kind": "StatusInject",
           "cardId": "BURN",
           "count": 4,
           "pile": "Hand"
+        }
+      ],
+      "WINDUP_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 5
+        }
+      ],
+      "HEAVY_CLEAVE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "MULTI_ATTACK_MOVE_MONSTER": {
+      "POKE": [
+        {
+          "kind": "Attack",
+          "damage": 0
         }
       ]
     },
@@ -91,6 +987,42 @@
           "count": 2,
           "pile": "Hand"
         }
+      ],
+      "BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SUCK_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "NIBBIT": {
+      "BUTT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SLICE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "HISS_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
       ]
     },
     "OVICOPTER": {
@@ -98,6 +1030,78 @@
         {
           "kind": "Summon",
           "spawnMonsterId": "TOUGH_EGG"
+        }
+      ],
+      "SMASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "TENDERIZER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "NUTRITIONAL_PASTE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "OWL_MAGISTRATE": {
+      "MAGISTRATE_SCRUTINY": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PECK_ASSAULT": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "VERDICT": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "PARAFRIGHT": {
+      "SLAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "PHANTASMAL_GARDENER": {
+      "BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "LASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "FLAIL_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ENLARGE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
         }
       ]
     },
@@ -109,6 +1113,26 @@
           "count": 3,
           "pile": "Discard"
         }
+      ],
+      "LASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "PUNCH_CONSTRUCT": {
+      "STRONG_PUNCH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "FAST_PUNCH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
       ]
     },
     "QUEEN": {
@@ -118,6 +1142,110 @@
           "powerId": "CHAINS_OF_BINDING",
           "boundCardsPerTurn": 3
         }
+      ],
+      "BURN_BRIGHT_FOR_ME_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "OFF_WITH_YOUR_HEAD_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "EXECUTION_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ENRAGE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
+    "ROCKET": {
+      "TARGETING_RETICLE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PRECISION_BEAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "CHARGE_UP_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "LASER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SCROLL_OF_BITING": {
+      "CHOMP": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "CHEW": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "MORE_TEETH": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
+    "SEAPUNK": {
+      "SEA_KICK_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SPINNING_KICK_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BUBBLE_BURP_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "SEWER_CLAM": {
+      "PRESSURIZE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 4
+        }
+      ],
+      "JET_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
       ]
     },
     "SHRINKER_BEETLE": {
@@ -126,6 +1254,56 @@
           "kind": "PowerDebuff",
           "powerId": "SHRINK",
           "attackDamageMultiplier": 0.7
+        }
+      ],
+      "CHOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "STOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SINGLE_ATTACK_MOVE_MONSTER": {
+      "POKE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SKULKING_COLONY": {
+      "SMASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ZOOM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "INERTIA_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "PIERCING_STABS_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
         }
       ]
     },
@@ -137,15 +1315,347 @@
           "count": 10,
           "pile": "Discard"
         }
+      ],
+      "LEECHING_HUG_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 3
+        }
+      ],
+      "SMOTHER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "FURIOUS_PUMMELING_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SLITHERING_STRANGLER": {
+      "TWACK": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "LASH": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SLUDGE_SPINNER": {
+      "OIL_SPRAY_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SLAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "RAGE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 3
+        }
+      ]
+    },
+    "SLUMBERING_BEETLE": {
+      "ROLL_OUT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
+    "SNEAKY_GREMLIN": {
+      "TACKLE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SOUL_FYSH": {
+      "DE_GAS_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "GAZE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SCREAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SOUL_NEXUS": {
+      "SOUL_BURN_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "MAELSTROM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "DRAIN_LIFE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SPECTRAL_KNIGHT": {
+      "SOUL_SLASH": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SOUL_FLAME": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "SPINY_TOAD": {
+      "SPIKE_EXPLOSION_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "TONGUE_LASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "STABBOT": {
+      "STAB_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TERROR_EEL": {
+      "CRASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "ThrashMove": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
       ]
     },
     "TEST_SUBJECT": {
+      "BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SKULL_BASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "MULTI_CLAW_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PHASE3_LACERATE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BIG_POUNCE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "BURNING_GROWL_MOVE": [
         {
           "kind": "StatusInject",
           "cardId": "BURN",
           "count": 0,
           "pile": "Discard"
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "THE_ADVERSARY_MK_ONE": {
+      "SMASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BEAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BARRAGE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
+      ]
+    },
+    "THE_ADVERSARY_MK_THREE": {
+      "CRASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "FLAME_BEAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BARRAGE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 4
+        }
+      ]
+    },
+    "THE_ADVERSARY_MK_TWO": {
+      "BASH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "FLAME_BEAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BARRAGE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 3
+        }
+      ]
+    },
+    "THE_FORGOTTEN": {
+      "DREAD": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "THE_INSATIABLE": {
+      "LIQUIFY_GROUND_MOVE": [
+        {
+          "kind": "StatusInject",
+          "cardId": "UNKNOWN",
+          "count": 1,
+          "pile": "DiscardRandom"
+        }
+      ],
+      "THRASH_MOVE_1": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "THRASH_MOVE_2": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "LUNGING_BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SALIVATE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ]
+    },
+    "THE_LOST": {
+      "DEBILITATING_SMOG": [
+        {
+          "kind": "AllyStrength",
+          "strengthDelta": 1
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "EYE_LASERS": [
+        {
+          "kind": "Attack",
+          "damage": 0
         }
       ]
     },
@@ -155,18 +1665,156 @@
           "kind": "Summon",
           "spawnMonsterId": "PARAFRIGHT"
         }
+      ],
+      "PIERCING_GAZE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "SAIL_MOVE": [
+        {
+          "kind": "AllyStrength",
+          "strengthDelta": 1
+        }
+      ],
+      "HARDENING_STRIKE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
       ]
     },
     "THIEVING_HOPPER": {
       "THIEVERY_MOVE": [
         {
+          "kind": "Steal"
+        },
+        {
           "kind": "PowerAffliction",
-          "powerId": "SWIPE",
-          "isNonDeterministic": true
+          "powerId": "SWIPE"
+        },
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "NAB_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "HAT_TRICK_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TOADPOLE": {
+      "SPIKE_SPIT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "WHIRL_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TORCH_HEAD_AMALGAM": {
+      "TACKLE_1_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "TACKLE_2_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BEAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "TACKLE_3_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "TACKLE_4_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TOUGH_EGG": {
+      "NIBBLE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TRACKER_RUBY_RAIDER": {
+      "HOUNDS_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TUNNELER": {
+      "BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "BELOW_MOVE_1": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "TURRET_OPERATOR": {
+      "UNLOAD_MOVE_1": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "UNLOAD_MOVE_2": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "RELOAD_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 1
         }
       ]
     },
     "TWIG_SLIME_M": {
+      "CLUMP_SHOT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "STICKY_SHOT_MOVE": [
         {
           "kind": "StatusInject",
@@ -176,7 +1824,27 @@
         }
       ]
     },
+    "TWIG_SLIME_S": {
+      "BUTT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
     "TWO_TAILED_RAT": {
+      "SCRATCH_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "DISEASE_BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "CALL_FOR_BACKUP_MOVE": [
         {
           "kind": "Summon",
@@ -185,79 +1853,119 @@
       ]
     },
     "VANTOM": {
+      "INK_BLOT_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "INKY_LANCE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "DISMEMBER_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        },
         {
           "kind": "StatusInject",
           "cardId": "WOUND",
           "count": 3,
           "pile": "Discard"
         }
+      ],
+      "PREPARE_MOVE": [
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
+        }
       ]
     },
     "VINE_SHAMBLER": {
       "GRASPING_VINES_MOVE": [
         {
+          "kind": "Attack",
+          "damage": 0
+        },
+        {
           "kind": "PowerAffliction",
           "powerId": "TANGLED",
           "attackCostPenalty": 1
         }
+      ],
+      "SWIPE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "CHOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ]
+    },
+    "WATERFALL_GIANT": {
+      "STOMP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "RAM_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PRESSURE_GUN_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "PRESSURE_UP_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
+      "EXPLODE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
       ]
     },
     "WRIGGLER": {
+      "NASTY_BITE_MOVE": [
+        {
+          "kind": "Attack",
+          "damage": 0
+        }
+      ],
       "WRIGGLE_MOVE": [
         {
           "kind": "StatusInject",
           "cardId": "INFECTION",
           "count": 1,
           "pile": "Discard"
+        },
+        {
+          "kind": "EnemyStrength",
+          "strengthDelta": 2
         }
       ]
     },
-    "NOISEBOT": {
-      "NOISE_MOVE": [
+    "ZAPBOT": {
+      "ZAP": [
         {
-          "kind": "StatusInject",
-          "cardId": "DAZED",
-          "count": 1,
-          "pile": "Discard"
-        },
-        {
-          "kind": "StatusInject",
-          "cardId": "DAZED",
-          "count": 1,
-          "pile": "DrawRandom"
-        }
-      ]
-    },
-    "SOUL_FYSH": {
-      "BECKON_MOVE": [
-        {
-          "kind": "StatusInject",
-          "cardId": "BECKON",
-          "count": 1,
-          "pile": "DrawRandom"
-        },
-        {
-          "kind": "StatusInject",
-          "cardId": "BECKON",
-          "count": 1,
-          "pile": "Discard"
-        }
-      ]
-    },
-    "THE_INSATIABLE": {
-      "LIQUIFY_GROUND_MOVE": [
-        {
-          "kind": "StatusInject",
-          "cardId": "FRANTIC_ESCAPE",
-          "count": 3,
-          "pile": "DrawRandom"
-        },
-        {
-          "kind": "StatusInject",
-          "cardId": "FRANTIC_ESCAPE",
-          "count": 3,
-          "pile": "DiscardRandom"
+          "kind": "Attack",
+          "damage": 0
         }
       ]
     }

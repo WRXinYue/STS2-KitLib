@@ -51,6 +51,8 @@ internal static class MonsterMoveEffectData {
             obj["skillCostPenalty"]?.GetValue<int>() ?? 0,
             obj["attackCostPenalty"]?.GetValue<int>() ?? 0,
             obj["boundCardsPerTurn"]?.GetValue<int>() ?? 0,
+            obj["damage"]?.GetValue<int>() ?? 0,
+            obj["strengthDelta"]?.GetValue<int>() ?? 0,
             obj["isNonDeterministic"]?.GetValue<bool>() == true);
     }
 

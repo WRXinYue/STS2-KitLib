@@ -67,3 +67,11 @@ Manual spot-checks:
 4. **Random inject** — Noisebot / Soul Fysh / Insatiable moves use `rngShuffle` counter for `DrawRandom` / `DiscardRandom` placement.
 5. **Headbutt pick** — discard-pile single-select uses highest `KeepScore` (live + sim); exhaust/discard still lowest.
 6. **Power registry** — snapshot `playerPowers` maps Weak/Frail/Shrink/Smog/Tangle/Bind into `CombatCardCost` / `ThreatEconomy`.
+
+### Phase C sim fidelity
+
+1. **Strength/Dexterity** — `playerPowers` Strength +3 with 6-dmg Strike → `CombatDamageCalc` outgoing 9.
+2. **Ordered move effects** — ThievingHopper steal before attack; TheObscura `AllyStrength` before ally hits.
+3. **Steal** — `THIEVING_HOPPER` removes best card from draw/discard pile in sim.
+4. **RNG streams** — snapshot includes `rngEnergyCosts`; missing `rngShuffle` logs Warn.
+5. **Confused EV** — draw-pile planning uses cost EV 1.5 when Confused active.

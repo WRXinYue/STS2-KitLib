@@ -52,7 +52,7 @@ internal static class CombatPileSimulator {
             merged.StableShuffle(fallbackRng);
             if (!_loggedFallbackShuffle) {
                 _loggedFallbackShuffle = true;
-                MainFile.Logger.Debug("[CombatPile] Using hash-derived fallback shuffle (rngShuffle seed missing).");
+                MainFile.Logger.Warn("[CombatPile] Using hash-derived fallback shuffle (rngShuffle seed missing).");
             }
 
             return (merged, [], fallbackRng.Counter);

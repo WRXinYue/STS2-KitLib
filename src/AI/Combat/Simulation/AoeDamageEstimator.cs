@@ -19,7 +19,7 @@ public static class AoeDamageEstimator {
         foreach (var card in state.Hand) {
             if (!CombatCardCost.CanAfford(card, state)) continue;
             if (!card.IsAttack || !card.IsAoe) continue;
-            best = Math.Max(best, card.Damage);
+            best = Math.Max(best, CombatDamageCalc.OutgoingDamage(card, state));
         }
         return best;
     }
@@ -45,7 +45,7 @@ public static class AoeDamageEstimator {
             if (!card.IsAttack || !card.IsAoe) continue;
             if (card.Damage <= 0) continue;
 
-            int kills = EstimateAoeKills(state, card.Damage);
+            int kills = EstimateAoeKills(state, CombatDamageCalc.OutgoingDamage(card, state));
             if (kills <= bestKills) continue;
             bestKills = kills;
             best = new SimCombatAction(SimActionKind.PlayCard, i, -1);

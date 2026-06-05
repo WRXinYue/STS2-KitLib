@@ -72,6 +72,8 @@ internal static class MonsterMoveScanner {
                 SkillCostPenalty = match.SkillCostPenalty > 0 ? match.SkillCostPenalty : runtime.SkillCostPenalty,
                 AttackCostPenalty = match.AttackCostPenalty > 0 ? match.AttackCostPenalty : runtime.AttackCostPenalty,
                 BoundCardsPerTurn = match.BoundCardsPerTurn > 0 ? match.BoundCardsPerTurn : runtime.BoundCardsPerTurn,
+                Damage = match.Damage > 0 ? match.Damage : runtime.Damage,
+                StrengthDelta = match.StrengthDelta != 0 ? match.StrengthDelta : runtime.StrengthDelta,
                 IsNonDeterministic = match.IsNonDeterministic || runtime.IsNonDeterministic,
             };
         }

@@ -49,12 +49,8 @@ public static class DrawPlanner {
             if (!string.Equals(card.CardType, "Attack", StringComparison.OrdinalIgnoreCase)
                 && card.Damage <= 0)
                 continue;
-            if (CombatCardCost.EffectiveCost(card, state.Modifiers) > energy) continue;
-
-            var damage = card.Damage;
-            foreach (var mod in state.Modifiers)
-                damage = (int)Math.Round(damage * mod.AttackDamageMultiplier);
-            total += Math.Max(0, damage);
+            if (CombatDamageCalc.PlanningCost(card, state.Modifiers, energy) > energy) continue;
+            total += CombatDamageCalc.OutgoingDamage(card, state.Modifiers);
         }
 
         return total;
@@ -67,8 +63,8 @@ public static class DrawPlanner {
                 || card.Block <= 0)
                 continue;
 
-            if (CombatCardCost.EffectiveCost(card, state.Modifiers) > energy) continue;
-            total += CombatCardCost.EffectiveBlock(card.Block, state.Modifiers);
+            if (CombatDamageCalc.PlanningCost(card, state.Modifiers, energy) > energy) continue;
+            total += CombatDamageCalc.OutgoingBlock(card, state.Modifiers);
         }
 
         return total;

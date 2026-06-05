@@ -624,7 +624,7 @@ flowchart LR
 | 塞牌 vs 攻击不同尺 | 挡牌应对 debuff/塞牌 | `EffectiveIncoming` 仅攻击；污染 EV 单独计入 `POLL=` |
 | 硬编码 / 不透明 | card id 列表、缺什么靠调权重掩盖 | `monster-move-effects.json`（官方 handler 提取）+ `MonsterMechanicProfile.effects[]` |
 
-**已知局限**（不假装完美）：敌人行动顺序按快照 `enemies[]` 列表序（`ActOrder`），非完整协程时序；回洗 / Random 注入在无 `rngShuffle` seed 时用牌堆哈希确定性 RNG（与官方战斗 RNG 可能不一致）；Swipe / Confused 等非确定性 power 仍跳过；未建模的 player power 忽略。
+**已知局限**（不假装完美）：非完整协程/动画时序；无 `rngShuffle` seed 时回洗用牌堆哈希确定性 RNG；Confused 抽牌费用为 EV 近似（非逐张 `CombatEnergyCosts` 回放）；未列入 registry 的 player power / 遗物 Hook 仍忽略；偷牌不模拟死亡还牌。
 
 | 类型 | 职责 |
 | --- | --- |
@@ -637,7 +637,9 @@ flowchart LR
 | `CombatSimulator` | `Apply(action)` 出牌模拟（弃牌/消耗/抽牌/控顶）；`EndTurn` 委托 `CombatTurnResolver` |
 | `DrawPlanner` | 顶牌 `PeekTop`、`WillReshuffle`、抽牌堆期望伤害/格挡 |
 | `CombatPileManipulator` | Headbutt 等：与 `AiCombatCardSelector` 同尺 `CombatDiscardPickScorer` 选弃牌堆顶牌 |
-| `PlayerCombatModifierRegistry` | 快照 / move effect → Shrink/Smog/Tangle/Bind/Weak/Frail 等战斗修正 |
+| `PlayerCombatModifierRegistry` | 快照 / move effect → Strength/Dexterity + Shrink/Smog/Tangle/Bind/Weak/Frail/Confused |
+| `CombatDamageCalc` | 玩家出牌伤害/格挡：flat（力敏）+ debuff 乘数 + 易伤 |
+| `StealEffectSimulator` | ThievingHopper / Swipe：启发式从 draw/discard 移除最高价值牌 |
 | `PostTurnSimulator` | EndTurn 前完整下回合 mini-beam（职业级节奏） |
 | `CardPileEffectResolver` | 官方 DynamicVar → draw/discard/scry 数量 |
 | `PileRhythmEvaluator` | 顶牌视野 + 回洗风险的牌堆节奏分 |
@@ -673,7 +675,7 @@ flowchart LR
 - `PileRhythmEvaluator`：10 张顶牌视野 + 回洗污染惩罚，接入 `EvaluateMidTurn` / `EvaluateTerminal`。
 - **Beam 参数（职业级）**：深度 10–16、宽度 24–48、预算 480–650 ms；迭代加深从 depth 5 起。
 
-**故意不模拟**（L4 后仍保留）：ThievingHopper 偷牌、完整 Hook 链、多玩家时序、Scry UI、Innate/PerfectFit 回合初排序。已模拟：draw/discard/exhaust 牌面、官方 shuffle RNG、确定性顶抽、`StatusInject` 塞牌、`Summon`、控顶启发式、白名单 power debuff。
+**故意不模拟**（Phase C 后仍保留）：完整 Hook/遗物链、多玩家时序、Scry UI 等价控牌、Innate/PerfectFit 回合初排序、偷牌死亡还牌。已模拟：有序 move 效果（Attack/Strength/Steal）、玩家 Strength/Dexterity、敌人 Strength/队友 buff、`StatusInject`+Random RNG、Swipe 启发式偷牌、Confused 费用 EV。
 
 **效果数据**：`tools/monster-move-effect-dump/extract-move-effects.py` 从官方 `Monsters/*.cs` 提取 `AddToCombatAndPreview` / `CreatureCmd.Add` / `PowerCmd.Apply`；嵌入 `src/AI/Data/monster-move-effects.json`。
 

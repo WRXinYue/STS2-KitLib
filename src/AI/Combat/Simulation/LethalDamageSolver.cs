@@ -40,7 +40,7 @@ public static class LethalDamageSolver {
             attacks.Add(new AttackOption(
                 i,
                 cost,
-                ScaleDamage(card.Damage, state.Modifiers, vulnerable),
+                CombatDamageCalc.OutgoingDamage(card.Damage, state.Modifiers, vulnerable),
                 card.IsAoe));
         }
 
@@ -68,20 +68,11 @@ public static class LethalDamageSolver {
             attacks.Add(new AttackOption(
                 i,
                 cost,
-                ScaleDamage(damage, vulnerable),
+                CombatDamageCalc.OutgoingDamage(damage, [], vulnerable),
                 targetType is "AllEnemy"));
         }
 
         return attacks;
-    }
-
-    static int ScaleDamage(int damage, IReadOnlyList<PlayerCombatModifier> modifiers, int vulnerable) {
-        var scaled = damage;
-        foreach (var mod in modifiers)
-            scaled = (int)Math.Round(scaled * mod.AttackDamageMultiplier);
-        if (vulnerable > 0)
-            scaled = (int)Math.Round(scaled * 1.5f);
-        return Math.Max(0, scaled);
     }
 
     static int ScaleDamage(int damage, int vulnerable) {

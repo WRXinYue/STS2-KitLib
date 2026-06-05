@@ -23,32 +23,47 @@ public static class CombatTurnResolver {
         foreach (var enemy in enemies.OrderBy(e => e.ActOrder).ToList()) {
             if (!enemy.IsAlive) continue;
 
-            var moveId = string.IsNullOrWhiteSpace(enemy.NextMoveId)
-                ? enemy.IntentSteps.FirstOrDefault()?.MoveId ?? ""
-                : enemy.NextMoveId;
-            var effects = MoveEffectIndex.GetEffects(enemy.MonsterId, moveId);
+            int idx = enemies.FindIndex(e => e.Index == enemy.Index);
+            if (idx < 0) continue;
+            var acting = enemies[idx];
+
+            var moveId = string.IsNullOrWhiteSpace(acting.NextMoveId)
+                ? acting.IntentSteps.FirstOrDefault()?.MoveId ?? ""
+                : acting.NextMoveId;
+            var effects = MoveEffectIndex.GetEffects(acting.MonsterId, moveId);
+            bool hasExplicitAttack = effects.Any(e => e.Kind == MonsterMoveEffectKind.Attack);
 
             foreach (var effect in effects) {
                 switch (effect.Kind) {
                     case MonsterMoveEffectKind.Attack:
-                        (hp, block) = ApplyEnemyAttack(hp, block, enemy.IntentDamage, modifiers);
+                        var attackDamage = effect.Damage > 0
+                            ? effect.Damage + acting.Strength
+                            : acting.IntentDamage;
+                        (hp, block) = ApplyEnemyAttack(hp, block, attackDamage, modifiers);
+                        break;
+                    case MonsterMoveEffectKind.EnemyStrength:
+                        acting = acting.AddStrength(effect.StrengthDelta);
+                        enemies[idx] = acting;
+                        break;
+                    case MonsterMoveEffectKind.AllyStrength:
+                        ApplyAllyStrength(enemies, effect.StrengthDelta);
+                        acting = enemies[idx];
                         break;
                     case MonsterMoveEffectKind.StatusInject:
                         if (!string.IsNullOrWhiteSpace(effect.CardId) && effect.Count > 0) {
                             (draw, discard, rngCounter) = ApplyStatusInject(
-                                draw,
-                                discard,
-                                effect,
-                                state.ShuffleRngSeed,
-                                rngCounter);
+                                draw, discard, effect, state.ShuffleRngSeed, rngCounter);
                         }
+                        break;
+                    case MonsterMoveEffectKind.Steal:
+                        (draw, discard) = StealEffectSimulator.Apply(draw, discard);
                         break;
                     case MonsterMoveEffectKind.Summon:
                         if (!string.IsNullOrWhiteSpace(effect.SpawnMonsterId)) {
                             var summoned = CombatSummonFactory.TryCreateSummonedEnemy(
                                 effect.SpawnMonsterId,
                                 NextEnemyIndex(enemies),
-                                enemy.Index,
+                                acting.Index,
                                 enemies);
                             if (summoned != null)
                                 enemies.Add(summoned);
@@ -58,18 +73,19 @@ public static class CombatTurnResolver {
                         modifiers.Add(MapPowerModifier(effect));
                         break;
                     case MonsterMoveEffectKind.PowerAffliction:
-                        if (!effect.IsNonDeterministic)
+                        if (string.Equals(effect.PowerId, "SWIPE", StringComparison.OrdinalIgnoreCase)) {
+                            (draw, discard) = StealEffectSimulator.Apply(draw, discard);
+                        } else if (!effect.IsNonDeterministic) {
                             modifiers.Add(MapPowerModifier(effect));
+                        }
                         break;
                 }
             }
 
-            if (enemy.IntentDamage > 0 && !effects.Any(e => e.Kind == MonsterMoveEffectKind.Attack))
-                (hp, block) = ApplyEnemyAttack(hp, block, enemy.IntentDamage, modifiers);
+            if (acting.IntentDamage > 0 && !hasExplicitAttack)
+                (hp, block) = ApplyEnemyAttack(hp, block, acting.IntentDamage, modifiers);
 
-            int idx = enemies.FindIndex(e => e.Index == enemy.Index);
-            if (idx >= 0)
-                enemies[idx] = AdvanceEnemyIntent(enemies[idx]);
+            enemies[idx] = AdvanceEnemyIntent(acting);
         }
 
         for (int i = 0; i < enemies.Count; i++) {
@@ -80,12 +96,12 @@ public static class CombatTurnResolver {
 
         (List<CombatHandCard> hand, List<CombatPileCard> drawAfter, List<CombatPileCard> discardAfter, int drawCounter) =
             CombatPileSimulator.DrawHand(
-            retained,
-            draw,
-            discard,
-            CombatPileSimulator.BaseHandDrawCount,
-            state.ShuffleRngSeed,
-            rngCounter);
+                retained,
+                draw,
+                discard,
+                CombatPileSimulator.BaseHandDrawCount,
+                state.ShuffleRngSeed,
+                rngCounter);
         rngCounter = drawCounter;
 
         return state with {
@@ -101,6 +117,14 @@ public static class CombatTurnResolver {
             Enemies = enemies,
             ShuffleRngCounter = rngCounter,
         };
+    }
+
+    static void ApplyAllyStrength(List<CombatEnemy> enemies, int delta) {
+        if (delta == 0) return;
+        for (int i = 0; i < enemies.Count; i++) {
+            if (!enemies[i].IsAlive) continue;
+            enemies[i] = enemies[i].AddStrength(delta);
+        }
     }
 
     static (int hp, int block) ApplyEnemyAttack(
