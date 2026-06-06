@@ -492,8 +492,8 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         if (clicked > 0)
             return ActionResult.Ok($"Collected {clicked} reward(s).");
 
-        // No more buttons — click Proceed (official handler waits for map/screen close).
-        if (NMapScreen.Instance is { IsOpen: true } && screen.IsComplete) {
+        // No more buttons — click Proceed (official handler waits for overlay pop, not map preload).
+        if (RewardsOverlayInactive() && NMapScreen.Instance is { IsOpen: true }) {
             ResetRewardTracking();
             return ActionResult.Ok("Rewards complete; map is open.");
         }
@@ -501,7 +501,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         var proceedBtn = UIHelper.FindFirst<NProceedButton>((Node)screen);
         if (proceedBtn != null)
         {
-            if (NMapScreen.Instance is { IsOpen: true }) {
+            if (RewardsOverlayInactive() && NMapScreen.Instance is { IsOpen: true }) {
                 ResetRewardTracking();
                 return ActionResult.Ok("Map already open.");
             }
@@ -513,20 +513,23 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             await UIHelper.Click(proceedBtn);
             var closed = await UIHelper.WaitUntil(
                 () => !GodotObject.IsInstanceValid((Node)screen)
-                      || NOverlayStack.Instance?.Peek() != (IOverlayScreen)screen
-                      || (NMapScreen.Instance?.IsOpen ?? false),
-                TimeSpan.FromSeconds(10));
+                      || NOverlayStack.Instance?.Peek() != (IOverlayScreen)screen,
+                TimeSpan.FromSeconds(15));
             if (closed) {
                 ResetRewardTracking();
                 return ActionResult.Ok("Proceed clicked.");
             }
 
-            _log("CollectReward: proceed clicked but rewards screen still open.");
-            return ActionResult.Ok("Proceed clicked; awaiting screen close.");
+            _log("CollectReward: proceed clicked but rewards overlay still active.");
+            return ActionResult.Ok("Proceed clicked; awaiting overlay close.");
         }
 
         return ActionResult.Fail("Rewards screen has no clickable buttons yet.");
     }
+
+    static bool RewardsOverlayInactive() =>
+        NOverlayStack.Instance?.Peek() is not NRewardsScreen
+        && !OverlayPhaseHelper.HasActiveCardRewardScreen();
 
     private void ResetRewardTracking()
     {
