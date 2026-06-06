@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DevMode.AI.AutoPlay;
 using DevMode.Actions;
 using DevMode.Actions.CardModes;
 using DevMode.Icons;
@@ -332,6 +333,9 @@ internal static class DevPanel {
 
     private static async Task StartNewTestAsync(NGame game, RunManager rm) {
         await game.Transition.FadeOut();
+
+        AiPlayModule.Instance.StopLoop();
+        SkipAnimControl.Reset();
 
         if (rm.IsInProgress)
             rm.CleanUp();

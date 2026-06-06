@@ -33,6 +33,13 @@ internal sealed class AiPlayModule {
             return;
         }
         if (!SettingsStore.Current.AutoPlayEnabled) return;
+        // LoadRun replaces NGlobalUi; defer until the new scene tree is ready.
+        Callable.From(StartLoopIfEnabled).CallDeferred();
+    }
+
+    void StartLoopIfEnabled() {
+        if (!IsAutoPlayAllowed || !SettingsStore.Current.AutoPlayEnabled)
+            return;
         StartLoop();
     }
 

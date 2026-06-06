@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using DevMode.AI.AutoPlay;
 using DevMode.Modding;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
@@ -298,6 +299,9 @@ internal static class SaveSlotManager {
     private static async Task LoadFromSaveAsync(SerializableRun save) {
         try {
             await NGame.Instance!.Transition.FadeOut();
+
+            AiPlayModule.Instance.StopLoop();
+            SkipAnimControl.Reset();
 
             if (RunManager.Instance.IsInProgress)
                 RunManager.Instance.CleanUp();
