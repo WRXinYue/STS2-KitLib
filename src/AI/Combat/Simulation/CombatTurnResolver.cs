@@ -15,6 +15,7 @@ public static class CombatTurnResolver {
         var modifiers = state.Modifiers.ToList();
         var enemies = state.Enemies.ToList();
         var rngCounter = state.ShuffleRngCounter;
+        int unblockedDamage = 0;
 
         List<CombatHandCard> retained;
         if (RelicCombatRules.RetainHandOnEndTurn(state.RelicIds)) {
@@ -42,7 +43,8 @@ public static class CombatTurnResolver {
                         var attackDamage = effect.Damage > 0
                             ? effect.Damage + acting.Strength
                             : acting.IntentDamage;
-                        (hp, block) = ApplyEnemyAttack(hp, block, attackDamage, modifiers);
+                        (hp, block, var unblocked) = ApplyEnemyAttack(hp, block, attackDamage, modifiers);
+                        unblockedDamage += unblocked;
                         break;
                     case MonsterMoveEffectKind.EnemyStrength:
                         acting = acting.AddStrength(effect.StrengthDelta);
@@ -91,8 +93,10 @@ public static class CombatTurnResolver {
                 }
             }
 
-            if (acting.IntentDamage > 0 && !hasExplicitAttack)
-                (hp, block) = ApplyEnemyAttack(hp, block, acting.IntentDamage, modifiers);
+            if (acting.IntentDamage > 0 && !hasExplicitAttack) {
+                (hp, block, var unblocked) = ApplyEnemyAttack(hp, block, acting.IntentDamage, modifiers);
+                unblockedDamage += unblocked;
+            }
 
             enemies[idx] = AdvanceEnemyIntent(acting);
         }
@@ -136,6 +140,8 @@ public static class CombatTurnResolver {
             Enemies = enemies,
             ShuffleRngCounter = rngCounter,
             NextPlayCostWaive = NextPlayCostWaive.None,
+            AttacksPlayedThisTurn = 0,
+            UnblockedDamageTakenThisTurn = unblockedDamage,
         };
     }
 
@@ -147,16 +153,16 @@ public static class CombatTurnResolver {
         }
     }
 
-    static (int hp, int block) ApplyEnemyAttack(
+    static (int hp, int block, int unblocked) ApplyEnemyAttack(
         int hp,
         int block,
         int damage,
         List<PlayerCombatModifier> modifiers) {
-        if (damage <= 0) return (hp, block);
+        if (damage <= 0) return (hp, block, 0);
 
         var net = Math.Max(0, damage - block);
         var newBlock = Math.Max(0, block - damage);
-        return (Math.Max(0, hp - net), newBlock);
+        return (Math.Max(0, hp - net), newBlock, net);
     }
 
     static PlayerCombatModifier MapPowerModifier(MonsterMoveEffect effect) =>

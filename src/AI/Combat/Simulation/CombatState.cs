@@ -28,7 +28,10 @@ public sealed record CombatState(
     int ShuffleRngCounter = 0,
     uint EnergyCostRngSeed = 0,
     int EnergyCostRngCounter = 0,
-    NextPlayCostWaive NextPlayCostWaive = NextPlayCostWaive.None) {
+    NextPlayCostWaive NextPlayCostWaive = NextPlayCostWaive.None,
+    int AttacksPlayedThisTurn = 0,
+    int UnblockedDamageTakenThisTurn = 0,
+    int OrbCount = 0) {
 
     public int AliveEnemyCount => Enemies.Count(e => e.IsAlive);
 
@@ -53,6 +56,7 @@ public sealed record CombatState(
         var (shuffleSeed, shuffleCounter) = ParseShuffleRng(combat?["rngShuffle"]?.AsObject());
         var (energyCostSeed, energyCostCounter) = ParseShuffleRng(combat?["rngEnergyCosts"]?.AsObject());
         var potions = ParsePotions(snapshot["potions"]?.AsArray());
+        var orbCount = combat?["orbCount"]?.GetValue<int>() ?? 0;
 
         if (turnNumber <= 1 && block == 0) {
             var relicBlock = RelicCombatRules.StartOfCombatBlock(relicIds);
@@ -64,7 +68,8 @@ public sealed record CombatState(
             hp, maxHp, block, energy, maxEnergy, statusDamage, turnNumber,
             hand, draw, discard, exhaust, modifiers, enemies, relicIds, potions,
             false,
-            shuffleSeed, shuffleCounter, energyCostSeed, energyCostCounter);
+            shuffleSeed, shuffleCounter, energyCostSeed, energyCostCounter,
+            OrbCount: orbCount);
     }
 
     public CombatState WithPlayer(int hp, int block, int energy) =>

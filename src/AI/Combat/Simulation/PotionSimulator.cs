@@ -116,6 +116,26 @@ internal static class PotionSimulator {
             case PotionCombatEffectKind.GainHeal:
                 hp = ApplyHeal(hp, state.PlayerMaxHp, effect.Amount);
                 break;
+
+            case PotionCombatEffectKind.ApplyPoison:
+                CombatEffectApplier.ApplySingleDamage(enemies, enemyIndex, effect.Amount);
+                break;
+
+            case PotionCombatEffectKind.GainFocus:
+                modifiers = CombatEffectApplier.AddModifier(modifiers, PlayerCombatModifier.Focus(effect.Amount));
+                break;
+
+            case PotionCombatEffectKind.GainStars:
+                energy += Math.Max(0, effect.Amount);
+                break;
+
+            case PotionCombatEffectKind.EnemyStrengthDown:
+                CombatEffectApplier.ApplyEnemyStrengthDelta(enemies, -effect.Amount);
+                break;
+
+            case PotionCombatEffectKind.NextAttackDoubled:
+                modifiers = CombatEffectApplier.AddModifier(modifiers, PlayerCombatModifier.Gigantification());
+                break;
         }
     }
 

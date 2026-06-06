@@ -231,7 +231,7 @@ public static class DeckEvaluator {
         if (metrics.DrawDeficit >= 2 && metrics.DeckSize <= plan.TargetDeckSize)
             score -= 4;
 
-        return score;
+        return Math.Max(0, score);
     }
 
     /// <summary>Quality delta from hypothetically adding one offered card to the deck.</summary>

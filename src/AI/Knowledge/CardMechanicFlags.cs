@@ -26,4 +26,6 @@ public enum CardMechanicFlags : ulong {
     AddsCardsToDeck = 1 << 17,
     /// <summary>Prompts to exhaust another card from hand (Burning Pact, True Grit+, Brand).</summary>
     HasExhaustFromHand = 1 << 18,
+    /// <summary>Plays and exhausts the top card of the draw pile (Havoc).</summary>
+    PlaysTopOfDrawExhaust = 1 << 19,
 }

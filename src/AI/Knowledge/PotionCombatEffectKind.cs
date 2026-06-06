@@ -12,4 +12,9 @@ public enum PotionCombatEffectKind {
     GainDexterity,
     GainHeal,
     RandomAddCards,
+    ApplyPoison,
+    GainFocus,
+    GainStars,
+    EnemyStrengthDown,
+    NextAttackDoubled,
 }

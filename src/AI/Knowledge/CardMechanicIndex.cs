@@ -21,7 +21,10 @@ public sealed record CardMechanicProfile(
     int AppliedWeak = 0,
     int AttackHitCount = 1,
     bool CostsEnergyX = false,
-    bool AttackHitsScaleWithEnergy = false);
+    bool AttackHitsScaleWithEnergy = false,
+    int HpLoss = 0,
+    int ReplayCount = 0,
+    AttackHitScaleMode HitScaleMode = AttackHitScaleMode.None);
 
 /// <summary>Indexes official card mechanics from <see cref="ModelDb.AllCards"/> at startup.</summary>
 public static class CardMechanicIndex {
@@ -112,7 +115,11 @@ public static class CardMechanicIndex {
         if (appliedVuln > 0) flags |= CardMechanicFlags.AppliesVulnerable;
         if (appliedWeak > 0) flags |= CardMechanicFlags.AppliesWeak;
 
+        if (string.Equals(card.GetType().Name, "Havoc", StringComparison.Ordinal))
+            flags |= CardMechanicFlags.PlaysTopOfDrawExhaust;
+
         var costsEnergyX = card.EnergyCost.CostsX;
+        var hitScale = ReadHitScaleMode(card, costsEnergyX);
         return new CardMechanicProfile(
             id,
             flags,
@@ -124,13 +131,16 @@ public static class CardMechanicIndex {
             [.. derived],
             appliedVuln,
             appliedWeak,
-            ReadAttackHitCount(card),
+            ReadAttackHitCount(card, hitScale),
             costsEnergyX,
-            ReadAttackHitsScaleWithEnergy(card, costsEnergyX));
+            hitScale == AttackHitScaleMode.Energy,
+            ReadHpLoss(card),
+            CardEditActions.GetReplayCount(card) ?? 0,
+            hitScale);
     }
 
-    static int ReadAttackHitCount(CardModel card) {
-        if (card.EnergyCost.CostsX && ReadAttackHitsScaleWithEnergy(card, costsEnergyX: true))
+    static int ReadAttackHitCount(CardModel card, AttackHitScaleMode hitScale) {
+        if (hitScale != AttackHitScaleMode.None && hitScale != AttackHitScaleMode.UnblockedDamageTakenPlusOne)
             return 1;
 
         var repeat = CardEditActions.GetDynamicVar(card, "Repeat");
@@ -140,10 +150,29 @@ public static class CardMechanicIndex {
         return AttackHitCountByTypeName.TryGetValue(card.GetType().Name, out var hits) ? hits : 1;
     }
 
-    static bool ReadAttackHitsScaleWithEnergy(CardModel card, bool costsEnergyX) =>
-        costsEnergyX
-        && card.Type == CardType.Attack
-        && AttackHitsScaleWithEnergyByTypeName.Contains(card.GetType().Name);
+    static AttackHitScaleMode ReadHitScaleMode(CardModel card, bool costsEnergyX) {
+        if (costsEnergyX && card.Type == CardType.Attack
+            && AttackHitsScaleWithEnergyByTypeName.Contains(card.GetType().Name))
+            return AttackHitScaleMode.Energy;
+
+        return HitScaleModeByTypeName.TryGetValue(card.GetType().Name, out var mode)
+            ? mode
+            : AttackHitScaleMode.None;
+    }
+
+    static int ReadHpLoss(CardModel card) {
+        var hpLoss = CardEditActions.GetDynamicVar(card, "HpLoss");
+        return hpLoss is > 0 ? hpLoss.Value : 0;
+    }
+
+    static readonly Dictionary<string, AttackHitScaleMode> HitScaleModeByTypeName =
+        new(StringComparer.Ordinal) {
+            ["Finisher"] = AttackHitScaleMode.AttacksPlayedThisTurn,
+            ["Flechettes"] = AttackHitScaleMode.SkillsInHand,
+            ["Barrage"] = AttackHitScaleMode.OrbCount,
+            ["FlakCannon"] = AttackHitScaleMode.StatusCardsOwned,
+            ["TearAsunder"] = AttackHitScaleMode.UnblockedDamageTakenPlusOne,
+        };
 
     static readonly HashSet<string> AttackHitsScaleWithEnergyByTypeName =
         new(StringComparer.Ordinal) {

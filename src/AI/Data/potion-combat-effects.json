@@ -122,19 +122,39 @@
       }
     },
     "POISON_POTION": {
-      "simulatable": false
+      "simulatable": true,
+      "targetType": "AnyEnemy",
+      "effects": [
+        { "kind": "ApplyPoison", "amount": 6 }
+      ]
     },
     "FOCUS_POTION": {
-      "simulatable": false
+      "simulatable": true,
+      "targetType": "Self",
+      "effects": [
+        { "kind": "GainFocus", "amount": 2 }
+      ]
     },
     "STAR_POTION": {
-      "simulatable": false
+      "simulatable": true,
+      "targetType": "Self",
+      "effects": [
+        { "kind": "GainStars", "amount": 3 }
+      ]
     },
     "GIGANTIFICATION_POTION": {
-      "simulatable": false
+      "simulatable": true,
+      "targetType": "AnyPlayer",
+      "effects": [
+        { "kind": "NextAttackDoubled", "amount": 1 }
+      ]
     },
     "SHACKLING_POTION": {
-      "simulatable": false
+      "simulatable": true,
+      "targetType": "AllEnemies",
+      "effects": [
+        { "kind": "EnemyStrengthDown", "amount": 7 }
+      ]
     }
   }
 }

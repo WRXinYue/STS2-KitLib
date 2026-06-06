@@ -8,5 +8,6 @@ internal static class MechanicCombatBonus {
         profile.Flags.HasFlag(CardMechanicFlags.TransformsHandAttacks)
         || profile.Flags.HasFlag(CardMechanicFlags.TransformsCards)
         || profile.Flags.HasFlag(CardMechanicFlags.AppliesVulnerable)
-        || profile.Flags.HasFlag(CardMechanicFlags.AppliesWeak);
+        || profile.Flags.HasFlag(CardMechanicFlags.AppliesWeak)
+        || profile.Flags.HasFlag(CardMechanicFlags.PlaysTopOfDrawExhaust);
 }

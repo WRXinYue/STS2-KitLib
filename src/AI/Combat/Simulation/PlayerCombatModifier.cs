@@ -36,4 +36,10 @@ public sealed record PlayerCombatModifier(
 
     public static PlayerCombatModifier Confused() =>
         new("CONFUSED", ConfusedDrawCostEv: true);
+
+    public static PlayerCombatModifier Focus(int amount) =>
+        new("FOCUS", AttackDamageFlat: amount);
+
+    public static PlayerCombatModifier Gigantification() =>
+        new("GIGANTIFICATION", AttackDamageMultiplier: 2f);
 }

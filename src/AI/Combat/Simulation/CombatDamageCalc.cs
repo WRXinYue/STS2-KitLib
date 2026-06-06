@@ -23,11 +23,11 @@ internal static class CombatDamageCalc {
         return Math.Max(0, scaled);
     }
 
-    public static int OutgoingDamage(CombatHandCard card, CombatState state, int vulnerableOnTarget = 0) {
+    public static int OutgoingDamage(CombatHandCard card, CombatState state, int vulnerableOnTarget = 0, int skillsInHand = 0) {
         if (!card.IsAttack || card.Damage <= 0)
             return 0;
         var perHit = OutgoingDamage(card.Damage, state.Modifiers, vulnerableOnTarget);
-        return perHit * Math.Max(0, CombatCardStats.ResolveEffectiveHitCount(card, state));
+        return perHit * Math.Max(0, CombatCardStats.ResolveEffectiveHitCount(card, state, skillsInHand));
     }
 
     public static int OutgoingDamage(CombatPileCard card, IReadOnlyList<PlayerCombatModifier> modifiers, int vulnerableOnTarget = 0) {

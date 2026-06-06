@@ -40,8 +40,11 @@ internal static class SnapshotCardJson {
         if (CardMechanicIndex.TryGet(card.Id.Entry, out var profile)) {
             if (profile.CostsEnergyX)
                 obj["costsX"] = true;
-            if (profile.AttackHitCount > 1 && !profile.AttackHitsScaleWithEnergy)
+            if (profile.AttackHitCount > 1 && !profile.AttackHitsScaleWithEnergy
+                && profile.HitScaleMode == AttackHitScaleMode.None)
                 obj["hitCount"] = profile.AttackHitCount;
+            if (profile.ReplayCount > 0)
+                obj["replayCount"] = profile.ReplayCount;
         }
 
         var block = CardEditActions.GetBlock(card);

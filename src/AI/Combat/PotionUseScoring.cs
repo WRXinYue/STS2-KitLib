@@ -146,6 +146,27 @@ internal static class PotionUseScoring {
                     blockOnly = false;
                     score += ScoreHealEffect(ctx);
                     break;
+
+                case PotionCombatEffectKind.ApplyPoison:
+                    blockOnly = false;
+                    score += ScoreDamageSingle(state, ctx, effect.Amount, enemyIndex);
+                    break;
+
+                case PotionCombatEffectKind.GainFocus:
+                case PotionCombatEffectKind.NextAttackDoubled:
+                    blockOnly = false;
+                    score += ScoreBuffEffect(ctx, effect.Amount > 0 ? effect.Amount : 2);
+                    break;
+
+                case PotionCombatEffectKind.GainStars:
+                    blockOnly = false;
+                    score += ScoreEnergyEffect(ctx);
+                    break;
+
+                case PotionCombatEffectKind.EnemyStrengthDown:
+                    blockOnly = false;
+                    score += effect.Amount * Math.Max(1, ctx.EnemyCount);
+                    break;
             }
         }
 

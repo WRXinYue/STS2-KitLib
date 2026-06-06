@@ -17,7 +17,7 @@ public static class NextFightDeckEvaluator {
 
         int baseline = GetBaselineScore(snapshot, plan, route);
         int withOffer = EvaluateDeck(snapshot, offeredCard, route);
-        return withOffer - baseline;
+        return Math.Clamp(withOffer - baseline, -80, 80);
     }
 
     public static int GetBaselineRouteScore(JsonObject snapshot, DeckPlan plan) {
@@ -59,23 +59,23 @@ public static class NextFightDeckEvaluator {
     }
 
     static int ScoreMetrics(TurnOneMetrics metrics, JsonObject snapshot) {
-        int score = metrics.BeamScore / 8;
+        int score = Math.Clamp(metrics.BeamScore / 8, -120, 120);
 
         if (metrics.CanLethal)
             score += 25;
 
-        score += metrics.MaxDamage / 4;
-        score += metrics.AffordableBlock / 3;
+        score += Math.Clamp(metrics.MaxDamage / 4, 0, 40);
+        score += Math.Clamp(metrics.AffordableBlock / 3, 0, 30);
 
         if (metrics.BlockGap > 0) {
-            score -= metrics.BlockGap * 8;
+            score -= Math.Min(metrics.BlockGap * 8, 80);
             var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
             if (metrics.BlockGap >= hp)
                 score -= 60;
         }
 
-        score -= metrics.NonDamageThreat * 2;
-        return score;
+        score -= Math.Min(metrics.NonDamageThreat * 2, 40);
+        return Math.Clamp(score, -120, 120);
     }
 
     static int ComputeCacheKey(JsonObject snapshot) {

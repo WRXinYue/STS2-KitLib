@@ -29,8 +29,10 @@ public static class CombatSimulator {
         var discard = state.DiscardPile.ToList();
         var exhaust = state.ExhaustPile.ToList();
         var enemies = state.Enemies.ToList();
+        var hp = state.PlayerHp;
         var block = state.PlayerBlock;
         var rngCounter = state.ShuffleRngCounter;
+        var attacksPlayed = state.AttacksPlayedThisTurn;
         var pileEffects = CardPileEffectResolver.ResolveAll(card.Id);
         var exhaustHand = CardPileEffectResolver.ExhaustHandCount(card.Id);
 
@@ -39,36 +41,35 @@ public static class CombatSimulator {
             return state.WithPlayer(state.PlayerHp, block, energy).WithHand(hand);
         }
 
+        int skillsInHand = CombatCardPlayEffects.CountSkillsInHand(hand);
         hand.RemoveAt(action.HandIndex);
 
-        if (card.IsAttack && card.Damage > 0) {
-            if (card.IsAoe || CombatTargetTypes.IsAllEnemies(card.TargetType)) {
-                var aoeDamage = CombatDamageCalc.OutgoingDamage(card, state);
-                CombatEffectApplier.ApplyAoeDamage(enemies, aoeDamage);
-            } else {
-                var targetIndex = action.EnemyIndex;
-                if (targetIndex < 0)
-                    targetIndex = CombatSetupEvaluator.PrimaryAttackTargetIndex(state);
+        if (card.Profile.Flags.HasFlag(CardMechanicFlags.PlaysTopOfDrawExhaust)) {
+            CombatCardPlayEffects.TryPlayTopOfDrawExhaust(
+                state with { Energy = energy, Hand = hand, DrawPile = draw, DiscardPile = discard, ExhaustPile = exhaust, Enemies = enemies },
+                action.EnemyIndex,
+                ref draw,
+                ref discard,
+                ref exhaust,
+                ref hp,
+                ref block,
+                ref enemies,
+                ref rngCounter);
+        } else {
+            int playCount = 1 + Math.Max(0, card.Profile.ReplayCount);
+            for (int i = 0; i < playCount; i++) {
+                CombatCardPlayEffects.ApplyIteration(
+                    card,
+                    state with { Energy = energy, Hand = hand, Enemies = enemies, AttacksPlayedThisTurn = attacksPlayed },
+                    action.EnemyIndex,
+                    skillsInHand,
+                    ref hp,
+                    ref block,
+                    ref enemies);
 
-                if (targetIndex >= 0) {
-                    var target = FindEnemy(enemies, targetIndex);
-                    var damage = CombatDamageCalc.OutgoingDamage(card, state, target?.Vulnerable ?? 0);
-                    CombatEffectApplier.ApplySingleDamage(enemies, targetIndex, damage);
-                }
+                if (card.IsAttack && card.Damage > 0)
+                    attacksPlayed++;
             }
-        }
-
-        if (card.Profile.AppliedVulnerable > 0)
-            CombatEffectApplier.ApplyDebuff(enemies, action.EnemyIndex, card.IsAoe, "VULNERABLE", card.Profile.AppliedVulnerable);
-
-        if (card.Profile.AppliedWeak > 0)
-            CombatEffectApplier.ApplyDebuff(enemies, action.EnemyIndex, card.IsAoe, "WEAK", card.Profile.AppliedWeak);
-
-        if (card.IsSkill) {
-            if (card.Block > 0)
-                block += CombatDamageCalc.OutgoingBlock(card, state);
-            else if (!MechanicCombatBonus.IsSetupSkill(card.Profile))
-                block += 5;
         }
 
         var pileCard = CombatPileSimulator.HandToPile(card);
@@ -106,12 +107,14 @@ public static class CombatSimulator {
             ?? (consumedWaive ? NextPlayCostWaive.None : waive);
 
         return state
-            .WithPlayer(state.PlayerHp, block, energy)
+            .WithPlayer(hp, block, energy)
             .WithHand(hand)
             .WithEnemies(enemies)
             .WithPiles(draw, discard, exhaust)
             .WithShuffleRng(state.ShuffleRngSeed, rngCounter)
-            .WithNextPlayCostWaive(nextWaive);
+            .WithNextPlayCostWaive(nextWaive) with {
+                AttacksPlayedThisTurn = attacksPlayed,
+            };
     }
 
     static (List<CombatHandCard> hand, List<CombatPileCard> exhaust) ExhaustFromHand(
@@ -229,15 +232,5 @@ public static class CombatSimulator {
         }
 
         return ReindexHand(result);
-    }
-
-    static CombatEnemy? FindEnemy(List<CombatEnemy> enemies, int targetIndex) {
-        foreach (var enemy in enemies) {
-            if (!enemy.IsAlive) continue;
-            if (enemy.Index == targetIndex)
-                return enemy;
-        }
-
-        return null;
     }
 }

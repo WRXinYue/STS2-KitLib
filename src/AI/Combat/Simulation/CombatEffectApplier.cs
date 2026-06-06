@@ -62,6 +62,14 @@ internal static class CombatEffectApplier {
         return list;
     }
 
+    public static void ApplyEnemyStrengthDelta(List<CombatEnemy> enemies, int delta) {
+        if (delta == 0) return;
+        for (int i = 0; i < enemies.Count; i++) {
+            if (!enemies[i].IsAlive) continue;
+            enemies[i] = enemies[i].AddStrength(delta);
+        }
+    }
+
     static CombatEnemy ApplyDamageToEnemy(CombatEnemy enemy, int damage) {
         var remaining = Math.Max(0, damage - enemy.Block);
         var newBlock = Math.Max(0, enemy.Block - damage);

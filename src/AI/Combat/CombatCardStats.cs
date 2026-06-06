@@ -27,6 +27,9 @@ internal static class CombatCardStats {
         if (profile.AttackHitsScaleWithEnergy)
             return ResolveEnergyScaledHits(profile.Id, Math.Max(0, energySpent));
 
+        if (profile.HitScaleMode != AttackHitScaleMode.None)
+            return ResolveScaledHits(profile.HitScaleMode, profile.Id, energySpent, attacksPlayed: 0, skillsInHand: 0, orbCount: 0, statusCards: 0, unblockedDamage: 0);
+
         var fromSnapshot = card?["hitCount"]?.GetValue<int>();
         if (fromSnapshot is > 1)
             return fromSnapshot.Value;
@@ -37,14 +40,45 @@ internal static class CombatCardStats {
         return Math.Max(1, fromSnapshot ?? 1);
     }
 
-    public static int ResolveEffectiveHitCount(CombatHandCard card, CombatState state) {
+    public static int ResolveEffectiveHitCount(CombatHandCard card, CombatState state, int skillsInHand = 0) {
         if (card.Profile.AttackHitsScaleWithEnergy) {
             int energySpent = CombatCardCost.EffectiveCost(card, state);
             return ResolveEnergyScaledHits(card.Id, energySpent);
         }
 
+        if (card.Profile.HitScaleMode != AttackHitScaleMode.None) {
+            int energySpent = CombatCardCost.EffectiveCost(card, state);
+            return ResolveScaledHits(
+                card.Profile.HitScaleMode,
+                card.Id,
+                energySpent,
+                state.AttacksPlayedThisTurn,
+                skillsInHand,
+                state.OrbCount,
+                CombatCardPlayEffects.CountStatusCards(state),
+                state.UnblockedDamageTakenThisTurn);
+        }
+
         return Math.Max(1, card.HitCount);
     }
+
+    public static int ResolveScaledHits(
+        AttackHitScaleMode mode,
+        string cardId,
+        int energySpent,
+        int attacksPlayed,
+        int skillsInHand,
+        int orbCount,
+        int statusCards,
+        int unblockedDamage) => mode switch {
+        AttackHitScaleMode.Energy => ResolveEnergyScaledHits(cardId, energySpent),
+        AttackHitScaleMode.AttacksPlayedThisTurn => Math.Max(0, attacksPlayed),
+        AttackHitScaleMode.SkillsInHand => Math.Max(0, skillsInHand),
+        AttackHitScaleMode.OrbCount => Math.Max(0, orbCount),
+        AttackHitScaleMode.StatusCardsOwned => Math.Max(0, statusCards),
+        AttackHitScaleMode.UnblockedDamageTakenPlusOne => Math.Max(1, 1 + unblockedDamage),
+        _ => 1,
+    };
 
     public static int ResolveEnergyCost(JsonObject card, int availableEnergy) {
         var profile = ResolveProfile(card);
