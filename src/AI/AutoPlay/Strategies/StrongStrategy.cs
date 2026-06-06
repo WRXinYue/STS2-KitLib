@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using DevMode.AI.AutoPlay.Scoring;
 using DevMode.AI.Combat;
+using DevMode.AI.Combat.Simulation;
 using DevMode.AI.Core;
 using DevMode.AI.Core.Schema;
 
@@ -40,6 +41,12 @@ public sealed class StrongStrategy : IDecisionMaker {
             var move = CombatSearch.PickBestMove(snapshot);
             if (move != null && move.Type != ActionType.EndTurn)
                 return move;
+
+            if (move?.Type == ActionType.EndTurn && CombatCardCost.HasAffordablePlay(CombatState.FromSnapshot(snapshot))) {
+                var scorerMove = CombatScorer.PickBestCombatMove(snapshot);
+                if (scorerMove is { Type: not ActionType.EndTurn })
+                    return scorerMove;
+            }
 
             var fallback = PotionScorer.TryFallbackPotion(snapshot);
             if (fallback != null)

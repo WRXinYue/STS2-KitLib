@@ -13,7 +13,7 @@ internal static class SnapshotCardJson {
         var obj = new JsonObject {
             ["id"] = card.Id.Entry ?? "",
             ["name"] = SafeCardTitle(card),
-            ["cost"] = SnapshotEnergyCost(card),
+            ["cost"] = ResolveEnergyCost(card),
             ["upgradeLevel"] = card.CurrentUpgradeLevel,
             ["maxUpgradeLevel"] = card.MaxUpgradeLevel,
             ["cardType"] = card.Type.ToString(),
@@ -60,7 +60,7 @@ internal static class SnapshotCardJson {
         return card.Id.Entry ?? "";
     }
 
-    static int SnapshotEnergyCost(CardModel card) {
+    internal static int ResolveEnergyCost(CardModel card) {
         try {
             return card.EnergyCost.GetWithModifiers(CostModifiers.All);
         }

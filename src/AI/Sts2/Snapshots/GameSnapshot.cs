@@ -68,11 +68,7 @@ internal static class GameSnapshot
                 obj["combat"] = CaptureCombat(state, player, combatState);
             }
             catch (Exception) {
-                obj["combat"] = new JsonObject {
-                    ["isPlayPhaseActive"] = Sts2CombatCompat.IsCombatPlayPhaseActive(),
-                    ["hand"] = new JsonArray(),
-                    ["enemies"] = new JsonArray(),
-                };
+                // Omit combat; GameLoop retries when the section is incomplete.
             }
         }
 
@@ -195,11 +191,12 @@ internal static class GameSnapshot
             {
                 try {
                     var cardObj = SnapshotCardJson.FromCard(c);
-                    cardObj["canPlay"] = TryCanPlay(c);
+                    cardObj["canPlay"] = TryCanPlay(c, combatState.Energy);
                     hand.Add(cardObj);
                 }
                 catch {
-                    // Skip cards that throw when read from a deferred main-thread capture.
+                    if (TryFallbackHandCard(c, combatState.Energy) is { } fallback)
+                        hand.Add(fallback);
                 }
             }
         }
@@ -414,13 +411,38 @@ internal static class GameSnapshot
         catch { return ""; }
     }
 
-    /// <summary>CanPlay may touch Godot card nodes; tolerate failures from background AI polls.</summary>
-    static bool TryCanPlay(CardModel card) {
+    /// <summary>CanPlay touches Godot card nodes; fall back to energy affordability when it throws.</summary>
+    static bool TryCanPlay(CardModel card, int currentEnergy) {
         try {
             return card.CanPlay(out _, out _);
         }
         catch {
-            return false;
+            return SnapshotCardJson.ResolveEnergyCost(card) <= currentEnergy;
+        }
+    }
+
+    static JsonObject? TryFallbackHandCard(CardModel card, int currentEnergy) {
+        try {
+            var cost = SnapshotCardJson.ResolveEnergyCost(card);
+            var keywords = new JsonArray();
+            foreach (var kw in card.Keywords)
+                keywords.Add(kw.ToString());
+
+            return new JsonObject {
+                ["id"] = card.Id.Entry ?? "",
+                ["name"] = card.Id.Entry ?? "",
+                ["cost"] = cost,
+                ["upgradeLevel"] = card.CurrentUpgradeLevel,
+                ["maxUpgradeLevel"] = card.MaxUpgradeLevel,
+                ["cardType"] = card.Type.ToString(),
+                ["rarity"] = card.Rarity.ToString(),
+                ["targetType"] = card.TargetType.ToString(),
+                ["keywords"] = keywords,
+                ["canPlay"] = cost <= currentEnergy,
+            };
+        }
+        catch {
+            return null;
         }
     }
 }
