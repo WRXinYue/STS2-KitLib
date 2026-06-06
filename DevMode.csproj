@@ -179,6 +179,8 @@
 
   <!-- Deploy built DLL + deps to game mods folder -->
   <Target Name="ExportModPck" AfterTargets="Publish" Condition="'$(RunPckExport)' == 'true' and '$(STS2_SKIP_PCK_EXPORT)' != '1' and Exists('$(GodotExe)')">
+    <Message Text="Importing Godot project assets before PCK export..." Importance="high" />
+    <Exec Command="&quot;$(GodotExe)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --import" EnvironmentVariables="STS2_SKIP_PCK_EXPORT=1" />
     <Message Text="Exporting mod PCK to $(ModPckPath)..." Importance="high" />
     <MakeDir Directories="$(PublishDir)" />
     <Exec Command="&quot;$(GodotExe)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --export-pack &quot;$(GodotExportPreset)&quot; &quot;$(ModPckPath)&quot;" EnvironmentVariables="STS2_SKIP_PCK_EXPORT=1" />
