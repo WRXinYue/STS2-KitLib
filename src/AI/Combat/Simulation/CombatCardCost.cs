@@ -4,7 +4,16 @@ using System.Collections.Generic;
 namespace DevMode.AI.Combat.Simulation;
 
 internal static class CombatCardCost {
-    public static int EffectiveCost(CombatHandCard card, IReadOnlyList<PlayerCombatModifier> modifiers) {
+    public static int EffectiveCost(CombatHandCard card, CombatState state) =>
+        EffectiveCostWithWaive(card, state.Modifiers, state.NextPlayCostWaive);
+
+    public static int EffectiveCost(CombatHandCard card, IReadOnlyList<PlayerCombatModifier> modifiers) =>
+        EffectiveCostWithWaive(card, modifiers, NextPlayCostWaive.None);
+
+    static int EffectiveCostWithWaive(
+        CombatHandCard card,
+        IReadOnlyList<PlayerCombatModifier> modifiers,
+        NextPlayCostWaive waive) {
         int cost = card.Cost;
         foreach (var mod in modifiers) {
             if (card.IsAttack)
@@ -13,7 +22,10 @@ internal static class CombatCardCost {
                 cost += mod.SkillCostPenalty;
         }
 
-        return cost;
+        if (CardPlayCostEffect.MatchesWaive(card, waive))
+            return 0;
+
+        return Math.Max(0, cost);
     }
 
     public static int EffectiveCost(CombatPileCard card, IReadOnlyList<PlayerCombatModifier> modifiers) {
@@ -36,7 +48,7 @@ internal static class CombatCardCost {
         CombatDamageCalc.OutgoingBlock(block, modifiers);
 
     public static bool CanAfford(CombatHandCard card, CombatState state) =>
-        card.CanPlay && EffectiveCost(card, state.Modifiers) <= state.Energy;
+        card.CanPlay && EffectiveCost(card, state) <= state.Energy;
 
     public static int CountAffordable(CombatState state) {
         int count = 0;

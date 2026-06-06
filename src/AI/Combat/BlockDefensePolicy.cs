@@ -35,7 +35,7 @@ public static class BlockDefensePolicy {
             int block = CombatDamageCalc.OutgoingBlock(card, state);
             if (block <= 0) continue;
 
-            options.Add((CombatCardCost.EffectiveCost(card, state.Modifiers), block));
+            options.Add((CombatCardCost.EffectiveCost(card, state), block));
         }
 
         options.Sort((a, b) => b.Block.CompareTo(a.Block));

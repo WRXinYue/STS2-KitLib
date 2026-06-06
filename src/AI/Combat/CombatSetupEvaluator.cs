@@ -502,7 +502,7 @@ internal static class CombatSetupEvaluator {
             if (!card.IsAttack || card.Damage <= 0)
                 continue;
 
-            int cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
+            int cost = CombatCardCost.EffectiveCost(card, state);
             if (cost > energy)
                 continue;
 

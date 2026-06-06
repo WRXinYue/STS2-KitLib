@@ -130,6 +130,7 @@ public static class CombatTurnResolver {
             Modifiers = modifiers,
             Enemies = enemies,
             ShuffleRngCounter = rngCounter,
+            NextPlayCostWaive = NextPlayCostWaive.None,
         };
     }
 

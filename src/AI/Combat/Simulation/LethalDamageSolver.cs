@@ -34,7 +34,7 @@ public static class LethalDamageSolver {
         for (int i = 0; i < state.Hand.Count; i++) {
             var card = state.Hand[i];
             if (!card.CanPlay || !card.IsAttack || card.Damage <= 0) continue;
-            var cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
+            var cost = CombatCardCost.EffectiveCost(card, state);
             if (cost > state.Energy) continue;
 
             attacks.Add(new AttackOption(

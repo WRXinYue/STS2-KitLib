@@ -21,7 +21,9 @@ public static class CombatSimulator {
         if (!CombatCardCost.CanAfford(card, state))
             return state;
 
-        var energy = state.Energy - CombatCardCost.EffectiveCost(card, state.Modifiers);
+        var waive = state.NextPlayCostWaive;
+        bool consumedWaive = CardPlayCostEffect.ConsumesWaive(card, waive);
+        var energy = state.Energy - CombatCardCost.EffectiveCost(card, state);
         var hand = state.Hand.ToList();
         var draw = state.DrawPile.ToList();
         var discard = state.DiscardPile.ToList();
@@ -33,9 +35,8 @@ public static class CombatSimulator {
         var exhaustHand = CardPileEffectResolver.ExhaustHandCount(card.Id);
 
         if (CombatTransformSimulator.IsHandAttackTransform(card.Profile)) {
-            var cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
             hand = ApplyHandTransform(hand, action.HandIndex);
-            return state.WithPlayer(state.PlayerHp, block, energy - cost).WithHand(hand);
+            return state.WithPlayer(state.PlayerHp, block, energy).WithHand(hand);
         }
 
         hand.RemoveAt(action.HandIndex);
@@ -101,12 +102,16 @@ public static class CombatSimulator {
                 state.ShuffleRngSeed, rngCounter);
         }
 
+        var nextWaive = CardPlayCostEffect.GrantOnPlay(card.Id)
+            ?? (consumedWaive ? NextPlayCostWaive.None : waive);
+
         return state
             .WithPlayer(state.PlayerHp, block, energy)
             .WithHand(hand)
             .WithEnemies(enemies)
             .WithPiles(draw, discard, exhaust)
-            .WithShuffleRng(state.ShuffleRngSeed, rngCounter);
+            .WithShuffleRng(state.ShuffleRngSeed, rngCounter)
+            .WithNextPlayCostWaive(nextWaive);
     }
 
     static (List<CombatHandCard> hand, List<CombatPileCard> exhaust) ExhaustFromHand(

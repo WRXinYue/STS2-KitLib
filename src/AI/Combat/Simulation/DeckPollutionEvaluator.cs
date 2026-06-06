@@ -133,7 +133,7 @@ public static class DeckPollutionEvaluator {
         foreach (var card in state.Hand) {
             if (!card.IsSkill || card.Block <= 0) continue;
 
-            if (CombatCardCost.EffectiveCost(card, state.Modifiers) > state.Energy) continue;
+            if (CombatCardCost.EffectiveCost(card, state) > state.Energy) continue;
             total += CombatDamageCalc.OutgoingBlock(card, state);
         }
 

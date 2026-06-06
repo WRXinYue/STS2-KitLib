@@ -157,7 +157,7 @@ public static class ThreatModel {
             if (!card.IsAttack || card.Damage <= 0)
                 continue;
 
-            int cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
+            int cost = CombatCardCost.EffectiveCost(card, state);
             if (cost > energy)
                 continue;
 
@@ -179,7 +179,7 @@ public static class ThreatModel {
             if (block <= 0)
                 continue;
 
-            int cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
+            int cost = CombatCardCost.EffectiveCost(card, state);
             if (cost > energy)
                 continue;
 

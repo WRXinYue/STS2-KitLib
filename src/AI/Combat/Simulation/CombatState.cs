@@ -27,7 +27,8 @@ public sealed record CombatState(
     uint ShuffleRngSeed = 0,
     int ShuffleRngCounter = 0,
     uint EnergyCostRngSeed = 0,
-    int EnergyCostRngCounter = 0) {
+    int EnergyCostRngCounter = 0,
+    NextPlayCostWaive NextPlayCostWaive = NextPlayCostWaive.None) {
 
     public int AliveEnemyCount => Enemies.Count(e => e.IsAlive);
 
@@ -95,6 +96,9 @@ public sealed record CombatState(
 
     public CombatState WithPotions(IReadOnlyList<CombatPotionSlot> potions, bool potionUsedThisTurn) =>
         this with { Potions = potions, PotionUsedThisTurn = potionUsedThisTurn };
+
+    public CombatState WithNextPlayCostWaive(NextPlayCostWaive waive) =>
+        this with { NextPlayCostWaive = waive };
 
     public JsonArray ToHandJson() {
         var arr = new JsonArray();

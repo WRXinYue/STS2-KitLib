@@ -324,7 +324,7 @@ internal static class PotionUseScoring {
         int min = 99;
         foreach (var card in state.Hand) {
             if (!CombatCardCost.CanAfford(card, state)) continue;
-            int cost = CombatCardCost.EffectiveCost(card, state.Modifiers);
+            int cost = CombatCardCost.EffectiveCost(card, state);
             if (cost < min) min = cost;
         }
         return min == 99 ? state.Energy + 1 : min;
