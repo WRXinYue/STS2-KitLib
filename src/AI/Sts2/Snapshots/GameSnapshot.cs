@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using DevMode.AI;
 using DevMode.AI.Combat;
 using DevMode.AI.Core;
 using SimCombatState = DevMode.AI.Combat.Simulation.CombatState;
@@ -36,16 +38,56 @@ internal static class GameSnapshot
             ["maxHp"] = player.Creature.MaxHp,
             ["characterId"] = player.Character.Id.Entry ?? "",
             ["ascensionLevel"] = state.AscensionLevel,
-            ["deck"] = CaptureDeck(player),
-            ["relics"] = CaptureRelics(player),
-            ["potions"] = CapturePotions(player),
             ["hasOpenPotionSlots"] = player.HasOpenPotionSlots,
             ["potionSlotCount"] = player.PotionSlots.Count,
         };
 
+        try {
+            obj["deck"] = CaptureDeck(player);
+        }
+        catch (Exception ex) {
+            // #region agent log
+            DbgSessionLog.Write("H1", "GameSnapshot.Capture", "deck failed", new { message = ex.Message });
+            // #endregion
+            obj["deck"] = new JsonArray();
+        }
+
+        try {
+            obj["relics"] = CaptureRelics(player);
+        }
+        catch (Exception ex) {
+            // #region agent log
+            DbgSessionLog.Write("H1", "GameSnapshot.Capture", "relics failed", new { message = ex.Message });
+            // #endregion
+            obj["relics"] = new JsonArray();
+        }
+
+        try {
+            obj["potions"] = CapturePotions(player);
+        }
+        catch (Exception ex) {
+            // #region agent log
+            DbgSessionLog.Write("H1", "GameSnapshot.Capture", "potions failed", new { message = ex.Message });
+            // #endregion
+            obj["potions"] = new JsonArray();
+        }
+
         var combatState = player.PlayerCombatState;
-        if (combatState != null)
-            obj["combat"] = CaptureCombat(state, player, combatState);
+        if (combatState != null) {
+            try {
+                obj["combat"] = CaptureCombat(state, player, combatState);
+            }
+            catch (Exception ex) {
+                // #region agent log
+                DbgSessionLog.Write("H1", "GameSnapshot.Capture", "combat failed", new { message = ex.Message });
+                // #endregion
+                obj["combat"] = new JsonObject {
+                    ["isPlayPhaseActive"] = Sts2CombatCompat.IsCombatPlayPhaseActive(),
+                    ["hand"] = new JsonArray(),
+                    ["enemies"] = new JsonArray(),
+                };
+            }
+        }
 
         var room = state.CurrentRoom;
         if (room != null)
@@ -76,8 +118,14 @@ internal static class GameSnapshot
     private static JsonArray CaptureDeck(Player player)
     {
         var arr = new JsonArray();
-        foreach (var c in player.Deck.Cards)
-            arr.Add(SnapshotCardJson.FromCard(c));
+        foreach (var c in player.Deck.Cards) {
+            try {
+                arr.Add(SnapshotCardJson.FromCard(c));
+            }
+            catch {
+                // Deck cards may touch live Godot nodes during combat transitions.
+            }
+        }
         return arr;
     }
 
@@ -89,7 +137,7 @@ internal static class GameSnapshot
             arr.Add(new JsonObject
             {
                 ["id"] = SafeRelicId(r),
-                ["name"] = r.Title.GetFormattedText(),
+                ["name"] = SafeRelicTitle(r),
                 ["rarity"] = SafeRelicRarity(r),
             });
         }
@@ -192,8 +240,14 @@ internal static class GameSnapshot
         var arr = new JsonArray();
         if (pile?.Cards == null) return arr;
 
-        foreach (var card in pile.Cards)
-            arr.Add(SnapshotCardJson.FromCard(card));
+        foreach (var card in pile.Cards) {
+            try {
+                arr.Add(SnapshotCardJson.FromCard(card));
+            }
+            catch {
+                // Pile cards can throw while combat UI is reparenting nodes.
+            }
+        }
 
         return arr;
     }
@@ -233,7 +287,9 @@ internal static class GameSnapshot
 
         foreach (var enemy in cs.Enemies)
         {
-            var obj = new JsonObject
+            JsonObject obj;
+            try {
+            obj = new JsonObject
             {
                 ["index"] = index++,
                 ["currentHp"] = enemy.CurrentHp,
@@ -326,6 +382,10 @@ internal static class GameSnapshot
             obj["mechanicFlags"] = mechanicFlags.ToString();
 
             arr.Add(obj);
+            }
+            catch {
+                // Skip enemies whose intent/card nodes throw during combat UI setup.
+            }
         }
 
         CombatEnemyGraph.ObserveAndEnrich(arr);
@@ -355,6 +415,11 @@ internal static class GameSnapshot
     static string SafeRelicId(RelicModel relic) {
         try { return relic.Id.Entry ?? ""; }
         catch { return ""; }
+    }
+
+    static string SafeRelicTitle(RelicModel relic) {
+        try { return relic.Title.GetFormattedText(); }
+        catch { return SafeRelicId(relic); }
     }
 
     static string SafeRelicRarity(RelicModel relic) {

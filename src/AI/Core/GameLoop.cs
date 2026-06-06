@@ -95,9 +95,9 @@ public sealed class GameLoop
                     message = snapEx.Message,
                 });
                 // #endregion
-                if (phase != GamePhase.Combat)
-                    throw;
-                snapshot = new JsonObject();
+                if (phase == GamePhase.Combat)
+                    return;
+                throw;
             }
             if (snapshot == null)
             {
@@ -113,6 +113,15 @@ public sealed class GameLoop
             var inCombat = IsCombatContext(phase, snapshot);
             if (!inCombat)
                 _endTurnPending = false;
+
+            if (inCombat && snapshot["combat"]?["hand"] == null) {
+                // #region agent log
+                DbgSessionLog.Write("G", "GameLoop.OnDecisionPointAsync", "combat not ready", new {
+                    hasCombat = snapshot["combat"] != null,
+                });
+                // #endregion
+                return;
+            }
 
             if (ShouldSkipCombatPoll(phase, snapshot)) {
                 // #region agent log
@@ -178,8 +187,10 @@ public sealed class GameLoop
             // #endregion
             if (!result.Success) {
                 _log($"GameLoop: Action failed — {result.Message}");
-                if (decidePhase == GamePhase.Combat && action.Type == ActionType.EndTurn)
-                    _endTurnPending = true;
+                if (decidePhase == GamePhase.Combat && action.Type == ActionType.EndTurn) {
+                    if (!IsTransientCombatFailure(result.Message))
+                        _endTurnPending = true;
+                }
                 else if (decidePhase == GamePhase.Combat && await TryRecoverFromRepeatedFailureAsync(fingerprint))
                     return;
                 return;
@@ -246,6 +257,11 @@ public sealed class GameLoop
 
     static bool ShouldDelayBeforeAction(GameAction action) =>
         action.Type is ActionType.PlayCard or ActionType.EndTurn or ActionType.UsePotion;
+
+    static bool IsTransientCombatFailure(string? message) =>
+        message != null && (
+            message.Contains("Not in play phase", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("Not in combat", StringComparison.OrdinalIgnoreCase));
 
     static bool? ReadSnapshotBool(JsonObject snapshot, string section, string key) {
         try {
