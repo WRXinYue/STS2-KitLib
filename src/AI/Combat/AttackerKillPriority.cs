@@ -19,6 +19,8 @@ internal static class AttackerKillPriority {
                 continue;
             if (LethalExclusions.ShouldSkip(enemy))
                 continue;
+            if (!PrimaryWipeEngagementPolicy.PreferMinionAttackerFocus(state, enemy))
+                continue;
             if (CombatSetupEvaluator.EstimateGreedyAttackDamageOn(state, enemy.Index) >= enemy.EffectiveHp)
                 return true;
         }
@@ -42,6 +44,8 @@ internal static class AttackerKillPriority {
 
         var target = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == action.EnemyIndex);
         if (target == null || target.EffectiveIncoming <= 0)
+            return 0;
+        if (!PrimaryWipeEngagementPolicy.PreferMinionAttackerFocus(state, target))
             return 0;
 
         if (!SimLethalChecker.CanKillEnemyThisAction(state, action.HandIndex, action.EnemyIndex))

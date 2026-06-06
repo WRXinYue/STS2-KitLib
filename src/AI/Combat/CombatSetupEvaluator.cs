@@ -769,10 +769,15 @@ internal static class CombatSetupEvaluator {
 
     /// <summary>Greedy sim focus: this-turn attackers, then status injectors, then horizon threat.</summary>
     public static int GreedyAttackFocusIndex(CombatState state) {
+        var rushPrimary = PrimaryWipeEngagementPolicy.RushPrimaryTarget(state);
+        if (rushPrimary != null && PrimaryWipeEngagementPolicy.ShouldRushPrimary(state))
+            return rushPrimary.Index;
+
         if (ThreatModel.IncomingDamage(state) > 0) {
             var attacker = state.Enemies
                 .Where(e => e.IsAlive && e.EffectiveIncoming > 0
-                    && ThreatModel.IsViableAttackTarget(state, e))
+                    && ThreatModel.IsViableAttackTarget(state, e)
+                    && PrimaryWipeEngagementPolicy.PreferMinionAttackerFocus(state, e))
                 .OrderByDescending(e => e.EffectiveIncoming)
                 .ThenBy(e => e.EffectiveHp)
                 .FirstOrDefault();
@@ -794,12 +799,16 @@ internal static class CombatSetupEvaluator {
     }
 
     public static IEnumerable<CombatEnemy> OrderEnemiesForGreedyAttacks(CombatState state) {
+        if (PrimaryWipeEngagementPolicy.ShouldRushPrimary(state))
+            return OrderEnemiesByThreat(state);
+
         if (ThreatModel.IncomingDamage(state) <= 0)
             return OrderEnemiesByThreat(state);
 
         var attackers = state.Enemies
             .Where(e => e.IsAlive && e.EffectiveIncoming > 0
-                && ThreatModel.IsViableAttackTarget(state, e))
+                && ThreatModel.IsViableAttackTarget(state, e)
+                && PrimaryWipeEngagementPolicy.PreferMinionAttackerFocus(state, e))
             .OrderByDescending(e => e.EffectiveIncoming)
             .ThenBy(e => e.EffectiveHp);
         var rest = OrderEnemiesByThreat(state)
