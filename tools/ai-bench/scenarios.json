@@ -135,8 +135,8 @@
     },
     {
       "id": "card_reward_marginal_skip",
-      "note": "Card reward skips when best offer total score <= 0; log card skip with marginal and nextFight breakdown.",
-      "logPatterns": ["card skip", "marginal=", "nextFight="]
+      "note": "Card reward skips when best offer total score < SkipOpportunityCost; log card skip with skipCost, marginal, and nextFight breakdown.",
+      "logPatterns": ["card skip", "skipCost=", "marginal=", "nextFight="]
     },
     {
       "id": "card_reward_next_fight_block",
