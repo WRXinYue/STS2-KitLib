@@ -62,12 +62,13 @@ internal static class CombatSetupEvaluator {
         return Math.Max(0, ComputeVulnerableSetupSimDelta(state, handIndex, enemyIndex));
     }
 
-    /// <summary>Lexicographic: this-turn incoming, future pressure, focus-target HP, total enemy HP, player HP.</summary>
+    /// <summary>Lexicographic: incoming, future pressure, deck pollution, focus HP, enemy HP, player HP.</summary>
     public readonly record struct CombatLineOutcome(
         int Incoming,
         int FutureIncoming0,
         int FutureIncoming1,
         int FutureIncoming2,
+        int DeckPollution,
         int FocusHp,
         int EnemyHp,
         int PlayerHpAfterTurn);
@@ -94,6 +95,9 @@ internal static class CombatSetupEvaluator {
             baseline.FutureIncoming0, baseline.FutureIncoming1, baseline.FutureIncoming2);
         if (futureCmp != 0)
             return futureCmp;
+
+        if (candidate.DeckPollution != baseline.DeckPollution)
+            return baseline.DeckPollution - candidate.DeckPollution;
 
         if (candidate.FocusHp != baseline.FocusHp)
             return baseline.FocusHp - candidate.FocusHp;
@@ -129,16 +133,18 @@ internal static class CombatSetupEvaluator {
         return baselineIncoming - candidateIncoming;
     }
 
-    public static int LineRankScore(CombatLineOutcome outcome, ThreatModel.LineScoreWeights weights) {
-        long cap = Math.Max(weights.IncomingCap, 1);
+    /// <summary>Fixed packing aligned with <see cref="CompareLines"/> — for beam sort and logs only.</summary>
+    public static int PackLineScore(CombatLineOutcome outcome) {
+        const int cap = 250;
         long score =
-            (cap - Math.Min(outcome.Incoming, cap)) * weights.IncomingUnit * cap * cap
-            + (cap - Math.Min(outcome.FutureIncoming0, cap)) * weights.FutureUnit * cap
-            + (cap - Math.Min(outcome.FutureIncoming1, cap)) * Math.Max(1, weights.FutureUnit / 2)
-            + (cap - Math.Min(outcome.FutureIncoming2, cap)) * Math.Max(1, weights.FutureUnit / 4)
-            + (cap - Math.Min(outcome.FocusHp, cap)) * weights.FocusUnit
-            + (cap * 10 - Math.Min(outcome.EnemyHp, cap * 10))
-            + outcome.PlayerHpAfterTurn;
+            (cap - Math.Min(outcome.Incoming, cap)) * 1_000_000_000L
+            + (cap - Math.Min(outcome.FutureIncoming0, cap)) * 1_000_000L
+            + (cap - Math.Min(outcome.FutureIncoming1, cap)) * 100_000L
+            + (cap - Math.Min(outcome.FutureIncoming2, cap)) * 10_000L
+            + (cap - Math.Min(outcome.DeckPollution, cap * 4)) * 1_000L
+            + (cap - Math.Min(outcome.FocusHp, cap)) * 100L
+            + (cap * 10 - Math.Min(outcome.EnemyHp, cap * 10)) * 10L
+            + Math.Min(outcome.PlayerHpAfterTurn, cap);
         return score > int.MaxValue ? int.MaxValue - 1 : (int)score;
     }
 
@@ -153,14 +159,12 @@ internal static class CombatSetupEvaluator {
         if (next.AliveEnemyCount == 0)
             return int.MaxValue;
 
-        int baseScore = LineRankScore(
-            EvaluateLine(next),
-            ThreatModel.WeightsFor(state));
+        int baseScore = PackLineScore(EvaluateLine(next));
         return SimMoveScoring.WithModifiers(state, action, baseScore, rootSnapshot);
     }
 
     public static CombatLineOutcome WipeOutcome(CombatState state) =>
-        new(0, 0, 0, 0, 0, 0, state.PlayerHp);
+        new(0, 0, 0, 0, 0, 0, 0, state.PlayerHp);
 
     static int CompareLineOutcome(CombatLineOutcome without, CombatLineOutcome with) =>
         CompareLines(without, with);
@@ -174,6 +178,7 @@ internal static class CombatSetupEvaluator {
             ThreatModel.PressureAtIntentStepKillAdjusted(afterTurn, 0, afterDrawTurnStart: true),
             ThreatModel.PressureAtIntentStep(afterTurn, 1),
             ThreatModel.PressureAtIntentStep(afterTurn, 2),
+            DeckPollutionEvaluator.EffectivePollutionBurden(afterTurn),
             focusMid?.CurrentHp ?? 0,
             afterTurn.Enemies.Where(e => e.IsAlive).Sum(e => e.CurrentHp),
             afterTurn.PlayerHp);
@@ -258,7 +263,52 @@ internal static class CombatSetupEvaluator {
             playedTransform = true;
         }
 
-        return SimulateGreedyBlock(SimulateGreedyAttacks(s, excludeHandIndex), excludeHandIndex);
+        s = SimulateGreedyBlock(SimulateGreedyAttacks(s, excludeHandIndex), excludeHandIndex);
+        return SimulateGreedyJunkClear(s, excludeHandIndex);
+    }
+
+    static CombatState SimulateGreedyJunkClear(CombatState state, int excludeHandIndex = -1) {
+        if (DeckPollutionEvaluator.HasAffordableJunkRelief(state))
+            return state;
+
+        var s = state;
+        string? excludeId = excludeHandIndex >= 0 && excludeHandIndex < state.Hand.Count
+            ? state.Hand[excludeHandIndex].Id
+            : null;
+
+        while (true) {
+            if (ThreatModel.IncomingDamage(s) > 0
+                && DeckPollutionEvaluator.ExpectedPlayableDamage(s) > 0)
+                break;
+
+            int bestHand = -1;
+            int bestDraw = -1;
+
+            for (int i = 0; i < s.Hand.Count; i++) {
+                var card = s.Hand[i];
+                if (excludeId != null && card.Id == excludeId)
+                    continue;
+                if (!DeckPollutionEvaluator.IsHandJunk(card))
+                    continue;
+                if (!DeckPollutionEvaluator.SelfExhaustsOnPlay(card))
+                    continue;
+                if (!CombatCardCost.CanAfford(card, s))
+                    continue;
+
+                int draw = CardPileEffectResolver.DrawCount(card.Id);
+                if (draw > bestDraw) {
+                    bestDraw = draw;
+                    bestHand = i;
+                }
+            }
+
+            if (bestHand < 0)
+                break;
+
+            s = CombatSimulator.Apply(s, new SimCombatAction(SimActionKind.PlayCard, bestHand, -1));
+        }
+
+        return s;
     }
 
     static CombatState SimulateGreedyBlock(CombatState state, int excludeHandIndex = -1) {
@@ -405,10 +455,10 @@ internal static class CombatSetupEvaluator {
 
         var statusThreat = state.Enemies
             .Where(e => e.IsAlive && ThreatModel.IsViableAttackTarget(state, e))
-            .Where(e => e.NonDamageThreat > 0
+            .Where(e => ThreatModel.NonDamageForStep(state, e, 0) > 0
                 || e.MechanicFlags.HasFlag(EnemyMechanicFlags.HasStatusCardIntent))
             .OrderBy(e => e.EffectiveHp)
-            .ThenByDescending(e => e.NonDamageThreat)
+            .ThenByDescending(e => ThreatModel.NonDamageForStep(state, e, 0))
             .FirstOrDefault();
         if (statusThreat != null)
             return statusThreat.Index;

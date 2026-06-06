@@ -10,7 +10,8 @@ internal static class CombatSummonFactory {
         string spawnMonsterId,
         int newIndex,
         int summonerIndex,
-        IReadOnlyList<CombatEnemy> existing) {
+        IReadOnlyList<CombatEnemy> existing,
+        CombatState state) {
         if (existing.Any(e => e.IsAlive
                 && string.Equals(e.MonsterId, spawnMonsterId, StringComparison.OrdinalIgnoreCase)))
             return null;
@@ -22,7 +23,7 @@ internal static class CombatSummonFactory {
         if (profile.Flags.HasFlag(EnemyMechanicFlags.IsSecondaryEnemy))
             flags |= EnemyMechanicFlags.IsSecondaryEnemy;
 
-        var steps = BuildIntentSteps(profile, 3);
+        var steps = BuildIntentSteps(state, profile, 3);
         var first = steps.Length > 0 ? steps[0] : null;
 
         int actOrder = existing.Count == 0 ? 0 : existing.Max(e => e.ActOrder) + 1;
@@ -49,7 +50,7 @@ internal static class CombatSummonFactory {
     static int DefaultHp(string monsterId) =>
         string.Equals(monsterId, "EYE_WITH_TEETH", StringComparison.OrdinalIgnoreCase) ? 6 : 20;
 
-    static CombatIntentStep[] BuildIntentSteps(MonsterMechanicProfile profile, int count) {
+    static CombatIntentStep[] BuildIntentSteps(CombatState state, MonsterMechanicProfile profile, int count) {
         if (profile.Moves.Count == 0)
             return [];
 
@@ -57,7 +58,7 @@ internal static class CombatSummonFactory {
         var steps = new CombatIntentStep[count];
         var effects = MoveEffectIndex.GetEffects(profile.MonsterId, move.MoveId);
         int damage = AttackDamageFromEffects(effects);
-        int nonDamage = OfficialMonsterProbe.NonDamageThreatFromIntentTypes(move.IntentTypes);
+        int nonDamage = MoveEffectPressure.FromMove(state, profile.MonsterId, move.MoveId);
 
         for (int i = 0; i < count; i++) {
             steps[i] = new CombatIntentStep(
@@ -71,13 +72,6 @@ internal static class CombatSummonFactory {
         return steps;
     }
 
-    static int AttackDamageFromEffects(IReadOnlyList<MonsterMoveEffect> effects) {
-        int damage = 0;
-        foreach (var effect in effects) {
-            if (effect.Kind == MonsterMoveEffectKind.Attack)
-                damage = Math.Max(damage, effect.Count);
-        }
-
-        return damage;
-    }
+    static int AttackDamageFromEffects(IReadOnlyList<MonsterMoveEffect> effects) =>
+        MoveEffectPressure.AttackDamageFromEffects(effects);
 }

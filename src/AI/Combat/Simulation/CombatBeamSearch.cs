@@ -100,7 +100,7 @@ public static class CombatBeamSearch {
 
         int score = int.MinValue;
         if (bestOutcome.HasValue) {
-            score = CombatSetupEvaluator.LineRankScore(bestOutcome.Value, ThreatModel.WeightsFor(root));
+            score = CombatSetupEvaluator.PackLineScore(bestOutcome.Value);
             if (bestPath is { Count: > 0 })
                 score += SimMoveScoring.OpeningModifierBonus(root, bestPath[0], rootSnapshot);
         }
@@ -125,7 +125,7 @@ public static class CombatBeamSearch {
             bestOutcome = outcome;
             bestPath = path;
             bestDepth = depth;
-            int rank = CombatSetupEvaluator.LineRankScore(outcome, ThreatModel.WeightsFor(root));
+            int rank = CombatSetupEvaluator.PackLineScore(outcome);
             if (path.Count > 0)
                 rank += SimMoveScoring.OpeningModifierBonus(root, path[0], rootSnapshot);
             CombatDebugTrace.LogBeamLeafUpdate(
@@ -152,10 +152,9 @@ public static class CombatBeamSearch {
     }
 
     static int RankLine(CombatState state) {
-        var weights = ThreatModel.WeightsFor(state);
         if (state.AliveEnemyCount == 0)
-            return CombatSetupEvaluator.LineRankScore(CombatSetupEvaluator.WipeOutcome(state), weights);
-        return CombatSetupEvaluator.LineRankScore(CombatSetupEvaluator.EvaluateLine(state), weights);
+            return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.WipeOutcome(state));
+        return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.EvaluateLine(state));
     }
 
     readonly record struct BeamNode(CombatState State, List<SimCombatAction> Path, int Score);

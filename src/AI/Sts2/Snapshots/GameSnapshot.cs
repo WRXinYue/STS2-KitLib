@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using DevMode.AI.Combat;
 using DevMode.AI.Core;
+using SimCombatState = DevMode.AI.Combat.Simulation.CombatState;
 using DevMode.AI.Core.Schema;
 using DevMode.AI.Knowledge;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
@@ -167,11 +168,20 @@ internal static class GameSnapshot
         combat["discardPile"] = CapturePile(combatState.DiscardPile);
         combat["exhaustPile"] = CapturePile(combatState.ExhaustPile);
 
-        if (cs != null)
-            combat["enemies"] = CaptureEnemies(cs, player);
+        if (cs != null) {
+            var pressureState = BuildPressureState(player, combat);
+            combat["enemies"] = CaptureEnemies(cs, player, pressureState);
+        }
 
         return combat;
     }
+
+    static SimCombatState BuildPressureState(Player player, JsonObject combat) =>
+        SimCombatState.FromSnapshot(new JsonObject {
+            ["currentHp"] = player.Creature.CurrentHp,
+            ["maxHp"] = player.Creature.MaxHp,
+            ["combat"] = combat,
+        });
 
     private static JsonArray CapturePile(CardPile? pile) {
         var arr = new JsonArray();
@@ -207,7 +217,10 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CaptureEnemies(CombatState cs, Player player)
+    private static JsonArray CaptureEnemies(
+        MegaCrit.Sts2.Core.Combat.CombatState cs,
+        Player player,
+        SimCombatState pressureState)
     {
         var arr = new JsonArray();
         var targets = cs.PlayerCreatures.ToList();
@@ -269,19 +282,29 @@ internal static class GameSnapshot
                 obj["intentBlock"] = intentBlock;
 
                 var intentTags = new JsonArray();
-                int nonDamageThreat = 0;
                 foreach (var intent in enemy.Monster.NextMove.Intents) {
                     if (intent.IntentType == IntentType.Hidden) continue;
                     intentTags.Add(intent.IntentType.ToString());
-                    nonDamageThreat += EnemyThreatWeights.IntentWeight(intent.IntentType);
                 }
+
+                string? capturedMonsterId = null;
+                try { capturedMonsterId = enemy.ModelId.Entry; } catch { }
+                var moveEffects = MoveEffectIndex.MergeWithRuntimeIntents(
+                    capturedMonsterId,
+                    enemy.Monster.NextMove.Id,
+                    enemy.Monster.NextMove.Intents);
+                int nonDamageThreat = DevMode.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
+                    pressureState,
+                    capturedMonsterId,
+                    enemy.Monster.NextMove.Id,
+                    moveEffects);
 
                 obj["intentTags"] = intentTags;
                 obj["nonDamageThreat"] = nonDamageThreat;
             }
 
             try {
-                var steps = MonsterIntentReader.CaptureIntentSteps(enemy, targets);
+                var steps = MonsterIntentReader.CaptureIntentSteps(enemy, targets, pressureState);
                 if (steps.Count > 0)
                     obj["intentSteps"] = steps;
             }
@@ -299,7 +322,7 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CaptureEnemiesBrief(CombatState cs)
+    private static JsonArray CaptureEnemiesBrief(MegaCrit.Sts2.Core.Combat.CombatState cs)
     {
         var arr = new JsonArray();
         var index = 0;

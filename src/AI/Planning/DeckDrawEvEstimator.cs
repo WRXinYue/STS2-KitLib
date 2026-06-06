@@ -66,7 +66,7 @@ public static class DeckDrawEvEstimator {
         int affordableBlock = BlockDefensePolicy.AffordableBlockTotal(state);
         int blockGap = Math.Max(0, incoming - affordableBlock - state.PlayerBlock);
         bool canLethal = SimLethalChecker.CanLethal(state, out _);
-        int nonDamage = state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
+        int nonDamage = ThreatModel.TotalNonDamageThreat(state);
 
         if (beamScore == int.MinValue)
             beamScore = FallbackTurnScore(state, incoming, maxDamage, affordableBlock, canLethal);
@@ -91,7 +91,7 @@ public static class DeckDrawEvEstimator {
         if (canLethal)
             score += 80;
         score -= Math.Max(0, incoming - affordableBlock - state.PlayerBlock) * 6;
-        score -= state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
+        score -= ThreatModel.TotalNonDamageThreat(state);
         return score;
     }
 }

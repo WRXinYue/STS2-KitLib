@@ -72,6 +72,7 @@ internal static class MonsterIntentReader {
     internal static JsonArray CaptureIntentSteps(
         Creature enemy,
         IReadOnlyList<Creature> targets,
+        DevMode.AI.Combat.Simulation.CombatState pressureState,
         int maxSteps = DevMode.AI.Combat.Simulation.ThreatModel.LineFutureHorizonTurns + 2) {
         var arr = new JsonArray();
         if (enemy.Monster is not { } monster)
@@ -91,11 +92,17 @@ internal static class MonsterIntentReader {
             }
 
             var intentTypes = new JsonArray();
-            int nonDamage = 0;
-            foreach (var intent in step.Intents) {
+            foreach (var intent in step.Intents)
                 intentTypes.Add(intent.IntentType.ToString());
-                nonDamage += EnemyThreatWeights.IntentWeight(intent.IntentType);
-            }
+
+            string? monsterId = null;
+            try { monsterId = enemy.ModelId.Entry; } catch { }
+            var effects = MoveEffectIndex.MergeWithRuntimeIntents(monsterId, step.MoveId, step.Intents);
+            int nonDamage = DevMode.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
+                pressureState,
+                monsterId,
+                step.MoveId,
+                effects);
 
             arr.Add(new JsonObject {
                 ["moveId"] = step.MoveId,

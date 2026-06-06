@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text.Json.Nodes;
 using DevMode.AI.Combat;
@@ -30,15 +31,15 @@ internal static class CombatActionHeuristic {
             return int.MinValue;
 
         if (DeckPollutionEvaluator.IsHandJunk(card)) {
-            var emergency = DeckPollutionEvaluator.EmergencyJunkPlayScore(state, card);
+            var emergency = DeckPollutionEvaluator.EmergencyJunkPlayScore(state, card, action.HandIndex);
             if (emergency > int.MinValue + 1)
                 return emergency;
             return int.MinValue;
         }
 
-        var junkRelief = DeckPollutionEvaluator.JunkReliefScore(state, card);
+        var junkRelief = DeckPollutionEvaluator.JunkReliefScore(state, card, action.HandIndex);
         if (junkRelief > 0)
-            return junkRelief + CombatSetupEvaluator.RankPlayAction(state, action) / 3;
+            return Math.Max(junkRelief, CombatSetupEvaluator.RankPlayAction(state, action));
 
         if (CombatTransformSimulator.IsHandAttackTransform(card.Profile)) {
             if (CombatTransformSimulator.EstimateTurnDamageDelta(
@@ -119,9 +120,7 @@ internal static class CombatActionHeuristic {
         if (DeckPollutionEvaluator.HasAffordableEmergencyJunkClear(state))
             return int.MinValue + 3;
 
-        return CombatSetupEvaluator.LineRankScore(
-            CombatSetupEvaluator.EvaluateLine(state),
-            ThreatModel.WeightsFor(state));
+        return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.EvaluateLine(state));
     }
 
     static bool ShouldPruneIllusionAttack(CombatState state, SimCombatAction action) {

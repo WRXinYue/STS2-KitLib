@@ -67,7 +67,13 @@ public static class CombatTurnResolver {
                                 effect.SpawnMonsterId,
                                 NextEnemyIndex(enemies),
                                 acting.Index,
-                                enemies);
+                                enemies,
+                                state with {
+                                    DrawPile = draw,
+                                    DiscardPile = discard,
+                                    Modifiers = modifiers,
+                                    Enemies = enemies,
+                                });
                             if (summoned != null)
                                 enemies.Add(summoned);
                         }

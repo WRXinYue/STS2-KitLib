@@ -107,13 +107,9 @@ public static class EncounterCombatFactory {
         var move = profile.Moves[0];
         var steps = new CombatIntentStep[count];
         var effects = MoveEffectIndex.GetEffects(profile.MonsterId, move.MoveId);
-        int damage = 0;
-        foreach (var effect in effects) {
-            if (effect.Kind == MonsterMoveEffectKind.Attack)
-                damage = Math.Max(damage, effect.Count);
-        }
+        int damage = MoveEffectPressure.AttackDamageFromEffects(effects);
 
-        int nonDamage = OfficialMonsterProbe.NonDamageThreatFromIntentTypes(move.IntentTypes);
+        int nonDamage = MoveEffectPressure.FromMove(profile.MonsterId, move.MoveId);
         for (int i = 0; i < count; i++) {
             steps[i] = new CombatIntentStep(
                 move.MoveId,

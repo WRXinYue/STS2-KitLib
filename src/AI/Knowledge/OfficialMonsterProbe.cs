@@ -86,9 +86,7 @@ internal static class OfficialMonsterProbe {
     }
 
     public static int NonDamageThreatFromIntentTypes(IEnumerable<IntentType> intentTypes) {
-        int total = 0;
-        foreach (var intent in intentTypes)
-            total += EnemyThreatWeights.IntentWeight(intent);
-        return total;
+        _ = intentTypes;
+        return 0;
     }
 }

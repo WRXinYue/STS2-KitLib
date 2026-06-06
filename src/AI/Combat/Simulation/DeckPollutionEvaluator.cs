@@ -24,7 +24,18 @@ public static class DeckPollutionEvaluator {
         return false;
     }
 
-    public static int JunkReliefScore(CombatState state, CombatHandCard card) {
+    public static int PollutionReliefDelta(CombatState state, int handIndex, int enemyIndex = -1) {
+        if (handIndex < 0 || handIndex >= state.Hand.Count)
+            return 0;
+
+        int before = EffectivePollutionBurden(state);
+        var after = CombatSimulator.Apply(
+            state,
+            new SimCombatAction(SimActionKind.PlayCard, handIndex, enemyIndex));
+        return before - EffectivePollutionBurden(after);
+    }
+
+    public static int JunkReliefScore(CombatState state, CombatHandCard card, int handIndex) {
         if (HandJunkCount(state) <= 0)
             return 0;
 
@@ -32,8 +43,7 @@ public static class DeckPollutionEvaluator {
             && CardPileEffectResolver.ExhaustHandCount(card.Id) <= 0)
             return 0;
 
-        int draw = CardPileEffectResolver.DrawCount(card.Id);
-        return 30 + HandJunkCount(state) * CombatJunkCard.DefaultJunkValue + draw * 8;
+        return Math.Max(0, PollutionReliefDelta(state, handIndex));
     }
 
     public static bool SelfExhaustsOnPlay(CombatHandCard card) =>
@@ -54,7 +64,7 @@ public static class DeckPollutionEvaluator {
         return false;
     }
 
-    public static int EmergencyJunkPlayScore(CombatState state, CombatHandCard card) {
+    public static int EmergencyJunkPlayScore(CombatState state, CombatHandCard card, int handIndex) {
         if (!IsHandJunk(card) || !SelfExhaustsOnPlay(card))
             return int.MinValue;
         if (HasAffordableJunkRelief(state))
@@ -66,16 +76,8 @@ public static class DeckPollutionEvaluator {
         if (ExpectedPlayableBlock(state) > 0 && ThreatModel.IncomingDamage(state) > 0)
             return int.MinValue;
 
-        int draw = CardPileEffectResolver.DrawCount(card.Id);
-        int score = 14 + draw * 4;
-        if (ThreatModel.NetDamageAfterBlock(state) > 0)
-            score -= 8;
-
-        var peek = DrawPlanner.PeekTop(state, 1);
-        if (peek.Count > 0 && peek[0].IsStatus)
-            score -= 10;
-
-        return score;
+        int delta = PollutionReliefDelta(state, handIndex);
+        return delta > 0 ? delta : int.MinValue;
     }
 
     public static int JunkCount(CombatState state) =>
@@ -83,8 +85,15 @@ public static class DeckPollutionEvaluator {
         + state.DrawPile.Count(c => c.IsStatus)
         + state.DiscardPile.Count(c => c.IsStatus);
 
-    public static int ImmediatePollutionCost(CombatState state) =>
+    /// <summary>
+    /// Pollution after sim: each remaining junk/status card costs <see cref="CombatJunkCard.DefaultJunkValue"/>.
+    /// Clearable cards (Slimed) are handled by playing them in <c>SimulateGreedyJunkClear</c>, not by discounts here.
+    /// </summary>
+    public static int EffectivePollutionBurden(CombatState state) =>
         JunkCount(state) * CombatJunkCard.DefaultJunkValue;
+
+    public static int ImmediatePollutionCost(CombatState state) =>
+        EffectivePollutionBurden(state);
 
     public static int ProjectedPollutionCost(CombatState state, int horizonTurns = 2) {
         double total = ImmediatePollutionCost(state);

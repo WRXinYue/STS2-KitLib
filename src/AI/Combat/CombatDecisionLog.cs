@@ -94,7 +94,7 @@ public static class CombatDecisionLog {
 
     static string FormatEnemyThreat(CombatState state) {
         var incoming = ThreatModel.IncomingDamage(state);
-        var nonDamage = state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
+        var nonDamage = ThreatModel.TotalNonDamageThreat(state);
         var next = ThreatModel.NextTurnIncoming(state);
         var junk = DeckPollutionEvaluator.JunkCount(state);
         var poll = DeckPollutionEvaluator.ProjectedPollutionCost(state);

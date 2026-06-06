@@ -11,54 +11,23 @@ public static class ThreatModel {
     /// <summary>Future enemy rounds compared in line outcome (after the current line resolves).</summary>
     public const int LineFutureHorizonTurns = 3;
 
-    /// <summary>Encounter-derived units for line/beam packing and mid-turn tie-breaks.</summary>
-    public readonly record struct LineScoreWeights(
-        int IncomingUnit,
-        int FutureUnit,
-        int FocusUnit,
-        int IncomingCap);
-
-    public static LineScoreWeights WeightsFor(CombatState state) {
-        var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
-        int thisIn = IncomingDamage(state);
-        int nextP = PressureAtIntentStepKillAdjusted(afterPhase, 0);
-        int horizonSum = 0;
-        for (int i = 0; i <= LineFutureHorizonTurns; i++) {
-            horizonSum += i == 0
-                ? PressureAtIntentStepKillAdjusted(afterPhase, 0)
-                : PressureAtIntentStep(afterPhase, i);
-        }
-
-        int incomingUnit = Math.Max(1, Math.Max(thisIn, nextP));
-        int futureUnit = Math.Max(1, horizonSum / (LineFutureHorizonTurns + 1));
-        int focusUnit = Math.Max(1, state.Enemies.Where(e => e.IsAlive).Sum(e => e.CurrentHp)
-            / Math.Max(1, state.AliveEnemyCount));
-        int cap = Math.Max(incomingUnit, thisIn + nextP);
-
-        return new LineScoreWeights(incomingUnit, futureUnit, focusUnit, cap);
-    }
-
     public static int FocusHp(CombatState state, int focusIndex) {
         var focus = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIndex);
         return focus?.CurrentHp ?? 0;
     }
 
-    /// <summary>Mid-turn heuristic score for greedy attack tie-breaks (weights from live threat).</summary>
+    /// <summary>Mid-turn greedy tie-break aligned with <see cref="CombatSetupEvaluator.CompareLines"/>.</summary>
     public static int MidTurnScore(CombatState state, int focusIndex) {
-        var w = WeightsFor(state);
         var afterPhase = CombatTurnResolver.ProjectAfterEnemyPhase(state);
-        int incoming = NetDamageAfterBlock(state);
-        int future0 = PressureAtIntentStepKillAdjusted(afterPhase, 0);
-        int future1 = PressureAtIntentStep(afterPhase, 1);
-        int future2 = PressureAtIntentStep(afterPhase, 2);
-        int enemyHp = state.Enemies.Where(e => e.IsAlive).Sum(e => e.EffectiveHp);
-        int focusHp = FocusHp(state, focusIndex);
-        return -incoming * w.IncomingUnit
-            - future0 * w.FutureUnit
-            - future1 * Math.Max(1, w.FutureUnit / 2)
-            - future2 * Math.Max(1, w.FutureUnit / 4)
-            - enemyHp
-            - focusHp * w.FocusUnit;
+        return CombatSetupEvaluator.PackLineScore(new CombatSetupEvaluator.CombatLineOutcome(
+            NetDamageAfterBlock(state),
+            PressureAtIntentStepKillAdjusted(afterPhase, 0),
+            PressureAtIntentStep(afterPhase, 1),
+            PressureAtIntentStep(afterPhase, 2),
+            DeckPollutionEvaluator.EffectivePollutionBurden(state),
+            FocusHp(state, focusIndex),
+            state.Enemies.Where(e => e.IsAlive).Sum(e => e.EffectiveHp),
+            state.PlayerHp));
     }
 
     /// <summary>Acceptable extra this-turn incoming when focus progress justifies it.</summary>
@@ -66,9 +35,9 @@ public static class ThreatModel {
         if (!focus.IsAlive)
             return 0;
 
-        int poke = focus.IntentDamage + focus.NonDamageThreat;
+        int poke = focus.IntentDamage + NonDamageForStep(state, focus, 0);
         int peak = PeakScheduledDamage(focus);
-        int horizon = HorizonThreatForEnemy(focus, 1, LineFutureHorizonTurns);
+        int horizon = HorizonThreatForEnemy(focus, state, 1, LineFutureHorizonTurns);
         int perStep = horizon / Math.Max(1, LineFutureHorizonTurns);
         return Math.Max(poke, Math.Max(peak, perStep));
     }
@@ -110,6 +79,18 @@ public static class ThreatModel {
         return (int)Math.Round(total);
     }
 
+    /// <summary>Non-damage pressure for one enemy intent step from the current deck/hand.</summary>
+    public static int NonDamageForStep(CombatState state, CombatEnemy enemy, int stepIndex) {
+        if (!enemy.IsAlive || stepIndex < 0 || stepIndex >= enemy.IntentSteps.Length)
+            return 0;
+
+        var step = enemy.IntentSteps[stepIndex];
+        if (string.IsNullOrWhiteSpace(step.MoveId))
+            return 0;
+
+        return MoveEffectPressure.FromMove(state, enemy.MonsterId, step.MoveId);
+    }
+
     /// <summary>Sum non-damage pressure at intentSteps[stepIndex] across alive enemies.</summary>
     public static int NonDamageAtIntentStep(CombatState state, int stepIndex) {
         if (stepIndex < 0)
@@ -119,7 +100,7 @@ public static class ThreatModel {
         foreach (var enemy in state.Enemies.Where(e => e.IsAlive)) {
             if (stepIndex >= enemy.IntentSteps.Length)
                 continue;
-            total += enemy.IntentSteps[stepIndex].NonDamageThreat;
+            total += NonDamageForStep(state, enemy, stepIndex);
         }
 
         return total;
@@ -219,7 +200,7 @@ public static class ThreatModel {
 
         foreach (var enemy in OrderEnemiesForKillBeforeStep(state, stepIndex)) {
             int inc = IncomingAtIntentStepForEnemy(enemy, stepIndex);
-            int nd = NonDamageAtIntentStepForEnemy(enemy, stepIndex);
+            int nd = NonDamageForStep(state, enemy, stepIndex);
             if (inc <= 0 && nd <= 0)
                 continue;
 
@@ -239,18 +220,15 @@ public static class ThreatModel {
         state.Enemies
             .Where(e => e.IsAlive)
             .OrderByDescending(e =>
-                IncomingAtIntentStepForEnemy(e, stepIndex) + NonDamageAtIntentStepForEnemy(e, stepIndex))
+                IncomingAtIntentStepForEnemy(e, stepIndex) + NonDamageForStep(state, e, stepIndex))
             .ThenBy(e => e.EffectiveHp);
 
-    static int NonDamageAtIntentStepForEnemy(CombatEnemy enemy, int stepIndex) {
-        if (!enemy.IsAlive || stepIndex < 0 || stepIndex >= enemy.IntentSteps.Length)
-            return 0;
-
-        return enemy.IntentSteps[stepIndex].NonDamageThreat;
-    }
-
     /// <summary>Intent-chain threat for focus fire over the next enemy phases.</summary>
-    public static int HorizonThreatForEnemy(CombatEnemy enemy, int startStep = 0, int stepCount = 3) {
+    public static int HorizonThreatForEnemy(
+        CombatEnemy enemy,
+        CombatState state,
+        int startStep = 0,
+        int stepCount = 3) {
         if (!enemy.IsAlive || startStep < 0)
             return 0;
 
@@ -260,7 +238,7 @@ public static class ThreatModel {
             int damage = step.IntentDamage;
             if (i > startStep && step.IsUncertain)
                 damage = (int)Math.Round(damage * EnemyThreatWeights.NextTurnUncertainMultiplier);
-            total += damage + step.NonDamageThreat;
+            total += damage + NonDamageForStep(state, enemy, i);
         }
 
         return total;
@@ -278,13 +256,13 @@ public static class ThreatModel {
             return 0;
 
         int peak = PeakScheduledDamage(enemy);
-        int horizon = HorizonThreatForEnemy(enemy, 1, LineFutureHorizonTurns);
-        int thisTurn = enemy.IntentDamage + enemy.NonDamageThreat;
+        int horizon = HorizonThreatForEnemy(enemy, state, 1, LineFutureHorizonTurns);
+        int thisTurn = enemy.IntentDamage + NonDamageForStep(state, enemy, 0);
 
         int poolPeak = 0;
         foreach (var e in alive)
             poolPeak = Math.Max(poolPeak, PeakScheduledDamage(e));
-        int poolHorizon = alive.Sum(e => HorizonThreatForEnemy(e, 1, LineFutureHorizonTurns));
+        int poolHorizon = alive.Sum(e => HorizonThreatForEnemy(e, state, 1, LineFutureHorizonTurns));
         int poolHp = alive.Where(e => !e.IsMinion).Sum(e => e.CurrentHp);
         if (poolHp <= 0)
             poolHp = alive.Sum(e => e.CurrentHp);
@@ -344,12 +322,12 @@ public static class ThreatModel {
     }
 
     public static int TotalNonDamageThreat(CombatState state) =>
-        state.Enemies.Where(e => e.IsAlive).Sum(e => e.NonDamageThreat);
+        NonDamageAtIntentStep(state, 0);
 
     public static int NextTurnAttackOn(CombatEnemy enemy) =>
         IncomingAtIntentStepForEnemy(enemy, 1);
 
-    public static int NextTurnPressureOn(CombatEnemy enemy) {
+    public static int NextTurnPressureOn(CombatEnemy enemy, CombatState state) {
         if (!enemy.IsAlive)
             return 0;
 
@@ -359,7 +337,7 @@ public static class ThreatModel {
             int damage = step.IntentDamage;
             if (step.IsUncertain)
                 damage = (int)Math.Round(damage * EnemyThreatWeights.NextTurnUncertainMultiplier);
-            total += damage + step.NonDamageThreat;
+            total += damage + NonDamageForStep(state, enemy, i);
         }
 
         return total;

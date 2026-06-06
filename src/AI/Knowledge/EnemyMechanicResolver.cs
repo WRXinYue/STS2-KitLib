@@ -1,7 +1,6 @@
 using System;
-using System.Linq;
 using System.Text.Json.Nodes;
-using MegaCrit.Sts2.Core.MonsterMoves.Intents;
+using DevMode.AI.Combat.Simulation;
 
 namespace DevMode.AI.Knowledge;
 
@@ -32,18 +31,7 @@ public static class EnemyMechanicResolver {
         if (enemy["nonDamageThreat"]?.GetValue<int>() is int cached)
             return cached;
 
-        var tags = enemy["intentTags"]?.AsArray();
-        if (tags == null || tags.Count == 0)
-            return NonDamageThreatFromProfile(enemy);
-
-        int total = 0;
-        foreach (var node in tags) {
-            if (node?.GetValue<string>() is not { } tag) continue;
-            if (Enum.TryParse<IntentType>(tag, ignoreCase: true, out var intent))
-                total += EnemyThreatWeights.IntentWeight(intent);
-        }
-
-        return total;
+        return NonDamageThreatFromProfile(enemy);
     }
 
     static int NonDamageThreatFromProfile(JsonObject enemy) {
@@ -52,14 +40,7 @@ public static class EnemyMechanicResolver {
         if (string.IsNullOrWhiteSpace(monsterId) || string.IsNullOrWhiteSpace(moveId))
             return 0;
 
-        if (!MonsterMechanicIndex.TryGet(monsterId, out var profile))
-            return 0;
-
-        var move = profile.Moves.FirstOrDefault(m =>
-            string.Equals(m.MoveId, moveId, StringComparison.OrdinalIgnoreCase));
-        if (move == null) return 0;
-
-        return OfficialMonsterProbe.NonDamageThreatFromIntentTypes(move.IntentTypes);
+        return MoveEffectPressure.FromMove(monsterId, moveId);
     }
 
     public static bool IsIllusionMinion(JsonObject? enemy) =>
