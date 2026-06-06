@@ -145,20 +145,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         if (!card.TryManualPlay(target))
             return ActionResult.Fail($"Card [{card.Title}] cannot be played.");
 
-        if (!await Sts2CombatPlayHelper.WaitForManualPlayAsync(card, TimeSpan.FromSeconds(8))) {
-            DevMode.AI.Combat.AgentDebugLog.Write("P1", "Sts2ActionExecutor.PlayCard", "wait failed", new {
-                cardId = card.Id.Entry,
-                handIndex = cardIndex,
-                playPhase = Sts2CombatCompat.IsCombatPlayPhaseActive(),
-            });
+        if (!await Sts2CombatPlayHelper.WaitForManualPlayAsync(card, TimeSpan.FromSeconds(8)))
             return ActionResult.Fail($"Card [{card.Title}] play did not complete.");
-        }
 
-        DevMode.AI.Combat.AgentDebugLog.Write("P1", "Sts2ActionExecutor.PlayCard", "wait ok", new {
-            cardId = card.Id.Entry,
-            handIndex = cardIndex,
-            playPhase = Sts2CombatCompat.IsCombatPlayPhaseActive(),
-        });
         return ActionResult.Ok($"Played [{card.Title}]");
     }
 

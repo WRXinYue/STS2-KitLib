@@ -92,11 +92,8 @@ public sealed class GameLoop
             if (inCombat && !IsCombatSnapshotReady(snapshot))
                 return;
 
-            if (ShouldSkipCombatPoll(phase, snapshot, out var skipReason)) {
-                if (skipReason != null)
-                    AgentDebugLog.Write("P2", "GameLoop.OnDecisionPoint", "skip combat poll", new { skipReason });
+            if (ShouldSkipCombatPoll(phase, snapshot))
                 return;
-            }
 
             var decidePhase = inCombat && phase is GamePhase.Unknown or GamePhase.Combat
                 ? GamePhase.Combat
@@ -149,8 +146,7 @@ public sealed class GameLoop
         }
     }
 
-    bool ShouldSkipCombatPoll(GamePhase phase, JsonObject snapshot, out string? reason) {
-        reason = null;
+    bool ShouldSkipCombatPoll(GamePhase phase, JsonObject snapshot) {
         if (!IsCombatContext(phase, snapshot))
             return false;
 
@@ -158,14 +154,11 @@ public sealed class GameLoop
         var playPhase = ReadSnapshotBool(snapshot, "combat", "isPlayPhaseActive");
         if (playPhase == false) {
             _endTurnPending = false;
-            reason = "playPhaseInactive";
             return true;
         }
 
-        if (_endTurnPending) {
-            reason = "endTurnPending";
+        if (_endTurnPending)
             return true;
-        }
 
         return false;
     }
