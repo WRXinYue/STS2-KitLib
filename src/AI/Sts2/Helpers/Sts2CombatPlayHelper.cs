@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using DevMode;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -30,7 +31,7 @@ internal static class Sts2CombatPlayHelper {
     }
 
     static bool IsPlayStable(CardModel card, out bool inHand, out bool settled) {
-        inHand = card.Pile?.Type == PileType.Hand;
+        inHand = IsCardInHand(card);
         settled = Sts2WaitHelper.ArePlayerDrivenActionsSettled();
 
         if (!CombatManager.Instance.IsInProgress)
@@ -39,7 +40,21 @@ internal static class Sts2CombatPlayHelper {
         if (inHand)
             return false;
 
+        // Instant/skip-anim mode completes card logic without waiting on animation-driven action cleanup.
+        if (SkipAnimControl.IsSkipping)
+            return true;
+
         return settled;
+    }
+
+    static bool IsCardInHand(CardModel card) {
+        if (RunContext.TryGetRunAndPlayer(out _, out var player)) {
+            var hand = player.PlayerCombatState?.Hand?.Cards;
+            if (hand != null)
+                return hand.Contains(card);
+        }
+
+        return card.Pile?.Type == PileType.Hand;
     }
 
     static string? DescribeOverlay() {

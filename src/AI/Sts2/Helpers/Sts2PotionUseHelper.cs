@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using DevMode;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
@@ -22,17 +23,20 @@ internal static class Sts2PotionUseHelper {
         if (NOverlayStack.Instance?.Peek() != null)
             return false;
 
-        if (!Sts2WaitHelper.ArePlayerDrivenActionsSettled())
-            return false;
-
         if (!CombatManager.Instance.IsInProgress)
             return true;
 
         var current = player.GetPotionAtSlotIndex(potionSlot);
         if (current == null)
-            return true;
+            return SkipAnimControl.IsSkipping || Sts2WaitHelper.ArePlayerDrivenActionsSettled();
 
         var currentId = current.Id.Entry ?? "";
-        return !string.Equals(currentId, potionId, StringComparison.OrdinalIgnoreCase);
+        if (!string.Equals(currentId, potionId, StringComparison.OrdinalIgnoreCase))
+            return SkipAnimControl.IsSkipping || Sts2WaitHelper.ArePlayerDrivenActionsSettled();
+
+        if (!SkipAnimControl.IsSkipping && !Sts2WaitHelper.ArePlayerDrivenActionsSettled())
+            return false;
+
+        return false;
     }
 }
