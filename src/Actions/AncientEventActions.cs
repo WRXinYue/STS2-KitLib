@@ -7,7 +7,6 @@ namespace DevMode.Actions;
 internal static class AncientEventActions
 {
     internal const string DarvId = "DARV";
-    internal const string DustyTomeOptionToken = "DUSTY_TOME";
 
     internal static bool IsDarv(EventModel eventModel) =>
         eventModel is Darv
@@ -16,7 +15,6 @@ internal static class AncientEventActions
     internal static AncientEventEnterRequest? ParseEnterFlags(string[] args, int startIndex)
     {
         bool? darvBranch = null;
-        string? pin = null;
 
         for (var i = startIndex; i < args.Length; i++)
         {
@@ -25,13 +23,11 @@ internal static class AncientEventActions
                 darvBranch = true;
             else if (arg.Equals("-dusty", StringComparison.OrdinalIgnoreCase))
                 darvBranch = false;
-            else
-                pin = arg.ToUpperInvariant();
         }
 
-        if (darvBranch is null && pin is null)
+        if (darvBranch is null)
             return null;
 
-        return new AncientEventEnterRequest(pin, darvBranch);
+        return new AncientEventEnterRequest(darvBranch);
     }
 }

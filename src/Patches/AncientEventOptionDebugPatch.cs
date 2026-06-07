@@ -9,8 +9,8 @@ using MegaCrit.Sts2.Core.Models.Relics;
 namespace DevMode.Patches;
 
 /// <summary>
-/// When <see cref="AncientEventModel.DebugOption"/> pins dusty tome from <c>AllPossibleOptions</c>,
-/// run <see cref="DustyTome.SetupForPlayer"/> so the ancient card name and obtain path work.
+/// Run <see cref="DustyTome.SetupForPlayer"/> when dusty tome appears in ancient options
+/// so the ancient card name and obtain path work.
 /// </summary>
 [HarmonyPatch(typeof(AncientEventModel), "GenerateInitialOptionsWrapper")]
 internal static class AncientEventOptionDebugPatch

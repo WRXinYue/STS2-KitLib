@@ -43,9 +43,8 @@ internal static class EventActions {
                 ? MapPointType.Ancient
                 : MapPointType.Unknown;
 
-            var room = CreateEventRoom(eventModel, request);
             player.RunState.AppendToMapPointHistory(mapPointType, RoomType.Event, eventModel.Id);
-            TaskHelper.RunSafely(RunManager.Instance.EnterRoom(room));
+            TaskHelper.RunSafely(RunManager.Instance.EnterRoom(new EventRoom(eventModel)));
             return true;
         }
         catch (Exception ex) {
@@ -58,19 +57,6 @@ internal static class EventActions {
         AncientEventDebugSession.ClearPendingDarvBranch();
         if (request?.DarvIncludeDustyTome is bool branch && AncientEventActions.IsDarv(eventModel))
             AncientEventDebugSession.PendingDarvDustyTomeBranch = branch;
-    }
-
-    private static EventRoom CreateEventRoom(EventModel eventModel, AncientEventEnterRequest? request) {
-        var pin = request?.PinFirstOptionToken;
-        if (eventModel is not AncientEventModel || string.IsNullOrWhiteSpace(pin))
-            return new EventRoom(eventModel);
-
-        return new EventRoom(eventModel) {
-            OnStart = e => {
-                if (e is AncientEventModel ancient)
-                    ancient.DebugOption = pin;
-            },
-        };
     }
 
     public static string GetEventDisplayName(EventModel evt) {

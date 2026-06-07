@@ -17,12 +17,6 @@ internal static class AncientEventEnterUI
             onChosen(new AncientEventEnterRequest(DarvIncludeDustyTome: true)));
         AddChoice(host, I18N.T("ancient.darv.threeBoss", "3 boss relics (no tome)"), () =>
             onChosen(new AncientEventEnterRequest(DarvIncludeDustyTome: false)));
-        AddChoice(host, I18N.T("ancient.darv.pinTome", "Pin Dusty Tome first"), () =>
-            onChosen(new AncientEventEnterRequest(AncientEventActions.DustyTomeOptionToken)));
-        AddChoice(host, I18N.T("ancient.darv.twoPlusPinTome", "2 relics + tome, pin tome first"), () =>
-            onChosen(new AncientEventEnterRequest(
-                AncientEventActions.DustyTomeOptionToken,
-                DarvIncludeDustyTome: true)));
     }
 
     private static void AddChoice(VBoxContainer host, string label, Action onPressed)

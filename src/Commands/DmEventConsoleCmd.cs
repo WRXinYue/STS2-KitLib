@@ -10,8 +10,8 @@ namespace DevMode.Commands;
 
 public class DmEventConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmevent";
-    public override string Args => "<force|list> [eventId] [+dusty|-dusty|DUSTY_TOME]";
-    public override string Description => "[DevMode] Force events; Darv: +dusty / -dusty / DUSTY_TOME";
+    public override string Args => "<force|list> [eventId] [+dusty|-dusty]";
+    public override string Description => "[DevMode] Force events; Darv: +dusty / -dusty";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
@@ -62,7 +62,7 @@ public class DmEventConsoleCmd : AbstractConsoleCmd {
         if (args[0].Equals("force", StringComparison.OrdinalIgnoreCase)
             && args.Length == 3
             && string.Equals(args[1], AncientEventActions.DarvId, StringComparison.OrdinalIgnoreCase)) {
-            var flags = new[] { "+dusty", "-dusty", AncientEventActions.DustyTomeOptionToken };
+            var flags = new[] { "+dusty", "-dusty" };
             return CompleteArgument(flags, new[] { args[0], args[1] }, args[2]);
         }
 
@@ -77,10 +77,8 @@ public class DmEventConsoleCmd : AbstractConsoleCmd {
         var parts = new System.Collections.Generic.List<string> { eventId };
         if (req.DarvIncludeDustyTome is true)
             parts.Add("+dusty");
-        else if (req.DarvIncludeDustyTome is false)
+        else         if (req.DarvIncludeDustyTome is false)
             parts.Add("-dusty");
-        if (req.PinFirstOptionToken is not null)
-            parts.Add(req.PinFirstOptionToken);
         return $"Forcing event: {string.Join(" ", parts)}";
     }
 }

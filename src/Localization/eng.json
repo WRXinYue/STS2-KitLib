@@ -843,8 +843,6 @@
   "ancient.darv.random": "Random (vanilla 50%)",
   "ancient.darv.twoPlusTome": "2 boss relics + Dusty Tome",
   "ancient.darv.threeBoss": "3 boss relics (no tome)",
-  "ancient.darv.pinTome": "Pin Dusty Tome first",
-  "ancient.darv.twoPlusPinTome": "2 relics + tome, pin tome first",
   "ancient.darv.entered": "Entering Darv ({0})",
 
   "cardBrowser.chipLibrary": "Library",

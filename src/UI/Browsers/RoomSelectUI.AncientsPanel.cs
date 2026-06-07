@@ -138,14 +138,10 @@ internal static partial class RoomSelectUI {
     }
 
     private static string DescribeDarvRequest(AncientEventEnterRequest request) {
-        if (request.DarvIncludeDustyTome is true && request.PinFirstOptionToken is not null)
-            return I18N.T("ancient.darv.twoPlusPinTome", "2 relics + tome, pin tome first");
         if (request.DarvIncludeDustyTome is true)
             return I18N.T("ancient.darv.twoPlusTome", "2 boss relics + Dusty Tome");
         if (request.DarvIncludeDustyTome is false)
             return I18N.T("ancient.darv.threeBoss", "3 boss relics (no tome)");
-        if (request.PinFirstOptionToken is not null)
-            return I18N.T("ancient.darv.pinTome", "Pin Dusty Tome first");
         return I18N.T("ancient.darv.random", "Random (vanilla 50%)");
     }
 }
