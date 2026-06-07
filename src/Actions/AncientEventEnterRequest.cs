@@ -1,6 +1,7 @@
 namespace DevMode.Actions;
 
-/// <param name="DarvIncludeDustyTome">
-/// <c>true</c> = 2 boss relics + dusty tome; <c>false</c> = 3 boss relics; <c>null</c> = vanilla RNG.
+/// <param name="PinOptionToken">
+/// Matches <see cref="MegaCrit.Sts2.Core.Events.EventOption.TextKey"/> substring
+/// (e.g. <c>ARCHAIC_TOOTH</c>), same as vanilla <c>ancient OROBAS ARCHAIC_TOOTH</c>.
 /// </param>
-internal readonly record struct AncientEventEnterRequest(bool? DarvIncludeDustyTome = null);
+internal readonly record struct AncientEventEnterRequest(string? PinOptionToken = null);

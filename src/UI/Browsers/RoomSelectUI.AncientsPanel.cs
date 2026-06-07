@@ -10,7 +10,7 @@ namespace DevMode.UI;
 internal static partial class RoomSelectUI {
     private enum AncientsExtView {
         List,
-        Darv,
+        Options,
     }
 
     internal sealed class AncientsPanelHandle {
@@ -71,19 +71,34 @@ internal static partial class RoomSelectUI {
             extStatusLabel.Text = I18N.T("room.ancients.count", "{0} ancients", ancientList.GetChildCount());
         }
 
-        void ShowDarvPicker(AncientEventModel ancient) {
-            view = AncientsExtView.Darv;
-            titleBtn.Text = I18N.T("ancient.darv.title", "Darv — option layout");
+        void ShowOptionsPicker(AncientEventModel ancient) {
+            view = AncientsExtView.Options;
+            var name = EventActions.GetEventDisplayName(ancient);
+            titleBtn.Text = I18N.T("ancient.options.title", "{0} — pin option", name);
 
             foreach (var child in bodyHost.GetChildren())
                 ((Node)child).QueueFree();
 
-            AncientEventEnterUI.PopulateDarvChoices(bodyHost, request => {
-                bool ok = EventActions.TryForceEnterEvent(ancient, request);
-                extStatusLabel.Text = ok
-                    ? I18N.T("ancient.darv.entered", "Entering Darv ({0})", DescribeDarvRequest(request))
-                    : I18N.T("room.error", "Failed to enter room.");
-            });
+            var scroll = new ScrollContainer {
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            };
+            var choicesHost = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            choicesHost.AddThemeConstantOverride("separation", 3);
+            scroll.AddChild(choicesHost);
+            bodyHost.AddChild(scroll);
+
+            Callable.From(() => {
+                AncientEventEnterUI.PopulateChoices(ancient, choicesHost, request => {
+                    bool ok = EventActions.TryForceEnterEvent(ancient, request);
+                    if (ok) {
+                        RoomSelectUI.RequestClose(globalUi);
+                        return;
+                    }
+
+                    extStatusLabel.Text = I18N.T("room.error", "Failed to enter room.");
+                });
+            }).CallDeferred();
 
             extStatusLabel.Text = "";
         }
@@ -96,19 +111,19 @@ internal static partial class RoomSelectUI {
             }
 
             warnLabel.Visible = false;
-            if (AncientEventActions.IsDarv(ancient)) {
-                ShowDarvPicker(ancient);
+            if (AncientEventActions.NeedsOptionPicker(ancient)) {
+                ShowOptionsPicker(ancient);
                 return;
             }
 
-            bool entered = EventActions.TryForceEnterEvent(ancient);
-            extStatusLabel.Text = entered
-                ? I18N.T("room.entered", "Entering: {0}", EventActions.GetEventDisplayName(ancient))
-                : I18N.T("room.error", "Failed to enter room.");
+            if (EventActions.TryForceEnterEvent(ancient))
+                RoomSelectUI.RequestClose(globalUi);
+            else
+                extStatusLabel.Text = I18N.T("room.error", "Failed to enter room.");
         }
 
         void OnBackPressed() {
-            if (view == AncientsExtView.Darv) {
+            if (view == AncientsExtView.Options) {
                 ShowList();
                 return;
             }
@@ -135,13 +150,5 @@ internal static partial class RoomSelectUI {
     private static string GetAncientEpithet(AncientEventModel ancient) {
         try { return ancient.Epithet?.GetFormattedText() ?? ""; }
         catch { return ""; }
-    }
-
-    private static string DescribeDarvRequest(AncientEventEnterRequest request) {
-        if (request.DarvIncludeDustyTome is true)
-            return I18N.T("ancient.darv.twoPlusTome", "2 boss relics + Dusty Tome");
-        if (request.DarvIncludeDustyTome is false)
-            return I18N.T("ancient.darv.threeBoss", "3 boss relics (no tome)");
-        return I18N.T("ancient.darv.random", "Random (vanilla 50%)");
     }
 }

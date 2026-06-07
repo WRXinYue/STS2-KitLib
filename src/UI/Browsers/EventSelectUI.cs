@@ -18,7 +18,7 @@ internal static class EventSelectUI {
     private const float PanelW = 520f;
     private const float DefaultExtWidth = 420f;
 
-    public static void Show(NGlobalUi globalUi, Action<EventModel, AncientEventEnterRequest?> enterEvent) {
+    public static void Show(NGlobalUi globalUi, Func<EventModel, AncientEventEnterRequest?, bool> enterEvent) {
         Remove(globalUi);
 
         var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
@@ -54,7 +54,7 @@ internal static class EventSelectUI {
         var statusLabel = BuildStatusLabel();
         var extStatusLabel = BuildStatusLabel();
 
-        var backBtn = BuildExtensionHeader(dual.ExtContent, out _);
+        var backBtn = BuildExtensionHeader(dual.ExtContent, out var extTitleBtn);
         var extBodyHost = new VBoxContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -65,14 +65,30 @@ internal static class EventSelectUI {
 
         backBtn.Pressed += () => dual.CloseExtension();
 
-        void ShowDarvExtension(EventModel evt) {
+        void OpenAncientExtension(EventModel evt) {
             foreach (var child in extBodyHost.GetChildren())
                 ((Node)child).QueueFree();
 
-            AncientEventEnterUI.PopulateDarvChoices(extBodyHost, request => {
-                enterEvent(evt, request);
-                extStatusLabel.Text = I18N.T("event.triggered", "Triggered: {0}", EventActions.GetEventDisplayName(evt));
-            });
+            var name = EventActions.GetEventDisplayName(evt);
+            extTitleBtn.Text = I18N.T("ancient.options.title", "{0} — pin option", name);
+
+            var scroll = new ScrollContainer {
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            };
+            var choicesHost = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            choicesHost.AddThemeConstantOverride("separation", 3);
+            scroll.AddChild(choicesHost);
+            extBodyHost.AddChild(scroll);
+
+            Callable.From(() => {
+                AncientEventEnterUI.PopulateChoices(evt, choicesHost, request => {
+                    if (enterEvent(evt, request))
+                        RequestClose(globalUi);
+                    else
+                        extStatusLabel.Text = I18N.T("room.error", "Failed to enter room.");
+                });
+            }).CallDeferred();
 
             Callable.From(() => {
                 bool alreadyOpen = dual.ExtSlot.Visible;
@@ -107,13 +123,17 @@ internal static class EventSelectUI {
                 var modSource = ContentModResolver.Resolve(evt);
                 var captured = evt;
                 list.AddChild(CreateEventListRow(displayName, modSource, () => {
-                    if (AncientEventActions.IsDarv(captured)) {
-                        ShowDarvExtension(captured);
+                    if (AncientEventActions.NeedsOptionPicker(captured)) {
+                        OpenAncientExtension(captured);
                         return;
                     }
 
-                    enterEvent(captured, null);
-                    statusLabel.Text = I18N.T("event.triggered", "Triggered: {0}", displayName);
+                    if (enterEvent(captured, null)) {
+                        RequestClose(globalUi);
+                        return;
+                    }
+
+                    statusLabel.Text = I18N.T("room.error", "Failed to enter room.");
                 }));
             }
             statusLabel.Text = I18N.T("event.count", "{0} events", filtered.Count);
@@ -160,7 +180,7 @@ internal static class EventSelectUI {
         row.AddChild(backBtn);
 
         titleBtn = new Button {
-            Text = I18N.T("ancient.darv.title", "Darv — option layout"),
+            Text = I18N.T("ancient.options.title", "{0} — pin option", ""),
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(0, 32),
         };
@@ -264,6 +284,9 @@ internal static class EventSelectUI {
     public static void Remove(NGlobalUi globalUi) {
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
     }
+
+    internal static void RequestClose(NGlobalUi globalUi) =>
+        DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(globalUi));
 
     private static void BuildNavTab(VBoxContainer vbox, string title) {
         var row = new HBoxContainer();

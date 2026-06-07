@@ -10,8 +10,8 @@ namespace DevMode.Commands;
 
 public class DmEventConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmevent";
-    public override string Args => "<force|list> [eventId] [+dusty|-dusty]";
-    public override string Description => "[DevMode] Force events; Darv: +dusty / -dusty";
+    public override string Args => "<force|list> [eventId] [choice]";
+    public override string Description => "[DevMode] Force events; ancients: optional choice token";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
@@ -41,7 +41,7 @@ public class DmEventConsoleCmd : AbstractConsoleCmd {
 
                     var request = AncientEventActions.ParseEnterFlags(args, 2);
                     if (EventActions.TryForceEnterEvent(evt, request))
-                        return new CmdResult(true, DescribeForce(evt, eventId, request));
+                        return new CmdResult(true, DescribeForce(eventId, request));
                     else
                         return new CmdResult(false, $"Failed to force event: {eventId}. Is a run in progress?");
                 }
@@ -59,26 +59,27 @@ public class DmEventConsoleCmd : AbstractConsoleCmd {
             return CompleteArgument(ids, new[] { args[0] }, args[1]);
         }
 
-        if (args[0].Equals("force", StringComparison.OrdinalIgnoreCase)
-            && args.Length == 3
-            && string.Equals(args[1], AncientEventActions.DarvId, StringComparison.OrdinalIgnoreCase)) {
-            var flags = new[] { "+dusty", "-dusty" };
-            return CompleteArgument(flags, new[] { args[0], args[1] }, args[2]);
+        if (args[0].Equals("force", StringComparison.OrdinalIgnoreCase) && args.Length == 3) {
+            var eventId = args[1];
+            var evt = EventActions.GetAllEvents().FirstOrDefault(e =>
+                string.Equals(((AbstractModel)e).Id.Entry, eventId, StringComparison.OrdinalIgnoreCase));
+
+            if (evt is AncientEventModel ancient) {
+                var tokens = AncientEventActions.GetOptionChoices(ancient)
+                    .Select(c => c.Token)
+                    .ToList();
+                return CompleteArgument(tokens, new[] { args[0], args[1] }, args[2]);
+            }
         }
 
         return base.GetArgumentCompletions(player, args);
     }
 
-    private static string DescribeForce(EventModel evt, string eventId, AncientEventEnterRequest? request)
+    private static string DescribeForce(string eventId, AncientEventEnterRequest? request)
     {
-        if (!AncientEventActions.IsDarv(evt) || request is not AncientEventEnterRequest req)
+        if (request?.PinOptionToken is not string pin)
             return $"Forcing event: {eventId}";
 
-        var parts = new System.Collections.Generic.List<string> { eventId };
-        if (req.DarvIncludeDustyTome is true)
-            parts.Add("+dusty");
-        else         if (req.DarvIncludeDustyTome is false)
-            parts.Add("-dusty");
-        return $"Forcing event: {string.Join(" ", parts)}";
+        return $"Forcing event: {eventId} {pin}";
     }
 }

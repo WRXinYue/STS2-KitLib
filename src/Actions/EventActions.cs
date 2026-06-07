@@ -37,14 +37,20 @@ internal static class EventActions {
                 return false;
             }
 
-            ApplyAncientEnterRequest(eventModel, request);
+            if (eventModel is AncientEventModel ancient
+                && request?.PinOptionToken is string pin
+                && !AncientEventActions.IsValidChoice(ancient, pin)) {
+                MainFile.Logger.Warn($"[DevMode] ForceEnterEvent: invalid ancient choice '{pin}'.");
+                return false;
+            }
 
             var mapPointType = eventModel is AncientEventModel
                 ? MapPointType.Ancient
                 : MapPointType.Unknown;
 
+            var room = CreateEventRoom(eventModel, request);
             player.RunState.AppendToMapPointHistory(mapPointType, RoomType.Event, eventModel.Id);
-            TaskHelper.RunSafely(RunManager.Instance.EnterRoom(new EventRoom(eventModel)));
+            TaskHelper.RunSafely(RunManager.Instance.EnterRoom(room));
             return true;
         }
         catch (Exception ex) {
@@ -53,10 +59,17 @@ internal static class EventActions {
         }
     }
 
-    private static void ApplyAncientEnterRequest(EventModel eventModel, AncientEventEnterRequest? request) {
-        AncientEventDebugSession.ClearPendingDarvBranch();
-        if (request?.DarvIncludeDustyTome is bool branch && AncientEventActions.IsDarv(eventModel))
-            AncientEventDebugSession.PendingDarvDustyTomeBranch = branch;
+    private static EventRoom CreateEventRoom(EventModel eventModel, AncientEventEnterRequest? request) {
+        var pin = request?.PinOptionToken;
+        if (eventModel is not AncientEventModel || string.IsNullOrWhiteSpace(pin))
+            return new EventRoom(eventModel);
+
+        return new EventRoom(eventModel) {
+            OnStart = e => {
+                if (e is AncientEventModel ancient)
+                    ancient.DebugOption = pin.ToUpperInvariant();
+            },
+        };
     }
 
     public static string GetEventDisplayName(EventModel evt) {

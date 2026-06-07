@@ -839,11 +839,9 @@
   "room.ancients.back": "Back",
   "room.ancients.count": "{0} ancients",
 
-  "ancient.darv.title": "Darv — option layout",
-  "ancient.darv.random": "Random (vanilla 50%)",
-  "ancient.darv.twoPlusTome": "2 boss relics + Dusty Tome",
-  "ancient.darv.threeBoss": "3 boss relics (no tome)",
-  "ancient.darv.entered": "Entering Darv ({0})",
+  "ancient.options.title": "{0} — pin option",
+  "ancient.options.random": "Random (vanilla)",
+  "ancient.entered": "Entering {0} ({1})",
 
   "cardBrowser.chipLibrary": "Library",
   "cardBrowser.viewUpgrades": "View upgrades",

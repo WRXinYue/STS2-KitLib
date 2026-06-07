@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **AI Host & StrongStrategy** — Mod AI platform with an **AI Host** panel in the dev rail, external companion terminal APIs, and **StrongStrategy** solo autoplay informed by Codex priors.
+- **Combat beam planner** — In-fight AI uses deck simulation and multi-turn line scoring (block-first lines, relic/power hooks, potion sim in search, minion engagement, mechanic discovery).
+- **AI HUD overlay** — Top-left run overlay with big/small deck forecast, win estimate, and live sim telemetry (replaces the older heuristic HUD).
+- **Reward & map AI** — Card rewards scored by marginal deck/sim value; map routing weighs path risk; rest sites prefer campfires when the deck needs upgrades; scored hand picks for exhaust and upgrade prompts.
+- **Ancient event debug (dev tools)** — From **Events** or **Room Teleport → Ancient Ones**, pick any ancient in the extension panel and enter randomly or pin a listed option (same picker for Darv, Orobas, and mod ancients); `dmevent force <eventId> [choice]`.
+- **MCP Nexus upload** — Pipeline to publish mod packages to Nexus from the MCP tooling (see README **MCP**).
+
+### Changed
+
+- **Combat AI** — Focus fire, vulnerable setup, and block timing follow sim-backed tradeoffs instead of fixed heuristics; potion use is unified under beam scoring with a narrower emergency path.
+
 ## [0.13.0] - 2026-06-02
 
 ### Added

@@ -874,11 +874,9 @@
   "room.ancients.back": "返回",
   "room.ancients.count": "共 {0} 位先古之民",
 
-  "ancient.darv.title": "达弗 — 选项布局",
-  "ancient.darv.random": "随机（原版 50%）",
-  "ancient.darv.twoPlusTome": "2 个 Boss 遗物 + 尘封法典",
-  "ancient.darv.threeBoss": "3 个 Boss 遗物（无法典）",
-  "ancient.darv.entered": "进入达弗（{0}）",
+  "ancient.options.title": "{0} — 置顶选项",
+  "ancient.options.random": "随机（原版）",
+  "ancient.entered": "进入 {0}（{1}）",
 
   "cardBrowser.sortType": "类型",
   "cardBrowser.sortRarity": "稀有度",

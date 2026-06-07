@@ -41,4 +41,7 @@ internal static partial class RoomSelectUI {
 
     public static void Remove(NGlobalUi globalUi)
         => ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
+
+    internal static void RequestClose(NGlobalUi globalUi) =>
+        DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(globalUi));
 }

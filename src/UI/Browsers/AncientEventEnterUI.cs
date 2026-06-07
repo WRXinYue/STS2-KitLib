@@ -1,28 +1,50 @@
 using System;
 using DevMode.Actions;
 using Godot;
+using MegaCrit.Sts2.Core.Models;
 
 namespace DevMode.UI;
 
 internal static class AncientEventEnterUI
 {
-    internal static void PopulateDarvChoices(VBoxContainer host, Action<AncientEventEnterRequest> onChosen)
+    internal static void PopulateChoices(
+        EventModel eventModel,
+        VBoxContainer host,
+        Action<AncientEventEnterRequest> onChosen)
+    {
+        ClearHost(host);
+
+        foreach (var choice in AncientEventActions.GetEnterChoices(eventModel))
+        {
+            var captured = choice;
+            AddChoice(host,
+                FormatChoiceListLabel(captured.Label, captured.Token),
+                captured.Token,
+                () => onChosen(captured.Request));
+        }
+    }
+
+    private static string FormatChoiceListLabel(string label, string? secondary)
+    {
+        if (string.IsNullOrWhiteSpace(secondary)
+            || string.Equals(label, secondary, StringComparison.OrdinalIgnoreCase))
+            return label;
+
+        return $"{label} — {secondary}";
+    }
+
+    private static void ClearHost(VBoxContainer host)
     {
         foreach (var child in host.GetChildren())
             ((Node)child).QueueFree();
-
-        AddChoice(host, I18N.T("ancient.darv.random", "Random (vanilla 50%)"), () =>
-            onChosen(new AncientEventEnterRequest()));
-        AddChoice(host, I18N.T("ancient.darv.twoPlusTome", "2 boss relics + Dusty Tome"), () =>
-            onChosen(new AncientEventEnterRequest(DarvIncludeDustyTome: true)));
-        AddChoice(host, I18N.T("ancient.darv.threeBoss", "3 boss relics (no tome)"), () =>
-            onChosen(new AncientEventEnterRequest(DarvIncludeDustyTome: false)));
     }
 
-    private static void AddChoice(VBoxContainer host, string label, Action onPressed)
+    private static void AddChoice(VBoxContainer host, string label, string? tooltip, Action onPressed)
     {
         var btn = DevPanelUI.CreateListItemButton(label);
         btn.Alignment = HorizontalAlignment.Left;
+        if (!string.IsNullOrWhiteSpace(tooltip))
+            btn.TooltipText = tooltip;
         btn.Pressed += () => onPressed();
         host.AddChild(btn);
     }

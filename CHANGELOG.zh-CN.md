@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **AI Host 与 StrongStrategy** — Mod AI 平台：开发侧栏 **AI Host** 面板、外部伴侣终端 API，以及基于 Codex 先验的 **StrongStrategy** 单机自动出牌。
+- **战斗 beam 规划器** — 对局内 AI 使用牌组模拟与多回合线路评分（优先挡牌线路、遗物/能力钩子、搜索内药水模拟、小怪 engagement、机制发现）。
+- **AI HUD 浮层** — 对局左上角 overlay：大小牌组预测、胜率估计与实时模拟遥测（取代旧版启发式 HUD）。
+- **奖励与地图 AI** — 卡牌奖励按边际牌组/模拟价值评分；地图选路权衡路径风险；牌组需升级时休息点优先营火；耗竭/升级选手牌按评分选择。
+- **先古事件调试（开发工具）** — 在 **事件** 或 **房间传送 → 先古之民** 中，从右侧扩展面板选择任意先古，随机进入或置顶列表中的某一选项（达弗、欧洛巴斯及 mod 先古使用同一套列表）；`dmevent force <eventId> [choice]`。
+- **MCP Nexus 上传** — 通过 MCP 工具链发布 mod 包到 Nexus（见 README **MCP**）。
+
+### Changed
+
+- **战斗 AI** — 集火、易伤铺垫与挡牌时机改为模拟驱动的权衡，不再依赖固定启发式；药水使用统一纳入 beam 评分，紧急路径收窄。
+
 ## [0.13.0] - 2026-06-02
 
 ### Added
