@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 /// <summary>Captures the next key press for hotkey rebinding in Settings.</summary>
 internal static class HotkeyCapture {

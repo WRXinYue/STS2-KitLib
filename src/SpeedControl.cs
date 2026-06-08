@@ -1,6 +1,6 @@
 using Godot;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Controls game animation speed via <see cref="Engine.TimeScale"/>.
@@ -32,6 +32,6 @@ internal static class SpeedControl {
 
     private static void Apply() {
         Engine.TimeScale = Speeds[_index];
-        DevModeState.GameplayModifiers.GameSpeed = Speeds[_index];
+        KitLibState.GameplayModifiers.GameSpeed = Speeds[_index];
     }
 }

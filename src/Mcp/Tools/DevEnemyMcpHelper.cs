@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal static class DevEnemyMcpHelper {
     public static JsonObject Fail(string error) => new() {

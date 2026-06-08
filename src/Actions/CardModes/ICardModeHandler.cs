@@ -3,9 +3,9 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
-using ActionSession = DevMode.DevPanel.ActionSession;
+using ActionSession = KitLib.DevPanel.ActionSession;
 
-namespace DevMode.Actions.CardModes;
+namespace KitLib.Actions.CardModes;
 
 /// <summary>
 /// Strategy interface for card panel modes (View, Add, Upgrade, Delete, Edit).

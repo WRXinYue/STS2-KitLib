@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using HarmonyLib;
 
-namespace DevMode.Interop;
+namespace KitLib.Interop;
 
 /// <summary>
 /// Heuristic Harmony insights: owner totals, busiest methods, multi-owner targets, and risk-style hints.
@@ -89,7 +89,7 @@ public static class HarmonySmartAnalysis {
     /// Default patterns excluded from analysis (DevMode itself and its framework dependency).
     /// Patterns ending with <c>*</c> match any owner that starts with the prefix before the asterisk.
     /// </summary>
-    public static readonly IReadOnlyList<string> DefaultExcludedOwners = ["DevMode", "com.ritsukage.sts2-RitsuLib.*"];
+    public static readonly IReadOnlyList<string> DefaultExcludedOwners = ["KitLib", "com.ritsukage.sts2-RitsuLib.*"];
 
     private static SmartAnalysisResult? _cachedResult;
     private static string? _cachedFormattedReport;

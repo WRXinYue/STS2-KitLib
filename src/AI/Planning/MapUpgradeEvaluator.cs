@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 /// <summary>Estimates smith value from the current deck for map routing and rest-site choices.</summary>
 public static class MapUpgradeEvaluator {

@@ -1,12 +1,12 @@
 using System;
-using DevMode;
-using DevMode.Icons;
-using DevMode.Panels;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Icons;
+using KitLib.Panels;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowSettingsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
@@ -89,7 +89,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         modeLbl.AddThemeFontSizeOverride("font_size", 12);
-        modeLbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        modeLbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         modeRow.AddChild(modeLbl);
 
         // Icon button: shows sun (→ switch to dark) when in light mode,
@@ -98,13 +98,13 @@ internal static partial class DevPanelUI {
         var modeBtn = new Button {
             CustomMinimumSize = new Vector2(36, 36),
             FocusMode = Control.FocusModeEnum.None,
-            Icon = modeIcon.Texture(20, DevModeTheme.Accent),
+            Icon = modeIcon.Texture(20, KitLibTheme.Accent),
             TooltipText = ThemeManager.IsDarkMode
                 ? I18N.T("appearance.mode.light", "Light Mode")
                 : I18N.T("appearance.mode.dark", "Dark Mode")
         };
         var modeBtnStyle = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
@@ -115,7 +115,7 @@ internal static partial class DevPanelUI {
             ContentMarginBottom = 6
         };
         var modeBtnHover = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgHover,
+            BgColor = KitLibTheme.ButtonBgHover,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
@@ -183,7 +183,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         hint.AddThemeFontSizeOverride("font_size", 11);
-        hint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        hint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         col.AddChild(hint);
 
         col.AddChild(CreateRailGroupEditor(
@@ -217,7 +217,7 @@ internal static partial class DevPanelUI {
 
         var sub = new Label { Text = title };
         sub.AddThemeFontSizeOverride("font_size", 11);
-        sub.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        sub.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         block.AddChild(sub);
 
         var list = new RailTabReorderList(

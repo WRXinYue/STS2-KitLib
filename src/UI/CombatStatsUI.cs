@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DevMode.CombatStats;
-using DevMode.Settings;
+using KitLib.CombatStats;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>DevPanel overlay for per-combat damage statistics (MVP).</summary>
 internal static partial class CombatStatsUI {
-    private const string RootName = "DevModeCombatStats";
+    private const string RootName = "KitLibCombatStats";
     private const float PanelW = 960f;
     private const int PieSplitInitialRight = 280;
     private const int PieSplitMinRight = 220;
@@ -44,14 +44,14 @@ internal static partial class CombatStatsUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         titleBox.AddChild(subtitle);
         vbox.AddChild(titleBox);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
 
         var statusLabel = new Label { Text = "" };
         statusLabel.AddThemeFontSizeOverride("font_size", 11);
-        statusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        statusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         vbox.AddChild(statusLabel);
 
         var chipRow = new HBoxContainer();
@@ -118,7 +118,7 @@ internal static partial class CombatStatsUI {
         exportBtn.AddThemeFontSizeOverride("font_size", 11);
         var exportStatus = new Label { Text = "" };
         exportStatus.AddThemeFontSizeOverride("font_size", 10);
-        exportStatus.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        exportStatus.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         exportStatus.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         exportRow.AddChild(exportBtn);
         exportRow.AddChild(exportStatus);
@@ -191,7 +191,7 @@ internal static partial class CombatStatsUI {
                 string json = CombatStatsExport.ToJson(bundle);
                 DisplayServer.ClipboardSet(json);
 
-                string dir = System.IO.Path.Combine(OS.GetUserDataDir(), "mod_data", "DevMode");
+                string dir = System.IO.Path.Combine(OS.GetUserDataDir(), "mod_data", "KitLib");
                 System.IO.Directory.CreateDirectory(dir);
                 string path = System.IO.Path.Combine(dir, $"combat-stats-{DateTime.Now:yyyyMMdd-HHmmss}.json");
                 System.IO.File.WriteAllText(path, json);
@@ -561,7 +561,7 @@ internal static partial class CombatStatsUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         l.AddThemeFontSizeOverride("font_size", 11);
-        l.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        l.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return l;
     }
 
@@ -580,14 +580,14 @@ internal static partial class CombatStatsUI {
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             };
             left.AddThemeFontSizeOverride("font_size", 11);
-            left.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            left.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
 
             _valueLabel = new Label {
                 HorizontalAlignment = HorizontalAlignment.Right,
                 CustomMinimumSize = new Vector2(52, 0),
             };
             _valueLabel.AddThemeFontSizeOverride("font_size", 11);
-            _valueLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            _valueLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
 
             AddChild(left);
             AddChild(_valueLabel);
@@ -648,7 +648,7 @@ internal static partial class CombatStatsUI {
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
             _nameLabel.AddThemeFontSizeOverride("font_size", 11);
-            _nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            _nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
 
             _amountLabel = new Label {
                 Text = amount.ToString(),
@@ -657,7 +657,7 @@ internal static partial class CombatStatsUI {
                 SizeFlagsHorizontal = SizeFlags.ShrinkEnd,
             };
             _amountLabel.AddThemeFontSizeOverride("font_size", 11);
-            _amountLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            _amountLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
 
             top.AddChild(_nameLabel);
             top.AddChild(_amountLabel);
@@ -730,14 +730,14 @@ internal static partial class CombatStatsUI {
             SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
             var track = new ColorRect {
-                Color = new Color(DevModeTheme.ButtonBgNormal.R, DevModeTheme.ButtonBgNormal.G,
-                    DevModeTheme.ButtonBgNormal.B, 0.9f),
+                Color = new Color(KitLibTheme.ButtonBgNormal.R, KitLibTheme.ButtonBgNormal.G,
+                    KitLibTheme.ButtonBgNormal.B, 0.9f),
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             track.SetAnchorsPreset(LayoutPreset.FullRect);
 
             _fill = new ColorRect {
-                Color = DevModeTheme.Accent,
+                Color = KitLibTheme.Accent,
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             _fill.SetAnchorsPreset(LayoutPreset.TopLeft);

@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Fullscreen centered modal shell for DevMode panels opened from the title screen.</summary>
 internal static class DevMainMenuOverlay {

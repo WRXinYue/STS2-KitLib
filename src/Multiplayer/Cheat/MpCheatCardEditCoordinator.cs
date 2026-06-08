@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using DevMode.Actions;
-using DevMode.Presets;
+using KitLib.Actions;
+using KitLib.Presets;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Host-authoritative edit-card: prepare/ACK on connected peers, then apply template (2–N players).</summary>
 internal static class MpCheatCardEditCoordinator {

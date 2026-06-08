@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 using Godot;
 
-namespace DevMode.Icons;
+namespace KitLib.Icons;
 
 /// <summary>
 /// Loads icons from the tree-shaken mdi-used.json (EmbeddedResource) and rasterises via
@@ -22,7 +22,7 @@ public static class IconifyAdapter {
         _loaded = true;
 
         var asm = typeof(IconifyAdapter).Assembly;
-        using var stream = asm.GetManifestResourceStream("DevMode.Icons.mdi-used.json");
+        using var stream = asm.GetManifestResourceStream("KitLib.Icons.mdi-used.json");
         if (stream is null) {
             MainFile.Logger.Warn("mdi-used.json not found as embedded resource. No icons available.");
             return;

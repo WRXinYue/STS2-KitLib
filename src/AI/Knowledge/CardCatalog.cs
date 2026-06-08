@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.AI.Core;
+using KitLib.AI.Core;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public interface ICardTagProvider {
     bool AppliesTo(string? cardId);

@@ -1,19 +1,19 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DevMode.AI.Planning;
-using DevMode.AI.AutoPlay.Strategies;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Sts2;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
-using DevMode.UI;
+using KitLib.AI.Planning;
+using KitLib.AI.AutoPlay.Strategies;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Helpers;
 
-namespace DevMode.AI.AutoPlay;
+namespace KitLib.AI.AutoPlay;
 
 /// <summary>Rule-based autonomous play loop (ported from STS2-AI, no LLM).</summary>
 internal sealed class AiPlayModule {

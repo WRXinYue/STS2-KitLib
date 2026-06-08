@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Reads and parses this process's mirrored session log, with fallback to shared <c>user://logs/</c>.
@@ -160,7 +160,7 @@ internal static class GameLogFileHydrator {
             }
 
             var text = Encoding.UTF8.GetString(buffer);
-            return DevModeInstance.ContainsSessionBoundary(text);
+            return KitLibInstance.ContainsSessionBoundary(text);
         }
         catch {
             return false;

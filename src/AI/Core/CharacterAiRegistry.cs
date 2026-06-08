@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>Maps character model ids to default <see cref="IDecisionMaker"/> implementations (mod-registered).</summary>
 public static class CharacterAiRegistry {

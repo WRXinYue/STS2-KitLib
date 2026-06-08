@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Simple pie chart for log source counts (drawn in <see cref="_Draw"/>).
@@ -77,7 +77,7 @@ internal sealed partial class LogSourcePieChart : Control {
 
         if (_slices.Count == 0 || _total <= 0) {
             DrawCircle(center, radius * 0.38f, new Color(0.22f, 0.22f, 0.26f, 0.85f));
-            DrawArc(center, radius, 0f, Mathf.Tau, 48, DevModeTheme.Separator, 1f, true);
+            DrawArc(center, radius, 0f, Mathf.Tau, 48, KitLibTheme.Separator, 1f, true);
             return;
         }
 
@@ -90,7 +90,7 @@ internal sealed partial class LogSourcePieChart : Control {
             start = end;
         }
 
-        DrawArc(center, radius + 0.5f, 0f, Mathf.Tau, 64, DevModeTheme.PanelBorder, 1f, true);
+        DrawArc(center, radius + 0.5f, 0f, Mathf.Tau, 64, KitLibTheme.PanelBorder, 1f, true);
     }
 
     private static Color SliceColor(string name, int paletteIndex)
@@ -126,15 +126,15 @@ internal static class LogSourceColors {
 
     internal static Color GetSliceColor(string name, int paletteIndex) {
         if (name == "Game")
-            return new Color(DevModeTheme.Subtle.R, DevModeTheme.Subtle.G, DevModeTheme.Subtle.B, 0.95f);
+            return new Color(KitLibTheme.Subtle.R, KitLibTheme.Subtle.G, KitLibTheme.Subtle.B, 0.95f);
         return ModPalette[paletteIndex % ModPalette.Length];
     }
 
     internal static Color GetModHighlightColor(string canonicalModId) {
         if (string.IsNullOrEmpty(canonicalModId) || canonicalModId == "Game")
-            return DevModeTheme.Subtle;
+            return KitLibTheme.Subtle;
 
-        return DevModeTheme.Accent;
+        return KitLibTheme.Accent;
     }
 
     internal static string ColorToBbHex(Color c) {

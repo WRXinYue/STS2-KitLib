@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Indexes official monster mechanics from encounters at startup.</summary>
 public static class MonsterMechanicIndex {

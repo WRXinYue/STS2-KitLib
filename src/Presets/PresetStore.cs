@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DevMode.Presets;
+namespace KitLib.Presets;
 
 /// <summary>
 /// Generic JSON-backed preset store. Persists a Dictionary&lt;string, T&gt; to disk.

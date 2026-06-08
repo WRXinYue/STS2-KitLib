@@ -1,10 +1,10 @@
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.LanTest;
+namespace KitLib.Multiplayer.LanTest;
 
 /// <summary>Defaults for same-machine dual-instance LAN multiplayer testing.</summary>
 internal static class DualInstanceTestBootstrap {
@@ -13,8 +13,8 @@ internal static class DualInstanceTestBootstrap {
     /// In-memory only — does not write settings.json.
     /// </summary>
     public static void EnsureMultiplayerDevActive(string reason) {
-        if (DevModeState.NormalRunMode == NormalRunMode.Disabled) {
-            DevModeState.NormalRunMode = NormalRunMode.DevPanel;
+        if (KitLibState.NormalRunMode == NormalRunMode.Disabled) {
+            KitLibState.NormalRunMode = NormalRunMode.DevPanel;
             MainFile.Logger.Info($"[LanTest] DevMode active for multiplayer dev session ({reason}).");
         }
 
@@ -22,10 +22,10 @@ internal static class DualInstanceTestBootstrap {
     }
 
     public static void EnsureCheatsEnabled(string reason) {
-        if (!DevModeInstanceRegistry.IsDualInstanceActive())
+        if (!KitLibInstanceRegistry.IsDualInstanceActive())
             return;
 
-        DevModeState.NormalRunMode = NormalRunMode.Cheat;
+        KitLibState.NormalRunMode = NormalRunMode.Cheat;
 
         if (!SettingsStore.Current.MultiplayerCheatOptIn) {
             SettingsStore.SetMultiplayerCheatOptIn(true);
@@ -42,7 +42,7 @@ internal static class DualInstanceTestBootstrap {
 
     /// <summary>Dual-instance LAN: auto-apply host-drive + client AFK presets so half-config cannot desync.</summary>
     internal static void TryAutoLanPresetsOnLaunch() {
-        if (!DevModeInstanceRegistry.IsDualInstanceActive()) return;
+        if (!KitLibInstanceRegistry.IsDualInstanceActive()) return;
 
         var netType = RunManager.Instance?.NetService?.Type;
         if (netType == NetGameType.Host) {

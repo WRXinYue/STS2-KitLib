@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.Actions;
-using DevMode.AI.Combat.Simulation;
+using KitLib.Actions;
+using KitLib.AI.Combat.Simulation;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public sealed record CardMechanicProfile(
     string Id,

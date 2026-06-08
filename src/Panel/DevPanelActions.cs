@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode.Panels;
+namespace KitLib.Panels;
 
 /// <summary>
 /// Callbacks consumed by built-in overlay panels (Save/Load, Settings).

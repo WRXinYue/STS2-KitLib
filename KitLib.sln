@@ -2,9 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevMode", "DevMode.csproj", "{A0000000-0000-0000-0000-000000000001}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib", "KitLib.csproj", "{A0000000-0000-0000-0000-000000000001}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevMode.Mcp", "tools\DevMode.Mcp\DevMode.Mcp.csproj", "{B0000000-0000-0000-0000-000000000002}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Mcp", "tools\DevMode.Mcp\KitLib.Mcp.csproj", "{B0000000-0000-0000-0000-000000000002}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

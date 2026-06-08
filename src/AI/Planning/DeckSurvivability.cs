@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public sealed record SurvivabilityCounts(int BlockSourceCount, int DrawSourceCount);
 

@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DevMode.CombatStats;
+namespace KitLib.CombatStats;
 
 internal static class CombatStatsExport {
     private static readonly JsonSerializerOptions JsonOptions = new() {

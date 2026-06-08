@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class RoomSelectUI {
     private enum AncientsExtView {
@@ -36,7 +36,7 @@ internal static partial class RoomSelectUI {
 
         var extStatusLabel = new Label { Text = "", HorizontalAlignment = HorizontalAlignment.Center };
         extStatusLabel.AddThemeFontSizeOverride("font_size", 11);
-        extStatusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        extStatusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         extVbox.AddChild(extStatusLabel);
 
         var view = AncientsExtView.List;

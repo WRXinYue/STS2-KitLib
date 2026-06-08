@@ -1,8 +1,8 @@
-using DevMode;
+using KitLib;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Runtime multiplayer cheat session (lobby + run scope).</summary>
 public static class MpCheatSession {
@@ -48,7 +48,7 @@ public static class MpCheatSession {
 
     public static void TryArmSession(string reason, bool allowWhileDeferredUi = false) {
         LastBlockReason = null;
-        if (!allowWhileDeferredUi && DevModeState.PseudoCoopDeferHeavyUi) {
+        if (!allowWhileDeferredUi && KitLibState.PseudoCoopDeferHeavyUi) {
             LastBlockReason = "pseudo_coop_deferred";
             return;
         }

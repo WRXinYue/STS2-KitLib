@@ -5,11 +5,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Loads combat potion effect profiles for beam simulation.</summary>
 internal static class PotionCombatEffectData {
-    const string ResourceName = "DevMode.AI.potion-combat-effects.json";
+    const string ResourceName = "KitLib.AI.potion-combat-effects.json";
 
     static JsonObject? _root;
     static readonly object Gate = new();

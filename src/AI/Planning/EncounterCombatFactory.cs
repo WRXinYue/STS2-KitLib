@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 /// <summary>Builds stub combat enemies from predicted encounters for macro sim.</summary>
 public static class EncounterCombatFactory {

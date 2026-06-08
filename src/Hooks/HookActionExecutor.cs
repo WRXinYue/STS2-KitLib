@@ -1,14 +1,14 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Hooks;
+namespace KitLib.Hooks;
 
 internal static class HookActionExecutor {
     public static void Execute(HookAction action, Player player) {

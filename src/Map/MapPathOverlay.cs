@@ -3,7 +3,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
-namespace DevMode.Map;
+namespace KitLib.Map;
 
 /// <summary>Highlights AI-planned map path segments by tinting vanilla path dots.</summary>
 internal static class MapPathOverlay {

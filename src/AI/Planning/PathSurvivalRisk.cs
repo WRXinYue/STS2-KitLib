@@ -1,7 +1,7 @@
 using System;
 using MegaCrit.Sts2.Core.Map;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public static class PathSurvivalRisk {
     public static int Compute(

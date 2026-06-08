@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
+using KitLib.AI.Combat.Simulation;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public static class EnemyMechanicResolver {
     public static EnemyMechanicFlags ResolveFlags(JsonObject? enemy) {

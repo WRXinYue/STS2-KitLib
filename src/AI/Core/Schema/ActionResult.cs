@@ -1,4 +1,4 @@
-namespace DevMode.AI.Core.Schema;
+namespace KitLib.AI.Core.Schema;
 
 /// <summary>
 /// Result of executing a <see cref="GameAction"/>.

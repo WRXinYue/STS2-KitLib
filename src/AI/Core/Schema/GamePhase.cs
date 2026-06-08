@@ -1,4 +1,4 @@
-namespace DevMode.AI.Core.Schema;
+namespace KitLib.AI.Core.Schema;
 
 /// <summary>
 /// Game-agnostic phases that any card/board game AI might encounter.

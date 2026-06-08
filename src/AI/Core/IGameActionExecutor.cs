@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>
 /// Abstraction for executing game actions.

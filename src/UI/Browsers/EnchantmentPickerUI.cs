@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Actions;
+using KitLib.Actions;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Expandable enchantment picker: header button + card-style icon grid inside the panel.</summary>
 internal static class EnchantmentPickerUI {
@@ -14,12 +14,12 @@ internal static class EnchantmentPickerUI {
     private const float GridMaxHeight = 220f;
     private const int FrameRadius = 6;
 
-    private static Color ColFrameBg => DevModeTheme.ButtonBgNormal;
-    private static Color ColFrameHover => DevModeTheme.ButtonBgHover;
-    private static Color ColFrameSelected => DevModeTheme.AccentAlpha;
-    private static Color ColAccent => DevModeTheme.Accent;
-    private static Color ColText => DevModeTheme.TextPrimary;
-    private static Color ColSubtle => DevModeTheme.Subtle;
+    private static Color ColFrameBg => KitLibTheme.ButtonBgNormal;
+    private static Color ColFrameHover => KitLibTheme.ButtonBgHover;
+    private static Color ColFrameSelected => KitLibTheme.AccentAlpha;
+    private static Color ColAccent => KitLibTheme.Accent;
+    private static Color ColText => KitLibTheme.TextPrimary;
+    private static Color ColSubtle => KitLibTheme.Subtle;
 
     public sealed class Options {
         public bool ShowModePicker { get; init; }

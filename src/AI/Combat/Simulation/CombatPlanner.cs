@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.AutoPlay.Scoring;
-using DevMode.AI.Combat;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
+using KitLib.AI.AutoPlay.Scoring;
+using KitLib.AI.Combat;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public static class CombatPlanner {
     public static GameAction? PickBestMove(JsonObject snapshot) {

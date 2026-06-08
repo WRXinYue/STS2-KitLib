@@ -1,4 +1,4 @@
-using DevMode.McpProxy;
+using KitLib.McpProxy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class CombatDamageCalc {
     public const float ConfusedDrawCostEv = 1.5f;

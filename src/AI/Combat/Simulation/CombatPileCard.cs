@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat;
+using KitLib.AI.Combat;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public sealed record CombatPileCard(
     string Id,

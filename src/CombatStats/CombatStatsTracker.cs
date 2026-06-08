@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.CombatStats;
+namespace KitLib.CombatStats;
 
 /// <summary>
 /// Aggregates combat statistics from <see cref="CombatHistory"/> for the DevMode stats panel.
@@ -50,13 +50,13 @@ internal static class CombatStatsTracker {
     }
 
     private static void OnRunStarted(RunState state) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         _runTotal = new CombatStatsSnapshot();
         _runCombatCount = 0;
     }
 
     private static void OnCombatSetUp(CombatState state) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
 
         _current = new CombatStatsSnapshot {
             EncounterKey = ResolveEncounterKey(state),

@@ -1,6 +1,6 @@
-using DevMode.AI.Sts2;
+using KitLib.AI.Sts2;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Shared auto-play state provider and action executor.</summary>
 internal static class AiPlayServices {

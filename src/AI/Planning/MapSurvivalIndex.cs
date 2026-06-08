@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MegaCrit.Sts2.Core.Map;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public sealed record MapSurvivalSegment(float CombatsToRest, int ElitesToRest);
 

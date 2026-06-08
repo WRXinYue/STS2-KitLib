@@ -1,7 +1,7 @@
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Arms MpCheat, attaches DevPanel, publishes — only when map is open and combat is idle.</summary>
 internal partial class PseudoCoopMapFinishNode : Node {
@@ -30,7 +30,7 @@ internal partial class PseudoCoopMapFinishNode : Node {
                 break;
             case 2:
                 PseudoCoopDeferredInit.RunLateDevPanel();
-                DevModeState.PseudoCoopAwaitingMapFinish = false;
+                KitLibState.PseudoCoopAwaitingMapFinish = false;
                 QueueFree();
                 break;
         }

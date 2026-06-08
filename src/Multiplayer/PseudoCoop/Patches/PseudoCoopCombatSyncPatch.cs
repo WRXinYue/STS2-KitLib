@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DevMode.Multiplayer.SyncBot;
+using KitLib.Multiplayer.SyncBot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>Injects sync payloads for simulated peers (e.g. phantom 1001) so WaitForSync does not hang.</summary>
 [HarmonyPatch(typeof(CombatStateSynchronizer), nameof(CombatStateSynchronizer.StartSync))]

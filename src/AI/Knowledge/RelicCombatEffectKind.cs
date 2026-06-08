@@ -1,4 +1,4 @@
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public enum RelicCombatEffectKind {
     HandDrawBonus,

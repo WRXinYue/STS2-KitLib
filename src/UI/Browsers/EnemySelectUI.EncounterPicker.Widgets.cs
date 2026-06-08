@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
     private sealed class PickerPreviewBand {
@@ -199,7 +199,7 @@ internal static partial class EnemySelectUI {
             HorizontalAlignment = HorizontalAlignment.Center,
         };
         statusLabel.AddThemeFontSizeOverride("font_size", 11);
-        statusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        statusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
 
         return (listRegion, scroll, list, statusLabel);
     }
@@ -238,7 +238,7 @@ internal static partial class EnemySelectUI {
         };
         foreach (var state in new[] { "normal", "hover", "pressed", "focus" })
             tab.AddThemeStyleboxOverride(state, flat);
-        tab.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        tab.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         tab.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(tab);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
@@ -246,7 +246,7 @@ internal static partial class EnemySelectUI {
 
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
     }
@@ -256,12 +256,12 @@ internal static partial class EnemySelectUI {
             Text = I18N.T("enemy.combatSidebar.addMenu", "Add enemies to combat"),
         };
         titleLabel.AddThemeFontSizeOverride("font_size", 13);
-        titleLabel.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        titleLabel.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(titleLabel);
 
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
     }
@@ -336,7 +336,7 @@ internal static partial class EnemySelectUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         nameLabel.AddThemeFontSizeOverride("font_size", 12);
-        nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         vbox.AddChild(nameLabel);
 
         var monstersLabel = new Label {
@@ -345,7 +345,7 @@ internal static partial class EnemySelectUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         monstersLabel.AddThemeFontSizeOverride("font_size", 11);
-        monstersLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        monstersLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         vbox.AddChild(monstersLabel);
 
         var (viewportContainer, viewport) = CreatePreviewViewport(0, bandHeight);
@@ -416,7 +416,7 @@ internal static partial class EnemySelectUI {
         BorderWidthBottom = 1,
         BorderWidthLeft = 1,
         BorderWidthRight = 1,
-        BorderColor = DevModeTheme.Separator,
+        BorderColor = KitLibTheme.Separator,
     };
 
     private static (SubViewportContainer container, SubViewport viewport) CreatePreviewViewport(
@@ -472,7 +472,7 @@ internal static partial class EnemySelectUI {
         var cellBorderRest = enc.RoomType switch {
             RoomType.Elite => new Color(0.80f, 0.60f, 0.20f, 0.18f),
             RoomType.Boss => new Color(0.90f, 0.25f, 0.25f, 0.18f),
-            _ => DevModeTheme.Separator,
+            _ => KitLibTheme.Separator,
         };
 
         bool compact = style == PickerCellStyle.Compact;
@@ -523,7 +523,7 @@ internal static partial class EnemySelectUI {
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
             nameLabel.AddThemeFontSizeOverride("font_size", 11);
             row.AddChild(nameLabel);
             cell.AddChild(row);
@@ -550,7 +550,7 @@ internal static partial class EnemySelectUI {
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 MouseFilter = Control.MouseFilterEnum.Ignore,
             };
-            nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
             nameLabel.AddThemeFontSizeOverride("font_size", 12);
             cellVBox.AddChild(nameLabel);
             cell.AddChild(cellVBox);
@@ -620,7 +620,7 @@ internal static partial class EnemySelectUI {
             AutowrapMode = compact ? TextServer.AutowrapMode.Off : TextServer.AutowrapMode.WordSmart,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
-        nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         nameLabel.AddThemeFontSizeOverride("font_size", compact ? 11 : 12);
         cell.AddChild(nameLabel);
 

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using MegaCrit.Sts2.Core.Localization;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Lightweight self-contained localization helper for DevMode.
@@ -64,7 +64,7 @@ internal static class I18N {
         lang ??= ResolveLanguage();
         _translations = Load(lang);
         _loadedLang = lang;
-        MainFile.Logger.Info($"[DevMode.I18N] Loaded {_translations.Count} strings for '{lang}'.");
+        MainFile.Logger.Info($"[KitLib.I18N] Loaded {_translations.Count} strings for '{lang}'.");
     }
 
     private static Dictionary<string, string> Load(string lang) {
@@ -76,12 +76,12 @@ internal static class I18N {
                 if (dict != null) return dict;
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode.I18N] Failed to load '{fsPath}': {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib.I18N] Failed to load '{fsPath}': {ex.Message}");
             }
         }
 
         // 2. Fall back to embedded resource
-        var resourceName = $"DevMode.Localization.{lang}.json";
+        var resourceName = $"KitLib.Localization.{lang}.json";
         var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
         if (stream != null) {
             try {
@@ -90,13 +90,13 @@ internal static class I18N {
                 if (dict != null) return dict;
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode.I18N] Failed to load embedded '{resourceName}': {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib.I18N] Failed to load embedded '{resourceName}': {ex.Message}");
             }
         }
 
         // 3. If non-English locale not found, fall back to eng
         if (!string.Equals(lang, "eng", StringComparison.OrdinalIgnoreCase)) {
-            MainFile.Logger.Info($"[DevMode.I18N] No translations for '{lang}', falling back to 'eng'.");
+            MainFile.Logger.Info($"[KitLib.I18N] No translations for '{lang}', falling back to 'eng'.");
             return Load("eng");
         }
 
@@ -126,7 +126,7 @@ internal static class I18N {
             LocManager.Instance?.SubscribeToLocaleChange(OnLocaleChanged);
         }
         catch (Exception ex) {
-            MainFile.Logger.Info($"[DevMode.I18N] Could not subscribe to locale changes: {ex.Message}");
+            MainFile.Logger.Info($"[KitLib.I18N] Could not subscribe to locale changes: {ex.Message}");
         }
     }
 

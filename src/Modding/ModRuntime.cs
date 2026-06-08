@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using MegaCrit.Sts2.Core.Modding;
 
-namespace DevMode.Modding;
+namespace KitLib.Modding;
 
 /// <summary>Stable snapshot of one loaded mod (manifest-backed).</summary>
-internal readonly record struct DevModeModInfo(
+internal readonly record struct KitLibModInfo(
     string Id,
     string DisplayName,
     string Version,
@@ -15,7 +15,7 @@ internal readonly record struct DevModeModInfo(
 /// <summary>Read-only view of mods the game has already scanned and loaded.</summary>
 internal interface IModCatalog {
     /// <summary>Copies current loaded-mod entries that have a non-empty manifest <c>id</c>.</summary>
-    IReadOnlyList<DevModeModInfo> GetSnapshot();
+    IReadOnlyList<KitLibModInfo> GetSnapshot();
 
     /// <summary>Fast membership checks (e.g. log line attribution). Empty if no mods loaded.</summary>
     HashSet<string> GetIdSet(StringComparer? comparer = null);
@@ -27,12 +27,12 @@ internal sealed class ModCatalog : IModCatalog {
 
     private ModCatalog() { }
 
-    public IReadOnlyList<DevModeModInfo> GetSnapshot() {
+    public IReadOnlyList<KitLibModInfo> GetSnapshot() {
         var mods = ModManagerLoadedMods.Enumerate().ToList();
         if (mods.Count == 0)
-            return Array.Empty<DevModeModInfo>();
+            return Array.Empty<KitLibModInfo>();
 
-        var list = new List<DevModeModInfo>(mods.Count);
+        var list = new List<KitLibModInfo>(mods.Count);
         foreach (var m in mods) {
             var man = m.manifest;
             if (man == null) continue;
@@ -40,7 +40,7 @@ internal sealed class ModCatalog : IModCatalog {
             if (string.IsNullOrEmpty(id)) continue;
             var name = string.IsNullOrEmpty(man.name) ? id : man.name;
             var ver = man.version ?? "";
-            list.Add(new DevModeModInfo(id, name, ver, ModRuntime.CopyDependencies(man)));
+            list.Add(new KitLibModInfo(id, name, ver, ModRuntime.CopyDependencies(man)));
         }
 
         return list;

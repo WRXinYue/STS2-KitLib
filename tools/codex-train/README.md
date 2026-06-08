@@ -13,7 +13,7 @@ uv run codex-train --parquet ../codex-crawl/data/macro_samples.parquet train
 uv run codex-train --parquet ../codex-crawl/data/macro_samples.parquet eval
 ```
 
-`train` writes `codex-priors.json` and syncs to `src/AI/Data/codex-priors.json` (embedded in DevMode.dll).
+`train` writes `codex-priors.json` and syncs to `src/AI/Data/codex-priors.json` (embedded in KitLib.dll).
 
 ## Prior tables
 

@@ -1,12 +1,12 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Room teleport panel — lets the developer jump directly into any room type.</summary>
 internal static partial class RoomSelectUI {
-    private const string RootName = "DevModeRoomSelect";
-    private const string ExtensionWidthKey = "DevModeRoomSelect_ext";
+    private const string RootName = "KitLibRoomSelect";
+    private const string ExtensionWidthKey = "KitLibRoomSelect_ext";
     private const string DualMetaKey = "dm_dual_room_select";
     private const string CarrierNodeName = "RoomSelectDualCarrier";
     private const float PanelW = 420f;

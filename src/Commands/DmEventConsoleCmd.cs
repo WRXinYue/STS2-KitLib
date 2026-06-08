@@ -1,17 +1,17 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmEventConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmevent";
     public override string Args => "<force|list> [eventId] [choice]";
-    public override string Description => "[DevMode] Force events; ancients: optional choice token";
+    public override string Description => "[KitLib] Force events; ancients: optional choice token";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 

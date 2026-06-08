@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Minimal Markdown → Godot BBCode for in-game manual pages.</summary>
 internal static partial class ManualMarkdown {
@@ -81,7 +81,7 @@ internal static partial class ManualMarkdown {
     }
 
     private static void AppendHeading(StringBuilder sb, string text, int size) {
-        var hex = DevModeTheme.Accent.ToHtml(false);
+        var hex = KitLibTheme.Accent.ToHtml(false);
         sb.Append("[font_size=").Append(size).Append("][color=").Append(hex).Append(']')
             .Append(InlineFormat(text))
             .Append("[/color][/font_size]\n");

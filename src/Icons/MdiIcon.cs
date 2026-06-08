@@ -1,6 +1,6 @@
 using Godot;
 
-namespace DevMode.Icons;
+namespace KitLib.Icons;
 
 /// <summary>
 /// Typed accessor for Material Design Icons (Iconify kebab names).

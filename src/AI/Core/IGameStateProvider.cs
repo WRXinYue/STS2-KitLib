@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>
 /// Abstraction for reading the current game state.

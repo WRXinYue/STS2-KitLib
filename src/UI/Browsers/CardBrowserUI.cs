@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode;
-using DevMode.Actions;
-using DevMode.Icons;
-using DevMode.Modding;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Actions;
+using KitLib.Icons;
+using KitLib.Modding;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -15,17 +15,17 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Self-drawn card browser replacing official NCardLibrary / NDeckCardSelectScreen.
 /// Center: scrollable grid of native NCard thumbnails (padded). Right: context-sensitive operation panel.
 /// </summary>
 internal static partial class CardBrowserUI {
-    private const string RootName = "DevModeCardBrowser";
+    private const string RootName = "KitLibCardBrowser";
     private const float RightPanelWidth = 300f;
 
-    private static Color ColSubtle => DevModeTheme.Subtle;
+    private static Color ColSubtle => KitLibTheme.Subtle;
 
     // Rail geometry — must match DevPanelUI constants
     private const float RailW = 52f;
@@ -165,7 +165,7 @@ internal static partial class CardBrowserUI {
         navOuter.AddChild(navSection);
         navOuter.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
         content.AddChild(navOuter);
@@ -175,7 +175,7 @@ internal static partial class CardBrowserUI {
         sortRow.AddThemeConstantOverride("separation", 6);
 
         sortRow.AddChild(new TextureRect {
-            Texture = MdiIcon.FilterVariant.Texture(18, DevModeTheme.Subtle),
+            Texture = MdiIcon.FilterVariant.Texture(18, KitLibTheme.Subtle),
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             CustomMinimumSize = new Vector2(22, 22),
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
@@ -228,7 +228,7 @@ internal static partial class CardBrowserUI {
             (string text, Action<bool> onInclude, Action<bool> onExclude, bool startInclude, bool startExclude)[] chips) {
             if (chipRow.GetChildCount() > 0) {
                 var sep = new VSeparator { CustomMinimumSize = new Vector2(1, 0) };
-                sep.AddThemeColorOverride("separator", DevModeTheme.Separator);
+                sep.AddThemeColorOverride("separator", KitLibTheme.Separator);
                 chipRow.AddChild(sep);
             }
             var groupLbl = new Label { Text = groupLabel };
@@ -538,7 +538,7 @@ internal static partial class CardBrowserUI {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill
         };
         var rightStyle = new StyleBoxFlat {
-            BgColor = DevModeTheme.PanelBg,
+            BgColor = KitLibTheme.PanelBg,
             CornerRadiusTopLeft = 10,
             CornerRadiusTopRight = 10,
             CornerRadiusBottomLeft = 10,
@@ -548,7 +548,7 @@ internal static partial class CardBrowserUI {
             ContentMarginTop = 12,
             ContentMarginBottom = 12,
             BorderWidthLeft = 1,
-            BorderColor = DevModeTheme.PanelBorder
+            BorderColor = KitLibTheme.PanelBorder
         };
         rightPanel.AddThemeStyleboxOverride("panel", rightStyle);
 
@@ -583,7 +583,7 @@ internal static partial class CardBrowserUI {
 
         var initialPileTarget = BrowseSourceToTarget(_browseSource);
         if (initialPileTarget.HasValue)
-            DevModeState.CardTarget = initialPileTarget.Value;
+            KitLibState.CardTarget = initialPileTarget.Value;
 
         InvalidateCardCache(s);
         RebuildGrid(s, s.SearchInput.Text ?? "");
@@ -658,7 +658,7 @@ internal static partial class CardBrowserUI {
         s.LibraryUpgradeRow.Visible = IsLibrarySource;
         var pileTarget = BrowseSourceToTarget(_browseSource);
         if (pileTarget.HasValue)
-            DevModeState.CardTarget = pileTarget.Value;
+            KitLibState.CardTarget = pileTarget.Value;
         ClearRightPanel(s);
         InvalidateCardCache(s);
         RebuildGrid(s, s.SearchInput.Text ?? "");

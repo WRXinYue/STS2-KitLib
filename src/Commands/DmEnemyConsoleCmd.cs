@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -9,12 +9,12 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmEnemyConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmenemy";
     public override string Args => "<set|clear|spawn|kill|list> [id|all]";
-    public override string Description => "[DevMode] Enemy/encounter manipulation";
+    public override string Description => "[KitLib] Enemy/encounter manipulation";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 

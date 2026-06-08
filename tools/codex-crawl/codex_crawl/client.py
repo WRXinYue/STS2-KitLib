@@ -20,7 +20,7 @@ class CodexClient:
             base_url=self.base_url,
             headers={
                 "Accept": "application/json",
-                "User-Agent": "DevMode-codex-crawl/0.1 (+https://github.com/STS2-DevMode)",
+                "User-Agent": "KitLib-codex-crawl/0.1 (+https://github.com/STS2-DevMode)",
             },
             timeout=120.0,
         )

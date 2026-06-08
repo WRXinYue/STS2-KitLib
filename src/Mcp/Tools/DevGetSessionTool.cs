@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.Mcp;
+using KitLib.Mcp;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevGetSessionTool : IMcpTool {
     public string Name => "dev_get_session";

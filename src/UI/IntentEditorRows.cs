@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using DevMode.EnemyIntent;
+using KitLib.EnemyIntent;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class IntentEditorRows {
     internal static void Sync(
@@ -68,7 +68,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
         };
         _nameLabel.AddThemeFontSizeOverride("font_size", 11);
-        _nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        _nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         AddChild(_nameLabel);
 
         _turnScroll = new ScrollContainer {
@@ -88,7 +88,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         _editHint.AddThemeFontSizeOverride("font_size", 10);
-        _editHint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        _editHint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         AddChild(_editHint);
 
         _moveScroll = new ScrollContainer {
@@ -107,7 +107,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         _feedback.AddThemeFontSizeOverride("font_size", 10);
-        _feedback.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        _feedback.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         AddChild(_feedback);
 
         AddChild(new HSeparator());
@@ -190,7 +190,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
             MouseFilter = MouseFilterEnum.Ignore,
         };
         turnLabel.AddThemeFontSizeOverride("font_size", 9);
-        turnLabel.AddThemeColorOverride("font_color", selected ? DevModeTheme.Accent : DevModeTheme.Subtle);
+        turnLabel.AddThemeColorOverride("font_color", selected ? KitLibTheme.Accent : KitLibTheme.Subtle);
         root.AddChild(turnLabel);
 
         var chip = new PanelContainer {
@@ -223,7 +223,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
     }
 
     private static StyleBoxFlat BuildTurnChipStyle(MonsterIntentStep step, bool selected, bool overridden) {
-        Color accent = DevModeTheme.Accent;
+        Color accent = KitLibTheme.Accent;
         Color border = selected
             ? accent
             : overridden
@@ -231,15 +231,15 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
                 : step.IsCurrent
                     ? accent
                     : step.IsUncertain
-                        ? DevModeTheme.Subtle
-                        : DevModeTheme.PanelBorder;
+                        ? KitLibTheme.Subtle
+                        : KitLibTheme.PanelBorder;
 
         return new StyleBoxFlat {
             BgColor = selected
                 ? new Color(accent.R, accent.G, accent.B, 0.28f)
                 : step.IsCurrent
                     ? new Color(accent.R, accent.G, accent.B, 0.18f)
-                    : new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.65f),
+                    : new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.65f),
             BorderColor = border,
             BorderWidthLeft = selected ? 2 : 1,
             BorderWidthTop = selected ? 2 : 1,
@@ -291,7 +291,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
                     ? I18N.T("enemyIntent.edit.turnNow", "Now")
                     : I18N.T("enemyIntent.edit.turnN", "+{0}", _selectedTurnIndex),
                 displayName);
-            _feedback.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+            _feedback.AddThemeColorOverride("font_color", KitLibTheme.Accent);
             _feedback.Visible = true;
             EnemyIntentUI.RefreshAfterApply(_entry);
             return;
@@ -324,7 +324,7 @@ internal sealed partial class IntentEnemyEditRow : VBoxContainer {
             MouseFilter = MouseFilterEnum.Ignore,
         };
         arrow.AddThemeFontSizeOverride("font_size", 12);
-        arrow.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        arrow.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return arrow;
     }
 

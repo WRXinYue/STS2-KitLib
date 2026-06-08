@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevTagSaveSlotTool : IMcpTool {
     public string Name => "dev_tag_save_slot";

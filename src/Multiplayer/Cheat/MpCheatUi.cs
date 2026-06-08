@@ -1,14 +1,14 @@
 using System;
 using System.Linq;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
-using DevMode.UI;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Mutable target player selected by host MP picker.</summary>
 internal sealed class MpCheatTargetPlayerRef {
@@ -36,7 +36,7 @@ internal static class MpCheatUi {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         label.AddThemeFontSizeOverride("font_size", 13);
-        label.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
 
         if (!MpCheatSession.InMultiplayerRun) {
             if (!SettingsStore.Current.MultiplayerCheatOptIn)
@@ -54,7 +54,7 @@ internal static class MpCheatUi {
             if (MpCheatSession.IsHost && MpCheatSyncBot.IsEnabled)
                 baseText += " " + I18N.T("syncbot.banner", "[SyncBot: simulated remote ACK/choices]");
             label.Text = baseText;
-            label.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+            label.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         }
         else {
             label.Text = I18N.T(
@@ -80,10 +80,10 @@ internal static class MpCheatUi {
 
     internal static void AfterCheatChanged() {
         if (!MpCheatSession.InMultiplayerRun) return;
-        MpCheatState.ApplyOptimisticFromDevModeState();
+        MpCheatState.ApplyOptimisticFromKitLibState();
         PlayerCheatEffects.ApplyImmediateIfEnabled();
         if (MpCheatSession.IsHost)
-            MpCheatSync.HostPublishFromDevModeState("ui");
+            MpCheatSync.HostPublishFromKitLibState("ui");
         else
             TaskHelper.RunSafely(MpCheatConfigCoordinator.TryClientPublishConfigAsync());
     }

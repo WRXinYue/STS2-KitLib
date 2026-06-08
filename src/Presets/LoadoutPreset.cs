@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace DevMode.Presets;
+namespace KitLib.Presets;
 
 /// <summary>Flags controlling which parts of a loadout are captured or applied.</summary>
 [Flags]

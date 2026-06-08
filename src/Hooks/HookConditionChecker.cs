@@ -4,7 +4,7 @@ using System.Linq;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Hooks;
+namespace KitLib.Hooks;
 
 internal static class HookConditionChecker {
     /// <summary>Returns true when ALL conditions are met (AND logic).</summary>

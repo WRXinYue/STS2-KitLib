@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using DevMode;
-using DevMode.Actions;
-using DevMode.UI;
+using KitLib;
+using KitLib.Actions;
+using KitLib.UI;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Map;
@@ -13,17 +13,17 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Patches.Map;
+namespace KitLib.Patches.Map;
 
 /// <summary>
 /// Adds encounter preview tooltip on map node hover.
 /// </summary>
 [HarmonyPatch(typeof(NMapPoint), "OnFocus")]
 public static class MapPointHoverPatch {
-    private const string TooltipName = "DevModeMapTooltip";
+    private const string TooltipName = "KitLibMapTooltip";
 
     public static void Postfix(NMapPoint __instance) {
-        if (!DevModeState.InDevRun) return;
+        if (!KitLibState.InDevRun) return;
 
         var point = __instance.Point;
         if (point == null) return;
@@ -191,7 +191,7 @@ public static class MapPointHoverPatch {
 [HarmonyPatch(typeof(NMapPoint), "OnUnfocus")]
 public static class MapPointUnhoverPatch {
     public static void Postfix(NMapPoint __instance) {
-        if (!DevModeState.InDevRun) return;
-        __instance.GetNodeOrNull<Control>("DevModeMapTooltip")?.QueueFree();
+        if (!KitLibState.InDevRun) return;
+        __instance.GetNodeOrNull<Control>("KitLibMapTooltip")?.QueueFree();
     }
 }

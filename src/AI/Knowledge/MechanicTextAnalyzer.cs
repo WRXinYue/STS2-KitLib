@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Last-resort English description fallback when <see cref="OfficialMechanicProbe"/> finds no structural signal.</summary>
 internal static class MechanicTextAnalyzer {

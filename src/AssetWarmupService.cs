@@ -6,7 +6,7 @@ using System.Reflection;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Background asset preloader. Warms up card textures, relic icons,

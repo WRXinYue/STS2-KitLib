@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using DevMode.AI.Combat;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class CombatDiscardPickScorer {
     public static int TopPickScore(CombatState state, CombatPileCard card) {

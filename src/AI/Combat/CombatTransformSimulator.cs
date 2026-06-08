@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Simulates hand-attack transforms (Primal Force → Giant Rock per official card logic).</summary>
 internal static class CombatTransformSimulator {

@@ -3,7 +3,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>
 /// Intercepts <see cref="ActModel.PullNextEncounter"/> to inject custom encounter overrides.
@@ -13,7 +13,7 @@ namespace DevMode.Patches;
 [HarmonyPatch(typeof(ActModel), nameof(ActModel.PullNextEncounter))]
 public static class EnemyOverridePatch {
     public static void Postfix(RoomType roomType, ref EncounterModel __result) {
-        if (!DevModeState.InDevRun) return;
+        if (!KitLibState.InDevRun) return;
 
         // Resolve current floor from RunManager state
         int floor = 0;
@@ -24,9 +24,9 @@ public static class EnemyOverridePatch {
         }
         catch { /* ignore */ }
 
-        MainFile.Logger.Info($"EnemyOverridePatch: PullNextEncounter called — roomType={roomType}, floor={floor}, mode={DevModeState.EnemyMode}");
+        MainFile.Logger.Info($"EnemyOverridePatch: PullNextEncounter called — roomType={roomType}, floor={floor}, mode={KitLibState.EnemyMode}");
 
-        var overrideEnc = DevModeState.ResolveOverride(roomType, floor);
+        var overrideEnc = KitLibState.ResolveOverride(roomType, floor);
         if (overrideEnc == null) return;
 
         // RunManager.CreateRoom uses PullNextEncounter(roomType).ToMutable() — the return here must be

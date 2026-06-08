@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Heuristic tag inference from card ids and keywords (no per-card hardcoding).</summary>
 public static class CardTagRules {

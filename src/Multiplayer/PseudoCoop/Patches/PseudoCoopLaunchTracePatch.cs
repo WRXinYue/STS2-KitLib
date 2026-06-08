@@ -1,9 +1,9 @@
-using DevMode.Multiplayer.LanTest;
+using KitLib.Multiplayer.LanTest;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>Milestone logs to pinpoint embark crashes.</summary>
 [HarmonyPatch(typeof(NSceneContainer), nameof(NSceneContainer.SetCurrentScene))]

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.CombatStats;
-using DevMode.Settings;
+using KitLib.CombatStats;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     private static class MpOverlayLayout {
@@ -192,7 +192,7 @@ internal static partial class CombatStatsUI {
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             title.AddThemeFontSizeOverride("font_size", 10);
-            title.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            title.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             titleRow.AddChild(title);
             return titleRow;
         }

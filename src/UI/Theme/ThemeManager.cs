@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Settings;
+using KitLib.Settings;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Central manager for the active visual theme.

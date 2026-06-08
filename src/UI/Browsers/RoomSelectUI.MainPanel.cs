@@ -1,8 +1,8 @@
-using DevMode.Icons;
+using KitLib.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class RoomSelectUI {
     internal readonly record struct RoomEntry(
@@ -69,7 +69,7 @@ internal static partial class RoomSelectUI {
 
         var statusLabel = new Label { Text = "", HorizontalAlignment = HorizontalAlignment.Center };
         statusLabel.AddThemeFontSizeOverride("font_size", 11);
-        statusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        statusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         mainVbox.AddChild(statusLabel);
 
         foreach (var entry in Rooms)

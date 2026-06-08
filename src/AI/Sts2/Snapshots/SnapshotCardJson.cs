@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.Actions;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Knowledge;
+using KitLib.Actions;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Sts2.Snapshots;
+namespace KitLib.AI.Sts2.Snapshots;
 
 internal static class SnapshotCardJson {
     public static JsonObject FromCard(CardModel card, int index = -1) {

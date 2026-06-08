@@ -1,4 +1,4 @@
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 [HarmonyPatch(typeof(ActionQueueSynchronizer), nameof(ActionQueueSynchronizer.RequestEnqueue))]
 internal static class MpAiTeammateAfkRequestEnqueuePatch {

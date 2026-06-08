@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal static class DevCardMcpHelper {
     public static JsonObject Fail(string error) => new() {

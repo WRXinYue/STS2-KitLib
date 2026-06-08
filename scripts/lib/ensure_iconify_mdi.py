@@ -7,7 +7,7 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-_USER_AGENT = "DevMode-ensure-iconify-mdi/1"
+_USER_AGENT = "KitLib-ensure-iconify-mdi/1"
 
 PACKAGE_VERSION = "1.2.3"
 

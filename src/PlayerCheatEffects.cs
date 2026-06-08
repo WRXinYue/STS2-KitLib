@@ -1,8 +1,8 @@
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>Immediate and per-frame effects for Harmony-backed player resource cheats.</summary>
 internal static class PlayerCheatEffects {

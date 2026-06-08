@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public static class PlayerCombatModifierRegistry {
     public static PlayerCombatModifier? FromSnapshot(JsonObject power) {

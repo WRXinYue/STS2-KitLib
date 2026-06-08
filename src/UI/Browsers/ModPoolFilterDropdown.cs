@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Icons;
+using KitLib.Icons;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Collapses mod character pool filters into one chip-style button with a checkable popup list.
@@ -13,8 +13,8 @@ namespace DevMode.UI;
 internal sealed partial class ModPoolFilterDropdown : Control {
     private static readonly MdiIcon ChevronDown = MdiIcon.From("chevron-down");
 
-    private static readonly Color ColChipOff = DevModeTheme.ButtonBgNormal;
-    private static readonly Color ColChipHover = DevModeTheme.ButtonBgHover;
+    private static readonly Color ColChipOff = KitLibTheme.ButtonBgNormal;
+    private static readonly Color ColChipHover = KitLibTheme.ButtonBgHover;
     private static readonly Color ColChipOn = new(0.25f, 0.40f, 0.65f, 0.90f);
     private static readonly Color ColChipOnHover = new(0.30f, 0.48f, 0.75f, 0.95f);
     private static readonly Color ColChipExclude = new(0.65f, 0.22f, 0.22f, 0.92f);
@@ -106,8 +106,8 @@ internal sealed partial class ModPoolFilterDropdown : Control {
             MinSize = new Vector2I(200, 0)
         };
         var popupStyle = new StyleBoxFlat {
-            BgColor = DevModeTheme.PanelBg,
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = KitLibTheme.PanelBg,
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,
             BorderWidthLeft = 1,
@@ -257,7 +257,7 @@ internal sealed partial class ModPoolFilterDropdown : Control {
         var includeActive = included.Count > 0;
         var excludeActive = excluded.Count > 0;
         var chipActive = includeActive || excludeActive;
-        var iconColor = chipActive || _hovered ? DevModeTheme.TextPrimary : DevModeTheme.Subtle;
+        var iconColor = chipActive || _hovered ? KitLibTheme.TextPrimary : KitLibTheme.Subtle;
 
         _label.Text = includeActive switch {
             true when included.Count == 1 => included[0].label,

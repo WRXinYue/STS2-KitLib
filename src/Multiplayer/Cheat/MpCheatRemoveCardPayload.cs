@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Serializable remove-card parameters broadcast to all peers.</summary>
 public sealed class MpCheatRemoveCardPayload {

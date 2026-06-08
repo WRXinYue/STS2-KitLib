@@ -6,7 +6,7 @@ using System.Text;
 using Godot;
 using HarmonyLib;
 
-namespace DevMode.Interop;
+namespace KitLib.Interop;
 
 /// <summary>
 /// Builds a UTF-8 text report of per-method Harmony hooks (owner, priority), matching common mod-framework dump layouts.

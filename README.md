@@ -1,18 +1,18 @@
-# DevMode
+# KitLib
 
 **English** | [中文](./README.zh-CN.md)
 
 All-in-one in-game toolkit for Slay the Spire 2 — test builds, cheat, script, and debug mods without leaving the game.
 
-![DevMode](https://raw.githubusercontent.com/WRXinYue/STS2-DevMode/main/assets/devmode.png)
+![KitLib](https://raw.githubusercontent.com/WRXinYue/STS2-DevMode/main/assets/devmode.png)
 
 ## Getting started
 
 - **During a run** — Hover the left-edge **peek tab** to expand the dev rail, then click a panel icon. Browser panels slide in from the left; combat overlays use the game’s right edge or floating windows.
-- **Title screen** — Click **DEVMODE** for test runs, snapshots, diagnostics, progress protection, and multiplayer dev tools (no run required).
+- **Title screen** — Click **KITLIB** for test runs, snapshots, diagnostics, progress protection, and multiplayer dev tools (no run required).
 - **Settings → Sidebar** — Drag to reorder rail tabs and hide panels you do not need. **Harmony analysis**, **Scripts**, and **Frameworks** start hidden; enable them here when needed.
 - **Settings → Game** — **In-game right sidebar** (combat shortcuts + stats rail), game speed, skip animations, overlay toggles.
-- **Normal runs** — From title **DEVMODE**, cycle **Normal run: Disabled / Dev Mode / Cheat Mode** to keep the rail available outside test runs.
+- **Normal runs** — From title **KITLIB**, cycle **Normal run: Disabled / Toolkit / Cheat Mode** to keep the rail available outside test runs.
 
 Install from [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) or build from source (`python scripts/init.py`, then `make sync`). Steam **beta** builds need the matching beta mod package.
 
@@ -69,7 +69,7 @@ During fights, intent badges on the right sidebar stack vertically when an enemy
 
 Open from the in-run **Logs** rail tab or title screen **DEVMODE → Diagnostics → Logs**.
 
-- **Live + file history** — Streams new log lines and hydrates earlier lines from the session log (`mod_data/DevMode/instances/{pid}/session.log`, with fallback to Godot `user://logs/`).
+- **Live + file history** — Streams new log lines and hydrates earlier lines from the session log (`mod_data/KitLib/instances/{pid}/session.log`, with fallback to Godot `user://logs/`).
 - **Filters** — Level chips (All / ≥ Info / ≥ Warn / Error), text search, per-mod source toggles, and toggleable **noise suppression** rules (known benign patterns with hit counts).
 - **Presentation** — Mod vs game source coloring; session boundary markers between DevMode restarts.
 - **Stats sidebar** — Entry counts by level and mod; **source pie chart**.
@@ -92,7 +92,7 @@ Typical ZIP contents:
 - `combat-stats.json` — Current combat stats export (if in a fight)
 - `game-logs/` — Optional attached vanilla log tail
 
-Reports are written under `user://devmode-reports/` (account-scoped user data, same tree as `mod_data/DevMode/`).
+Reports are written under `user://devmode-reports/` (account-scoped user data, same tree as `mod_data/KitLib/`).
 
 When DevMode detects an unhandled error or an abnormal exit, it can open a dialog that links here with a **prefilled crash summary** — see **[Crash recovery](#crash-recovery)** below.
 
@@ -108,7 +108,7 @@ DevMode can prompt you to export a feedback ZIP after serious failures (without 
 ### Next-launch prompt
 
 - If the game **exits abnormally** (e.g. kill process) and the previous session did not shut down cleanly, the **main menu** offers the same export flow on next startup.
-- Session markers live under `mod_data/DevMode/instances/{pid}/session.active`; pending reports under `mod_data/DevMode/pending-crash-report.json`.
+- Session markers live under `mod_data/KitLib/instances/{pid}/session.active`; pending reports under `mod_data/KitLib/pending-crash-report.json`.
 
 ### Settings
 
@@ -212,15 +212,15 @@ Detailed architecture, verification checklist, and desync history: **[docs/lan-h
 
 DevMode exposes a **soft-dependency** AI platform for content mods. DevMode owns the loop, snapshot capture, action execution, and vanilla combat scoring; your mod bridge supplies character semantics (snapshot extensions, strategy rules, score tweaks).
 
-**Requires:** DevMode loaded at runtime. Reference `DevMode.dll` at compile time only (do not bundle it in your mod).
+**Requires:** DevMode loaded at runtime. Reference `KitLib.dll` at compile time only (do not bundle it in your mod).
 
 ### Registration (mod init)
 
 Call from your mod’s `[ModInitializer]` after DevMode is available:
 
 ```csharp
-using DevMode.AI.Core;
-using DevMode.Companion;
+using KitLib.AI.Core;
+using KitLib.Companion;
 
 CompanionBridge.RegisterCharacterStrategy(
     "YOUR_CHARACTER_MODEL_ID",
@@ -297,11 +297,11 @@ CompanionBridge.TrySummon(new CompanionSpawnRequest(
 | LustTravel2 (FoxHime) | `LustTravel2.DevModeBridge` | stamina snapshot, FoxHime strategy + move modifier |
 | WineFox (CombatMaid) | `STS2_CombatMaid` | craft/stress snapshot, WineFox strategy + move modifier |
 
-Build a bridge DLL against a fresh `DevMode.dll` (`build/DevMode/DevMode.dll` after `dotnet build`). Ship the bridge as a separate mod with `"dependencies": ["YourContentMod"]` (DevMode is runtime-only).
+Build a bridge DLL against a fresh `KitLib.dll` (`build/KitLib/KitLib.dll` after `dotnet build`). Ship the bridge as a separate mod with `"dependencies": ["YourContentMod"]` (DevMode is runtime-only).
 
 ## MCP
 
-Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Claude Desktop, IDE MCP plugins, etc.) to a running STS2 session with DevMode loaded. DevMode starts an in-game HTTP bridge on port **9877**; the stdio proxy in `tools/DevMode.Mcp` (built with the official [MCP C# SDK](https://csharp.sdk.modelcontextprotocol.io/)) forwards MCP messages to `http://127.0.0.1:9877/messages`.
+Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Claude Desktop, IDE MCP plugins, etc.) to a running STS2 session with DevMode loaded. DevMode starts an in-game HTTP bridge on port **9877**; the stdio proxy in `tools/KitLib.Mcp` (built with the official [MCP C# SDK](https://csharp.sdk.modelcontextprotocol.io/)) forwards MCP messages to `http://127.0.0.1:9877/messages`.
 
 **Requires:** Slay the Spire 2 running with **DevMode** loaded for tool execution (start the game before or keep it running while the client connects). Tool listing works without the game.
 
@@ -356,7 +356,7 @@ Before a debugging session, tag saves with **`dev_tag_save_slot`** so agents can
 Local dev (DLL; used by `dotnet exec` config below):
 
 ```bash
-dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
+dotnet build tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release
 ```
 
 Self-contained executable (repo Makefile; default RID is your host OS):
@@ -365,13 +365,13 @@ Self-contained executable (repo Makefile; default RID is your host OS):
 make build-tools
 ```
 
-Output: `build/tools/DevMode.Mcp/<rid>/publish/DevMode.Mcp.exe` (Windows) or `DevMode.Mcp` (macOS/Linux).
+Output: `build/tools/KitLib.Mcp/<rid>/publish/KitLib.Mcp.exe` (Windows) or `KitLib.Mcp` (macOS/Linux).
 
 Cross-compile manually, for example:
 
 ```bash
-dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ### Client configuration
@@ -389,7 +389,7 @@ Paste one of the blocks below into your existing MCP client config (merge with y
       "command": "dotnet",
       "args": [
         "exec",
-        "tools/DevMode.Mcp/bin/Release/net8.0/DevMode.Mcp.dll",
+        "tools/KitLib.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
         "--",
         "--port",
         "9877"
@@ -413,7 +413,7 @@ Windows:
 {
   "mcpServers": {
     "devmode": {
-      "command": "C:/path/to/DevMode.Mcp.exe",
+      "command": "C:/path/to/KitLib.Mcp.exe",
       "args": ["--port", "9877"]
     }
   }
@@ -426,7 +426,7 @@ macOS / Linux:
 {
   "mcpServers": {
     "devmode": {
-      "command": "/path/to/DevMode.Mcp",
+      "command": "/path/to/KitLib.Mcp",
       "args": ["--port", "9877"]
     }
   }

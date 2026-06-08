@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat;
-using DevMode.AI.Core;
-using SimCombatState = DevMode.AI.Combat.Simulation.CombatState;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat;
+using KitLib.AI.Core;
+using SimCombatState = KitLib.AI.Combat.Simulation.CombatState;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
-using DevMode.EnemyIntent;
+using KitLib.EnemyIntent;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -17,7 +17,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI.Sts2.Snapshots;
+namespace KitLib.AI.Sts2.Snapshots;
 
 /// <summary>
 /// Captures the full STS2 game state into a <see cref="JsonObject"/>
@@ -349,7 +349,7 @@ internal static class GameSnapshot
                     capturedMonsterId,
                     enemy.Monster.NextMove.Id,
                     enemy.Monster.NextMove.Intents);
-                int nonDamageThreat = DevMode.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
+                int nonDamageThreat = KitLib.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
                     pressureState,
                     capturedMonsterId,
                     enemy.Monster.NextMove.Id,

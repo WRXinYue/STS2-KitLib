@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Expected offensive bonus from vulnerable stacks decaying over future player turns.</summary>
 public static class VulnerableOutlookEvaluator {

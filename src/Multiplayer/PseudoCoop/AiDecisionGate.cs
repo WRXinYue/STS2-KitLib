@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Serializes LanLocal, Companion, and MpAi decision ticks on one shared executor.</summary>
 internal static class AiDecisionGate {

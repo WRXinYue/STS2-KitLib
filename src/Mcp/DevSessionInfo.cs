@@ -1,14 +1,14 @@
 using System.Text.Json.Nodes;
-using DevMode.AI;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.UI;
+using KitLib.AI;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.Mcp;
+namespace KitLib.Mcp;
 
 internal static class DevSessionInfo {
     public static JsonObject Capture() {
@@ -25,7 +25,7 @@ internal static class DevSessionInfo {
         return new JsonObject {
             ["runActive"] = runActive,
             ["phase"] = phase,
-            ["inDevRun"] = DevModeState.InDevRun,
+            ["inDevRun"] = KitLibState.InDevRun,
             ["blockingPrompts"] = prompts,
         };
     }

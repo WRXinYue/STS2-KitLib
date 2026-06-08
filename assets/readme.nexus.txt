@@ -78,7 +78,7 @@ During fights, intent badges on the right sidebar stack vertically when an enemy
 Open from the in-run [b]Logs[/b] rail tab or title screen [b]DEVMODE → Diagnostics → Logs[/b].
 
 [list]
-[*][b]Live + file history[/b] — Streams new log lines and hydrates earlier lines from the session log ([i]mod_data/DevMode/instances/{pid}/session.log[/i], with fallback to Godot [i]user://logs/[/i]).
+[*][b]Live + file history[/b] — Streams new log lines and hydrates earlier lines from the session log ([i]mod_data/KitLib/instances/{pid}/session.log[/i], with fallback to Godot [i]user://logs/[/i]).
 [*][b]Filters[/b] — Level chips (All / ≥ Info / ≥ Warn / Error), text search, per-mod source toggles, and toggleable [b]noise suppression[/b] rules (known benign patterns with hit counts).
 [*][b]Presentation[/b] — Mod vs game source coloring; session boundary markers between DevMode restarts.
 [*][b]Stats sidebar[/b] — Entry counts by level and mod; [b]source pie chart[/b].
@@ -104,7 +104,7 @@ Typical ZIP contents:
 [*][i]game-logs/[/i] — Optional attached vanilla log tail
 [/list]
 
-Reports are written under [i]user://devmode-reports/[/i] (account-scoped user data, same tree as [i]mod_data/DevMode/[/i]).
+Reports are written under [i]user://devmode-reports/[/i] (account-scoped user data, same tree as [i]mod_data/KitLib/[/i]).
 
 When DevMode detects an unhandled error or an abnormal exit, it can open a dialog that links here with a [b]prefilled crash summary[/b] — see [b][url=#crash-recovery]Crash recovery[/url][/b] below.
 
@@ -242,7 +242,7 @@ Detailed architecture, verification checklist, and desync history: [b][url=./doc
 
 [b]MCP[/b]
 
-Connect any [url=https://modelcontextprotocol.io]Model Context Protocol[/url] client (Claude Desktop, IDE MCP plugins, etc.) to a running STS2 session with DevMode loaded. DevMode starts an in-game HTTP bridge on port [b]9877[/b]; the stdio proxy in [i]tools/DevMode.Mcp[/i] (built with the official [url=https://csharp.sdk.modelcontextprotocol.io/]MCP C# SDK[/url]) forwards MCP messages to [i]http://127.0.0.1:9877/messages[/i].
+Connect any [url=https://modelcontextprotocol.io]Model Context Protocol[/url] client (Claude Desktop, IDE MCP plugins, etc.) to a running STS2 session with DevMode loaded. DevMode starts an in-game HTTP bridge on port [b]9877[/b]; the stdio proxy in [i]tools/KitLib.Mcp[/i] (built with the official [url=https://csharp.sdk.modelcontextprotocol.io/]MCP C# SDK[/url]) forwards MCP messages to [i]http://127.0.0.1:9877/messages[/i].
 
 [b]Requires:[/b] Slay the Spire 2 running with [b]DevMode[/b] loaded for tool execution (start the game before or keep it running while the client connects). Tool listing works without the game.
 
@@ -303,7 +303,7 @@ Before a debugging session, tag saves with [b][i]dev[i]tag[/i]save_slot[/i][/b] 
 Local dev (DLL; used by [i]dotnet exec[/i] config below):
 
 [code]
-dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
+dotnet build tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release
 [/code]
 
 Self-contained executable (repo Makefile; default RID is your host OS):
@@ -312,13 +312,13 @@ Self-contained executable (repo Makefile; default RID is your host OS):
 make build-tools
 [/code]
 
-Output: [i]build/tools/DevMode.Mcp/&lt;rid&gt;/publish/DevMode.Mcp.exe[/i] (Windows) or [i]DevMode.Mcp[/i] (macOS/Linux).
+Output: [i]build/tools/KitLib.Mcp/&lt;rid&gt;/publish/KitLib.Mcp.exe[/i] (Windows) or [i]KitLib.Mcp[/i] (macOS/Linux).
 
 Cross-compile manually, for example:
 
 [code]
-dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
 [/code]
 
 [b]Client configuration[/b]
@@ -336,7 +336,7 @@ Paste one of the blocks below into your existing MCP client config (merge with y
       "command": "dotnet",
       "args": [
         "exec",
-        "tools/DevMode.Mcp/bin/Release/net8.0/DevMode.Mcp.dll",
+        "tools/KitLib.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
         "--",
         "--port",
         "9877"
@@ -360,7 +360,7 @@ Windows:
 {
   "mcpServers": {
     "devmode": {
-      "command": "C:/path/to/DevMode.Mcp.exe",
+      "command": "C:/path/to/KitLib.Mcp.exe",
       "args": ["--port", "9877"]
     }
   }
@@ -373,7 +373,7 @@ macOS / Linux:
 {
   "mcpServers": {
     "devmode": {
-      "command": "/path/to/DevMode.Mcp",
+      "command": "/path/to/KitLib.Mcp",
       "args": ["--port", "9877"]
     }
   }
@@ -492,7 +492,7 @@ See [url=https://github.com/WRXinYue/STS2-DevMode/blob/main/CHANGELOG.md]CHANGEL
 从局内 [b]日志[/b] rail 标签，或标题 [b]DEVMODE → Diagnostics → Logs[/b] 打开。
 
 [list]
-[*][b]实时 + 文件历史[/b] — 流式接收新日志，并从会话日志回填更早行（[i]mod_data/DevMode/instances/{pid}/session.log[/i]，回退 Godot [i]user://logs/[/i]）。
+[*][b]实时 + 文件历史[/b] — 流式接收新日志，并从会话日志回填更早行（[i]mod_data/KitLib/instances/{pid}/session.log[/i]，回退 Godot [i]user://logs/[/i]）。
 [*][b]筛选[/b] — 级别 chip（全部 / ≥ Info / ≥ Warn / Error）、文本搜索、按 mod 来源开关、可切换的[b]噪音抑制[/b]规则（已知无害模式 + 命中次数）。
 [*][b]展示[/b] — mod 与游戏来源分色；DevMode 重启之间的会话边界标记。
 [*][b]统计侧栏[/b] — 按级别与 mod 计数；[b]来源饼图[/b]。
@@ -518,7 +518,7 @@ ZIP 典型内容：
 [*][i]game-logs/[/i] — 可选附加的原版日志尾部
 [/list]
 
-报告写入 [i]user://devmode-reports/[/i]（账号作用域用户数据，与 [i]mod_data/DevMode/[/i] 同树）。
+报告写入 [i]user://devmode-reports/[/i]（账号作用域用户数据，与 [i]mod_data/KitLib/[/i] 同树）。
 
 当 DevMode 检测到未捕获异常或异常退出时，可弹出对话框并[b]预填崩溃摘要[/b]跳转至此导出流程 — 见下方 [b][url=#崩溃恢复]崩溃恢复[/url][/b]。
 
@@ -656,7 +656,7 @@ macOS / Linux 下 [i]%AppData%[/i] 对应游戏账号作用域的用户数据目
 
 [b]MCP[/b]
 
-通过 [url=https://modelcontextprotocol.io]Model Context Protocol[/url] 将 run 状态与操作暴露给任意 MCP 客户端（Claude Desktop、IDE MCP 插件等）。Mod 内 HTTP 桥接默认监听 [b]9877[/b]；[i]tools/DevMode.Mcp[/i] 中的 stdio 代理（基于官方 [url=https://csharp.sdk.modelcontextprotocol.io/]MCP C# SDK[/url]）将 MCP 消息转发到 [i]http://127.0.0.1:9877/messages[/i]。
+通过 [url=https://modelcontextprotocol.io]Model Context Protocol[/url] 将 run 状态与操作暴露给任意 MCP 客户端（Claude Desktop、IDE MCP 插件等）。Mod 内 HTTP 桥接默认监听 [b]9877[/b]；[i]tools/KitLib.Mcp[/i] 中的 stdio 代理（基于官方 [url=https://csharp.sdk.modelcontextprotocol.io/]MCP C# SDK[/url]）将 MCP 消息转发到 [i]http://127.0.0.1:9877/messages[/i]。
 
 [b]前提：[/b] 执行工具调用时，《杀戮尖塔 2》须已运行且 [b]DevMode[/b] 已加载（先开游戏，或保持游戏运行后再连接 MCP 客户端）。列出工具名称无需启动游戏。
 
@@ -717,7 +717,7 @@ Bridge 就绪后，典型 MCP Agent 流程：
 本地开发（DLL；供下方 [i]dotnet exec[/i] 配置使用）：
 
 [code]
-dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
+dotnet build tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release
 [/code]
 
 自包含可执行文件（仓库 Makefile；默认 RID 为当前系统）：
@@ -726,13 +726,13 @@ dotnet build tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release
 make build-tools
 [/code]
 
-输出路径：[i]build/tools/DevMode.Mcp/&lt;rid&gt;/publish/DevMode.Mcp.exe[/i]（Windows）或 [i]DevMode.Mcp[/i]（macOS/Linux）。
+输出路径：[i]build/tools/KitLib.Mcp/&lt;rid&gt;/publish/KitLib.Mcp.exe[/i]（Windows）或 [i]KitLib.Mcp[/i]（macOS/Linux）。
 
 手动交叉编译示例：
 
 [code]
-dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
 [/code]
 
 [b]客户端配置[/b]
@@ -750,7 +750,7 @@ dotnet publish tools/DevMode.Mcp/DevMode.Mcp.csproj -c Release -r osx-arm64 --se
       "command": "dotnet",
       "args": [
         "exec",
-        "tools/DevMode.Mcp/bin/Release/net8.0/DevMode.Mcp.dll",
+        "tools/KitLib.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
         "--",
         "--port",
         "9877"
@@ -774,7 +774,7 @@ Windows：
 {
   "mcpServers": {
     "devmode": {
-      "command": "C:/path/to/DevMode.Mcp.exe",
+      "command": "C:/path/to/KitLib.Mcp.exe",
       "args": ["--port", "9877"]
     }
   }
@@ -787,7 +787,7 @@ macOS / Linux：
 {
   "mcpServers": {
     "devmode": {
-      "command": "/path/to/DevMode.Mcp",
+      "command": "/path/to/KitLib.Mcp",
       "args": ["--port", "9877"]
     }
   }

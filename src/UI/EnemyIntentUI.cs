@@ -1,15 +1,15 @@
 using System.Collections.Generic;
-using DevMode.EnemyIntent;
-using DevMode.Settings;
+using KitLib.EnemyIntent;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>DevPanel browser for enemy intent preview and floating overlay toggle.</summary>
 internal static partial class EnemyIntentUI {
-    private const string RootName = "DevModeEnemyIntent";
+    private const string RootName = "KitLibEnemyIntent";
     private const float PanelW = 720f;
 
     private static VBoxContainer? _browserPreviewList;
@@ -33,14 +33,14 @@ internal static partial class EnemyIntentUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         titleBox.AddChild(subtitle);
         vbox.AddChild(titleBox);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
 
         _browserStatus = new Label { Text = "" };
         _browserStatus.AddThemeFontSizeOverride("font_size", 11);
-        _browserStatus.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        _browserStatus.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         vbox.AddChild(_browserStatus);
 
         var previewScroll = new ScrollContainer {
@@ -114,7 +114,7 @@ internal static partial class EnemyIntentUI {
         if (_browserPreviewList == null || _browserStatus == null)
             return;
 
-        if (!DevModeState.IsActive
+        if (!KitLibState.IsActive
             || CombatManager.Instance?.IsInProgress != true
             || CombatManager.Instance.DebugOnlyGetState() is not { } state) {
             ClearPreviewList(_browserPreviewList);

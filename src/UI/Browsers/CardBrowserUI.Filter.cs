@@ -8,7 +8,7 @@ using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.CardPools;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CardBrowserUI {
     // ── Filter / browse / sort enums ──
@@ -74,11 +74,11 @@ internal static partial class CardBrowserUI {
 
     // ── Rarity colors ──
 
-    private static Color ColCommon => DevModeTheme.RarityCommon;
-    private static Color ColUncommon => DevModeTheme.RarityUncommon;
-    private static Color ColRare => DevModeTheme.RarityRare;
-    private static Color ColSpecial => DevModeTheme.RaritySpecial;
-    private static Color ColCurse => DevModeTheme.RarityCurse;
+    private static Color ColCommon => KitLibTheme.RarityCommon;
+    private static Color ColUncommon => KitLibTheme.RarityUncommon;
+    private static Color ColRare => KitLibTheme.RarityRare;
+    private static Color ColSpecial => KitLibTheme.RaritySpecial;
+    private static Color ColCurse => KitLibTheme.RarityCurse;
 
     // ── Card enum helpers ──
 

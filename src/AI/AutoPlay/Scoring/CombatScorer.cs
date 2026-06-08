@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 /// <summary>Minimal combat fallback when beam search returns no path. Not used for primary decisions.</summary>
 public static class CombatScorer {

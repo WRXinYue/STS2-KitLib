@@ -1,8 +1,8 @@
-using DevMode.Map;
+using KitLib.Map;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
-namespace DevMode.Patches.Map;
+namespace KitLib.Patches.Map;
 
 /// <summary>
 /// When map debug-jump is enabled, map clicks use <see cref="VanillaMapNavigator"/>.
@@ -24,7 +24,7 @@ public static class MapPointDevJumpPatch {
 
         if (!VanillaMapNavigator.TryGoTo(point.coord)) {
             MainFile.Logger.Warn(
-                $"[DevMode.MapJump] TryGoTo failed, vanilla fallback: {point.coord} {point.PointType}");
+                $"[KitLib.MapJump] TryGoTo failed, vanilla fallback: {point.coord} {point.PointType}");
             return true;
         }
 

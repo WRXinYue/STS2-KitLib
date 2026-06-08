@@ -1,9 +1,9 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 /// <summary>Macro potion belt value: retain scores, discard-to-make-room, shop offers.</summary>
 public static class PotionInventoryScorer {

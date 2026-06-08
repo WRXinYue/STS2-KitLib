@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Beam expansion ordering — same line rank as leaf comparison, plus hard prune sentinels.</summary>
 internal static class CombatActionHeuristic {

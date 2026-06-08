@@ -1,9 +1,9 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public readonly record struct DeckStats(
     int DeckSize,

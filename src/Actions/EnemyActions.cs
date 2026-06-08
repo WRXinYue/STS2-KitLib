@@ -3,7 +3,7 @@ using System.Linq;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class EnemyActions {
     /// <summary>All encounters grouped by room type, sorted by name.</summary>
@@ -16,51 +16,51 @@ internal static class EnemyActions {
 
     /// <summary>Set a global encounter override (all combat rooms).</summary>
     public static void SetGlobalOverride(EncounterModel encounter) {
-        DevModeState.EnemyMode = EnemyMode.Global;
-        DevModeState.GlobalEncounterOverride = encounter;
+        KitLibState.EnemyMode = EnemyMode.Global;
+        KitLibState.GlobalEncounterOverride = encounter;
         ClearRoomTypeOverrides();
         MainFile.Logger.Info($"EnemyActions: Global override set to {((AbstractModel)encounter).Id.Entry}");
     }
 
     /// <summary>Set a per-room-type encounter override.</summary>
     public static void SetRoomTypeOverride(RoomType roomType, EncounterModel encounter) {
-        DevModeState.EnemyMode = EnemyMode.PerType;
-        DevModeState.GlobalEncounterOverride = null;
-        DevModeState.RoomTypeOverrides[roomType] = encounter;
+        KitLibState.EnemyMode = EnemyMode.PerType;
+        KitLibState.GlobalEncounterOverride = null;
+        KitLibState.RoomTypeOverrides[roomType] = encounter;
         MainFile.Logger.Info($"EnemyActions: {roomType} override set to {((AbstractModel)encounter).Id.Entry}");
     }
 
     /// <summary>Set a per-floor encounter override.</summary>
     public static void SetFloorOverride(int floor, EncounterModel encounter) {
-        DevModeState.FloorOverrides[floor] = encounter;
+        KitLibState.FloorOverrides[floor] = encounter;
         MainFile.Logger.Info($"EnemyActions: Floor {floor} override set to {((AbstractModel)encounter).Id.Entry}");
     }
 
     /// <summary>Remove a per-floor override.</summary>
     public static void ClearFloorOverride(int floor) {
-        DevModeState.FloorOverrides.Remove(floor);
+        KitLibState.FloorOverrides.Remove(floor);
         MainFile.Logger.Info($"EnemyActions: Floor {floor} override cleared");
     }
 
     public static void ClearGlobalOverride() {
-        DevModeState.GlobalEncounterOverride = null;
-        if (DevModeState.EnemyMode == EnemyMode.Global)
-            DevModeState.EnemyMode = EnemyMode.Off;
+        KitLibState.GlobalEncounterOverride = null;
+        if (KitLibState.EnemyMode == EnemyMode.Global)
+            KitLibState.EnemyMode = EnemyMode.Off;
         MainFile.Logger.Info("EnemyActions: Global override cleared");
     }
 
     public static void ClearRoomTypeOverride(RoomType roomType) {
-        DevModeState.RoomTypeOverrides[roomType] = null;
-        if (DevModeState.EnemyMode == EnemyMode.PerType
-            && DevModeState.RoomTypeOverrides.Values.All(enc => enc == null)) {
-            DevModeState.EnemyMode = EnemyMode.Off;
+        KitLibState.RoomTypeOverrides[roomType] = null;
+        if (KitLibState.EnemyMode == EnemyMode.PerType
+            && KitLibState.RoomTypeOverrides.Values.All(enc => enc == null)) {
+            KitLibState.EnemyMode = EnemyMode.Off;
         }
         MainFile.Logger.Info($"EnemyActions: {roomType} override cleared");
     }
 
     /// <summary>Clear all overrides.</summary>
     public static void ClearAll() {
-        DevModeState.ClearEnemyOverrides();
+        KitLibState.ClearEnemyOverrides();
         MainFile.Logger.Info("EnemyActions: All enemy overrides cleared");
     }
 
@@ -91,8 +91,8 @@ internal static class EnemyActions {
     }
 
     private static void ClearRoomTypeOverrides() {
-        DevModeState.RoomTypeOverrides[RoomType.Monster] = null;
-        DevModeState.RoomTypeOverrides[RoomType.Elite] = null;
-        DevModeState.RoomTypeOverrides[RoomType.Boss] = null;
+        KitLibState.RoomTypeOverrides[RoomType.Monster] = null;
+        KitLibState.RoomTypeOverrides[RoomType.Elite] = null;
+        KitLibState.RoomTypeOverrides[RoomType.Boss] = null;
     }
 }

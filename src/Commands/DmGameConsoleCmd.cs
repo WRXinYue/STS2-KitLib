@@ -4,12 +4,12 @@ using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmGameConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmgame";
     public override string Args => "<speed|skipanim|maprewrite> [mode]";
-    public override string Description => "[DevMode] Game speed, animation skip, map rewrite";
+    public override string Description => "[KitLib] Game speed, animation skip, map rewrite";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
@@ -33,8 +33,8 @@ public class DmGameConsoleCmd : AbstractConsoleCmd {
                 }
             case "maprewrite": {
                     if (args.Length < 2) {
-                        var current = DevModeState.MapCheats.MapRewriteEnabled
-                            ? DevModeState.MapCheats.MapRewriteMode.ToString()
+                        var current = KitLibState.MapCheats.MapRewriteEnabled
+                            ? KitLibState.MapCheats.MapRewriteMode.ToString()
                             : "disabled";
                         return new CmdResult(true, $"Map rewrite: {current}\nUsage: dmgame maprewrite <none|allchest|allelite|allboss>");
                     }
@@ -42,20 +42,20 @@ public class DmGameConsoleCmd : AbstractConsoleCmd {
                     var mode = args[1].ToLowerInvariant();
                     switch (mode) {
                         case "none" or "off" or "disable":
-                            DevModeState.MapCheats.MapRewriteEnabled = false;
-                            DevModeState.MapCheats.MapRewriteMode = MapRewriteMode.None;
+                            KitLibState.MapCheats.MapRewriteEnabled = false;
+                            KitLibState.MapCheats.MapRewriteMode = MapRewriteMode.None;
                             return new CmdResult(true, "Map rewrite: disabled");
                         case "allchest" or "chest":
-                            DevModeState.MapCheats.MapRewriteEnabled = true;
-                            DevModeState.MapCheats.MapRewriteMode = MapRewriteMode.AllChest;
+                            KitLibState.MapCheats.MapRewriteEnabled = true;
+                            KitLibState.MapCheats.MapRewriteMode = MapRewriteMode.AllChest;
                             return new CmdResult(true, "Map rewrite: AllChest");
                         case "allelite" or "elite":
-                            DevModeState.MapCheats.MapRewriteEnabled = true;
-                            DevModeState.MapCheats.MapRewriteMode = MapRewriteMode.AllElite;
+                            KitLibState.MapCheats.MapRewriteEnabled = true;
+                            KitLibState.MapCheats.MapRewriteMode = MapRewriteMode.AllElite;
                             return new CmdResult(true, "Map rewrite: AllElite");
                         case "allboss" or "boss":
-                            DevModeState.MapCheats.MapRewriteEnabled = true;
-                            DevModeState.MapCheats.MapRewriteMode = MapRewriteMode.AllBoss;
+                            KitLibState.MapCheats.MapRewriteEnabled = true;
+                            KitLibState.MapCheats.MapRewriteMode = MapRewriteMode.AllBoss;
                             return new CmdResult(true, "Map rewrite: AllBoss");
                         default:
                             return new CmdResult(false, $"Unknown mode: '{mode}'. Use: {string.Join(", ", MapModes)}");

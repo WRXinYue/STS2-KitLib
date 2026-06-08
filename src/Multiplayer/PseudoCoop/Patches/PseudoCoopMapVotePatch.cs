@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>Mirrors host map votes to simulated peers after the host vote is recorded.</summary>
 [HarmonyPatch(typeof(MapSelectionSynchronizer), nameof(MapSelectionSynchronizer.PlayerVotedForMapCoord))]
@@ -24,7 +24,7 @@ internal static class PseudoCoopMapVoteSynchronizerPatch {
         PseudoCoopMapVoteMirror.MirrorHostVote(map, source, destination.Value);
 
         // LAN / MP embark may never call NMapScreen.Open; first host map vote is a safe fallback.
-        if (DevModeState.PseudoCoopAwaitingMapFinish)
+        if (KitLibState.PseudoCoopAwaitingMapFinish)
             PseudoCoopDeferredInit.TryScheduleMapFinish();
     }
 }

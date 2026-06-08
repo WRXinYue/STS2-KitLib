@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Modding;
-using DevMode.Settings;
+using KitLib.Modding;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal static class ModChangeGuard {
     internal static bool CompletedForSession { get; private set; }

@@ -1,7 +1,7 @@
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 
-namespace DevMode.Combat;
+namespace KitLib.Combat;
 
 internal readonly struct CombatSnapshot {
     internal int Round { get; init; }

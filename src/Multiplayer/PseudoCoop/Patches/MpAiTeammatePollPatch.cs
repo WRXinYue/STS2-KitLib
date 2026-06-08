@@ -2,7 +2,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 [HarmonyPatch(typeof(NRun), nameof(NRun._Process))]
 internal static class MpAiTeammatePollPatch {

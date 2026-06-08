@@ -1,7 +1,7 @@
-using DevMode;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Settings;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Initializes multiplayer cheat sync (INetMessage + run lifecycle).</summary>
 public static class MpCheatSync {
@@ -10,7 +10,7 @@ public static class MpCheatSync {
     }
 
     public static void OnRunStarted() {
-        if (DevModeState.PseudoCoopDeferHeavyUi) return;
+        if (KitLibState.PseudoCoopDeferHeavyUi) return;
         if (!MpCheatSession.InMultiplayerRun) return;
 
         MpCheatSession.TryArmSession("run_started");
@@ -25,7 +25,7 @@ public static class MpCheatSync {
         MpCheatSession.OnRunEnded();
     }
 
-    public static void HostPublishFromDevModeState(string reason) {
+    public static void HostPublishFromKitLibState(string reason) {
         if (!MpCheatSession.CanEditMultiplayerCheats) return;
         var netId = MpCheatSession.ResolveLocalPlayerNetId();
         if (netId == 0) {
@@ -37,7 +37,7 @@ public static class MpCheatSync {
     }
 
     internal static void TryPublishInitialHostConfig(string reason) {
-        if (DevModeState.PseudoCoopDeferHeavyUi || DevModeState.PseudoCoopDeferMpCheatPublish) return;
+        if (KitLibState.PseudoCoopDeferHeavyUi || KitLibState.PseudoCoopDeferMpCheatPublish) return;
         if (!MpCheatSession.IsHost || !MpCheatSession.SessionArmed) return;
         if (MpCheatState.Revision > 0 && reason != "run_start") return;
         var netId = MpCheatSession.ResolveLocalPlayerNetId();

@@ -1,14 +1,14 @@
 using System.Collections.Generic;
-using DevMode.Companion;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Settings;
+using KitLib.Companion;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Models;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.SyncBot;
+namespace KitLib.Multiplayer.SyncBot;
 
 /// <summary>Host-only dev helper: simulate remote MpCheat ACKs and default player choices in-process.</summary>
 internal static class MpCheatSyncBot {

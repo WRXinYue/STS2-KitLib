@@ -1,20 +1,20 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.AI.Core;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Multiplayer.SyncBot;
+using KitLib.AI.Core;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 /// <summary>Public API for spawning AI companions in pseudo-coop / host multiplayer runs.</summary>
 public static class CompanionBridge {
     public static bool IsAvailable =>
-        !DevModeState.PseudoCoopDeferHeavyUi;
+        !KitLibState.PseudoCoopDeferHeavyUi;
 
     public static bool IsHostMultiplayerRun =>
         MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost;

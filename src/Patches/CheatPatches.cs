@@ -13,11 +13,11 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Odds;
 using MegaCrit.Sts2.Core.Rooms;
-using DevMode.Actions;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Actions;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.ValueProps;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>Infinite HP — prevent player HP loss.</summary>
 [HarmonyPatch(typeof(Creature), nameof(Creature.LoseHpInternal))]
@@ -195,7 +195,7 @@ public static class UnknownMapTreasurePatch {
 [HarmonyPatch(typeof(NPotionContainer), "GrowPotionHolders")]
 public static class PotionContainerShrinkPatch {
     public static void Postfix(NPotionContainer __instance, int newMaxPotionSlots) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
 
         var holdersField = AccessTools.Field(typeof(NPotionContainer), "_holders");
         if (holdersField == null) return;

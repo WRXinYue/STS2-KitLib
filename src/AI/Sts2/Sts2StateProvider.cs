@@ -14,14 +14,14 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
-using DevMode.AI;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.Multiplayer.Cheat;
-using DevMode.AI.Sts2.Helpers;
-using DevMode.AI.Sts2.Snapshots;
+using KitLib.AI;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.Multiplayer.Cheat;
+using KitLib.AI.Sts2.Helpers;
+using KitLib.AI.Sts2.Snapshots;
 
-namespace DevMode.AI.Sts2;
+namespace KitLib.AI.Sts2;
 
 public sealed class Sts2StateProvider : IGameStateProvider
 {

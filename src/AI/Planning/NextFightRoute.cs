@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Sts2;
+using KitLib.Actions;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Sts2;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public sealed record NextFightNode(
     float Weight,

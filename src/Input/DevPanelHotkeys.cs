@@ -1,8 +1,8 @@
-using DevMode.Settings;
-using DevMode.UI;
+using KitLib.Settings;
+using KitLib.UI;
 using Godot;
 
-namespace DevMode.Hotkeys;
+namespace KitLib.Hotkeys;
 
 /// <summary>Keyboard shortcuts for DevMode rail shell actions (no InputMap registration).</summary>
 internal static class DevPanelHotkeys {

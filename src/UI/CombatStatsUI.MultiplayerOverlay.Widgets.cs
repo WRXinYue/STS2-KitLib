@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DevMode.CombatStats;
+using KitLib.CombatStats;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     private sealed partial class MpOverlayPlayerRow : Control {
@@ -107,10 +107,10 @@ internal static partial class CombatStatsUI {
         private void ApplyLeaderStyle() {
             _nameLabel.AddThemeColorOverride(
                 "font_color",
-                _isLeader ? DevModeTheme.TextPrimary : DevModeTheme.TextSecondary);
+                _isLeader ? KitLibTheme.TextPrimary : KitLibTheme.TextSecondary);
             _scoreLabel.AddThemeColorOverride(
                 "font_color",
-                _isLeader ? DevModeTheme.Accent : DevModeTheme.TextSecondary);
+                _isLeader ? KitLibTheme.Accent : KitLibTheme.TextSecondary);
         }
 
         private void AnimateScore(int target, bool animate) {
@@ -279,8 +279,8 @@ internal static partial class CombatStatsUI {
     private static class MpOverlayBarStyles {
         public static StyleBoxFlat Track() =>
             RoundedBox(
-                new Color(DevModeTheme.Subtle, 0.22f),
-                new Color(DevModeTheme.PanelBorder, 0.45f),
+                new Color(KitLibTheme.Subtle, 0.22f),
+                new Color(KitLibTheme.PanelBorder, 0.45f),
                 MpOverlayLayout.BarCornerRadius);
 
         public static StyleBoxFlat Segment(Color color, float radiusLeft, float radiusRight) =>

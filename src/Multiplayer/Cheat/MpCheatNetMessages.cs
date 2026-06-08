@@ -1,11 +1,11 @@
 using System;
 using System.Text.Json;
-using DevMode.Presets;
+using KitLib.Presets;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Multiplayer.Transport;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>
 /// Single INetMessage slot for all MpCheat wire traffic (config / command / ACK).

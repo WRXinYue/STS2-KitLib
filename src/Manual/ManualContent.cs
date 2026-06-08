@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ManualContent {
     public sealed record Topic(string Id, string TitleKey);
@@ -28,7 +28,7 @@ internal static class ManualContent {
 
     public static string LoadMarkdown(string topicId) {
         var lang = I18N.LangCode;
-        var resourceName = $"DevMode.Manual.{lang}.{topicId}";
+        var resourceName = $"KitLib.Manual.{lang}.{topicId}";
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
         if (stream == null) {
             MainFile.Logger.Warn($"[ManualContent] Missing manual topic '{topicId}' for '{lang}'.");

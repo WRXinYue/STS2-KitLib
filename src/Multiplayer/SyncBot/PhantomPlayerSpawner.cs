@@ -1,10 +1,10 @@
 using System.Linq;
-using DevMode.Companion;
-using DevMode.Settings;
+using KitLib.Companion;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.SyncBot;
+namespace KitLib.Multiplayer.SyncBot;
 
 /// <summary>Spawns NetId 1001 after map history exists (not safe during RunManager.Launch postfix).</summary>
 internal static class PhantomPlayerSpawner {

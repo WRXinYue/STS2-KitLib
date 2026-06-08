@@ -1,10 +1,10 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal static class DevCheatMcpHelper {
     public static JsonObject Fail(string error) => new() {
@@ -14,7 +14,7 @@ internal static class DevCheatMcpHelper {
 
     public static bool TryRequireCheats(out JsonObject? error) {
         error = null;
-        if (!DevModeState.CheatsInRun) {
+        if (!KitLibState.CheatsInRun) {
             error = Fail("Cheats are not active. Start a dev test run or set NormalRunMode to Cheat.");
             return false;
         }
@@ -22,8 +22,8 @@ internal static class DevCheatMcpHelper {
     }
 
     public static RuntimeStatModifiers EnsureStatModifiers() {
-        DevModeState.StatModifiers ??= new RuntimeStatModifiers();
-        return DevModeState.StatModifiers;
+        KitLibState.StatModifiers ??= new RuntimeStatModifiers();
+        return KitLibState.StatModifiers;
     }
 
     public static bool? ParseOptionalBool(JsonObject args, out string? error) {
@@ -66,13 +66,13 @@ internal static class DevCheatMcpHelper {
             // Patch toggles
             case "infinite_hp":
             case "godmode": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.InfiniteHp;
-                    DevModeState.PlayerCheats.InfiniteHp = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.InfiniteHp;
+                    KitLibState.PlayerCheats.InfiniteHp = v;
                     return Ok(cheat, v);
                 }
             case "infinite_block": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.InfiniteBlock;
-                    DevModeState.PlayerCheats.InfiniteBlock = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.InfiniteBlock;
+                    KitLibState.PlayerCheats.InfiniteBlock = v;
                     if (!MpCheatSession.InMultiplayerRun && v && RunContext.TryGetRunAndPlayer(out _, out var bp)) {
                         var c = bp.Creature;
                         if (c.Block < 999) c.GainBlockInternal(999 - c.Block);
@@ -80,74 +80,74 @@ internal static class DevCheatMcpHelper {
                     return Ok(cheat, v);
                 }
             case "infinite_energy": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.InfiniteEnergy;
-                    DevModeState.PlayerCheats.InfiniteEnergy = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.InfiniteEnergy;
+                    KitLibState.PlayerCheats.InfiniteEnergy = v;
                     if (v) PlayerCheatEffects.ApplyImmediateIfEnabled();
                     return Ok(cheat, v);
                 }
             case "infinite_stars": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.InfiniteStars;
-                    DevModeState.PlayerCheats.InfiniteStars = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.InfiniteStars;
+                    KitLibState.PlayerCheats.InfiniteStars = v;
                     if (v) PlayerCheatEffects.ApplyImmediateIfEnabled();
                     return Ok(cheat, v);
                 }
             case "freeze_enemies": {
-                    var v = enabled ?? !DevModeState.EnemyCheats.FreezeEnemies;
-                    DevModeState.EnemyCheats.FreezeEnemies = v;
+                    var v = enabled ?? !KitLibState.EnemyCheats.FreezeEnemies;
+                    KitLibState.EnemyCheats.FreezeEnemies = v;
                     return Ok(cheat, v);
                 }
             case "one_hit_kill": {
-                    var v = enabled ?? !DevModeState.EnemyCheats.OneHitKill;
-                    DevModeState.EnemyCheats.OneHitKill = v;
+                    var v = enabled ?? !KitLibState.EnemyCheats.OneHitKill;
+                    KitLibState.EnemyCheats.OneHitKill = v;
                     return Ok(cheat, v);
                 }
             case "free_shop": {
-                    var v = enabled ?? !DevModeState.GameplayModifiers.FreeShop;
-                    DevModeState.GameplayModifiers.FreeShop = v;
+                    var v = enabled ?? !KitLibState.GameplayModifiers.FreeShop;
+                    KitLibState.GameplayModifiers.FreeShop = v;
                     return Ok(cheat, v);
                 }
             case "always_potion": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.AlwaysRewardPotion;
-                    DevModeState.PlayerCheats.AlwaysRewardPotion = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.AlwaysRewardPotion;
+                    KitLibState.PlayerCheats.AlwaysRewardPotion = v;
                     return Ok(cheat, v);
                 }
             case "always_upgrade": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.AlwaysUpgradeCardReward;
-                    DevModeState.PlayerCheats.AlwaysUpgradeCardReward = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.AlwaysUpgradeCardReward;
+                    KitLibState.PlayerCheats.AlwaysUpgradeCardReward = v;
                     return Ok(cheat, v);
                 }
             case "max_rarity": {
-                    var v = enabled ?? !DevModeState.PlayerCheats.MaxCardRewardRarity;
-                    DevModeState.PlayerCheats.MaxCardRewardRarity = v;
+                    var v = enabled ?? !KitLibState.PlayerCheats.MaxCardRewardRarity;
+                    KitLibState.PlayerCheats.MaxCardRewardRarity = v;
                     return Ok(cheat, v);
                 }
             case "unknown_treasure": {
-                    var v = enabled ?? !DevModeState.MapCheats.UnknownMapAlwaysTreasure;
-                    DevModeState.MapCheats.UnknownMapAlwaysTreasure = v;
+                    var v = enabled ?? !KitLibState.MapCheats.UnknownMapAlwaysTreasure;
+                    KitLibState.MapCheats.UnknownMapAlwaysTreasure = v;
                     return Ok(cheat, v);
                 }
             case "max_score": {
-                    var v = enabled ?? !DevModeState.GameplayModifiers.MaxScore;
-                    DevModeState.GameplayModifiers.MaxScore = v;
+                    var v = enabled ?? !KitLibState.GameplayModifiers.MaxScore;
+                    KitLibState.GameplayModifiers.MaxScore = v;
                     return Ok(cheat, v);
                 }
 
             // Multipliers
             case "damage_multiplier":
-                return ApplyMultiplier(cheat, value, DevModeState.EnemyCheats.DamageMultiplier,
-                    v => DevModeState.EnemyCheats.DamageMultiplier = v);
+                return ApplyMultiplier(cheat, value, KitLibState.EnemyCheats.DamageMultiplier,
+                    v => KitLibState.EnemyCheats.DamageMultiplier = v);
             case "defense_multiplier":
-                return ApplyMultiplier(cheat, value, DevModeState.PlayerCheats.DefenseMultiplier,
-                    v => DevModeState.PlayerCheats.DefenseMultiplier = v);
+                return ApplyMultiplier(cheat, value, KitLibState.PlayerCheats.DefenseMultiplier,
+                    v => KitLibState.PlayerCheats.DefenseMultiplier = v);
             case "gold_multiplier":
-                return ApplyMultiplier(cheat, value, DevModeState.GameplayModifiers.GoldMultiplier,
-                    v => DevModeState.GameplayModifiers.GoldMultiplier = v);
+                return ApplyMultiplier(cheat, value, KitLibState.GameplayModifiers.GoldMultiplier,
+                    v => KitLibState.GameplayModifiers.GoldMultiplier = v);
             case "score_multiplier":
-                return ApplyMultiplier(cheat, value, DevModeState.GameplayModifiers.ScoreMultiplier,
-                    v => DevModeState.GameplayModifiers.ScoreMultiplier = v);
+                return ApplyMultiplier(cheat, value, KitLibState.GameplayModifiers.ScoreMultiplier,
+                    v => KitLibState.GameplayModifiers.ScoreMultiplier = v);
             case "game_speed":
-                return ApplyMultiplier(cheat, value, DevModeState.GameplayModifiers.GameSpeed,
-                    v => DevModeState.GameplayModifiers.GameSpeed = v);
+                return ApplyMultiplier(cheat, value, KitLibState.GameplayModifiers.GameSpeed,
+                    v => KitLibState.GameplayModifiers.GameSpeed = v);
 
             // Runtime frame cheats
             case "god_mode": {

@@ -1,8 +1,8 @@
-using DevMode.AI.AutoPlay;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib.AI.AutoPlay;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>One-click preset: host hand-plays, phantom + SyncBot + AI teammate.</summary>
 internal static class PseudoCoopBootstrap {

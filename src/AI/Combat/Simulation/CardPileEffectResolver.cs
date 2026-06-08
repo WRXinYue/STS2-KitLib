@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Actions;
-using DevMode.AI.Knowledge;
+using KitLib.Actions;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class CardPileEffectResolver {
     readonly record struct PileEffects(int Draw, int Discard, int Scry, int ExhaustHand);

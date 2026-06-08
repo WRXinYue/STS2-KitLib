@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Navigation;
+using KitLib.Navigation;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Actions.CardModes;
+namespace KitLib.Actions.CardModes;
 
 /// <summary>
 /// Deprecated: Previously used by Upgrade and Delete mode handlers to show

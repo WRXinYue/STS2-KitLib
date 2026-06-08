@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Modding;
+using KitLib.Actions;
+using KitLib.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Event picker — spliced to the DevMode rail, matching card / relic browser layout.</summary>
 internal static class EventSelectUI {
-    private const string RootName = "DevModeEventSelect";
-    private const string ExtensionWidthKey = "DevModeEventSelect_ext";
+    private const string RootName = "KitLibEventSelect";
+    private const string ExtensionWidthKey = "KitLibEventSelect_ext";
     private const string DualMetaKey = "dm_dual_event_select";
     private const string CarrierNodeName = "EventSelectDualCarrier";
     private const float PanelW = 520f;
@@ -175,7 +175,7 @@ internal static class EventSelectUI {
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" })
             backBtn.AddThemeStyleboxOverride(s, flat);
-        backBtn.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        backBtn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         backBtn.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(backBtn);
 
@@ -186,14 +186,14 @@ internal static class EventSelectUI {
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" })
             titleBtn.AddThemeStyleboxOverride(s, flat);
-        titleBtn.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        titleBtn.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         titleBtn.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(titleBtn);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         extVbox.AddChild(row);
         extVbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
 
@@ -228,7 +228,7 @@ internal static class EventSelectUI {
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         nameLabel.AddThemeFontSizeOverride("font_size", 13);
-        nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         nameLabel.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         col.AddChild(nameLabel);
 
@@ -237,7 +237,7 @@ internal static class EventSelectUI {
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
         sourceLabel.AddThemeFontSizeOverride("font_size", 10);
-        sourceLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        sourceLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         sourceLabel.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
         col.AddChild(sourceLabel);
 
@@ -269,14 +269,14 @@ internal static class EventSelectUI {
             BorderColor = border
         };
 
-        var accent = DevModeTheme.Accent;
-        var bgNormal = DevModeTheme.ButtonBgNormal;
+        var accent = KitLibTheme.Accent;
+        var bgNormal = KitLibTheme.ButtonBgNormal;
         var borderNormal = new Color(bgNormal.R, bgNormal.G, bgNormal.B, bgNormal.A * 0.8f);
         var borderHover = new Color(accent.R, accent.G, accent.B, 0.30f);
 
         panel.AddThemeStyleboxOverride("panel", MakeStyle(bgNormal, borderNormal));
         panel.MouseEntered += () =>
-            panel.AddThemeStyleboxOverride("panel", MakeStyle(DevModeTheme.ButtonBgHover, borderHover));
+            panel.AddThemeStyleboxOverride("panel", MakeStyle(KitLibTheme.ButtonBgHover, borderHover));
         panel.MouseExited += () =>
             panel.AddThemeStyleboxOverride("panel", MakeStyle(bgNormal, borderNormal));
     }
@@ -294,18 +294,18 @@ internal static class EventSelectUI {
         var tab = new Button { Text = title, FocusMode = Control.FocusModeEnum.None, CustomMinimumSize = new Vector2(0, 32) };
         var flat = new StyleBoxFlat { BgColor = Colors.Transparent, ContentMarginLeft = 16, ContentMarginRight = 16, ContentMarginTop = 4, ContentMarginBottom = 6 };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" }) tab.AddThemeStyleboxOverride(s, flat);
-        tab.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        tab.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         tab.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(tab);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         vbox.AddChild(row);
-        vbox.AddChild(new ColorRect { CustomMinimumSize = new Vector2(0, 1), Color = DevModeTheme.Separator, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        vbox.AddChild(new ColorRect { CustomMinimumSize = new Vector2(0, 1), Color = KitLibTheme.Separator, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
     }
 
     private static Label BuildStatusLabel() {
         var lbl = new Label { HorizontalAlignment = HorizontalAlignment.Center };
         lbl.AddThemeFontSizeOverride("font_size", 11);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return lbl;
     }
 }

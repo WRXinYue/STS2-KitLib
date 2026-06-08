@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Hooks;
-using DevMode.Icons;
-using DevMode.Modding;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.Actions;
+using KitLib.Hooks;
+using KitLib.Icons;
+using KitLib.Modding;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -16,11 +16,11 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Potion browser — same two-pane layout as RelicBrowserUI.</summary>
 internal static class PotionSelectUI {
-    private const string RootName = "DevModePotionBrowser";
+    private const string RootName = "KitLibPotionBrowser";
     private const float RightPanelW = 240f;
     private const float RailLeft = 24f;
     private const float RailW = 52f;
@@ -53,15 +53,15 @@ internal static class PotionSelectUI {
 
     // ── Colours ──────────────────────────────────────────────────────────
 
-    private static Color ColNavActive => DevModeTheme.Accent;
-    private static Color ColNavAccent => DevModeTheme.AccentAlpha;
-    private static Color ColPanelBg => DevModeTheme.PanelBg;
-    private static Color ColPanelBorder => DevModeTheme.PanelBorder;
-    private static Color ColSubtle => DevModeTheme.Subtle;
-    private static Color ColNavInactive => DevModeTheme.Subtle;
-    private static Color ColNavHover => DevModeTheme.TextPrimary;
-    private static Color ColSegOff => DevModeTheme.ButtonBgNormal;
-    private static Color ColSegHover => DevModeTheme.ButtonBgHover;
+    private static Color ColNavActive => KitLibTheme.Accent;
+    private static Color ColNavAccent => KitLibTheme.AccentAlpha;
+    private static Color ColPanelBg => KitLibTheme.PanelBg;
+    private static Color ColPanelBorder => KitLibTheme.PanelBorder;
+    private static Color ColSubtle => KitLibTheme.Subtle;
+    private static Color ColNavInactive => KitLibTheme.Subtle;
+    private static Color ColNavHover => KitLibTheme.TextPrimary;
+    private static Color ColSegOff => KitLibTheme.ButtonBgNormal;
+    private static Color ColSegHover => KitLibTheme.ButtonBgHover;
     private static readonly Color ColSegOn = new(0.25f, 0.40f, 0.65f, 0.90f);
     private static readonly Color ColSegOnHover = new(0.30f, 0.48f, 0.75f, 0.95f);
 
@@ -156,7 +156,7 @@ internal static class PotionSelectUI {
         navOuter.AddChild(navSection);
         navOuter.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
         content.AddChild(navOuter);
@@ -165,7 +165,7 @@ internal static class PotionSelectUI {
         var searchRow = new HBoxContainer();
         searchRow.AddThemeConstantOverride("separation", 6);
         searchRow.AddChild(new TextureRect {
-            Texture = MdiIcon.Magnify.Texture(18, DevModeTheme.Subtle),
+            Texture = MdiIcon.Magnify.Texture(18, KitLibTheme.Subtle),
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             CustomMinimumSize = new Vector2(22, 22),
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
@@ -186,7 +186,7 @@ internal static class PotionSelectUI {
             var chipRow = new HBoxContainer();
             chipRow.AddThemeConstantOverride("separation", 4);
             chipRow.AddChild(new TextureRect {
-                Texture = MdiIcon.FilterVariant.Texture(16, DevModeTheme.Subtle),
+                Texture = MdiIcon.FilterVariant.Texture(16, KitLibTheme.Subtle),
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                 CustomMinimumSize = new Vector2(18, 18),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
@@ -424,8 +424,8 @@ internal static class PotionSelectUI {
 
         // ── Name label ──
         var nameColor = rarity == PotionRarity.None
-            ? DevModeTheme.Subtle
-            : rarityCol.Lerp(DevModeTheme.TextPrimary, 0.45f);
+            ? KitLibTheme.Subtle
+            : rarityCol.Lerp(KitLibTheme.TextPrimary, 0.45f);
 
         var label = new Label {
             Text = name,
@@ -596,7 +596,7 @@ internal static class PotionSelectUI {
         // ID
         var id = ((AbstractModel)potion).Id.Entry;
         if (!string.IsNullOrEmpty(id))
-            container.AddChild(DevModeTheme.CreateCopyableIdRow(id,
+            container.AddChild(KitLibTheme.CreateCopyableIdRow(id,
                 msg => s.StatusLabel.Text = msg));
 
         container.AddChild(BrowserDetailHelpers.CreateModSourceRow(ContentModResolver.Resolve(potion)));
@@ -605,10 +605,10 @@ internal static class PotionSelectUI {
         string? desc = PotionActions.GetPotionDescriptionFormatted(potion);
         if (!string.IsNullOrWhiteSpace(desc)) {
             container.AddChild(new HSeparator());
-            var descLabel = DevModeTheme.CreateGameBbcodeLabel();
-            descLabel.Text = DevModeTheme.ConvertGameBbcode(desc);
+            var descLabel = KitLibTheme.CreateGameBbcodeLabel();
+            descLabel.Text = KitLibTheme.ConvertGameBbcode(desc);
             descLabel.AddThemeFontSizeOverride("normal_font_size", 12);
-            descLabel.AddThemeColorOverride("default_color", DevModeTheme.TextSecondary);
+            descLabel.AddThemeColorOverride("default_color", KitLibTheme.TextSecondary);
             container.AddChild(descLabel);
         }
 
@@ -822,9 +822,9 @@ internal static class PotionSelectUI {
         btn.AddThemeStyleboxOverride("pressed", MakeStyle(ColSegOn));
         btn.AddThemeStyleboxOverride("hover_pressed", MakeStyle(ColSegOnHover));
         btn.AddThemeStyleboxOverride("focus", MakeStyle(ColSegOff));
-        btn.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 11);
         return btn;
     }
@@ -925,11 +925,11 @@ internal static class PotionSelectUI {
     };
 
     private static Color RarityToColor(PotionRarity rarity) => rarity switch {
-        PotionRarity.Common => DevModeTheme.RarityCommon,
-        PotionRarity.Uncommon => DevModeTheme.RarityUncommon,
-        PotionRarity.Rare => DevModeTheme.RarityRare,
-        PotionRarity.Event => DevModeTheme.RaritySpecial,
-        PotionRarity.Token => DevModeTheme.Subtle,
+        PotionRarity.Common => KitLibTheme.RarityCommon,
+        PotionRarity.Uncommon => KitLibTheme.RarityUncommon,
+        PotionRarity.Rare => KitLibTheme.RarityRare,
+        PotionRarity.Event => KitLibTheme.RaritySpecial,
+        PotionRarity.Token => KitLibTheme.Subtle,
         _ => ColSubtle
     };
 }

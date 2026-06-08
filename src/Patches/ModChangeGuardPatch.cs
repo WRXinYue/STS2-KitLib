@@ -1,8 +1,8 @@
-using DevMode.Progress;
+using KitLib.Progress;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.InitProfileId))]
 internal static class ModChangeGuardInitProfilePatch {

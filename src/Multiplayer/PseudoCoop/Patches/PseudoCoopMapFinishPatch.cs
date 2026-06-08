@@ -1,8 +1,8 @@
-using DevMode.Settings;
+using KitLib.Settings;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 [HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.Open))]
 internal static class PseudoCoopMapFinishPatch {
@@ -11,7 +11,7 @@ internal static class PseudoCoopMapFinishPatch {
         if (state != null && SettingsStore.Current.SyncBotSpawnPhantomPlayer)
             PseudoCoopMultiplayerUiRefresh.TryRefreshAfterPlayerJoined(state);
 
-        if (!DevModeState.PseudoCoopAwaitingMapFinish) return;
+        if (!KitLibState.PseudoCoopAwaitingMapFinish) return;
         PseudoCoopDeferredInit.TryScheduleMapFinish();
     }
 }

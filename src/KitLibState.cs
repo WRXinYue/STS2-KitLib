@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Presets;
+using KitLib.Presets;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode;
+namespace KitLib;
 
 public enum CardTarget {
     DrawPile,
@@ -78,7 +78,7 @@ public enum EnemyMode {
 
 /// <summary>
 /// Dev overlay level applied to normal (non-test) runs.
-/// This is independent of <see cref="DevModeState.InDevRun"/>; it persists across run boundaries
+/// This is independent of <see cref="KitLibState.InDevRun"/>; it persists across run boundaries
 /// and is cycled by the user from the Developer Mode menu.
 /// </summary>
 public enum NormalRunMode {
@@ -90,7 +90,7 @@ public enum NormalRunMode {
     Cheat,
 }
 
-public static class DevModeState {
+public static class KitLibState {
     /// <summary>True when this is a dev test run started from the Developer Mode menu (no save).</summary>
     public static bool InDevRun { get; set; }
 

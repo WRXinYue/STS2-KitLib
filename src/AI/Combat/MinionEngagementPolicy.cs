@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Context-aware target bias replacing fixed minion +/-30.</summary>
 public static class MinionEngagementPolicy {

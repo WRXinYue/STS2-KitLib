@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using DevMode;
+using KitLib;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Serializable multiplayer cheat snapshot (Tier 0/1 sync).</summary>
 public sealed class MpCheatConfig {
@@ -23,7 +23,7 @@ public sealed class MpCheatConfig {
     /// <summary>Per-player cheat flags keyed by net id (MP player toggles).</summary>
     public Dictionary<ulong, MpCheatPlayerFlags> PerPlayer { get; set; } = new();
 
-    public static MpCheatConfig FromDevModeState() {
+    public static MpCheatConfig FromKitLibState() {
         return new MpCheatConfig {
             SessionEnabled = true,
             GlobalPlayer = MpCheatPlayerFlags.FromDevMode(),
@@ -82,7 +82,7 @@ public sealed class MpCheatConfig {
         return merged;
     }
 
-    public void ApplyToDevModeState() {
+    public void ApplyToKitLibState() {
         GlobalPlayer.ApplyToDevMode();
         GlobalEnemy.ApplyToDevMode();
         GlobalGameplay.ApplyToDevMode();
@@ -90,7 +90,7 @@ public sealed class MpCheatConfig {
     }
 
     /// <summary>Apply synced snapshot to local DevMode UI (MP: only this machine's player flags).</summary>
-    public void ApplyToLocalDevModeState(ulong localNetId) {
+    public void ApplyToLocalKitLibState(ulong localNetId) {
         if (TryGetPlayerFlags(localNetId, out var per))
             per.ApplyToDevMode();
         else
@@ -151,25 +151,25 @@ public sealed class MpCheatPlayerFlags {
     };
 
     public static MpCheatPlayerFlags FromDevMode() => new() {
-        InfiniteHp = DevModeState.PlayerCheats.InfiniteHp,
-        InfiniteBlock = DevModeState.PlayerCheats.InfiniteBlock,
-        InfiniteEnergy = DevModeState.PlayerCheats.InfiniteEnergy,
-        InfiniteStars = DevModeState.PlayerCheats.InfiniteStars,
-        AlwaysRewardPotion = DevModeState.PlayerCheats.AlwaysRewardPotion,
-        AlwaysUpgradeCardReward = DevModeState.PlayerCheats.AlwaysUpgradeCardReward,
-        MaxCardRewardRarity = DevModeState.PlayerCheats.MaxCardRewardRarity,
-        DefenseMultiplier = DevModeState.PlayerCheats.DefenseMultiplier,
+        InfiniteHp = KitLibState.PlayerCheats.InfiniteHp,
+        InfiniteBlock = KitLibState.PlayerCheats.InfiniteBlock,
+        InfiniteEnergy = KitLibState.PlayerCheats.InfiniteEnergy,
+        InfiniteStars = KitLibState.PlayerCheats.InfiniteStars,
+        AlwaysRewardPotion = KitLibState.PlayerCheats.AlwaysRewardPotion,
+        AlwaysUpgradeCardReward = KitLibState.PlayerCheats.AlwaysUpgradeCardReward,
+        MaxCardRewardRarity = KitLibState.PlayerCheats.MaxCardRewardRarity,
+        DefenseMultiplier = KitLibState.PlayerCheats.DefenseMultiplier,
     };
 
     public void ApplyToDevMode() {
-        DevModeState.PlayerCheats.InfiniteHp = InfiniteHp;
-        DevModeState.PlayerCheats.InfiniteBlock = InfiniteBlock;
-        DevModeState.PlayerCheats.InfiniteEnergy = InfiniteEnergy;
-        DevModeState.PlayerCheats.InfiniteStars = InfiniteStars;
-        DevModeState.PlayerCheats.AlwaysRewardPotion = AlwaysRewardPotion;
-        DevModeState.PlayerCheats.AlwaysUpgradeCardReward = AlwaysUpgradeCardReward;
-        DevModeState.PlayerCheats.MaxCardRewardRarity = MaxCardRewardRarity;
-        DevModeState.PlayerCheats.DefenseMultiplier = DefenseMultiplier;
+        KitLibState.PlayerCheats.InfiniteHp = InfiniteHp;
+        KitLibState.PlayerCheats.InfiniteBlock = InfiniteBlock;
+        KitLibState.PlayerCheats.InfiniteEnergy = InfiniteEnergy;
+        KitLibState.PlayerCheats.InfiniteStars = InfiniteStars;
+        KitLibState.PlayerCheats.AlwaysRewardPotion = AlwaysRewardPotion;
+        KitLibState.PlayerCheats.AlwaysUpgradeCardReward = AlwaysUpgradeCardReward;
+        KitLibState.PlayerCheats.MaxCardRewardRarity = MaxCardRewardRarity;
+        KitLibState.PlayerCheats.DefenseMultiplier = DefenseMultiplier;
     }
 }
 
@@ -185,15 +185,15 @@ public sealed class MpCheatEnemyFlags {
     };
 
     public static MpCheatEnemyFlags FromDevMode() => new() {
-        FreezeEnemies = DevModeState.EnemyCheats.FreezeEnemies,
-        OneHitKill = DevModeState.EnemyCheats.OneHitKill,
-        DamageMultiplier = DevModeState.EnemyCheats.DamageMultiplier,
+        FreezeEnemies = KitLibState.EnemyCheats.FreezeEnemies,
+        OneHitKill = KitLibState.EnemyCheats.OneHitKill,
+        DamageMultiplier = KitLibState.EnemyCheats.DamageMultiplier,
     };
 
     public void ApplyToDevMode() {
-        DevModeState.EnemyCheats.FreezeEnemies = FreezeEnemies;
-        DevModeState.EnemyCheats.OneHitKill = OneHitKill;
-        DevModeState.EnemyCheats.DamageMultiplier = DamageMultiplier;
+        KitLibState.EnemyCheats.FreezeEnemies = FreezeEnemies;
+        KitLibState.EnemyCheats.OneHitKill = OneHitKill;
+        KitLibState.EnemyCheats.DamageMultiplier = DamageMultiplier;
     }
 }
 
@@ -207,13 +207,13 @@ public sealed class MpCheatGameplayFlags {
     };
 
     public static MpCheatGameplayFlags FromDevMode() => new() {
-        GoldMultiplier = DevModeState.GameplayModifiers.GoldMultiplier,
-        FreeShop = DevModeState.GameplayModifiers.FreeShop,
+        GoldMultiplier = KitLibState.GameplayModifiers.GoldMultiplier,
+        FreeShop = KitLibState.GameplayModifiers.FreeShop,
     };
 
     public void ApplyToDevMode() {
-        DevModeState.GameplayModifiers.GoldMultiplier = GoldMultiplier;
-        DevModeState.GameplayModifiers.FreeShop = FreeShop;
+        KitLibState.GameplayModifiers.GoldMultiplier = GoldMultiplier;
+        KitLibState.GameplayModifiers.FreeShop = FreeShop;
     }
 }
 
@@ -227,12 +227,12 @@ public sealed class MpCheatMapFlags {
     };
 
     public static MpCheatMapFlags FromDevMode() => new() {
-        UnknownMapAlwaysTreasure = DevModeState.MapCheats.UnknownMapAlwaysTreasure,
-        FreeTravelFromDevRoomMap = DevModeState.MapCheats.MapDebugJumpEnabled,
+        UnknownMapAlwaysTreasure = KitLibState.MapCheats.UnknownMapAlwaysTreasure,
+        FreeTravelFromDevRoomMap = KitLibState.MapCheats.MapDebugJumpEnabled,
     };
 
     public void ApplyToDevMode() {
-        DevModeState.MapCheats.UnknownMapAlwaysTreasure = UnknownMapAlwaysTreasure;
-        DevModeState.MapCheats.MapDebugJumpEnabled = FreeTravelFromDevRoomMap;
+        KitLibState.MapCheats.UnknownMapAlwaysTreasure = UnknownMapAlwaysTreasure;
+        KitLibState.MapCheats.MapDebugJumpEnabled = FreeTravelFromDevRoomMap;
     }
 }

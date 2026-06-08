@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.SyncBot;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 internal static class CompanionNetIdAllocator {
     internal const int MaxCoopPlayers = 4;

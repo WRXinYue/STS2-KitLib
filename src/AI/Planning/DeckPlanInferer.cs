@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public static class DeckPlanInferer {
     public static DeckPlan Infer(JsonObject snapshot) {

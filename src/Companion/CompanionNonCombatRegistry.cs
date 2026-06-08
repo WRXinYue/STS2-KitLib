@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 /// <summary>Tracks companions that should run non-combat AI (events, rewards, rest, shop).</summary>
 public static class CompanionNonCombatRegistry {

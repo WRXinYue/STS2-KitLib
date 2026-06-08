@@ -1,4 +1,4 @@
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 internal static class HotkeyActionId {
     internal const string ToggleRail = "toggleRail";

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Hooks;
-using DevMode.Settings;
+using KitLib.Hooks;
+using KitLib.Settings;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 /// <summary>
 /// One-click migration: converts existing <see cref="HookEntry"/> rules

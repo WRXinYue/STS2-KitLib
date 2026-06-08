@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI;
-using DevMode.AI.Core.Schema;
+using KitLib.AI;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class MapActionTool : IMcpTool {
     public string Name => "map_action";

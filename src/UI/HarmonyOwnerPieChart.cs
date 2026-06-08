@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Pie chart for Harmony patch counts by owner (top slices + Other).
@@ -109,7 +109,7 @@ internal sealed partial class HarmonyOwnerPieChart : Control {
 
         if (_slices.Count == 0 || _total <= 0) {
             DrawCircle(center, radius * 0.38f, new Color(0.22f, 0.22f, 0.26f, 0.85f));
-            DrawArc(center, radius, 0f, Mathf.Tau, 48, DevModeTheme.Separator, 1f, true);
+            DrawArc(center, radius, 0f, Mathf.Tau, 48, KitLibTheme.Separator, 1f, true);
             return;
         }
 
@@ -122,7 +122,7 @@ internal sealed partial class HarmonyOwnerPieChart : Control {
             start = end;
         }
 
-        DrawArc(center, radius + 0.5f, 0f, Mathf.Tau, 64, DevModeTheme.PanelBorder, 1f, true);
+        DrawArc(center, radius + 0.5f, 0f, Mathf.Tau, 64, KitLibTheme.PanelBorder, 1f, true);
     }
 
     private void DrawWedge(Vector2 center, float radius, float fromRad, float toRad, Color color) {

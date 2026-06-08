@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DevMode.Hooks;
+using KitLib.Hooks;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 /// <summary>
 /// Central dispatcher for SpireScratch scripts.
@@ -76,7 +76,7 @@ internal static class ScriptManager {
     // ──────── Fire ────────
 
     public static void Fire(TriggerType trigger, Player? player) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         if (_scripts.Count == 0) return;
         if (player == null && !RunContext.TryGetRunAndPlayer(out _, out player)) return;
 

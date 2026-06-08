@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Patches.Map;
+namespace KitLib.Patches.Map;
 
 /// <summary>
 /// Rewrites map room types based on QoL settings.
@@ -22,13 +22,13 @@ public static class MapRoomRewritePatch {
 
     [HarmonyPrefix]
     public static void Prefix(ref RoomType __0, ref MapPointType __1, ref AbstractModel? __2) {
-        if (!DevModeState.CheatsInRun || !DevModeState.MapCheats.MapRewriteEnabled) return;
+        if (!KitLibState.CheatsInRun || !KitLibState.MapCheats.MapRewriteEnabled) return;
 
-        if (DevModeState.MapCheats.MapKeepFinalBoss && __0 == RoomType.Boss) return;
+        if (KitLibState.MapCheats.MapKeepFinalBoss && __0 == RoomType.Boss) return;
 
         if (__0 != RoomType.Monster && __0 != RoomType.Elite && (int)__0 != 8) return;
 
-        switch (DevModeState.MapCheats.MapRewriteMode) {
+        switch (KitLibState.MapCheats.MapRewriteMode) {
             case MapRewriteMode.AllChest:
                 __0 = RoomType.Treasure;
                 __1 = (MapPointType)3;

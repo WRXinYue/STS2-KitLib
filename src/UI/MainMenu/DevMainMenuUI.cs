@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using DevMode;
-using DevMode.Actions;
-using DevMode.Multiplayer.LanTest;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Actions;
+using KitLib.Multiplayer.LanTest;
+using KitLib.Settings;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
@@ -13,7 +13,7 @@ using MegaCrit.Sts2.Core.Nodes.Debug.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal sealed class DevMainMenuActions {
     public required Action OnNewTest { get; init; }
@@ -42,13 +42,13 @@ internal static class DevMainMenuUI {
 
         var container = mainMenu.GetNodeOrNull<Control>(ButtonsContainerPath);
         if (container == null) {
-            MainFile.Logger.Warn("DevMode: Could not find MainMenuTextButtons container.");
+            MainFile.Logger.Warn("KitLib: Could not find MainMenuTextButtons container.");
             return;
         }
 
         var template = container.GetNodeOrNull<NMainMenuTextButton>("SettingsButton");
         if (template == null) {
-            MainFile.Logger.Warn("DevMode: SettingsButton not found under MainMenuTextButtons.");
+            MainFile.Logger.Warn("KitLib: SettingsButton not found under MainMenuTextButtons.");
             return;
         }
 
@@ -162,14 +162,14 @@ internal static class DevMainMenuUI {
         var game = mainMenu.GetTree().Root.GetNodeOrNull<NGame>("Game")
             ?? NGame.Instance;
         if (game == null) {
-            MainFile.Logger.Warn("DevMode: NGame not found; cannot open LAN multiplayer test scene.");
+            MainFile.Logger.Warn("KitLib: NGame not found; cannot open LAN multiplayer test scene.");
             return;
         }
 
         var testScene = SceneHelper.Instantiate<NMultiplayerTest>("debug/multiplayer_test");
         game.RootSceneContainer.SetCurrentScene(testScene);
         _ = TaskHelper.RunSafely(game.Transition.FadeIn());
-        MainFile.Logger.Info("DevMode: Opened LAN multiplayer test scene (debug/multiplayer_test).");
+        MainFile.Logger.Info("KitLib: Opened LAN multiplayer test scene (debug/multiplayer_test).");
     }
 
     static void ClearAddedButtons() {
@@ -268,10 +268,10 @@ internal static class DevMainMenuUI {
     }
 
     private static bool IsDevMenuAddedButton(Control ctrl) =>
-        ctrl.Name.ToString().StartsWith("DevModeBtn_", StringComparison.Ordinal);
+        ctrl.Name.ToString().StartsWith("KitLibBtn_", StringComparison.Ordinal);
 
-    private const string SeedOverlayName = "DevModeSeedInput";
-    private const string UnlockAllOverlayName = "DevModeUnlockAllConfirm";
+    private const string SeedOverlayName = "KitLibSeedInput";
+    private const string UnlockAllOverlayName = "KitLibUnlockAllConfirm";
 
     private static void ShowUnlockAllConfirm(NMainMenu mainMenu) {
         var root = mainMenu.GetTree().Root;
@@ -308,11 +308,11 @@ internal static class DevMainMenuUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(title);
 
         vbox.AddChild(new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
@@ -323,7 +323,7 @@ internal static class DevMainMenuUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         body.AddThemeFontSizeOverride("font_size", 12);
-        body.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        body.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(body);
 
         var btnRow = new HBoxContainer();
@@ -404,14 +404,14 @@ internal static class DevMainMenuUI {
 
         var title = new Label { Text = I18N.T("restart.title", "Restart with Seed"), HorizontalAlignment = HorizontalAlignment.Center };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(title);
 
-        vbox.AddChild(new ColorRect { Color = DevModeTheme.Separator, CustomMinimumSize = new Vector2(0, 1), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        vbox.AddChild(new ColorRect { Color = KitLibTheme.Separator, CustomMinimumSize = new Vector2(0, 1), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 
         var seedLbl = new Label { Text = I18N.T("restart.seed.label", "Seed (leave empty for random):") };
         seedLbl.AddThemeFontSizeOverride("font_size", 12);
-        seedLbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        seedLbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(seedLbl);
 
         var seedInput = new LineEdit {
@@ -440,8 +440,8 @@ internal static class DevMainMenuUI {
         startBtn.Pressed += () => {
             var seed = seedInput.Text?.Trim();
             if (!string.IsNullOrEmpty(seed)) {
-                DevModeState.PendingRestartSeed = SeedHelper.CanonicalizeSeed(seed);
-                MainFile.Logger.Info($"[DevMode] MainMenu seed input: '{DevModeState.PendingRestartSeed}'.");
+                KitLibState.PendingRestartSeed = SeedHelper.CanonicalizeSeed(seed);
+                MainFile.Logger.Info($"[KitLib] MainMenu seed input: '{KitLibState.PendingRestartSeed}'.");
             }
 
             overlay.QueueFree();
@@ -460,7 +460,7 @@ internal static class DevMainMenuUI {
     }
 
     private static void AdvanceNormalRunMode() {
-        var next = DevModeState.NormalRunMode switch {
+        var next = KitLibState.NormalRunMode switch {
             NormalRunMode.Disabled => NormalRunMode.DevPanel,
             NormalRunMode.DevPanel => NormalRunMode.Cheat,
             NormalRunMode.Cheat   => NormalRunMode.Disabled,
@@ -475,7 +475,7 @@ internal static class DevMainMenuUI {
             : I18N.T("devmenu.mpCheat.off", "Multiplayer cheat: OFF");
 
     private static string GetPersistNormalRunModeLabel() {
-        return DevModeState.NormalRunMode switch {
+        return KitLibState.NormalRunMode switch {
             NormalRunMode.Disabled => I18N.T("devmenu.persistNormalRun.disabled", "Normal run: disabled"),
             NormalRunMode.DevPanel => I18N.T("devmenu.persistNormalRun.devMode", "Normal run: Dev Mode"),
             NormalRunMode.Cheat   => I18N.T("devmenu.persistNormalRun.cheatMode", "Normal run: Cheat Mode"),
@@ -487,7 +487,7 @@ internal static class DevMainMenuUI {
         var btn = MainMenuTextButtonFactory.CreateFrom(
             template,
             container,
-            name: $"DevModeBtn_{text.Replace(" ", "")}",
+            name: $"KitLibBtn_{text.Replace(" ", "")}",
             text: text,
             onReleased: _ => action());
 

@@ -1,11 +1,11 @@
 using System;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Node name for <see cref="SaveSlotFullscreenShell"/> (fullscreen) or <see cref="SaveSlotPanel"/> (embedded).</summary>
 internal static class SaveSlotDialogRootId {
-    internal const string NodeName = "DevModeSaveSlot";
+    internal const string NodeName = "KitLibSaveSlot";
 }
 
 internal interface ISaveSlotDialogRoot {

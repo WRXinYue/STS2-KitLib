@@ -1,7 +1,7 @@
 using System.Linq;
-using DevMode.AI.Combat.Simulation;
+using KitLib.AI.Combat.Simulation;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Prefer killing this-turn attackers over chipping high-HP primaries.</summary>
 internal static class AttackerKillPriority {

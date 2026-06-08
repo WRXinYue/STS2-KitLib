@@ -1,6 +1,6 @@
 using System;
-using DevMode.Hooks;
-using DevMode.Scripts;
+using KitLib.Hooks;
+using KitLib.Scripts;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.ValueProps;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>
 /// Subscribe to CombatManager events on combat setup to fire Hook triggers
@@ -24,7 +24,7 @@ public static class HookCombatSetupPatch {
     private static Action<CombatRoom>? _combatEndHandler;
 
     public static void Postfix(CombatManager __instance) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
 
         // Unsubscribe stale handlers from a previous combat session
         if (_turnStartHandler != null) __instance.TurnStarted -= _turnStartHandler;
@@ -68,7 +68,7 @@ public static class HookCombatSetupPatch {
     [typeof(PlayerChoiceContext), typeof(decimal), typeof(Player), typeof(bool)])]
 public static class HookDrawPatch {
     public static void Postfix(Player player) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         HookManager.Fire(TriggerType.OnDraw, player);
         ScriptManager.Fire(TriggerType.OnDraw, player);
     }
@@ -79,7 +79,7 @@ public static class HookDrawPatch {
 [HarmonyPriority(Priority.Low)]
 public static class HookDamagePatch {
     public static void Postfix(Creature __instance, DamageResult __result) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         if (__result.UnblockedDamage <= 0) return;
 
         Player? player = null;
@@ -100,7 +100,7 @@ public static class HookDamagePatch {
 [HarmonyPatch(typeof(PotionModel), nameof(PotionModel.OnUseWrapper))]
 public static class HookPotionUsedPatch {
     public static void Prefix() {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
 
         Player? player = null;
         RunContext.TryGetRunAndPlayer(out _, out player);
@@ -137,7 +137,7 @@ public static class ScriptCardPlayedPatch {
     }
 
     public static void Postfix() {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         Player? player = null;
         RunContext.TryGetRunAndPlayer(out _, out player);
         HookManager.Fire(TriggerType.OnCardPlayed, player);
@@ -149,7 +149,7 @@ public static class ScriptCardPlayedPatch {
 [HarmonyPatch(typeof(CardPileCmd), nameof(CardPileCmd.Shuffle))]
 public static class ScriptShufflePatch {
     public static void Postfix() {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         Player? player = null;
         RunContext.TryGetRunAndPlayer(out _, out player);
         HookManager.Fire(TriggerType.OnShuffle, player);

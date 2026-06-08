@@ -1,15 +1,15 @@
 using System.Collections.Generic;
-using DevMode.EnemyIntent;
-using DevMode.Settings;
+using KitLib.EnemyIntent;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Draggable overlay that predicts enemy move/intent sequences during combat.</summary>
 internal static partial class MonsterIntentOverlayUI {
-    internal const string RootName = "DevModeMonsterIntentOverlay";
+    internal const string RootName = "KitLibMonsterIntentOverlay";
 
     private static MonsterIntentOverlayHost? _overlay;
     private static NGlobalUi? _globalUi;
@@ -51,7 +51,7 @@ internal static partial class MonsterIntentOverlayUI {
     internal static void Hide() => _overlay?.HidePanel();
 
     private static bool ShouldShow() {
-        if (!DevModeState.IsActive)
+        if (!KitLibState.IsActive)
             return false;
         return MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState());
     }
@@ -216,7 +216,7 @@ internal static partial class MonsterIntentOverlayUI {
                 MouseFilter = MouseFilterEnum.Ignore,
             };
             title.AddThemeFontSizeOverride("font_size", 10);
-            title.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            title.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             titleRow.AddChild(title);
             return titleRow;
         }

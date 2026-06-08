@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Shared incoming-damage threat checks for block scoring and transform suppression.</summary>
 public static class BlockThreatEvaluator {

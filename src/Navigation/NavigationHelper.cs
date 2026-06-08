@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.PauseMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Navigation;
+namespace KitLib.Navigation;
 
 internal static class NavigationHelper {
     /// <summary>

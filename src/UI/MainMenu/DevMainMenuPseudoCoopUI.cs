@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Unified pseudo-coop panel: options, character, seed, one-click host start.</summary>
 internal static class DevMainMenuPseudoCoopUI {
-    private const string OverlayName = "DevModePseudoCoopLaunch";
+    private const string OverlayName = "KitLibPseudoCoopLaunch";
 
     static readonly List<CharacterModel> Characters = ModelDb.AllCharacters.ToList();
 
@@ -50,7 +50,7 @@ internal static class DevMainMenuPseudoCoopUI {
 
         var desc = CreateSecondaryLabel(I18N.T(
             "devmenu.pseudocoop.desc",
-            "Host a multiplayer run from DevMode. You play locally; AI drives simulated teammates in combat."));
+            "Host a multiplayer run from KitLib. You play locally; AI drives simulated teammates in combat."));
         vbox.AddChild(desc);
 
         var charRow = new HBoxContainer();
@@ -108,7 +108,7 @@ internal static class DevMainMenuPseudoCoopUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         statusLbl.AddThemeFontSizeOverride("font_size", 12);
-        statusLbl.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        statusLbl.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         vbox.AddChild(statusLbl);
 
         var errorLbl = new Label {
@@ -208,7 +208,7 @@ internal static class DevMainMenuPseudoCoopUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         return title;
     }
 
@@ -228,12 +228,12 @@ internal static class DevMainMenuPseudoCoopUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         lbl.AddThemeFontSizeOverride("font_size", 12);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         return lbl;
     }
 
     static ColorRect Separator() => new() {
-        Color = DevModeTheme.Separator,
+        Color = KitLibTheme.Separator,
         CustomMinimumSize = new Vector2(0, 1),
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
     };

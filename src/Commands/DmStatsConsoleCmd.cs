@@ -1,22 +1,22 @@
 using System;
 using System.IO;
-using DevMode.CombatStats;
+using KitLib.CombatStats;
 using Godot;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmStatsConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmstats";
     public override string Args => "[export [filename]] | [text]";
-    public override string Description => "[DevMode] Dump or export combat statistics (current / last / run total)";
+    public override string Description => "[KitLib] Dump or export combat statistics (current / last / run total)";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
     public override CmdResult Process(Player? issuingPlayer, string[] args) {
-        if (!DevModeState.IsActive)
+        if (!KitLibState.IsActive)
             return new CmdResult(false, "Dev Mode is not active.");
 
         if (args.Length == 0)
@@ -36,7 +36,7 @@ public class DmStatsConsoleCmd : AbstractConsoleCmd {
             if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                 fileName += ".json";
 
-            string dir = Path.Combine(OS.GetUserDataDir(), "mod_data", "DevMode");
+            string dir = Path.Combine(OS.GetUserDataDir(), "mod_data", "KitLib");
             Directory.CreateDirectory(dir);
             string path = Path.Combine(dir, fileName);
 

@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Panels;
-using DevMode.Settings;
+using KitLib.Panels;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     private static bool _railShown;

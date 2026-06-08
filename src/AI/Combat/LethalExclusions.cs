@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Combat.Simulation;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Enemies that must never be lethal-fast-path targets.</summary>
 internal static class LethalExclusions {

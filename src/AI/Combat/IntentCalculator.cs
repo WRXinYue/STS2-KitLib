@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
+using KitLib.AI.Combat.Simulation;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 public static class IntentCalculator {
     public static int TotalIncomingDamage(JsonObject snapshot) =>

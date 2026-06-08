@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public interface IDeckPlanContributor {
     bool AppliesTo(string? characterId);

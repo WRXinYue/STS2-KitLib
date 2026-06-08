@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DevMode.Multiplayer.SyncBot;
+using KitLib.Multiplayer.SyncBot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Registers simulated peers in <see cref="RunLobby"/> so combat sync does not skip them.</summary>
 internal static class PseudoCoopLobbyRoster {

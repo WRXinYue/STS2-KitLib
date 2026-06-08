@@ -6,15 +6,15 @@ using System.IO;
 using System.Reflection;
 using MegaCrit.Sts2.Core.Modding;
 
-namespace DevMode.Modding;
+namespace KitLib.Modding;
 
 internal static class ModAssemblyLookup {
-    private static readonly Lazy<Dictionary<string, DevModeModInfo>> _byAssemblySimpleName =
+    private static readonly Lazy<Dictionary<string, KitLibModInfo>> _byAssemblySimpleName =
         new(BuildAssemblyMap, isThreadSafe: true);
     private static readonly HashSet<string> _nonModAssemblies = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<Type, string?> _modDirectoryCache  = new();
 
-    internal static bool TryGetByAssemblySimpleName(string? assemblySimpleName, out DevModeModInfo info) {
+    internal static bool TryGetByAssemblySimpleName(string? assemblySimpleName, out KitLibModInfo info) {
         info = default;
         if (string.IsNullOrEmpty(assemblySimpleName))
             return false;
@@ -27,8 +27,8 @@ internal static class ModAssemblyLookup {
         return map.TryGetValue(assemblySimpleName, out info);
     }
 
-    private static Dictionary<string, DevModeModInfo> BuildAssemblyMap() {
-        var map = new Dictionary<string, DevModeModInfo>(StringComparer.Ordinal);
+    private static Dictionary<string, KitLibModInfo> BuildAssemblyMap() {
+        var map = new Dictionary<string, KitLibModInfo>(StringComparer.Ordinal);
 
         foreach (var mod in ModManagerLoadedMods.Enumerate()) {
             var man = mod.manifest;
@@ -40,7 +40,7 @@ internal static class ModAssemblyLookup {
                 continue;
 
             var display = string.IsNullOrEmpty(man.name) ? man.id : man.name;
-            var info = new DevModeModInfo(man.id, display, man.version ?? "", ModRuntime.CopyDependencies(man));
+            var info = new KitLibModInfo(man.id, display, man.version ?? "", ModRuntime.CopyDependencies(man));
             RegisterAssembliesForMod(mod, info, map);
         }
 
@@ -53,14 +53,14 @@ internal static class ModAssemblyLookup {
     //         if (_byAssemblySimpleName != null)
     //             return;
 
-    //         var map = new Dictionary<string, DevModeModInfo>(StringComparer.Ordinal);
+    //         var map = new Dictionary<string, KitLibModInfo>(StringComparer.Ordinal);
     //         foreach (var mod in ModManagerLoadedMods.Enumerate()) {
     //             var man = mod.manifest;
     //             if (man == null || string.IsNullOrEmpty(man.id))
     //                 continue;
 
     //             var display = string.IsNullOrEmpty(man.name) ? man.id : man.name;
-    //             var info = new DevModeModInfo(man.id, display, man.version ?? "");
+    //             var info = new KitLibModInfo(man.id, display, man.version ?? "");
     //             RegisterAssembliesForMod(mod, info, map);
     //         }
 
@@ -68,7 +68,7 @@ internal static class ModAssemblyLookup {
     //     }
     // }
 
-    private static void RegisterAssembliesForMod(Mod mod, DevModeModInfo info,  Dictionary<string, DevModeModInfo> map) {
+    private static void RegisterAssembliesForMod(Mod mod, KitLibModInfo info,  Dictionary<string, KitLibModInfo> map) {
         var modDir = GetOrCacheModDirectory(mod);
 
         foreach (var asm in EnumerateAssembliesLinkedToMod(mod, modDir)) {
@@ -364,7 +364,7 @@ internal static class ModAssemblyLookup {
 
     #region Logging Helpers
 
-    private static void LogAssemblyMapStats(Dictionary<string, DevModeModInfo> map) {
+    private static void LogAssemblyMapStats(Dictionary<string, KitLibModInfo> map) {
         MainFile.Logger.Info(
             $"[ModAssemblyLookup] Built assembly map with {map.Count} entries");
     }

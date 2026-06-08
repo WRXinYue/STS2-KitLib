@@ -1,10 +1,10 @@
-using DevMode.Map;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Map;
+using KitLib.Multiplayer.Cheat;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
-namespace DevMode.Patches.Map;
+namespace KitLib.Patches.Map;
 
 [HarmonyPatch(typeof(NMapScreen), "RecalculateTravelability")]
 public static class MapTravelabilityRewritePatch {

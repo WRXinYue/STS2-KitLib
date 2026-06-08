@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Hooks;
+namespace KitLib.Hooks;
 
 /// <summary>
 /// Central dispatcher: receives trigger events, checks conditions, and executes actions.
@@ -15,7 +15,7 @@ internal static class HookManager {
     /// those whose conditions pass will have their actions executed.
     /// </summary>
     public static void Fire(TriggerType trigger, Player? player) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         if (MpCheatUi.IsHooksDisabledInMultiplayer) return;
 
         List<HookEntry> hooks;

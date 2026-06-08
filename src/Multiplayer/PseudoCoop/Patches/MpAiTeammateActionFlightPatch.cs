@@ -1,7 +1,7 @@
 using HarmonyLib;
 using MegaCrit.Sts2.Core.GameActions;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>Track in-flight queue actions so end-turn is not signaled while a card is still resolving.</summary>
 internal static class MpAiTeammateActionFlightPatch {

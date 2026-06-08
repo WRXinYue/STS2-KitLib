@@ -1,13 +1,13 @@
 using System;
-using DevMode.Interop;
+using KitLib.Interop;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Status panel for RitsuLib (bridge diagnostics).</summary>
 internal static class FrameworkBridgeUI {
-    private const string RootName = "DevModeFrameworkBridge";
+    private const string RootName = "KitLibFrameworkBridge";
     private const float PanelW = 680f;
     private const double AutoRefreshIntervalSec = 2.0;
 
@@ -26,7 +26,7 @@ internal static class FrameworkBridgeUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         titleBox.AddChild(subtitle);
         vbox.AddChild(titleBox);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
@@ -145,7 +145,7 @@ internal static class FrameworkBridgeUI {
 
     private static Control MakeSep() {
         var line = new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1)
         };
         line.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -155,8 +155,8 @@ internal static class FrameworkBridgeUI {
     private static Control MakeSectionCard(string title, string description, Action<VBoxContainer> fillBody) {
         var panel = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var style = new StyleBoxFlat {
-            BgColor = new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.55f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.55f),
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
             BorderWidthTop = 1,
@@ -180,7 +180,7 @@ internal static class FrameworkBridgeUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         head.AddThemeFontSizeOverride("font_size", 13);
-        head.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        head.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         outer.AddChild(head);
 
         var desc = new Label {
@@ -188,7 +188,7 @@ internal static class FrameworkBridgeUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         desc.AddThemeFontSizeOverride("font_size", 10);
-        desc.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        desc.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         outer.AddChild(desc);
 
         var body = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -208,14 +208,14 @@ internal static class FrameworkBridgeUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         left.AddThemeFontSizeOverride("font_size", 11);
-        left.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        left.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         var right = new Label {
             Text = value,
             HorizontalAlignment = HorizontalAlignment.Right,
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         right.AddThemeFontSizeOverride("font_size", 11);
-        right.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        right.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         right.SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd;
         right.CustomMinimumSize = new Vector2(220, 0);
         row.AddChild(left);
@@ -229,7 +229,7 @@ internal static class FrameworkBridgeUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         l.AddThemeFontSizeOverride("font_size", 10);
-        l.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        l.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         return l;
     }
 
@@ -237,7 +237,7 @@ internal static class FrameworkBridgeUI {
         var wrap = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var innerStyle = new StyleBoxFlat {
             BgColor = new Color(0f, 0f, 0f, 0.28f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
             BorderWidthTop = 1,
@@ -258,7 +258,7 @@ internal static class FrameworkBridgeUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         lbl.AddThemeFontSizeOverride("font_size", 10);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         wrap.AddChild(lbl);
         return wrap;
     }
@@ -269,7 +269,7 @@ internal static class FrameworkBridgeUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         l.AddThemeFontSizeOverride("font_size", 10);
-        l.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        l.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return l;
     }
 

@@ -1,11 +1,11 @@
 using System;
-using DevMode;
-using DevMode.Multiplayer.SyncBot;
+using KitLib;
+using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Native STS2 INetMessage bus for MpCheat (single envelope, no RitsuLib Sidecar).</summary>
 internal static class MpCheatNetBus {
@@ -37,7 +37,7 @@ internal static class MpCheatNetBus {
     }
 
     static bool ShouldAutoPublishHostConfig() =>
-        !DevModeState.PseudoCoopDeferHeavyUi && !DevModeState.PseudoCoopDeferMpCheatPublish;
+        !KitLibState.PseudoCoopDeferHeavyUi && !KitLibState.PseudoCoopDeferMpCheatPublish;
 
     public static void Reset() {
         _registeredService = null;

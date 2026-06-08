@@ -1,18 +1,18 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Hooks;
+using KitLib.Hooks;
 
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 /// <summary>
 /// Persistent user preferences for DevMode appearance. Serialized to settings.json.
 /// </summary>
-public sealed partial class DevModeSettings {
+public sealed partial class KitLibSettings {
     public bool DarkMode { get; set; } = true;
     public string DarkThemeName { get; set; } = ThemeNames.Dark;
     public string LightThemeName { get; set; } = ThemeNames.Light;
 
-    /// <summary>Key = browser overlay <c>rootName</c> (e.g. <c>DevModeConsole</c>); value = last panel width in px.</summary>
+    /// <summary>Key = browser overlay <c>rootName</c> (e.g. <c>KitLibConsole</c>); value = last panel width in px.</summary>
     public Dictionary<string, int> BrowserPanelWidths { get; set; } = new(StringComparer.Ordinal);
 
     /// <summary>User-defined hook rules (trigger + conditions + actions).</summary>

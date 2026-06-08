@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 public static class AiMoveModifierHub {
     static readonly List<IAiMoveModifier> Modifiers = [];

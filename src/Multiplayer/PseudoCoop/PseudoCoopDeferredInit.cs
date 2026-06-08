@@ -1,19 +1,19 @@
-using DevMode;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.LanTest;
-using DevMode.Patches;
-using DevMode.UI;
+using KitLib;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.LanTest;
+using KitLib.Patches;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Finishes pseudo-coop launch: MpCheat arm after EnterAct; DevPanel/publish after map opens.</summary>
 internal static class PseudoCoopDeferredInit {
     public static void TryScheduleAfterEnterAct0() {
-        if (!DevModeState.PseudoCoopLaunchPending) return;
+        if (!KitLibState.PseudoCoopLaunchPending) return;
 
-        DevModeState.PseudoCoopLaunchPending = false;
+        KitLibState.PseudoCoopLaunchPending = false;
         MainFile.Logger.Info("[PseudoCoop] Scheduling deferred init (next frame)…");
         Callable.From(CompleteDeferred).CallDeferred();
     }
@@ -24,14 +24,14 @@ internal static class PseudoCoopDeferredInit {
     }
 
     internal static void TryScheduleMapFinish() {
-        if (!DevModeState.PseudoCoopAwaitingMapFinish) return;
+        if (!KitLibState.PseudoCoopAwaitingMapFinish) return;
 
         var run = NRun.Instance;
         if (run == null) {
             RunLateMpCheatArm();
             RunLateMpCheatPublish();
             RunLateDevPanel();
-            DevModeState.PseudoCoopAwaitingMapFinish = false;
+            KitLibState.PseudoCoopAwaitingMapFinish = false;
             return;
         }
 
@@ -43,9 +43,9 @@ internal static class PseudoCoopDeferredInit {
     }
 
     internal static void RunLateDevPanel() {
-        DevModeState.PseudoCoopDeferHeavyUi = false;
+        KitLibState.PseudoCoopDeferHeavyUi = false;
         var globalUi = NRun.Instance?.GlobalUi;
-        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
+        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
             MainFile.Logger.Info("[PseudoCoop] Map finish: minimal DevPanel (AI Host)…");
             GlobalUiReadyPatch.TryAttachDualInstanceMinimal(globalUi);
         }
@@ -59,7 +59,7 @@ internal static class PseudoCoopDeferredInit {
         else
             MainFile.Logger.Warn("[PseudoCoop] DevPanel attach skipped (DevMode inactive or UI unavailable).");
 
-        if (DevModeInstanceRegistry.IsDualInstanceActive())
+        if (KitLibInstanceRegistry.IsDualInstanceActive())
             DualInstanceTestBootstrap.TryAutoLanPresetsOnLaunch();
     }
 
@@ -81,12 +81,12 @@ internal static class PseudoCoopDeferredInit {
 
     internal static void RunLateMpCheatPublish() {
         if (!MpCheatSession.LocalOptIn) {
-            DevModeState.PseudoCoopDeferMpCheatPublish = false;
+            KitLibState.PseudoCoopDeferMpCheatPublish = false;
             MainFile.Logger.Info("[PseudoCoop] Map finish complete (no MpCheat opt-in).");
             return;
         }
 
-        DevModeState.PseudoCoopDeferMpCheatPublish = false;
+        KitLibState.PseudoCoopDeferMpCheatPublish = false;
         if (!MpCheatSession.SessionArmed) {
             MainFile.Logger.Warn("[PseudoCoop] Map finish: MpCheat publish skipped (session not armed).");
             return;

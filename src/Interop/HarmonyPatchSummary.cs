@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace DevMode.Interop;
+namespace KitLib.Interop;
 
 /// <summary>
 /// Process-wide Harmony stats (<see cref="Harmony.GetAllPatchedMethods"/>).

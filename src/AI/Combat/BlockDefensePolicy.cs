@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Shared block-vs-kill policy for snapshot scoring and beam simulation.</summary>
 public static class BlockDefensePolicy {

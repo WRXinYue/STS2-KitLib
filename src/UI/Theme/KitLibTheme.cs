@@ -1,14 +1,14 @@
 using System.Text.RegularExpressions;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Shared color and sizing constants for the DevMode UI (rail, browser, overlays).
 /// All color values delegate to <see cref="ThemeManager.Current"/> so they update
 /// automatically when the user switches themes.
 /// </summary>
-internal static class DevModeTheme {
+internal static class KitLibTheme {
     // ── Panel / overlay backgrounds ──
     public static Color PanelBg => ThemeManager.Current.PanelBg;
     public static Color PanelBorder => ThemeManager.Current.PanelBorder;

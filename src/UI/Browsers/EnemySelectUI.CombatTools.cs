@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Actions;
+using KitLib.Multiplayer.Cheat;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -10,11 +10,11 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
     internal static bool IsCombatToolsVisible =>
-        DevModeState.IsActive
+        KitLibState.IsActive
         && CombatManager.Instance?.IsInProgress == true
         && CombatEnemyActions.GetCombatState() != null;
 
@@ -89,7 +89,7 @@ internal static partial class EnemySelectUI {
         nameLabel.AddThemeFontSizeOverride("font_size", 12);
         textBox.AddChild(nameLabel);
         var hpLabel = new Label { Text = hp };
-        hpLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        hpLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         hpLabel.AddThemeFontSizeOverride("font_size", 11);
         textBox.AddChild(hpLabel);
         row.AddChild(textBox);
@@ -157,7 +157,7 @@ internal static partial class EnemySelectUI {
 
     internal static void RunSyncedCombatAddMonster(MonsterModel monster, Action? onChanged = null) {
         MainFile.Logger.Info(
-            $"[DevMode.CombatAdd] UI request: {((AbstractModel)monster).Id.Entry} mp={MpCheatSession.InMultiplayerRun}");
+            $"[KitLib.CombatAdd] UI request: {((AbstractModel)monster).Id.Entry} mp={MpCheatSession.InMultiplayerRun}");
         if (!MpCheatSession.InMultiplayerRun) {
             DevPanelUI.RunCombatAction(async () => { await CombatEnemyActions.AddMonster(monster); }, onChanged);
             return;

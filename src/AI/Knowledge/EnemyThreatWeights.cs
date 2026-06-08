@@ -1,6 +1,6 @@
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Tunable non-damage threat weights (grid-search via tools/ai-bench).</summary>
 public static class EnemyThreatWeights {

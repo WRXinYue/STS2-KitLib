@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DevMode.Settings;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal sealed record ModCharacterProgressLossResult(
     ProfileBackupSummary Backup,

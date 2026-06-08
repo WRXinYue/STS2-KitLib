@@ -1,8 +1,8 @@
-using DevMode.AI.AutoPlay;
+using KitLib.AI.AutoPlay;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI.Sts2.Patches;
+namespace KitLib.AI.Sts2.Patches;
 
 [HarmonyPatch(typeof(RunManager))]
 internal static class AiPlayRunPatches {

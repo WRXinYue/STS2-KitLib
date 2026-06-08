@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DevMode.Feedback;
+namespace KitLib.Feedback;
 
 internal enum CrashReportKind {
     UnhandledException,
@@ -39,7 +39,7 @@ internal static class CrashRecoveryStore {
     private static string PendingReportPath => Path.Combine(DataPaths.BaseDir, "pending-crash-report.json");
 
     private static string SessionActivePath =>
-        Path.Combine(DataPaths.BaseDir, "instances", DevModeInstance.ProcessId.ToString(), "session.active");
+        Path.Combine(DataPaths.BaseDir, "instances", KitLibInstance.ProcessId.ToString(), "session.active");
 
     internal static void MarkSessionStarted() {
         lock (FileLock) {
@@ -48,7 +48,7 @@ internal static class CrashRecoveryStore {
                 var dir = Path.GetDirectoryName(SessionActivePath);
                 if (!string.IsNullOrEmpty(dir))
                     Directory.CreateDirectory(dir);
-                File.WriteAllText(SessionActivePath, $"{DateTime.UtcNow:O}\n{DevModeInstance.ProcessId}");
+                File.WriteAllText(SessionActivePath, $"{DateTime.UtcNow:O}\n{KitLibInstance.ProcessId}");
             }
             catch (Exception ex) {
                 MainFile.Logger.Warn($"[DevMode CrashRecovery] Failed to mark session started: {ex.Message}");
@@ -164,7 +164,7 @@ internal static class CrashRecoveryStore {
             if (!int.TryParse(name, out int pid))
                 continue;
 
-            if (pid == DevModeInstance.ProcessId)
+            if (pid == KitLibInstance.ProcessId)
                 continue;
 
             if (IsProcessAlive(pid))
@@ -178,7 +178,7 @@ internal static class CrashRecoveryStore {
             WritePendingReportLocked(new CrashReport {
                 Kind = CrashReportKind.OrphanSession,
                 UtcTimestamp = DateTime.UtcNow,
-                ProcessId = DevModeInstance.ProcessId,
+                ProcessId = KitLibInstance.ProcessId,
                 DevModeVersion = GetDevModeVersion(),
                 OrphanProcessId = pid
             });
@@ -193,7 +193,7 @@ internal static class CrashRecoveryStore {
         return new CrashReport {
             Kind = kind,
             UtcTimestamp = DateTime.UtcNow,
-            ProcessId = DevModeInstance.ProcessId,
+            ProcessId = KitLibInstance.ProcessId,
             DevModeVersion = GetDevModeVersion(),
             ExceptionType = ex?.GetType().FullName,
             Message = ex?.Message,

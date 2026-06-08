@@ -1,12 +1,12 @@
 using System;
-using DevMode.AI.AutoPlay.Strategies;
-using DevMode.AI.Core;
-using DevMode.AI.Planning;
-using DevMode.Companion;
-using DevMode.Settings;
+using KitLib.AI.AutoPlay.Strategies;
+using KitLib.AI.Core;
+using KitLib.AI.Planning;
+using KitLib.Companion;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>Resolves <see cref="IDecisionMaker"/> for a companion or player (netId → characterId → fallback).</summary>
 public static class StrategyResolver {

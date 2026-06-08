@@ -1,11 +1,11 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 
-namespace DevMode.AI.Characters.Vanilla;
+namespace KitLib.AI.Characters.Vanilla;
 
 sealed class SilentPack : IDeckPlanContributor {
     public bool AppliesTo(string? characterId) =>

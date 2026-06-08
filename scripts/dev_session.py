@@ -77,7 +77,7 @@ def _warn_existing_instances(repo_root: Path) -> None:
         / "SlayTheSpire2"
         / "steam"
         / "mod_data"
-        / "DevMode"
+        / "KitLib"
         / "instances"
     )
     if not instances_dir.is_dir():
@@ -93,7 +93,7 @@ def _warn_existing_instances(repo_root: Path) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="DevMode agent session bootstrap (L1 orchestrator).")
+    ap = argparse.ArgumentParser(description="KitLib agent session bootstrap (L1 orchestrator).")
     ap.add_argument("--repo-root", type=Path, default=None, help="Repository root")
     ap.add_argument("--sync", action="store_true", help="Run make sync before launch")
     ap.add_argument("--launch", action="store_true", help="Launch STS2")

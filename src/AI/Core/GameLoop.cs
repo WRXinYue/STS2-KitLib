@@ -1,12 +1,12 @@
 using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode;
-using DevMode.AI.AutoPlay.Scoring;
-using DevMode.AI.Sts2;
-using DevMode.AI.Core.Schema;
+using KitLib;
+using KitLib.AI.AutoPlay.Scoring;
+using KitLib.AI.Sts2;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>
 /// Generic AI game loop: observe → decide → act.

@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Opens a system terminal tailing AI decision lines from the session log.</summary>
 internal static class AiLogTerminalLauncher {

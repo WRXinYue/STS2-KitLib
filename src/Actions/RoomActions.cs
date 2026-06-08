@@ -3,9 +3,9 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
-using DevMode.Map;
+using KitLib.Map;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class RoomActions {
     public static bool IsRunInProgress => RunManager.Instance?.IsInProgress == true;
@@ -18,7 +18,7 @@ internal static class RoomActions {
         try {
             var rm = RunManager.Instance;
             if (rm == null || !rm.IsInProgress) {
-                MainFile.Logger.Warn("[DevMode] TryEnterRoom: no run in progress.");
+                MainFile.Logger.Warn("[KitLib] TryEnterRoom: no run in progress.");
                 return false;
             }
 
@@ -39,7 +39,7 @@ internal static class RoomActions {
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode] TryEnterRoom({roomType}) failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib] TryEnterRoom({roomType}) failed: {ex.Message}");
             return false;
         }
     }

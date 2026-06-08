@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace DevMode.AI.Sts2.Helpers;
+namespace KitLib.AI.Sts2.Helpers;
 
 /// <summary>State waits for <see cref="NRewardsScreen"/> — aligned with official handler flow.</summary>
 internal static class RewardScreenHelper {

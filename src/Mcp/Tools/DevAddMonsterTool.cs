@@ -1,10 +1,10 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.Actions;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Actions;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevAddMonsterTool : IMcpTool {
     public string Name => "dev_add_monster";

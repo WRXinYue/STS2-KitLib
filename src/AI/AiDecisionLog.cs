@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Ring buffer of recent AI decision lines for the in-game AI Host panel.</summary>
 public static class AiDecisionLog {

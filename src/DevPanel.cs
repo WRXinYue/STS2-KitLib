@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using DevMode.AI.AutoPlay;
-using DevMode.Actions;
-using DevMode.Actions.CardModes;
-using DevMode.Icons;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Navigation;
-using DevMode.Panels;
-using DevMode.UI;
+using KitLib.AI.AutoPlay;
+using KitLib.Actions;
+using KitLib.Actions.CardModes;
+using KitLib.Icons;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Navigation;
+using KitLib.Panels;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -19,7 +19,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Facade / coordinator — delegates to specialized modules:
@@ -81,7 +81,7 @@ internal static class DevPanel {
     };
 
     private static ICardModeHandler CurrentCardHandler
-        => _cardHandlers[DevModeState.CardMode];
+        => _cardHandlers[KitLibState.CardMode];
 
     // ──────── Lifecycle ────────
 
@@ -165,7 +165,7 @@ internal static class DevPanel {
 
     private static void OpenCards() {
         if (!TryDismissCurrent()) return;
-        DevModeState.ActivePanel = ActivePanel.Cards;
+        KitLibState.ActivePanel = ActivePanel.Cards;
 
         if (_globalUi == null) return;
         if (!RunContext.TryGetRunAndPlayer(out var state, out var player)) return;
@@ -174,7 +174,7 @@ internal static class DevPanel {
 
     private static void OpenRelics() {
         if (!TryDismissCurrent()) return;
-        DevModeState.ActivePanel = ActivePanel.Relics;
+        KitLibState.ActivePanel = ActivePanel.Relics;
 
         if (_globalUi == null) return;
         if (!RunContext.TryGetRunAndPlayer(out var state, out var player)) return;
@@ -184,14 +184,14 @@ internal static class DevPanel {
     private static void OpenEnemies() {
         if (_globalUi == null) return;
         if (!TryDismissCurrent()) return;
-        DevModeState.ActivePanel = ActivePanel.Enemies;
+        KitLibState.ActivePanel = ActivePanel.Enemies;
         EnemySelectUI.ShowMain(_globalUi);
     }
 
     private static void OpenPowers() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Powers;
+        KitLibState.ActivePanel = ActivePanel.Powers;
 
         if (!RunContext.TryGetRunAndPlayer(out _, out var player)) return;
 
@@ -201,7 +201,7 @@ internal static class DevPanel {
     private static void OpenPotions() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Potions;
+        KitLibState.ActivePanel = ActivePanel.Potions;
 
         if (!RunContext.TryGetRunAndPlayer(out _, out var player)) return;
 
@@ -211,7 +211,7 @@ internal static class DevPanel {
     private static void OpenEvents() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Events;
+        KitLibState.ActivePanel = ActivePanel.Events;
 
         EventSelectUI.Show(_globalUi, (evt, request) => EventActions.TryForceEnterEvent(evt, request));
     }
@@ -219,7 +219,7 @@ internal static class DevPanel {
     private static void OpenRooms() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Rooms;
+        KitLibState.ActivePanel = ActivePanel.Rooms;
 
         RoomSelectUI.Show(_globalUi);
     }
@@ -227,7 +227,7 @@ internal static class DevPanel {
     private static void OpenConsole() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Console;
+        KitLibState.ActivePanel = ActivePanel.Console;
 
         ConsoleUI.Show(_globalUi);
     }
@@ -235,7 +235,7 @@ internal static class DevPanel {
     private static void OpenPresets() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Presets;
+        KitLibState.ActivePanel = ActivePanel.Presets;
 
         PresetUI.Show(_globalUi);
     }
@@ -244,7 +244,7 @@ internal static class DevPanel {
         if (_globalUi == null) return;
         if (MpCheatUi.IsHooksDisabledInMultiplayer) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Hooks;
+        KitLibState.ActivePanel = ActivePanel.Hooks;
 
         HookConfigUI.Show(_globalUi);
     }
@@ -252,7 +252,7 @@ internal static class DevPanel {
     private static void OpenScripts() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Scripts;
+        KitLibState.ActivePanel = ActivePanel.Scripts;
 
         ScriptUI.Show(_globalUi);
     }
@@ -260,7 +260,7 @@ internal static class DevPanel {
     private static void OpenLogs() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Logs;
+        KitLibState.ActivePanel = ActivePanel.Logs;
 
         LogCollector.AcknowledgeAlerts();
         LogViewerUI.Show(_globalUi);
@@ -271,7 +271,7 @@ internal static class DevPanel {
     private static void OpenCombatStats() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.CombatStats;
+        KitLibState.ActivePanel = ActivePanel.CombatStats;
 
         CombatStatsUI.Show(_globalUi);
     }
@@ -279,7 +279,7 @@ internal static class DevPanel {
     private static void OpenEnemyIntent() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.EnemyIntent;
+        KitLibState.ActivePanel = ActivePanel.EnemyIntent;
 
         EnemyIntentUI.Show(_globalUi);
     }
@@ -287,7 +287,7 @@ internal static class DevPanel {
     private static void OpenHarmonyAnalysis() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.HarmonyAnalysis;
+        KitLibState.ActivePanel = ActivePanel.HarmonyAnalysis;
 
         HarmonyAnalysisUI.Show(_globalUi);
     }
@@ -295,7 +295,7 @@ internal static class DevPanel {
     private static void OpenFrameworks() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Frameworks;
+        KitLibState.ActivePanel = ActivePanel.Frameworks;
 
         FrameworkBridgeUI.Show(_globalUi);
     }
@@ -303,7 +303,7 @@ internal static class DevPanel {
     private static void OpenFeedback() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Feedback;
+        KitLibState.ActivePanel = ActivePanel.Feedback;
 
         FeedbackReportUI.Show(_globalUi);
     }
@@ -311,7 +311,7 @@ internal static class DevPanel {
     private static void OpenManual() {
         if (_globalUi == null) return;
         TryDismissCurrent();
-        DevModeState.ActivePanel = ActivePanel.Manual;
+        KitLibState.ActivePanel = ActivePanel.Manual;
 
         ManualUI.Show(_globalUi);
     }
@@ -345,7 +345,7 @@ internal static class DevPanel {
     }
 
     private static void RefreshPanel() {
-        switch (DevModeState.ActivePanel) {
+        switch (KitLibState.ActivePanel) {
             case ActivePanel.Cards: OpenCards(); break;
             case ActivePanel.Relics: OpenRelics(); break;
             case ActivePanel.Enemies: OpenEnemies(); break;
@@ -394,7 +394,7 @@ internal static class DevPanel {
     }
 
     public static bool TryHandleRelicSelection(NRelicCollectionEntry entry) {
-        if (DevModeState.ActivePanel != ActivePanel.Relics || DevModeState.RelicMode != RelicMode.Add)
+        if (KitLibState.ActivePanel != ActivePanel.Relics || KitLibState.RelicMode != RelicMode.Add)
             return false;
 
         if (entry?.relic == null) return true;
@@ -417,12 +417,12 @@ internal static class DevPanel {
     /// </summary>
     public static void NotifyCardLibraryClosed() {
         // Only reset if we were actively using the Cards panel
-        if (DevModeState.ActivePanel != ActivePanel.Cards) return;
+        if (KitLibState.ActivePanel != ActivePanel.Cards) return;
         ResetPanel();
     }
 
     public static void NotifyRelicCollectionClosed() {
-        if (DevModeState.ActivePanel != ActivePanel.Relics) return;
+        if (KitLibState.ActivePanel != ActivePanel.Relics) return;
         ResetPanel();
         ClearState();
     }
@@ -430,7 +430,7 @@ internal static class DevPanel {
     // ──────── Private ────────
 
     internal static void ResetPanel() {
-        DevModeState.ActivePanel = ActivePanel.None;
+        KitLibState.ActivePanel = ActivePanel.None;
     }
 
     private static void ClearState() {

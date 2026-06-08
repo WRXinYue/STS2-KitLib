@@ -4,11 +4,11 @@ using System.Linq;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Command reference — spliced to the DevMode rail, matching card / relic browser layout.</summary>
 internal static class ConsoleUI {
-    private const string RootName = "DevModeConsole";
+    private const string RootName = "KitLibConsole";
     private const float PanelW = 580f;
     private static readonly ConsoleBridge _bridge = new();
 
@@ -71,14 +71,14 @@ internal static class ConsoleUI {
             ContentMarginBottom = 6
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" }) tab.AddThemeStyleboxOverride(s, flat);
-        tab.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        tab.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         tab.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(tab);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         vbox.AddChild(row);
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
     }
@@ -108,7 +108,7 @@ internal static class ConsoleUI {
 
         if (devmode.Count > 0) {
             listBox.AddChild(DevPanelUI.CreateSectionHeader(
-                $"{I18N.T("console.section.devmode", "DevMode Commands")}  ({devmode.Count})"));
+                $"{I18N.T("console.section.devmode", "KitLib Commands")}  ({devmode.Count})"));
             foreach (var cmd in devmode)
                 listBox.AddChild(CreateCommandEntry(cmd));
         }
@@ -118,7 +118,7 @@ internal static class ConsoleUI {
                 Text = I18N.T("console.noResults", "No commands found."),
                 HorizontalAlignment = HorizontalAlignment.Center
             };
-            noResult.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            noResult.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             listBox.AddChild(noResult);
         }
     }
@@ -148,12 +148,12 @@ internal static class ConsoleUI {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
             };
             descLabel.AddThemeFontSizeOverride("font_size", 11);
-            descLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            descLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             container.AddChild(descLabel);
         }
 
         var sep = new HSeparator();
-        sep.Modulate = DevModeTheme.Separator;
+        sep.Modulate = KitLibTheme.Separator;
         container.AddChild(sep);
 
         return container;

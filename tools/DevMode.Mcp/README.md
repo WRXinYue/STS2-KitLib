@@ -1,4 +1,4 @@
-# DevMode MCP (stdio proxy)
+# KitLib MCP (stdio proxy)
 
 Documentation lives in the repo root:
 

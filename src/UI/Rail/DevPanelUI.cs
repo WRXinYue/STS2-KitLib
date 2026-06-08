@@ -1,20 +1,20 @@
 using System;
 using System.Collections.Generic;
-using DevMode;
-using DevMode.Icons;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Panels;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Icons;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Panels;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
-    internal const string RailRootName = "DevModeRailRoot";
-    private const string LegacyTopBarName = "DevModeTopBar";
+    internal const string RailRootName = "KitLibRailRoot";
+    private const string LegacyTopBarName = "KitLibTopBar";
     private const string RootName = RailRootName;
-    private const string OverlayName = "DevModeOverlay";
+    private const string OverlayName = "KitLibOverlay";
     private const float RailW = 52f;
     private const float IconBtnSize = 36f;
     private const float OverlayW = 560f;
@@ -86,14 +86,14 @@ internal static partial class DevPanelUI {
     private static Color ColRailBorder => ThemeManager.Current.RailBorder;
     private static Color ColIconNormal => ThemeManager.Current.IconNormal;
     private static Color ColIconHover => ThemeManager.Current.IconHover;
-    private static Color ColIconActive => DevModeTheme.Accent;
+    private static Color ColIconActive => KitLibTheme.Accent;
     private static Color ColIconDisabled => new(0.55f, 0.55f, 0.55f, 0.85f);
     private static Color ColIconActiveBg => ThemeManager.Current.IconActiveBg;
-    private static Color ColOverlayBg => DevModeTheme.PanelBg;
-    private static Color ColOverlayBorder => DevModeTheme.PanelBorder;
+    private static Color ColOverlayBg => KitLibTheme.PanelBg;
+    private static Color ColOverlayBorder => KitLibTheme.PanelBorder;
     private static readonly Color ColBackdrop = new(0f, 0f, 0f, 0.50f);
-    private static Color ColSectionText => DevModeTheme.Subtle;
-    private static Color ColSeparator => DevModeTheme.Separator;
+    private static Color ColSectionText => KitLibTheme.Subtle;
+    private static Color ColSeparator => KitLibTheme.Separator;
 
     /// <summary>Applies the current theme colors to the persistent rail widgets in-place.</summary>
     private static void ApplyRailTheme() {
@@ -144,7 +144,7 @@ internal static partial class DevPanelUI {
             foreach (var child in parent.GetChildren()) {
                 if (child is Control ctrl) {
                     string name = ctrl.Name.ToString();
-                    if (name.StartsWith("DevMode", StringComparison.Ordinal)
+                    if (name.StartsWith("KitLib", StringComparison.Ordinal)
                         && !_keepNodes.Contains(name)) {
                         if (!TryAnimateBrowserOverlayClose(parent, ctrl)) {
                             parent.RemoveChild(ctrl);
@@ -249,7 +249,7 @@ internal static partial class DevPanelUI {
         railVBox.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
 
         // ── Separator line ──
-        if (!DevModeState.DualInstanceMinimalRail) {
+        if (!KitLibState.DualInstanceMinimalRail) {
             var sep = new HSeparator();
             _railSepStyle = new StyleBoxFlat {
                 BgColor = ColSeparator,
@@ -351,7 +351,7 @@ internal static partial class DevPanelUI {
 
         RefreshRailHintPresentation();
 
-        if (!DevModeState.DualInstanceMinimalRail)
+        if (!KitLibState.DualInstanceMinimalRail)
             AttachContextPane(globalUi);
         ((Node)globalUi).AddChild(root);
     }

@@ -1,8 +1,8 @@
-using DevMode.Multiplayer.PseudoCoop;
+using KitLib.Multiplayer.PseudoCoop;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.SyncBot.Patches;
+namespace KitLib.Multiplayer.SyncBot.Patches;
 
 // Launch postfix removed: preset is applied in PseudoCoopLobbyHost; phantom spawns on map history.
 

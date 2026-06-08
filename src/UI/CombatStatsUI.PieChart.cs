@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.CombatStats;
+using KitLib.CombatStats;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     private const int PieChartSize = 168;
@@ -55,7 +55,7 @@ internal static partial class CombatStatsUI {
     }
 
     private static Color PieSliceColor(int index) {
-        float hue = (DevModeTheme.Accent.H + index * 0.14f) % 1f;
+        float hue = (KitLibTheme.Accent.H + index * 0.14f) % 1f;
         return Color.FromHsv(hue, 0.58f, 0.92f);
     }
 
@@ -102,7 +102,7 @@ internal static partial class CombatStatsUI {
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };
             _emptyLabel.AddThemeFontSizeOverride("font_size", railCompact ? 8 : 10);
-            _emptyLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            _emptyLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             if (!railCompact)
                 _root.AddChild(_emptyLabel);
 
@@ -269,14 +269,14 @@ internal static partial class CombatStatsUI {
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
             label.AddThemeFontSizeOverride("font_size", 10);
-            label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
 
             var value = new Label {
                 Text = $"{amount} ({pct:0.#}%)",
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
             value.AddThemeFontSizeOverride("font_size", 10);
-            value.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            value.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
 
             row.AddChild(swatch);
             row.AddChild(label);
@@ -357,7 +357,7 @@ internal static partial class CombatStatsUI {
 
             if (_slices.Count == 0 || _total <= 0) {
                 DrawCircle(center, outerR * 0.38f, new Color(0.22f, 0.22f, 0.26f, 0.85f));
-                DrawArc(center, outerR, 0f, Mathf.Tau, 48, DevModeTheme.Separator, 1f, true);
+                DrawArc(center, outerR, 0f, Mathf.Tau, 48, KitLibTheme.Separator, 1f, true);
                 return;
             }
 
@@ -369,8 +369,8 @@ internal static partial class CombatStatsUI {
             }
 
             float innerR = outerR * 0.52f;
-            DrawCircle(center, innerR, DevModeTheme.PanelBg);
-            DrawArc(center, outerR + 0.5f, 0f, Mathf.Tau, 64, DevModeTheme.PanelBorder, 1f, true);
+            DrawCircle(center, innerR, KitLibTheme.PanelBg);
+            DrawArc(center, outerR + 0.5f, 0f, Mathf.Tau, 64, KitLibTheme.PanelBorder, 1f, true);
         }
 
         private void DrawWedge(Vector2 center, float radius, float fromRad, float toRad, Color color) {

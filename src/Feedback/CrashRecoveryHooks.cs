@@ -1,11 +1,11 @@
 using System;
-using DevMode.UI;
+using KitLib.UI;
 using Godot;
 
-namespace DevMode.Feedback;
+namespace KitLib.Feedback;
 
 internal static class CrashRecoveryHooks {
-    private const string LifecycleNodeName = "DevModeCrashRecoveryLifecycle";
+    private const string LifecycleNodeName = "KitLibCrashRecoveryLifecycle";
 
     private static bool _registered;
 

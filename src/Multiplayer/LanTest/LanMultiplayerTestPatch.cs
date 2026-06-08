@@ -1,10 +1,10 @@
-using DevMode.Settings;
+using KitLib.Settings;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Nodes.Debug.Multiplayer;
 
-namespace DevMode.Multiplayer.LanTest;
+namespace KitLib.Multiplayer.LanTest;
 internal static class LanMultiplayerTestGuards {
     internal static bool IsTestSceneAlive(NMultiplayerTest test)
         => GodotObject.IsInstanceValid(test) && test.IsInsideTree();
@@ -18,9 +18,9 @@ internal static class LanMultiplayerTestGuards {
 internal static class LanMultiplayerTestBeginRunPatch {
     static void Prefix() {
         DualInstanceTestBootstrap.EnsureMultiplayerDevActive("lan_begin_run");
-        DevModeState.PseudoCoopDeferHeavyUi = true;
-        DevModeState.PseudoCoopDeferMpCheatPublish = true;
-        DevModeState.PseudoCoopAwaitingMapFinish = true;
+        KitLibState.PseudoCoopDeferHeavyUi = true;
+        KitLibState.PseudoCoopDeferMpCheatPublish = true;
+        KitLibState.PseudoCoopAwaitingMapFinish = true;
         MainFile.Logger.Info("[LanTest] Deferring DevPanel/warmup until map opens.");
     }
 }

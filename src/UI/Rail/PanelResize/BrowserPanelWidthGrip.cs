@@ -1,8 +1,8 @@
 using System;
-using DevMode.Settings;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal sealed partial class BrowserPanelWidthGrip : Control {
     private const float MinPanelWidth = 320f;

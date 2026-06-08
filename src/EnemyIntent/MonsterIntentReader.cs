@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
-using DevMode.UI;
+using KitLib.AI.Knowledge;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -14,7 +14,7 @@ using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 using MegaCrit.Sts2.Core.Random;
 
-namespace DevMode.EnemyIntent;
+namespace KitLib.EnemyIntent;
 
 internal sealed record MonsterIntentStep(
     string MoveId,
@@ -72,8 +72,8 @@ internal static class MonsterIntentReader {
     internal static JsonArray CaptureIntentSteps(
         Creature enemy,
         IReadOnlyList<Creature> targets,
-        DevMode.AI.Combat.Simulation.CombatState pressureState,
-        int maxSteps = DevMode.AI.Combat.Simulation.ThreatModel.LineFutureHorizonTurns + 2) {
+        KitLib.AI.Combat.Simulation.CombatState pressureState,
+        int maxSteps = KitLib.AI.Combat.Simulation.ThreatModel.LineFutureHorizonTurns + 2) {
         var arr = new JsonArray();
         if (enemy.Monster is not { } monster)
             return arr;
@@ -98,7 +98,7 @@ internal static class MonsterIntentReader {
             string? monsterId = null;
             try { monsterId = enemy.ModelId.Entry; } catch { }
             var effects = MoveEffectIndex.MergeWithRuntimeIntents(monsterId, step.MoveId, step.Intents);
-            int nonDamage = DevMode.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
+            int nonDamage = KitLib.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
                 pressureState,
                 monsterId,
                 step.MoveId,
@@ -315,7 +315,7 @@ internal static class MonsterIntentReader {
 
         try {
             var loc = MonsterModel.L10NMonsterLookup($"{monster.Id.Entry}.moves.{moveId}.title");
-            string text = DevModeTheme.ToPlainTooltipText(loc.GetFormattedText());
+            string text = KitLibTheme.ToPlainTooltipText(loc.GetFormattedText());
             if (string.IsNullOrWhiteSpace(text))
                 return null;
 

@@ -1,11 +1,11 @@
-using DevMode.Combat;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
-using DevMode.UI;
+using KitLib.Combat;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 
-namespace DevMode.Hotkeys;
+namespace KitLib.Hotkeys;
 
 /// <summary>Quick save/load and combat checkpoint hotkeys during an active run.</summary>
 internal static class QuickSlHotkeys {

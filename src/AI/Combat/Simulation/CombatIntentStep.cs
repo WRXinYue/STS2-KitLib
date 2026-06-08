@@ -1,4 +1,4 @@
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public sealed record CombatIntentStep(
     string MoveId,

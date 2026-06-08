@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI;
+using KitLib.AI;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class GameStateTool : IMcpTool {
     public string Name => "get_game_state";

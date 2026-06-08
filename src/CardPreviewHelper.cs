@@ -3,7 +3,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Safe card preview for DevMode browsers. Some event cards (e.g. MadScience) need runtime

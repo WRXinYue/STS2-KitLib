@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DevMode.Combat;
+namespace KitLib.Combat;
 
 internal sealed class CombatCheckpointNode {
     public string Id { get; set; } = "";

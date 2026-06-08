@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.Actions;
+using KitLib.Actions;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevListCardsTool : IMcpTool {
     public string Name => "dev_list_cards";

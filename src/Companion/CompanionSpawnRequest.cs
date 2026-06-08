@@ -1,8 +1,8 @@
-using DevMode.AI.Core;
+using KitLib.AI.Core;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Unlocks;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 public sealed record CompanionSpawnRequest(
     CharacterModel Character,

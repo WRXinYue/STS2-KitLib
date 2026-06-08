@@ -8,4 +8,4 @@
   - **已卸载 mod 残留进度警告** — 进度仍含已卸载 mod 数据时仅写日志
   - **mod 角色进度丢失时提示恢复** — 主菜单加载后，若最近备份中有可恢复的 mod 角色进度而当前存档已被清掉，弹出 **恢复** / **暂不**
 
-备份目录：`mod_data/DevMode/profile_backups/{时间戳}_profile{N}/`（完整路径见 README **进度保护**）。恢复仅限标题画面；建议 mod 集与备份时一致。
+备份目录：`mod_data/KitLib/profile_backups/{时间戳}_profile{N}/`（完整路径见 README **进度保护**）。恢复仅限标题画面；建议 mod 集与备份时一致。

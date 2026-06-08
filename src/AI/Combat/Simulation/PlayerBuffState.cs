@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Aggregated player buff-power state not represented by flat combat modifiers.</summary>
 public sealed record PlayerBuffState(

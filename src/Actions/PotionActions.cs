@@ -2,13 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class PotionActions {
     private const BindingFlags ReflFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;

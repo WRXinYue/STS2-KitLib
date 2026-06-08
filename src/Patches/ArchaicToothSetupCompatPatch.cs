@@ -2,7 +2,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models.Relics;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>
 /// Orobas evaluates OptionPool3 before RelicOption assigns Owner; mod Archaic Tooth setups need it bound.

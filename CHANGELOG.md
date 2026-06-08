@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rebrand to KitLib** — Mod id, assembly, C# root namespace, user-data path (`mod_data/KitLib`), and NuGet package id (`STS2.KitLib`) replace DevMode. Legacy `mod_data/DevMode` settings migrate automatically on first launch. Dependent mods should reference `KitLib.dll` and `KitLib.*` namespaces (e.g. `KitLib.Companion.CompanionBridge`).
 - **Combat AI** — Focus fire, vulnerable setup, and block timing follow sim-backed tradeoffs instead of fixed heuristics; potion use is unified under beam scoring with a narrower emergency path.
 
 ## [0.13.0] - 2026-06-02
@@ -40,8 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Crash recovery prompts** — When an unhandled error occurs in-game, DevMode shows a dialog to view logs or export a feedback ZIP (prefilled with crash summary). If the game exits abnormally, the main menu offers the same on next launch. Toggle under **Settings → Crash recovery**. Session markers live under `mod_data/DevMode/instances/{pid}/`.
-- **Progress protection** — On mod set fingerprint change, DevMode backs up the active profile's `progress.save` (and optional related saves) under `mod_data/DevMode/profile_backups/` before vanilla save filtering can run. Optional warn-only log when progress still references unloaded mods. Toggle under **Settings → Progress protection** or the title-screen **DEVMODE → Progress protection** panel (status + recent backups + one-click restore). Each backup row has a **Details** button to inspect account progress, per-character stats, epochs, compendium counts, and backup metadata.
+- **Crash recovery prompts** — When an unhandled error occurs in-game, DevMode shows a dialog to view logs or export a feedback ZIP (prefilled with crash summary). If the game exits abnormally, the main menu offers the same on next launch. Toggle under **Settings → Crash recovery**. Session markers live under `mod_data/KitLib/instances/{pid}/`.
+- **Progress protection** — On mod set fingerprint change, DevMode backs up the active profile's `progress.save` (and optional related saves) under `mod_data/KitLib/profile_backups/` before vanilla save filtering can run. Optional warn-only log when progress still references unloaded mods. Toggle under **Settings → Progress protection** or the title-screen **DEVMODE → Progress protection** panel (status + recent backups + one-click restore). Each backup row has a **Details** button to inspect account progress, per-character stats, epochs, compendium counts, and backup metadata.
 - **Progress protection startup prompt** — On main menu load, if mod character stats were filtered but a recoverable backup exists, DevMode offers a **Restore** / **Not now** dialog (toggle under **Progress protection** settings).
 - **Content browsers (mod source)** — Card, relic, potion, power, and event pickers include a **Mod source** filter to include or exclude game content and loaded mods. Detail views show **Source:** for the selected entry. The card browser remembers your mod-source filter across sessions.
 
@@ -123,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Enemy map hover tooltip** — Node hover previews render inside the map panel again (no longer invisible due to incorrect top-level layering).
-- **Settings, save slots, presets, and scripts** are now stored in the game's user-data directory (`SlayTheSpire2/steam/<id>/mod_data/DevMode/`) instead of inside the mod folder — they survive Steam Workshop updates without data loss.
+- **Settings, save slots, presets, and scripts** are now stored in the game's user-data directory (`SlayTheSpire2/steam/<id>/mod_data/KitLib/`) instead of inside the mod folder — they survive Steam Workshop updates without data loss.
 - Settings and save-slot files are now written atomically, preventing file corruption if the game crashes mid-save.
 - Applying powers, adding cards in combat, and loading presets work on the **stable/public** STS2 build again, not only the Steam beta branch.
 - Combat Stats **pie chart sidebar** layout when the stats panel is nearly full width and flush with the game right rail.

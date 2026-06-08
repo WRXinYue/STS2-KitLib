@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     private const string TurnChartNodeName = "turn.damage.chart";
@@ -137,7 +137,7 @@ internal static partial class CombatStatsUI {
                         SizeFlagsHorizontal = SizeFlags.ExpandFill,
                     };
                     label.AddThemeFontSizeOverride("font_size", 9);
-                    label.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+                    label.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
                     _xLabels.AddChild(label);
                 }
                 label.Text = turn.ToString();
@@ -150,7 +150,7 @@ internal static partial class CombatStatsUI {
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
             label.AddThemeFontSizeOverride("font_size", 9);
-            label.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            label.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             return label;
         }
     }
@@ -203,8 +203,8 @@ internal static partial class CombatStatsUI {
             if (plot.Size.X <= 1f || plot.Size.Y <= 1f || _series.Count == 0)
                 return;
 
-            var gridColor = new Color(DevModeTheme.PanelBorder.R, DevModeTheme.PanelBorder.G,
-                DevModeTheme.PanelBorder.B, 0.28f);
+            var gridColor = new Color(KitLibTheme.PanelBorder.R, KitLibTheme.PanelBorder.G,
+                KitLibTheme.PanelBorder.B, 0.28f);
             for (int i = 1; i <= 2; i++) {
                 float y = plot.Position.Y + plot.Size.Y * i / 3f;
                 DrawLine(new Vector2(plot.Position.X, y), new Vector2(plot.End.X, y), gridColor, 1f);
@@ -221,17 +221,17 @@ internal static partial class CombatStatsUI {
                 area[0] = new Vector2(points[0].X, plot.End.Y);
                 Array.Copy(points, 0, area, 1, points.Length);
                 area[^1] = new Vector2(points[^1].X, plot.End.Y);
-                DrawColoredPolygon(area, new Color(DevModeTheme.Accent.R, DevModeTheme.Accent.G,
-                    DevModeTheme.Accent.B, 0.14f));
+                DrawColoredPolygon(area, new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G,
+                    KitLibTheme.Accent.B, 0.14f));
             }
 
-            var lineColor = DevModeTheme.Accent;
+            var lineColor = KitLibTheme.Accent;
             for (int i = 1; i < points.Length; i++)
                 DrawLine(points[i - 1], points[i], lineColor, 2f);
 
             foreach (var p in points) {
                 DrawCircle(p, 3f, lineColor);
-                DrawCircle(p, 1.5f, DevModeTheme.TextPrimary);
+                DrawCircle(p, 1.5f, KitLibTheme.TextPrimary);
             }
         }
 

@@ -1,11 +1,11 @@
-using DevMode.Actions;
+using KitLib.Actions;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>
 /// Mid-combat adds (including vanilla monster summons like Ovicopter lay eggs) may pass
@@ -36,7 +36,7 @@ internal static class CombatSummonSlotRepositionPatch
             var id = creature.Monster != null
                 ? ((MegaCrit.Sts2.Core.Models.AbstractModel)creature.Monster).Id.Entry
                 : "?";
-            MainFile.Logger.Info($"[DevMode.CombatAdd] summon reposition hook: {id}");
+            MainFile.Logger.Info($"[KitLib.CombatAdd] summon reposition hook: {id}");
             CombatEnemyActions.RepositionEnemies(cs);
         }
     }

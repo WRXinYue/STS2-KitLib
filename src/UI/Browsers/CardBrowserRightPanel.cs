@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Actions;
-using DevMode.Hooks;
-using DevMode.Modding;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Presets;
-using DevMode.Settings;
+using KitLib.Actions;
+using KitLib.Hooks;
+using KitLib.Modding;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Presets;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
@@ -18,14 +18,14 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Builds the right-side detail / action panel inside the card browser.
 /// Stateless: every method receives what it needs via parameters.
 /// </summary>
 internal static class CardBrowserRightPanel {
-    private static Color ColSubtle => DevModeTheme.Subtle;
+    private static Color ColSubtle => KitLibTheme.Subtle;
 
     /// <summary>Staged edits applied when adding from the library (canonical cards are not mutated in-place in MP).</summary>
     private sealed class LibraryAddStaging {
@@ -74,7 +74,7 @@ internal static class CardBrowserRightPanel {
 
         private void RefreshMpDurHint() {
             if (MpDurHint == null) return;
-            MpDurHint.Text = DevModeState.EffectDuration == EffectDuration.Permanent
+            MpDurHint.Text = KitLibState.EffectDuration == EffectDuration.Permanent
                 ? I18N.T(
                     "mpcheat.cardAdd.permLocksEdits",
                     "Permanent mode: card stat edits are disabled.")
@@ -89,7 +89,7 @@ internal static class CardBrowserRightPanel {
     }
 
     private static bool ShouldLockLibraryStatEdits =>
-        MpCheatSession.InMultiplayerRun && DevModeState.EffectDuration == EffectDuration.Permanent;
+        MpCheatSession.InMultiplayerRun && KitLibState.EffectDuration == EffectDuration.Permanent;
 
     internal static void Build(VBoxContainer container, Label statusLabel,
         CardModel card, RunState state, Player player, NGlobalUi globalUi, Action onCardEdited,
@@ -114,7 +114,7 @@ internal static class CardBrowserRightPanel {
 
         var cardIdStr = ((AbstractModel)card).Id.Entry;
         if (!string.IsNullOrEmpty(cardIdStr))
-            container.AddChild(DevModeTheme.CreateCopyableIdRow(cardIdStr,
+            container.AddChild(KitLibTheme.CreateCopyableIdRow(cardIdStr,
                 msg => statusLabel.Text = msg));
 
         container.AddChild(BrowserDetailHelpers.CreateModSourceRow(ContentModResolver.Resolve(card)));
@@ -140,10 +140,10 @@ internal static class CardBrowserRightPanel {
 
         var desc = CardPreviewHelper.GetDescription(card, forUpgradePreview: !ReferenceEquals(displayCard, card));
         if (!string.IsNullOrWhiteSpace(desc)) {
-            var descLabel = DevModeTheme.CreateGameBbcodeLabel();
-            descLabel.Text = DevModeTheme.ConvertGameBbcode(desc);
+            var descLabel = KitLibTheme.CreateGameBbcodeLabel();
+            descLabel.Text = KitLibTheme.ConvertGameBbcode(desc);
             descLabel.AddThemeFontSizeOverride("normal_font_size", 12);
-            descLabel.AddThemeColorOverride("default_color", DevModeTheme.TextSecondary);
+            descLabel.AddThemeColorOverride("default_color", KitLibTheme.TextSecondary);
             container.AddChild(descLabel);
         }
 
@@ -237,7 +237,7 @@ internal static class CardBrowserRightPanel {
         targetPicker.AddItem(I18N.T("topbar.card.discardPile", "Discard"), 2);
         targetPicker.AddItem(I18N.T("topbar.card.exhaustPile", "Exhaust"), 3);
         targetPicker.AddItem(I18N.T("topbar.card.deck", "Deck"), 4);
-        targetPicker.Selected = DevModeState.CardTarget switch {
+        targetPicker.Selected = KitLibState.CardTarget switch {
             CardTarget.Hand => 0,
             CardTarget.DrawPile => 1,
             CardTarget.DiscardPile => 2,
@@ -246,7 +246,7 @@ internal static class CardBrowserRightPanel {
             _ => 0
         };
         targetPicker.ItemSelected += idx => {
-            DevModeState.CardTarget = idx switch {
+            KitLibState.CardTarget = idx switch {
                 0 => CardTarget.Hand,
                 1 => CardTarget.DrawPile,
                 2 => CardTarget.DiscardPile,
@@ -266,9 +266,9 @@ internal static class CardBrowserRightPanel {
         var durPicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         durPicker.AddItem(I18N.T("topbar.card.temporary", "Temp"), 0);
         durPicker.AddItem(I18N.T("topbar.card.permanent", "Perm"), 1);
-        durPicker.Selected = DevModeState.EffectDuration == EffectDuration.Permanent ? 1 : 0;
+        durPicker.Selected = KitLibState.EffectDuration == EffectDuration.Permanent ? 1 : 0;
         durPicker.ItemSelected += idx => {
-            DevModeState.EffectDuration = idx == 1 ? EffectDuration.Permanent : EffectDuration.Temporary;
+            KitLibState.EffectDuration = idx == 1 ? EffectDuration.Permanent : EffectDuration.Temporary;
             libraryUi.Refresh();
         };
         durRow.AddChild(durPicker);
@@ -302,8 +302,8 @@ internal static class CardBrowserRightPanel {
 
         async Task SyncAddCardInMultiplayerAsync() {
             var addRequest = new AddCardRequest {
-                Target = DevModeState.CardTarget,
-                Duration = DevModeState.EffectDuration,
+                Target = KitLibState.CardTarget,
+                Duration = KitLibState.EffectDuration,
                 UpgradeLevelsToApply = upgradeLevelsToApply,
                 StagedTemplate = addStaging.Template,
             };

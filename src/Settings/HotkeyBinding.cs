@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 public sealed class HotkeyBinding {
     public int KeyCode { get; set; }
@@ -90,7 +90,7 @@ public sealed class HotkeyBinding {
     };
 
     /// <summary>Returns null if valid, otherwise an i18n key for the rejection reason.</summary>
-    public static string? ValidateForAssign(string actionId, HotkeyBinding candidate, DevModeSettings settings) {
+    public static string? ValidateForAssign(string actionId, HotkeyBinding candidate, KitLibSettings settings) {
         if (candidate.KeyCode == 0)
             return "hotkeys.conflict.empty";
 

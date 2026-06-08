@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 [Flags]
 public enum EnemyMechanicFlags : ulong {

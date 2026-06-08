@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Settings;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>
 /// The game forcibly downgrades <see cref="FastModeType.Instant"/> to <see cref="FastModeType.Fast"/>

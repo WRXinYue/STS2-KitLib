@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DevMode.Hooks;
+namespace KitLib.Hooks;
 
 public enum TriggerType {
     CombatStart,

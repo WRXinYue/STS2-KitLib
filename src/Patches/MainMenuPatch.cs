@@ -1,13 +1,13 @@
 using System;
-using DevMode.Feedback;
-using DevMode.UI;
+using KitLib.Feedback;
+using KitLib.UI;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 [HarmonyPatch(typeof(NMainMenu))]
 public static class MainMenuPatch {
@@ -22,7 +22,7 @@ public static class MainMenuPatch {
 
         var settingsBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/SettingsButton");
         if (settingsBtn == null) {
-            MainFile.Logger.Warn("DevMode: Could not find Settings button.");
+            MainFile.Logger.Warn("KitLib: Could not find Settings button.");
             return;
         }
 
@@ -31,7 +31,7 @@ public static class MainMenuPatch {
         _devModeButton = MainMenuTextButtonFactory.CreateFrom(
             settingsBtn,
             container,
-            "DevModeButton",
+            "KitLibButton",
             I18N.T("menu.developerMode", "DEVMODE"),
             OnDevModeButtonPressed);
 
@@ -39,7 +39,7 @@ public static class MainMenuPatch {
         int insertAt = quitBtn != null ? quitBtn.GetIndex() : container.GetChildCount();
         container.MoveChild(_devModeButton, insertAt);
 
-        MainFile.Logger.Info("DevMode: Main menu Developer Mode button added.");
+        MainFile.Logger.Info("KitLib: Main menu Developer Mode button added.");
     }
 
     [HarmonyPostfix]
@@ -70,10 +70,10 @@ public static class MainMenuPatch {
         if (_devModeButton == null || !GodotObject.IsInstanceValid(_devModeButton))
             return;
 
-        if (DevModeState.AutoProceedToCharSelect) {
-            DevModeState.AutoProceedToCharSelect = false;
-            DevModeState.InDevRun = true;
-            MainFile.Logger.Info("DevMode: Auto-proceeding to character select (Restart with Seed).");
+        if (KitLibState.AutoProceedToCharSelect) {
+            KitLibState.AutoProceedToCharSelect = false;
+            KitLibState.InDevRun = true;
+            MainFile.Logger.Info("KitLib: Auto-proceeding to character select (Restart with Seed).");
             var charSelect = __instance.SubmenuStack.GetSubmenuType<NCharacterSelectScreen>();
             charSelect.InitializeSingleplayer();
             __instance.SubmenuStack.Push(charSelect);
@@ -99,11 +99,11 @@ public static class MainMenuPatch {
     private static void OnDevModeButtonPressed(NButton _) {
         if (_mainMenuRef == null) return;
 
-        MainFile.Logger.Info("DevMode: Opening dev mode menu...");
+        MainFile.Logger.Info("KitLib: Opening dev mode menu...");
 
         DevMainMenuUI.Show(_mainMenuRef, new DevMainMenuActions {
             OnNewTest = () => {
-                DevModeState.InDevRun = true;
+                KitLibState.InDevRun = true;
                 var charSelect = _mainMenuRef.SubmenuStack.GetSubmenuType<NCharacterSelectScreen>();
                 charSelect.InitializeSingleplayer();
                 _mainMenuRef.SubmenuStack.Push(charSelect);

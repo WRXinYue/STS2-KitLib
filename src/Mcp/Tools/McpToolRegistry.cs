@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class McpToolRegistry {
     private readonly Dictionary<string, IMcpTool> _tools = new();

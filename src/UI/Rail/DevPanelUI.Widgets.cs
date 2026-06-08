@@ -1,8 +1,8 @@
 using System;
-using DevMode.Icons;
+using KitLib.Icons;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     // ── Browser-panel factory (spliced to rail, same visual language as Cards/Relics) ─────────
@@ -165,7 +165,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         lbl.AddThemeFontSizeOverride("font_size", 16);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         return lbl;
     }
 
@@ -178,7 +178,7 @@ internal static partial class DevPanelUI {
         row.AddThemeConstantOverride("separation", 6);
 
         row.AddChild(new TextureRect {
-            Texture = MdiIcon.Magnify.Texture(18, DevModeTheme.Subtle),
+            Texture = MdiIcon.Magnify.Texture(18, KitLibTheme.Subtle),
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             CustomMinimumSize = new Vector2(22, 22),
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
@@ -225,16 +225,16 @@ internal static partial class DevPanelUI {
             BorderColor = border
         };
 
-        var accent = DevModeTheme.Accent;
-        var bgNormal = DevModeTheme.ButtonBgNormal;
+        var accent = KitLibTheme.Accent;
+        var bgNormal = KitLibTheme.ButtonBgNormal;
         btn.AddThemeStyleboxOverride("normal", MakeStyle(bgNormal, new Color(bgNormal.R, bgNormal.G, bgNormal.B, bgNormal.A * 0.8f)));
-        btn.AddThemeStyleboxOverride("hover", MakeStyle(DevModeTheme.ButtonBgHover, new Color(accent.R, accent.G, accent.B, 0.30f)));
+        btn.AddThemeStyleboxOverride("hover", MakeStyle(KitLibTheme.ButtonBgHover, new Color(accent.R, accent.G, accent.B, 0.30f)));
         btn.AddThemeStyleboxOverride("pressed", MakeStyle(new Color(accent.R, accent.G, accent.B, 0.15f), new Color(accent.R, accent.G, accent.B, 0.50f)));
         btn.AddThemeStyleboxOverride("focus", MakeStyle(bgNormal, new Color(bgNormal.R, bgNormal.G, bgNormal.B, bgNormal.A * 0.8f)));
 
-        btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 13);
 
         return btn;
@@ -263,16 +263,16 @@ internal static partial class DevPanelUI {
             ContentMarginBottom = 2
         };
 
-        var accent = DevModeTheme.Accent;
-        btn.AddThemeStyleboxOverride("normal", MakeStyle(DevModeTheme.ButtonBgNormal));
-        btn.AddThemeStyleboxOverride("hover", MakeStyle(DevModeTheme.ButtonBgHover));
-        btn.AddThemeStyleboxOverride("pressed", MakeStyle(DevModeTheme.AccentAlpha));
+        var accent = KitLibTheme.Accent;
+        btn.AddThemeStyleboxOverride("normal", MakeStyle(KitLibTheme.ButtonBgNormal));
+        btn.AddThemeStyleboxOverride("hover", MakeStyle(KitLibTheme.ButtonBgHover));
+        btn.AddThemeStyleboxOverride("pressed", MakeStyle(KitLibTheme.AccentAlpha));
         btn.AddThemeStyleboxOverride("hover_pressed", MakeStyle(new Color(accent.R, accent.G, accent.B, 0.95f)));
-        btn.AddThemeStyleboxOverride("focus", MakeStyle(DevModeTheme.ButtonBgNormal));
+        btn.AddThemeStyleboxOverride("focus", MakeStyle(KitLibTheme.ButtonBgNormal));
 
-        btn.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 11);
 
         return btn;
@@ -294,7 +294,7 @@ internal static partial class DevPanelUI {
 
     private static void ApplyDisabledStyle(Button btn, int cornerFlags) {
         var s = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             ContentMarginLeft = 12,
             ContentMarginRight = 12,
             ContentMarginTop = 4,
@@ -303,7 +303,7 @@ internal static partial class DevPanelUI {
             BorderWidthBottom = 1,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
-            BorderColor = DevModeTheme.Separator,
+            BorderColor = KitLibTheme.Separator,
             CornerRadiusTopLeft = (cornerFlags & 1) != 0 ? 6 : 0,
             CornerRadiusBottomLeft = (cornerFlags & 1) != 0 ? 6 : 0,
             CornerRadiusTopRight = (cornerFlags & 2) != 0 ? 6 : 0,
@@ -311,13 +311,13 @@ internal static partial class DevPanelUI {
         };
         foreach (var state in new[] { "normal", "hover", "pressed", "focus", "disabled" })
             btn.AddThemeStyleboxOverride(state, s);
-        btn.AddThemeColorOverride("font_disabled_color", DevModeTheme.Subtle);
+        btn.AddThemeColorOverride("font_disabled_color", KitLibTheme.Subtle);
     }
 
     private static void ApplyToggleStyle(Button btn, bool active, int cornerFlags) {
-        var accent = DevModeTheme.Accent;
+        var accent = KitLibTheme.Accent;
         var s = new StyleBoxFlat {
-            BgColor = active ? new Color(accent.R, accent.G, accent.B, 0.25f) : DevModeTheme.ButtonBgNormal,
+            BgColor = active ? new Color(accent.R, accent.G, accent.B, 0.25f) : KitLibTheme.ButtonBgNormal,
             ContentMarginLeft = 12,
             ContentMarginRight = 12,
             ContentMarginTop = 4,
@@ -326,7 +326,7 @@ internal static partial class DevPanelUI {
             BorderWidthBottom = 1,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
-            BorderColor = active ? new Color(accent.R, accent.G, accent.B, 0.6f) : DevModeTheme.Separator,
+            BorderColor = active ? new Color(accent.R, accent.G, accent.B, 0.6f) : KitLibTheme.Separator,
             CornerRadiusTopLeft = (cornerFlags & 1) != 0 ? 6 : 0,
             CornerRadiusBottomLeft = (cornerFlags & 1) != 0 ? 6 : 0,
             CornerRadiusTopRight = (cornerFlags & 2) != 0 ? 6 : 0,
@@ -336,12 +336,12 @@ internal static partial class DevPanelUI {
         btn.AddThemeStyleboxOverride("hover", s);
         btn.AddThemeStyleboxOverride("pressed", s);
         btn.AddThemeStyleboxOverride("focus", s);
-        btn.AddThemeColorOverride("font_color", active ? DevModeTheme.Accent : DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", active ? KitLibTheme.Accent : KitLibTheme.TextPrimary);
     }
 
     private static void ApplySmallButtonStyle(Button btn) {
         var normal = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             ContentMarginLeft = 4,
             ContentMarginRight = 4,
             ContentMarginTop = 2,
@@ -352,7 +352,7 @@ internal static partial class DevPanelUI {
             CornerRadiusBottomRight = 4
         };
         var hover = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgHover,
+            BgColor = KitLibTheme.ButtonBgHover,
             ContentMarginLeft = 4,
             ContentMarginRight = 4,
             ContentMarginTop = 2,
@@ -370,9 +370,9 @@ internal static partial class DevPanelUI {
 
     private static void ApplySpinBoxTheme(SpinBox spinBox) {
         var lineEdit = spinBox.GetLineEdit();
-        lineEdit.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lineEdit.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         var bg = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             ContentMarginLeft = 4,
             ContentMarginRight = 4,
             ContentMarginTop = 2,
@@ -405,7 +405,7 @@ internal static partial class DevPanelUI {
             btn.Alignment = HorizontalAlignment.Left;
         }
         var normal = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
@@ -416,7 +416,7 @@ internal static partial class DevPanelUI {
             ContentMarginBottom = 4
         };
         var hover = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgHover,
+            BgColor = KitLibTheme.ButtonBgHover,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
@@ -430,25 +430,25 @@ internal static partial class DevPanelUI {
         btn.AddThemeStyleboxOverride("hover", hover);
         btn.AddThemeStyleboxOverride("pressed", hover);
         btn.AddThemeStyleboxOverride("focus", normal);
-        btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 13);
         return btn;
     }
 
     private static Button CreateOverlayButton(string text, MdiIcon icon) {
-        var accent = DevModeTheme.Accent;
+        var accent = KitLibTheme.Accent;
         var btn = new Button {
             Text = text,
             CustomMinimumSize = new Vector2(200, 48),
             FocusMode = Control.FocusModeEnum.None,
-            Icon = icon.Texture(20, DevModeTheme.TextPrimary),
+            Icon = icon.Texture(20, KitLibTheme.TextPrimary),
             IconAlignment = HorizontalAlignment.Left,
             Alignment = HorizontalAlignment.Center
         };
         var style = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             CornerRadiusTopLeft = 10,
             CornerRadiusTopRight = 10,
             CornerRadiusBottomLeft = 10,
@@ -474,7 +474,7 @@ internal static partial class DevPanelUI {
         btn.AddThemeStyleboxOverride("pressed", hoverStyle);
         btn.AddThemeStyleboxOverride("focus", style);
         btn.AddThemeFontSizeOverride("font_size", 14);
-        btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         return btn;
     }
 
@@ -546,7 +546,7 @@ internal static partial class DevPanelUI {
             ClipText = true
         };
         lbl.AddThemeFontSizeOverride("font_size", 12);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         if (tooltip != null) lbl.TooltipText = tooltip;
         row.AddChild(lbl);
 
@@ -586,13 +586,13 @@ internal static partial class DevPanelUI {
 
         var lbl = new Label { Text = label, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true };
         lbl.AddThemeFontSizeOverride("font_size", 12);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         if (tooltip != null) lbl.TooltipText = tooltip;
         row.AddChild(lbl);
 
         var valLabel = new Label { Text = getter().ToString("0.#"), CustomMinimumSize = new Vector2(28, 0) };
         valLabel.AddThemeFontSizeOverride("font_size", 12);
-        valLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        valLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         valLabel.HorizontalAlignment = HorizontalAlignment.Right;
         row.AddChild(valLabel);
 
@@ -629,11 +629,11 @@ internal static partial class DevPanelUI {
 
         var lbl = new Label { Text = label, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true };
         lbl.AddThemeFontSizeOverride("font_size", 12);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         row.AddChild(lbl);
 
         var minusBtn = new Button { CustomMinimumSize = new Vector2(26, 26), FocusMode = Control.FocusModeEnum.None };
-        minusBtn.Icon = MdiIcon.Minus.Texture(14, DevModeTheme.TextPrimary);
+        minusBtn.Icon = MdiIcon.Minus.Texture(14, KitLibTheme.TextPrimary);
         ApplySmallButtonStyle(minusBtn);
         row.AddChild(minusBtn);
 
@@ -650,12 +650,12 @@ internal static partial class DevPanelUI {
         row.AddChild(spinBox);
 
         var plusBtn = new Button { CustomMinimumSize = new Vector2(26, 26), FocusMode = Control.FocusModeEnum.None };
-        plusBtn.Icon = MdiIcon.Plus.Texture(14, DevModeTheme.TextPrimary);
+        plusBtn.Icon = MdiIcon.Plus.Texture(14, KitLibTheme.TextPrimary);
         ApplySmallButtonStyle(plusBtn);
         row.AddChild(plusBtn);
 
         var applyBtn = new Button { CustomMinimumSize = new Vector2(26, 26), FocusMode = Control.FocusModeEnum.None };
-        applyBtn.Icon = MdiIcon.Check.Texture(14, DevModeTheme.TextPrimary);
+        applyBtn.Icon = MdiIcon.Check.Texture(14, KitLibTheme.TextPrimary);
         var applyStyle = new StyleBoxFlat {
             BgColor = new Color(0.2f, 0.5f, 0.4f, 0.9f),
             ContentMarginLeft = 4,
@@ -697,7 +697,7 @@ internal static partial class DevPanelUI {
 
         var check = new CheckBox { Text = label, ButtonPressed = lockGetter() };
         check.AddThemeFontSizeOverride("font_size", 12);
-        check.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        check.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         check.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         check.ClipText = true;
         row.AddChild(check);

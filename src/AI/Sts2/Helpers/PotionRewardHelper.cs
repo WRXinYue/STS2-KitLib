@@ -2,13 +2,13 @@ using System;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI.AutoPlay.Scoring;
+using KitLib.AI.AutoPlay.Scoring;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace DevMode.AI.Sts2.Helpers;
+namespace KitLib.AI.Sts2.Helpers;
 
 /// <summary>Resolves potion-belt-full prompts opened by reward or shop flows.</summary>
 internal static class PotionRewardHelper {

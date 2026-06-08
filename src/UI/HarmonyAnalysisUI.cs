@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using DevMode.Interop;
+using KitLib.Interop;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Full Harmony dump + smart analysis with selectable text, owner pie chart, and copy actions.
 /// </summary>
 internal static class HarmonyAnalysisUI {
-    internal const string RootName = "DevModeHarmonyAnalysis";
+    internal const string RootName = "KitLibHarmonyAnalysis";
     private const float PanelW = 1120f;
     private const double AutoRefreshIntervalSec = 3.0;
     private const int SmartMainSplitInitial = 820;
@@ -33,7 +33,7 @@ internal static class HarmonyAnalysisUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         titleBox.AddChild(subtitle);
         vbox.AddChild(titleBox);
 
@@ -43,7 +43,7 @@ internal static class HarmonyAnalysisUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         selectHint.AddThemeFontSizeOverride("font_size", 10);
-        selectHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        selectHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         vbox.AddChild(selectHint);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
 
@@ -56,7 +56,7 @@ internal static class HarmonyAnalysisUI {
             VerticalAlignment = VerticalAlignment.Center
         };
         filterLabel.AddThemeFontSizeOverride("font_size", 11);
-        filterLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        filterLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         filterRow.AddChild(filterLabel);
 
         var excludeEdit = new LineEdit {
@@ -74,7 +74,7 @@ internal static class HarmonyAnalysisUI {
             VerticalAlignment = VerticalAlignment.Center
         };
         filterHint.AddThemeFontSizeOverride("font_size", 10);
-        filterHint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        filterHint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         filterRow.AddChild(filterHint);
 
         vbox.AddChild(filterRow);
@@ -152,7 +152,7 @@ internal static class HarmonyAnalysisUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         legend.AddThemeFontSizeOverride("font_size", 9);
-        legend.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        legend.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
 
         var legendScroll = new ScrollContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -167,11 +167,11 @@ internal static class HarmonyAnalysisUI {
             HorizontalAlignment = HorizontalAlignment.Center
         };
         pieTitle.AddThemeFontSizeOverride("font_size", 11);
-        pieTitle.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        pieTitle.AddThemeColorOverride("font_color", KitLibTheme.Accent);
 
         var legendTitle = new Label { Text = I18N.T("harmony.pie.legendTitle", "Counts (all owners)") };
         legendTitle.AddThemeFontSizeOverride("font_size", 10);
-        legendTitle.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        legendTitle.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
 
         var rightColumn = new VBoxContainer {
             CustomMinimumSize = new Vector2(248, 0),
@@ -308,7 +308,7 @@ internal static class HarmonyAnalysisUI {
                         patchRegistry,
                         I18N.T("harmony.registry.section", "=== Patch documentation (shared registry) ==="),
                         I18N.T("harmony.registry.intro",
-                            "Matched by Harmony owner id. Registry is embedded in DevMode.dll."),
+                            "Matched by Harmony owner id. Registry is embedded in KitLib.dll."),
                         I18N.T("harmony.registry.noneMatched",
                             "No owners in this snapshot appear in the registry."));
                     lastAppliedSmart = smart;
@@ -481,13 +481,13 @@ internal static class HarmonyAnalysisUI {
             ScrollFitContentHeight = false
         };
         te.AddThemeFontSizeOverride("font_size", 11);
-        te.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-        te.AddThemeColorOverride("caret_color", DevModeTheme.Accent);
-        te.AddThemeColorOverride("selection_color", new Color(DevModeTheme.Accent.R, DevModeTheme.Accent.G, DevModeTheme.Accent.B, 0.35f));
+        te.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        te.AddThemeColorOverride("caret_color", KitLibTheme.Accent);
+        te.AddThemeColorOverride("selection_color", new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G, KitLibTheme.Accent.B, 0.35f));
 
         var bg = new StyleBoxFlat {
-            BgColor = new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.94f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.94f),
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
             BorderWidthTop = 1,

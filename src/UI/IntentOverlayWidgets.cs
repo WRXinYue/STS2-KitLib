@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using DevMode.EnemyIntent;
+using KitLib.EnemyIntent;
 using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
@@ -9,7 +9,7 @@ using MegaCrit.Sts2.Core.Entities.Intents;
 using MegaCrit.Sts2.Core.HoverTips;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class IntentOverlayLayout {
     public const float BadgeSize = 40f;
@@ -26,9 +26,9 @@ internal static class IntentTooltip {
         var lines = new List<string>();
         string? title = tip.Title ?? intent.GetIntentLabel(targets, owner).GetFormattedText();
         if (!string.IsNullOrWhiteSpace(title))
-            lines.Add(DevModeTheme.ToPlainTooltipText(title));
+            lines.Add(KitLibTheme.ToPlainTooltipText(title));
         if (!string.IsNullOrWhiteSpace(tip.Description))
-            lines.Add(DevModeTheme.ToPlainTooltipText(tip.Description));
+            lines.Add(KitLibTheme.ToPlainTooltipText(tip.Description));
         return string.Join("\n", lines);
     }
 
@@ -105,7 +105,7 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
         };
         _nameLabel.AddThemeFontSizeOverride("font_size", badgeSize <= IntentOverlayLayout.CompactBadgeSize ? 9 : 11);
-        _nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        _nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         AddChild(_nameLabel);
 
         _stepScroll = new ScrollContainer {
@@ -215,7 +215,7 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
             MouseFilter = MouseFilterEnum.Ignore,
         };
         arrow.AddThemeFontSizeOverride("font_size", 12);
-        arrow.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        arrow.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return arrow;
     }
 
@@ -229,13 +229,13 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
 
         var style = new StyleBoxFlat {
             BgColor = step.IsCurrent
-                ? new Color(DevModeTheme.Accent.R, DevModeTheme.Accent.G, DevModeTheme.Accent.B, 0.18f)
-                : new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.65f),
+                ? new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G, KitLibTheme.Accent.B, 0.18f)
+                : new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.65f),
             BorderColor = step.IsCurrent
-                ? DevModeTheme.Accent
+                ? KitLibTheme.Accent
                 : step.IsUncertain
-                    ? DevModeTheme.Subtle
-                    : DevModeTheme.PanelBorder,
+                    ? KitLibTheme.Subtle
+                    : KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,
@@ -321,7 +321,7 @@ internal sealed partial class IntentOverlayBadge : Control {
             MouseFilter = MouseFilterEnum.Ignore,
         };
         _valueLabel.AddThemeFontSizeOverride("font_size", badgeSize <= IntentOverlayLayout.CompactBadgeSize ? 8 : 9);
-        _valueLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        _valueLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         AddChild(_valueLabel);
     }
 
@@ -350,7 +350,7 @@ internal sealed partial class IntentOverlayBadge : Control {
     }
 
     private void ApplyValueLabel(string raw) {
-        string text = DevModeTheme.StripFontSizeBbcode(raw);
+        string text = KitLibTheme.StripFontSizeBbcode(raw);
         if (string.IsNullOrWhiteSpace(text)) {
             _valueLabel.Visible = false;
             return;

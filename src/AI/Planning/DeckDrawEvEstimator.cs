@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat;
-using DevMode.AI.Combat.Simulation;
+using KitLib.AI.Combat;
+using KitLib.AI.Combat.Simulation;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public sealed record TurnOneMetrics(
     int BeamScore,

@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
-using DevMode.Settings;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.Settings;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Verbose combat pick logging for AutoPlay terminal / godot.log.</summary>
 public static class CombatDecisionLog {

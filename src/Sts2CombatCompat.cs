@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 #endif
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Stable vs Steam-beta combat API shims (IsPlayPhase removal, history entry fields, ICombatState).

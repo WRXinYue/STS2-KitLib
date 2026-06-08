@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DevMode.Hooks;
+using KitLib.Hooks;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 // ─────────────────────────── Condition tree ───────────────────────────
 

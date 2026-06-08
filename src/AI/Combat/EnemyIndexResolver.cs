@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Maps snapshot enemy array slots ↔ combat <c>index</c> field (0-based slot in <c>CombatState.Enemies</c>, stable when others die).</summary>
 internal static class EnemyIndexResolver {

@@ -1,11 +1,11 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
     internal static void BuildCombatAddPicker(

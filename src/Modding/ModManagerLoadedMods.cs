@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using MegaCrit.Sts2.Core.Modding;
 
-namespace DevMode.Modding;
+namespace KitLib.Modding;
 
 internal static class ModManagerLoadedMods {
     private static readonly Lazy<Func<IEnumerable<Mod>>> _getLoadedMods =

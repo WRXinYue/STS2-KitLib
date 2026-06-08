@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Actions;
-using DevMode.Icons;
+using KitLib.Actions;
+using KitLib.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal readonly record struct ContextRailAction(
     MdiIcon Icon,
@@ -55,7 +55,7 @@ internal abstract class CombatContextSidebarBase : IDevPanelSidebarProvider {
     public bool HasContent => _hasContent;
 
     protected static bool IsCombatVisible =>
-        DevModeState.IsActive
+        KitLibState.IsActive
         && CombatManager.Instance?.IsInProgress == true
         && CombatEnemyActions.GetCombatState() != null;
 

@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI.AutoPlay.Scoring;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.AutoPlay.Scoring;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.AutoPlay.Strategies;
+namespace KitLib.AI.AutoPlay.Strategies;
 
 /// <summary>
 /// Basic rule-based strategy for autonomous play.

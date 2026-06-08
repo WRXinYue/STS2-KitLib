@@ -1,6 +1,6 @@
 using Godot;
 
-namespace DevMode.Feedback;
+namespace KitLib.Feedback;
 
 /// <summary>
 /// Clears the crash-recovery session marker on Godot shutdown (normal quit).

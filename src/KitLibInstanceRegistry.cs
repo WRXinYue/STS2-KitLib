@@ -2,16 +2,16 @@ using System;
 using System.IO;
 using System.Linq;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Tracks live DevMode processes on this machine via heartbeat lock files under
-/// <c>mod_data/DevMode/instances/</c>.
+/// <c>mod_data/KitLib/instances/</c>.
 /// </summary>
-internal static class DevModeInstanceRegistry {
+internal static class KitLibInstanceRegistry {
     private static readonly TimeSpan StaleAfter = TimeSpan.FromSeconds(45);
     private static string InstancesDir => Path.Combine(DataPaths.BaseDir, "instances");
-    private static string LockPath => Path.Combine(InstancesDir, $"{DevModeInstance.ProcessId}.lock");
+    private static string LockPath => Path.Combine(InstancesDir, $"{KitLibInstance.ProcessId}.lock");
 
     public static void Register() {
         try {
@@ -20,7 +20,7 @@ internal static class DevModeInstanceRegistry {
             CleanupStaleLocks();
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode] Instance registry register failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib] Instance registry register failed: {ex.Message}");
         }
     }
 

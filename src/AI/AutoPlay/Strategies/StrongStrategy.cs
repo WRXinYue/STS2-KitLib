@@ -1,13 +1,13 @@
 using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI.AutoPlay.Scoring;
-using DevMode.AI.Combat;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.AutoPlay.Scoring;
+using KitLib.AI.Combat;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.AutoPlay.Strategies;
+namespace KitLib.AI.AutoPlay.Strategies;
 
 /// <summary>
 /// Deck-plan-aware strategy for solo A10-capable play.

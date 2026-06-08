@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Nodes.Debug;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Bridge to the official STS2 DevConsole.

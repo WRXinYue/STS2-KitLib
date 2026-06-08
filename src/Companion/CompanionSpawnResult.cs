@@ -1,6 +1,6 @@
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 public sealed record CompanionSpawnResult(
     bool Ok,

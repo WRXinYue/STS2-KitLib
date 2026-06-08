@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 public sealed class MpCheatConfigClientRequestMessage {
     public ulong ClientRequestId { get; set; }

@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Authoritative in-run multiplayer cheat config (not per-frame).</summary>
 public static class MpCheatState {
@@ -17,17 +17,17 @@ public static class MpCheatState {
         var localNetId = MpCheatSession.ResolveLocalPlayerNetId();
         if (MpCheatSession.InMultiplayerRun) {
             _config.NormalizePerPlayerKeys(localNetId);
-            _config.ApplyToLocalDevModeState(localNetId);
+            _config.ApplyToLocalKitLibState(localNetId);
             LogPerPlayerState(revision, reason, localNetId);
         }
         else {
-            _config.ApplyToDevModeState();
+            _config.ApplyToKitLibState();
             MainFile.Logger.Info($"[MpCheat] Applied config rev={revision} ({reason}).");
         }
     }
 
-    /// <summary>Apply local DevModeState to in-memory config before host round-trip (client UI toggles).</summary>
-    public static void ApplyOptimisticFromDevModeState() {
+    /// <summary>Apply local KitLibState to in-memory config before host round-trip (client UI toggles).</summary>
+    public static void ApplyOptimisticFromKitLibState() {
         if (!MpCheatSession.InMultiplayerRun) return;
         var netId = MpCheatSession.ResolveLocalPlayerNetId();
         if (netId == 0) {
@@ -37,7 +37,7 @@ public static class MpCheatState {
         _config = MpCheatConfig.MergeLocalEdits(_config, netId, MpCheatSession.IsHost);
         _config.SessionEnabled = true;
         MainFile.Logger.Info(
-            $"[MpCheat] Optimistic per-player config applied netId={netId} infiniteBlock={DevModeState.PlayerCheats.InfiniteBlock}.");
+            $"[MpCheat] Optimistic per-player config applied netId={netId} infiniteBlock={KitLibState.PlayerCheats.InfiniteBlock}.");
     }
 
     private static void LogPerPlayerState(long revision, string reason, ulong localNetId) {

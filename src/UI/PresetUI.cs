@@ -1,22 +1,22 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Presets;
+using KitLib.Presets;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Preset manager — two-pane browser with selective save/load scope.</summary>
 internal static class PresetUI {
-    private const string RootName = "DevModePresets";
+    private const string RootName = "KitLibPresets";
     private const float PanelW = 800f;
 
     private static readonly Color ColCards = new(0.35f, 0.58f, 0.95f);
     private static readonly Color ColRelics = new(0.88f, 0.72f, 0.22f);
     private static readonly Color ColStats = new(0.32f, 0.76f, 0.50f);
-    private static Color ColLight => DevModeTheme.TextPrimary;
-    private static Color ColDetailBg => DevModeTheme.ButtonBgNormal;
+    private static Color ColLight => KitLibTheme.TextPrimary;
+    private static Color ColDetailBg => KitLibTheme.ButtonBgNormal;
 
     // ─────────────────────────────── State ───────────────────────────────
 
@@ -94,7 +94,7 @@ internal static class PresetUI {
 
         var title = new Label { Text = I18N.T("preset.title", "Preset Manager") };
         title.AddThemeFontSizeOverride("font_size", 14);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         row.AddChild(title);
 
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
@@ -112,14 +112,14 @@ internal static class PresetUI {
 
         // ── New preset card ──
         var newCard = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        newCard.AddThemeStyleboxOverride("panel", MakeCardStyle(DevModeTheme.Separator));
+        newCard.AddThemeStyleboxOverride("panel", MakeCardStyle(KitLibTheme.Separator));
 
         var newInner = new VBoxContainer();
         newInner.AddThemeConstantOverride("separation", 8);
 
         var newHdr = new Label { Text = I18N.T("preset.newPreset", "New Preset") };
         newHdr.AddThemeFontSizeOverride("font_size", 11);
-        newHdr.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        newHdr.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         newInner.AddChild(newHdr);
 
         s.NameInput = new LineEdit {
@@ -131,7 +131,7 @@ internal static class PresetUI {
         // Scope toggles
         var includeHdr = new Label { Text = I18N.T("preset.include", "Include:") };
         includeHdr.AddThemeFontSizeOverride("font_size", 11);
-        includeHdr.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        includeHdr.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         newInner.AddChild(includeHdr);
 
         var toggleRow = new HBoxContainer();
@@ -184,7 +184,7 @@ internal static class PresetUI {
         // ── Preset count label ──
         s.CountLabel = new Label { HorizontalAlignment = HorizontalAlignment.Left };
         s.CountLabel.AddThemeFontSizeOverride("font_size", 11);
-        s.CountLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        s.CountLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         pane.AddChild(s.CountLabel);
 
         // ── Scrollable list ──
@@ -217,7 +217,7 @@ internal static class PresetUI {
             BorderWidthBottom = 1,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
-            BorderColor = DevModeTheme.PanelBorder,
+            BorderColor = KitLibTheme.PanelBorder,
         };
         pane.AddThemeStyleboxOverride("panel", bgStyle);
 
@@ -238,7 +238,7 @@ internal static class PresetUI {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         s.HintLabel.AddThemeFontSizeOverride("font_size", 13);
-        s.HintLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        s.HintLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         inner.AddChild(s.HintLabel);
 
         // Detail content (hidden until a preset is selected)
@@ -259,7 +259,7 @@ internal static class PresetUI {
         // Summary
         s.DetailSummary = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         s.DetailSummary.AddThemeFontSizeOverride("font_size", 11);
-        s.DetailSummary.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        s.DetailSummary.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         ((VBoxContainer)s.DetailContent).AddChild(s.DetailSummary);
 
         ((VBoxContainer)s.DetailContent).AddChild(MakeDivider());
@@ -267,7 +267,7 @@ internal static class PresetUI {
         // Apply scope
         var applyScopeHdr = new Label { Text = I18N.T("preset.applyScope", "Apply scope") };
         applyScopeHdr.AddThemeFontSizeOverride("font_size", 11);
-        applyScopeHdr.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        applyScopeHdr.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         ((VBoxContainer)s.DetailContent).AddChild(applyScopeHdr);
 
         s.ApplyScopeBox = new VBoxContainer();
@@ -309,7 +309,7 @@ internal static class PresetUI {
         // Status
         s.StatusLabel = new Label { HorizontalAlignment = HorizontalAlignment.Center };
         s.StatusLabel.AddThemeFontSizeOverride("font_size", 11);
-        s.StatusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        s.StatusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         ((VBoxContainer)s.DetailContent).AddChild(s.StatusLabel);
 
         inner.AddChild(s.DetailContent);
@@ -333,7 +333,7 @@ internal static class PresetUI {
                 Text = I18N.T("preset.empty", "No saved presets."),
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
-            empty.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            empty.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             s.PresetList.AddChild(empty);
             return;
         }
@@ -346,10 +346,10 @@ internal static class PresetUI {
             var row = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             var rowStyle = MakeCardStyle(isSelected
                 ? new Color(0.24f, 0.34f, 0.50f, 0.90f)
-                : DevModeTheme.Separator);
+                : KitLibTheme.Separator);
             if (isSelected) {
                 rowStyle.BorderWidthLeft = rowStyle.BorderWidthRight = rowStyle.BorderWidthTop = rowStyle.BorderWidthBottom = 1;
-                rowStyle.BorderColor = DevModeTheme.AccentAlpha;
+                rowStyle.BorderColor = KitLibTheme.AccentAlpha;
             }
             row.AddThemeStyleboxOverride("panel", rowStyle);
             row.MouseFilter = Control.MouseFilterEnum.Stop;
@@ -385,7 +385,7 @@ internal static class PresetUI {
             var summary = BuildSummaryLine(preset);
             var subLabel = new Label { Text = summary };
             subLabel.AddThemeFontSizeOverride("font_size", 11);
-            subLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            subLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             rowInner.AddChild(subLabel);
 
             var innerMargin = new MarginContainer();
@@ -661,11 +661,11 @@ internal static class PresetUI {
         BorderWidthRight = 1,
         BorderWidthTop = 1,
         BorderWidthBottom = 1,
-        BorderColor = DevModeTheme.PanelBorder,
+        BorderColor = KitLibTheme.PanelBorder,
     };
 
     private static ColorRect MakeDivider() => new() {
-        Color = DevModeTheme.Separator,
+        Color = KitLibTheme.Separator,
         CustomMinimumSize = new Vector2(0, 1),
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
     };

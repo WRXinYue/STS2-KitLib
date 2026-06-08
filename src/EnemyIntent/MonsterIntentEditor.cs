@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.UI;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Intents;
@@ -9,7 +9,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 
-namespace DevMode.EnemyIntent;
+namespace KitLib.EnemyIntent;
 
 internal static class MonsterIntentEditor {
     internal sealed record MoveOption(string Id, string DisplayName);
@@ -37,8 +37,8 @@ internal static class MonsterIntentEditor {
 
     internal static bool TrySetMoveAtTurn(Creature enemy, int turnIndex, string moveId, out string? error) {
         error = null;
-        if (!DevModeState.IsActive) {
-            error = "DevMode is not active.";
+        if (!KitLibState.IsActive) {
+            error = "KitLib is not active.";
             return false;
         }
 
@@ -153,7 +153,7 @@ internal static class MonsterIntentEditor {
             if (intent.IntentType == IntentType.Hidden)
                 continue;
 
-            string? text = DevModeTheme.StripFontSizeBbcode(
+            string? text = KitLibTheme.StripFontSizeBbcode(
                 intent.GetIntentLabel(targets, owner).GetFormattedText());
             if (!string.IsNullOrWhiteSpace(text))
                 return text;

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Expected incoming damage prevented by enemy weak stacks over upcoming intent steps.</summary>
 public static class WeakMitigationEvaluator {

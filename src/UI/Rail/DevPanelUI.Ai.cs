@@ -1,18 +1,18 @@
-using DevMode;
-using DevMode.AI;
-using DevMode.AI.AutoPlay;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Panels;
-using DevMode.Icons;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib;
+using KitLib.AI;
+using KitLib.AI.AutoPlay;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Panels;
+using KitLib.Icons;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowAiOverlay(NGlobalUi globalUi, DevPanelActions actions) {
@@ -42,7 +42,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         statusLabel.AddThemeFontSizeOverride("font_size", 12);
-        statusLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        statusLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
 
         var recommendBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         recommendBox.AddThemeConstantOverride("separation", 4);
@@ -52,7 +52,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         terminalHint.AddThemeFontSizeOverride("font_size", 12);
-        terminalHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        terminalHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
 
         var terminalError = new Label {
             Visible = false,
@@ -60,7 +60,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         terminalError.AddThemeFontSizeOverride("font_size", 11);
-        terminalError.AddThemeColorOverride("font_color", DevModeTheme.RarityCurse);
+        terminalError.AddThemeColorOverride("font_color", KitLibTheme.RarityCurse);
 
         void RefreshTerminalHint() {
             var logName = GameLogFileHydrator.CurrentSessionLogFileName;
@@ -97,7 +97,7 @@ internal static partial class DevPanelUI {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 };
                 tipLabel.AddThemeFontSizeOverride("font_size", 12);
-                tipLabel.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+                tipLabel.AddThemeColorOverride("font_color", KitLibTheme.Accent);
                 recommendBox.AddChild(tipLabel);
             }
 
@@ -137,7 +137,7 @@ internal static partial class DevPanelUI {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             blocked.AddThemeFontSizeOverride("font_size", 12);
-            blocked.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            blocked.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             inner.AddChild(blocked);
         }
         else {
@@ -195,7 +195,7 @@ internal static partial class DevPanelUI {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 };
                 lanHint.AddThemeFontSizeOverride("font_size", 12);
-                lanHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+                lanHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
                 inner.AddChild(lanHint);
             }
             else {
@@ -257,7 +257,7 @@ internal static partial class DevPanelUI {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             pseudoHint.AddThemeFontSizeOverride("font_size", 12);
-            pseudoHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            pseudoHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             inner.AddChild(pseudoHint);
 
             if (!liveEnet) {
@@ -293,7 +293,7 @@ internal static partial class DevPanelUI {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 };
                 syncHint.AddThemeFontSizeOverride("font_size", 12);
-                syncHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+                syncHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
                 inner.AddChild(syncHint);
             }
         }
@@ -311,7 +311,7 @@ internal static partial class DevPanelUI {
                     : I18N.T("pseudocoop.afkClientOff", "○ AFK off — you play combat locally");
                 afkStatus.AddThemeColorOverride(
                     "font_color",
-                    on ? DevModeTheme.Accent : DevModeTheme.TextSecondary);
+                    on ? KitLibTheme.Accent : KitLibTheme.TextSecondary);
             }
             RefreshAfkStatus();
             inner.AddChild(afkStatus);
@@ -339,7 +339,7 @@ internal static partial class DevPanelUI {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             afkHint.AddThemeFontSizeOverride("font_size", 12);
-            afkHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            afkHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             inner.AddChild(afkHint);
             inner.AddChild(CreateSectionHeader(I18N.T("syncbot.section", "SyncBot (Dev)")));
             var hostOnly = new Label {
@@ -348,7 +348,7 @@ internal static partial class DevPanelUI {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             hostOnly.AddThemeFontSizeOverride("font_size", 12);
-            hostOnly.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            hostOnly.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             inner.AddChild(hostOnly);
         }
         else {
@@ -358,7 +358,7 @@ internal static partial class DevPanelUI {
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             };
             offlineHint.AddThemeFontSizeOverride("font_size", 12);
-            offlineHint.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            offlineHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             inner.AddChild(offlineHint);
         }
 

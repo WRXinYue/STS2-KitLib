@@ -1,16 +1,16 @@
 using System;
 using System.Linq;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Unlocks;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 internal static class CompanionSpawnService {
     internal static CompanionSpawnResult TrySpawn(CompanionSpawnRequest request) {
@@ -19,7 +19,7 @@ internal static class CompanionSpawnService {
         if (request.Character == null)
             return new(false, 0, "Character is required.");
 
-        if (DevModeState.PseudoCoopDeferHeavyUi)
+        if (KitLibState.PseudoCoopDeferHeavyUi)
             return new(false, 0, "Run is still launching (pseudo-coop deferred UI).");
 
         var run = RunManager.Instance;

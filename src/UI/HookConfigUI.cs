@@ -1,25 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Hooks;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.Actions;
+using KitLib.Hooks;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Hook rule manager — list + detail editor for Trigger → Condition → Action rules.</summary>
 internal static class HookConfigUI {
-    private const string RootName = "DevModeHookConfig";
+    private const string RootName = "KitLibHookConfig";
     private const float PanelW = 780f;
 
-    private static Color ColAccent => DevModeTheme.Accent;
-    private static Color ColLight => DevModeTheme.TextPrimary;
-    private static Color ColSubtle => DevModeTheme.Subtle;
-    private static Color ColBg => DevModeTheme.ButtonBgNormal;
+    private static Color ColAccent => KitLibTheme.Accent;
+    private static Color ColLight => KitLibTheme.TextPrimary;
+    private static Color ColSubtle => KitLibTheme.Subtle;
+    private static Color ColBg => KitLibTheme.ButtonBgNormal;
 
     // ─────────────────────────── State ───────────────────────────
 
@@ -686,7 +686,7 @@ internal static class HookConfigUI {
     }
 
     private static ColorRect MakeDivider() => new() {
-        Color = DevModeTheme.Separator,
+        Color = KitLibTheme.Separator,
         CustomMinimumSize = new Vector2(0, 1),
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
     };

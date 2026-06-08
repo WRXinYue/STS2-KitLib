@@ -6,9 +6,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DevMode.Modding;
+using KitLib.Modding;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal sealed class ModFingerprintEntry {
     public string Id { get; set; } = "";
@@ -43,7 +43,7 @@ internal static class ModSetFingerprintStore {
         }
     }
 
-    public static void Save(IReadOnlyList<DevModeModInfo> mods, string hash) {
+    public static void Save(IReadOnlyList<KitLibModInfo> mods, string hash) {
         var data = new ModSetFingerprintData {
             Hash = hash,
             UtcTimestamp = DateTimeOffset.UtcNow,
@@ -68,7 +68,7 @@ internal static class ModSetFingerprintStore {
         }
     }
 
-    public static string ComputeHash(IReadOnlyList<DevModeModInfo> mods) {
+    public static string ComputeHash(IReadOnlyList<KitLibModInfo> mods) {
         var lines = mods
             .OrderBy(m => m.Id, StringComparer.Ordinal)
             .Select(m => {
@@ -83,7 +83,7 @@ internal static class ModSetFingerprintStore {
         return Convert.ToHexString(hash);
     }
 
-    private static ModFingerprintEntry ToEntry(DevModeModInfo mod) =>
+    private static ModFingerprintEntry ToEntry(KitLibModInfo mod) =>
         new() {
             Id = mod.Id,
             Version = mod.Version,

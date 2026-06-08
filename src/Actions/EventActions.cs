@@ -8,7 +8,7 @@ using MegaCrit.Sts2.Core.Models.Events;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class EventActions {
     public static IEnumerable<EventModel> GetAllEvents() {
@@ -28,12 +28,12 @@ internal static class EventActions {
     public static bool TryForceEnterEvent(EventModel eventModel, AncientEventEnterRequest? request = null) {
         try {
             if (!RunManager.Instance.IsInProgress) {
-                MainFile.Logger.Warn("[DevMode] ForceEnterEvent: no run in progress.");
+                MainFile.Logger.Warn("[KitLib] ForceEnterEvent: no run in progress.");
                 return false;
             }
 
             if (!RunContext.TryGetRunAndPlayer(out _, out var player)) {
-                MainFile.Logger.Warn("[DevMode] ForceEnterEvent: could not get active player.");
+                MainFile.Logger.Warn("[KitLib] ForceEnterEvent: could not get active player.");
                 return false;
             }
 
@@ -41,7 +41,7 @@ internal static class EventActions {
                 && request?.PinOptionToken is string pin
                 && !AncientEventActions.IsValidChoice(ancient, pin, player)) {
                 MainFile.Logger.Warn(
-                    $"[DevMode] ForceEnterEvent: invalid ancient choice '{pin}' for current run/deck.");
+                    $"[KitLib] ForceEnterEvent: invalid ancient choice '{pin}' for current run/deck.");
                 return false;
             }
 
@@ -55,7 +55,7 @@ internal static class EventActions {
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode] ForceEnterEvent failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib] ForceEnterEvent failed: {ex.Message}");
             return false;
         }
     }

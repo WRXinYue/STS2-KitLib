@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 internal static class CombatPowerReader {
     public static int GetVulnerable(JsonObject? enemy) => GetPowerAmount(enemy, "VULNERABLE");

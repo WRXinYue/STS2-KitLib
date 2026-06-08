@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public sealed class DeckPlan {
     public float ThinPreference { get; init; }

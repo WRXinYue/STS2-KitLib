@@ -10,13 +10,13 @@ using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
-using DevMode.AI.AutoPlay;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
-using DevMode.UI;
+using KitLib.AI.AutoPlay;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 [HarmonyPatch(typeof(NGlobalUi), "_Ready")]
 public static class GlobalUiReadyPatch {
@@ -25,9 +25,9 @@ public static class GlobalUiReadyPatch {
     private static AssetWarmupService? _warmup;
 
     public static void Postfix(NGlobalUi __instance) {
-        if (!DevModeState.IsActive) return;
-        if (DevModeState.PseudoCoopLaunchPending) return;
-        if (DevModeState.PseudoCoopDeferHeavyUi) {
+        if (!KitLibState.IsActive) return;
+        if (KitLibState.PseudoCoopLaunchPending) return;
+        if (KitLibState.PseudoCoopDeferHeavyUi) {
             EnsureProcessNodeOnly(__instance);
             return;
         }
@@ -47,18 +47,18 @@ public static class GlobalUiReadyPatch {
 
     /// <summary>Lightweight process hook without DevPanel (pseudo-coop embark).</summary>
     public static void EnsureProcessNodeOnly(NGlobalUi? globalUi) {
-        if (!DevModeState.IsActive || globalUi == null) return;
+        if (!KitLibState.IsActive || globalUi == null) return;
         var parent = (Node)globalUi;
-        if (parent.GetNodeOrNull<Node>("DevModeProcessNode") != null) return;
-        parent.AddChild(new DevModeProcessNode { Name = "DevModeProcessNode" });
+        if (parent.GetNodeOrNull<Node>("KitLibProcessNode") != null) return;
+        parent.AddChild(new KitLibProcessNode { Name = "KitLibProcessNode" });
     }
 
     /// <summary>Attach DevPanel and warmup after pseudo-coop scene transition stabilizes.</summary>
     /// <param name="deferWarmupBuild">When true, warmup job list builds on next Process tick instead of synchronously.</param>
     /// <param name="skipWarmup">When true, DevPanel only; call <see cref="StartWarmupIfAttached"/> later.</param>
     public static void TryAttachDeferred(NGlobalUi? globalUi, bool deferWarmupBuild = false, bool skipWarmup = false) {
-        if (!DevModeState.IsActive) return;
-        if (DevModeState.PseudoCoopDeferHeavyUi) {
+        if (!KitLibState.IsActive) return;
+        if (KitLibState.PseudoCoopDeferHeavyUi) {
             EnsureProcessNodeOnly(globalUi);
             return;
         }
@@ -68,8 +68,8 @@ public static class GlobalUiReadyPatch {
         DevPanel.Attach(globalUi);
         AiHudOverlayUI.SyncState(globalUi);
 
-        if (DevModeState.StatModifiers == null)
-            DevModeState.StatModifiers = new RuntimeStatModifiers();
+        if (KitLibState.StatModifiers == null)
+            KitLibState.StatModifiers = new RuntimeStatModifiers();
 
         if (!skipWarmup) {
             if (_warmup == null)
@@ -86,15 +86,15 @@ public static class GlobalUiReadyPatch {
 
     /// <summary>Dual-instance LAN: AI Host rail only (no context pane / warmup).</summary>
     public static void TryAttachDualInstanceMinimal(NGlobalUi? globalUi) {
-        if (!DevModeState.IsActive) return;
-        if (DevModeState.PseudoCoopDeferHeavyUi) {
+        if (!KitLibState.IsActive) return;
+        if (KitLibState.PseudoCoopDeferHeavyUi) {
             EnsureProcessNodeOnly(globalUi);
             return;
         }
         if (globalUi == null) return;
         if (_attached == globalUi) return;
 
-        DevModeState.DualInstanceMinimalRail = true;
+        KitLibState.DualInstanceMinimalRail = true;
         _attached = globalUi;
         DevPanel.Attach(globalUi);
         EnsureProcessNodeOnly(globalUi);
@@ -112,7 +112,7 @@ public static class GlobalUiReadyPatch {
         if (MpCheatApplier.CheatsActive)
             PlayerCheatEffects.Update();
         if (MpCheatApplier.FrameCheatsAllowed)
-            DevModeState.StatModifiers?.Update(delta);
+            KitLibState.StatModifiers?.Update(delta);
         _warmup?.Process(delta);
     }
 }
@@ -148,11 +148,11 @@ public static class RelicCollectionClosedPatch {
 [HarmonyPatch(typeof(NCardLibraryGrid), "GetCardVisibility")]
 public static class CardVisibilityPatch {
     public static void Postfix(ref ModelVisibility __result) {
-        if (DevModeState.InDevRun) {
+        if (KitLibState.InDevRun) {
             __result = ModelVisibility.Visible;
             return;
         }
-        if (DevModeState.IsActive && SettingsStore.Current.ShowHiddenCards)
+        if (KitLibState.IsActive && SettingsStore.Current.ShowHiddenCards)
             __result = ModelVisibility.Visible;
     }
 }
@@ -164,7 +164,7 @@ public static class CardLibraryIncludeHiddenPatch {
         AccessTools.FieldRefAccess<NCardLibraryGrid, List<CardModel>>("_allCards");
 
     public static void Postfix(NCardLibraryGrid __instance) {
-        if (!DevModeState.IsActive || !SettingsStore.Current.ShowHiddenCards) return;
+        if (!KitLibState.IsActive || !SettingsStore.Current.ShowHiddenCards) return;
 
         var list = AllCardsRef(__instance);
         var existing = new HashSet<CardModel>(list);
@@ -182,7 +182,7 @@ public static class RelicVisibilityPatch {
         IEnumerable<RelicModel> relics,
         ref HashSet<RelicModel> seenRelics,
         ref HashSet<RelicModel> unlockedRelics) {
-        if (!DevModeState.InDevRun) return;
+        if (!KitLibState.InDevRun) return;
         foreach (var relic in relics) {
             seenRelics.Add(relic);
             unlockedRelics.Add(relic);
@@ -195,7 +195,7 @@ public static class RelicCategoryVisibilityPatch {
     public static void Prefix(
         ref HashSet<RelicModel> seenRelics,
         ref HashSet<RelicModel> allUnlockedRelics) {
-        if (!DevModeState.InDevRun) return;
+        if (!KitLibState.InDevRun) return;
         foreach (var relic in ModelDb.AllRelics) {
             seenRelics.Add(relic);
             allUnlockedRelics.Add(relic);
@@ -205,7 +205,7 @@ public static class RelicCategoryVisibilityPatch {
 
 public static class AncientUnlockPatch {
     public static void Postfix(ActModel __instance, ref IEnumerable<AncientEventModel> __result) {
-        if (!DevModeState.InDevRun) return;
+        if (!KitLibState.InDevRun) return;
         __result = __instance.AllAncients;
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Lightweight sidecar metadata stored alongside each save slot.

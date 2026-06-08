@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Spawns encounter minions when a primary with <see cref="EnemyMechanicFlags.SpawnsOnDeath"/> dies.</summary>
 internal static class CombatDeathSpawnSimulator {

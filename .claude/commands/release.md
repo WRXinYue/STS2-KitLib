@@ -3,7 +3,7 @@ Bump the version to $ARGUMENTS and release.
 Steps:
 
 1. Update version files:
-   - `DevMode.json` → `"version"` field
+   - `KitLib.json` → `"version"` field
    - `CHANGELOG.md` → add new `## [VERSION] - DATE` section below `## [Unreleased]`
    - `CHANGELOG.zh-CN.md` → same in Chinese
 

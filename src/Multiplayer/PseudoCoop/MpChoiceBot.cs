@@ -1,12 +1,12 @@
 using System.Linq;
-using DevMode.AI.Sts2.Snapshots;
-using DevMode.Multiplayer.SyncBot;
+using KitLib.AI.Sts2.Snapshots;
+using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Entities.Models;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Heuristic remote choices for simulated peers (replaces fixed index 0 when teammate AI is on).</summary>
 internal static class MpChoiceBot {

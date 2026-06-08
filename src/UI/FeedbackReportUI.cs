@@ -2,21 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using DevMode.Feedback;
-using DevMode.Icons;
+using KitLib.Feedback;
+using KitLib.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Mod feedback / bug report panel — lets the user enter a title + description,
 /// select a game log file to attach, toggle privacy mode, and export a ZIP.
 /// </summary>
 internal static class FeedbackReportUI {
-    private const string RootName = "DevModeFeedbackReport";
+    private const string RootName = "KitLibFeedbackReport";
     private const float PanelW = 660f;
 
     // Sentinel index in the OptionButton meaning "do not attach a log file"
@@ -51,7 +51,7 @@ internal static class FeedbackReportUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         titleBox.AddChild(subtitle);
         vbox.AddChild(titleBox);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
@@ -119,7 +119,7 @@ internal static class FeedbackReportUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
         privacyHint.AddThemeFontSizeOverride("font_size", 10);
-        privacyHint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        privacyHint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         privacyRow.AddChild(privacyToggle);
         privacyRow.AddChild(privacyHint);
         vbox.AddChild(privacyRow);
@@ -135,7 +135,7 @@ internal static class FeedbackReportUI {
             Visible = false
         };
         statusLabel.AddThemeFontSizeOverride("font_size", 11);
-        statusLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        statusLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         vbox.AddChild(statusLabel);
 
         // ── Export button ──────────────────────────────────────────────────
@@ -242,7 +242,7 @@ internal static class FeedbackReportUI {
     private static Label MakeFieldLabel(string text) {
         var l = new Label { Text = text };
         l.AddThemeFontSizeOverride("font_size", 11);
-        l.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        l.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         return l;
     }
 
@@ -256,7 +256,7 @@ internal static class FeedbackReportUI {
             FocusMode = Control.FocusModeEnum.None
         };
         btn.AddThemeFontSizeOverride("font_size", 13);
-        var accent = DevModeTheme.Accent;
+        var accent = KitLibTheme.Accent;
         StyleBoxFlat MakeStyle(Color bg) => new() {
             BgColor = bg,
             CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6,
@@ -268,19 +268,19 @@ internal static class FeedbackReportUI {
         btn.AddThemeStyleboxOverride("hover",    MakeStyle(new Color(accent.R, accent.G, accent.B, 0.65f)));
         btn.AddThemeStyleboxOverride("pressed",  MakeStyle(new Color(accent.R, accent.G, accent.B, 0.30f)));
         btn.AddThemeStyleboxOverride("focus",    MakeStyle(new Color(accent.R, accent.G, accent.B, 0.45f)));
-        btn.AddThemeStyleboxOverride("disabled", MakeStyle(DevModeTheme.ButtonBgNormal));
+        btn.AddThemeStyleboxOverride("disabled", MakeStyle(KitLibTheme.ButtonBgNormal));
         btn.AddThemeColorOverride("font_color",          Colors.White);
         btn.AddThemeColorOverride("font_hover_color",    Colors.White);
         btn.AddThemeColorOverride("font_pressed_color",  Colors.White);
-        btn.AddThemeColorOverride("font_disabled_color", DevModeTheme.Subtle);
+        btn.AddThemeColorOverride("font_disabled_color", KitLibTheme.Subtle);
         return btn;
     }
 
     private static Control MakeContentsCard(bool hasLogFiles) {
         var panel = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var style = new StyleBoxFlat {
-            BgColor = new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.45f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.45f),
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1,
             CornerRadiusTopLeft = 6, CornerRadiusTopRight = 6,
             CornerRadiusBottomLeft = 6, CornerRadiusBottomRight = 6,
@@ -294,7 +294,7 @@ internal static class FeedbackReportUI {
 
         var head = new Label { Text = I18N.T("feedback.contents.title", "ZIP contents") };
         head.AddThemeFontSizeOverride("font_size", 10);
-        head.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        head.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         inner.AddChild(head);
 
         var items = new List<string> {
@@ -311,7 +311,7 @@ internal static class FeedbackReportUI {
         foreach (var item in items) {
             var l = new Label { Text = "  • " + item };
             l.AddThemeFontSizeOverride("font_size", 10);
-            l.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            l.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             l.AutowrapMode = TextServer.AutowrapMode.WordSmart;
             inner.AddChild(l);
         }
@@ -323,7 +323,7 @@ internal static class FeedbackReportUI {
     private static StyleBoxFlat MakeInputStyle() =>
         new() {
             BgColor = new Color(0f, 0f, 0f, 0.22f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1, BorderWidthRight = 1, BorderWidthTop = 1, BorderWidthBottom = 1,
             CornerRadiusTopLeft = 4, CornerRadiusTopRight = 4,
             CornerRadiusBottomLeft = 4, CornerRadiusBottomRight = 4,
@@ -333,7 +333,7 @@ internal static class FeedbackReportUI {
 
     private static StyleBoxFlat MakeInputFocusStyle() {
         var s = MakeInputStyle();
-        s.BorderColor = DevModeTheme.Accent;
+        s.BorderColor = KitLibTheme.Accent;
         return s;
     }
 }

@@ -1,6 +1,6 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
-/// <summary>Locate a pile card instance + partial <see cref="DevMode.Presets.CardEditTemplate"/> JSON.</summary>
+/// <summary>Locate a pile card instance + partial <see cref="KitLib.Presets.CardEditTemplate"/> JSON.</summary>
 public sealed class MpCheatEditCardPayload {
     public string CardId { get; set; } = "";
     public ulong TargetPlayerNetId { get; set; }

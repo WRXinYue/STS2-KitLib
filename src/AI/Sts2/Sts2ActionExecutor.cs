@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
-using DevMode;
-using DevMode.AI;
-using DevMode.Actions;
-using DevMode.Multiplayer.PseudoCoop;
+using KitLib;
+using KitLib.AI;
+using KitLib.Actions;
+using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
@@ -35,12 +35,12 @@ using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
-using DevMode.AI.AutoPlay.Scoring;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Sts2.Helpers;
+using KitLib.AI.AutoPlay.Scoring;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2.Helpers;
 
-namespace DevMode.AI.Sts2;
+namespace KitLib.AI.Sts2;
 
 /// <summary>
 /// Maps <see cref="GameAction"/> to STS2 game API calls.

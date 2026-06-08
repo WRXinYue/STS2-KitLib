@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 /// <summary>
 /// Per-combat variable storage for SpireScratch scripts.

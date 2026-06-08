@@ -1,4 +1,4 @@
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Combat-sim categories for installed player buff powers.</summary>
 public enum PlayerPowerEffectKind {

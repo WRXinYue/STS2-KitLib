@@ -1,17 +1,17 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Presets;
+using KitLib.Actions;
+using KitLib.Presets;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Full-screen overlay for deep card editing.</summary>
 internal static class CardEditUI {
-    private const string RootName = "DevModeCardEdit";
+    private const string RootName = "KitLibCardEdit";
 
     public static void ShowForCard(NGlobalUi globalUi, CardModel card) {
         Remove(globalUi);

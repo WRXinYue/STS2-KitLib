@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Icons;
-using DevMode.Modding;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Actions;
+using KitLib.Icons;
+using KitLib.Modding;
+using KitLib.Multiplayer.Cheat;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -14,14 +14,14 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Self-drawn relic browser — parallel architecture to CardBrowserUI.
 /// Center: scrollable grid of compact relic tiles. Right: context-sensitive detail / actions.
 /// </summary>
 internal static partial class RelicBrowserUI {
-    private const string RootName = "DevModeRelicBrowser";
+    private const string RootName = "KitLibRelicBrowser";
     private const float RightPanelWidth = 260f;
 
     private const float RailW = 52f;
@@ -134,7 +134,7 @@ internal static partial class RelicBrowserUI {
         navOuter.AddChild(navSection);
         navOuter.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
         content.AddChild(navOuter);
@@ -144,7 +144,7 @@ internal static partial class RelicBrowserUI {
         searchRow.AddThemeConstantOverride("separation", 6);
 
         searchRow.AddChild(new TextureRect {
-            Texture = MdiIcon.Magnify.Texture(18, DevModeTheme.Subtle),
+            Texture = MdiIcon.Magnify.Texture(18, KitLibTheme.Subtle),
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             CustomMinimumSize = new Vector2(22, 22),
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
@@ -183,7 +183,7 @@ internal static partial class RelicBrowserUI {
             chipRow.AddThemeConstantOverride("separation", 4);
 
             var filterIcon = new TextureRect {
-                Texture = MdiIcon.FilterVariant.Texture(16, DevModeTheme.Subtle),
+                Texture = MdiIcon.FilterVariant.Texture(16, KitLibTheme.Subtle),
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                 CustomMinimumSize = new Vector2(18, 18),
                 SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
@@ -254,7 +254,7 @@ internal static partial class RelicBrowserUI {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill
         };
         var rightStyle = new StyleBoxFlat {
-            BgColor = DevModeTheme.PanelBg,
+            BgColor = KitLibTheme.PanelBg,
             CornerRadiusTopLeft = 10,
             CornerRadiusTopRight = 10,
             CornerRadiusBottomLeft = 10,
@@ -264,7 +264,7 @@ internal static partial class RelicBrowserUI {
             ContentMarginTop = 14,
             ContentMarginBottom = 14,
             BorderWidthLeft = 1,
-            BorderColor = DevModeTheme.PanelBorder
+            BorderColor = KitLibTheme.PanelBorder
         };
         rightPanel.AddThemeStyleboxOverride("panel", rightStyle);
 
@@ -377,7 +377,7 @@ internal static partial class RelicBrowserUI {
 
         // ID
         if (!string.IsNullOrEmpty(id))
-            container.AddChild(DevModeTheme.CreateCopyableIdRow(id,
+            container.AddChild(KitLibTheme.CreateCopyableIdRow(id,
                 msg => s.StatusLabel.Text = msg));
 
         container.AddChild(BrowserDetailHelpers.CreateModSourceRow(ContentModResolver.Resolve(relic)));
@@ -385,19 +385,19 @@ internal static partial class RelicBrowserUI {
         // Description
         if (!string.IsNullOrWhiteSpace(desc)) {
             container.AddChild(new HSeparator());
-            var descLabel = DevModeTheme.CreateGameBbcodeLabel();
-            descLabel.Text = DevModeTheme.ConvertGameBbcode(desc);
+            var descLabel = KitLibTheme.CreateGameBbcodeLabel();
+            descLabel.Text = KitLibTheme.ConvertGameBbcode(desc);
             descLabel.AddThemeFontSizeOverride("normal_font_size", 12);
-            descLabel.AddThemeColorOverride("default_color", DevModeTheme.TextSecondary);
+            descLabel.AddThemeColorOverride("default_color", KitLibTheme.TextSecondary);
             container.AddChild(descLabel);
         }
 
         // Flavor text
         if (!string.IsNullOrWhiteSpace(flavor) && flavor != desc) {
-            var flavorLabel = DevModeTheme.CreateGameBbcodeLabel();
-            flavorLabel.Text = DevModeTheme.ConvertGameBbcode(flavor);
+            var flavorLabel = KitLibTheme.CreateGameBbcodeLabel();
+            flavorLabel.Text = KitLibTheme.ConvertGameBbcode(flavor);
             flavorLabel.AddThemeFontSizeOverride("normal_font_size", 11);
-            flavorLabel.AddThemeColorOverride("default_color", DevModeTheme.Subtle);
+            flavorLabel.AddThemeColorOverride("default_color", KitLibTheme.Subtle);
             container.AddChild(flavorLabel);
         }
 

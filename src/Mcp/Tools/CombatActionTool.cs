@@ -1,11 +1,11 @@
 using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Sts2.Snapshots;
+using KitLib.AI;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2.Snapshots;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class CombatActionTool : IMcpTool {
     public string Name => "combat_action";

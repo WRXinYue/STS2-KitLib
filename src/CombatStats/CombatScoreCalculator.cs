@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DevMode.CombatStats;
+namespace KitLib.CombatStats;
 
 internal enum CombatPieCategory {
     Overview,

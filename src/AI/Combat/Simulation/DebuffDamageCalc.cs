@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Enemy weak on attackers — matches <see cref="PlayerCombatModifier.Weak"/> (25% less).</summary>
 internal static class DebuffDamageCalc {

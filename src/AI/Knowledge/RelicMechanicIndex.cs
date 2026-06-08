@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public sealed record RelicMechanicProfile(
     string Id,

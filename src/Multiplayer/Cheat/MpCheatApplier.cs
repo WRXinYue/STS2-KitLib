@@ -4,7 +4,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Single query surface for Harmony cheat patches (SP + MP).</summary>
 public static class MpCheatApplier {
@@ -15,7 +15,7 @@ public static class MpCheatApplier {
         get {
             if (MpCheatSession.InMultiplayerRun)
                 return MpCheatSession.CanUseMultiplayerCheats;
-            return DevModeState.CheatsInRun;
+            return KitLibState.CheatsInRun;
         }
     }
 

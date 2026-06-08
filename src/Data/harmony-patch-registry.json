@@ -16,9 +16,9 @@
       "docUrl": "https://github.com/BAKAOLC/STS2-RitsuLib"
     },
     {
-      "owner": "DevMode",
+      "owner": "KitLib",
       "category": "devtools",
-      "displayName": "DevMode",
+      "displayName": "KitLib",
       "summary": "Developer overlay (this mod): test harnesses, Harmony analysis, and debug tools.",
       "docUrl": ""
     }

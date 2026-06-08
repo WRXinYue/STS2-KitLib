@@ -5,7 +5,7 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class MainMenuTextButtonFactory {
     private static readonly FieldInfo? LocStringField =

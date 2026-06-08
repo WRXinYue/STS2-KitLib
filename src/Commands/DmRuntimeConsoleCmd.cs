@@ -4,12 +4,12 @@ using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmruntime";
     public override string Args => "<toggle> [on|off|value]";
-    public override string Description => "[DevMode] Runtime stat modifiers and stat locks";
+    public override string Description => "[KitLib] Runtime stat modifiers and stat locks";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
@@ -28,8 +28,8 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
     private static readonly string[] AllSubs = Toggles.Concat(Locks).Append("status").ToArray();
 
     private static RuntimeStatModifiers EnsureMods() {
-        DevModeState.StatModifiers ??= new RuntimeStatModifiers();
-        return DevModeState.StatModifiers;
+        KitLibState.StatModifiers ??= new RuntimeStatModifiers();
+        return KitLibState.StatModifiers;
     }
 
     public override CmdResult Process(Player? issuingPlayer, string[] args) {

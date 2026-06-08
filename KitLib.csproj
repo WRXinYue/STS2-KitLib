@@ -12,7 +12,7 @@
     <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir>
     <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64</Sts2DataDir>
     <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64') and !Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64</Sts2DataDir>
-    <ModId>DevMode</ModId>
+    <ModId>KitLib</ModId>
     <AssemblyName>$(ModId)</AssemblyName>
     <Sts2ModsRoot>$(Sts2Dir)/mods</Sts2ModsRoot>
     <Sts2ModsRoot Condition="'$(OS)' != 'Windows_NT'">$(Sts2Dir)/SlayTheSpire2.app/Contents/MacOS/mods</Sts2ModsRoot>
@@ -41,20 +41,20 @@
     <ModPckPath>$(PublishDir)\$(ModId).pck</ModPckPath>
   </PropertyGroup>
 
-  <Target Name="CheckLocalProps" BeforeTargets="BeforeBuild;BeforePublish" Condition="'$(PackDevMode)' != 'true'">
+  <Target Name="CheckLocalProps" BeforeTargets="BeforeBuild;BeforePublish" Condition="'$(PackKitLib)' != 'true'">
     <Error Condition="'$(Sts2Dir)' == ''" Text="Sts2Dir not set. Edit local.props with your STS2 install path." />
   </Target>
 
-  <!-- NuGet mod install package (make zip + dotnet pack -p:PackDevMode=true) -->
-  <PropertyGroup Condition="'$(PackDevMode)' == 'true'">
+  <!-- NuGet mod install package (make zip + dotnet pack -p:PackKitLib=true) -->
+  <PropertyGroup Condition="'$(PackKitLib)' == 'true'">
     <IsPackable>true</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <PackageId Condition="'$(Sts2Beta)' != 'true'">STS2.DevMode</PackageId>
-    <PackageId Condition="'$(Sts2Beta)' == 'true'">STS2.DevMode.Beta</PackageId>
-    <Title>DevMode for Slay the Spire 2</Title>
+    <PackageId Condition="'$(Sts2Beta)' != 'true'">STS2.KitLib</PackageId>
+    <PackageId Condition="'$(Sts2Beta)' == 'true'">STS2.KitLib.Beta</PackageId>
+    <Title>KitLib for Slay the Spire 2</Title>
     <Authors>WRXinYue</Authors>
-    <Description>Developer mod for Slay the Spire 2 — install Content/DevMode into the game mods folder.</Description>
+    <Description>Modular in-game toolkit for Slay the Spire 2 — install Content/KitLib into the game mods folder.</Description>
     <PackageProjectUrl>https://github.com/WRXinYue/STS2-DevMode</PackageProjectUrl>
     <RepositoryUrl>https://github.com/WRXinYue/STS2-DevMode</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -63,16 +63,16 @@
     <NoWarn>$(NoWarn);NU5100</NoWarn>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(PackDevMode)' == 'true'">
+  <ItemGroup Condition="'$(PackKitLib)' == 'true'">
     <None Include="README.md" Pack="true" PackagePath="\" />
-    <Content Include="$(RepoRoot)build\dist\DevMode\**\*" PackagePath="Content\DevMode\%(RecursiveDir)" />
+    <Content Include="$(RepoRoot)build\dist\KitLib\**\*" PackagePath="Content\KitLib\%(RecursiveDir)" />
   </ItemGroup>
 
-  <Target Name="ValidatePackDist" BeforeTargets="GenerateNuspec" Condition="'$(PackDevMode)' == 'true'">
-    <Error Condition="!Exists('$(RepoRoot)build\dist\DevMode\DevMode.dll')"
-           Text="Run make zip (or make zip-beta) before dotnet pack -p:PackDevMode=true." />
-    <Error Condition="!Exists('$(RepoRoot)build\dist\DevMode\DevMode.pck')"
-           Text="DevMode.pck missing from build/dist/DevMode/. Run make zip with GodotPath set in local.props." />
+  <Target Name="ValidatePackDist" BeforeTargets="GenerateNuspec" Condition="'$(PackKitLib)' == 'true'">
+    <Error Condition="!Exists('$(RepoRoot)build\dist\KitLib\KitLib.dll')"
+           Text="Run make zip (or make zip-beta) before dotnet pack -p:PackKitLib=true." />
+    <Error Condition="!Exists('$(RepoRoot)build\dist\KitLib\KitLib.pck')"
+           Text="KitLib.pck missing from build/dist/KitLib/. Run make zip with GodotPath set in local.props." />
   </Target>
 
   <Target Name="ExcludeGodotTempFromCompile" BeforeTargets="CoreCompile">
@@ -112,26 +112,26 @@
 
   <!-- Embed manual Markdown (in-game docs) -->
   <ItemGroup>
-    <EmbeddedResource Include="manual\eng\*.md" LogicalName="DevMode.Manual.eng.%(Filename)" />
-    <EmbeddedResource Include="manual\zhs\*.md" LogicalName="DevMode.Manual.zhs.%(Filename)" />
+    <EmbeddedResource Include="manual\eng\*.md" LogicalName="KitLib.Manual.eng.%(Filename)" />
+    <EmbeddedResource Include="manual\zhs\*.md" LogicalName="KitLib.Manual.zhs.%(Filename)" />
   </ItemGroup>
 
   <!-- Embed localization JSON files into the DLL -->
   <ItemGroup>
-    <EmbeddedResource Include="src\Localization\eng.json" LogicalName="DevMode.Localization.eng.json" />
-    <EmbeddedResource Include="src\Localization\zhs.json" LogicalName="DevMode.Localization.zhs.json" />
-    <EmbeddedResource Include="src\Data\harmony-patch-registry.json" LogicalName="DevMode.Data.harmony-patch-registry.json" />
-    <EmbeddedResource Include="src\AI\Data\codex-priors.json" LogicalName="DevMode.AI.codex-priors.json"
+    <EmbeddedResource Include="src\Localization\eng.json" LogicalName="KitLib.Localization.eng.json" />
+    <EmbeddedResource Include="src\Localization\zhs.json" LogicalName="KitLib.Localization.zhs.json" />
+    <EmbeddedResource Include="src\Data\harmony-patch-registry.json" LogicalName="KitLib.Data.harmony-patch-registry.json" />
+    <EmbeddedResource Include="src\AI\Data\codex-priors.json" LogicalName="KitLib.AI.codex-priors.json"
                       Condition="Exists('src\AI\Data\codex-priors.json')" />
-    <EmbeddedResource Include="src\AI\Data\potion-tiers.json" LogicalName="DevMode.AI.potion-tiers.json"
+    <EmbeddedResource Include="src\AI\Data\potion-tiers.json" LogicalName="KitLib.AI.potion-tiers.json"
                       Condition="Exists('src\AI\Data\potion-tiers.json')" />
-    <EmbeddedResource Include="src\AI\Data\monster-probe-overrides.json" LogicalName="DevMode.AI.monster-probe-overrides.json"
+    <EmbeddedResource Include="src\AI\Data\monster-probe-overrides.json" LogicalName="KitLib.AI.monster-probe-overrides.json"
                       Condition="Exists('src\AI\Data\monster-probe-overrides.json')" />
-    <EmbeddedResource Include="src\AI\Data\monster-move-effects.json" LogicalName="DevMode.AI.monster-move-effects.json"
+    <EmbeddedResource Include="src\AI\Data\monster-move-effects.json" LogicalName="KitLib.AI.monster-move-effects.json"
                       Condition="Exists('src\AI\Data\monster-move-effects.json')" />
-    <EmbeddedResource Include="src\AI\Data\relic-combat-effects.json" LogicalName="DevMode.AI.relic-combat-effects.json"
+    <EmbeddedResource Include="src\AI\Data\relic-combat-effects.json" LogicalName="KitLib.AI.relic-combat-effects.json"
                       Condition="Exists('src\AI\Data\relic-combat-effects.json')" />
-    <EmbeddedResource Include="src\AI\Data\potion-combat-effects.json" LogicalName="DevMode.AI.potion-combat-effects.json"
+    <EmbeddedResource Include="src\AI\Data\potion-combat-effects.json" LogicalName="KitLib.AI.potion-combat-effects.json"
                       Condition="Exists('src\AI\Data\potion-combat-effects.json')" />
   </ItemGroup>
 
@@ -141,7 +141,7 @@
 
   <!-- Embed tree-shaken icon set (generated by scripts/shake_icons.py) -->
   <ItemGroup>
-    <EmbeddedResource Include="src\Icons\mdi-used.json" LogicalName="DevMode.Icons.mdi-used.json"
+    <EmbeddedResource Include="src\Icons\mdi-used.json" LogicalName="KitLib.Icons.mdi-used.json"
                       Condition="Exists('src\Icons\mdi-used.json')" />
   </ItemGroup>
 
@@ -161,7 +161,7 @@
       <_RitsuLibDll>$(PkgSTS2_RitsuLib)\lib\net9.0\STS2-RitsuLib.dll</_RitsuLibDll>
     </PropertyGroup>
     <Warning
-      Text="STS2.RitsuLib package path missing or DLL not found (run `dotnet restore DevMode.sln`). Skipping copy to game mods."
+      Text="STS2.RitsuLib package path missing or DLL not found (run `dotnet restore KitLib.sln`). Skipping copy to game mods."
       Condition="'$(PkgSTS2_RitsuLib)' == '' or !Exists('$(_RitsuLibDll)')" />
     <Message Text="Copying STS2-RitsuLib to game mods folder." Importance="high" Condition="Exists('$(_RitsuLibDll)')" />
     <MakeDir Directories="$(Sts2Dir)\mods\STS2-RitsuLib\" Condition="Exists('$(_RitsuLibDll)')" />
@@ -220,19 +220,19 @@
     <Copy SourceFiles="@(RepoEditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
-  <!-- Copy repo-built MCP stdio proxy into mods/DevMode/tools/ (make deploy-tools) -->
+  <!-- Copy repo-built MCP stdio proxy into mods/KitLib/tools/ (make deploy-tools) -->
   <PropertyGroup>
     <ToolsRid Condition="'$(ToolsRid)' == ''">win-x64</ToolsRid>
-    <ToolsPublishDir Condition="'$(ToolsPublishDir)' == ''">$(RepoRoot)build/tools/DevMode.Mcp/$(ToolsRid)/publish</ToolsPublishDir>
+    <ToolsPublishDir Condition="'$(ToolsPublishDir)' == ''">$(RepoRoot)build/tools/KitLib.Mcp/$(ToolsRid)/publish</ToolsPublishDir>
   </PropertyGroup>
 
   <Target Name="DeployToolsToMods" DependsOnTargets="CheckLocalProps">
     <Error Condition="'$(DeployToolsFromRepoBuild)' != 'true'" Text="Set DeployToolsFromRepoBuild=true (e.g. make deploy-tools)." />
     <PropertyGroup>
-      <_ToolsMcpExe Condition="'$(OS)' == 'Windows_NT'">$(ToolsPublishDir)\DevMode.Mcp.exe</_ToolsMcpExe>
-      <_ToolsMcpExe Condition="'$(OS)' != 'Windows_NT'">$(ToolsPublishDir)/DevMode.Mcp</_ToolsMcpExe>
-      <_ToolsMcpDest Condition="'$(OS)' == 'Windows_NT'">$(ModsDir)\tools\DevMode.Mcp.exe</_ToolsMcpDest>
-      <_ToolsMcpDest Condition="'$(OS)' != 'Windows_NT'">$(ModsDir)/tools/DevMode.Mcp</_ToolsMcpDest>
+      <_ToolsMcpExe Condition="'$(OS)' == 'Windows_NT'">$(ToolsPublishDir)\KitLib.Mcp.exe</_ToolsMcpExe>
+      <_ToolsMcpExe Condition="'$(OS)' != 'Windows_NT'">$(ToolsPublishDir)/KitLib.Mcp</_ToolsMcpExe>
+      <_ToolsMcpDest Condition="'$(OS)' == 'Windows_NT'">$(ModsDir)\tools\KitLib.Mcp.exe</_ToolsMcpDest>
+      <_ToolsMcpDest Condition="'$(OS)' != 'Windows_NT'">$(ModsDir)/tools/KitLib.Mcp</_ToolsMcpDest>
     </PropertyGroup>
     <Error Condition="!Exists('$(_ToolsMcpExe)')" Text="MCP tool missing: $(_ToolsMcpExe). Run make build-tools first." />
     <MakeDir Directories="$(ModsDir)/tools" />

@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Presets;
+namespace KitLib.Presets;
 
 /// <summary>
 /// Manages all preset types: loadout, card, relic, power, potion, event, encounter, monster.
@@ -90,10 +90,10 @@ internal static class PresetManager {
                 player.MaxEnergy = preset.MaxEnergy;
                 player.BaseOrbSlotCount = preset.OrbSlots;
                 applied++;
-                MainFile.Logger.Info("[DevMode] Stats applied.");
+                MainFile.Logger.Info("[KitLib] Stats applied.");
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode] Stats apply failed: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib] Stats apply failed: {ex.Message}");
             }
         }
 
@@ -108,10 +108,10 @@ internal static class PresetManager {
                         await RelicCmd.Obtain(model.ToMutable(), player, -1);
                 }
                 applied++;
-                MainFile.Logger.Info("[DevMode] Relics applied.");
+                MainFile.Logger.Info("[KitLib] Relics applied.");
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode] Relics apply failed: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib] Relics apply failed: {ex.Message}");
             }
         }
 
@@ -130,13 +130,13 @@ internal static class PresetManager {
                         if (pile != null)
                             combatCards.AddRange(pile.Cards.ToArray());
                     }
-                    MainFile.Logger.Info($"[DevMode] Removing {combatCards.Count} combat cards...");
+                    MainFile.Logger.Info($"[KitLib] Removing {combatCards.Count} combat cards...");
                     if (combatCards.Count > 0)
                         await CardPileCmd.RemoveFromCombat(combatCards, false);
                 }
 
                 var deckCards = player.Deck.Cards.ToArray();
-                MainFile.Logger.Info($"[DevMode] Removing {deckCards.Length} deck cards...");
+                MainFile.Logger.Info($"[KitLib] Removing {deckCards.Length} deck cards...");
                 foreach (var card in deckCards)
                     if (card != null) await CardPileCmd.RemoveFromDeck(card, false);
 
@@ -153,7 +153,7 @@ internal static class PresetManager {
 
                 if (inCombat && combatState != null) {
                     if (preset.HasCombatSnapshot) {
-                        MainFile.Logger.Info("[DevMode] Restoring combat snapshot (hand/draw/discard)...");
+                        MainFile.Logger.Info("[KitLib] Restoring combat snapshot (hand/draw/discard)...");
                         await AddCombatCardsFromEntries(preset.HandCards, PileType.Hand, combatState, player);
                         await AddCombatCardsFromEntries(preset.DrawCards, PileType.Draw, combatState, player);
                         await AddCombatCardsFromEntries(preset.DiscardCards, PileType.Discard, combatState, player);
@@ -175,22 +175,22 @@ internal static class PresetManager {
                             }
                         }
                         const int handDraw = 5;
-                        MainFile.Logger.Info($"[DevMode] No snapshot — drawing {handDraw} cards into hand...");
+                        MainFile.Logger.Info($"[KitLib] No snapshot — drawing {handDraw} cards into hand...");
                         await CardPileCmd.Draw(new BlockingPlayerChoiceContext(), handDraw, player, false);
                     }
                 }
                 applied++;
-                MainFile.Logger.Info("[DevMode] Cards applied.");
+                MainFile.Logger.Info("[KitLib] Cards applied.");
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode] Cards apply failed: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib] Cards apply failed: {ex.Message}");
             }
         }
 
         if (applied > 0)
-            MainFile.Logger.Info($"[DevMode] Preset applied (scope: {effective}, inCombat: {inCombat}).");
+            MainFile.Logger.Info($"[KitLib] Preset applied (scope: {effective}, inCombat: {inCombat}).");
         else
-            MainFile.Logger.Warn("[DevMode] Preset apply: nothing was applied.");
+            MainFile.Logger.Warn("[KitLib] Preset apply: nothing was applied.");
     }
 
     /// <summary>Export a preset to clipboard as JSON.</summary>
@@ -248,7 +248,7 @@ internal static class PresetManager {
         foreach (var entry in entries) {
             var model = ModelDb.AllCards.FirstOrDefault(c => ((AbstractModel)c).Id.Entry == entry.CardId);
             if (model == null) {
-                MainFile.Logger.Warn($"[DevMode] Card not found for {pileType}: {entry.CardId}");
+                MainFile.Logger.Warn($"[KitLib] Card not found for {pileType}: {entry.CardId}");
                 continue;
             }
             for (int i = 0; i < entry.Count; i++) {

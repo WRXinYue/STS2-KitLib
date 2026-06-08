@@ -30,7 +30,7 @@ def _prop_line(name: str, value: str | None) -> str:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="DevMode repo init.")
+    ap = argparse.ArgumentParser(description="KitLib repo init.")
     ap.add_argument(
         "--repo-root",
         type=Path,
@@ -87,13 +87,13 @@ def main() -> int:
     print("Done. You can now run:")
     print("  make compile  -- dotnet build: DLL/manifest to game mods (no .pck)")
     print("  make pck      -- dotnet publish + Godot .pck to game mods")
-    print("  make sync              -- build + deploy into game mods/DevMode/ (does not overwrite STS2-RitsuLib)")
+    print("  make sync              -- build + deploy into game mods/KitLib/ (does not overwrite STS2-RitsuLib)")
     print("  make sync-framework-mods  -- copy DevMode STS2-RitsuLib NuGet into game (optional)")
     print("  make sync-launch       -- sync + launch game")
     print("  make launch            -- launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)")
     print("  make sync-beta-launch  -- sync-beta + launch game")
-    print("  make deploy    -- deploy from build/DevMode/ (after make build)")
-    print("  make build     -- artifacts under build/DevMode/ only (no game copy)")
+    print("  make deploy    -- deploy from build/KitLib/ (after make build)")
+    print("  make build     -- artifacts under build/KitLib/ only (no game copy)")
     print("  make upload-nuget  -- zip + NuGet pack/push (NUGET_API_KEY in .env)")
     print("  make upload-all    -- upload-github + upload-nexus + upload-nuget (one zip build)")
     return 0

@@ -1,5 +1,5 @@
 using System.Reflection;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.GameActions;
@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>
 /// Host RequestEnqueue uses host NetId as actionOwnerId; host-driven peers need message.playerId = action.OwnerId

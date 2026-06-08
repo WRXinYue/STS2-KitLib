@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 
-namespace DevMode.EnemyIntent;
+namespace KitLib.EnemyIntent;
 
 /// <summary>Per-enemy, per-turn-index move overrides for dev intent editing.</summary>
 internal static class MonsterIntentOverrides {

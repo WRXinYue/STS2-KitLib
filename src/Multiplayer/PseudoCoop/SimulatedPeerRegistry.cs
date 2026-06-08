@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Unified roster for SyncBot ACKs vs in-process teammate simulation.</summary>
 internal static class SimulatedPeerRegistry {

@@ -2,17 +2,17 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using DevMode.Modding;
-using DevMode.Progress;
+using KitLib.Modding;
+using KitLib.Progress;
 using Godot;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ProgressGuardUI {
-    private const string RootName = "DevModeProgressGuard";
-    private const string RestoreConfirmName = "DevModeProgressRestoreConfirm";
+    private const string RootName = "KitLibProgressGuard";
+    private const string RestoreConfirmName = "KitLibProgressRestoreConfirm";
     private const float PanelW = 560f;
 
     private static NMainMenu? _mainMenu;
@@ -76,7 +76,7 @@ internal static class ProgressGuardUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         titleBox.AddChild(subtitle);
         vbox.AddChild(titleBox);
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
@@ -117,7 +117,7 @@ internal static class ProgressGuardUI {
             ? "Matches current mod set"
             : "Mod set changed since last launch";
         var matchLabel = MakeStatusLabel(I18N.T(matchKey, matchFallback));
-        matchLabel.AddThemeColorOverride("font_color", matches ? DevModeTheme.Subtle : DevModeTheme.Accent);
+        matchLabel.AddThemeColorOverride("font_color", matches ? KitLibTheme.Subtle : KitLibTheme.Accent);
         vbox.AddChild(matchLabel);
     }
 
@@ -157,7 +157,7 @@ internal static class ProgressGuardUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         label.AddThemeFontSizeOverride("font_size", 11);
-        label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         row.AddChild(label);
 
         var detailsBtn = new Button {
@@ -218,11 +218,11 @@ internal static class ProgressGuardUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(title);
 
         vbox.AddChild(new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
@@ -258,7 +258,7 @@ internal static class ProgressGuardUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         bodyLabel.AddThemeFontSizeOverride("font_size", 12);
-        bodyLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        bodyLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(bodyLabel);
 
         var btnRow = new HBoxContainer();
@@ -317,7 +317,7 @@ internal static class ProgressGuardUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         label.AddThemeFontSizeOverride("font_size", 11);
-        label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         return label;
     }
 }

@@ -1,4 +1,4 @@
-using DevMode;
+using KitLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 /// <summary>Predicts which encounter a map combat node will use, including dev overrides.</summary>
 internal static class MapEncounterPreview {
@@ -46,26 +46,26 @@ internal static class MapEncounterPreview {
             && point.coord.Equals(state.CurrentMapCoord.Value);
 
         EncounterModel? encounter;
-        bool isFloorOverride = DevModeState.FloorOverrides.ContainsKey(floor);
+        bool isFloorOverride = KitLibState.FloorOverrides.ContainsKey(floor);
         bool isGlobalOrTypeOverride = false;
         bool isOverride;
 
         if (isCurrentRoom) {
             encounter = (state.CurrentRoom as CombatRoom)?.Encounter;
             isOverride = isFloorOverride
-                || DevModeState.ResolveOverride(roomType.Value, floor) != null;
+                || KitLibState.ResolveOverride(roomType.Value, floor) != null;
         }
         else {
-            var floorEnc = DevModeState.FloorOverrides.TryGetValue(floor, out var fo) ? fo : null;
-            var modeEnc = DevModeState.EnemyMode switch {
-                EnemyMode.Global => DevModeState.GlobalEncounterOverride,
-                EnemyMode.PerType => DevModeState.RoomTypeOverrides.TryGetValue(roomType.Value, out var enc)
+            var floorEnc = KitLibState.FloorOverrides.TryGetValue(floor, out var fo) ? fo : null;
+            var modeEnc = KitLibState.EnemyMode switch {
+                EnemyMode.Global => KitLibState.GlobalEncounterOverride,
+                EnemyMode.PerType => KitLibState.RoomTypeOverrides.TryGetValue(roomType.Value, out var enc)
                     ? enc
                     : null,
                 _ => null,
             };
             isGlobalOrTypeOverride = modeEnc != null && floorEnc == null;
-            var overrideEnc = DevModeState.ResolveOverride(roomType.Value, floor);
+            var overrideEnc = KitLibState.ResolveOverride(roomType.Value, floor);
             encounter = overrideEnc ?? PredictEncounter(state, point, roomType.Value);
             isOverride = overrideEnc != null;
         }

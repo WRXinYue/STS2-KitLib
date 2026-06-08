@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 public sealed record CombatMoveScore(
     GameAction Action,

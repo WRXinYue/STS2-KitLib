@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Bridges sim/beam actions to <see cref="IAiMoveModifier"/> via <see cref="GameAction"/>.</summary>
 public static class SimMoveScoring {

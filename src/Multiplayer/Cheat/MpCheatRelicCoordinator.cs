@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 internal static class MpCheatRelicCoordinator {
     public static Task<string> TryHostAddRelicAsync(Player target, RelicModel relic) =>

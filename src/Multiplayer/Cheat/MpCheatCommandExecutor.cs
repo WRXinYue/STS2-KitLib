@@ -1,9 +1,9 @@
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 public static class MpCheatCommandExecutor {
     public static void Execute(MpCheatCommandMessage message) {

@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal const string SectionCardMeta = "_dm_section_card";
@@ -104,7 +104,7 @@ internal static partial class DevPanelUI {
 
         var head = new Label { Text = title };
         head.AddThemeFontSizeOverride("font_size", 13);
-        head.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        head.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         outer.AddChild(head);
 
         var body = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
@@ -130,8 +130,8 @@ internal static partial class DevPanelUI {
 
     internal static void ApplySectionCardStyle(PanelContainer panel, bool mergeRight) {
         var style = new StyleBoxFlat {
-            BgColor = new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.55f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.55f),
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,
@@ -150,8 +150,8 @@ internal static partial class DevPanelUI {
 
     internal static void ApplySidebarPanelStyle(PanelContainer panel, bool mergeLeft) {
         var style = new StyleBoxFlat {
-            BgColor = new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.55f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.55f),
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = mergeLeft ? 0 : 1,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,

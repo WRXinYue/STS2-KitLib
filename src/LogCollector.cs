@@ -4,21 +4,21 @@ using Godot;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Captures log entries emitted by the game's logging system into an in-memory ring buffer.
 /// Subscribe via <see cref="Log.LogCallback"/> so every Logger instance is covered.
 /// Opening the log viewer also hydrates from this process's mirrored log at
-/// <c>mod_data/DevMode/instances/{pid}/session.log</c>, falling back to <c>user://logs/</c>.
+/// <c>mod_data/KitLib/instances/{pid}/session.log</c>, falling back to <c>user://logs/</c>.
 /// </summary>
 internal static class LogCollector {
     public const int MaxLiveEntries = 2000;
     public const int MaxMergedEntries = 4000;
-    internal const string LogViewerRootName = "DevModeLogViewer";
+    internal const string LogViewerRootName = "KitLibLogViewer";
 
-    /// <summary>Legacy prefix; new sessions append <c>[pid=…]</c> via <see cref="DevModeInstance.SessionBoundaryMarker"/>.</summary>
-    public const string SessionBoundaryMarker = DevModeInstance.SessionBoundaryPrefix;
+    /// <summary>Legacy prefix; new sessions append <c>[pid=…]</c> via <see cref="KitLibInstance.SessionBoundaryMarker"/>.</summary>
+    public const string SessionBoundaryMarker = KitLibInstance.SessionBoundaryPrefix;
 
     public readonly record struct Entry(
         LogLevel Level,
@@ -46,12 +46,12 @@ internal static class LogCollector {
     }
 
     public static bool IsSessionBoundary(in Entry entry)
-        => DevModeInstance.ContainsSessionBoundary(entry.Text)
+        => KitLibInstance.ContainsSessionBoundary(entry.Text)
            || entry.Text.Contains(SessionBoundaryMarker, StringComparison.Ordinal);
 
     public static void Initialize() {
         Log.LogCallback += OnLogReceived;
-        MainFile.Logger.Info(DevModeInstance.SessionBoundaryMarker);
+        MainFile.Logger.Info(KitLibInstance.SessionBoundaryMarker);
     }
 
     /// <summary>

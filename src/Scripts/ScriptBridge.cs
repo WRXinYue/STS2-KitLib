@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 /// <summary>
 /// Local WebSocket bridge for the Blockly editor.

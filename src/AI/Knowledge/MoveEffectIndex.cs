@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Merges runtime intent scan with static handler effects from monster-move-effects.json.</summary>
 public static class MoveEffectIndex {

@@ -1,10 +1,10 @@
 using System;
-using DevMode.Actions;
-using DevMode.Icons;
+using KitLib.Actions;
+using KitLib.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class RoomSelectUI {
     private static readonly Color AncientAccent = new(0.90f, 0.65f, 0.20f);
@@ -12,7 +12,7 @@ internal static partial class RoomSelectUI {
     private static Control BuildRoomCard(RoomEntry entry, Label warnLabel, Label statusLabel) {
         var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var cardStyle = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
@@ -54,7 +54,7 @@ internal static partial class RoomSelectUI {
     private static Control BuildAncientEntryCard(Action onOpen) {
         var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         var cardStyle = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
@@ -107,7 +107,7 @@ internal static partial class RoomSelectUI {
 
         var nameLabel = new Label { Text = title };
         nameLabel.AddThemeFontSizeOverride("font_size", 13);
-        nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         nameLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
         textCol.AddChild(nameLabel);
 
@@ -116,14 +116,14 @@ internal static partial class RoomSelectUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         descLabel.AddThemeFontSizeOverride("font_size", 11);
-        descLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        descLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         descLabel.MouseFilter = Control.MouseFilterEnum.Ignore;
         textCol.AddChild(descLabel);
 
         hbox.AddChild(textCol);
 
         hbox.AddChild(new TextureRect {
-            Texture = MdiIcon.ChevronRight.Texture(16, DevModeTheme.Subtle),
+            Texture = MdiIcon.ChevronRight.Texture(16, KitLibTheme.Subtle),
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
             CustomMinimumSize = new Vector2(20, 20),
             SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
@@ -136,11 +136,11 @@ internal static partial class RoomSelectUI {
 
     private static void WireCardHover(PanelContainer card, StyleBoxFlat cardStyle, Color accent) {
         card.MouseEntered += () => {
-            cardStyle.BgColor = DevModeTheme.ButtonBgHover;
+            cardStyle.BgColor = KitLibTheme.ButtonBgHover;
             cardStyle.BorderColor = accent with { A = 0.90f };
         };
         card.MouseExited += () => {
-            cardStyle.BgColor = DevModeTheme.ButtonBgNormal;
+            cardStyle.BgColor = KitLibTheme.ButtonBgNormal;
             cardStyle.BorderColor = accent with { A = 0.60f };
         };
     }
@@ -163,7 +163,7 @@ internal static partial class RoomSelectUI {
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" })
             backBtn.AddThemeStyleboxOverride(s, flat);
-        backBtn.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        backBtn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         backBtn.AddThemeFontSizeOverride("font_size", 12);
         row.AddChild(backBtn);
 
@@ -174,14 +174,14 @@ internal static partial class RoomSelectUI {
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" })
             titleBtn.AddThemeStyleboxOverride(s, flat);
-        titleBtn.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        titleBtn.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         titleBtn.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(titleBtn);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         extVbox.AddChild(row);
         extVbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
 
@@ -202,14 +202,14 @@ internal static partial class RoomSelectUI {
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" })
             tab.AddThemeStyleboxOverride(s, flat);
-        tab.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        tab.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         tab.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(tab);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         vbox.AddChild(row);
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
     }

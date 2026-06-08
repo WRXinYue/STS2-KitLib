@@ -1,18 +1,18 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmPotionConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmpotion";
     public override string Args => "<add|list> [potionId]";
-    public override string Description => "[DevMode] Add potions or list all potion IDs";
+    public override string Description => "[KitLib] Add potions or list all potion IDs";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 

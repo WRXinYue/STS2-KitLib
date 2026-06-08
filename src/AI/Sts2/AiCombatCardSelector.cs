@@ -3,18 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI.Combat;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
-using DevMode.AI.Sts2.Snapshots;
-using DevMode.Actions;
-using DevMode.AI.Combat.Simulation;
+using KitLib.AI.Combat;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
+using KitLib.AI.Sts2.Snapshots;
+using KitLib.Actions;
+using KitLib.AI.Combat.Simulation;
 using MegaCrit.Sts2.Core.Entities.CardRewardAlternatives;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.TestSupport;
 
-namespace DevMode.AI.Sts2;
+namespace KitLib.AI.Sts2;
 
 /// <summary>
 /// Resolves in-combat hand prompts (exhaust, discard, upgrade) using deck plan + combat context.

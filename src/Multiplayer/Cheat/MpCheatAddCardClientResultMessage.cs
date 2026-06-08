@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Host → client: result of <see cref="MpCheatAddCardClientRequestMessage" />.</summary>
 public sealed class MpCheatAddCardClientResultMessage {

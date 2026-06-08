@@ -2,10 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode;
+using KitLib;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Modding;
+namespace KitLib.Modding;
 
 internal readonly record struct ContentModSource(string Key, string DisplayLabel, string? ModId) {
     public const string GameKey = "Game";

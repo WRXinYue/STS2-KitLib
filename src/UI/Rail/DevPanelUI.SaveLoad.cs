@@ -1,14 +1,14 @@
 using System;
-using DevMode;
-using DevMode.Icons;
-using DevMode.Panels;
-using DevMode.Presets;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Icons;
+using KitLib.Panels;
+using KitLib.Presets;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowSaveLoadOverlay(NGlobalUi globalUi, DevPanelActions actions) {
@@ -129,7 +129,7 @@ internal static partial class DevPanelUI {
 
         var seedLbl = new Label { Text = I18N.T("restart.seed.label", "Seed (leave empty for random):") };
         seedLbl.AddThemeFontSizeOverride("font_size", 12);
-        seedLbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        seedLbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         seedSection.AddChild(seedLbl);
 
         var seedInput = new LineEdit {
@@ -140,14 +140,14 @@ internal static partial class DevPanelUI {
         inner.AddChild(seedSection);
 
         inner.AddChild(new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
 
         var carryLbl = new Label { Text = I18N.T("restart.carry.label", "Carry over from current run:") };
         carryLbl.AddThemeFontSizeOverride("font_size", 12);
-        carryLbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        carryLbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         inner.AddChild(carryLbl);
 
         bool hasRun = RunContext.TryGetRunAndPlayer(out _, out _);
@@ -185,7 +185,7 @@ internal static partial class DevPanelUI {
         if (!hasRun) {
             var noRunLbl = new Label { Text = I18N.T("restart.noRun", "(No active run — carry-over unavailable)") };
             noRunLbl.AddThemeFontSizeOverride("font_size", 11);
-            noRunLbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            noRunLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             inner.AddChild(noRunLbl);
         }
 
@@ -193,7 +193,7 @@ internal static partial class DevPanelUI {
 
         var statusLbl = new Label { HorizontalAlignment = HorizontalAlignment.Center };
         statusLbl.AddThemeFontSizeOverride("font_size", 11);
-        statusLbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        statusLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         inner.AddChild(statusLbl);
 
         var btnRow = new HBoxContainer();
@@ -218,23 +218,23 @@ internal static partial class DevPanelUI {
             if (scope != PresetContents.None && hasRun) {
                 var preset = PresetManager.CaptureFromRun(scope);
                 if (preset != null) {
-                    DevModeState.PendingRestartPreset = preset;
-                    DevModeState.PendingRestartScope = scope;
-                    MainFile.Logger.Info($"[DevMode] RestartWithSeed: captured preset scope={scope}.");
+                    KitLibState.PendingRestartPreset = preset;
+                    KitLibState.PendingRestartScope = scope;
+                    MainFile.Logger.Info($"[KitLib] RestartWithSeed: captured preset scope={scope}.");
                 }
             }
 
             if (goldToggle.ButtonPressed && hasRun && RunContext.TryGetRunAndPlayer(out _, out var player)) {
-                DevModeState.PendingRestartGold = player.Gold;
-                MainFile.Logger.Info($"[DevMode] RestartWithSeed: captured gold={player.Gold}.");
+                KitLibState.PendingRestartGold = player.Gold;
+                MainFile.Logger.Info($"[KitLib] RestartWithSeed: captured gold={player.Gold}.");
             }
 
             if (!string.IsNullOrEmpty(seed)) {
-                DevModeState.PendingRestartSeed = seed;
-                MainFile.Logger.Info($"[DevMode] RestartWithSeed: seed override set to '{seed}'.");
+                KitLibState.PendingRestartSeed = seed;
+                MainFile.Logger.Info($"[KitLib] RestartWithSeed: seed override set to '{seed}'.");
             }
 
-            DevModeState.AutoProceedToCharSelect = true;
+            KitLibState.AutoProceedToCharSelect = true;
 
             ((Node)globalUi).GetNodeOrNull<Control>(RestartSeedRootName)?.QueueFree();
             actions.OnNewTest();

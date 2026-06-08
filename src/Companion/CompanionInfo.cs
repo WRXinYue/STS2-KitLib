@@ -1,6 +1,6 @@
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 public sealed record CompanionInfo(
     ulong NetId,

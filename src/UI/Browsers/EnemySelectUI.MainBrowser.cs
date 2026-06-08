@@ -2,7 +2,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
     internal sealed class MainBrowserState {
@@ -64,7 +64,7 @@ internal static partial class EnemySelectUI {
 
         state.StatusLabel = new Label { Text = "" };
         state.StatusLabel.AddThemeFontSizeOverride("font_size", 11);
-        state.StatusLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        state.StatusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         state.StatusLabel.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         dual.MainContent.AddChild(state.StatusLabel);
 
@@ -81,7 +81,7 @@ internal static partial class EnemySelectUI {
             VerticalAlignment = VerticalAlignment.Center,
         };
         title.AddThemeFontSizeOverride("font_size", 14);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         row.AddChild(title);
 
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });

@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Wire helpers for MpCheat INetMessage payloads (magic + bounded strings).</summary>
 internal static class MpCheatPacketIO {

@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Client → host: request synced remove-card.</summary>
 public sealed class MpCheatRemoveCardClientRequestMessage {

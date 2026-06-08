@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Interop;
+using KitLib.Interop;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Virtualized list of declaring-type paths: only visible rows are drawn; scroll via wheel or scrollbar.
@@ -145,9 +145,9 @@ internal sealed partial class HarmonyDeclaringTypeVirtualList : Control {
 
     public override void _Draw() {
         var font = GetThemeFont("font", "Label") ?? ThemeDB.FallbackFont;
-        var textCol = DevModeTheme.TextPrimary;
-        var selCol = new Color(DevModeTheme.Accent.R, DevModeTheme.Accent.G, DevModeTheme.Accent.B, 0.28f);
-        var subtle = DevModeTheme.Subtle;
+        var textCol = KitLibTheme.TextPrimary;
+        var selCol = new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G, KitLibTheme.Accent.B, 0.28f);
+        var subtle = KitLibTheme.Subtle;
 
         _visibleRows = Math.Max(1, (int)(Size.Y / RowHeight));
         var count = Math.Min(_visibleRows, Math.Max(0, _rows.Count - _scrollIndex));

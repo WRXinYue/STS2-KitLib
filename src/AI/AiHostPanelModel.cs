@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using DevMode.AI.AutoPlay;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.Companion;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib.AI.AutoPlay;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.Companion;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Live AI status and mode hints for the AI Host rail panel.</summary>
 internal static class AiHostPanelModel {
@@ -20,9 +20,9 @@ internal static class AiHostPanelModel {
         var runActive = RunManager.Instance?.IsInProgress == true;
         lines.Add(I18N.T("ai.status.run", "Run: {0}", runActive ? I18N.T("ai.status.runActive", "active") : I18N.T("ai.status.runIdle", "none")));
 
-        if (!DevModeState.IsActive)
-            lines.Add(I18N.T("ai.status.devInactive", "DevMode rail: inactive (enable Normal run on title screen)"));
-        else if (DevModeState.PseudoCoopDeferHeavyUi)
+        if (!KitLibState.IsActive)
+            lines.Add(I18N.T("ai.status.devInactive", "KitLib rail: inactive (enable Normal run on title screen)"));
+        else if (KitLibState.PseudoCoopDeferHeavyUi)
             lines.Add(I18N.T("ai.status.deferredUi", "Sidebar: deferred until map opens (LAN / pseudo-coop)"));
 
         if (runActive) {
@@ -94,10 +94,10 @@ internal static class AiHostPanelModel {
     public static IReadOnlyList<string> BuildRecommendations() {
         var tips = new List<string>();
 
-        if (!DevModeState.IsActive)
+        if (!KitLibState.IsActive)
             tips.Add(I18N.T("ai.rec.normalRun", "Title screen → DEVMODE → set Normal run to Dev Mode or Cheat Mode."));
 
-        if (DevModeState.DualInstanceMinimalRail)
+        if (KitLibState.DualInstanceMinimalRail)
             tips.Add(I18N.T("ai.rec.minimalRail", "Dual-instance rail shows AI Host + Logs; use a full Dev run for all panels."));
 
         if (MpCheatSession.InMultiplayerRun && LanLocalDecisionHost.IsEnabled)
@@ -110,7 +110,7 @@ internal static class AiHostPanelModel {
                 "ai.rec.lanLocalOff",
                 "Apply LAN host preset (AI Host panel) to auto-pick Neow and rewards on both windows."));
 
-        if (DevModeState.PseudoCoopDeferHeavyUi)
+        if (KitLibState.PseudoCoopDeferHeavyUi)
             tips.Add(I18N.T("ai.rec.deferUi", "Finish Neow and open the map once — the sidebar attaches after deferred init."));
 
         if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost) {

@@ -1,4 +1,4 @@
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 /// <param name="PinOptionToken">
 /// Matches <see cref="MegaCrit.Sts2.Core.Events.EventOption.TextKey"/> substring

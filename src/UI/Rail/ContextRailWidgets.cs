@@ -1,8 +1,8 @@
 using System;
-using DevMode.Icons;
+using KitLib.Icons;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ContextRailWidgets {
     internal const float IconBtnSize = 36f;
@@ -53,7 +53,7 @@ internal static class ContextRailWidgets {
         var wrap = new CenterContainer();
         var line = new ColorRect {
             CustomMinimumSize = new Vector2(24, 1),
-            Color = new Color(DevModeTheme.Subtle.R, DevModeTheme.Subtle.G, DevModeTheme.Subtle.B, 0.35f),
+            Color = new Color(KitLibTheme.Subtle.R, KitLibTheme.Subtle.G, KitLibTheme.Subtle.B, 0.35f),
         };
         wrap.AddChild(line);
         return wrap;

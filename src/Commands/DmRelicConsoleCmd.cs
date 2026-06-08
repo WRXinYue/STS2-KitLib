@@ -1,18 +1,18 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmRelicConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmrelic";
     public override string Args => "<add|list> [relicId]";
-    public override string Description => "[DevMode] Add relics or list all relic IDs";
+    public override string Description => "[KitLib] Add relics or list all relic IDs";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 

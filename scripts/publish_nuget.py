@@ -42,11 +42,11 @@ def _resolve_sts2_beta_version(cli_value: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Pack and push DevMode to NuGet.")
-    ap.add_argument("--version", default="", help="Semver (default: DevMode.json)")
+    ap.add_argument("--version", default="", help="Semver (default: KitLib.json)")
     ap.add_argument(
         "--beta",
         action="store_true",
-        help="Use STS2 Steam beta build (make zip-beta, STS2.DevMode.Beta package id).",
+        help="Use STS2 Steam beta build (make zip-beta, STS2.KitLib.Beta package id).",
     )
     ap.add_argument(
         "--sts2-beta-version",
@@ -62,7 +62,7 @@ def main() -> int:
     ap.add_argument(
         "--skip-build",
         action="store_true",
-        help="Skip make zip; require existing build/dist/DevMode/.",
+        help="Skip make zip; require existing build/dist/KitLib/.",
     )
     ap.add_argument(
         "--dry-run",
@@ -73,9 +73,9 @@ def main() -> int:
 
     version = args.version.strip()
     if not version:
-        manifest = json.loads((_REPO_ROOT / "DevMode.json").read_text(encoding="utf-8"))
+        manifest = json.loads((_REPO_ROOT / "KitLib.json").read_text(encoding="utf-8"))
         version = str(manifest["version"])
-        print(f"Version auto-detected from DevMode.json: {version}")
+        print(f"Version auto-detected from KitLib.json: {version}")
 
     sts2_beta_version = _resolve_sts2_beta_version(args.sts2_beta_version)
     pkg_version = nuget_ops.package_version(version, beta=args.beta, sts2_beta_version=sts2_beta_version)

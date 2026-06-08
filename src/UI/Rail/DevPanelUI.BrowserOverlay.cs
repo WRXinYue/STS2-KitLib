@@ -2,7 +2,7 @@ using System;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     private const string BrowserPanelAnimatingMetaKey = "_dm_browser_panel_animating";
@@ -41,7 +41,7 @@ internal static partial class DevPanelUI {
     /// <remarks>
     /// <para>This method manages rail pinning and splicing automatically. The rail is pinned
     /// when the overlay is created and unpinned when the root control exits the scene tree.</para>
-    /// <para>Panel width is automatically persisted and restored via <see cref="DevModeSettings"/>.
+    /// <para>Panel width is automatically persisted and restored via <see cref="KitLibSettings"/>.
     /// A width grip is attached to the right edge for user resizing.</para>
     /// </remarks>
     internal static (Control Root, PanelContainer Panel, VBoxContainer Content) CreateBrowserOverlayShell(

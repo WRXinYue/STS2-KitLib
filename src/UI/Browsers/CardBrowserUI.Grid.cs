@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Modding;
+using KitLib.Actions;
+using KitLib.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CardBrowserUI {
     // ── Grid constants ──
@@ -51,7 +51,7 @@ internal static partial class CardBrowserUI {
                 modelForNode = CardPreviewHelper.GetDisplayModel(card, useLibraryUpgradePreview);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode] Card preview model failed for {card.Id}: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib] Card preview model failed for {card.Id}: {ex.Message}");
                 modelForNode = card;
                 useLibraryUpgradePreview = false;
             }
@@ -73,7 +73,7 @@ internal static partial class CardBrowserUI {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode] NCard.Create failed for {card.Id}: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib] NCard.Create failed for {card.Id}: {ex.Message}");
         }
         AddCardFallback(host, card);
         return null;

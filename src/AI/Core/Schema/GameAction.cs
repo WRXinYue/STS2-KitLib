@@ -1,4 +1,4 @@
-namespace DevMode.AI.Core.Schema;
+namespace KitLib.AI.Core.Schema;
 
 /// <summary>
 /// A game-agnostic action the AI wants to perform.

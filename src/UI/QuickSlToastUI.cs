@@ -1,9 +1,9 @@
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class QuickSlToastUI {
-    private const string ToastName = "DevModeQuickSlToast";
+    private const string ToastName = "KitLibQuickSlToast";
 
     internal static void Show(string message) {
         var tree = Engine.GetMainLoop() as SceneTree;
@@ -21,8 +21,8 @@ internal static class QuickSlToastUI {
         panel.MouseFilter = Control.MouseFilterEnum.Ignore;
 
         var style = new StyleBoxFlat {
-            BgColor = DevModeTheme.PanelBg with { A = 0.92f },
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = KitLibTheme.PanelBg with { A = 0.92f },
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthBottom = 1,
             BorderWidthTop = 1,
             BorderWidthLeft = 1,
@@ -43,7 +43,7 @@ internal static class QuickSlToastUI {
             HorizontalAlignment = HorizontalAlignment.Center
         };
         label.AddThemeFontSizeOverride("font_size", 14);
-        label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         panel.AddChild(label);
 
         root.AddChild(panel);

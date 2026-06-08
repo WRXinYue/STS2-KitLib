@@ -1,7 +1,7 @@
 using System;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.Panels;
+namespace KitLib.Panels;
 
 /// <summary>
 /// Controls which DevMode panel is currently open and mediates all tab-switch operations.

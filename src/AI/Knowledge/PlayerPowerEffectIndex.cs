@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Actions;
-using DevMode.AI.Combat.Simulation;
+using KitLib.Actions;
+using KitLib.AI.Combat.Simulation;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Maps official PowerVar types to combat-sim effect kinds (indexed from <see cref="ModelDb.AllCards"/>).</summary>
 public static class PlayerPowerEffectIndex {

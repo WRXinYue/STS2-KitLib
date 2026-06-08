@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class StealEffectSimulator {
     public static (List<CombatPileCard> draw, List<CombatPileCard> discard) Apply(

@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Icons;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Panels;
+using KitLib.Icons;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Panels;
 
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 /// <summary>
-/// Persists and resolves dev-rail tab order and visibility from <see cref="DevModeSettings"/>.
+/// Persists and resolves dev-rail tab order and visibility from <see cref="KitLibSettings"/>.
 /// </summary>
 internal static class RailTabPreferences {
     public const string PrimaryKey = "Primary";
@@ -44,7 +44,7 @@ internal static class RailTabPreferences {
                 continue;
             if (hidden.Contains(id) && id != SettingsTabId)
                 continue;
-            if (DevModeState.DualInstanceMinimalRail && id is not AiHostTabId and not LogsTabId)
+            if (KitLibState.DualInstanceMinimalRail && id is not AiHostTabId and not LogsTabId)
                 continue;
             result.Add(tab);
         }
@@ -86,7 +86,7 @@ internal static class RailTabPreferences {
         SettingsStore.Save();
     }
 
-    public static void ApplyDefaultHiddenTabs(DevModeSettings settings) {
+    public static void ApplyDefaultHiddenTabs(KitLibSettings settings) {
         foreach (var id in DefaultHiddenTabIds)
             settings.RailHiddenTabIds.Add(id);
     }
@@ -136,7 +136,7 @@ internal static class RailTabPreferences {
     }
 
     private static bool IsAvailableInCurrentMode(IDevPanelTab tab) {
-        if (DevModeState.CheatsInRun || MpCheatSession.CanUseMultiplayerCheats) return true;
+        if (KitLibState.CheatsInRun || MpCheatSession.CanUseMultiplayerCheats) return true;
         // AI Host is Cheat-kind but must stay visible in DevPanel / LAN minimal-rail sessions.
         if (tab.Id is AiHostTabId or LogsTabId) return true;
         return tab.Kind == DevPanelTabKind.Developer;

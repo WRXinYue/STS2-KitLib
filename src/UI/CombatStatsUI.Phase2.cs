@@ -1,8 +1,8 @@
 using System.Linq;
-using DevMode.CombatStats;
+using KitLib.CombatStats;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     private static void BuildCompareSection(VBoxContainer parent, PlayerCombatStats current, PlayerCombatStats last) {
@@ -26,14 +26,14 @@ internal static partial class CombatStatsUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         left.AddThemeFontSizeOverride("font_size", 11);
-        left.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        left.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         var right = new Label {
             Text = $"{current} ({sign}{delta})",
             HorizontalAlignment = HorizontalAlignment.Right,
         };
         right.AddThemeFontSizeOverride("font_size", 11);
         right.AddThemeColorOverride("font_color",
-            delta > 0 ? DevModeTheme.Accent : DevModeTheme.TextSecondary);
+            delta > 0 ? KitLibTheme.Accent : KitLibTheme.TextSecondary);
         row.AddChild(left);
         row.AddChild(right);
         return row;
@@ -114,7 +114,7 @@ internal static partial class CombatStatsUI {
                 Text = BuildTimelineText(player),
             };
             rtl.AddThemeFontSizeOverride("normal_font_size", 10);
-            rtl.AddThemeColorOverride("default_color", DevModeTheme.TextSecondary);
+            rtl.AddThemeColorOverride("default_color", KitLibTheme.TextSecondary);
             var noFocus = new StyleBoxEmpty();
             rtl.AddThemeStyleboxOverride("normal", noFocus);
             rtl.AddThemeStyleboxOverride("focus", noFocus);

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using DevMode.AI.Core;
+using KitLib.AI.Core;
 
-namespace DevMode.Companion;
+namespace KitLib.Companion;
 
 public static class CompanionRegistry {
     static readonly Dictionary<ulong, IDecisionMaker> Strategies = [];

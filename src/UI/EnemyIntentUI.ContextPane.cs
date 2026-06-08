@@ -1,8 +1,8 @@
-using DevMode.EnemyIntent;
+using KitLib.EnemyIntent;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemyIntentUI {
     internal const string PanelContextId = "enemyIntent.nextTurn";
@@ -67,7 +67,7 @@ internal static partial class EnemyIntentUI {
         public bool HasContent => _hasContent;
 
         public void Refresh() {
-            if (!DevModeState.IsActive
+            if (!KitLibState.IsActive
                 || !MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState())) {
                 Clear();
                 _hasContent = false;

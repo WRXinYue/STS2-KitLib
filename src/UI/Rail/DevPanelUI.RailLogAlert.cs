@@ -1,8 +1,8 @@
-using DevMode.Icons;
+using KitLib.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     private const string LogsTabId = "devmode.logs";

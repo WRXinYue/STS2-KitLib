@@ -5,7 +5,7 @@ using Godot;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class RelicBrowserUI {
     private enum SortField { Alphabet, Rarity }
@@ -15,18 +15,18 @@ internal static partial class RelicBrowserUI {
     private static bool IsAllSource => _browseSource == BrowseSource.All;
 
     private static readonly Dictionary<RelicRarity, Color> RarityColors = new() {
-        [RelicRarity.None] = DevModeTheme.Subtle,
+        [RelicRarity.None] = KitLibTheme.Subtle,
         [RelicRarity.Starter] = new Color(0.50f, 0.50f, 0.55f),
-        [RelicRarity.Common] = DevModeTheme.RarityCommon,
-        [RelicRarity.Uncommon] = DevModeTheme.RarityUncommon,
-        [RelicRarity.Rare] = DevModeTheme.RarityRare,
+        [RelicRarity.Common] = KitLibTheme.RarityCommon,
+        [RelicRarity.Uncommon] = KitLibTheme.RarityUncommon,
+        [RelicRarity.Rare] = KitLibTheme.RarityRare,
         [RelicRarity.Shop] = new Color(0.35f, 0.75f, 0.55f),
-        [RelicRarity.Event] = DevModeTheme.RaritySpecial,
+        [RelicRarity.Event] = KitLibTheme.RaritySpecial,
         [RelicRarity.Ancient] = new Color(0.90f, 0.65f, 0.20f),
     };
 
     private static Color RarityToColor(RelicRarity rarity)
-        => RarityColors.TryGetValue(rarity, out var c) ? c : DevModeTheme.Subtle;
+        => RarityColors.TryGetValue(rarity, out var c) ? c : KitLibTheme.Subtle;
 
     internal static RelicRarity GetRelicRarity(RelicModel relic) {
         try { return relic.Rarity; }

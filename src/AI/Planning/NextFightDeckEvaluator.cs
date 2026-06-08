@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 /// <summary>Scores card offers by simulating upcoming combats on the planned route.</summary>
 public static class NextFightDeckEvaluator {

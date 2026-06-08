@@ -1,9 +1,9 @@
-using DevMode.Progress;
+using KitLib.Progress;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.InitProgressData))]
 internal static class ProgressLossDetectPatch {

@@ -21,7 +21,7 @@ using NetPlayerState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatStat
 using NetCardState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.CardState;
 using NetPileState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.CombatPileState;
 
-namespace DevMode.Combat;
+namespace KitLib.Combat;
 
 internal static class CombatCheckpointRestorer {
     private static int _restoreInProgress;

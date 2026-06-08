@@ -1,6 +1,6 @@
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Payload bodies inside <see cref="ZzzMpCheatEnvelopeNetMessage" /> (after magic + channel).</summary>
 internal static class MpCheatEnvelopeCodec {

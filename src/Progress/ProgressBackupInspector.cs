@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal sealed class ProgressBackupCharacterSummary {
     public string CharacterName { get; init; } = "";

@@ -5,7 +5,7 @@ Environment variables (required):
     NEXUS_API_KEY              - Your personal API key from nexusmods.com/settings/api-keys
     NEXUS_FILE_GROUP_ID        - Main file group ID (stable/public build; Files tab → API Info)
     NEXUS_FILE_GROUP_ID_BETA   - Optional file group ID for STS2 Steam beta builds (separate line)
-    NEXUS_FILE_GROUP_ID_MCP    - Optional file group ID for DevMode.Mcp stdio proxy (separate line)
+    NEXUS_FILE_GROUP_ID_MCP    - Optional file group ID for KitLib.Mcp stdio proxy (separate line)
 
 Usage:
     python scripts/publish_nexus.py [--version X.Y.Z] [--beta] [--mcp] [--dry-run]
@@ -35,8 +35,8 @@ def _resolve_sts2_beta_version(cli_value: str) -> str:
 
 def _zip_path(version: str, *, beta: bool, sts2_beta_version: str) -> Path:
     if beta:
-        return _REPO_ROOT / "build" / f"DevMode-v{version}-sts2beta-v{sts2_beta_version}.zip"
-    return _REPO_ROOT / "build" / f"DevMode-v{version}.zip"
+        return _REPO_ROOT / "build" / f"KitLib-v{version}-sts2beta-v{sts2_beta_version}.zip"
+    return _REPO_ROOT / "build" / f"KitLib-v{version}.zip"
 
 
 def _tools_rid(cli_value: str) -> str:
@@ -49,11 +49,11 @@ def _tools_rid(cli_value: str) -> str:
 
 
 def _mcp_zip_path(version: str, tools_rid: str) -> Path:
-    return _REPO_ROOT / "build" / f"DevMode.Mcp-v{version}-{tools_rid}.zip"
+    return _REPO_ROOT / "build" / f"KitLib.Mcp-v{version}-{tools_rid}.zip"
 
 
 def _mcp_description_bbcode(tools_rid: str) -> str:
-    exe = "DevMode.Mcp.exe" if tools_rid.startswith("win") else "DevMode.Mcp"
+    exe = "KitLib.Mcp.exe" if tools_rid.startswith("win") else "KitLib.Mcp"
     return (
         "[b]DevMode MCP stdio proxy[/b] (optional dev tool)\n\n"
         "Connect MCP clients (Cursor, Claude Desktop, etc.) to a running Slay the Spire 2 session "
@@ -88,11 +88,11 @@ def _nexus_display_name(
     tools_rid: str,
 ) -> str:
     if mcp:
-        return f"DevMode.Mcp v{version} ({tools_rid})"
+        return f"KitLib.Mcp v{version} ({tools_rid})"
     if beta:
         safe = sts2_beta_version.strip().lstrip("v")
-        return f"DevMode.Compat.sts2beta-v{safe}"
-    return f"DevMode v{version}"
+        return f"KitLib.Compat.sts2beta-v{safe}"
+    return f"KitLib v{version}"
 
 
 def _nexus_attach_options(*, beta: bool, mcp: bool) -> dict[str, object]:
@@ -354,7 +354,7 @@ def step6_update_mod_file(
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Upload DevMode zip to Nexus Mods.")
-    ap.add_argument("--version", default="", help="Semver, e.g. 0.6.0 (default: DevMode.json)")
+    ap.add_argument("--version", default="", help="Semver, e.g. 0.6.0 (default: KitLib.json)")
     ap.add_argument(
         "--beta",
         action="store_true",
@@ -363,7 +363,7 @@ def main() -> int:
     ap.add_argument(
         "--mcp",
         action="store_true",
-        help="Build/package/upload the DevMode.Mcp stdio proxy (make zip-mcp).",
+        help="Build/package/upload the KitLib.Mcp stdio proxy (make zip-mcp).",
     )
     ap.add_argument(
         "--tools-rid",
@@ -389,10 +389,10 @@ def main() -> int:
     # ── resolve version ──────────────────────────────────────────────────────
     version = args.version.strip()
     if not version:
-        raw = (_REPO_ROOT / "DevMode.json").read_text(encoding="utf-8")
+        raw = (_REPO_ROOT / "KitLib.json").read_text(encoding="utf-8")
         manifest = json.loads(raw)
         version = str(manifest["version"])
-        print(f"Version auto-detected from DevMode.json: {version}")
+        print(f"Version auto-detected from KitLib.json: {version}")
 
     sts2_beta_version = _resolve_sts2_beta_version(args.sts2_beta_version)
     tools_rid = _tools_rid(args.tools_rid)
@@ -421,7 +421,7 @@ def main() -> int:
             if args.mcp:
                 env_name = "NEXUS_FILE_GROUP_ID_MCP"
                 hint = (
-                    "Create an Optional file for DevMode.Mcp on your mod page first, "
+                    "Create an Optional file for KitLib.Mcp on your mod page first, "
                     "then copy its group ID from API Info."
                 )
             elif args.beta:

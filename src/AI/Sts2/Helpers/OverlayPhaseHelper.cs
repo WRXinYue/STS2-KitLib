@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.AutoPlay.Scoring;
+using KitLib.AI.AutoPlay.Scoring;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Rewards;
@@ -13,7 +13,7 @@ using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI.Sts2.Helpers;
+namespace KitLib.AI.Sts2.Helpers;
 
 /// <summary>Resolves overlay UI that <see cref="NOverlayStack.Peek"/> alone can miss (nested / deck-select).</summary>
 internal static class OverlayPhaseHelper {

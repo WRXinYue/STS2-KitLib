@@ -1,7 +1,7 @@
-using DevMode.CombatStats;
+using KitLib.CombatStats;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     internal const string DefaultContextId = "default.players";

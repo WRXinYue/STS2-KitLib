@@ -4,7 +4,7 @@ using System.Linq;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public sealed record RelicCatalogEntry(
     string Id,

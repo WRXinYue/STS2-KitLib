@@ -1,12 +1,12 @@
 using System;
 using System.IO;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Identifies this game process for dual-instance (same machine) testing.
 /// </summary>
-internal static class DevModeInstance {
+internal static class KitLibInstance {
     public const string SessionBoundaryPrefix = "── DevMode log capture started ──";
 
     public static int ProcessId { get; } = Environment.ProcessId;

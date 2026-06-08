@@ -1,19 +1,19 @@
-using DevMode.Feedback;
-using DevMode.Hotkeys;
-using DevMode.Mcp;
-using DevMode.Patches;
-using DevMode.Scripts;
-using DevMode.Settings;
+using KitLib.Feedback;
+using KitLib.Hotkeys;
+using KitLib.Mcp;
+using KitLib.Patches;
+using KitLib.Scripts;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Lightweight Godot Node that hooks into the scene tree's _Process loop.
 /// Drives RuntimeStatModifiers, AssetWarmupService, and script hot-reload each frame.
 /// </summary>
-internal partial class DevModeProcessNode : Node {
-    internal static DevModeProcessNode? Instance { get; private set; }
+internal partial class KitLibProcessNode : Node {
+    internal static KitLibProcessNode? Instance { get; private set; }
 
     private double _heartbeatAccum;
     private double _logFlushAccum;
@@ -36,7 +36,7 @@ internal partial class DevModeProcessNode : Node {
         _heartbeatAccum += delta;
         if (_heartbeatAccum >= 2.0) {
             _heartbeatAccum = 0;
-            DevModeInstanceRegistry.Heartbeat();
+            KitLibInstanceRegistry.Heartbeat();
         }
 
         _logFlushAccum += delta;
@@ -55,6 +55,6 @@ internal partial class DevModeProcessNode : Node {
         CrashRecoveryStore.MarkSessionCleanExit();
         McpBridge.Shutdown();
         InstanceLogWriter.Shutdown();
-        DevModeInstanceRegistry.Unregister();
+        KitLibInstanceRegistry.Unregister();
     }
 }

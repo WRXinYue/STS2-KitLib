@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace DevMode.Interop;
+namespace KitLib.Interop;
 
 /// <summary>
 /// Read-only RitsuLib diagnostics for DevMode (no config sync).

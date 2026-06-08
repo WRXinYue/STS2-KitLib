@@ -1,18 +1,18 @@
-using DevMode.AI.AutoPlay;
-using DevMode.AI.Planning;
-using DevMode.Map;
-using DevMode.Settings;
+using KitLib.AI.AutoPlay;
+using KitLib.AI.Planning;
+using KitLib.Map;
+using KitLib.Settings;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Patches.Map;
+namespace KitLib.Patches.Map;
 
 [HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.Open))]
 public static class MapScreenOpenPatch {
     public static void Postfix(NMapScreen __instance) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         MapScreenUnlock.OnOpened(__instance);
         MapAiPathOverlayHelper.TryApplyAiPathOverlay(__instance);
     }
@@ -21,7 +21,7 @@ public static class MapScreenOpenPatch {
 [HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.Close))]
 public static class MapScreenClosePatch {
     public static void Postfix(NMapScreen __instance) {
-        if (!DevModeState.IsActive) return;
+        if (!KitLibState.IsActive) return;
         MapScreenUnlock.OnClosed(__instance);
         MapPathOverlay.Clear(__instance);
         MapPathPlanner.ClearCache();

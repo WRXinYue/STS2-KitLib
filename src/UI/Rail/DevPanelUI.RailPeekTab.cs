@@ -1,10 +1,10 @@
 using System;
-using DevMode.Icons;
-using DevMode.Settings;
+using KitLib.Icons;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     private enum PeekTabMode {
@@ -161,7 +161,7 @@ internal static partial class DevPanelUI {
             minAlpha = 0.5f;
             break;
         default:
-            var accent = DevModeTheme.Accent;
+            var accent = KitLibTheme.Accent;
             borderDim = new Color(accent.R, accent.G, accent.B, 0.25f);
             borderBright = new Color(accent.R, accent.G, accent.B, 1f);
             halfCycle = 0.55f;

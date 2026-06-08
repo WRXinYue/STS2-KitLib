@@ -1,7 +1,7 @@
-using DevMode.Settings;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ProgressGuardPanelBuilder {
     internal static void AddToggleSection(VBoxContainer parent, bool includeSectionHeader) {

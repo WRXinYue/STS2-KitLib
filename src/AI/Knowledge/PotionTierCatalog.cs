@@ -4,11 +4,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Static retain scores for potions (interim until Codex potion priors).</summary>
 public static class PotionTierCatalog {
-    const string ResourceName = "DevMode.AI.potion-tiers.json";
+    const string ResourceName = "KitLib.AI.potion-tiers.json";
     const int DefaultScore = 10;
 
     static JsonObject? _root;

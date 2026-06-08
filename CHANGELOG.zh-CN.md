@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **更名为 KitLib** — mod id、程序集、C# 根命名空间、用户数据路径（`mod_data/KitLib`）及 NuGet 包 id（`STS2.KitLib`）取代 DevMode。首次启动会自动迁移旧版 `mod_data/DevMode` 设置。依赖本 mod 的其他 mod 请改为引用 `KitLib.dll` 与 `KitLib.*` 命名空间（如 `KitLib.Companion.CompanionBridge`）。
 - **战斗 AI** — 集火、易伤铺垫与挡牌时机改为模拟驱动的权衡，不再依赖固定启发式；药水使用统一纳入 beam 评分，紧急路径收窄。
 
 ## [0.13.0] - 2026-06-02
@@ -40,8 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **进度保护** — mod 集指纹变化时，在 vanilla 存档过滤写盘前，将当前 profile 的 `progress.save`（及可选相关存档）备份到 `mod_data/DevMode/profile_backups/`；可选在 progress 仍含已卸载 mod 数据时仅写日志警告。可在 **设置 → 进度保护** 或标题画面 **DEVMODE → 进度保护** 面板中开关、查看状态与最近备份，并一键恢复 progress。每条备份可点 **详情** 查看账号进度、各角色统计、epochs、图鉴数量及备份元数据。
-- **崩溃恢复提示** — 游戏内发生未捕获异常时，DevMode 弹出对话框，可查看日志或导出预填崩溃摘要的反馈 ZIP；若游戏异常退出，下次进入主菜单时同样提示。可在 **设置 → 崩溃恢复** 中开关。会话标记位于 `mod_data/DevMode/instances/{pid}/`。
+- **进度保护** — mod 集指纹变化时，在 vanilla 存档过滤写盘前，将当前 profile 的 `progress.save`（及可选相关存档）备份到 `mod_data/KitLib/profile_backups/`；可选在 progress 仍含已卸载 mod 数据时仅写日志警告。可在 **设置 → 进度保护** 或标题画面 **DEVMODE → 进度保护** 面板中开关、查看状态与最近备份，并一键恢复 progress。每条备份可点 **详情** 查看账号进度、各角色统计、epochs、图鉴数量及备份元数据。
+- **崩溃恢复提示** — 游戏内发生未捕获异常时，DevMode 弹出对话框，可查看日志或导出预填崩溃摘要的反馈 ZIP；若游戏异常退出，下次进入主菜单时同样提示。可在 **设置 → 崩溃恢复** 中开关。会话标记位于 `mod_data/KitLib/instances/{pid}/`。
 - **启动时 mod 角色进度丢失提示** — 进入主菜单时，若检测到 mod 角色统计被过滤且存在可恢复备份，弹出 **恢复** / **暂不恢复** 对话框（可在 **进度保护** 设置中关闭）。
 - **内容浏览器（Mod 来源）** — 卡牌、遗物、药水、能力、事件选择器新增 **Mod 来源** 筛选，可按游戏本体或已加载 mod 包含/排除；详情区显示 **来源：**。卡牌浏览器会记住 Mod 来源筛选设置。
 
@@ -123,7 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **敌人地图悬停预览** — 节点悬停 tooltip 重新正确显示在地图面板内（修复因 TopLevel 层级导致的不可见问题）。
-- **设置、存档槽、预设与脚本**现存储在游戏用户数据目录（`SlayTheSpire2/steam/<id>/mod_data/DevMode/`）而非 mod 文件夹内 — Steam Workshop 更新 mod 后数据不再丢失。
+- **设置、存档槽、预设与脚本**现存储在游戏用户数据目录（`SlayTheSpire2/steam/<id>/mod_data/KitLib/`）而非 mod 文件夹内 — Steam Workshop 更新 mod 后数据不再丢失。
 - 设置与存档槽文件改为原子写入，游戏崩溃时不会产生损坏的文件。
 - 在 **正式版/公开版** STS2 上再次可用：施加能力、战斗中添加卡牌、加载预设等开发工具（不仅限于 Steam beta）。
 - 战斗统计面板拉至接近全宽并与游戏右侧轨合并时，**饼图侧栏**布局不再错乱。

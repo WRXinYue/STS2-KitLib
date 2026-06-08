@@ -1,4 +1,4 @@
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Defers catalog indexing until <see cref="MegaCrit.Sts2.Core.Models.ModelDb.Init"/> completes.</summary>
 public static class AiKnowledgeBootstrap {

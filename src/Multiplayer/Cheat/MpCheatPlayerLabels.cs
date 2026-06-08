@@ -1,7 +1,7 @@
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 internal static class MpCheatPlayerLabels {
     internal static string FormatPickerLabel(Player player) {

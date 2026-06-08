@@ -1,7 +1,7 @@
 using System;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Last AI decision for in-game HUD display.</summary>
 public sealed record AiHudDecision(

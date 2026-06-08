@@ -1,3 +1,3 @@
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public sealed record CombatPotionSlot(int Slot, string Id);

@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using DevMode.Icons;
-using DevMode.Modding;
+using KitLib.Icons;
+using KitLib.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Log viewer spliced to the DevMode rail (fixed-width browser panel + backdrop, same pattern as Console).
 /// Filters live in a left scroll sidebar (level, text, mod source, suppress rules); log center; stats + pie on the right.
 /// </summary>
 internal static class LogViewerUI {
-    private const string RootName = "DevModeLogViewer";
+    private const string RootName = "KitLibLogViewer";
     private const float PanelW = 880f;
     private const float FilterSideMinW = 216f;
     private const float StatsSideMinW = 164f;
@@ -33,7 +33,7 @@ internal static class LogViewerUI {
     private static Label CreateLogFilterSectionHeading(string i18nKey, string fallback) {
         var l = new Label { Text = I18N.T(i18nKey, fallback) };
         l.AddThemeFontSizeOverride("font_size", 10);
-        l.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        l.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return l;
     }
 
@@ -109,7 +109,7 @@ internal static class LogViewerUI {
 
         var filterTitle = new Label { Text = I18N.T("log.filter.sidebar", "Filters") };
         filterTitle.AddThemeFontSizeOverride("font_size", 12);
-        filterTitle.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        filterTitle.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         filterInner.AddChild(filterTitle);
 
         filterInner.AddChild(CreateLogFilterSectionHeading("log.filter.section.level", "Level"));
@@ -124,7 +124,7 @@ internal static class LogViewerUI {
 
         filterInner.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
 
@@ -133,7 +133,7 @@ internal static class LogViewerUI {
 
         filterInner.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
 
@@ -144,7 +144,7 @@ internal static class LogViewerUI {
 
         filterInner.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
 
@@ -160,7 +160,7 @@ internal static class LogViewerUI {
 
         bodyHBox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(1, 0),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
         });
@@ -203,7 +203,7 @@ internal static class LogViewerUI {
             Name = "LogCopyFloat",
             FocusMode = Control.FocusModeEnum.None,
             Flat = true,
-            Icon = MdiIcon.ContentCopy.Texture(16, DevModeTheme.Subtle),
+            Icon = MdiIcon.ContentCopy.Texture(16, KitLibTheme.Subtle),
             Visible = false,
             ZIndex = 2,
             TooltipText = I18N.T("log.copyAll", "Copy All"),
@@ -238,7 +238,7 @@ internal static class LogViewerUI {
         bodyHBox.AddChild(logColumn);
 
         void SetCopyFloatDefaultIcon()
-            => copyFloatBtn.Icon = MdiIcon.ContentCopy.Texture(16, DevModeTheme.Subtle);
+            => copyFloatBtn.Icon = MdiIcon.ContentCopy.Texture(16, KitLibTheme.Subtle);
 
         void HideCopyFloat() {
             copyFloatBtn.Visible = false;
@@ -266,7 +266,7 @@ internal static class LogViewerUI {
 
         copyFloatBtn.Pressed += () => {
             DisplayServer.ClipboardSet(lastPlainText);
-            copyFloatBtn.Icon = MdiIcon.Check.Texture(16, DevModeTheme.Accent);
+            copyFloatBtn.Icon = MdiIcon.Check.Texture(16, KitLibTheme.Accent);
             var t = copyFloatBtn.GetTree().CreateTimer(1.15);
             t.Timeout += () => {
                 if (!GodotObject.IsInstanceValid(copyFloatBtn)) return;
@@ -276,7 +276,7 @@ internal static class LogViewerUI {
 
         bodyHBox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(1, 0),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
         });
@@ -290,7 +290,7 @@ internal static class LogViewerUI {
 
         var statsTitle = new Label { Text = I18N.T("log.stats.title", "来源统计") };
         statsTitle.AddThemeFontSizeOverride("font_size", 12);
-        statsTitle.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        statsTitle.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         statsColumn.AddChild(statsTitle);
 
         var pieChart = new LogSourcePieChart();
@@ -321,7 +321,7 @@ internal static class LogViewerUI {
 
         var countLabel = new Label { Text = "" };
         countLabel.AddThemeFontSizeOverride("font_size", 11);
-        countLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        countLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         footerRow.AddChild(countLabel);
         footerRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         vbox.AddChild(footerRow);
@@ -383,7 +383,7 @@ internal static class LogViewerUI {
             HashSet<string> loadedModIds,
             Dictionary<string, string> modIdAliases) {
             var sb = new StringBuilder(entries.Count * 96);
-            string boundaryCol = LogSourceColors.ColorToBbHex(DevModeTheme.Accent);
+            string boundaryCol = LogSourceColors.ColorToBbHex(KitLibTheme.Accent);
 
             foreach (var (entry, source) in entries) {
                 if (LogCollector.IsSessionBoundary(entry)) {
@@ -528,7 +528,7 @@ internal static class LogViewerUI {
 
         foreach (var e in entries) {
             if (LogCollector.IsSessionBoundary(e)) {
-                result.Add(new FilteredLogEntry(e, "DevMode"));
+                result.Add(new FilteredLogEntry(e, "KitLib"));
                 continue;
             }
 
@@ -716,7 +716,7 @@ internal static class LogViewerUI {
         if (modStats.Count == 0) {
             var empty = new Label { Text = I18N.T("log.stats.empty", "无可见日志") };
             empty.AddThemeFontSizeOverride("font_size", 11);
-            empty.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            empty.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             statsVBox.AddChild(empty);
             return;
         }
@@ -818,7 +818,7 @@ internal static class LogViewerUI {
 
         var title = new Label { Text = I18N.T("log.title", "Log Viewer") };
         title.AddThemeFontSizeOverride("font_size", 13);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         title.AddThemeConstantOverride("margin_left", 4);
         row.AddChild(title);
 
@@ -828,10 +828,10 @@ internal static class LogViewerUI {
             Text = I18N.T("log.openFolder", "Open Folder"),
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(64, 26),
-            Icon = MdiIcon.FolderOpen.Texture(14, DevModeTheme.Subtle),
+            Icon = MdiIcon.FolderOpen.Texture(14, KitLibTheme.Subtle),
             TooltipText = InstanceLogWriter.IsActive
                 ? I18N.T("log.openFolderTipInstance",
-                    "Open this window's log folder (mod_data/DevMode/instances/{0}/)", DevModeInstance.ProcessId)
+                    "Open this window's log folder (mod_data/KitLib/instances/{0}/)", KitLibInstance.ProcessId)
                 : I18N.T("log.openFolderTip", "Open the game log folder (user://logs/) in the system file manager"),
         };
         ApplySmallFlatButton(openFolderBtn);
@@ -842,7 +842,7 @@ internal static class LogViewerUI {
             Text = I18N.T("log.clear", "Clear"),
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(64, 26),
-            Icon = MdiIcon.Delete.Texture(14, DevModeTheme.Subtle)
+            Icon = MdiIcon.Delete.Texture(14, KitLibTheme.Subtle)
         };
         ApplySmallFlatButton(_clearBtn);
         row.AddChild(_clearBtn);
@@ -850,7 +850,7 @@ internal static class LogViewerUI {
         var closeBtn = new Button {
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(28, 28),
-            Icon = MdiIcon.Close.Texture(16, DevModeTheme.Subtle)
+            Icon = MdiIcon.Close.Texture(16, KitLibTheme.Subtle)
         };
         ApplySmallFlatButton(closeBtn);
         closeBtn.Pressed += onClose;
@@ -858,28 +858,28 @@ internal static class LogViewerUI {
 
         vbox.AddChild(row);
 
-        var instanceRow = new Label { Text = DevModeInstance.LogViewerSubtitle };
+        var instanceRow = new Label { Text = KitLibInstance.LogViewerSubtitle };
         instanceRow.AddThemeFontSizeOverride("font_size", 10);
-        instanceRow.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        instanceRow.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         instanceRow.AddThemeConstantOverride("margin_left", 4);
         vbox.AddChild(instanceRow);
 
-        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
+        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
             var dualHint = new Label {
                 Text = I18N.T("log.instance.dualHint",
-                    "Dual-instance mode: this window writes to mod_data/DevMode/instances/{0}/session.log; Godot still shares user://logs/.",
-                    DevModeInstance.ProcessId),
+                    "Dual-instance mode: this window writes to mod_data/KitLib/instances/{0}/session.log; Godot still shares user://logs/.",
+                    KitLibInstance.ProcessId),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };
             dualHint.AddThemeFontSizeOverride("font_size", 10);
-            dualHint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            dualHint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             dualHint.AddThemeConstantOverride("margin_left", 4);
             vbox.AddChild(dualHint);
         }
 
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.ButtonBgNormal,
+            Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
     }
@@ -903,7 +903,7 @@ internal static class LogViewerUI {
             CornerRadiusBottomRight = 4
         };
         var hover = new StyleBoxFlat {
-            BgColor = DevModeTheme.ButtonBgNormal,
+            BgColor = KitLibTheme.ButtonBgNormal,
             ContentMarginLeft = 6,
             ContentMarginRight = 6,
             ContentMarginTop = 3,
@@ -917,8 +917,8 @@ internal static class LogViewerUI {
         btn.AddThemeStyleboxOverride("hover", hover);
         btn.AddThemeStyleboxOverride("pressed", hover);
         btn.AddThemeStyleboxOverride("focus", normal);
-        btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 12);
     }
 }

@@ -7,14 +7,14 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Enemy browser and unified encounter picker for Dev panel / combat sidebar.
 /// Shared creature-visual loading helpers used by map tooltips and picker previews.
 /// </summary>
 internal static partial class EnemySelectUI {
-    private const string RootName = "DevModeEnemySelect";
+    private const string RootName = "KitLibEnemySelect";
 
     // Cache of monsters whose visuals failed to load — avoid retrying
     private static readonly HashSet<string> _failedVisuals = new();
@@ -87,7 +87,7 @@ internal static partial class EnemySelectUI {
                 VerticalAlignment = VerticalAlignment.Center,
                 MouseFilter = Control.MouseFilterEnum.Ignore
             };
-            fallback.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            fallback.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             fallback.Position = new Vector2(totalWidth / 2 - 40, viewport.Size.Y / 2 - 10);
             viewport.AddChild(fallback);
         }

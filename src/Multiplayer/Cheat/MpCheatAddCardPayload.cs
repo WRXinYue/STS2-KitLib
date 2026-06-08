@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Serializable add-card parameters broadcast to all peers.</summary>
 public sealed class MpCheatAddCardPayload {
@@ -8,7 +8,7 @@ public sealed class MpCheatAddCardPayload {
     public int Duration { get; set; }
     public int UpgradeLevels { get; set; }
     public int? CustomBaseCost { get; set; }
-    /// <summary>Partial <see cref="DevMode.Presets.CardEditTemplate"/> JSON applied after create on all peers.</summary>
+    /// <summary>Partial <see cref="KitLib.Presets.CardEditTemplate"/> JSON applied after create on all peers.</summary>
     public string TemplateJson { get; set; } = "";
     public bool UseUpgradePreviewStyle { get; set; }
 }

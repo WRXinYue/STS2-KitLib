@@ -1,18 +1,18 @@
 using System.Text.Json.Nodes;
-using DevMode.AI;
-using DevMode.AI.AutoPlay;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Sts2;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.AI;
+using KitLib.AI.AutoPlay;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>In-game AI hosting HUD — sim-derived telemetry at top-left.</summary>
 internal static partial class AiHudOverlayUI {
-    internal const string RootName = "DevModeAiHudOverlay";
+    internal const string RootName = "KitLibAiHudOverlay";
 
     static AiHudOverlayHost? _overlay;
     static NGlobalUi? _globalUi;
@@ -21,7 +21,7 @@ internal static partial class AiHudOverlayUI {
         SettingsStore.Current.AiHudEnabled;
 
     internal static bool ShouldShow() {
-        if (!DevModeState.IsActive)
+        if (!KitLibState.IsActive)
             return false;
         if (!IsEnabled())
             return false;
@@ -151,10 +151,10 @@ internal static partial class AiHudOverlayUI {
             _stack.AddThemeConstantOverride("separation", 2);
 
             _titleLabel = MakeLabel(TitleFontSize, TitleColor);
-            _phaseLabel = MakeLabel(12, DevModeTheme.TextSecondary);
-            _telemetryLabel = MakeLabel(12, DevModeTheme.TextPrimary);
-            _nextLabel = MakeLabel(12, DevModeTheme.TextPrimary);
-            _auxLabel = MakeLabel(11, DevModeTheme.TextSecondary);
+            _phaseLabel = MakeLabel(12, KitLibTheme.TextSecondary);
+            _telemetryLabel = MakeLabel(12, KitLibTheme.TextPrimary);
+            _nextLabel = MakeLabel(12, KitLibTheme.TextPrimary);
+            _auxLabel = MakeLabel(11, KitLibTheme.TextSecondary);
 
             _stack.AddChild(_titleLabel);
             _stack.AddChild(_phaseLabel);
@@ -237,10 +237,10 @@ internal static partial class AiHudOverlayUI {
         void ApplyTheme() {
             _titleLabel.AddThemeColorOverride("font_color", TitleColor);
             _titleLabel.AddThemeFontSizeOverride("font_size", TitleFontSize);
-            _phaseLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
-            _telemetryLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-            _nextLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-            _auxLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            _phaseLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+            _telemetryLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+            _nextLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+            _auxLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         }
 
         static Label MakeLabel(int size, Color color) {

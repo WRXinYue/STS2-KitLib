@@ -6,12 +6,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
-using DevMode.Mcp.Tools;
+using KitLib.Mcp.Tools;
 
-namespace DevMode.Mcp;
+namespace KitLib.Mcp;
 
 /// <summary>
-/// In-game HTTP JSON-RPC bridge for MCP tools. External <c>tools/DevMode.Mcp</c> proxies stdio MCP here.
+/// In-game HTTP JSON-RPC bridge for MCP tools. External <c>tools/KitLib.Mcp</c> proxies stdio MCP here.
 /// </summary>
 internal static class McpBridge {
     private static HttpListener? _listener;
@@ -92,7 +92,7 @@ internal static class McpBridge {
 
             switch (path) {
                 case "/health":
-                    body = """{"status":"ok","mod":"DevMode"}""";
+                    body = """{"status":"ok","mod":"KitLib"}""";
                     break;
 
                 case "/messages" when req.HttpMethod == "POST":

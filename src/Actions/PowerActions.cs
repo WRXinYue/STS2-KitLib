@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class PowerActions {
     public static IEnumerable<PowerModel> GetAllPowers() => ModelDb.AllPowers;
@@ -126,7 +126,7 @@ internal static class PowerActions {
         }
 
         if (!CombatManager.Instance.IsInProgress) {
-            MainFile.Logger.Warn("[DevMode] AddPower: no active combat — powers require an in-progress combat session.");
+            MainFile.Logger.Warn("[KitLib] AddPower: no active combat — powers require an in-progress combat session.");
             return;
         }
 
@@ -167,7 +167,7 @@ internal static class PowerActions {
 #endif
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode] ApplyPower failed ({((AbstractModel)power).Id.Entry}): {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib] ApplyPower failed ({((AbstractModel)power).Id.Entry}): {ex.Message}");
         }
     }
 

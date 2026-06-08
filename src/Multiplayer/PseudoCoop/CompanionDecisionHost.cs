@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.AI;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.Companion;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.AI;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.Companion;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Runs <see cref="GameLoop"/> for host-driven companions during non-combat phases.</summary>
 internal static class CompanionDecisionHost {

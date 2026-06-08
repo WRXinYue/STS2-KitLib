@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Icons;
+using KitLib.Icons;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.Panels;
+namespace KitLib.Panels;
 
 /// <summary>Central registry for DevMode rail tabs.</summary>
 internal static class DevPanelRegistry {

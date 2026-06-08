@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CardBrowserUI {
     // ── Nav tab colors ──
 
-    private static Color ColNavActive => DevModeTheme.Accent;
-    private static Color ColNavInactive => DevModeTheme.Subtle;
-    private static Color ColNavHover => DevModeTheme.TextPrimary;
-    private static Color ColNavAccent => DevModeTheme.AccentAlpha;
+    private static Color ColNavActive => KitLibTheme.Accent;
+    private static Color ColNavInactive => KitLibTheme.Subtle;
+    private static Color ColNavHover => KitLibTheme.TextPrimary;
+    private static Color ColNavAccent => KitLibTheme.AccentAlpha;
 
     private static Button CreateNavTab(string text, bool active) {
         var btn = new Button {
@@ -43,9 +43,9 @@ internal static partial class CardBrowserUI {
 
     // ── Sort toggle button ──
 
-    private static Color ColSortBg => DevModeTheme.ButtonBgNormal;
-    private static Color ColSortHover => DevModeTheme.ButtonBgHover;
-    private static Color ColSortPressed => DevModeTheme.AccentAlpha;
+    private static Color ColSortBg => KitLibTheme.ButtonBgNormal;
+    private static Color ColSortHover => KitLibTheme.ButtonBgHover;
+    private static Color ColSortPressed => KitLibTheme.AccentAlpha;
 
     private static Button CreateSortToggleButton(string text) {
         var btn = new Button {
@@ -82,8 +82,8 @@ internal static partial class CardBrowserUI {
 
     // ── Filter chip (toggle button) ──
 
-    private static Color ColChipOff => DevModeTheme.ButtonBgNormal;
-    private static Color ColChipHover => DevModeTheme.ButtonBgHover;
+    private static Color ColChipOff => KitLibTheme.ButtonBgNormal;
+    private static Color ColChipHover => KitLibTheme.ButtonBgHover;
     private static readonly Color ColChipOn = new(0.25f, 0.40f, 0.65f, 0.90f);
     private static readonly Color ColChipOnHover = new(0.30f, 0.48f, 0.75f, 0.95f);
     private static readonly Color ColChipExclude = new(0.65f, 0.22f, 0.22f, 0.92f);
@@ -120,9 +120,9 @@ internal static partial class CardBrowserUI {
 
         ApplyFilterChipVisual(btn, buttonPressed ? FilterChipMode.Include : FilterChipMode.Off);
 
-        btn.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 11);
 
         return btn;
@@ -213,8 +213,8 @@ internal static partial class CardBrowserUI {
 
     // ── Panel colors ──
 
-    private static Color ColPanelBg => DevModeTheme.PanelBg;
-    private static Color ColPanelBorder => DevModeTheme.PanelBorder;
+    private static Color ColPanelBg => KitLibTheme.PanelBg;
+    private static Color ColPanelBorder => KitLibTheme.PanelBorder;
 
     private static PanelContainer CreateBrowserPanel() {
         var panel = new PanelContainer {

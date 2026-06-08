@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Random;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class PotionRandomPools {
     sealed record PoolCard(string Id, string Name, int Cost, int Damage, int Block, string CardType);

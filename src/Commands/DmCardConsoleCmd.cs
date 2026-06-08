@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -9,12 +9,12 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmCardConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmcard";
     public override string Args => "<add|list> [cardId] [deck|hand|draw|discard|exhaust] [perm|temp]";
-    public override string Description => "[DevMode] Add cards or list all card IDs";
+    public override string Description => "[KitLib] Add cards or list all card IDs";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
@@ -49,7 +49,7 @@ public class DmCardConsoleCmd : AbstractConsoleCmd {
 
                     // Parse target
                     if (args.Length >= 3) {
-                        DevModeState.CardTarget = args[2].ToLowerInvariant() switch {
+                        KitLibState.CardTarget = args[2].ToLowerInvariant() switch {
                             "hand" => CardTarget.Hand,
                             "draw" => CardTarget.DrawPile,
                             "discard" => CardTarget.DiscardPile,
@@ -60,14 +60,14 @@ public class DmCardConsoleCmd : AbstractConsoleCmd {
 
                     // Parse duration
                     if (args.Length >= 4) {
-                        DevModeState.EffectDuration = args[3].ToLowerInvariant() switch {
+                        KitLibState.EffectDuration = args[3].ToLowerInvariant() switch {
                             "temp" or "temporary" => EffectDuration.Temporary,
                             _ => EffectDuration.Permanent
                         };
                     }
 
                     TaskHelper.RunSafely(CardActions.Add(state, player, card).RunAsync());
-                    return new CmdResult(true, $"Added '{cardId}' to {DevModeState.CardTarget} ({DevModeState.EffectDuration})");
+                    return new CmdResult(true, $"Added '{cardId}' to {KitLibState.CardTarget} ({KitLibState.EffectDuration})");
                 }
             default:
                 return new CmdResult(false, $"Unknown subcommand: '{sub}'. Use: add, list");

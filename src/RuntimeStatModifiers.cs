@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Frame-level runtime stat modifiers. Called from _Process each frame.

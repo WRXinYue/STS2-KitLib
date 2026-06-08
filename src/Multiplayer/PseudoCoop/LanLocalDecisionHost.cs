@@ -1,16 +1,16 @@
 using System;
 using System.Threading.Tasks;
-using DevMode.AI;
-using DevMode.AI.AutoPlay;
-using DevMode.AI.Core;
-using DevMode.AI.Core.Schema;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.AI;
+using KitLib.AI.AutoPlay;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>
 /// LAN dev: automates the local player's non-combat phases on this instance only.

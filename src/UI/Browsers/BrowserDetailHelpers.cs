@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Icons;
-using DevMode.Modding;
+using KitLib.Icons;
+using KitLib.Modding;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class BrowserDetailHelpers {
     private static readonly MdiIcon ModSourceChipIcon = MdiIcon.From("zip-box");
@@ -16,7 +16,7 @@ internal static class BrowserDetailHelpers {
             TooltipText = src.ModId ?? src.Key
         };
         label.AddThemeFontSizeOverride("font_size", 11);
-        label.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        label.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         return label;
     }
 
@@ -36,7 +36,7 @@ internal static class BrowserDetailHelpers {
             VerticalAlignment = VerticalAlignment.Center
         };
         heading.AddThemeFontSizeOverride("font_size", 11);
-        heading.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        heading.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         heading.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         row.AddChild(heading);
 

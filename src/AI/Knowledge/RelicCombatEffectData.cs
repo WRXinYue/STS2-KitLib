@@ -5,11 +5,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Loads combat relic profiles extracted from official RelicModel handlers.</summary>
 internal static class RelicCombatEffectData {
-    const string ResourceName = "DevMode.AI.relic-combat-effects.json";
+    const string ResourceName = "KitLib.AI.relic-combat-effects.json";
 
     static JsonObject? _root;
     static readonly object Gate = new();

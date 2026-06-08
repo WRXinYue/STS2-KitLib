@@ -1,9 +1,9 @@
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevDumpMonsterMechanicsTool : IMcpTool {
     public string Name => "dev_dump_monster_mechanics";

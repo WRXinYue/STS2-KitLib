@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode;
-using DevMode.Combat;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Combat;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Save/load slot picker content — one layout for embedded and fullscreen (latter wraps in <see cref="SaveSlotFullscreenShell"/>).</summary>
 internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
@@ -161,7 +161,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         title.AddThemeFontSizeOverride("font_size", 20);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         headerRow.AddChild(title);
         outerVbox.AddChild(headerRow);
 
@@ -279,7 +279,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             ClipText = true,
         };
         nameLabel.AddThemeFontSizeOverride("font_size", 14);
-        nameLabel.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        nameLabel.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         topRow.AddChild(nameLabel);
 
         if (!empty) {
@@ -288,14 +288,14 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
             timeLabel.AddThemeFontSizeOverride("font_size", 11);
-            timeLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            timeLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             topRow.AddChild(timeLabel);
         }
         vbox.AddChild(topRow);
 
         var hintLabel = new Label { Text = FormatQuickHint() };
         hintLabel.AddThemeFontSizeOverride("font_size", 11);
-        hintLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        hintLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         vbox.AddChild(hintLabel);
 
         if (empty) {
@@ -304,7 +304,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
             emptyLabel.AddThemeFontSizeOverride("font_size", 12);
-            emptyLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            emptyLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             vbox.AddChild(emptyLabel);
         }
         else {
@@ -315,7 +315,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 Text = I18N.T("snapshot.floorShort", "F{0}", meta!.TotalFloor),
             };
             floorLabel.AddThemeFontSizeOverride("font_size", 12);
-            floorLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            floorLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             statsRow.AddChild(floorLabel);
 
             var hpLabel = new Label {
@@ -331,7 +331,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
             goldLabel.AddThemeFontSizeOverride("font_size", 12);
-            goldLabel.AddThemeColorOverride("font_color", DevModeTheme.RarityRare);
+            goldLabel.AddThemeColorOverride("font_color", KitLibTheme.RarityRare);
             statsRow.AddChild(goldLabel);
             vbox.AddChild(statsRow);
 
@@ -356,12 +356,12 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             Text = I18N.T("snapshot.combatSessionTitle", "This combat"),
         };
         title.AddThemeFontSizeOverride("font_size", 13);
-        title.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        title.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         section.AddChild(title);
 
         var hint = new Label { Text = FormatCombatSessionHint() };
         hint.AddThemeFontSizeOverride("font_size", 11);
-        hint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        hint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         section.AddChild(hint);
 
         var nodes = CombatCheckpointStore.GetNodes()
@@ -373,7 +373,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 Text = I18N.T("snapshot.combatSessionEmpty", "(none yet)"),
             };
             empty.AddThemeFontSizeOverride("font_size", 12);
-            empty.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            empty.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             section.AddChild(empty);
             return section;
         }
@@ -419,7 +419,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             ClipText = true,
         };
         label.AddThemeFontSizeOverride("font_size", 12);
-        label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         inner.AddChild(label);
 
         var time = new Label {
@@ -427,7 +427,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             HorizontalAlignment = HorizontalAlignment.Right,
         };
         time.AddThemeFontSizeOverride("font_size", 11);
-        time.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        time.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         inner.AddChild(time);
 
         row.AddChild(inner);
@@ -498,7 +498,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
             emptyLabel.AddThemeFontSizeOverride("font_size", 13);
-            emptyLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            emptyLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             margin.AddChild(emptyLabel);
             vbox.AddChild(margin);
         }
@@ -511,7 +511,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 ClipText = true,
             };
             nameLabel.AddThemeFontSizeOverride("font_size", 14);
-            nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
             topRow.AddChild(nameLabel);
 
             var timeLabel = new Label {
@@ -519,7 +519,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
             timeLabel.AddThemeFontSizeOverride("font_size", 11);
-            timeLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            timeLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             topRow.AddChild(timeLabel);
             vbox.AddChild(topRow);
 
@@ -531,7 +531,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 Text = I18N.T("snapshot.floorShort", "F{0}", meta.TotalFloor),
             };
             floorLabel.AddThemeFontSizeOverride("font_size", 12);
-            floorLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            floorLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             statsRow.AddChild(floorLabel);
 
             var hpLabel = new Label {
@@ -547,7 +547,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
             goldLabel.AddThemeFontSizeOverride("font_size", 12);
-            goldLabel.AddThemeColorOverride("font_color", DevModeTheme.RarityRare);
+            goldLabel.AddThemeColorOverride("font_color", KitLibTheme.RarityRare);
             statsRow.AddChild(goldLabel);
             vbox.AddChild(statsRow);
 
@@ -583,12 +583,12 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         var headerRow = new HBoxContainer();
         _detailName = new Label { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClipText = true };
         _detailName.AddThemeFontSizeOverride("font_size", 20);
-        _detailName.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        _detailName.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         headerRow.AddChild(_detailName);
 
         _detailTime = new Label { HorizontalAlignment = HorizontalAlignment.Right };
         _detailTime.AddThemeFontSizeOverride("font_size", 13);
-        _detailTime.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        _detailTime.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         headerRow.AddChild(_detailTime);
         _detailContainer.AddChild(headerRow);
 
@@ -601,9 +601,9 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         _detailFloor = MakeBadgeLabel();
         _detailHp = MakeBadgeLabel();
         _detailGold = MakeBadgeLabel();
-        badgeRow.AddChild(MakeBadge(_detailFloor, BadgeTint(DevModeTheme.Accent, 0.20f)));
-        badgeRow.AddChild(MakeBadge(_detailHp, BadgeTint(DevModeTheme.RarityCurse, 0.18f)));
-        badgeRow.AddChild(MakeBadge(_detailGold, BadgeTint(DevModeTheme.RarityRare, 0.22f)));
+        badgeRow.AddChild(MakeBadge(_detailFloor, BadgeTint(KitLibTheme.Accent, 0.20f)));
+        badgeRow.AddChild(MakeBadge(_detailHp, BadgeTint(KitLibTheme.RarityCurse, 0.18f)));
+        badgeRow.AddChild(MakeBadge(_detailGold, BadgeTint(KitLibTheme.RarityRare, 0.22f)));
         _detailContainer.AddChild(badgeRow);
 
         // Seed
@@ -622,15 +622,15 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         body.AddThemeConstantOverride("separation", 6);
 
         body.AddChild(SectionHeader(I18N.T("snapshot.cards", "Cards")));
-        _detailCards = DetailWrapLabel(12, DevModeTheme.TextPrimary);
+        _detailCards = DetailWrapLabel(12, KitLibTheme.TextPrimary);
         body.AddChild(_detailCards);
 
         body.AddChild(SectionHeader(I18N.T("snapshot.relics", "Relics")));
-        _detailRelics = DetailWrapLabel(12, DevModeTheme.TextPrimary);
+        _detailRelics = DetailWrapLabel(12, KitLibTheme.TextPrimary);
         body.AddChild(_detailRelics);
 
         body.AddChild(SectionHeader(I18N.T("snapshot.mods", "Mods")));
-        _detailMods = DetailWrapLabel(11, DevModeTheme.Subtle);
+        _detailMods = DetailWrapLabel(11, KitLibTheme.Subtle);
         body.AddChild(_detailMods);
 
         scroll.AddChild(body);
@@ -644,7 +644,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
 
         _nameLabel = new Label { Text = I18N.T("snapshot.nameLabel", "Name:") };
         _nameLabel.AddThemeFontSizeOverride("font_size", 14);
-        _nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        _nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         footerRow.AddChild(_nameLabel);
 
         _nameInput = new LineEdit {
@@ -687,7 +687,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             HorizontalAlignment = HorizontalAlignment.Center,
         };
         placeholderLabel.AddThemeFontSizeOverride("font_size", 16);
-        placeholderLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        placeholderLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         _placeholderPanel.AddChild(placeholderLabel);
         outerVbox.AddChild(_placeholderPanel);
 

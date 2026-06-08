@@ -4,13 +4,13 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using DevMode.CombatStats;
-using DevMode.Interop;
-using DevMode.Modding;
+using KitLib.CombatStats;
+using KitLib.Interop;
+using KitLib.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Logging;
 
-namespace DevMode.Feedback;
+namespace KitLib.Feedback;
 
 /// <summary>
 /// Collects filtered log, Harmony patch dump, framework bridge snapshot, and mod list,
@@ -75,7 +75,7 @@ internal static class FeedbackReportBuilder {
         var sb = new StringBuilder();
         sb.AppendLine("=== DevMode Feedback Report ===");
         sb.AppendLine($"Generated : {DateTime.Now:O}");
-        sb.AppendLine($"DevMode   : {MainFile.ModID}");
+        sb.AppendLine($"KitLib   : {MainFile.ModID}");
         sb.AppendLine($"OS        : {OS.GetName()} {OS.GetVersion()}");
         // Always redact path in header regardless of privacy mode — it's shown to user in the UI anyway
         sb.AppendLine($"User data : {(req.PrivacyMode ? "<user-data>" : userDataDir)}");
@@ -134,7 +134,7 @@ internal static class FeedbackReportBuilder {
 
     private static string BuildCombatStatsJson() {
         try {
-            if (!DevModeState.IsActive)
+            if (!KitLibState.IsActive)
                 return "{\"note\":\"Dev Mode inactive during report\"}";
             return CombatStatsExport.ToJson(CombatStatsExport.CaptureBundle());
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json.Serialization;
 
-namespace DevMode.Presets;
+namespace KitLib.Presets;
 
 public sealed class CardEditTemplate {
     [JsonPropertyName("baseCost")]

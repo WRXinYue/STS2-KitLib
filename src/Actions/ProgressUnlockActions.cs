@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Timeline;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 /// <summary>Progress-file unlocks mirroring the dev console <c>unlock all</c> command.</summary>
 internal static class ProgressUnlockActions {
@@ -47,6 +47,6 @@ internal static class ProgressUnlockActions {
             progress.GetOrCreateCharacterStats(character.Id).MaxAscension = AscensionManager.maxAscensionAllowed;
 
         save.SaveProgressFile();
-        MainFile.Logger.Info("[DevMode] Unlocked all save progress (timeline, ascension, compendium).");
+        MainFile.Logger.Info("[KitLib] Unlocked all save progress (timeline, ascension, compendium).");
     }
 }

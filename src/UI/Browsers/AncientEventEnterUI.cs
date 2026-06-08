@@ -1,9 +1,9 @@
 using System;
-using DevMode.Actions;
+using KitLib.Actions;
 using Godot;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class AncientEventEnterUI
 {

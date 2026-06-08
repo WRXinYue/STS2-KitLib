@@ -2,7 +2,7 @@ using System.ComponentModel;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Server;
 
-namespace DevMode.McpProxy;
+namespace KitLib.McpProxy;
 
 [McpServerToolType]
 internal sealed class Sts2McpTools {

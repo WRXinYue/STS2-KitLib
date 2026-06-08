@@ -4,10 +4,10 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
-    private const string ExtensionWidthKey = "DevModeEnemySelect_ext";
+    private const string ExtensionWidthKey = "KitLibEnemySelect_ext";
     private const string DualMetaKey = "dm_dual_enemy_select";
     private const string CarrierNodeName = "EnemySelectDualCarrier";
     private const float DefaultMainWidth = 800f;

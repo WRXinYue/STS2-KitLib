@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
-namespace DevMode.AI.Sts2.Helpers;
+namespace KitLib.AI.Sts2.Helpers;
 
 internal static class UIHelper
 {

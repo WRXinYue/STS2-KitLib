@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Client → host validation result for a pending add/remove-card command.</summary>
 public sealed class MpCheatAddCardAckMessage {

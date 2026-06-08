@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Random;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 /// <summary>Builds turn-1 combat states from deck snapshots for macro evaluation.</summary>
 public static class DeckCombatStateFactory {

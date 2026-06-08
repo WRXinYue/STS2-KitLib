@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Discriminator inside <see cref="ZzzMpCheatEnvelopeNetMessage" />.</summary>
 public enum MpCheatWireChannel : byte {

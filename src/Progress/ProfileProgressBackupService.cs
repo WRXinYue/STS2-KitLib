@@ -4,12 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DevMode.Modding;
+using KitLib.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal enum ModChangeTriggerReason {
     Startup,
@@ -51,7 +51,7 @@ internal static class ProfileProgressBackupService {
         int profileId,
         ModChangeTriggerReason reason,
         string fingerprintHash,
-        IReadOnlyList<DevModeModInfo> mods) {
+        IReadOnlyList<KitLibModInfo> mods) {
         try {
             var progressPath = ResolveProfileScopedPath(profileId, "saves/progress.save");
             if (!File.Exists(progressPath)) {

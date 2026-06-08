@@ -1,10 +1,10 @@
-using DevMode.UI;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Actions.CardModes;
+namespace KitLib.Actions.CardModes;
 
 internal sealed class AddModeHandler : ICardModeHandler {
     public string Id => "add";

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 internal static class HotkeyDefaults {
     internal static readonly HotkeyBinding ToggleRail =
@@ -39,7 +39,7 @@ internal static class HotkeyDefaults {
         _ => new HotkeyBinding()
     };
 
-    internal static void ApplyTo(DevModeSettings settings) {
+    internal static void ApplyTo(KitLibSettings settings) {
         settings.HotkeyToggleRail = ToggleRail.Clone();
         settings.HotkeyClosePanel = ClosePanel.Clone();
         settings.HotkeyNextTab = NextTab.Clone();

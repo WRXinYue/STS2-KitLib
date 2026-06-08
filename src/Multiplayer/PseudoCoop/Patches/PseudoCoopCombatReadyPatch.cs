@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>Simulated peers must ready end-turn and enemy-turn phases (no ENet client to enqueue actions).</summary>
 [HarmonyPatch(typeof(EndPlayerTurnAction), "ExecuteAction")]

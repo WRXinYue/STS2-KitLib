@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Navigation;
-using DevMode.Presets;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Navigation;
+using KitLib.Presets;
 using MegaCrit.Sts2.Core.CardSelection;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -19,7 +19,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 /// <summary>
 /// Parameter object for <see cref="CardActions.Add"/> / <see cref="CardActions.AddCardBuilder"/> — target pile,
@@ -39,8 +39,8 @@ internal struct AddCardRequest {
     public CardEditTemplate? StagedTemplate;
 
     public static AddCardRequest FromDevPanelState(int upgradeLevelsToApply = 0) => new() {
-        Target = DevModeState.CardTarget,
-        Duration = DevModeState.EffectDuration,
+        Target = KitLibState.CardTarget,
+        Duration = KitLibState.EffectDuration,
         UpgradeLevelsToApply = upgradeLevelsToApply,
         CustomBaseCost = null,
         StagedTemplate = null,
@@ -414,8 +414,8 @@ internal static class CardActions {
     public static async Task RemoveCards(RunState state, Player player) {
         await Task.Yield();
 
-        var target = DevModeState.CardTarget;
-        var duration = DevModeState.EffectDuration;
+        var target = KitLibState.CardTarget;
+        var duration = KitLibState.EffectDuration;
 
         var cards = CollectCardsForTarget(player, target);
         if (cards.Count == 0) {
@@ -477,7 +477,7 @@ internal static class CardActions {
     public static async Task UpgradeCards(Player player) {
         await Task.Yield();
 
-        var target = DevModeState.CardTarget;
+        var target = KitLibState.CardTarget;
         var cards = CollectCardsForTarget(player, target);
         var upgradable = cards
             .Where(c => c.IsUpgradable)

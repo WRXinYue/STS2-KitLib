@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
 
-namespace DevMode.CombatStats;
+namespace KitLib.CombatStats;
 
 /// <summary>
 /// Incrementally consumes <see cref="CombatHistory"/> entries and forwards them to

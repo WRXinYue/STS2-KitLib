@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Icons;
-using DevMode.Panels;
-using DevMode.Settings;
+using KitLib.Icons;
+using KitLib.Panels;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Drag-reorderable list of rail tabs with per-row visibility toggles.</summary>
 internal sealed partial class RailTabReorderList : VBoxContainer {
@@ -126,7 +126,7 @@ internal sealed partial class RailTabReorderList : VBoxContainer {
             MouseFilter = MouseFilterEnum.Pass;
 
             _style = new StyleBoxFlat {
-                BgColor = DevModeTheme.ButtonBgNormal,
+                BgColor = KitLibTheme.ButtonBgNormal,
                 CornerRadiusTopLeft = 8,
                 CornerRadiusTopRight = 8,
                 CornerRadiusBottomLeft = 8,
@@ -139,11 +139,11 @@ internal sealed partial class RailTabReorderList : VBoxContainer {
                 BorderWidthTop = 1,
                 BorderWidthLeft = 1,
                 BorderWidthRight = 1,
-                BorderColor = DevModeTheme.Separator
+                BorderColor = KitLibTheme.Separator
             };
             _dragStyle = (StyleBoxFlat)_style.Duplicate();
-            _dragStyle.BgColor = DevModeTheme.ButtonBgHover;
-            _dragStyle.BorderColor = DevModeTheme.Accent;
+            _dragStyle.BgColor = KitLibTheme.ButtonBgHover;
+            _dragStyle.BorderColor = KitLibTheme.Accent;
             AddThemeStyleboxOverride("panel", _style);
 
             var row = new HBoxContainer {
@@ -155,7 +155,7 @@ internal sealed partial class RailTabReorderList : VBoxContainer {
             AddChild(row);
 
             var grip = new TextureRect {
-                Texture = MdiIcon.DragVertical.Texture(18, DevModeTheme.Subtle),
+                Texture = MdiIcon.DragVertical.Texture(18, KitLibTheme.Subtle),
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                 CustomMinimumSize = new Vector2(22, 22),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
@@ -169,7 +169,7 @@ internal sealed partial class RailTabReorderList : VBoxContainer {
             row.AddChild(grip);
 
             var iconRect = new TextureRect {
-                Texture = entry.Icon.Texture(18, DevModeTheme.TextPrimary),
+                Texture = entry.Icon.Texture(18, KitLibTheme.TextPrimary),
                 CustomMinimumSize = new Vector2(22, 22),
                 SizeFlagsVertical = SizeFlags.ShrinkCenter,
                 StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
@@ -185,7 +185,7 @@ internal sealed partial class RailTabReorderList : VBoxContainer {
                 MouseFilter = MouseFilterEnum.Ignore
             };
             lbl.AddThemeFontSizeOverride("font_size", 12);
-            lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
             row.AddChild(lbl);
 
             _check = new CheckBox {

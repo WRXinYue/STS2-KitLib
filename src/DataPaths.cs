@@ -1,21 +1,22 @@
+using System;
 using System.IO;
 using Godot;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
-/// Resolves all writable user-data paths for DevMode to
-/// <c>user://steam/{userId}/mod_data/DevMode/</c>
-/// (e.g. <c>~/Library/Application Support/SlayTheSpire2/steam/{userId}/mod_data/DevMode/</c>).
-/// All paths are lazily resolved after Godot and platform services are initialized.
+/// Resolves writable user-data paths under
+/// <c>user://steam/{userId}/mod_data/KitLib/</c>.
+/// Migrates legacy <c>mod_data/DevMode/</c> on first access.
 /// </summary>
 internal static class DataPaths {
+    private const string LegacyModDataSubdir = "mod_data/DevMode";
+    private const string ModDataSubdir = "mod_data/KitLib";
+
     private static string? _baseDir;
 
-    /// <summary>
-    /// Absolute filesystem path to the DevMode user-data root directory.
-    /// </summary>
+    /// <summary>Absolute filesystem path to the KitLib user-data root.</summary>
     public static string BaseDir => _baseDir ??= ResolveBaseDir();
 
     public static string SettingsFile => Path.Combine(BaseDir, "settings.json");
@@ -26,7 +27,30 @@ internal static class DataPaths {
     public static string ProfileBackupsDir => Path.Combine(BaseDir, "profile_backups");
 
     private static string ResolveBaseDir() {
-        var godotPath = UserDataPathProvider.GetAccountScopedBasePath("mod_data/DevMode");
-        return ProjectSettings.GlobalizePath(godotPath);
+        var kitLibPath = UserDataPathProvider.GetAccountScopedBasePath(ModDataSubdir);
+        var kitLibDir = ProjectSettings.GlobalizePath(kitLibPath);
+        TryMigrateLegacyDataDir(kitLibDir);
+        return kitLibDir;
+    }
+
+    private static void TryMigrateLegacyDataDir(string kitLibDir) {
+        if (Directory.Exists(kitLibDir) && Directory.EnumerateFileSystemEntries(kitLibDir).GetEnumerator().MoveNext())
+            return;
+
+        var legacyPath = UserDataPathProvider.GetAccountScopedBasePath(LegacyModDataSubdir);
+        var legacyDir = ProjectSettings.GlobalizePath(legacyPath);
+        if (!Directory.Exists(legacyDir))
+            return;
+
+        try {
+            Directory.CreateDirectory(Path.GetDirectoryName(kitLibDir)!);
+            if (Directory.Exists(kitLibDir))
+                Directory.Delete(kitLibDir, recursive: true);
+            Directory.Move(legacyDir, kitLibDir);
+            MainFile.Logger.Info($"[KitLib] Migrated user data from {LegacyModDataSubdir} to {ModDataSubdir}.");
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"[KitLib] Legacy data migration failed: {ex.Message}");
+        }
     }
 }

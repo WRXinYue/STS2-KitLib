@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI;
-using DevMode.AI.Knowledge;
+using KitLib.AI;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public static class CombatBeamSearch {
     public static readonly BeamSearchOptions ShallowMacro = new(3, 12, 12, 18);

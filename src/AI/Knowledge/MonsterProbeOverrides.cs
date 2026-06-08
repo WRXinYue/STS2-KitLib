@@ -5,11 +5,11 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Hand-maintained corrections for monster probe edge cases.</summary>
 internal static class MonsterProbeOverrides {
-    const string ResourceName = "DevMode.AI.monster-probe-overrides.json";
+    const string ResourceName = "KitLib.AI.monster-probe-overrides.json";
 
     static JsonObject? _root;
     static readonly object Gate = new();

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using MegaCrit.Sts2.Core.Combat;
 
-namespace DevMode.Combat;
+namespace KitLib.Combat;
 
 /// <summary>Per-combat checkpoint bundle: one index plus node snapshot files.</summary>
 internal static class CombatCheckpointStore {

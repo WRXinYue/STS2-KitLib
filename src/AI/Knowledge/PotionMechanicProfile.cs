@@ -1,4 +1,4 @@
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public sealed record PotionMechanicProfile(
     string Id,

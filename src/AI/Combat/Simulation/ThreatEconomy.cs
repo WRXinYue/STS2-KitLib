@@ -1,4 +1,4 @@
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public static class ThreatEconomy {
     public static int ScaledNonDamagePressure(CombatState state) {

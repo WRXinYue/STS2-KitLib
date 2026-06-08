@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Shared potion combat-use scoring for beam QuickScore and PotionScorer fallback.</summary>
 internal static class PotionUseScoring {

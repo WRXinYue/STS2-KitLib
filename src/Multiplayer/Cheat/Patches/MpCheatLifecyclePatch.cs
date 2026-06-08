@@ -1,16 +1,16 @@
-using DevMode;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.SyncBot;
+using KitLib;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.SyncBot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat.Patches;
+namespace KitLib.Multiplayer.Cheat.Patches;
 
 [HarmonyPatch(typeof(NRun), "_Ready")]
 internal static class MpCheatNRunReadyPatch {
     static void Postfix() {
-        if (DevModeState.PseudoCoopLaunchPending || DevModeState.PseudoCoopDeferHeavyUi) return;
+        if (KitLibState.PseudoCoopLaunchPending || KitLibState.PseudoCoopDeferHeavyUi) return;
         if (!MpCheatSession.LocalOptIn) return;
         MpCheatSync.OnRunStarted();
         MpCheatSync.TryPublishInitialHostConfig("nrun_ready");
@@ -26,6 +26,6 @@ internal static class MpCheatRunLifecyclePatch {
     static void OnEnded() {
         MpCheatSync.OnRunEnded();
         MpCheatSyncBot.OnRunEnded();
-        DevModeState.OnRunEnded();
+        KitLibState.OnRunEnded();
     }
 }

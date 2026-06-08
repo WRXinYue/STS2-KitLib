@@ -2,7 +2,7 @@ using System;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 internal static class EventOptionInfer {
     static readonly (string Hint, string OptionKey)[] TitleHints = {

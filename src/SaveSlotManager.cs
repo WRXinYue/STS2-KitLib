@@ -7,15 +7,15 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DevMode.AI.AutoPlay;
-using DevMode.Modding;
+using KitLib.AI.AutoPlay;
+using KitLib.Modding;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode;
+namespace KitLib;
 
 internal static class SaveSlotManager {
     internal const int QuickSlotId = 0;
@@ -200,7 +200,7 @@ internal static class SaveSlotManager {
         var n = Math.Min(trace.FrameCount, maxFrames);
 
         string? culpritSummary = null;
-        var manifestModsOnStack = new HashSet<DevModeModInfo>();
+        var manifestModsOnStack = new HashSet<KitLibModInfo>();
 
         var sb = new StringBuilder();
         sb.Append("SaveSlotManager: Stack (assembly → type.method):");
@@ -308,7 +308,7 @@ internal static class SaveSlotManager {
 
             try {
                 // InDevRun = true already implies CheatsInRun and IsActive; no need to change NormalRunMode.
-                DevModeState.InDevRun = true;
+                KitLibState.InDevRun = true;
 
                 var state = RunState.FromSerializable(save);
                 RunManager.Instance.SetUpSavedSinglePlayer(state, save);
@@ -324,7 +324,7 @@ internal static class SaveSlotManager {
             }
             catch (Exception ex) {
                 LogLoadFailure(ex);
-                DevModeState.OnRunEnded();
+                KitLibState.OnRunEnded();
                 throw;
             }
         }

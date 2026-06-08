@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>On-play cost waivers: Unrelenting / Pounce / Synthesis cycle.</summary>
 internal static class CardPlayCostEffect {

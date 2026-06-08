@@ -1,9 +1,9 @@
 using System;
 using System.Diagnostics;
-using DevMode.Settings;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Browser panel width: persistence and resize grip wiring.</summary>
 internal static partial class DevPanelUI {

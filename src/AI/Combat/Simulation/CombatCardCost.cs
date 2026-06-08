@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class CombatCardCost {
     public static int EffectiveCost(CombatHandCard card, CombatState state) =>

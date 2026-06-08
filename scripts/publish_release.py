@@ -28,8 +28,8 @@ def _resolve_sts2_beta_version(cli_value: str) -> str:
 
 def _zip_name(version: str, *, beta: bool, sts2_beta_version: str) -> str:
     if beta:
-        return f"DevMode-v{version}-sts2beta-v{sts2_beta_version}.zip"
-    return f"DevMode-v{version}.zip"
+        return f"KitLib-v{version}-sts2beta-v{sts2_beta_version}.zip"
+    return f"KitLib-v{version}.zip"
 
 
 def _release_tag(version: str, *, beta: bool, sts2_beta_version: str) -> str:
@@ -75,7 +75,7 @@ def main() -> int:
     ap.add_argument(
         "--version",
         default="",
-        help="Semver, e.g. 0.2.0 (default: DevMode.json)",
+        help="Semver, e.g. 0.2.0 (default: KitLib.json)",
     )
     ap.add_argument(
         "--beta",
@@ -91,10 +91,10 @@ def main() -> int:
 
     version = args.version.strip()
     if not version:
-        raw = (_REPO_ROOT / "DevMode.json").read_text(encoding="utf-8")
+        raw = (_REPO_ROOT / "KitLib.json").read_text(encoding="utf-8")
         manifest = json.loads(raw)
         version = str(manifest["version"])
-        print(f"Version auto-detected from DevMode.json: {version}")
+        print(f"Version auto-detected from KitLib.json: {version}")
 
     sts2_beta_version = _resolve_sts2_beta_version(args.sts2_beta_version)
     if args.beta:

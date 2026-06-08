@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Client → host config publish requests (Tier 1b).</summary>
 internal static class MpCheatConfigCoordinator {
@@ -15,7 +15,7 @@ internal static class MpCheatConfigCoordinator {
 
     public static async Task<string> TryClientPublishConfigAsync() {
         if (MpCheatSession.IsHost) {
-            MpCheatSync.HostPublishFromDevModeState("ui");
+            MpCheatSync.HostPublishFromKitLibState("ui");
             return I18N.T("mpcheat.config.hostPublished", "Cheat config published.");
         }
 

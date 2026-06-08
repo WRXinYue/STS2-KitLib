@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Mirrors this process's <see cref="Log.LogCallback"/> stream to
-/// <c>mod_data/DevMode/instances/{pid}/session.log</c> so dual-instance runs
+/// <c>mod_data/KitLib/instances/{pid}/session.log</c> so dual-instance runs
 /// do not share a single on-disk log file with Godot's rotated <c>godot.log</c>.
 /// Callback enqueues only; <see cref="TryFlush"/> drains on a timer or at shutdown.
 /// </summary>
@@ -25,12 +25,12 @@ internal static class InstanceLogWriter {
     public static bool IsActive => _writer != null;
 
     public static string DisplayName
-        => IsActive ? $"instances/{DevModeInstance.ProcessId}/session.log" : "";
+        => IsActive ? $"instances/{KitLibInstance.ProcessId}/session.log" : "";
 
     public static void Initialize() {
         try {
             InstanceDirectory = Path.Combine(
-                DataPaths.BaseDir, "instances", DevModeInstance.ProcessId.ToString());
+                DataPaths.BaseDir, "instances", KitLibInstance.ProcessId.ToString());
             Directory.CreateDirectory(InstanceDirectory);
             SessionLogPath = Path.Combine(InstanceDirectory, "session.log");
 
@@ -41,7 +41,7 @@ internal static class InstanceLogWriter {
             };
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode] Instance log writer failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib] Instance log writer failed: {ex.Message}");
             _writer = null;
         }
     }
@@ -69,7 +69,7 @@ internal static class InstanceLogWriter {
                 _writer.Flush();
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode] Instance log write failed: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib] Instance log write failed: {ex.Message}");
             }
         }
     }

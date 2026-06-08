@@ -1,17 +1,17 @@
-using DevMode;
+using KitLib;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
-    private const string SettingsRootName = "DevModeSettings";
-    private const string AiRootName = "DevModeAi";
-    private const string CheatsRootName = "DevModeCheats";
-    private const string SaveLoadRootName = "DevModeSaveLoad";
+    private const string SettingsRootName = "KitLibSettings";
+    private const string AiRootName = "KitLibAi";
+    private const string CheatsRootName = "KitLibCheats";
+    private const string SaveLoadRootName = "KitLibSaveLoad";
     private const string SaveLoadMenuHostName = "SaveLoadMenuHost";
-    private const string SaveLoadExtensionWidthKey = "DevModeSaveLoad_ext";
-    private const string RestartSeedRootName = "DevModeRestartSeed";
+    private const string SaveLoadExtensionWidthKey = "KitLibSaveLoad_ext";
+    private const string RestartSeedRootName = "KitLibRestartSeed";
 
     private static (Control root, PanelContainer panel, VBoxContainer vbox) CreateOverlayRoot(
         NGlobalUi globalUi, string rootName, float panelWidth = 0f, int contentSeparation = 10) {
@@ -37,14 +37,14 @@ internal static partial class DevPanelUI {
         };
         foreach (var s in new[] { "normal", "hover", "pressed", "focus" })
             tab.AddThemeStyleboxOverride(s, flat);
-        tab.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        tab.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         tab.AddThemeFontSizeOverride("font_size", 13);
         row.AddChild(tab);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         vbox.AddChild(row);
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
     }

@@ -10,7 +10,7 @@ using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Timeline;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>
 /// Multiplayer compatibility patches.
@@ -18,9 +18,9 @@ namespace DevMode.Patches;
 /// so the mod doesn't break multiplayer handshakes.
 /// </summary>
 internal static class MultiplayerCompatRules {
-    public const string MpCheatCapabilitySignature = "DevMode:MpCheat";
+    public const string MpCheatCapabilitySignature = "KitLib:MpCheat";
 
-    private static readonly string[] IgnoredPrefixes = ["DevMode"];
+    private static readonly string[] IgnoredPrefixes = ["KitLib", "DevMode"];
     private static bool? _hasCustomModelTypes;
     private static bool _loggedModelTypeCheck;
     private static bool _loggedHashNormalization;
@@ -64,9 +64,9 @@ internal static class MultiplayerCompatRules {
         if (!_loggedModelTypeCheck) {
             _loggedModelTypeCheck = true;
             if (hasCustom)
-                MainFile.Logger.Warn("DevMode assembly contains custom model types. ModelDb hash bypass disabled.");
+                MainFile.Logger.Warn("KitLib assembly contains custom model types. ModelDb hash bypass disabled.");
             else
-                MainFile.Logger.Info("DevMode assembly has no custom model types. ModelDb hash bypass enabled.");
+                MainFile.Logger.Info("KitLib assembly has no custom model types. ModelDb hash bypass enabled.");
         }
         return !hasCustom;
     }

@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.ValueProps;
 
-namespace DevMode.CombatStats;
+namespace KitLib.CombatStats;
 
 /// <summary>
 /// Estimates extra damage from Vulnerable (on target) and prevented damage from Weak (on attacker)

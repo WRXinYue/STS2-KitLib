@@ -1,12 +1,12 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Planning;
-using DevMode.AI.Sts2;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Planning;
+using KitLib.AI.Sts2;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 public static class MapScorer {
     public static GameAction PickBest(JsonObject snapshot) {

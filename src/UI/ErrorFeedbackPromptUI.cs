@@ -1,14 +1,14 @@
 using System;
-using DevMode.Feedback;
-using DevMode.Settings;
+using KitLib.Feedback;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ErrorFeedbackPromptUI {
-    private const string PromptName = "DevModeErrorFeedbackPrompt";
+    private const string PromptName = "KitLibErrorFeedbackPrompt";
 
     private static bool ShownForSession { get; set; }
 
@@ -160,11 +160,11 @@ internal static class ErrorFeedbackPromptUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(title);
 
         vbox.AddChild(new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
@@ -174,7 +174,7 @@ internal static class ErrorFeedbackPromptUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         body.AddThemeFontSizeOverride("font_size", 12);
-        body.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        body.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(body);
 
         var btnRow = new HBoxContainer();

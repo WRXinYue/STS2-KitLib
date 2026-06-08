@@ -1,8 +1,8 @@
 using System.Linq;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Opportunity cost of potions consumed on a beam line (retain value + situational waste).</summary>
 internal static class PotionLineCost {

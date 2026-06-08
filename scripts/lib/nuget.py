@@ -39,7 +39,7 @@ def run_pack(
     beta: bool,
     configuration: str = "Release",
 ) -> Path:
-    dist_dll = repo_root / "build" / "dist" / "DevMode" / "DevMode.dll"
+    dist_dll = repo_root / "build" / "dist" / "KitLib" / "KitLib.dll"
     if not dist_dll.is_file():
         raise RuntimeError(
             f"Mod dist not found: {dist_dll}\nRun make zip (or make zip-beta) first."
@@ -51,13 +51,13 @@ def run_pack(
     cmd = [
         "dotnet",
         "pack",
-        str(repo_root / "DevMode.csproj"),
+        str(repo_root / "KitLib.csproj"),
         "-c",
         configuration,
         "--no-build",
         "-o",
         str(out_dir),
-        "-p:PackDevMode=true",
+        "-p:PackKitLib=true",
         f"-p:PackageVersion={package_version}",
     ]
     if beta:

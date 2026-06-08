@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Godot;
 
-namespace DevMode.Mcp;
+namespace KitLib.Mcp;
 
 /// <summary>
 /// Runs MCP tool handlers on the Godot main thread. HTTP listener threads must not call game APIs directly.

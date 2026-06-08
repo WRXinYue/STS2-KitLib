@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace DevMode.McpProxy;
+namespace KitLib.McpProxy;
 
 /// <summary>
 /// Forwards MCP tool calls to the in-game DevMode HTTP bridge.
@@ -41,7 +41,7 @@ internal sealed class GameBridgeClient : IDisposable {
         }
         catch (Exception ex) {
             throw new InvalidOperationException(
-                $"DevMode MCP bridge unreachable on port {_port}. Is the game running with DevMode loaded? {ex.Message}",
+                $"KitLib MCP bridge unreachable on port {_port}. Is the game running with DevMode loaded? {ex.Message}",
                 ex);
         }
     }

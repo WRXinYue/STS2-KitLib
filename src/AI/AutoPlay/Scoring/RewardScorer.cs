@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 public static class RewardScorer {
     public static GameAction PickBest(JsonObject snapshot) {

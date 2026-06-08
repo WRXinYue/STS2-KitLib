@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.CombatStats;
+namespace KitLib.CombatStats;
 
 /// <summary>Maps stored model id keys (e.g. VULNERABLE_POWER) to localized display names.</summary>
 internal static class CombatStatsDisplayNames {

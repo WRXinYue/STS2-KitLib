@@ -1,13 +1,13 @@
 using System;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
-using DevMode.AI.Sts2;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
+using KitLib.AI.Sts2;
 using MegaCrit.Sts2.Core.Map;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 public static class RestScorer {
     public static GameAction PickBest(JsonObject snapshot) {

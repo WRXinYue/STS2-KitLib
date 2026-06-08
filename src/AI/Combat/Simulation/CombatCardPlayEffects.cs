@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DevMode.AI.Combat;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Combat;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class CombatCardPlayEffects {
     public static void ApplyIteration(

@@ -1,12 +1,12 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using DevMode.UI;
+using KitLib.UI;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevStartTestRunTool : IMcpTool {
     public string Name => "dev_start_test_run";
@@ -37,13 +37,13 @@ internal sealed class DevStartTestRunTool : IMcpTool {
         if (args.TryGetPropertyValue("seed", out var seedNode)
             && seedNode?.GetValueKind() == System.Text.Json.JsonValueKind.String) {
             var seed = seedNode.GetValue<string>()?.Trim();
-            DevModeState.PendingRestartSeed = string.IsNullOrEmpty(seed) ? null : seed;
+            KitLibState.PendingRestartSeed = string.IsNullOrEmpty(seed) ? null : seed;
         }
         else {
-            DevModeState.PendingRestartSeed = null;
+            KitLibState.PendingRestartSeed = null;
         }
 
-        DevModeState.InDevRun = true;
+        KitLibState.InDevRun = true;
 
         if (DevMainMenuUI.IsVisible)
             DevMainMenuUI.Hide();

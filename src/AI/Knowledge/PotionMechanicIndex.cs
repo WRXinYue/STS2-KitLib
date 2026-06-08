@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Entities.Potions;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Indexes official potion mechanics from <see cref="ModelDb.AllPotions"/> at startup.</summary>
 public static class PotionMechanicIndex {

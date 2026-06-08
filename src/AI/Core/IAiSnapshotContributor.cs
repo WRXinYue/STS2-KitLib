@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>Mod-provided enrichment for AI snapshots under <c>snapshot["extensions"]</c>.</summary>
 public interface IAiSnapshotContributor {

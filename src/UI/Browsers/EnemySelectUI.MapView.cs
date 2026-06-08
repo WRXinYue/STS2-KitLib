@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode;
-using DevMode.Actions;
+using KitLib;
+using KitLib.Actions;
 using Godot;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
@@ -10,7 +10,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
     private enum MapPickTarget {
@@ -46,7 +46,7 @@ internal static partial class EnemySelectUI {
         _activeMapSession = null;
 
         var runState = RunManager.Instance?.DebugOnlyGetState();
-        if (runState?.Map == null || !DevModeState.InDevRun) {
+        if (runState?.Map == null || !KitLibState.InDevRun) {
             state.ContentHost.AddChild(new Label {
                 Text = I18N.T("enemy.mapUnavailable", "Start a dev run to edit encounters on the map."),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
@@ -115,8 +115,8 @@ internal static partial class EnemySelectUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         detailPanel.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
-            BgColor = new Color(DevModeTheme.PanelBg.R, DevModeTheme.PanelBg.G, DevModeTheme.PanelBg.B, 0.85f),
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.85f),
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
             BorderWidthTop = 1,
@@ -172,10 +172,10 @@ internal static partial class EnemySelectUI {
         AddRunRuleRow(
             session,
             I18N.T("enemy.runRuleAll", "All combats"),
-            FormatRunRuleValue(DevModeState.EnemyMode == EnemyMode.Global
-                ? DevModeState.GlobalEncounterOverride
+            FormatRunRuleValue(KitLibState.EnemyMode == EnemyMode.Global
+                ? KitLibState.GlobalEncounterOverride
                 : null),
-            DevModeState.EnemyMode == EnemyMode.Global && DevModeState.GlobalEncounterOverride != null,
+            KitLibState.EnemyMode == EnemyMode.Global && KitLibState.GlobalEncounterOverride != null,
             () => {
                 session.Browser.EncounterFilter = null;
                 OpenMapPicker(session, MapPickTarget.Global, null, null);
@@ -187,8 +187,8 @@ internal static partial class EnemySelectUI {
             });
 
         foreach (var roomType in new[] { RoomType.Monster, RoomType.Elite, RoomType.Boss }) {
-            var enc = DevModeState.RoomTypeOverrides.TryGetValue(roomType, out var rtEnc) ? rtEnc : null;
-            bool active = DevModeState.EnemyMode == EnemyMode.PerType && enc != null;
+            var enc = KitLibState.RoomTypeOverrides.TryGetValue(roomType, out var rtEnc) ? rtEnc : null;
+            bool active = KitLibState.EnemyMode == EnemyMode.PerType && enc != null;
             AddRunRuleRow(
                 session,
                 RoomTypeLabel(roomType),
@@ -246,7 +246,7 @@ internal static partial class EnemySelectUI {
             Text = value,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        valueLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        valueLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         valueLabel.AddThemeFontSizeOverride("font_size", 11);
         textBox.AddChild(valueLabel);
         row.AddChild(textBox);
@@ -469,7 +469,7 @@ internal static partial class EnemySelectUI {
             FocusMode = Control.FocusModeEnum.None,
         };
         clearFloorsBtn.Pressed += () => {
-            DevModeState.FloorOverrides.Clear();
+            KitLibState.FloorOverrides.Clear();
             session.Browser.StatusLabel.Text = I18N.T(
                 "enemy.clearedFloors",
                 "Cleared all floor overrides.");
@@ -482,7 +482,7 @@ internal static partial class EnemySelectUI {
             FocusMode = Control.FocusModeEnum.None,
         };
         clearAllBtn.Pressed += () => {
-            DevModeState.ClearEnemyOverrides();
+            KitLibState.ClearEnemyOverrides();
             session.Browser.StatusLabel.Text = I18N.T(
                 "enemy.clearedOverrides", "All enemy overrides cleared.");
             session.RefreshAll();
@@ -645,7 +645,7 @@ internal static partial class EnemySelectUI {
             Text = text,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        label.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        label.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         label.AddThemeFontSizeOverride("font_size", 11);
         return label;
     }
@@ -751,7 +751,7 @@ internal static partial class EnemySelectUI {
             bool isCombat = MapEncounterPreview.IsCombatNode(point.PointType);
             bool isCurrent = _currentCoord.HasValue && point.coord.Equals(_currentCoord.Value);
             bool isSelected = _selectedPoint != null && point.coord.Equals(_selectedPoint.coord);
-            bool hasFloorOverride = DevModeState.FloorOverrides.ContainsKey(point.coord.row + 1);
+            bool hasFloorOverride = KitLibState.FloorOverrides.ContainsKey(point.coord.row + 1);
 
             var btn = new Button {
                 FocusMode = FocusModeEnum.None,
@@ -778,12 +778,12 @@ internal static partial class EnemySelectUI {
                 fill = fill.Lightened(0.18f);
 
             var border = isSelected
-                ? DevModeTheme.Accent
+                ? KitLibTheme.Accent
                 : isCurrent
                     ? new Color(0.95f, 0.85f, 0.35f)
                     : hasFloorOverride && isCombat
-                        ? new Color(DevModeTheme.Accent.R, DevModeTheme.Accent.G, DevModeTheme.Accent.B, 0.85f)
-                        : DevModeTheme.PanelBorder;
+                        ? new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G, KitLibTheme.Accent.B, 0.85f)
+                        : KitLibTheme.PanelBorder;
 
             int bw = isSelected || isCurrent ? 2 : 1;
             btn.AddThemeStyleboxOverride("normal", MakeNodeStyle(fill, border, bw));
@@ -791,8 +791,8 @@ internal static partial class EnemySelectUI {
             btn.AddThemeStyleboxOverride("pressed", MakeNodeStyle(fill.Darkened(0.08f), border, bw));
             btn.AddThemeStyleboxOverride("disabled", MakeNodeStyle(fill.Darkened(0.15f), border, bw));
             btn.AddThemeStyleboxOverride("focus", MakeNodeStyle(fill, border, bw));
-            btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
-            btn.AddThemeColorOverride("font_disabled_color", DevModeTheme.Subtle);
+            btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+            btn.AddThemeColorOverride("font_disabled_color", KitLibTheme.Subtle);
 
             if (isCombat)
                 btn.Pressed += () => _onSelect(point);

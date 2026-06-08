@@ -1,19 +1,19 @@
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
-namespace DevMode.Map;
+namespace KitLib.Map;
 
 /// <summary>
 /// Map debug-jump cheat: full unlock on <see cref="NMapScreen"/> while
-/// <see cref="DevModeState.MapCheats.MapDebugJumpEnabled"/> is on.
+/// <see cref="KitLibState.MapCheats.MapDebugJumpEnabled"/> is on.
 /// </summary>
 internal static class MapScreenUnlock {
     public static bool IsActive =>
-        DevModeState.CheatsInRun && DevModeState.MapCheats.MapDebugJumpEnabled;
+        KitLibState.CheatsInRun && KitLibState.MapCheats.MapDebugJumpEnabled;
 
     /// <summary>Enable jump cheat when entering the map room from the Dev panel room teleport.</summary>
     public static void EnableFromDevPanel() {
-        if (!DevModeState.CheatsInRun) return;
-        DevModeState.MapCheats.MapDebugJumpEnabled = true;
+        if (!KitLibState.CheatsInRun) return;
+        KitLibState.MapCheats.MapDebugJumpEnabled = true;
     }
 
     public static void OnOpened(NMapScreen screen) {

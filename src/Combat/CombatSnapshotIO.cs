@@ -5,7 +5,7 @@ using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Combat;
+namespace KitLib.Combat;
 
 internal static class CombatSnapshotIO {
     private const int FileVersion = 1;

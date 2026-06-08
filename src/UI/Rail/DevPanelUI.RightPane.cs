@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using DevMode.CombatStats;
-using DevMode.EnemyIntent;
-using DevMode.Settings;
+using KitLib.CombatStats;
+using KitLib.EnemyIntent;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
-    internal const string ContextPaneRootName = "DevModeContextPaneRoot";
+    internal const string ContextPaneRootName = "KitLibContextPaneRoot";
 
     /// <summary>Same width as the left icon rail — browser panels reserve this on the right.</summary>
     public static float ContextPaneW => BrowserRailW;
@@ -150,13 +150,13 @@ internal static partial class DevPanelUI {
     private static async System.Threading.Tasks.Task WrapCombatAction(
         Func<System.Threading.Tasks.Task> action,
         Action? onCompleted) {
-        MainFile.Logger.Info("[DevMode.CombatAdd] RunCombatAction starting");
+        MainFile.Logger.Info("[KitLib.CombatAdd] RunCombatAction starting");
         try {
             await action();
-            MainFile.Logger.Info("[DevMode.CombatAdd] RunCombatAction finished");
+            MainFile.Logger.Info("[KitLib.CombatAdd] RunCombatAction finished");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode.CombatAdd] RunCombatAction failed: {ex}");
+            MainFile.Logger.Warn($"[KitLib.CombatAdd] RunCombatAction failed: {ex}");
             throw;
         }
         finally {
@@ -428,7 +428,7 @@ internal static partial class DevPanelUI {
             if (child is not Control root)
                 continue;
             string name = root.Name.ToString();
-            if (!name.StartsWith("DevMode", StringComparison.Ordinal))
+            if (!name.StartsWith("KitLib", StringComparison.Ordinal))
                 continue;
 
             var clipHost = root.GetNodeOrNull<Control>("BrowserPanelClipHost");

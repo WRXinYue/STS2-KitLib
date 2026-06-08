@@ -7,7 +7,7 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Events;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class AncientEventActions
 {
@@ -49,7 +49,7 @@ internal static class AncientEventActions
         catch (Exception ex)
         {
             MainFile.Logger.Warn(
-                $"[DevMode] Failed to list ancient options for {((AbstractModel)ancient).Id.Entry}: {ex.Message}");
+                $"[KitLib] Failed to list ancient options for {((AbstractModel)ancient).Id.Entry}: {ex.Message}");
         }
 
         return choices;

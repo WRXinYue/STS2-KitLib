@@ -1,13 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
 /// <summary>
-/// Loads and saves <see cref="DevModeSettings"/> to <c>settings.json</c> in the DevMode user-data directory.
+/// Loads and saves <see cref="KitLibSettings"/> to <c>settings.json</c> in the DevMode user-data directory.
 /// </summary>
 public static class SettingsStore {
     private static readonly JsonSerializerOptions JsonOpts = new() {
@@ -17,20 +18,21 @@ public static class SettingsStore {
 
     private static string FilePath => DataPaths.SettingsFile;
 
-    public static DevModeSettings Current { get; private set; } = new();
+    public static KitLibSettings Current { get; private set; } = new();
 
     public static void Load() {
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
                 if (!File.Exists(FilePath)) {
-                    Current = new DevModeSettings { RailIntroDismissed = false };
+                    Current = new KitLibSettings { RailIntroDismissed = false };
                     ApplyNormalRunModeFromSettings();
                     Save();
                     return;
                 }
                 var json = ReadSharedText(FilePath);
-                Current = JsonSerializer.Deserialize<DevModeSettings>(json, JsonOpts) ?? new();
+                Current = JsonSerializer.Deserialize<KitLibSettings>(json, JsonOpts) ?? new();
                 ApplyRailLayoutDefaults();
+                ApplyLegacyUiKeyMigration();
                 ApplyProgressGuardDefaults();
                 ApplyHotkeyDefaults();
                 ApplyHotkeySettingsMigration();
@@ -57,7 +59,7 @@ public static class SettingsStore {
 
     public static void SetNormalRunMode(NormalRunMode mode) {
         Current.NormalRunMode = mode.ToString();
-        DevModeState.NormalRunMode = mode;
+        KitLibState.NormalRunMode = mode;
         Save();
     }
 
@@ -94,9 +96,9 @@ public static class SettingsStore {
     }
 
     public static void SetCombatStatsMpOverlayPosition(float x, float y) {
-        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
-            DevModeInstance.SessionOverlay.MpOverlayPosX = x;
-            DevModeInstance.SessionOverlay.MpOverlayPosY = y;
+        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+            KitLibInstance.SessionOverlay.MpOverlayPosX = x;
+            KitLibInstance.SessionOverlay.MpOverlayPosY = y;
             return;
         }
         Current.CombatStatsMpOverlayPosX = x;
@@ -105,8 +107,8 @@ public static class SettingsStore {
     }
 
     public static (float? X, float? Y) GetCombatStatsMpOverlayPosition() {
-        if (DevModeInstanceRegistry.IsDualInstanceActive())
-            return (DevModeInstance.SessionOverlay.MpOverlayPosX, DevModeInstance.SessionOverlay.MpOverlayPosY);
+        if (KitLibInstanceRegistry.IsDualInstanceActive())
+            return (KitLibInstance.SessionOverlay.MpOverlayPosX, KitLibInstance.SessionOverlay.MpOverlayPosY);
         return (Current.CombatStatsMpOverlayPosX, Current.CombatStatsMpOverlayPosY);
     }
 
@@ -116,9 +118,9 @@ public static class SettingsStore {
     }
 
     public static void SetCombatStatsMonsterIntentOverlayPosition(float x, float y) {
-        if (DevModeInstanceRegistry.IsDualInstanceActive()) {
-            DevModeInstance.SessionOverlay.MonsterIntentOverlayPosX = x;
-            DevModeInstance.SessionOverlay.MonsterIntentOverlayPosY = y;
+        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+            KitLibInstance.SessionOverlay.MonsterIntentOverlayPosX = x;
+            KitLibInstance.SessionOverlay.MonsterIntentOverlayPosY = y;
             return;
         }
         Current.CombatStatsMonsterIntentOverlayPosX = x;
@@ -127,9 +129,9 @@ public static class SettingsStore {
     }
 
     public static (float? X, float? Y) GetCombatStatsMonsterIntentOverlayPosition() {
-        if (DevModeInstanceRegistry.IsDualInstanceActive())
-            return (DevModeInstance.SessionOverlay.MonsterIntentOverlayPosX,
-                DevModeInstance.SessionOverlay.MonsterIntentOverlayPosY);
+        if (KitLibInstanceRegistry.IsDualInstanceActive())
+            return (KitLibInstance.SessionOverlay.MonsterIntentOverlayPosX,
+                KitLibInstance.SessionOverlay.MonsterIntentOverlayPosY);
         return (Current.CombatStatsMonsterIntentOverlayPosX, Current.CombatStatsMonsterIntentOverlayPosY);
     }
 
@@ -144,7 +146,7 @@ public static class SettingsStore {
     }
 
     private static void ApplyNormalRunModeFromSettings() {
-        DevModeState.NormalRunMode = ParseNormalRunMode(Current.NormalRunMode);
+        KitLibState.NormalRunMode = ParseNormalRunMode(Current.NormalRunMode);
     }
 
     private static NormalRunMode ParseNormalRunMode(string? value) {
@@ -158,6 +160,30 @@ public static class SettingsStore {
             return;
         RailTabPreferences.ApplyDefaultHiddenTabs(Current);
         Current.RailLayoutDefaultsVersion = 1;
+        Save();
+    }
+
+    /// <summary>Remap browser overlay width keys from legacy DevMode* root names to KitLib*.</summary>
+    private static void ApplyLegacyUiKeyMigration() {
+        if (Current.BrowserPanelWidths.Count == 0)
+            return;
+
+        var remapped = false;
+        var next = new Dictionary<string, int>(Current.BrowserPanelWidths, StringComparer.Ordinal);
+        foreach (var (key, width) in Current.BrowserPanelWidths) {
+            if (!key.StartsWith("DevMode", StringComparison.Ordinal))
+                continue;
+            var newKey = "KitLib" + key["DevMode".Length..];
+            if (!next.ContainsKey(newKey))
+                next[newKey] = width;
+            next.Remove(key);
+            remapped = true;
+        }
+
+        if (!remapped)
+            return;
+
+        Current.BrowserPanelWidths = next;
         Save();
     }
 

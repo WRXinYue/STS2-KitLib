@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Multiplayer.SyncBot;
+using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Which run peers participate in prepare/ACK for host commands (2–N players).</summary>
 internal static class MpCheatParticipants {

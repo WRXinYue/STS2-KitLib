@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
-using DevMode.Hooks;
+using KitLib.Hooks;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 /// <summary>Recursively evaluates a <see cref="ConditionNode"/> tree.</summary>
 internal static class ScriptConditionEvaluator {

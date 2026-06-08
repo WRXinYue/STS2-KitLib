@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Settings;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class DevPanelHotkeySettingsUI {
     private static readonly (string ActionId, string LabelKey, string LabelFallback)[] Rows = {
@@ -71,7 +71,7 @@ internal static class DevPanelHotkeySettingsUI {
             ClipText = true
         };
         lbl.AddThemeFontSizeOverride("font_size", 12);
-        lbl.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         row.AddChild(lbl);
 
         var bindBtn = new Button {
@@ -130,8 +130,8 @@ internal static class DevPanelHotkeySettingsUI {
     }
 
     private static void StyleBindingButton(Button btn, bool listening) {
-        var bg = listening ? DevModeTheme.Accent : DevModeTheme.PanelBg;
-        var border = listening ? DevModeTheme.Accent : DevModeTheme.PanelBorder;
+        var bg = listening ? KitLibTheme.Accent : KitLibTheme.PanelBg;
+        var border = listening ? KitLibTheme.Accent : KitLibTheme.PanelBorder;
         var sb = new StyleBoxFlat {
             BgColor = bg,
             BorderColor = border,
@@ -152,6 +152,6 @@ internal static class DevPanelHotkeySettingsUI {
         btn.AddThemeStyleboxOverride("hover", sb);
         btn.AddThemeStyleboxOverride("pressed", sb);
         btn.AddThemeStyleboxOverride("focus", sb);
-        btn.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
     }
 }

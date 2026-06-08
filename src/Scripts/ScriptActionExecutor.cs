@@ -1,13 +1,13 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.Hooks;
+using KitLib.Actions;
+using KitLib.Hooks;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Scripts;
+namespace KitLib.Scripts;
 
 /// <summary>Recursively executes an <see cref="ActionNode"/> tree.</summary>
 internal static class ScriptActionExecutor {

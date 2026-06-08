@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Multiplayer.Cheat;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
@@ -9,7 +9,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 internal static class RelicActions {
     public static async Task AddRelic(RelicModel relic, Player player) {

@@ -1,14 +1,14 @@
 using System;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using DevMode.AI.Combat;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
-using DevMode.AI.Sts2;
+using KitLib.AI.Combat;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
+using KitLib.AI.Sts2;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Player-facing HUD text from snapshots and last decision (no re-decide).</summary>
 public static class AiHudModel {

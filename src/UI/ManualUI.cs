@@ -1,17 +1,17 @@
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>In-game DevMode manual — topic list and embedded Markdown pages.</summary>
 internal static class ManualUI {
-    private const string RootName = "DevModeManual";
+    private const string RootName = "KitLibManual";
     private const float PanelW = 780f;
     private const int NavW = 168;
     private const int NavItemH = 28;
 
-    private static Color ColAccent => DevModeTheme.Accent;
-    private static Color ColSubtle => DevModeTheme.Subtle;
+    private static Color ColAccent => KitLibTheme.Accent;
+    private static Color ColSubtle => KitLibTheme.Subtle;
 
     public static void Show(NGlobalUi globalUi) {
         Remove(globalUi);
@@ -35,7 +35,7 @@ internal static class ManualUI {
 
     private static void BuildHeader(VBoxContainer outer) {
         var title = new Label {
-            Text = I18N.T("manual.title", "DevMode Manual"),
+            Text = I18N.T("manual.title", "KitLib Manual"),
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter
         };
         title.AddThemeFontSizeOverride("font_size", 15);
@@ -87,7 +87,7 @@ internal static class ManualUI {
         };
         split.AddChild(contentScroll);
 
-        var content = DevModeTheme.CreateGameBbcodeLabel();
+        var content = KitLibTheme.CreateGameBbcodeLabel();
         content.FitContent = true;
         content.ScrollActive = false;
         content.MouseFilter = Control.MouseFilterEnum.Ignore;

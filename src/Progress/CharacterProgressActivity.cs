@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal static class CharacterProgressActivity {
     public static bool HasActivity(CharacterStats stats) =>

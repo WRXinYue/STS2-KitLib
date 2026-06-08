@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using DevMode;
+using KitLib;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -8,7 +8,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace DevMode.AI.Sts2.Helpers;
+namespace KitLib.AI.Sts2.Helpers;
 
 /// <summary>Waits for <see cref="CardModel.TryManualPlay"/> to finish via the action queue.</summary>
 internal static class Sts2CombatPlayHelper {

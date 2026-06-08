@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
-using DevMode;
+using KitLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace DevMode.AI.Sts2.Helpers;
+namespace KitLib.AI.Sts2.Helpers;
 
 /// <summary>Waits for <see cref="MegaCrit.Sts2.Core.Models.PotionModel.EnqueueManualUse"/> to finish.</summary>
 internal static class Sts2PotionUseHelper {

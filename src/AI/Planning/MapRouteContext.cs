@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace DevMode.AI.Planning;
+namespace KitLib.AI.Planning;
 
 public sealed record MapRouteContext(
     float HpRatio,

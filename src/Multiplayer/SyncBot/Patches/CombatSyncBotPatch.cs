@@ -1,15 +1,15 @@
 using System.Linq;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Multiplayer.PseudoCoop;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.SyncBot.Patches;
+namespace KitLib.Multiplayer.SyncBot.Patches;
 
 [HarmonyPatch(typeof(NRun), nameof(NRun._Process))]
 internal static class CombatSyncBotPatch {

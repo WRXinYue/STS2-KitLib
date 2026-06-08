@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using DevMode.Multiplayer.LanTest;
-using DevMode.Multiplayer.SyncBot;
-using DevMode.Settings;
+using KitLib.Multiplayer.LanTest;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
@@ -15,7 +15,7 @@ using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Unlocks;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Hosts ENet then uses the official character-select MP embark path (same as main-menu multiplayer).</summary>
 internal static class PseudoCoopLobbyHost {
@@ -70,10 +70,10 @@ internal static class PseudoCoopLobbyHost {
             // Do not Push char select onto the main-menu stack: SetCurrentScene frees the menu
             // while StartNewMultiplayerRun is still running, which can tear down the embark flow.
             DualInstanceTestBootstrap.EnsureMultiplayerDevActive("pseudo_coop_host");
-            DevModeState.PseudoCoopLaunchPending = true;
-            DevModeState.PseudoCoopDeferHeavyUi = true;
-            DevModeState.PseudoCoopDeferMpCheatPublish = true;
-            DevModeState.PseudoCoopAwaitingMapFinish = true;
+            KitLibState.PseudoCoopLaunchPending = true;
+            KitLibState.PseudoCoopDeferHeavyUi = true;
+            KitLibState.PseudoCoopDeferMpCheatPublish = true;
+            KitLibState.PseudoCoopAwaitingMapFinish = true;
             lobby.SetReady(ready: true);
 
             MainFile.Logger.Info(

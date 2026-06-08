@@ -1,21 +1,21 @@
-# DevMode — build pipeline
+# KitLib — build pipeline
 #
-#   build   → artifacts under repo build/DevMode/  (CI-safe, no game writes)
-#   deploy  → copy build/DevMode/ into game mods/DevMode/ (other mods untouched)
+#   build   → artifacts under repo build/KitLib/  (CI-safe, no game writes)
+#   deploy  → copy build/KitLib/ into game mods/KitLib/ (other mods untouched)
 #   sync    → build + deploy (default local dev loop)
 
 DOTNET ?= dotnet
 
-# Read version from DevMode.json (Windows Store python3 alias is often broken; use python on Windows)
+# Read version from KitLib.json (Windows Store python3 alias is often broken; use python on Windows)
 ifeq ($(OS),Windows_NT)
 PYTHON ?= python
 else
 PYTHON ?= python3
 endif
-VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('DevMode.json',encoding='utf-8'))['version'])")
+VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('KitLib.json',encoding='utf-8'))['version'])")
 
-MOD_MAIN := DevMode.csproj
-MCP_PROJECT := tools/DevMode.Mcp/DevMode.Mcp.csproj
+MOD_MAIN := KitLib.csproj
+MCP_PROJECT := tools/DevMode.Mcp/KitLib.Mcp.csproj
 
 # Runtime identifier for self-contained tool publish (override: make build-tools TOOLS_RID=linux-x64)
 ifeq ($(OS),Windows_NT)
@@ -38,24 +38,24 @@ endif
 endif
 endif
 
-TOOLS_PUBLISH_DIR := build/tools/DevMode.Mcp/$(TOOLS_RID)/publish
+TOOLS_PUBLISH_DIR := build/tools/KitLib.Mcp/$(TOOLS_RID)/publish
 TOOLS_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(TOOLS_PUBLISH_DIR)
 DEPLOY_TOOLS := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployToolsToMods -p:DeployToolsFromRepoBuild=true -p:ToolsPublishDir=$(TOOLS_PUBLISH_DIR) -p:ToolsRid=$(TOOLS_RID)
 
 # Use -p: (not /p:) so Git Bash on Windows does not treat /p:... as a MSYS path.
 DEPLOY_TO_GAME := -p:DeployToGame=true
 BETA_FLAG     := -p:Sts2Beta=true
-# Copy build/DevMode/ into mods/DevMode/ only — never republish into the game tree.
+# Copy build/KitLib/ into mods/KitLib/ only — never republish into the game tree.
 DEPLOY_COPY   := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployRepoBuildToMods -p:DeployFromRepoBuild=true
 
 # STS2 Steam beta branch game version (update when Megacrit bumps beta; see beta install release_info.json).
 STS2_GAME_BETA_VERSION ?= 0.105.1
 BETA_STS2_VER_ARG := --sts2-beta-version $(STS2_GAME_BETA_VERSION)
 ZIP_BETA_TAG := -sts2beta-v$(STS2_GAME_BETA_VERSION)
-ZIP_NAME_BETA := build/DevMode-v$(VERSION)$(ZIP_BETA_TAG).zip
-ZIP_MCP_NAME := build/DevMode.Mcp-v$(VERSION)-$(TOOLS_RID).zip
-MCP_PUBLISH_EXE := $(TOOLS_PUBLISH_DIR)/DevMode.Mcp.exe
-MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/DevMode.Mcp
+ZIP_NAME_BETA := build/KitLib-v$(VERSION)$(ZIP_BETA_TAG).zip
+ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
+MCP_PUBLISH_EXE := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp.exe
+MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
 
 .PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip clean \
         build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta upload-all-beta \
@@ -63,37 +63,37 @@ MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/DevMode.Mcp
         upload-github upload-nexus upload-nuget
 
 help:
-	@echo "DevMode — targets"
+	@echo "KitLib — targets"
 	@echo ""
 	@echo "  init         detect STS2 + Godot, generate local.props + .vscode (PYTHON=... to override)"
 	@echo "  icons        tree-shake MDI (mdi-used.json + MdiIcon.Generated.cs)"
-	@echo "  format       dotnet format DevMode.sln (EditorConfig / pre-commit)"
+	@echo "  format       dotnet format KitLib.sln (EditorConfig / pre-commit)"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build to build/DevMode/, then copy into game mods/DevMode/ only"
+	@echo "  sync         build to build/KitLib/, then copy into game mods/KitLib/ only"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
 	@echo "  sync-framework-mods  copy DevMode NuGet STS2-RitsuLib into game (overwrites other RitsuLib builds)"
 	@echo "  launch       launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)"
-	@echo "  build        publish to build/DevMode/ only (no game)"
-	@echo "  deploy       copy build/DevMode/ into game mods/DevMode/ (no republish)"
+	@echo "  build        publish to build/KitLib/ only (no game)"
+	@echo "  deploy       copy build/KitLib/ into game mods/KitLib/ (no republish)"
 	@echo "  compile      dotnet build to game mods (no .pck)"
 	@echo "  pck          dotnet publish to game mods + .pck"
 	@echo ""
-	@echo "  compile-tools dotnet build DevMode.Mcp Release (local MCP / Cursor)"
-	@echo "  build-tools  publish DevMode.Mcp self-contained exe to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
-	@echo "  deploy-tools copy MCP exe into game mods/DevMode/tools/ (requires make init)"
+	@echo "  compile-tools dotnet build KitLib.Mcp Release (local MCP / Cursor)"
+	@echo "  build-tools  publish KitLib.Mcp self-contained exe to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
+	@echo "  deploy-tools copy MCP exe into game mods/KitLib/tools/ (requires make init)"
 	@echo "  sync-tools   build-tools + deploy-tools"
-	@echo "  zip-mcp      build-tools + package build/DevMode.Mcp-vX.X.X-<rid>.zip (exe only)"
+	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
 	@echo "  sync-beta         build-beta + deploy-beta (STS2 Steam beta; Sts2Dir = beta install)"
 	@echo "  sync-beta-launch  sync-beta + launch game (same as LAUNCH=1 make sync-beta)"
-	@echo "  build-beta        publish to build/DevMode/ only (STS2 Steam beta)"
-	@echo "  deploy-beta  copy build/DevMode/ into game mods/DevMode/ (STS2 Steam beta)"
+	@echo "  build-beta        publish to build/KitLib/ only (STS2 Steam beta)"
+	@echo "  deploy-beta  copy build/KitLib/ into game mods/KitLib/ (STS2 Steam beta)"
 	@echo "  compile-beta dotnet build to game mods, no .pck (STS2 Steam beta)"
 	@echo "  pck-beta     dotnet publish to game mods + .pck (STS2 Steam beta)"
 	@echo ""
-	@echo "  zip          build + package build/DevMode-vX.X.X.zip"
+	@echo "  zip          build + package build/KitLib-vX.X.X.zip"
 	@echo ""
 	@echo "  [upload]"
 	@echo "  upload-github  zip + GitHub Release (requires gh CLI; alias: publish)"
@@ -106,7 +106,7 @@ help:
 	@echo "  zip-beta       build-beta + package …-sts2beta-v$(STS2_GAME_BETA_VERSION).zip"
 	@echo "  upload-github-beta  zip-beta + GitHub Release for STS2 beta v$(STS2_GAME_BETA_VERSION) (alias: publish-beta)"
 	@echo "  upload-nexus-beta   zip-beta + Nexus Optional file (NEXUS_FILE_GROUP_ID_BETA; alias: nexus-beta)"
-	@echo "  upload-nuget-beta   zip-beta + NuGet push (STS2.DevMode.Beta) for STS2 beta v$(STS2_GAME_BETA_VERSION) (alias: nuget-beta)"
+	@echo "  upload-nuget-beta   zip-beta + NuGet push (STS2.KitLib.Beta) for STS2 beta v$(STS2_GAME_BETA_VERSION) (alias: nuget-beta)"
 	@echo "  upload-all-beta     upload-github-beta then upload-nexus-beta then upload-nuget-beta (one zip build)"
 	@echo ""
 	@echo "  clean        remove build/ + dotnet clean"
@@ -118,7 +118,7 @@ icons:
 	$(PYTHON) scripts/shake_icons.py
 
 format:
-	$(DOTNET) format DevMode.sln --verbosity quiet
+	$(DOTNET) format KitLib.sln --verbosity quiet
 
 deps:
 	$(DOTNET) restore $(MOD_MAIN)
@@ -209,73 +209,73 @@ upload-all-beta: publish-beta nexus-beta nuget-beta
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py
 
-# ── zip: build + package into build/DevMode-vX.X.X.zip ──
-ZIP_NAME := build/DevMode-v$(VERSION).zip
-DIST_DIR := build/dist/DevMode
+# ── zip: build + package into build/KitLib-vX.X.X.zip ──
+ZIP_NAME := build/KitLib-v$(VERSION).zip
+DIST_DIR := build/dist/KitLib
 
 ifeq ($(OS),Windows_NT)
 zip-mcp: build-tools
-	@if not exist $(MCP_PUBLISH_EXE) (echo ERROR: DevMode.Mcp.exe not found. Run make build-tools first. & exit /b 1)
-	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_MCP_NAME)','w',zipfile.ZIP_DEFLATED);z.write(r'$(MCP_PUBLISH_EXE)','DevMode.Mcp.exe');z.close()"
+	@if not exist $(MCP_PUBLISH_EXE) (echo ERROR: KitLib.Mcp.exe not found. Run make build-tools first. & exit /b 1)
+	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_MCP_NAME)','w',zipfile.ZIP_DEFLATED);z.write(r'$(MCP_PUBLISH_EXE)','KitLib.Mcp.exe');z.close()"
 	@echo.
 	@echo Done: $(ZIP_MCP_NAME)
 
 zip-beta: build-beta
-	@if not exist build\DevMode\DevMode.pck (echo ERROR: DevMode.pck not found. Set GodotPath in local.props ^(make init^) and rebuild. & exit /b 1)
+	@if not exist build\KitLib\KitLib.pck (echo ERROR: KitLib.pck not found. Set GodotPath in local.props ^(make init^) and rebuild. & exit /b 1)
 	@if exist build\dist rmdir /s /q build\dist
-	@mkdir build\dist\DevMode\editor
-	@copy /y build\DevMode\DevMode.dll build\dist\DevMode\ >nul
-	@copy /y build\DevMode\DevMode.pck build\dist\DevMode\ >nul
-	@copy /y build\DevMode\mod_manifest.json build\dist\DevMode\ >nul
-	@xcopy /s /y /q editor\* build\dist\DevMode\editor\ >nul
-	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME_BETA)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/DevMode') for f in fs];z.close()"
+	@mkdir build\dist\KitLib\editor
+	@copy /y build\KitLib\KitLib.dll build\dist\KitLib\ >nul
+	@copy /y build\KitLib\KitLib.pck build\dist\KitLib\ >nul
+	@copy /y build\KitLib\mod_manifest.json build\dist\KitLib\ >nul
+	@xcopy /s /y /q editor\* build\dist\KitLib\editor\ >nul
+	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME_BETA)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/KitLib') for f in fs];z.close()"
 	@echo.
 	@echo Done: $(ZIP_NAME_BETA)  (STS2 Steam beta v$(STS2_GAME_BETA_VERSION))
 	@echo Install: extract into "Slay the Spire 2" beta branch mods folder
 
 zip: build
-	@if not exist build\DevMode\DevMode.pck (echo ERROR: DevMode.pck not found. Set GodotPath in local.props ^(make init^) and rebuild. & exit /b 1)
+	@if not exist build\KitLib\KitLib.pck (echo ERROR: KitLib.pck not found. Set GodotPath in local.props ^(make init^) and rebuild. & exit /b 1)
 	@if exist build\dist rmdir /s /q build\dist
-	@mkdir build\dist\DevMode\editor
-	@copy /y build\DevMode\DevMode.dll build\dist\DevMode\ >nul
-	@copy /y build\DevMode\DevMode.pck build\dist\DevMode\ >nul
-	@copy /y build\DevMode\mod_manifest.json build\dist\DevMode\ >nul
-	@xcopy /s /y /q editor\* build\dist\DevMode\editor\ >nul
-	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/DevMode') for f in fs];z.close()"
+	@mkdir build\dist\KitLib\editor
+	@copy /y build\KitLib\KitLib.dll build\dist\KitLib\ >nul
+	@copy /y build\KitLib\KitLib.pck build\dist\KitLib\ >nul
+	@copy /y build\KitLib\mod_manifest.json build\dist\KitLib\ >nul
+	@xcopy /s /y /q editor\* build\dist\KitLib\editor\ >nul
+	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/KitLib') for f in fs];z.close()"
 	@echo.
-	@echo Done: build\DevMode-v$(VERSION).zip
+	@echo Done: build\KitLib-v$(VERSION).zip
 	@echo Install: extract into "Slay the Spire 2\mods\"
 
 clean:
 	@if exist build rmdir /s /q build
-	$(DOTNET) clean DevMode.sln
+	$(DOTNET) clean KitLib.sln
 else
 zip-mcp: build-tools
-	@test -f $(MCP_PUBLISH_BIN) || (echo "ERROR: DevMode.Mcp not found. Run make build-tools first." >&2; exit 1)
-	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_MCP_NAME)','w',zipfile.ZIP_DEFLATED);z.write('$(MCP_PUBLISH_BIN)','DevMode.Mcp');z.close()"
+	@test -f $(MCP_PUBLISH_BIN) || (echo "ERROR: KitLib.Mcp not found. Run make build-tools first." >&2; exit 1)
+	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_MCP_NAME)','w',zipfile.ZIP_DEFLATED);z.write('$(MCP_PUBLISH_BIN)','KitLib.Mcp');z.close()"
 	@echo ""
 	@echo "Done: $(ZIP_MCP_NAME)"
 
 zip-beta: build-beta
-	@test -f build/DevMode/DevMode.pck || (echo "ERROR: DevMode.pck not found. Set GodotPath in local.props (make init) and rebuild." >&2; exit 1)
+	@test -f build/KitLib/KitLib.pck || (echo "ERROR: KitLib.pck not found. Set GodotPath in local.props (make init) and rebuild." >&2; exit 1)
 	rm -rf build/dist
 	mkdir -p $(DIST_DIR)/editor
-	cp build/DevMode/DevMode.dll build/DevMode/mod_manifest.json build/DevMode/DevMode.pck $(DIST_DIR)/
+	cp build/KitLib/KitLib.dll build/KitLib/mod_manifest.json build/KitLib/KitLib.pck $(DIST_DIR)/
 	cp -R editor/. $(DIST_DIR)/editor/
 	rm -f $(ZIP_NAME_BETA)
-	cd build/dist && zip -qr ../DevMode-v$(VERSION)$(ZIP_BETA_TAG).zip DevMode
+	cd build/dist && zip -qr ../KitLib-v$(VERSION)$(ZIP_BETA_TAG).zip KitLib
 	@echo ""
 	@echo "Done: $(ZIP_NAME_BETA)  (STS2 Steam beta v$(STS2_GAME_BETA_VERSION))"
 	@echo 'Install: extract into "Slay the Spire 2" beta branch mods/'
 
 zip: build
-	@test -f build/DevMode/DevMode.pck || (echo "ERROR: DevMode.pck not found. Set GodotPath in local.props (make init) and rebuild." >&2; exit 1)
+	@test -f build/KitLib/KitLib.pck || (echo "ERROR: KitLib.pck not found. Set GodotPath in local.props (make init) and rebuild." >&2; exit 1)
 	rm -rf build/dist
 	mkdir -p $(DIST_DIR)/editor
-	cp build/DevMode/DevMode.dll build/DevMode/mod_manifest.json build/DevMode/DevMode.pck $(DIST_DIR)/
+	cp build/KitLib/KitLib.dll build/KitLib/mod_manifest.json build/KitLib/KitLib.pck $(DIST_DIR)/
 	cp -R editor/. $(DIST_DIR)/editor/
 	rm -f $(ZIP_NAME)
-	cd build/dist && zip -qr ../DevMode-v$(VERSION).zip DevMode
+	cd build/dist && zip -qr ../KitLib-v$(VERSION).zip KitLib
 	@echo ""
 	@echo "Done: $(ZIP_NAME)"
 	@echo 'Install: extract into "Slay the Spire 2/mods/"'
@@ -283,5 +283,5 @@ zip: build
 clean:
 	rm -rf build
 	find src -type f \( -name '*.uid' -o -name '*.import' \) -exec rm -f {} +
-	$(DOTNET) clean DevMode.sln
+	$(DOTNET) clean KitLib.sln
 endif

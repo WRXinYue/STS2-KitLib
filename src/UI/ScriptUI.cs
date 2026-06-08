@@ -1,20 +1,20 @@
 using System;
 using System.Linq;
-using DevMode.Scripts;
+using KitLib.Scripts;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>SpireScratch script manager panel — shows loaded scripts with enable/disable toggle.</summary>
 internal static class ScriptUI {
-    private const string RootName = "DevModeScripts";
+    private const string RootName = "KitLibScripts";
     private const float PanelW = 680f;
 
-    private static Color ColAccent => DevModeTheme.Accent;
-    private static Color ColLight => DevModeTheme.TextPrimary;
-    private static Color ColSubtle => DevModeTheme.Subtle;
-    private static Color ColBg => DevModeTheme.ButtonBgNormal;
+    private static Color ColAccent => KitLibTheme.Accent;
+    private static Color ColLight => KitLibTheme.TextPrimary;
+    private static Color ColSubtle => KitLibTheme.Subtle;
+    private static Color ColBg => KitLibTheme.ButtonBgNormal;
     private static Color ColError => new(0.9f, 0.35f, 0.3f);
     private static Color ColOk => new(0.3f, 0.85f, 0.45f);
 
@@ -123,7 +123,7 @@ internal static class ScriptUI {
         titleRow.AddChild(editorBtn);
 
         // Migrate hooks button
-        var hooks = DevMode.Settings.SettingsStore.Current.Hooks;
+        var hooks = KitLib.Settings.SettingsStore.Current.Hooks;
         if (hooks != null && hooks.Count > 0) {
             var migrateBtn = new Button {
                 Text = I18N.T("script.migrate", "Migrate Hooks ({0})", hooks.Count),
@@ -309,7 +309,7 @@ internal static class ScriptUI {
     // ──────── Helpers ────────
 
     private static ColorRect MakeDivider() => new() {
-        Color = DevModeTheme.Separator,
+        Color = KitLibTheme.Separator,
         CustomMinimumSize = new Vector2(0, 1),
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
     };

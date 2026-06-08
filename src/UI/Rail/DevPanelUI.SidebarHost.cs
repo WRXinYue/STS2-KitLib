@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Swappable content for a <see cref="DevPanelSidebarHost"/> pane.</summary>
 internal interface IDevPanelSidebarProvider {
@@ -31,13 +31,13 @@ internal sealed partial class DevPanelSidebarHost : VBoxContainer {
 
         _title = new Label();
         _title.AddThemeFontSizeOverride("font_size", railCompact ? 9 : 12);
-        _title.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        _title.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         _title.Visible = !railCompact;
         AddChild(_title);
 
         _hint = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         _hint.AddThemeFontSizeOverride("font_size", 10);
-        _hint.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        _hint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         _hint.Visible = !railCompact;
         AddChild(_hint);
 

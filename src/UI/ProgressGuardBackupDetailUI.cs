@@ -2,15 +2,15 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using DevMode.Modding;
-using DevMode.Progress;
+using KitLib.Modding;
+using KitLib.Progress;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ProgressGuardBackupDetailUI {
-    private const string RootName = "DevModeProgressBackupDetail";
+    private const string RootName = "KitLibProgressBackupDetail";
 
     public static void Show(NMainMenu mainMenu, ProfileBackupSummary backup, int profileId) {
         var root = mainMenu.GetTree().Root;
@@ -54,7 +54,7 @@ internal static class ProgressGuardBackupDetailUI {
             HorizontalAlignment = HorizontalAlignment.Center,
         };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         outer.AddChild(title);
 
         var time = backup.UtcTimestamp.ToUniversalTime().ToString("u", CultureInfo.InvariantCulture);
@@ -64,11 +64,11 @@ internal static class ProgressGuardBackupDetailUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         subtitle.AddThemeFontSizeOverride("font_size", 11);
-        subtitle.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        subtitle.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         outer.AddChild(subtitle);
 
         outer.AddChild(new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
@@ -220,7 +220,7 @@ internal static class ProgressGuardBackupDetailUI {
     private static Label MakeSectionHeader(string text) {
         var label = new Label { Text = text };
         label.AddThemeFontSizeOverride("font_size", 12);
-        label.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        label.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         return label;
     }
 
@@ -230,7 +230,7 @@ internal static class ProgressGuardBackupDetailUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         label.AddThemeFontSizeOverride("font_size", 11);
-        label.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         return label;
     }
 

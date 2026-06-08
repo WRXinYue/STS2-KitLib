@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using DevMode.Actions;
-using DevMode.EnemyIntent;
+using KitLib.Actions;
+using KitLib.EnemyIntent;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 internal static class MpCheatCombatEnemyCoordinator {
     public static Task<string> TryHostAddMonsterAsync(MonsterModel monster) =>

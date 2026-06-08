@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Built-in filter rules for the log viewer.
@@ -33,7 +33,7 @@ internal static class LogSuppressor {
             "非 Manifest 的 JSON 被游戏误识别为 Mod 配置文件，已知游戏 Bug"),
 
         new("warmup job failed",
-            "DevMode 资源预热任务失败：通常为 Mod 中存在无效内容，不影响运行"),
+            "KitLib 资源预热任务失败：通常为 Mod 中存在无效内容，不影响运行"),
 
         new("Limiting background FPS",
             "窗口失焦时限帧：游戏后台运行时的正常 INFO 日志"),

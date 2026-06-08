@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Shared draggable floating panel helpers for combat overlays.</summary>
 internal static class FloatingCombatOverlay {

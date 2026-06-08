@@ -4,12 +4,12 @@ using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmSaveConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmsave";
     public override string Args => "<quick|load|slot|delete|list> [slotNumber] [name]";
-    public override string Description => "[DevMode] Quick save/load, slot save/load/delete";
+    public override string Description => "[KitLib] Quick save/load, slot save/load/delete";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 

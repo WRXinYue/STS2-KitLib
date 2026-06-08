@@ -3,15 +3,15 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using DevMode.Progress;
-using DevMode.Settings;
+using KitLib.Progress;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static class ProgressLossPromptUI {
-    private const string PromptName = "DevModeProgressLossPrompt";
+    private const string PromptName = "KitLibProgressLossPrompt";
 
     private static bool DismissedForSession { get; set; }
 
@@ -92,11 +92,11 @@ internal static class ProgressLossPromptUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         title.AddThemeFontSizeOverride("font_size", 16);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(title);
 
         vbox.AddChild(new ColorRect {
-            Color = DevModeTheme.Separator,
+            Color = KitLibTheme.Separator,
             CustomMinimumSize = new Vector2(0, 1),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         });
@@ -116,7 +116,7 @@ internal static class ProgressLossPromptUI {
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         bodyLabel.AddThemeFontSizeOverride("font_size", 12);
-        bodyLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        bodyLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(bodyLabel);
 
         var btnRow = new HBoxContainer();

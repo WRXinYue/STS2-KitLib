@@ -1,11 +1,11 @@
 using System.Linq;
-using DevMode.Settings;
+using KitLib.Settings;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 
-namespace DevMode.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
 /// <summary>Allows host-only lobby to begin when phantom player will be spawned at launch.</summary>
 [HarmonyPatch(typeof(StartRunLobby), nameof(StartRunLobby.IsAboutToBeginGame))]

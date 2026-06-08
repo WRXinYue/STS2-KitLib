@@ -8,7 +8,7 @@ using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>Phantom players join mid-run after <see cref="ActionQueueSet"/> was built with one queue.</summary>
 internal static class PseudoCoopActionQueue {

@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Planning;
+using KitLib.AI.Planning;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 /// <summary>Fallback card reward tweaks when next-fight sim lacks card coverage.</summary>
 internal static class EarlyCardRewardAdjustments {

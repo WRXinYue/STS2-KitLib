@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public sealed record MonsterMoveProfile(
     string MoveId,

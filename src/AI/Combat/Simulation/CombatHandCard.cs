@@ -1,7 +1,7 @@
 using System;
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 public sealed record CombatHandCard(
     int HandIndex,

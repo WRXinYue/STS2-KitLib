@@ -3,13 +3,13 @@ using System.IO;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using DevMode.Settings;
+using KitLib.Settings;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 /// <summary>Community priors trained from Spire Codex A10 macro samples (embedded JSON).</summary>
 public static class CodexPriorCatalog {
-    const string ResourceName = "DevMode.AI.codex-priors.json";
+    const string ResourceName = "KitLib.AI.codex-priors.json";
 
     static JsonObject? _root;
     static readonly object Gate = new();

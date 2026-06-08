@@ -1,4 +1,4 @@
-namespace DevMode.Combat;
+namespace KitLib.Combat;
 
 internal enum CombatCheckpointKind {
     CombatStart,

@@ -2,34 +2,34 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class RelicBrowserUI {
     // ── Nav / accent colours ──
 
-    private static Color ColNavActive => DevModeTheme.Accent;
-    private static Color ColNavInactive => DevModeTheme.Subtle;
-    private static Color ColNavHover => DevModeTheme.TextPrimary;
-    private static Color ColNavAccent => DevModeTheme.AccentAlpha;
+    private static Color ColNavActive => KitLibTheme.Accent;
+    private static Color ColNavInactive => KitLibTheme.Subtle;
+    private static Color ColNavHover => KitLibTheme.TextPrimary;
+    private static Color ColNavAccent => KitLibTheme.AccentAlpha;
 
     // ── Panel / border colours ──
 
-    private static Color ColPanelBg => DevModeTheme.PanelBg;
-    private static Color ColPanelBorder => DevModeTheme.PanelBorder;
-    private static Color ColSubtle => DevModeTheme.Subtle;
+    private static Color ColPanelBg => KitLibTheme.PanelBg;
+    private static Color ColPanelBorder => KitLibTheme.PanelBorder;
+    private static Color ColSubtle => KitLibTheme.Subtle;
 
     // (tile frame colours defined in RelicBrowserUI.Grid.cs)
 
     // ── Sort button colours ──
 
-    private static Color ColSortBg => DevModeTheme.ButtonBgNormal;
-    private static Color ColSortHover => DevModeTheme.ButtonBgHover;
-    private static Color ColSortPressed => DevModeTheme.AccentAlpha;
+    private static Color ColSortBg => KitLibTheme.ButtonBgNormal;
+    private static Color ColSortHover => KitLibTheme.ButtonBgHover;
+    private static Color ColSortPressed => KitLibTheme.AccentAlpha;
 
     // ── Segment filter colours (pill-shaped toggle) ──
 
-    private static Color ColSegOff => DevModeTheme.ButtonBgNormal;
-    private static Color ColSegHover => DevModeTheme.ButtonBgHover;
+    private static Color ColSegOff => KitLibTheme.ButtonBgNormal;
+    private static Color ColSegHover => KitLibTheme.ButtonBgHover;
     private static readonly Color ColSegOn = new(0.25f, 0.40f, 0.65f, 0.90f);
     private static readonly Color ColSegOnHover = new(0.30f, 0.48f, 0.75f, 0.95f);
 
@@ -127,9 +127,9 @@ internal static partial class RelicBrowserUI {
         btn.AddThemeStyleboxOverride("hover_pressed", MakeStyle(ColSegOnHover));
         btn.AddThemeStyleboxOverride("focus", MakeStyle(ColSegOff));
 
-        btn.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
-        btn.AddThemeColorOverride("font_hover_color", DevModeTheme.TextPrimary);
-        btn.AddThemeColorOverride("font_pressed_color", DevModeTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         btn.AddThemeFontSizeOverride("font_size", 11);
 
         return btn;

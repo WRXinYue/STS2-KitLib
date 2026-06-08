@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
+using KitLib.AI.Core.Schema;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 public static class AiSnapshotHub {
     static readonly List<IAiSnapshotContributor> Contributors = [];

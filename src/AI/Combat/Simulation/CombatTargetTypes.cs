@@ -1,6 +1,6 @@
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 internal static class CombatTargetTypes {
     public static bool IsAllEnemies(string? targetType) =>

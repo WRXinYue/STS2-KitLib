@@ -1,18 +1,18 @@
 using System;
 using System.Linq;
-using DevMode.Actions;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmPowerConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmpower";
     public override string Args => "<add|list> [powerId] [amount] [self|enemies|allies]";
-    public override string Description => "[DevMode] Apply powers or list all power IDs";
+    public override string Description => "[KitLib] Apply powers or list all power IDs";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 

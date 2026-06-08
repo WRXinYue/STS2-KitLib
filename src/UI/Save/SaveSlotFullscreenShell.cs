@@ -1,7 +1,7 @@
 using System;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Fullscreen dim + centered slot picker. Hosts a single <see cref="SaveSlotPanel"/> — layout is not duplicated.</summary>
 internal sealed partial class SaveSlotFullscreenShell : Control, ISaveSlotDialogRoot {

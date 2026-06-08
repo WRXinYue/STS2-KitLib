@@ -4,12 +4,12 @@ using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
 
-namespace DevMode.Commands;
+namespace KitLib.Commands;
 
 public class DmCheatConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmcheat";
     public override string Args => "<toggle> [on|off|value]";
-    public override string Description => "[DevMode] Toggle cheat flags (godmode, infinitehp, onehitkill, ...)";
+    public override string Description => "[KitLib] Toggle cheat flags (godmode, infinitehp, onehitkill, ...)";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
@@ -37,77 +37,77 @@ public class DmCheatConsoleCmd : AbstractConsoleCmd {
         switch (sub) {
             case "godmode":
             case "infinitehp": {
-                    var v = flag ?? !DevModeState.PlayerCheats.InfiniteHp;
-                    DevModeState.PlayerCheats.InfiniteHp = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.InfiniteHp;
+                    KitLibState.PlayerCheats.InfiniteHp = v;
                     return new CmdResult(true, $"Infinite HP: {OnOff(v)}");
                 }
             case "infiniteblock": {
-                    var v = flag ?? !DevModeState.PlayerCheats.InfiniteBlock;
-                    DevModeState.PlayerCheats.InfiniteBlock = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.InfiniteBlock;
+                    KitLibState.PlayerCheats.InfiniteBlock = v;
                     return new CmdResult(true, $"Infinite Block: {OnOff(v)}");
                 }
             case "infiniteenergy": {
-                    var v = flag ?? !DevModeState.PlayerCheats.InfiniteEnergy;
-                    DevModeState.PlayerCheats.InfiniteEnergy = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.InfiniteEnergy;
+                    KitLibState.PlayerCheats.InfiniteEnergy = v;
                     if (v) PlayerCheatEffects.ApplyImmediateIfEnabled();
                     return new CmdResult(true, $"Infinite Energy: {OnOff(v)}");
                 }
             case "infinitestars": {
-                    var v = flag ?? !DevModeState.PlayerCheats.InfiniteStars;
-                    DevModeState.PlayerCheats.InfiniteStars = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.InfiniteStars;
+                    KitLibState.PlayerCheats.InfiniteStars = v;
                     if (v) PlayerCheatEffects.ApplyImmediateIfEnabled();
                     return new CmdResult(true, $"Infinite Stars: {OnOff(v)}");
                 }
             case "freezeenemies": {
-                    var v = flag ?? !DevModeState.EnemyCheats.FreezeEnemies;
-                    DevModeState.EnemyCheats.FreezeEnemies = v;
+                    var v = flag ?? !KitLibState.EnemyCheats.FreezeEnemies;
+                    KitLibState.EnemyCheats.FreezeEnemies = v;
                     return new CmdResult(true, $"Freeze Enemies: {OnOff(v)}");
                 }
             case "onehitkill": {
-                    var v = flag ?? !DevModeState.EnemyCheats.OneHitKill;
-                    DevModeState.EnemyCheats.OneHitKill = v;
+                    var v = flag ?? !KitLibState.EnemyCheats.OneHitKill;
+                    KitLibState.EnemyCheats.OneHitKill = v;
                     return new CmdResult(true, $"One-Hit Kill: {OnOff(v)}");
                 }
             case "freeshop": {
-                    var v = flag ?? !DevModeState.GameplayModifiers.FreeShop;
-                    DevModeState.GameplayModifiers.FreeShop = v;
+                    var v = flag ?? !KitLibState.GameplayModifiers.FreeShop;
+                    KitLibState.GameplayModifiers.FreeShop = v;
                     return new CmdResult(true, $"Free Shop: {OnOff(v)}");
                 }
             case "alwayspotion": {
-                    var v = flag ?? !DevModeState.PlayerCheats.AlwaysRewardPotion;
-                    DevModeState.PlayerCheats.AlwaysRewardPotion = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.AlwaysRewardPotion;
+                    KitLibState.PlayerCheats.AlwaysRewardPotion = v;
                     return new CmdResult(true, $"Always Reward Potion: {OnOff(v)}");
                 }
             case "alwaysupgrade": {
-                    var v = flag ?? !DevModeState.PlayerCheats.AlwaysUpgradeCardReward;
-                    DevModeState.PlayerCheats.AlwaysUpgradeCardReward = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.AlwaysUpgradeCardReward;
+                    KitLibState.PlayerCheats.AlwaysUpgradeCardReward = v;
                     return new CmdResult(true, $"Always Upgrade Reward: {OnOff(v)}");
                 }
             case "maxrarity": {
-                    var v = flag ?? !DevModeState.PlayerCheats.MaxCardRewardRarity;
-                    DevModeState.PlayerCheats.MaxCardRewardRarity = v;
+                    var v = flag ?? !KitLibState.PlayerCheats.MaxCardRewardRarity;
+                    KitLibState.PlayerCheats.MaxCardRewardRarity = v;
                     return new CmdResult(true, $"Max Card Reward Rarity: {OnOff(v)}");
                 }
             case "unknowntreasure": {
-                    var v = flag ?? !DevModeState.MapCheats.UnknownMapAlwaysTreasure;
-                    DevModeState.MapCheats.UnknownMapAlwaysTreasure = v;
+                    var v = flag ?? !KitLibState.MapCheats.UnknownMapAlwaysTreasure;
+                    KitLibState.MapCheats.UnknownMapAlwaysTreasure = v;
                     return new CmdResult(true, $"Unknown → Treasure: {OnOff(v)}");
                 }
             case "maxscore": {
-                    var v = flag ?? !DevModeState.GameplayModifiers.MaxScore;
-                    DevModeState.GameplayModifiers.MaxScore = v;
+                    var v = flag ?? !KitLibState.GameplayModifiers.MaxScore;
+                    KitLibState.GameplayModifiers.MaxScore = v;
                     return new CmdResult(true, $"Max Score: {OnOff(v)}");
                 }
 
             // Multipliers
             case "damagemult":
-                return SetMultiplier(args, "Damage Multiplier", DevModeState.EnemyCheats.DamageMultiplier, v => DevModeState.EnemyCheats.DamageMultiplier = v);
+                return SetMultiplier(args, "Damage Multiplier", KitLibState.EnemyCheats.DamageMultiplier, v => KitLibState.EnemyCheats.DamageMultiplier = v);
             case "defensemult":
-                return SetMultiplier(args, "Defense Multiplier", DevModeState.PlayerCheats.DefenseMultiplier, v => DevModeState.PlayerCheats.DefenseMultiplier = v);
+                return SetMultiplier(args, "Defense Multiplier", KitLibState.PlayerCheats.DefenseMultiplier, v => KitLibState.PlayerCheats.DefenseMultiplier = v);
             case "goldmult":
-                return SetMultiplier(args, "Gold Multiplier", DevModeState.GameplayModifiers.GoldMultiplier, v => DevModeState.GameplayModifiers.GoldMultiplier = v);
+                return SetMultiplier(args, "Gold Multiplier", KitLibState.GameplayModifiers.GoldMultiplier, v => KitLibState.GameplayModifiers.GoldMultiplier = v);
             case "scoremult":
-                return SetMultiplier(args, "Score Multiplier", DevModeState.GameplayModifiers.ScoreMultiplier, v => DevModeState.GameplayModifiers.ScoreMultiplier = v);
+                return SetMultiplier(args, "Score Multiplier", KitLibState.GameplayModifiers.ScoreMultiplier, v => KitLibState.GameplayModifiers.ScoreMultiplier = v);
 
             default:
                 return new CmdResult(false, $"Unknown toggle: '{sub}'. Available: {string.Join(", ", AllSubs)}");

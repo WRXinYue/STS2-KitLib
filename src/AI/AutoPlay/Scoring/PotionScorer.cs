@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Combat;
-using DevMode.AI.Combat.Simulation;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
+using KitLib.AI.Combat;
+using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 /// <summary>Scores held potions in combat; uses only when better than playing cards (except emergencies).</summary>
 public static class PotionScorer {

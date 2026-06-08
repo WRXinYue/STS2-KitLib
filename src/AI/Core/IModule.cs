@@ -1,4 +1,4 @@
-namespace DevMode.AI.Core;
+namespace KitLib.AI.Core;
 
 /// <summary>
 /// A pluggable module within the STS2-AI mod.

@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Actions;
-using DevMode.EnemyIntent;
-using DevMode.Icons;
+using KitLib.Actions;
+using KitLib.EnemyIntent;
+using KitLib.Icons;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class EnemySelectUI {
     internal const string CombatToolsContextId = "enemy.combatTools";

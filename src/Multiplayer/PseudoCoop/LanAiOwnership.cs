@@ -1,10 +1,10 @@
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.PseudoCoop;
 
 /// <summary>
 /// LAN dual-instance AI ownership: each window drives only its local player off-combat;

@@ -1,6 +1,6 @@
-using DevMode.AI.Knowledge;
+using KitLib.AI.Knowledge;
 
-namespace DevMode.AI.Combat;
+namespace KitLib.AI.Combat;
 
 /// <summary>Mechanic-index flags for setup skills (transform/debuff), not per-card scoring.</summary>
 internal static class MechanicCombatBonus {

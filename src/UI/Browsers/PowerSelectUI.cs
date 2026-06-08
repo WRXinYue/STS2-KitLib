@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode;
-using DevMode.Actions;
-using DevMode.Hooks;
-using DevMode.Modding;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Settings;
+using KitLib;
+using KitLib.Actions;
+using KitLib.Hooks;
+using KitLib.Modding;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -16,11 +16,11 @@ using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>Power browser — two-pane layout with icon grid on the left and detail / apply on the right.</summary>
 internal static class PowerSelectUI {
-    private const string RootName = "DevModePowerSelect";
+    private const string RootName = "KitLibPowerSelect";
     private const float PanelW = 920f;
     private const float TileMinWidth = 72f;
     private const float IconSize = 44f;
@@ -28,14 +28,14 @@ internal static class PowerSelectUI {
     private const float GridHSep = 8f;
     private const float GridVSep = 8f;
 
-    private static Color ColFrameBg => DevModeTheme.ButtonBgNormal;
-    private static Color ColFrameHover => DevModeTheme.ButtonBgHover;
-    private static Color ColFrameSelected => DevModeTheme.AccentAlpha;
-    private static Color ColDetailBg => DevModeTheme.ButtonBgNormal;
+    private static Color ColFrameBg => KitLibTheme.ButtonBgNormal;
+    private static Color ColFrameHover => KitLibTheme.ButtonBgHover;
+    private static Color ColFrameSelected => KitLibTheme.AccentAlpha;
+    private static Color ColDetailBg => KitLibTheme.ButtonBgNormal;
     private static readonly Color ColBuff = new(0.30f, 0.75f, 0.45f);
     private static readonly Color ColDebuff = new(0.85f, 0.35f, 0.30f);
     private static readonly Color ColNone = new(0.55f, 0.55f, 0.65f);
-    private static Color ColLight => DevModeTheme.TextPrimary;
+    private static Color ColLight => KitLibTheme.TextPrimary;
 
     // ─────────────────────────────── State ───────────────────────────────
 
@@ -150,7 +150,7 @@ internal static class PowerSelectUI {
             VerticalAlignment = VerticalAlignment.Center,
         };
         title.AddThemeFontSizeOverride("font_size", 14);
-        title.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         row1.AddChild(title);
 
         row1.AddChild(new Control { CustomMinimumSize = new Vector2(6, 0) });
@@ -224,7 +224,7 @@ internal static class PowerSelectUI {
 
         s.CountLabel = new Label { HorizontalAlignment = HorizontalAlignment.Left };
         s.CountLabel.AddThemeFontSizeOverride("font_size", 11);
-        s.CountLabel.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        s.CountLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         pane.AddChild(s.CountLabel);
 
         body.AddChild(pane);
@@ -247,7 +247,7 @@ internal static class PowerSelectUI {
             BorderWidthBottom = 1,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
-            BorderColor = DevModeTheme.PanelBorder,
+            BorderColor = KitLibTheme.PanelBorder,
         };
         pane.AddThemeStyleboxOverride("panel", bgStyle);
 
@@ -317,7 +317,7 @@ internal static class PowerSelectUI {
         var badgeRow = new HBoxContainer();
         badgeRow.AddThemeConstantOverride("separation", 6);
         s.DetailTypeBadge = MakeBadgeLabel("", ColNone);
-        s.DetailStackBadge = MakeBadgeLabel("", DevModeTheme.Subtle);
+        s.DetailStackBadge = MakeBadgeLabel("", KitLibTheme.Subtle);
         badgeRow.AddChild(s.DetailTypeBadge);
         badgeRow.AddChild(s.DetailStackBadge);
         nameCol.AddChild(badgeRow);
@@ -329,10 +329,10 @@ internal static class PowerSelectUI {
         inner.AddChild(iconRow);
 
         // ── Description ──
-        s.DetailDesc = DevModeTheme.CreateGameBbcodeLabel();
+        s.DetailDesc = KitLibTheme.CreateGameBbcodeLabel();
         s.DetailDesc.CustomMinimumSize = new Vector2(0, 50);
         s.DetailDesc.AddThemeFontSizeOverride("normal_font_size", 11);
-        s.DetailDesc.AddThemeColorOverride("default_color", DevModeTheme.TextSecondary);
+        s.DetailDesc.AddThemeColorOverride("default_color", KitLibTheme.TextSecondary);
         inner.AddChild(s.DetailDesc);
 
         inner.AddChild(MakeDivider());
@@ -350,7 +350,7 @@ internal static class PowerSelectUI {
         // ── Target buttons ──
         var targetHdr = new Label { Text = I18N.T("power.target.label", "Target") };
         targetHdr.AddThemeFontSizeOverride("font_size", 11);
-        targetHdr.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        targetHdr.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         inner.AddChild(targetHdr);
 
         var targetRow = new HBoxContainer();
@@ -376,7 +376,7 @@ internal static class PowerSelectUI {
             VerticalAlignment = VerticalAlignment.Center,
         };
         amountLbl.AddThemeFontSizeOverride("font_size", 12);
-        amountLbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        amountLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         amountRow.AddChild(amountLbl);
         s.AmountSpin = new SpinBox { MinValue = 1, MaxValue = 999, Value = 1, Step = 1, CustomMinimumSize = new Vector2(88, 28) };
         s.AmountSpin.ValueChanged += v => s.Amount = (int)v;
@@ -464,7 +464,7 @@ internal static class PowerSelectUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         curLbl.AddThemeFontSizeOverride("font_size", 11);
-        curLbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        curLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         curHdr.AddChild(curLbl);
 
         var clearBtn = new Button { Text = I18N.T("power.clear_all", "Clear All"), FocusMode = Control.FocusModeEnum.None };
@@ -511,7 +511,7 @@ internal static class PowerSelectUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         autoLbl.AddThemeFontSizeOverride("font_size", 11);
-        autoLbl.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        autoLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         autoHdr.AddChild(autoLbl);
 
         var autoClearBtn = new Button { Text = I18N.T("power.autoApply.clearAll", "Clear All"), FocusMode = Control.FocusModeEnum.None };
@@ -708,13 +708,13 @@ internal static class PowerSelectUI {
         s.DetailTypeBadge.AddThemeColorOverride("font_color", typeCol);
 
         s.DetailStackBadge.Text = power.StackType.ToString();
-        s.DetailStackBadge.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+        s.DetailStackBadge.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
 
         // ID row
         foreach (var c in s.DetailIdContainer.GetChildren()) ((Node)c).QueueFree();
         var powerId = ((AbstractModel)power).Id.Entry;
         if (!string.IsNullOrEmpty(powerId))
-            s.DetailIdContainer.AddChild(DevModeTheme.CreateCopyableIdRow(powerId));
+            s.DetailIdContainer.AddChild(KitLibTheme.CreateCopyableIdRow(powerId));
         s.DetailIdContainer.AddChild(BrowserDetailHelpers.CreateModSourceRow(ContentModResolver.Resolve(power)));
 
         // Icon — try BigIcon first, fall back to atlas Icon
@@ -738,7 +738,7 @@ internal static class PowerSelectUI {
             var raw = power.Description?.GetFormattedText();
             s.DetailDesc.Text = string.IsNullOrEmpty(raw)
                 ? I18N.T("power.no_desc", "(No description)")
-                : DevModeTheme.ConvertGameBbcode(raw);
+                : KitLibTheme.ConvertGameBbcode(raw);
         }
         catch { s.DetailDesc.Text = I18N.T("power.no_desc", "(No description)"); }
 
@@ -762,7 +762,7 @@ internal static class PowerSelectUI {
         if (powers.Length == 0) {
             var none = new Label { Text = I18N.T("power.none_active", "No active powers") };
             none.AddThemeFontSizeOverride("font_size", 11);
-            none.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            none.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             s.CurrentPowersList.AddChild(none);
             return;
         }
@@ -833,9 +833,9 @@ internal static class PowerSelectUI {
     }
 
     private static void SetTargetActive(Button btn, bool active) {
-        btn.AddThemeColorOverride("font_color", active ? DevModeTheme.Accent : DevModeTheme.Subtle);
-        btn.AddThemeStyleboxOverride("normal", MakeTargetStyle(active ? DevModeTheme.AccentAlpha : DevModeTheme.PanelBorder));
-        btn.AddThemeStyleboxOverride("hover", MakeTargetStyle(active ? DevModeTheme.Accent : new Color(0.4f, 0.4f, 0.55f)));
+        btn.AddThemeColorOverride("font_color", active ? KitLibTheme.Accent : KitLibTheme.Subtle);
+        btn.AddThemeStyleboxOverride("normal", MakeTargetStyle(active ? KitLibTheme.AccentAlpha : KitLibTheme.PanelBorder));
+        btn.AddThemeStyleboxOverride("hover", MakeTargetStyle(active ? KitLibTheme.Accent : new Color(0.4f, 0.4f, 0.55f)));
     }
 
     private static StyleBoxFlat MakeTargetStyle(Color borderCol) => new() {
@@ -913,7 +913,7 @@ internal static class PowerSelectUI {
     };
 
     private static ColorRect MakeDivider() => new() {
-        Color = DevModeTheme.Separator,
+        Color = KitLibTheme.Separator,
         CustomMinimumSize = new Vector2(0, 1),
         SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
     };
@@ -932,7 +932,7 @@ internal static class PowerSelectUI {
         if (autoBuffs.Count == 0) {
             var none = new Label { Text = I18N.T("power.autoApply.empty", "No auto-apply rules") };
             none.AddThemeFontSizeOverride("font_size", 11);
-            none.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            none.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             s.AutoApplyList.AddChild(none);
             return;
         }
@@ -948,7 +948,7 @@ internal static class PowerSelectUI {
                     VerticalAlignment = VerticalAlignment.Center,
                 };
                 triggerLabel.AddThemeFontSizeOverride("font_size", 9);
-                triggerLabel.AddThemeColorOverride("font_color", DevModeTheme.Accent);
+                triggerLabel.AddThemeColorOverride("font_color", KitLibTheme.Accent);
                 row.AddChild(triggerLabel);
 
                 var targetCol = action.Target switch {
@@ -971,7 +971,7 @@ internal static class PowerSelectUI {
                     VerticalAlignment = VerticalAlignment.Center,
                 };
                 targetTag.AddThemeFontSizeOverride("font_size", 9);
-                targetTag.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+                targetTag.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
                 row.AddChild(targetTag);
 
                 var toggleBtn = new CheckButton {

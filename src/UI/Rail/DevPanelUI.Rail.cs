@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Panels;
-using DevMode.Settings;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Panels;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     private static VBoxContainer? _railVBox;

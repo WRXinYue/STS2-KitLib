@@ -1,7 +1,7 @@
-using DevMode.Settings;
+using KitLib.Settings;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 /// <summary>
 /// Immutable set of color tokens that define a visual theme for the DevMode UI.

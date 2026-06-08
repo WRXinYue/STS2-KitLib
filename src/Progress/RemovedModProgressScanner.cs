@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using DevMode.Modding;
+using KitLib.Modding;
 
-namespace DevMode.Progress;
+namespace KitLib.Progress;
 
 internal static class RemovedModProgressScanner {
     public static void WarnIfResidue(
         ModSetFingerprintData? previous,
-        IReadOnlyList<DevModeModInfo> currentMods,
+        IReadOnlyList<KitLibModInfo> currentMods,
         int profileId,
         string? backupDir) {
         if (previous?.Mods == null || previous.Mods.Count == 0)

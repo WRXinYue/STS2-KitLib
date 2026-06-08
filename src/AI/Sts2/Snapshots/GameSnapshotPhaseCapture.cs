@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Planning;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Sts2.Helpers;
-using DevMode.Actions;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Planning;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Sts2.Helpers;
+using KitLib.Actions;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Merchant;
@@ -25,7 +25,7 @@ using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI.Sts2.Snapshots;
+namespace KitLib.AI.Sts2.Snapshots;
 
 /// <summary>Captures overlay / room UI context for non-combat AI decisions.</summary>
 internal static class GameSnapshotPhaseCapture

@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Godot;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Runs combat snapshot / game API calls on the Godot main thread (AI poll runs on a threadpool thread).</summary>
 internal static class AiMainThread {

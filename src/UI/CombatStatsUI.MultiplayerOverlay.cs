@@ -1,17 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.CombatStats;
-using DevMode.Settings;
+using KitLib.CombatStats;
+using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
-    internal const string MultiplayerOverlayRootName = "DevModeCombatStatsMpOverlay";
+    internal const string MultiplayerOverlayRootName = "KitLibCombatStatsMpOverlay";
 
     private static MultiplayerOverlayHost? _mpOverlay;
     private static NGlobalUi? _mpOverlayGlobalUi;

@@ -1,4 +1,4 @@
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 /// <summary>Discrete host-authoritative cheat actions (Tier 2).</summary>
 public enum MpCheatCommandKind {

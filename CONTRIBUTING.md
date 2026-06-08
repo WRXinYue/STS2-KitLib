@@ -4,7 +4,7 @@
 
 - Use **Conventional Commits** for PR titles and commit messages (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, …).
 - Keep changes **scoped** to the feature or fix; avoid drive-by reformatting or unrelated file churn.
-- Before opening a PR: `dotnet build` on `DevMode.sln`, and run **`make format`** (or `dotnet format DevMode.sln`) so C# matches [`.editorconfig`](.editorconfig). If you touch `scripts/`, run **`flake8 scripts`** when flake8 is installed.
+- Before opening a PR: `dotnet build` on `KitLib.sln`, and run **`make format`** (or `dotnet format KitLib.sln`) so C# matches [`.editorconfig`](.editorconfig). If you touch `scripts/`, run **`flake8 scripts`** when flake8 is installed.
 - Do **not** commit `.env`, `local.props`, or anything under `icons/` that comes from npm; they are local or generated.
 
 ### Code style (C#)

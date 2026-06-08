@@ -1,7 +1,7 @@
-using DevMode.Icons;
+using KitLib.Icons;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace DevMode.Panels;
+namespace KitLib.Panels;
 
 /// <summary>Represents a tab in the DevMode rail.</summary>
 internal interface IDevPanelTab {
@@ -43,8 +43,8 @@ internal enum DevPanelTabGroup {
 }
 
 /// <summary>
-/// Rail tab capability. When <see cref="DevModeState.CheatsInRun"/> (<see cref="NormalRunMode.Cheat"/> or
-/// <see cref="DevModeState.InDevRun"/>), every tab appears.
+/// Rail tab capability. When <see cref="KitLibState.CheatsInRun"/> (<see cref="NormalRunMode.Cheat"/> or
+/// <see cref="KitLibState.InDevRun"/>), every tab appears.
 /// Otherwise (e.g. <see cref="NormalRunMode.DevPanel"/> on an ordinary run), only <see cref="Developer"/> tabs appear
 /// (logs, Harmony, settings, combat stats, …).
 /// </summary>

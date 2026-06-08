@@ -3,7 +3,7 @@ using System.Linq;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace DevMode.AI;
+namespace KitLib.AI;
 
 /// <summary>Scoped player for MpAiTeammateHost decisions (not the local human).</summary>
 internal static class AiHostContext {

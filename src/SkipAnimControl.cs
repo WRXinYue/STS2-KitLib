@@ -1,7 +1,7 @@
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Settings;
 
-namespace DevMode;
+namespace KitLib;
 
 /// <summary>
 /// Toggles the game's built-in <see cref="FastModeType.Instant"/> mode to skip card animations.

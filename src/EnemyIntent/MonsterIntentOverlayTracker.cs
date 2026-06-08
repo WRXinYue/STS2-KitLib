@@ -1,7 +1,7 @@
 using System;
 using MegaCrit.Sts2.Core.Combat;
 
-namespace DevMode.EnemyIntent;
+namespace KitLib.EnemyIntent;
 
 /// <summary>Notifies UI when combat enemy intents may have changed.</summary>
 internal static class MonsterIntentOverlayTracker {

@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using DevMode;
-using DevMode.Actions;
+using KitLib;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Multiplayer.Cheat;
+namespace KitLib.Multiplayer.Cheat;
 
 internal static class MpCheatPowerCoordinator {
     public static Task<string> TryHostAddPowerAsync(Player target, PowerModel power, int amount, PowerTarget targetKind) =>

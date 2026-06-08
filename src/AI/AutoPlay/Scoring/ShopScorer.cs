@@ -1,10 +1,10 @@
 using System;
 using System.Text.Json.Nodes;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 public static class ShopScorer {
     const int MinGoldAfterShopping = 25;

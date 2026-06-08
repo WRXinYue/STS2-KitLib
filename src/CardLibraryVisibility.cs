@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Settings;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode;
+namespace KitLib;
 
 internal static class CardLibraryVisibility {
     public static bool ShowHiddenCards => SettingsStore.Current.ShowHiddenCards;

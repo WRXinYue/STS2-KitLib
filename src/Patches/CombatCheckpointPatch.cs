@@ -1,11 +1,11 @@
 using System;
-using DevMode.Combat;
+using KitLib.Combat;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Rooms;
 
-namespace DevMode.Patches;
+namespace KitLib.Patches;
 
 /// <summary>Auto-saves combat checkpoint nodes; independent of hook trigger IsActive gate.</summary>
 [HarmonyPatch(typeof(CombatManager), nameof(CombatManager.SetUpCombat))]
@@ -36,7 +36,7 @@ internal static class CombatCheckpointPatch {
     }
 
     private static void OnPlayerTurnStarted() {
-        if (!DevModeState.IsActive)
+        if (!KitLibState.IsActive)
             return;
         if (CombatManager.Instance is not { IsInProgress: true })
             return;

@@ -1,6 +1,6 @@
-namespace DevMode.Settings;
+namespace KitLib.Settings;
 
-public sealed partial class DevModeSettings {
+public sealed partial class KitLibSettings {
     public HotkeyBinding HotkeyToggleRail { get; set; } = HotkeyDefaults.ToggleRail.Clone();
     public HotkeyBinding HotkeyClosePanel { get; set; } = HotkeyDefaults.ClosePanel.Clone();
     public HotkeyBinding HotkeyNextTab { get; set; } = HotkeyDefaults.NextTab.Clone();

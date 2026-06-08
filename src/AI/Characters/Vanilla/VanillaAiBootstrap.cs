@@ -1,11 +1,11 @@
-using DevMode.AI.AutoPlay.Strategies;
-using DevMode.AI.Knowledge;
-using DevMode.AI.Planning;
-using DevMode.Companion;
+using KitLib.AI.AutoPlay.Strategies;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
+using KitLib.Companion;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 
-namespace DevMode.AI.Characters.Vanilla;
+namespace KitLib.AI.Characters.Vanilla;
 
 public static class VanillaAiBootstrap {
     static readonly StrongStrategy DefaultStrategy = new();

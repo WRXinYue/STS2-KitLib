@@ -1,29 +1,29 @@
-using DevMode.AI;
-using DevMode.CombatStats;
-using DevMode.EnemyIntent;
-using DevMode.Feedback;
-using DevMode.Interop;
-using DevMode.Mcp;
-using DevMode.Multiplayer.Cheat;
-using DevMode.Patches;
-using DevMode.Scripts;
-using DevMode.Settings;
+using KitLib.AI;
+using KitLib.CombatStats;
+using KitLib.EnemyIntent;
+using KitLib.Feedback;
+using KitLib.Interop;
+using KitLib.Mcp;
+using KitLib.Multiplayer.Cheat;
+using KitLib.Patches;
+using KitLib.Scripts;
+using KitLib.Settings;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Modding;
 
-namespace DevMode;
+namespace KitLib;
 
 [ModInitializer(nameof(Initialize))]
 public class MainFile {
-    public const string ModID = "DevMode";
+    public const string ModID = "KitLib";
 
     public static MegaCrit.Sts2.Core.Logging.Logger Logger { get; } =
         new(ModID, MegaCrit.Sts2.Core.Logging.LogType.Generic);
 
     public static void Initialize() {
-        Logger.Info("DevMode initializing...");
+        Logger.Info("KitLib initializing...");
 
-        DevModeInstanceRegistry.Register();
+        KitLibInstanceRegistry.Register();
 
         // Load persisted settings (theme, etc.) before anything else
         SettingsStore.Load();
@@ -37,8 +37,8 @@ public class MainFile {
         CrashRecoveryHooks.Register();
         CrashRecoveryStore.MarkSessionStarted();
 
-        if (DevModeInstanceRegistry.IsDualInstanceActive())
-            Logger.Info($"[DevMode] Dual-instance mode ({DevModeInstanceRegistry.ActiveInstanceCount()} processes).");
+        if (KitLibInstanceRegistry.IsDualInstanceActive())
+            Logger.Info($"[KitLib] Dual-instance mode ({KitLibInstanceRegistry.ActiveInstanceCount()} processes).");
 
         ScriptManager.Initialize();
         ScriptBridge.Start();
@@ -55,6 +55,6 @@ public class MainFile {
         var harmony = new Harmony(ModID);
         harmony.PatchAll();
         ScriptCardPlayedPatch.TryApply(harmony);
-        Logger.Info("DevMode initialized — Harmony patches applied.");
+        Logger.Info("KitLib initialized — Harmony patches applied.");
     }
 }

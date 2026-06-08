@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
-namespace DevMode.Mcp.Tools;
+namespace KitLib.Mcp.Tools;
 
 internal sealed class DevSetCheatTool : IMcpTool {
     public string Name => "dev_set_cheat";

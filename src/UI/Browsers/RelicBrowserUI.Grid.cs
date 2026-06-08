@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.Modding;
+using KitLib.Modding;
 using Godot;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class RelicBrowserUI {
     private const float TileMinWidth = 110f;
@@ -148,8 +148,8 @@ internal static partial class RelicBrowserUI {
         // ── Name label (rarity-tinted, below the frame) ──
 
         var nameColor = rarity == RelicRarity.None
-            ? DevModeTheme.Subtle
-            : rarityCol.Lerp(DevModeTheme.TextPrimary, 0.45f);
+            ? KitLibTheme.Subtle
+            : rarityCol.Lerp(KitLibTheme.TextPrimary, 0.45f);
 
         var label = new Label {
             Text = name,

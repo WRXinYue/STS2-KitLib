@@ -1,6 +1,6 @@
 using System;
 
-namespace DevMode.AI.Combat.Simulation;
+namespace KitLib.AI.Combat.Simulation;
 
 /// <summary>Deck-order value for mid-turn and post-draw scoring.</summary>
 public static class PileRhythmEvaluator {

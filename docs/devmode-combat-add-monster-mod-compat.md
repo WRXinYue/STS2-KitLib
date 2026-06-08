@@ -1,4 +1,4 @@
-# DevMode 战斗中加怪 — 与其他 mod 的兼容性
+# KitLib 战斗中加怪 — 与其他 mod 的兼容性
 
 ## 现象
 
@@ -13,10 +13,10 @@ DevMode 调用原版 `CreatureCmd.Add`，与地图跳转无关。
 | **LustTravel2 敌人耐力条**（狐妖局） | 旧版在 `CreatureCmd.Add` Postfix 里对 `PowerCmd` 使用 `GetResult()`，阻塞 `await CreatureCmd.Add`。已在 LustTravel2 改为 `TaskHelper.RunSafely` + `EnsureOnCreatureAsync`。 |
 | **未缓存怪物场景** | `creature_visuals/*.tscn` 在主线程同步加载会顿挫。DevMode 在 `CombatEnemyActions.TryPreloadMonsterVisualsAsync` 中做 threaded preload。 |
 
-## DevMode 侧
+## KitLib 侧
 
 - 实现：`src/Actions/CombatEnemyActions.cs`
-- 诊断日志：`[DevMode.CombatAdd]`（`begin` / `CreatureCmd.Add starting` / `done` / `success`）
+- 诊断日志：`[KitLib.CombatAdd]`（`begin` / `CreatureCmd.Add starting` / `done` / `success`）
 
 ## LustTravel2 侧（详细）
 

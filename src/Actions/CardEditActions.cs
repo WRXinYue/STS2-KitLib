@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DevMode.Presets;
+using KitLib.Presets;
 using Godot;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -12,7 +12,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 
-namespace DevMode.Actions;
+namespace KitLib.Actions;
 
 /// <summary>
 /// Dev panel card editing: cost (official <see cref="CardModel.EnergyCost"/> API), replay, damage, block,

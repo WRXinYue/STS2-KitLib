@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DevMode.CombatStats;
+using KitLib.CombatStats;
 using Godot;
 
-namespace DevMode.UI;
+namespace KitLib.UI;
 
 internal static partial class CombatStatsUI {
     private const float SidebarBarHeight = 72f;
@@ -48,7 +48,7 @@ internal static partial class CombatStatsUI {
     }
 
     private static Color ScoreKindColor(int index) {
-        float hue = (DevModeTheme.Accent.H + index * 0.12f) % 1f;
+        float hue = (KitLibTheme.Accent.H + index * 0.12f) % 1f;
         return Color.FromHsv(hue, 0.58f, 0.92f);
     }
 
@@ -116,8 +116,8 @@ internal static partial class CombatStatsUI {
     private static Control BuildScoreBreakdownTooltipControl(string name, int total, CombatScoreBreakdown bd) {
         var panel = new PanelContainer();
         panel.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
-            BgColor = DevModeTheme.PanelBg,
-            BorderColor = DevModeTheme.PanelBorder,
+            BgColor = KitLibTheme.PanelBg,
+            BorderColor = KitLibTheme.PanelBorder,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,
             BorderWidthLeft = 1,
@@ -138,14 +138,14 @@ internal static partial class CombatStatsUI {
 
         var title = new Label { Text = name };
         title.AddThemeFontSizeOverride("font_size", 11);
-        title.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+        title.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(title);
 
         var totalLbl = new Label {
             Text = I18N.T("combatStats.sidebar.total", "Total {0}", total),
         };
         totalLbl.AddThemeFontSizeOverride("font_size", 10);
-        totalLbl.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        totalLbl.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         vbox.AddChild(totalLbl);
 
         foreach (var (key, amount, color) in ScoreBreakdownSegments(bd)) {
@@ -179,7 +179,7 @@ internal static partial class CombatStatsUI {
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         line.AddThemeFontSizeOverride("font_size", 10);
-        line.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+        line.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
         row.AddChild(line);
         return row;
     }
@@ -223,7 +223,7 @@ internal static partial class CombatStatsUI {
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
             _empty.AddThemeFontSizeOverride("font_size", railCompact ? 8 : 10);
-            _empty.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            _empty.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
 
             _root.AddChild(_list);
             if (!railCompact)
@@ -339,7 +339,7 @@ internal static partial class CombatStatsUI {
                 TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
             };
             nameLabel.AddThemeFontSizeOverride("font_size", 10);
-            nameLabel.AddThemeColorOverride("font_color", DevModeTheme.TextPrimary);
+            nameLabel.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
 
             var bd = CombatScoreCalculator.Breakdown(player);
             float barHeight = Math.Max(6f, SidebarBarHeight * total / (float)maxScore);
@@ -361,7 +361,7 @@ internal static partial class CombatStatsUI {
                 CustomMinimumSize = new Vector2(36, 0),
             };
             scoreLabel.AddThemeFontSizeOverride("font_size", 11);
-            scoreLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            scoreLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
 
             row.AddChild(nameLabel);
             row.AddChild(barColumn);
@@ -395,7 +395,7 @@ internal static partial class CombatStatsUI {
                 HorizontalAlignment = HorizontalAlignment.Center,
             };
             scoreLabel.AddThemeFontSizeOverride("font_size", 12);
-            scoreLabel.AddThemeColorOverride("font_color", DevModeTheme.TextSecondary);
+            scoreLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
             ApplyBarTooltip(scoreLabel, tooltip);
             column.AddChild(scoreLabel);
 
@@ -423,7 +423,7 @@ internal static partial class CombatStatsUI {
             });
             var l = new Label { Text = label, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             l.AddThemeFontSizeOverride("font_size", 9);
-            l.AddThemeColorOverride("font_color", DevModeTheme.Subtle);
+            l.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
             row.AddChild(l);
             return row;
         }
@@ -484,8 +484,8 @@ internal static partial class CombatStatsUI {
         }
 
         private void DrawScaleTicks(float barX, float barW, float totalW, float h) {
-            var major = new Color(DevModeTheme.Subtle, 0.65f);
-            var labelColor = new Color(DevModeTheme.TextSecondary, 0.92f);
+            var major = new Color(KitLibTheme.Subtle, 0.65f);
+            var labelColor = new Color(KitLibTheme.TextSecondary, 0.92f);
             string totalLabel = "TOT";
 
             DrawTickWithLabels(barX, barW, totalW, TopTickInset, major, labelColor, totalLabel, _total.ToString(), nearTop: true);

@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
-using DevMode.AI;
-using DevMode.AI.Core.Schema;
-using DevMode.AI.Planning;
+using KitLib.AI;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Planning;
 
-namespace DevMode.AI.AutoPlay.Scoring;
+namespace KitLib.AI.AutoPlay.Scoring;
 
 public static class CardRewardScorer {
     public static GameAction PickBest(JsonObject snapshot) {

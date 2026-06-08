@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DevMode.AI.Knowledge;
+namespace KitLib.AI.Knowledge;
 
 public sealed record PotionCombatEffect(
     PotionCombatEffectKind Kind,
