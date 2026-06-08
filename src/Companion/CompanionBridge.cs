@@ -1,90 +1,71 @@
-using System.Collections.Generic;
-using System.Linq;
 using KitLib.AI.Core;
 using KitLib.AI.Knowledge;
+using KitLib.Abstractions.Host;
 using KitLib.AI.Planning;
-using KitLib.Multiplayer.Cheat;
-using KitLib.Multiplayer.PseudoCoop;
-using KitLib.Multiplayer.SyncBot;
-using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.Runs;
+using KitLib.Host;
 
 namespace KitLib.Companion;
 
-/// <summary>Public API for spawning AI companions in pseudo-coop / host multiplayer runs.</summary>
+/// <summary>Public API for content mods; execution delegates to KitLib.AI when loaded.</summary>
 public static class CompanionBridge {
     public static bool IsAvailable =>
-        !KitLibState.PseudoCoopDeferHeavyUi;
+        KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai) && !KitLibState.PseudoCoopDeferHeavyUi;
 
     public static bool IsHostMultiplayerRun =>
-        MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost;
+        KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai) && KitLibHost.IsHostMultiplayerRun?.Invoke() == true;
 
-    public static IReadOnlyList<CompanionInfo> ListCompanions() {
-        var state = RunManager.Instance?.DebugOnlyGetState();
-        var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
-        if (state == null || hostNetId == 0)
-            return [];
+    public static IReadOnlyList<CompanionInfo> ListCompanions() =>
+        KitLibHost.ListCompanionsHandler?.Invoke() ?? [];
 
-        return state.Players
-            .Where(p => p.NetId != hostNetId)
-            .Select(p => new CompanionInfo(
-                p.NetId,
-                p.Character!.Id,
-                SimulatedPeerRegistry.IsHostDrivenPeer(p.NetId),
-                p.Creature.IsAlive))
-            .ToList();
+    public static CompanionSpawnResult TrySummon(CompanionSpawnRequest request) {
+        if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
+            return new CompanionSpawnResult(false, 0, "KitLib.AI module is not loaded.");
+        return KitLibHost.TrySummonCompanion?.Invoke(request)
+            ?? new CompanionSpawnResult(false, 0, "KitLib.AI companion spawn is unavailable.");
     }
 
-    public static CompanionSpawnResult TrySummon(CompanionSpawnRequest request) =>
-        CompanionSpawnService.TrySpawn(request);
-
-    /// <summary>Stops AI control and unregisters lobby roster entry; does not remove the player from run state.</summary>
     public static bool TryDismiss(ulong netId) {
-        if (netId == 0) return false;
-
-        var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
-        if (netId == hostNetId) return false;
-
-        CompanionRegistry.Unregister(netId);
-        PseudoCoopLobbyRoster.UnregisterSimulatedPeer(netId);
-        SimulatedPeerRegistry.Refresh();
-        MainFile.Logger.Info($"[Companion] Dismissed netId={netId} (AI/roster only).");
-        return true;
+        if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
+            return false;
+        return KitLibHost.TryDismissCompanion?.Invoke(netId) == true;
     }
 
-    public static void RegisterStrategy(ulong netId, IDecisionMaker strategy) =>
-        CompanionRegistry.Register(netId, strategy);
+    public static void RegisterStrategy(ulong netId, IDecisionMaker strategy) {
+        KitLibHost.RegisterNetIdStrategy(netId, strategy);
+        KitLibHost.RegisterNetIdStrategyDelegate?.Invoke(netId, strategy);
+    }
 
-    public static void UnregisterStrategy(ulong netId) =>
-        CompanionRegistry.Unregister(netId);
+    public static void UnregisterStrategy(ulong netId) {
+        KitLibHost.UnregisterNetIdStrategy(netId);
+        KitLibHost.UnregisterNetIdStrategyDelegate?.Invoke(netId);
+    }
 
-    /// <summary>Register a default strategy for all players of this character (mod init).</summary>
     public static void RegisterCharacterStrategy(
         string characterId,
         IDecisionMaker strategy,
         CharacterAiProfile? profile = null) =>
-        CharacterAiRegistry.Register(characterId, strategy, profile);
+        KitLibHost.RegisterCharacterStrategy(characterId, strategy, profile);
 
     public static void RegisterSnapshotContributor(IAiSnapshotContributor contributor) =>
-        AiSnapshotHub.Register(contributor);
+        KitLibHost.RegisterSnapshotContributor(contributor);
 
     public static void RegisterMoveModifier(IAiMoveModifier modifier) =>
-        AiMoveModifierHub.Register(modifier);
+        KitLibHost.RegisterMoveModifier(modifier);
 
     public static void RegisterDeckPlanContributor(IDeckPlanContributor contributor) =>
-        DeckPlanContributorHub.Register(contributor);
+        KitLibHost.RegisterDeckPlanContributor(contributor);
 
     public static void RegisterCardTagProvider(ICardTagProvider provider) =>
-        CardTagProviderHub.Register(provider);
+        KitLibHost.RegisterCardTagProvider(provider);
 
     public static bool TryEnsurePseudoCoopPreset() {
-        if (!IsAvailable) return false;
-        PseudoCoopBootstrap.ApplyPreset();
-        return true;
+        if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
+            return false;
+        return KitLibHost.TryEnsurePseudoCoopPresetHandler?.Invoke() == true;
     }
 
-    internal static void OnRunEnded() {
-        CompanionRegistry.ClearOnRunEnd();
-        CompanionNonCombatRegistry.ClearOnRunEnd();
+    public static void OnRunEnded() {
+        KitLibHost.ClearRunState();
+        KitLibHost.OnCompanionRunEnded?.Invoke();
     }
 }

@@ -278,7 +278,7 @@ internal static class HarmonyAnalysisUI {
                 if (!ReferenceEquals(smart, lastAppliedSmart) || lastSmartText == null) {
                     lastSmartText = HarmonySmartAnalysis.FormatReport(
                         smart,
-                        I18N.T("harmony.smart.heading", "=== Smart analysis (DevMode) ==="),
+                        I18N.T("harmony.smart.heading", "=== Smart analysis (KitLib) ==="),
                         I18N.T("harmony.smart.section.risk", "Likely problem spots (heuristic)"),
                         I18N.T("harmony.smart.riskIntro",
                             "These patterns often correlate with mod conflicts or fragile ordering — not proof. Use owner + patch method names to find the mod DLL."),
@@ -454,7 +454,7 @@ internal static class HarmonyAnalysisUI {
 
         vbox.AddChild(btnRow);
 
-        var timer = new Timer {
+        var timer = new Godot.Timer {
             WaitTime = AutoRefreshIntervalSec,
             OneShot = false,
             Autostart = true

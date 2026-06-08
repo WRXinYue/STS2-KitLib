@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json.Nodes;
+using KitLib.Cheat;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
@@ -22,8 +23,8 @@ internal static class DevCheatMcpHelper {
     }
 
     public static RuntimeStatModifiers EnsureStatModifiers() {
-        KitLibState.StatModifiers ??= new RuntimeStatModifiers();
-        return KitLibState.StatModifiers;
+        CheatRunState.StatModifiers ??= new RuntimeStatModifiers();
+        return CheatRunState.StatModifiers;
     }
 
     public static bool? ParseOptionalBool(JsonObject args, out string? error) {

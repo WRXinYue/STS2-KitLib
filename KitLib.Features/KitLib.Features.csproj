@@ -1,0 +1,50 @@
+<Project Sdk="Godot.NET.Sdk/4.5.1">
+  <Import Project="../eng/KitLib.SatelliteMod.targets" />
+  <PropertyGroup>
+    <ModId>KitLib.Features</ModId>
+    <AssemblyName>KitLib.Features</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../KitLib.Abstractions/KitLib.Abstractions.csproj" />
+    <ProjectReference Include="../KitLib.csproj" />
+    <ProjectReference Include="../KitLib.Shared/KitLib.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(Sts2DataDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)src\**\*.cs" />
+    <Compile Remove="$(RepoRoot)src\MainFile.cs" />
+    <Compile Remove="$(RepoRoot)src\KitLibState.cs" />
+    <Compile Remove="$(RepoRoot)src\I18N.cs" />
+    <Compile Remove="$(RepoRoot)src\Host\**\*.cs" />
+    <Compile Remove="$(RepoRoot)src\Companion\CompanionBridge.cs" />
+    <Compile Remove="$(RepoRoot)src\Companion\CompanionSpawnRequest.cs" />
+    <Compile Remove="$(RepoRoot)src\Companion\CompanionSpawnResult.cs" />
+    <Compile Remove="$(RepoRoot)src\Companion\CompanionInfo.cs" />
+    <Compile Remove="$(RepoRoot)src\Icons\**\*.cs" />
+    <Compile Remove="$(RepoRoot)src\Panel\DevPanelActionSession.cs" />
+    <Compile Remove="$(RepoRoot)src\Panel\IDevPanelTab.cs" />
+    <Compile Include="$(RepoRoot)KitLib.Cheat\CheatRestartState.cs" />
+    <Compile Include="$(RepoRoot)KitLib.Cheat\CheatRunState.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(RepoRoot)src\AI\Data\*.json" LogicalName="KitLib.AI.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)src\Icons\mdi-used.json" LogicalName="KitLib.Icons.mdi-used.json"
+                      Condition="Exists('$(RepoRoot)src\Icons\mdi-used.json')" />
+    <EmbeddedResource Include="$(RepoRoot)src\Localization\eng.json" LogicalName="KitLib.Localization.eng.json" />
+    <EmbeddedResource Include="$(RepoRoot)src\Localization\zhs.json" LogicalName="KitLib.Localization.zhs.json" />
+    <EmbeddedResource Include="$(RepoRoot)manual\eng\**\*" LogicalName="KitLib.Manual.eng.%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)manual\zhs\**\*" LogicalName="KitLib.Manual.zhs.%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="$(RepoRoot)src\Data\harmony-patch-registry.json" LogicalName="KitLib.Data.harmony-patch-registry.json" />
+  </ItemGroup>
+</Project>

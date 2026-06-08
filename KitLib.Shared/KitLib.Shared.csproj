@@ -1,0 +1,25 @@
+<Project Sdk="Godot.NET.Sdk/4.5.1">
+  <Import Project="../eng/KitLib.SatelliteMod.targets" />
+  <PropertyGroup>
+    <ModId>KitLib.Shared</ModId>
+    <AssemblyName>KitLib.Shared</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../KitLib.Abstractions/KitLib.Abstractions.csproj" />
+    <ProjectReference Include="../KitLib.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)src\Icons\**\*.cs" />
+    <Compile Include="$(RepoRoot)src\Panel\DevPanelActionSession.cs" />
+    <Compile Include="$(RepoRoot)src\Panel\IDevPanelTab.cs" />
+    <Compile Include="$(RepoRoot)src\KitLibInstance.cs" />
+  </ItemGroup>
+</Project>

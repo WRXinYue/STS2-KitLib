@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using KitLib.AI.AutoPlay;
 using KitLib.Actions;
+using KitLib.Host;
 using KitLib.Actions.CardModes;
 using KitLib.Icons;
 using KitLib.Multiplayer.Cheat;
@@ -30,46 +30,9 @@ namespace KitLib;
 ///   Context  → <see cref="RunContext"/>
 /// </summary>
 internal static class DevPanel {
-    // ──────── ActionSession ────────
-    // Runs one async action at a time. Calling Cancel() before a new Run()
-    // prevents the old action's completion callback from firing, eliminating
-    // the race between TryDismissCurrent and in-flight async wrappers.
-
-    internal sealed class ActionSession {
-        private int _gen;
-        public bool IsBusy { get; private set; }
-
-        /// <summary>Invalidate the in-flight action (if any).</summary>
-        public void Cancel() {
-            _gen++;
-            IsBusy = false;
-        }
-
-        /// <summary>
-        /// Run <paramref name="work"/> asynchronously.
-        /// <paramref name="onCompleted"/> is only called when the action finishes
-        /// naturally — not when it was superseded by Cancel() or a newer Run().
-        /// </summary>
-        public void Run(Func<Task> work, string label, Action onCompleted) {
-            IsBusy = true;
-            int myGen = ++_gen;
-            TaskHelper.RunSafely(Execute(work, label, myGen, onCompleted));
-        }
-
-        private async Task Execute(Func<Task> work, string label, int myGen, Action onCompleted) {
-            try { await work(); }
-            catch (Exception ex) { MainFile.Logger.Warn($"DevPanel: {label} failed: {ex.Message}"); }
-            finally {
-                IsBusy = false;
-                if (_gen == myGen)
-                    onCompleted();
-            }
-        }
-    }
-
     // ──────── State ────────
 
-    private static readonly ActionSession _session = new();
+    private static readonly DevPanelActionSession _session = new();
     private static NGlobalUi? _globalUi;
 
     private static readonly Dictionary<CardMode, ICardModeHandler> _cardHandlers = new() {
@@ -98,10 +61,12 @@ internal static class DevPanel {
                 GetSkipAnimLabel = SkipAnimControl.GetLabel,
             };
 
-            RegisterBuiltInTabs(globalUi, actions);
+            DevPanelSession.Actions = actions;
+            KitLibPanelOps.CurrentGlobalUi = globalUi;
+            KitLibPanelOps.TryDismissCurrent = _ => TryDismissCurrent();
+            KitLibPanelOps.OnPanelAttach?.Invoke(globalUi);
 
             DevPanelUI.Attach(globalUi, actions);
-            AiHudOverlayUI.Attach(globalUi);
             ((Node)globalUi).TreeExiting += () => Detach(globalUi);
 
             MainFile.Logger.Info("DevPanel: Sidebar attached.");
@@ -113,9 +78,9 @@ internal static class DevPanel {
 
     public static void Detach(NGlobalUi globalUi) {
         try {
+            KitLibPanelOps.OnPanelDetach?.Invoke(globalUi);
             DevPanelRegistry.DeactivateAll(globalUi);
             DevPanelUI.Detach(globalUi);
-            AiHudOverlayUI.Detach(globalUi);
             ClearState();
             SpeedControl.Reset();
             SkipAnimControl.Reset();
@@ -126,44 +91,9 @@ internal static class DevPanel {
         }
     }
 
-    // ──────── Built-in Tab Registration ────────
+    // ──────── Panel Openers (used by satellite tab registration) ────────
 
-    private static void RegisterBuiltInTabs(NGlobalUi globalUi, DevPanelActions actions) {
-        // Primary group — main feature panels
-        DevPanelRegistry.Register("devmode.cards", MdiIcon.Cards, I18N.T("panel.cards", "Cards"), 100, DevPanelTabGroup.Primary, _ => OpenCards());
-        DevPanelRegistry.Register("devmode.relics", MdiIcon.From("diamond-stone"), I18N.T("panel.relics", "Relics"), 200, DevPanelTabGroup.Primary, _ => OpenRelics());
-        DevPanelRegistry.Register("devmode.enemies", MdiIcon.Skull, I18N.T("panel.enemies", "Enemies"), 300, DevPanelTabGroup.Primary, _ => OpenEnemies());
-        DevPanelRegistry.Register("devmode.powers", MdiIcon.Flash, I18N.T("panel.powers", "Powers"), 400, DevPanelTabGroup.Primary, _ => OpenPowers());
-        DevPanelRegistry.Register("devmode.potions", MdiIcon.From("flask-outline"), I18N.T("panel.potions", "Potions"), 500, DevPanelTabGroup.Primary, _ => OpenPotions());
-        DevPanelRegistry.Register("devmode.events", MdiIcon.CalendarStar, I18N.T("panel.events", "Events"), 600, DevPanelTabGroup.Primary, _ => OpenEvents());
-        DevPanelRegistry.Register("devmode.rooms", MdiIcon.MapMarker, I18N.T("panel.rooms", "Rooms"), 650, DevPanelTabGroup.Primary, _ => OpenRooms());
-        DevPanelRegistry.Register("devmode.console", MdiIcon.Console, I18N.T("panel.console", "Console"), 700, DevPanelTabGroup.Primary, _ => OpenConsole());
-        DevPanelRegistry.Register("devmode.ai", MdiIcon.Robot, I18N.T("panel.ai", "AI Host"), 745, DevPanelTabGroup.Primary, gui => DevPanelUI.ShowAiOverlay(gui, actions));
-        DevPanelRegistry.Register("devmode.cheats", MdiIcon.Star, I18N.T("panel.cheats", "Cheats"), 750, DevPanelTabGroup.Primary, gui => DevPanelUI.ShowCheatsOverlay(gui, actions));
-        DevPanelRegistry.Register("devmode.enemyIntent", MdiIcon.From("bullseye-arrow"), I18N.T("panel.enemyIntent", "Enemy intents"), 754, DevPanelTabGroup.Primary, _ => OpenEnemyIntent(), kind: DevPanelTabKind.Developer);
-        DevPanelRegistry.Register("devmode.combatStats", MdiIcon.From("chart-bar"), I18N.T("panel.combatStats", "Combat Stats"), 756, DevPanelTabGroup.Primary, _ => OpenCombatStats(), kind: DevPanelTabKind.Developer);
-        DevPanelRegistry.Register("devmode.presets", MdiIcon.From("book-open-variant"), I18N.T("panel.presets", "Presets"), 800, DevPanelTabGroup.Primary, _ => OpenPresets());
-        DevPanelRegistry.Register("devmode.hooks", MdiIcon.LightningBolt, I18N.T("panel.hooks", "Hooks"), 900, DevPanelTabGroup.Primary, _ => OpenHooks());
-        DevPanelRegistry.Register("devmode.scripts", MdiIcon.PuzzleOutline, I18N.T("panel.scripts", "Scripts"), 950, DevPanelTabGroup.Primary, _ => OpenScripts());
-        DevPanelRegistry.Register("devmode.logs", MdiIcon.TextBoxOutline, I18N.T("panel.logs", "Logs"), 960, DevPanelTabGroup.Primary, _ => OpenLogs(), null,
-            DevPanelTabKind.Developer);
-        DevPanelRegistry.Register("devmode.harmonyAnalysis", MdiIcon.Magnify, I18N.T("panel.harmonyAnalysis", "Harmony analysis"), 962, DevPanelTabGroup.Primary,
-            _ => OpenHarmonyAnalysis(), null, DevPanelTabKind.Developer);
-        DevPanelRegistry.Register("devmode.frameworks", MdiIcon.FilterVariant, I18N.T("panel.frameworks", "Frameworks"), 965, DevPanelTabGroup.Primary,
-            _ => OpenFrameworks(), null, DevPanelTabKind.Developer);
-        DevPanelRegistry.Register("devmode.feedback", MdiIcon.BugOutline, I18N.T("panel.feedback", "Mod Feedback"), 970, DevPanelTabGroup.Primary,
-            _ => OpenFeedback(), null, DevPanelTabKind.Developer);
-
-        // Utility group — settings / tools
-        DevPanelRegistry.Register("devmode.save", MdiIcon.ContentSave, I18N.T("panel.save", "Save / Load"), 100, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSaveLoadOverlay(gui, actions));
-        DevPanelRegistry.Register("devmode.manual", MdiIcon.From("book-open-variant"), I18N.T("panel.manual", "Manual"), 150, DevPanelTabGroup.Utility, _ => OpenManual());
-        DevPanelRegistry.Register("devmode.settings", MdiIcon.Cog, I18N.T("panel.settings", "Settings"), 200, DevPanelTabGroup.Utility, gui => DevPanelUI.ShowSettingsOverlay(gui, actions), kind: DevPanelTabKind.Developer);
-
-    }
-
-    // ──────── Panel Openers ────────
-
-    private static void OpenCards() {
+    internal static void OpenCards() {
         if (!TryDismissCurrent()) return;
         KitLibState.ActivePanel = ActivePanel.Cards;
 
@@ -172,7 +102,7 @@ internal static class DevPanel {
         CardBrowserUI.Show(_globalUi, state, player);
     }
 
-    private static void OpenRelics() {
+    internal static void OpenRelics() {
         if (!TryDismissCurrent()) return;
         KitLibState.ActivePanel = ActivePanel.Relics;
 
@@ -181,14 +111,14 @@ internal static class DevPanel {
         RelicBrowserUI.Show(_globalUi, state, player);
     }
 
-    private static void OpenEnemies() {
+    internal static void OpenEnemies() {
         if (_globalUi == null) return;
         if (!TryDismissCurrent()) return;
         KitLibState.ActivePanel = ActivePanel.Enemies;
         EnemySelectUI.ShowMain(_globalUi);
     }
 
-    private static void OpenPowers() {
+    internal static void OpenPowers() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Powers;
@@ -198,7 +128,7 @@ internal static class DevPanel {
         PowerSelectUI.Show(_globalUi, player);
     }
 
-    private static void OpenPotions() {
+    internal static void OpenPotions() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Potions;
@@ -208,7 +138,7 @@ internal static class DevPanel {
         PotionSelectUI.Show(_globalUi, player);
     }
 
-    private static void OpenEvents() {
+    internal static void OpenEvents() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Events;
@@ -216,7 +146,7 @@ internal static class DevPanel {
         EventSelectUI.Show(_globalUi, (evt, request) => EventActions.TryForceEnterEvent(evt, request));
     }
 
-    private static void OpenRooms() {
+    internal static void OpenRooms() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Rooms;
@@ -224,7 +154,7 @@ internal static class DevPanel {
         RoomSelectUI.Show(_globalUi);
     }
 
-    private static void OpenConsole() {
+    internal static void OpenConsole() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Console;
@@ -232,7 +162,7 @@ internal static class DevPanel {
         ConsoleUI.Show(_globalUi);
     }
 
-    private static void OpenPresets() {
+    internal static void OpenPresets() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Presets;
@@ -240,7 +170,7 @@ internal static class DevPanel {
         PresetUI.Show(_globalUi);
     }
 
-    private static void OpenHooks() {
+    internal static void OpenHooks() {
         if (_globalUi == null) return;
         if (MpCheatUi.IsHooksDisabledInMultiplayer) return;
         TryDismissCurrent();
@@ -249,7 +179,7 @@ internal static class DevPanel {
         HookConfigUI.Show(_globalUi);
     }
 
-    private static void OpenScripts() {
+    internal static void OpenScripts() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Scripts;
@@ -257,7 +187,7 @@ internal static class DevPanel {
         ScriptUI.Show(_globalUi);
     }
 
-    private static void OpenLogs() {
+    internal static void OpenLogs() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Logs;
@@ -268,7 +198,7 @@ internal static class DevPanel {
         DevPanelUI.RefreshRailHintPresentation();
     }
 
-    private static void OpenCombatStats() {
+    internal static void OpenCombatStats() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.CombatStats;
@@ -276,7 +206,7 @@ internal static class DevPanel {
         CombatStatsUI.Show(_globalUi);
     }
 
-    private static void OpenEnemyIntent() {
+    internal static void OpenEnemyIntent() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.EnemyIntent;
@@ -284,7 +214,7 @@ internal static class DevPanel {
         EnemyIntentUI.Show(_globalUi);
     }
 
-    private static void OpenHarmonyAnalysis() {
+    internal static void OpenHarmonyAnalysis() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.HarmonyAnalysis;
@@ -292,7 +222,7 @@ internal static class DevPanel {
         HarmonyAnalysisUI.Show(_globalUi);
     }
 
-    private static void OpenFrameworks() {
+    internal static void OpenFrameworks() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Frameworks;
@@ -300,7 +230,7 @@ internal static class DevPanel {
         FrameworkBridgeUI.Show(_globalUi);
     }
 
-    private static void OpenFeedback() {
+    internal static void OpenFeedback() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Feedback;
@@ -308,7 +238,7 @@ internal static class DevPanel {
         FeedbackReportUI.Show(_globalUi);
     }
 
-    private static void OpenManual() {
+    internal static void OpenManual() {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Manual;
@@ -316,7 +246,7 @@ internal static class DevPanel {
         ManualUI.Show(_globalUi);
     }
 
-    private static void StartNewTest() {
+    internal static void StartNewTest() {
         try {
             var game = NGame.Instance;
             var rm = RunManager.Instance;
@@ -332,7 +262,7 @@ internal static class DevPanel {
     private static async Task StartNewTestAsync(NGame game, RunManager rm) {
         await game.Transition.FadeOut();
 
-        AiPlayModule.Instance.StopLoop();
+        KitLibHost.StopAiPlayLoop?.Invoke();
         SkipAnimControl.Reset();
 
         if (rm.IsInProgress)
@@ -370,7 +300,7 @@ internal static class DevPanel {
 
     // ──────── Panel Switching ────────
 
-    private static bool TryDismissCurrent() {
+    internal static bool TryDismissCurrent() {
         if (_session.IsBusy) RunContext.Clear();
         _session.Cancel();                     // invalidate before closing overlays
         NavigationHelper.CloseCapstone();

@@ -28,7 +28,7 @@ internal static class CrashRecoveryPromptUI {
         if (report == null)
             return false;
 
-        MainFile.Logger.Info("[DevMode CrashRecovery] Showing startup crash recovery prompt.");
+        MainFile.Logger.Info("[KitLib CrashRecovery] Showing startup crash recovery prompt.");
         Callable.From(() => Show(mainMenu, report)).CallDeferred();
         return true;
     }

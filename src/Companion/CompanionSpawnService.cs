@@ -98,4 +98,30 @@ internal static class CompanionSpawnService {
         MpCheatSession.TryArmSession("companion_spawn", allowWhileDeferredUi: true);
         SimulatedPeerRegistry.Refresh();
     }
+
+    internal static bool TryDismissViaBridge(ulong netId) {
+        if (netId == 0) return false;
+        var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
+        if (netId == hostNetId) return false;
+        CompanionRegistry.Unregister(netId);
+        PseudoCoopLobbyRoster.UnregisterSimulatedPeer(netId);
+        SimulatedPeerRegistry.Refresh();
+        MainFile.Logger.Info($"[Companion] Dismissed netId={netId} (AI/roster only).");
+        return true;
+    }
+
+    internal static IReadOnlyList<CompanionInfo> ListForBridge() {
+        var state = RunManager.Instance?.DebugOnlyGetState();
+        var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
+        if (state == null || hostNetId == 0)
+            return [];
+        return state.Players
+            .Where(p => p.NetId != hostNetId)
+            .Select(p => new CompanionInfo(
+                p.NetId,
+                p.Character!.Id,
+                SimulatedPeerRegistry.IsHostDrivenPeer(p.NetId),
+                p.Creature.IsAlive))
+            .ToList();
+    }
 }

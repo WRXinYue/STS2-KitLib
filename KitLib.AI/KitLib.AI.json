@@ -1,0 +1,11 @@
+{
+  "id": "KitLib.AI",
+  "name": "KitLib AI",
+  "author": "WRXinYue",
+  "description": "KitLib AI Host — autoplay, companions, and AI knowledge data.",
+  "version": "0.13.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": ["KitLib", "KitLib.Shared", "KitLib.Features"],
+  "affects_gameplay": false
+}

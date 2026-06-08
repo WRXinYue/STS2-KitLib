@@ -1,0 +1,11 @@
+{
+  "id": "KitLib.Cheat",
+  "name": "KitLib Cheat",
+  "author": "WRXinYue",
+  "description": "KitLib cheat module — tab registration and cheat runtime hooks.",
+  "version": "0.13.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": ["KitLib", "KitLib.Shared", "KitLib.Features", "KitLib.Panel"],
+  "affects_gameplay": false
+}

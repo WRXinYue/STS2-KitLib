@@ -24,7 +24,8 @@ local.props
 .idea/
 .vscode/launch.json
 .vscode/tasks.json
-*.user
+*.csproj.user
+*.sln.docstates
 
 # Icons source (large, from @iconify-json/mdi npm package)
 /icons/

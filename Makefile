@@ -57,7 +57,12 @@ ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
 MCP_PUBLISH_EXE := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp.exe
 MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
 
-.PHONY: help init icons format deps build deploy sync sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip clean \
+MOD_PROJECTS := KitLib.csproj KitLib.Shared/KitLib.Shared.csproj KitLib.Features/KitLib.Features.csproj \
+	KitLib.User/KitLib.User.csproj KitLib.Cheat/KitLib.Cheat.csproj KitLib.Dev/KitLib.Dev.csproj \
+	KitLib.AI/KitLib.AI.csproj KitLib.Panel/KitLib.Panel.csproj
+PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
+
+.PHONY: help init icons format deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean \
         build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta upload-all-beta \
         launch launch-beta sync-launch sync-beta-run dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         upload-github upload-nexus upload-nuget
@@ -70,7 +75,10 @@ help:
 	@echo "  format       dotnet format KitLib.sln (EditorConfig / pre-commit)"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build to build/KitLib/, then copy into game mods/KitLib/ only"
+	@echo "  sync         build Core to build/KitLib/, then copy into game mods/KitLib/ only"
+	@echo "  sync-full    build-all + deploy every KitLib* mod into game mods/"
+	@echo "  build-all    dotnet build solution (Core + Features + satellites)"
+	@echo "  zip-full     build-all + package Core/Full/per-module zips under build/"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
 	@echo "  sync-framework-mods  copy DevMode NuGet STS2-RitsuLib into game (overwrites other RitsuLib builds)"
@@ -126,10 +134,16 @@ deps:
 build:
 	$(DOTNET) publish $(MOD_MAIN)
 
+build-all:
+	$(DOTNET) build KitLib.sln
+
 deploy:
 	$(DEPLOY_COPY)
 
 sync: build deploy
+
+sync-full: build-all
+	$(PYTHON) scripts/deploy_modules.py
 
 sync-framework-mods:
 	$(DOTNET) msbuild $(MOD_MAIN) -t:SyncFrameworkModsToGame -p:DisableFrameworkModsAfterRestore=false
@@ -212,6 +226,9 @@ readme-nexus:
 # ── zip: build + package into build/KitLib-vX.X.X.zip ──
 ZIP_NAME := build/KitLib-v$(VERSION).zip
 DIST_DIR := build/dist/KitLib
+
+zip-full: build-all
+	$(PACKAGE_MODULES) --skip-build
 
 ifeq ($(OS),Windows_NT)
 zip-mcp: build-tools

@@ -14,13 +14,13 @@ namespace KitLib.Patches;
 
 /// <summary>
 /// Multiplayer compatibility patches.
-/// Filters DevMode from mod signature lists and normalizes ModelDb hash
+/// Filters KitLib modules from mod signature lists and normalizes ModelDb hash
 /// so the mod doesn't break multiplayer handshakes.
 /// </summary>
 internal static class MultiplayerCompatRules {
     public const string MpCheatCapabilitySignature = "KitLib:MpCheat";
 
-    private static readonly string[] IgnoredPrefixes = ["KitLib", "DevMode"];
+    private static readonly string[] IgnoredPrefixes = ["KitLib"];
     private static bool? _hasCustomModelTypes;
     private static bool _loggedModelTypeCheck;
     private static bool _loggedHashNormalization;
@@ -37,7 +37,7 @@ internal static class MultiplayerCompatRules {
 
     public static bool ShouldIgnore(string? sig) {
         if (string.IsNullOrWhiteSpace(sig)) return false;
-        // MpCheat opt-in must not enter vanilla mod diff (causes "host has DevMode:MpCheat" kick).
+        // MpCheat opt-in must not enter vanilla mod diff (causes "host has KitLib:MpCheat" kick).
         if (sig.Equals(MpCheatCapabilitySignature, StringComparison.OrdinalIgnoreCase))
             return true;
         return IgnoredPrefixes.Any(p => sig.StartsWith(p, StringComparison.OrdinalIgnoreCase));
@@ -54,7 +54,7 @@ internal static class MultiplayerCompatRules {
             message.idDatabaseHash = ModelIdSerializationCache.Hash;
             if (!_loggedHashNormalization) {
                 _loggedHashNormalization = true;
-                MainFile.Logger.Warn("Normalized multiplayer ModelDb hash for DevMode compatibility.");
+                MainFile.Logger.Warn("Normalized multiplayer ModelDb hash for KitLib compatibility.");
             }
         }
     }
@@ -90,7 +90,7 @@ internal static class MultiplayerCompatRules {
     }
 }
 
-/// <summary>Filter DevMode from multiplayer mod signature list.</summary>
+/// <summary>Filter KitLib modules from multiplayer mod signature list.</summary>
 [HarmonyPatch(typeof(ModManager), nameof(ModManager.GetGameplayRelevantModNameList))]
 public static class MultiplayerModSyncPatch {
     public static void Postfix(ref List<string> __result) {

@@ -1,0 +1,11 @@
+{
+  "id": "KitLib.Features",
+  "name": "KitLib Features",
+  "author": "WRXinYue",
+  "description": "Shared KitLib gameplay, UI, AI, and patch implementations.",
+  "version": "0.13.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": ["KitLib", "KitLib.Shared"],
+  "affects_gameplay": false
+}

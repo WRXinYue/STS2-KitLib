@@ -1,0 +1,11 @@
+{
+  "id": "KitLib.Shared",
+  "name": "KitLib Shared",
+  "author": "WRXinYue",
+  "description": "Shared KitLib settings, icons, and modding helpers.",
+  "version": "0.13.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": ["KitLib"],
+  "affects_gameplay": false
+}

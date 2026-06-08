@@ -14,7 +14,7 @@
 - **设置 → 游戏（Game）** — **局内右侧边栏**（战斗快捷 + 统计 rail）、游戏速度、跳过动画、overlay 开关。
 - **普通 run** — 标题 **KITLIB** 中切换 **Normal run: 关闭 / 工具箱 / 作弊模式**，在非测试局也保留侧栏。
 
-可从 [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) 安装，或源码构建（`python scripts/init.py`，再 `make sync`）。Steam **beta** 分支需使用对应的 beta mod 包。
+可从 [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) 安装，或源码构建（`python scripts/init.py`，再 `make sync-full` 部署全部模块）。Steam **beta** 分支需使用对应的 beta mod 包。推荐发布包 **KitLib-Full**（与旧版单体功能等价）。
 
 ## 面板一览
 

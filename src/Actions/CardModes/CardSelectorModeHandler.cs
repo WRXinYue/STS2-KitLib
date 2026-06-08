@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KitLib.Navigation;
+using KitLib.Panels;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
@@ -28,7 +29,7 @@ internal abstract class CardSelectorModeHandler : ICardModeHandler {
         return FilterCards(cards).Count > 0;
     }
 
-    public void Execute(NGlobalUi globalUi, DevPanel.ActionSession session, RunState state, Player player) {
+    public void Execute(NGlobalUi globalUi, DevPanelActionSession session, RunState state, Player player) {
         NavigationHelper.ClosePauseMenu();
         session.Run(
             () => ExecuteAsync(state, player),

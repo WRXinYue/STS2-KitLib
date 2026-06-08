@@ -110,6 +110,24 @@ def main() -> int:
 
     print(f"Packed: {package}")
 
+    print("Packing STS2.KitLib.Abstractions...")
+    abstractions_out = _REPO_ROOT / "build" / "nuget"
+    abstractions_out.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            "dotnet",
+            "pack",
+            str(_REPO_ROOT / "KitLib.Abstractions" / "KitLib.Abstractions.csproj"),
+            "-c",
+            "Release",
+            "-o",
+            str(abstractions_out),
+            f"-p:Version={pkg_version}",
+        ],
+        cwd=_REPO_ROOT,
+        check=True,
+    )
+
     if args.dry_run:
         print("Dry run — skipping NuGet push.")
         return 0

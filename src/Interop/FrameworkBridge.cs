@@ -56,7 +56,7 @@ public static class FrameworkBridge {
     /// <summary>Subscribe once to RitsuLib lifecycle (replayable) and log a one-line snapshot.</summary>
     public static void Initialize() {
         if (!IsAvailable) {
-            MainFile.Logger.Info("[DevMode Bridge] RitsuLib not present — bridge disabled.");
+            MainFile.Logger.Info("[KitLib Bridge] RitsuLib not present — bridge disabled.");
             return;
         }
 
@@ -78,18 +78,18 @@ public static class FrameworkBridge {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode Bridge] RitsuLib lifecycle subscribe failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib Bridge] RitsuLib lifecycle subscribe failed: {ex.Message}");
         }
 
         try {
             var s = CaptureSnapshot();
             MainFile.Logger.Info(
-                $"[DevMode Bridge] Ritsu init={s.RitsuLibInitialized} active={s.RitsuLibActive} " +
+                $"[KitLib Bridge] Ritsu init={s.RitsuLibInitialized} active={s.RitsuLibActive} " +
                 $"pages={s.RitsuLibModSettingsPageCount} mods={s.RitsuLibDistinctOwningModCount} | " +
                 $"harmony methods={s.HarmonyStats.PatchedMethodCount}");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode Bridge] snapshot failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib Bridge] snapshot failed: {ex.Message}");
         }
     }
 
@@ -241,10 +241,10 @@ public static class FrameworkBridge {
             string modId   = type.GetProperty("FrameworkModId")?.GetValue(evt) as string ?? "?";
             bool isActive  = (bool)(type.GetProperty("IsActive")?.GetValue(evt) ?? false);
             MainFile.Logger.Info(
-                $"[DevMode Bridge] RitsuLib event: modId={modId}, active={isActive}");
+                $"[KitLib Bridge] RitsuLib event: modId={modId}, active={isActive}");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[DevMode Bridge] event log failed: {ex.Message}");
+            MainFile.Logger.Warn($"[KitLib Bridge] event log failed: {ex.Message}");
         }
     }
 }

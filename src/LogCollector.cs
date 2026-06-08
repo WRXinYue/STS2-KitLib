@@ -45,9 +45,12 @@ internal static class LogCollector {
         }
     }
 
+    private const string LegacySessionBoundaryMarker = "── DevMode log capture started ──";
+
     public static bool IsSessionBoundary(in Entry entry)
         => KitLibInstance.ContainsSessionBoundary(entry.Text)
-           || entry.Text.Contains(SessionBoundaryMarker, StringComparison.Ordinal);
+           || entry.Text.Contains(SessionBoundaryMarker, StringComparison.Ordinal)
+           || entry.Text.Contains(LegacySessionBoundaryMarker, StringComparison.Ordinal);
 
     public static void Initialize() {
         Log.LogCallback += OnLogReceived;

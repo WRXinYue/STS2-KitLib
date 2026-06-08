@@ -1,3 +1,4 @@
+using KitLib.Panels;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
@@ -15,7 +16,7 @@ internal sealed class AddModeHandler : ICardModeHandler {
     public bool HasRelevantCards(Player player, CardTarget target)
         => target == CardTarget.Deck || player.PlayerCombatState != null;
 
-    public void Execute(NGlobalUi globalUi, DevPanel.ActionSession session, RunState state, Player player) {
+    public void Execute(NGlobalUi globalUi, DevPanelActionSession session, RunState state, Player player) {
         CardBrowserUI.Show(globalUi, state, player);
     }
 

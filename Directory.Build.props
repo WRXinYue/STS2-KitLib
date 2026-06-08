@@ -1,5 +1,17 @@
 <Project>
+  <Import Project="local.props" Condition="Exists('$(MSBuildThisFileDirectory)local.props')" />
   <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Sts2Dir)' != ''">
+    <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir>
+    <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64</Sts2DataDir>
+    <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64') and !Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64</Sts2DataDir>
+    <Sts2ModsRoot>$(Sts2Dir)/mods</Sts2ModsRoot>
+    <Sts2ModsRoot Condition="'$(OS)' != 'Windows_NT'">$(Sts2Dir)/SlayTheSpire2.app/Contents/MacOS/mods</Sts2ModsRoot>
   </PropertyGroup>
 </Project>

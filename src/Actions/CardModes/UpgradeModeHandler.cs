@@ -1,3 +1,4 @@
+using KitLib.Panels;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
@@ -17,7 +18,7 @@ internal sealed class UpgradeModeHandler : ICardModeHandler {
         return cards.Exists(c => c.CurrentUpgradeLevel < c.MaxUpgradeLevel);
     }
 
-    public void Execute(NGlobalUi globalUi, DevPanel.ActionSession session, RunState state, Player player) {
+    public void Execute(NGlobalUi globalUi, DevPanelActionSession session, RunState state, Player player) {
         CardBrowserUI.Show(globalUi, state, player);
     }
 

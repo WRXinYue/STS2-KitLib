@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **KitLib 模块化拆分** — Core（`KitLib`）无 patch/UI；卫星 mod（Panel / User / Cheat / Dev / AI）经 `KitLibHost` 注册；共享实现在 `KitLib.Features`。发布包含 **KitLib-Full** 与各模块独立 zip；NuGet **`STS2.KitLib.Abstractions`** 供内容 mod 编译期引用。
 - **AI Host 与 StrongStrategy** — Mod AI 平台：开发侧栏 **AI Host** 面板、外部伴侣终端 API，以及基于 Codex 先验的 **StrongStrategy** 单机自动出牌。
 - **战斗 beam 规划器** — 对局内 AI 使用牌组模拟与多回合线路评分（优先挡牌线路、遗物/能力钩子、搜索内药水模拟、小怪 engagement、机制发现）。
 - **AI HUD 浮层** — 对局左上角 overlay：大小牌组预测、胜率估计与实时模拟遥测（取代旧版启发式 HUD）。
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **破坏性：单体 → 模块** — 现有用户请安装 **KitLib-Full**（或 Core + Shared + Features + 所需卫星）。`make sync` 仅部署 Core；本地开发用 `make sync-full`。
 - **更名为 KitLib** — mod id、程序集、C# 根命名空间、用户数据路径（`mod_data/KitLib`）及 NuGet 包 id（`STS2.KitLib`）取代 DevMode。首次启动会自动迁移旧版 `mod_data/DevMode` 设置。依赖本 mod 的其他 mod 请改为引用 `KitLib.dll` 与 `KitLib.*` 命名空间（如 `KitLib.Companion.CompanionBridge`）。
 - **战斗 AI** — 集火、易伤铺垫与挡牌时机改为模拟驱动的权衡，不再依赖固定启发式；药水使用统一纳入 beam 评分，紧急路径收窄。
 

@@ -133,7 +133,7 @@ internal static partial class AiHudOverlayUI {
         readonly Label _telemetryLabel;
         readonly Label _nextLabel;
         readonly Label _auxLabel;
-        readonly Timer _refreshTimer;
+        readonly Godot.Timer _refreshTimer;
         string? _lastDecisionKey;
         JsonObject? _cachedSnapshot;
 
@@ -163,7 +163,7 @@ internal static partial class AiHudOverlayUI {
             _stack.AddChild(_auxLabel);
             AddChild(_stack);
 
-            _refreshTimer = new Timer { WaitTime = 2.0, Autostart = true };
+            _refreshTimer = new Godot.Timer { WaitTime = 2.0, Autostart = true };
             _refreshTimer.Timeout += RefreshContent;
             AddChild(_refreshTimer);
 

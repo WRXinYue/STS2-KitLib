@@ -35,7 +35,7 @@ internal static class ScriptUI {
             BuildScriptList(vbox);
             BuildVariableSection(vbox);
 
-            var timer = new Timer { WaitTime = 1.0, Autostart = true, OneShot = false, Name = "ScriptAutoRefresh" };
+            var timer = new Godot.Timer { WaitTime = 1.0, Autostart = true, OneShot = false, Name = "ScriptAutoRefresh" };
             timer.Timeout += () => {
                 if (ScriptManager.ReloadVersion != _lastSeenVersion)
                     Show(globalUi);
@@ -54,7 +54,7 @@ internal static class ScriptUI {
             var root = parent.GetNodeOrNull<Control>(RootName);
             if (root == null) break;
             // Stop timer immediately so it can't trigger another Show()
-            root.GetNodeOrNull<Timer>("ScriptAutoRefresh")?.Stop();
+            root.GetNodeOrNull<Godot.Timer>("ScriptAutoRefresh")?.Stop();
             // Detach from tree first — prevents QueueFree race where
             // the old node is still findable by name
             parent.RemoveChild(root);

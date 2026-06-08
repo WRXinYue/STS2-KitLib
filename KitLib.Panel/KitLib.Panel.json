@@ -1,0 +1,11 @@
+{
+  "id": "KitLib.Panel",
+  "name": "KitLib Panel",
+  "author": "WRXinYue",
+  "description": "KitLib in-game rail UI and main-menu entry.",
+  "version": "0.13.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": ["KitLib", "KitLib.Shared", "KitLib.Features"],
+  "affects_gameplay": false
+}

@@ -114,7 +114,7 @@ internal static partial class DevPanelUI {
         inner.AddChild(terminalError);
         RefreshMonitor();
 
-        var refreshTimer = new Timer { WaitTime = 0.5, Autostart = true };
+        var refreshTimer = new Godot.Timer { WaitTime = 0.5, Autostart = true };
         refreshTimer.Timeout += RefreshMonitor;
         root.AddChild(refreshTimer);
         root.TreeExiting += () => refreshTimer.QueueFree();

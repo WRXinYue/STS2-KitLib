@@ -123,7 +123,7 @@ internal static class FrameworkBridgeUI {
         btnRow.AddChild(refresh);
         vbox.AddChild(btnRow);
 
-        var timer = new Timer {
+        var timer = new Godot.Timer {
             WaitTime = AutoRefreshIntervalSec,
             OneShot = false,
             Autostart = true

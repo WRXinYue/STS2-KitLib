@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text.Json.Nodes;
 using KitLib.AI.Knowledge;
 
 namespace KitLib.AI.Planning;
@@ -7,10 +6,8 @@ namespace KitLib.AI.Planning;
 public sealed class DeckPlan {
     public float ThinPreference { get; init; }
     public int TargetDeckSize { get; init; } = 18;
-    /// <summary>Ideal strike count; surplus drives removal priority.</summary>
     public int TargetStrikeCount { get; init; } = 1;
     public int TargetDefendCount { get; init; } = 2;
-    /// <summary>Non-starter block cards (cost ≤2) needed for path survivability.</summary>
     public int TargetBlockSources { get; init; } = 2;
     public int TargetDrawSources { get; init; } = 2;
     public IReadOnlyDictionary<AiTag, float> Weights { get; init; } =

@@ -1,0 +1,11 @@
+{
+  "id": "KitLib.Dev",
+  "name": "KitLib Dev",
+  "author": "WRXinYue",
+  "description": "KitLib developer tools — hooks, scripts, Harmony analysis, MCP bridge.",
+  "version": "0.13.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": ["KitLib", "KitLib.Shared", "KitLib.Features", "KitLib.Panel"],
+  "affects_gameplay": false
+}

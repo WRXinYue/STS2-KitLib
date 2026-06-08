@@ -498,7 +498,7 @@ internal static class LogViewerUI {
         BuildHeaderClearWire(vbox, OnClear);
 
         // ── Auto-refresh timer (1 s) ──
-        var timer = new Timer { WaitTime = 1.0, Autostart = true };
+        var timer = new Godot.Timer { WaitTime = 1.0, Autostart = true };
         timer.Timeout += () => { if (LogCollector.IsDirty) Repopulate(); };
         root.AddChild(timer);
         Repopulate();

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>KitLib.Abstractions</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>STS2.KitLib.Abstractions</PackageId>
+    <Title>KitLib Abstractions for Slay the Spire 2</Title>
+    <Authors>WRXinYue</Authors>
+    <Description>Compile-time contracts for KitLib and content-mod AI bridges.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Version>0.13.0</Version>
+    <PackageOutputPath>$(RepoRoot)build\nuget\</PackageOutputPath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(Sts2Dir)' != ''">
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

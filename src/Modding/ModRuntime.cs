@@ -6,14 +6,14 @@ using MegaCrit.Sts2.Core.Modding;
 namespace KitLib.Modding;
 
 /// <summary>Stable snapshot of one loaded mod (manifest-backed).</summary>
-internal readonly record struct KitLibModInfo(
+public readonly record struct KitLibModInfo(
     string Id,
     string DisplayName,
     string Version,
     IReadOnlyList<string> Dependencies);
 
 /// <summary>Read-only view of mods the game has already scanned and loaded.</summary>
-internal interface IModCatalog {
+public interface IModCatalog {
     /// <summary>Copies current loaded-mod entries that have a non-empty manifest <c>id</c>.</summary>
     IReadOnlyList<KitLibModInfo> GetSnapshot();
 
@@ -22,7 +22,7 @@ internal interface IModCatalog {
 }
 
 /// <summary>Default <see cref="IModCatalog"/> backed by the game's loaded mod enumeration.</summary>
-internal sealed class ModCatalog : IModCatalog {
+public sealed class ModCatalog : IModCatalog {
     public static IModCatalog Default { get; } = new ModCatalog();
 
     private ModCatalog() { }
@@ -60,7 +60,7 @@ internal sealed class ModCatalog : IModCatalog {
 }
 
 /// <summary>Game-backed mod catalog; safe to call from main thread after mod load.</summary>
-internal static class ModRuntime {
+public static class ModRuntime {
     public static IModCatalog Catalog => ModCatalog.Default;
 
     internal static string[] CopyDependencies(ModManifest manifest) {

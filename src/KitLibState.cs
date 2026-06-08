@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using KitLib.Presets;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 
@@ -137,16 +137,10 @@ public static class KitLibState {
 
     // ── Restart-with-Seed ──
 
-    public static LoadoutPreset? PendingRestartPreset { get; set; }
-
-    public static PresetContents PendingRestartScope { get; set; }
-
     public static int? PendingRestartGold { get; set; }
 
     /// <summary>Injected via StartNewSingleplayerRun; char select overwrites/clears DebugSeedOverride.</summary>
     public static string? PendingRestartSeed { get; set; }
-
-    public static RuntimeStatModifiers? StatModifiers { get; set; }
 
     // ── Enemy overrides ──
 
@@ -252,8 +246,6 @@ public static class KitLibState {
     public static bool AutoProceedToCharSelect { get; set; }
 
     public static void ClearPendingRestart() {
-        PendingRestartPreset = null;
-        PendingRestartScope = PresetContents.None;
         PendingRestartGold = null;
         PendingRestartSeed = null;
         AutoProceedToCharSelect = false;
@@ -277,6 +269,6 @@ public static class KitLibState {
         EnemyCheats.Reset();
         GameplayModifiers.Reset();
         MapCheats.Reset();
-        StatModifiers = null;
+        KitLibCheatOps.ClearRunState?.Invoke();
     }
 }

@@ -14,7 +14,30 @@ All-in-one in-game toolkit for Slay the Spire 2 — test builds, cheat, script, 
 - **Settings → Game** — **In-game right sidebar** (combat shortcuts + stats rail), game speed, skip animations, overlay toggles.
 - **Normal runs** — From title **KITLIB**, cycle **Normal run: Disabled / Toolkit / Cheat Mode** to keep the rail available outside test runs.
 
-Install from [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) or build from source (`python scripts/init.py`, then `make sync`). Steam **beta** builds need the matching beta mod package.
+Install from [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) or build from source (`python scripts/init.py`, then `make sync-full`). Steam **beta** builds need the matching beta mod package.
+
+### Modular install (0.13+)
+
+KitLib is split into a minimal **Core** plus optional satellite mods:
+
+| Mod folder | Role |
+|------------|------|
+| `KitLib` | Core host (`KitLibHost`) — no UI, no patches |
+| `KitLib.Shared` | Icons and shared panel types |
+| `KitLib.Features` | Shared gameplay/UI/AI implementation (required for any dev feature) |
+| `KitLib.User` | Logs, progress guard, manual, crash recovery |
+| `KitLib.Panel` | Dev rail + title-screen entry |
+| `KitLib.Cheat` | Cheat tab registration + runtime hooks |
+| `KitLib.Dev` | Hooks, scripts, Harmony/MCP tools |
+| `KitLib.AI` | AI Host, autoplay, companions |
+
+**Recommended packages**
+
+- **KitLib-Full** zip — same experience as the legacy monolith; extract all subfolders into `mods/`.
+- **Core + User** — progress protection and logs without dev panels.
+- **Content-mod authors** — NuGet `STS2.KitLib.Abstractions` + runtime `KitLib` + `KitLib.Shared` + `KitLib.Features`.
+
+Build all modules: `make build-all`. Package zips: `make zip-full`.
 
 ## Panels
 

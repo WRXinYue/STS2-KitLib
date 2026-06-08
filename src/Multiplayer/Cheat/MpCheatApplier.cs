@@ -77,7 +77,7 @@ public static class MpCheatApplier {
 
     private static MpCheatPlayerFlags GetLocalPlayerFlags() {
         if (!MpCheatSession.InMultiplayerRun)
-            return MpCheatPlayerFlags.FromDevMode();
+            return MpCheatPlayerFlags.FromKitLibState();
         return GetPlayerFlags(MpCheatSession.LocalNetId);
     }
 
@@ -85,7 +85,7 @@ public static class MpCheatApplier {
 
     private static MpCheatPlayerFlags GetPlayerFlags(ulong netId) {
         if (!MpCheatSession.InMultiplayerRun)
-            return MpCheatPlayerFlags.FromDevMode();
+            return MpCheatPlayerFlags.FromKitLibState();
 
         MpCheatState.Config.TryGetPlayerFlags(netId, out var flags);
         return flags;

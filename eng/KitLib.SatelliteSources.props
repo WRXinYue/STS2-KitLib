@@ -1,0 +1,77 @@
+<Project>
+  <ItemGroup Label="KitLib.AI">
+    <KitLibAiCompile Include="$(RepoRoot)src\AI\**\*.cs" />
+    <KitLibAiCompile Include="$(RepoRoot)src\Companion\**\*.cs" />
+    <KitLibAiCompile Include="$(RepoRoot)src\Patches\Map\MapScreenSessionPatch.cs" />
+    <KitLibAiCompile Include="$(RepoRoot)src\Multiplayer\PseudoCoop\**\*.cs" />
+    <KitLibAiCompile Remove="$(RepoRoot)src\Companion\CompanionBridge.cs" />
+    <KitLibAiCompile Remove="$(RepoRoot)src\Companion\CompanionSpawnRequest.cs" />
+    <KitLibAiCompile Remove="$(RepoRoot)src\Companion\CompanionSpawnResult.cs" />
+    <KitLibAiCompile Remove="$(RepoRoot)src\Companion\CompanionInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup Label="KitLib.Panel">
+    <KitLibPanelCompile Include="$(RepoRoot)src\DevPanel.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\KitLibProcessNode.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Panel\**\*.cs" />
+    <KitLibPanelCompile Remove="$(RepoRoot)src\Panel\DevPanelActionSession.cs" />
+    <KitLibPanelCompile Remove="$(RepoRoot)src\Panel\IDevPanelTab.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\UI\**\*.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Input\**\*.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Settings\RailTabPreferences.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Commands\**\*.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Multiplayer\Cheat\MpCheatUi.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Multiplayer\LanTest\**\*.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Patches\MainMenuPatch.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Patches\DevPanelPatches.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Patches\CombatResetIntentOverlayPatch.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Patches\CombatSummonSlotCompatPatch.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Patches\Map\MapPreviewPatch.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\SpeedControl.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\SkipAnimControl.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\AssetWarmupService.cs" />
+    <KitLibPanelCompile Include="$(RepoRoot)src\Mcp\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Label="KitLib.User">
+    <KitLibUserCompile Include="$(RepoRoot)src\LogCollector.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\GameLogFileHydrator.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\LogSuppressor.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\InstanceLogWriter.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\Progress\**\*.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\Manual\**\*.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\Patches\ModChangeGuardPatch.cs" />
+    <KitLibUserCompile Include="$(RepoRoot)src\Patches\ProgressLossPromptPatch.cs" />
+  </ItemGroup>
+
+  <ItemGroup Label="KitLib.Cheat">
+    <KitLibCheatCompile Include="$(RepoRoot)src\PlayerCheatEffects.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\SaveSlotManager.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\CheatPatches.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\RunStartPatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\EnemyOverridePatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\InstantModeUnlockPatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\Combat*.cs" />
+    <KitLibCheatCompile Remove="$(RepoRoot)src\Patches\CombatResetIntentOverlayPatch.cs" />
+    <KitLibCheatCompile Remove="$(RepoRoot)src\Patches\CombatSummonSlotCompatPatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\ArchaicToothSetupCompatPatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\MultiplayerCompatPatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Patches\Map\**\*.cs" />
+    <KitLibCheatCompile Remove="$(RepoRoot)src\Patches\Map\MapPreviewPatch.cs" />
+    <KitLibCheatCompile Remove="$(RepoRoot)src\Patches\Map\MapScreenSessionPatch.cs" />
+    <KitLibCheatCompile Include="$(RepoRoot)src\Combat\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Label="KitLib.Dev">
+    <KitLibDevCompile Include="$(RepoRoot)src\Hooks\**\*.cs" />
+    <KitLibDevCompile Remove="$(RepoRoot)src\Hooks\HookModels.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\Scripts\**\*.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\Interop\**\*.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\CombatStats\**\*.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\Feedback\**\*.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\Feedback\CrashRecovery*.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\Patches\HookPatches.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\Sts2CombatCompat.cs" />
+    <KitLibDevCompile Include="$(RepoRoot)src\KitLibInstanceRegistry.cs" />
+  </ItemGroup>
+</Project>

@@ -4,7 +4,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 namespace KitLib.Panels;
 
 /// <summary>Represents a tab in the DevMode rail.</summary>
-internal interface IDevPanelTab {
+public interface IDevPanelTab {
     /// <summary>Unique identifier, e.g. "mymod.debug".</summary>
     string Id { get; }
 
@@ -34,7 +34,7 @@ internal interface IDevPanelTab {
 }
 
 /// <summary>Determines where the tab icon is placed in the rail.</summary>
-internal enum DevPanelTabGroup {
+public enum DevPanelTabGroup {
     /// <summary>Upper section — primary feature panels (Cards, Relics, …).</summary>
     Primary,
 
@@ -48,7 +48,7 @@ internal enum DevPanelTabGroup {
 /// Otherwise (e.g. <see cref="NormalRunMode.DevPanel"/> on an ordinary run), only <see cref="Developer"/> tabs appear
 /// (logs, Harmony, settings, combat stats, …).
 /// </summary>
-internal enum DevPanelTabKind {
+public enum DevPanelTabKind {
     /// <summary>Inspection and tooling that do not change run or save data (logs, Harmony report, framework bridge).</summary>
     Developer,
 

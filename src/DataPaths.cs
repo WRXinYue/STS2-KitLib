@@ -10,7 +10,7 @@ namespace KitLib;
 /// <c>user://steam/{userId}/mod_data/KitLib/</c>.
 /// Migrates legacy <c>mod_data/DevMode/</c> on first access.
 /// </summary>
-internal static class DataPaths {
+public static class DataPaths {
     private const string LegacyModDataSubdir = "mod_data/DevMode";
     private const string ModDataSubdir = "mod_data/KitLib";
 

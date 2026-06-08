@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Modular KitLib split** — Core (`KitLib`) is patch/UI-free; satellites (`KitLib.Panel`, `KitLib.User`, `KitLib.Cheat`, `KitLib.Dev`, `KitLib.AI`) register tabs via `KitLibHost`; shared runtime ships in `KitLib.Features`. Releases include **KitLib-Full** plus per-module zips. NuGet **`STS2.KitLib.Abstractions`** exposes compile-time bridge contracts.
 - **AI Host & StrongStrategy** — Mod AI platform with an **AI Host** panel in the dev rail, external companion terminal APIs, and **StrongStrategy** solo autoplay informed by Codex priors.
 - **Combat beam planner** — In-fight AI uses deck simulation and multi-turn line scoring (block-first lines, relic/power hooks, potion sim in search, minion engagement, mechanic discovery).
 - **AI HUD overlay** — Top-left run overlay with big/small deck forecast, win estimate, and live sim telemetry (replaces the older heuristic HUD).
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking: monolith → modules** — Existing users should install **KitLib-Full** (or Core + Shared + Features + desired satellites). `make sync` deploys Core only; use `make sync-full` for local dev with every module.
 - **Rebrand to KitLib** — Mod id, assembly, C# root namespace, user-data path (`mod_data/KitLib`), and NuGet package id (`STS2.KitLib`) replace DevMode. Legacy `mod_data/DevMode` settings migrate automatically on first launch. Dependent mods should reference `KitLib.dll` and `KitLib.*` namespaces (e.g. `KitLib.Companion.CompanionBridge`).
 - **Combat AI** — Focus fire, vulnerable setup, and block timing follow sim-backed tradeoffs instead of fixed heuristics; potion use is unified under beam scoring with a narrower emergency path.
 

@@ -26,10 +26,10 @@ public sealed class MpCheatConfig {
     public static MpCheatConfig FromKitLibState() {
         return new MpCheatConfig {
             SessionEnabled = true,
-            GlobalPlayer = MpCheatPlayerFlags.FromDevMode(),
-            GlobalEnemy = MpCheatEnemyFlags.FromDevMode(),
-            GlobalGameplay = MpCheatGameplayFlags.FromDevMode(),
-            GlobalMap = MpCheatMapFlags.FromDevMode(),
+            GlobalPlayer = MpCheatPlayerFlags.FromKitLibState(),
+            GlobalEnemy = MpCheatEnemyFlags.FromKitLibState(),
+            GlobalGameplay = MpCheatGameplayFlags.FromKitLibState(),
+            GlobalMap = MpCheatMapFlags.FromKitLibState(),
         };
     }
 
@@ -52,11 +52,11 @@ public sealed class MpCheatConfig {
         var merged = baseline.Clone();
         merged.SessionEnabled = true;
         merged.GlobalPlayer = new MpCheatPlayerFlags();
-        merged.PerPlayer[localNetId] = MpCheatPlayerFlags.FromDevMode();
+        merged.PerPlayer[localNetId] = MpCheatPlayerFlags.FromKitLibState();
         if (includeSharedGlobals) {
-            merged.GlobalEnemy = MpCheatEnemyFlags.FromDevMode();
-            merged.GlobalGameplay = MpCheatGameplayFlags.FromDevMode();
-            merged.GlobalMap = MpCheatMapFlags.FromDevMode();
+            merged.GlobalEnemy = MpCheatEnemyFlags.FromKitLibState();
+            merged.GlobalGameplay = MpCheatGameplayFlags.FromKitLibState();
+            merged.GlobalMap = MpCheatMapFlags.FromKitLibState();
         }
         return merged;
     }
@@ -65,7 +65,7 @@ public sealed class MpCheatConfig {
     public static MpCheatConfig BuildClientPlayerPatch(ulong requesterNetId) =>
         new() {
             SessionEnabled = true,
-            PerPlayer = { [requesterNetId] = MpCheatPlayerFlags.FromDevMode() },
+            PerPlayer = { [requesterNetId] = MpCheatPlayerFlags.FromKitLibState() },
         };
 
     /// <summary>Host merges a client patch without overwriting shared globals.</summary>
@@ -83,22 +83,22 @@ public sealed class MpCheatConfig {
     }
 
     public void ApplyToKitLibState() {
-        GlobalPlayer.ApplyToDevMode();
-        GlobalEnemy.ApplyToDevMode();
-        GlobalGameplay.ApplyToDevMode();
-        GlobalMap.ApplyToDevMode();
+        GlobalPlayer.ApplyToKitLibState();
+        GlobalEnemy.ApplyToKitLibState();
+        GlobalGameplay.ApplyToKitLibState();
+        GlobalMap.ApplyToKitLibState();
     }
 
-    /// <summary>Apply synced snapshot to local DevMode UI (MP: only this machine's player flags).</summary>
+    /// <summary>Apply synced snapshot to local KitLib UI (MP: only this machine's player flags).</summary>
     public void ApplyToLocalKitLibState(ulong localNetId) {
         if (TryGetPlayerFlags(localNetId, out var per))
-            per.ApplyToDevMode();
+            per.ApplyToKitLibState();
         else
-            new MpCheatPlayerFlags().ApplyToDevMode();
+            new MpCheatPlayerFlags().ApplyToKitLibState();
 
-        GlobalEnemy.ApplyToDevMode();
-        GlobalGameplay.ApplyToDevMode();
-        GlobalMap.ApplyToDevMode();
+        GlobalEnemy.ApplyToKitLibState();
+        GlobalGameplay.ApplyToKitLibState();
+        GlobalMap.ApplyToKitLibState();
     }
 
     /// <summary>Move legacy PerPlayer[0] to the real local net id after run start.</summary>
@@ -150,7 +150,7 @@ public sealed class MpCheatPlayerFlags {
         DefenseMultiplier = DefenseMultiplier,
     };
 
-    public static MpCheatPlayerFlags FromDevMode() => new() {
+    public static MpCheatPlayerFlags FromKitLibState() => new() {
         InfiniteHp = KitLibState.PlayerCheats.InfiniteHp,
         InfiniteBlock = KitLibState.PlayerCheats.InfiniteBlock,
         InfiniteEnergy = KitLibState.PlayerCheats.InfiniteEnergy,
@@ -161,7 +161,7 @@ public sealed class MpCheatPlayerFlags {
         DefenseMultiplier = KitLibState.PlayerCheats.DefenseMultiplier,
     };
 
-    public void ApplyToDevMode() {
+    public void ApplyToKitLibState() {
         KitLibState.PlayerCheats.InfiniteHp = InfiniteHp;
         KitLibState.PlayerCheats.InfiniteBlock = InfiniteBlock;
         KitLibState.PlayerCheats.InfiniteEnergy = InfiniteEnergy;
@@ -184,13 +184,13 @@ public sealed class MpCheatEnemyFlags {
         DamageMultiplier = DamageMultiplier,
     };
 
-    public static MpCheatEnemyFlags FromDevMode() => new() {
+    public static MpCheatEnemyFlags FromKitLibState() => new() {
         FreezeEnemies = KitLibState.EnemyCheats.FreezeEnemies,
         OneHitKill = KitLibState.EnemyCheats.OneHitKill,
         DamageMultiplier = KitLibState.EnemyCheats.DamageMultiplier,
     };
 
-    public void ApplyToDevMode() {
+    public void ApplyToKitLibState() {
         KitLibState.EnemyCheats.FreezeEnemies = FreezeEnemies;
         KitLibState.EnemyCheats.OneHitKill = OneHitKill;
         KitLibState.EnemyCheats.DamageMultiplier = DamageMultiplier;
@@ -206,12 +206,12 @@ public sealed class MpCheatGameplayFlags {
         FreeShop = FreeShop,
     };
 
-    public static MpCheatGameplayFlags FromDevMode() => new() {
+    public static MpCheatGameplayFlags FromKitLibState() => new() {
         GoldMultiplier = KitLibState.GameplayModifiers.GoldMultiplier,
         FreeShop = KitLibState.GameplayModifiers.FreeShop,
     };
 
-    public void ApplyToDevMode() {
+    public void ApplyToKitLibState() {
         KitLibState.GameplayModifiers.GoldMultiplier = GoldMultiplier;
         KitLibState.GameplayModifiers.FreeShop = FreeShop;
     }
@@ -226,12 +226,12 @@ public sealed class MpCheatMapFlags {
         FreeTravelFromDevRoomMap = FreeTravelFromDevRoomMap,
     };
 
-    public static MpCheatMapFlags FromDevMode() => new() {
+    public static MpCheatMapFlags FromKitLibState() => new() {
         UnknownMapAlwaysTreasure = KitLibState.MapCheats.UnknownMapAlwaysTreasure,
         FreeTravelFromDevRoomMap = KitLibState.MapCheats.MapDebugJumpEnabled,
     };
 
-    public void ApplyToDevMode() {
+    public void ApplyToKitLibState() {
         KitLibState.MapCheats.UnknownMapAlwaysTreasure = UnknownMapAlwaysTreasure;
         KitLibState.MapCheats.MapDebugJumpEnabled = FreeTravelFromDevRoomMap;
     }

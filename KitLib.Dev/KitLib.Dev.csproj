@@ -1,0 +1,17 @@
+<Project Sdk="Godot.NET.Sdk/4.5.1">
+  <Import Project="../eng/KitLib.Mod.Shared.props" />
+  <Import Project="../eng/KitLib.SatelliteMod.targets" />
+  <PropertyGroup>
+    <ModId>KitLib.Dev</ModId>
+    <AssemblyName>KitLib.Dev</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ModuleEntry.cs" />
+    <Compile Include="DevTabRegistration.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../KitLib.Features/KitLib.Features.csproj" />
+  </ItemGroup>
+</Project>

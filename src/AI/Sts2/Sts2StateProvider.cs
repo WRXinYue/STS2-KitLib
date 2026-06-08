@@ -17,7 +17,7 @@ using MegaCrit.Sts2.Core.Runs;
 using KitLib.AI;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
-using KitLib.Multiplayer.Cheat;
+using KitLib.Host;
 using KitLib.AI.Sts2.Helpers;
 using KitLib.AI.Sts2.Snapshots;
 
@@ -159,7 +159,7 @@ public sealed class Sts2StateProvider : IGameStateProvider
             return true;
 
         // Never guess player 1 in multiplayer — causes cross-driving between LanLocal / MpAi / Companion.
-        if (MpCheatSession.InMultiplayerRun)
+        if (MultiplayerRunProbe.InMultiplayerRun)
             return false;
 
         player = state.Players.FirstOrDefault();

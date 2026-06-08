@@ -13,7 +13,6 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Odds;
 using MegaCrit.Sts2.Core.Rooms;
-using KitLib.Actions;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.ValueProps;
 

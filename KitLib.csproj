@@ -1,8 +1,9 @@
-<Project Sdk="Godot.NET.Sdk/4.5.1">
-  <Import Project="local.props" Condition="Exists('local.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="eng\KitLib.Core.Compile.props" />
 
   <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);packages/**;**/.godot/**;icons/**;extern/**;tools/**</DefaultItemExcludes>
+    <GodotProjectDir>$(MSBuildThisFileDirectory).no-godot</GodotProjectDir>
+    <DefaultItemExcludes>$(DefaultItemExcludes);packages/**;**/.godot/**;icons/**;extern/**;tools/**;KitLib.*/**;KitLib.Abstractions/**</DefaultItemExcludes>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>true</ImplicitUsings>
     <LangVersion>12.0</LangVersion>
@@ -20,12 +21,9 @@
     <RepoRoot Condition="'$(RepoRoot)' == ''">$(MSBuildThisFileDirectory)</RepoRoot>
     <RepoBuildDir>$(RepoRoot)build\$(ModId)</RepoBuildDir>
     <DeployToGame Condition="'$(DeployToGame)' == ''">false</DeployToGame>
-    <DevModePython Condition="'$(DevModePython)' == '' and '$(OS)' == 'Windows_NT'">python</DevModePython>
-    <DevModePython Condition="'$(DevModePython)' == '' and '$(OS)' != 'Windows_NT'">python3</DevModePython>
-    <GodotExe Condition="'$(GodotExe)' == '' and '$(GodotPath)' != ''">$(GodotPath)</GodotExe>
-    <GodotExportPreset>BasicExport</GodotExportPreset>
-    <RunPckExport Condition="'$(RunPckExport)' == ''">true</RunPckExport>
-    <!-- Default off during sync/deploy so DevMode does not overwrite mods/STS2-RitsuLib (other mods e.g. LustTravel2 use a different package). -->
+    <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' == 'Windows_NT'">python</KitLibPython>
+    <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' != 'Windows_NT'">python3</KitLibPython>
+    <!-- Default off during sync/deploy so KitLib does not overwrite mods/STS2-RitsuLib (other mods e.g. LustTravel2 use a different package). -->
     <DisableFrameworkModsAfterRestore Condition="'$(DisableFrameworkModsAfterRestore)' == ''">true</DisableFrameworkModsAfterRestore>
     <!-- Set Sts2Beta=true in local.props when building against the Steam beta branch -->
     <DefineConstants Condition="'$(Sts2Beta)' == 'true'">$(DefineConstants);STS2_BETA</DefineConstants>
@@ -35,10 +33,6 @@
     <PublishDir>$(RepoBuildDir)</PublishDir>
     <OutputPath>$(RepoBuildDir)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <ModPckPath>$(PublishDir)\$(ModId).pck</ModPckPath>
   </PropertyGroup>
 
   <Target Name="CheckLocalProps" BeforeTargets="BeforeBuild;BeforePublish" Condition="'$(PackKitLib)' != 'true'">
@@ -71,23 +65,21 @@
   <Target Name="ValidatePackDist" BeforeTargets="GenerateNuspec" Condition="'$(PackKitLib)' == 'true'">
     <Error Condition="!Exists('$(RepoRoot)build\dist\KitLib\KitLib.dll')"
            Text="Run make zip (or make zip-beta) before dotnet pack -p:PackKitLib=true." />
-    <Error Condition="!Exists('$(RepoRoot)build\dist\KitLib\KitLib.pck')"
-           Text="KitLib.pck missing from build/dist/KitLib/. Run make zip with GodotPath set in local.props." />
   </Target>
 
-  <Target Name="ExcludeGodotTempFromCompile" BeforeTargets="CoreCompile">
+  <Target Name="RemoveGodotAnalyzers" BeforeTargets="CoreCompile">
     <ItemGroup>
-      <Compile Remove="$(MSBuildProjectDirectory)\.godot\**\*.cs" />
+      <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Identity)').Contains('Godot'))" />
     </ItemGroup>
   </Target>
 
   <ItemGroup>
+    <ProjectReference Include="KitLib.Abstractions\KitLib.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="sts2">
       <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="0Harmony">
-      <HintPath>$(Sts2DataDir)\0Harmony.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
@@ -110,50 +102,13 @@
     <EmbeddedResource Remove="$(MSBuildProjectName)\**" />
   </ItemGroup>
 
-  <!-- Embed manual Markdown (in-game docs) -->
-  <ItemGroup>
-    <EmbeddedResource Include="manual\eng\*.md" LogicalName="KitLib.Manual.eng.%(Filename)" />
-    <EmbeddedResource Include="manual\zhs\*.md" LogicalName="KitLib.Manual.zhs.%(Filename)" />
-  </ItemGroup>
-
-  <!-- Embed localization JSON files into the DLL -->
   <ItemGroup>
     <EmbeddedResource Include="src\Localization\eng.json" LogicalName="KitLib.Localization.eng.json" />
     <EmbeddedResource Include="src\Localization\zhs.json" LogicalName="KitLib.Localization.zhs.json" />
-    <EmbeddedResource Include="src\Data\harmony-patch-registry.json" LogicalName="KitLib.Data.harmony-patch-registry.json" />
-    <EmbeddedResource Include="src\AI\Data\codex-priors.json" LogicalName="KitLib.AI.codex-priors.json"
-                      Condition="Exists('src\AI\Data\codex-priors.json')" />
-    <EmbeddedResource Include="src\AI\Data\potion-tiers.json" LogicalName="KitLib.AI.potion-tiers.json"
-                      Condition="Exists('src\AI\Data\potion-tiers.json')" />
-    <EmbeddedResource Include="src\AI\Data\monster-probe-overrides.json" LogicalName="KitLib.AI.monster-probe-overrides.json"
-                      Condition="Exists('src\AI\Data\monster-probe-overrides.json')" />
-    <EmbeddedResource Include="src\AI\Data\monster-move-effects.json" LogicalName="KitLib.AI.monster-move-effects.json"
-                      Condition="Exists('src\AI\Data\monster-move-effects.json')" />
-    <EmbeddedResource Include="src\AI\Data\relic-combat-effects.json" LogicalName="KitLib.AI.relic-combat-effects.json"
-                      Condition="Exists('src\AI\Data\relic-combat-effects.json')" />
-    <EmbeddedResource Include="src\AI\Data\potion-combat-effects.json" LogicalName="KitLib.AI.potion-combat-effects.json"
-                      Condition="Exists('src\AI\Data\potion-combat-effects.json')" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="$(ModId).json" CopyToPublishDirectory="PreserveNewest" TargetPath="mod_manifest.json" />
-  </ItemGroup>
-
-  <!-- Embed tree-shaken icon set (generated by scripts/shake_icons.py) -->
-  <ItemGroup>
-    <EmbeddedResource Include="src\Icons\mdi-used.json" LogicalName="KitLib.Icons.mdi-used.json"
-                      Condition="Exists('src\Icons\mdi-used.json')" />
-  </ItemGroup>
-
-  <!-- Pre-build: ensure full MDI json if missing, then tree-shake (scripts/shake_icons.py) -->
-  <Target Name="ShakeIcons" BeforeTargets="CoreCompile">
-    <Exec Command="&quot;$(DevModePython)&quot; &quot;$(MSBuildProjectDirectory)/scripts/shake_icons.py&quot; --repo-root &quot;$(MSBuildProjectDirectory)&quot;"
-          WorkingDirectory="$(MSBuildProjectDirectory)"
-          IgnoreExitCode="false" />
-  </Target>
-
-  <ItemGroup>
-    <Content Include="$(MSBuildProjectName)\**" />
   </ItemGroup>
 
   <Target Name="CopyRitsuLibModToGame" DependsOnTargets="CheckLocalProps">
@@ -177,66 +132,13 @@
 
   <Target Name="AutoSyncFrameworkModsAfterRestore" AfterTargets="Restore" DependsOnTargets="CopyFrameworkModsToGame" Condition="'$(Sts2Dir)' != '' and '$(DisableFrameworkModsAfterRestore)' != 'true'" />
 
-  <!-- Deploy built DLL + deps to game mods folder -->
-  <Target Name="ExportModPck" AfterTargets="Publish" Condition="'$(RunPckExport)' == 'true' and '$(STS2_SKIP_PCK_EXPORT)' != '1' and Exists('$(GodotExe)')">
-    <Message Text="Importing Godot project assets before PCK export..." Importance="high" />
-    <Exec Command="&quot;$(GodotExe)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --import" EnvironmentVariables="STS2_SKIP_PCK_EXPORT=1" />
-    <Message Text="Exporting mod PCK to $(ModPckPath)..." Importance="high" />
-    <MakeDir Directories="$(PublishDir)" />
-    <Exec Command="&quot;$(GodotExe)&quot; --headless --path &quot;$(MSBuildProjectDirectory)&quot; --export-pack &quot;$(GodotExportPreset)&quot; &quot;$(ModPckPath)&quot;" EnvironmentVariables="STS2_SKIP_PCK_EXPORT=1" />
-  </Target>
-
-  <Target Name="WarnMissingGodotForPck" AfterTargets="Publish" Condition="'$(RunPckExport)' == 'true' and '$(STS2_SKIP_PCK_EXPORT)' != '1' and !Exists('$(GodotExe)')">
-    <Warning Text="Godot not found (set GodotPath in local.props). Skipped PCK export; mod_image.png will not appear in-game." />
-  </Target>
-
-  <Target Name="DeployToGame" AfterTargets="Publish;ExportModPck" DependsOnTargets="CopyFrameworkModsToGame" Condition="'$(DeployToGame)' == 'true'">
-    <ItemGroup>
-      <DeployFiles Include="$(PublishDir)\$(ModId).dll" />
-      <DeployFiles Include="$(PublishDir)\$(ModId).pck" Condition="Exists('$(PublishDir)\$(ModId).pck')" />
-      <EditorFiles Include="$(MSBuildProjectDirectory)\editor\**\*" />
-    </ItemGroup>
-    <MakeDir Directories="$(ModsDir)" />
-    <MakeDir Directories="$(ModsDir)\editor" />
-    <Copy SourceFiles="@(DeployFiles)" DestinationFolder="$(ModsDir)" SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(PublishDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(PublishDir)\mod_manifest.json')" />
-    <Copy SourceFiles="@(EditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <!-- Copy repo build artifacts to game mods (used by VS Code sync task) -->
   <Target Name="DeployRepoBuildToMods" DependsOnTargets="CheckLocalProps">
     <Error Condition="'$(DeployFromRepoBuild)' != 'true'" Text="Set DeployFromRepoBuild=true (e.g. make deploy)." />
     <Error
       Condition="'$(ModsDir)' == '$(Sts2ModsRoot)' or '$(ModsDir)' == '$(Sts2ModsRoot)/' or '$(ModsDir)' == '$(Sts2ModsRoot)\'"
       Text="ModsDir must be mods/$(ModId), not the entire mods folder ($(ModsDir))." />
-    <ItemGroup>
-      <RepoEditorFiles Include="$(MSBuildProjectDirectory)\editor\**\*" />
-    </ItemGroup>
     <MakeDir Directories="$(ModsDir)\" />
-    <MakeDir Directories="$(ModsDir)\editor" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
-    <Copy SourceFiles="$(RepoBuildDir)\$(ModId).pck" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).pck')" />
-    <Copy SourceFiles="@(RepoEditorFiles)" DestinationFolder="$(ModsDir)\editor\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
-
-  <!-- Copy repo-built MCP stdio proxy into mods/KitLib/tools/ (make deploy-tools) -->
-  <PropertyGroup>
-    <ToolsRid Condition="'$(ToolsRid)' == ''">win-x64</ToolsRid>
-    <ToolsPublishDir Condition="'$(ToolsPublishDir)' == ''">$(RepoRoot)build/tools/KitLib.Mcp/$(ToolsRid)/publish</ToolsPublishDir>
-  </PropertyGroup>
-
-  <Target Name="DeployToolsToMods" DependsOnTargets="CheckLocalProps">
-    <Error Condition="'$(DeployToolsFromRepoBuild)' != 'true'" Text="Set DeployToolsFromRepoBuild=true (e.g. make deploy-tools)." />
-    <PropertyGroup>
-      <_ToolsMcpExe Condition="'$(OS)' == 'Windows_NT'">$(ToolsPublishDir)\KitLib.Mcp.exe</_ToolsMcpExe>
-      <_ToolsMcpExe Condition="'$(OS)' != 'Windows_NT'">$(ToolsPublishDir)/KitLib.Mcp</_ToolsMcpExe>
-      <_ToolsMcpDest Condition="'$(OS)' == 'Windows_NT'">$(ModsDir)\tools\KitLib.Mcp.exe</_ToolsMcpDest>
-      <_ToolsMcpDest Condition="'$(OS)' != 'Windows_NT'">$(ModsDir)/tools/KitLib.Mcp</_ToolsMcpDest>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(_ToolsMcpExe)')" Text="MCP tool missing: $(_ToolsMcpExe). Run make build-tools first." />
-    <MakeDir Directories="$(ModsDir)/tools" />
-    <Copy SourceFiles="$(_ToolsMcpExe)" DestinationFiles="$(_ToolsMcpDest)" SkipUnchangedFiles="true" />
-    <Message Text="Deployed MCP tool to $(_ToolsMcpDest)" Importance="high" />
   </Target>
 </Project>

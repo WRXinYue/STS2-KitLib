@@ -1,4 +1,5 @@
 using System;
+using KitLib.Cheat;
 using KitLib.Presets;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -49,13 +50,14 @@ public static class RunStartPatch {
         }
 
         // Apply carried-over cards / relics (async via game command queue)
-        if (KitLibState.PendingRestartPreset != null) {
-            var preset = KitLibState.PendingRestartPreset;
-            var scope = KitLibState.PendingRestartScope;
+        if (CheatRestartState.PendingRestartPreset != null) {
+            var preset = CheatRestartState.PendingRestartPreset;
+            var scope = CheatRestartState.PendingRestartScope;
             MainFile.Logger.Info($"[KitLib] Restart: scheduling preset apply (scope: {scope}).");
             TaskHelper.RunSafely(PresetManager.ApplyToRunAsync(preset, scope));
         }
 
+        CheatRestartState.ClearPresetRestart();
         KitLibState.ClearPendingRestart();
     }
 

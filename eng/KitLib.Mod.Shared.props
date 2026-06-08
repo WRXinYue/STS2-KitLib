@@ -1,0 +1,29 @@
+<Project>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' == 'Windows_NT'">python</KitLibPython>
+    <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' != 'Windows_NT'">python3</KitLibPython>
+    <DefineConstants Condition="'$(Sts2Beta)' == 'true'">$(DefineConstants);STS2_BETA</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(Sts2DataDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)KitLib.Abstractions\KitLib.Abstractions.csproj" />
+    <ProjectReference Include="$(RepoRoot)KitLib.csproj" />
+    <ProjectReference Include="$(RepoRoot)KitLib.Shared\KitLib.Shared.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

@@ -51,7 +51,7 @@ internal static class CrashRecoveryStore {
                 File.WriteAllText(SessionActivePath, $"{DateTime.UtcNow:O}\n{KitLibInstance.ProcessId}");
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode CrashRecovery] Failed to mark session started: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib CrashRecovery] Failed to mark session started: {ex.Message}");
             }
         }
     }
@@ -69,7 +69,7 @@ internal static class CrashRecoveryStore {
                 WritePendingReportLocked(report);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[DevMode CrashRecovery] Failed to record crash: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLib CrashRecovery] Failed to record crash: {ex.Message}");
             }
         }
     }

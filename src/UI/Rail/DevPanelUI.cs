@@ -314,7 +314,7 @@ internal static partial class DevPanelUI {
 
         BindRailSlide(SlideRail);
 
-        var pollTimer = new Timer {
+        var pollTimer = new Godot.Timer {
             Name = "RailPollTimer",
             WaitTime = 0.1f,
             Autostart = true

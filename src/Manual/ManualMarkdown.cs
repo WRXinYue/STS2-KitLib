@@ -81,7 +81,7 @@ internal static partial class ManualMarkdown {
     }
 
     private static void AppendHeading(StringBuilder sb, string text, int size) {
-        var hex = KitLibTheme.Accent.ToHtml(false);
+        const string hex = "5b9eff";
         sb.Append("[font_size=").Append(size).Append("][color=").Append(hex).Append(']')
             .Append(InlineFormat(text))
             .Append("[/color][/font_size]\n");

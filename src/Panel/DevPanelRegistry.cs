@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KitLib.Abstractions.Host;
+using KitLib.Host;
 using KitLib.Icons;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
@@ -17,6 +19,7 @@ internal static class DevPanelRegistry {
         _tabs.RemoveAll(t => t.Id == tab.Id);
         _tabs.Add(tab);
         _dirty = true;
+        KitLibHost.RegisterTab(ToDescriptor(tab));
     }
 
     /// <summary>Convenience overload — register with lambdas, no need to implement <see cref="IDevPanelTab"/>.</summary>
@@ -33,6 +36,18 @@ internal static class DevPanelRegistry {
         if (removed > 0) _dirty = true;
         return removed > 0;
     }
+
+    static KitLibTabDescriptor ToDescriptor(IDevPanelTab tab) => new() {
+        Id = tab.Id,
+        IconKey = tab.Icon.Name,
+        DisplayName = tab.DisplayName,
+        Order = tab.Order,
+        Group = tab.Group == DevPanelTabGroup.Primary ? KitLibTabGroup.Primary : KitLibTabGroup.Utility,
+        Kind = tab.Kind == DevPanelTabKind.Developer ? KitLibTabKind.Developer : KitLibTabKind.Cheat,
+        OnActivate = ui => tab.OnActivate((NGlobalUi)ui),
+        OnDeactivate = ui => tab.OnDeactivate((NGlobalUi)ui),
+        OwningModuleId = KitLibModuleIds.Core,
+    };
 
     /// <summary>Get all tabs for a given group, sorted by <see cref="IDevPanelTab.Order"/> (stable).</summary>
     internal static IReadOnlyList<IDevPanelTab> GetTabs(DevPanelTabGroup group) {

@@ -1,5 +1,6 @@
 using System;
 using KitLib;
+using KitLib.Cheat;
 using KitLib.Icons;
 using KitLib.Panels;
 using KitLib.Presets;
@@ -218,8 +219,8 @@ internal static partial class DevPanelUI {
             if (scope != PresetContents.None && hasRun) {
                 var preset = PresetManager.CaptureFromRun(scope);
                 if (preset != null) {
-                    KitLibState.PendingRestartPreset = preset;
-                    KitLibState.PendingRestartScope = scope;
+                    CheatRestartState.PendingRestartPreset = preset;
+                    CheatRestartState.PendingRestartScope = scope;
                     MainFile.Logger.Info($"[KitLib] RestartWithSeed: captured preset scope={scope}.");
                 }
             }

@@ -6,37 +6,12 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.AI.Knowledge;
 
-public interface ICardTagProvider {
-    bool AppliesTo(string? cardId);
-    IReadOnlyList<AiTag> GetExtraTags(string cardId);
-}
-
 public static class CardTagProviderHub {
-    static readonly List<ICardTagProvider> Providers = [];
+    public static void Register(ICardTagProvider provider) =>
+        KitLib.Host.KitLibHost.RegisterCardTagProvider(provider);
 
-    public static void Register(ICardTagProvider provider) {
-        Providers.Add(provider);
-        MainFile.Logger.Info($"[AiKnowledge] Card tag provider registered type={provider.GetType().Name}.");
-    }
-
-    public static IReadOnlyList<AiTag> MergeTags(string? cardId, IReadOnlyList<AiTag> baseTags) {
-        if (string.IsNullOrWhiteSpace(cardId) || Providers.Count == 0)
-            return baseTags;
-
-        var merged = new HashSet<AiTag>(baseTags);
-        foreach (var provider in Providers) {
-            if (!provider.AppliesTo(cardId)) continue;
-            try {
-                foreach (var tag in provider.GetExtraTags(cardId))
-                    merged.Add(tag);
-            }
-            catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiKnowledge] Tag provider {provider.GetType().Name} failed: {ex.Message}");
-            }
-        }
-
-        return merged.Count > 0 ? [.. merged] : baseTags;
-    }
+    public static IReadOnlyList<AiTag> MergeTags(string? cardId, IReadOnlyList<AiTag> baseTags) =>
+        KitLib.Host.KitLibHost.MergeCardTags(cardId, baseTags);
 }
 
 public sealed record CardCatalogEntry(

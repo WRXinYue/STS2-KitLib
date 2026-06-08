@@ -86,10 +86,10 @@ public static class HarmonySmartAnalysis {
         IReadOnlyList<DeclaringTypePatchInfo> PatchesByDeclaringType);
 
     /// <summary>
-    /// Default patterns excluded from analysis (DevMode itself and its framework dependency).
+    /// Default patterns excluded from analysis (KitLib modules and framework dependency).
     /// Patterns ending with <c>*</c> match any owner that starts with the prefix before the asterisk.
     /// </summary>
-    public static readonly IReadOnlyList<string> DefaultExcludedOwners = ["KitLib", "com.ritsukage.sts2-RitsuLib.*"];
+    public static readonly IReadOnlyList<string> DefaultExcludedOwners = ["KitLib*", "com.ritsukage.sts2-RitsuLib.*"];
 
     private static SmartAnalysisResult? _cachedResult;
     private static string? _cachedFormattedReport;

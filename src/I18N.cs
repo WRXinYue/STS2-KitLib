@@ -12,7 +12,7 @@ namespace KitLib;
 /// Loads flat key-value JSON files from the mod's localization/ folder,
 /// falling back to embedded resources, and reacts to game locale changes.
 /// </summary>
-internal static class I18N {
+public static class I18N {
     private static readonly string ModDir =
         Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
 
@@ -42,10 +42,10 @@ internal static class I18N {
     }
 
     /// <summary>Fired after translations reload on game locale change.</summary>
-    internal static event Action? LanguageChanged;
+    public static event Action? LanguageChanged;
 
     /// <summary>Loaded language folder id: <c>eng</c> or <c>zhs</c>.</summary>
-    internal static string LangCode {
+    public static string LangCode {
         get {
             EnsureLoaded();
             return string.Equals(_loadedLang, "zhs", StringComparison.OrdinalIgnoreCase) ? "zhs" : "eng";
@@ -107,8 +107,7 @@ internal static class I18N {
         string? lang = null;
         try { lang = LocManager.Instance?.Language; } catch { }
         if (!string.IsNullOrWhiteSpace(lang)) return Normalize(lang);
-        try { lang = Godot.TranslationServer.GetLocale(); } catch { }
-        return Normalize(lang);
+        return "eng";
     }
 
     private static string Normalize(string? lang) {

@@ -5,7 +5,7 @@ using KitLib.AI.AutoPlay;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.Companion;
-using KitLib.Multiplayer.Cheat;
+using KitLib.Host;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
@@ -33,11 +33,11 @@ internal static class AiHostPanelModel {
         if (AiHostContext.ActiveNetId is ulong activeId)
             lines.Add(I18N.T("ai.status.deciding", "Deciding for netId {0}", activeId));
 
-        if (MpCheatSession.InMultiplayerRun) {
+        if (MultiplayerRunProbe.InMultiplayerRun) {
             lines.Add(I18N.T(
                 "ai.status.mpRole",
                 "Multiplayer: {0}",
-                MpCheatSession.IsHost ? I18N.T("ai.status.host", "host") : I18N.T("ai.status.client", "client")));
+                MultiplayerRunProbe.IsHost ? I18N.T("ai.status.host", "host") : I18N.T("ai.status.client", "client")));
         }
 
         lines.Add(I18N.T(
@@ -47,7 +47,7 @@ internal static class AiHostPanelModel {
                 ? I18N.T("ai.status.on", "running")
                 : I18N.T("ai.status.off", "off")));
 
-        if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost) {
+        if (MultiplayerRunProbe.InMultiplayerRun && MultiplayerRunProbe.IsHost) {
             lines.Add(I18N.T(
                 "ai.status.teammate",
                 "Host AI Teammate: {0}",
@@ -59,7 +59,7 @@ internal static class AiHostPanelModel {
                 lines.Add(I18N.T("ai.status.aiPeers", "AI-driven peers: {0}", targets));
         }
 
-        if (MpCheatSession.InMultiplayerRun && !MpCheatSession.IsHost) {
+        if (MultiplayerRunProbe.InMultiplayerRun && !MultiplayerRunProbe.IsHost) {
             lines.Add(I18N.T(
                 "ai.status.afk",
                 "Client AFK: {0}",
@@ -68,7 +68,7 @@ internal static class AiHostPanelModel {
                     : I18N.T("ai.status.off", "off")));
         }
 
-        if (MpCheatSession.InMultiplayerRun && LanLocalDecisionHost.IsEnabled) {
+        if (MultiplayerRunProbe.InMultiplayerRun && LanLocalDecisionHost.IsEnabled) {
             lines.Add(I18N.T(
                 "ai.status.lanLocal",
                 "LAN local AI (Neow/rewards): {0}",
@@ -100,12 +100,12 @@ internal static class AiHostPanelModel {
         if (KitLibState.DualInstanceMinimalRail)
             tips.Add(I18N.T("ai.rec.minimalRail", "Dual-instance rail shows AI Host + Logs; use a full Dev run for all panels."));
 
-        if (MpCheatSession.InMultiplayerRun && LanLocalDecisionHost.IsEnabled)
+        if (MultiplayerRunProbe.InMultiplayerRun && LanLocalDecisionHost.IsEnabled)
             tips.Add(I18N.T(
                 "ai.rec.lanLocal",
                 "LAN: Neow and reward screens are automated locally; host still hand-plays combat."));
 
-        if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost && !LanLocalDecisionHost.IsEnabled)
+        if (MultiplayerRunProbe.InMultiplayerRun && MultiplayerRunProbe.IsHost && !LanLocalDecisionHost.IsEnabled)
             tips.Add(I18N.T(
                 "ai.rec.lanLocalOff",
                 "Apply LAN host preset (AI Host panel) to auto-pick Neow and rewards on both windows."));
@@ -113,7 +113,7 @@ internal static class AiHostPanelModel {
         if (KitLibState.PseudoCoopDeferHeavyUi)
             tips.Add(I18N.T("ai.rec.deferUi", "Finish Neow and open the map once — the sidebar attaches after deferred init."));
 
-        if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost) {
+        if (MultiplayerRunProbe.InMultiplayerRun && MultiplayerRunProbe.IsHost) {
             if (SettingsStore.Current.AutoPlayEnabled)
                 tips.Add(I18N.T("ai.rec.noAutoplayMp", "Turn off Solo AI Host in multiplayer; hand-play locally and use Host AI Teammate for remotes."));
             if (!SettingsStore.Current.MpAiTeammateEnabled)
@@ -125,10 +125,10 @@ internal static class AiHostPanelModel {
                 tips.Add(I18N.T("ai.rec.syncbot", "Solo host testing: enable SyncBot or spawn a phantom player."));
         }
 
-        if (MpCheatSession.InMultiplayerRun && !MpCheatSession.IsHost && !MpAiTeammateAfkClient.IsSessionEnabled)
+        if (MultiplayerRunProbe.InMultiplayerRun && !MultiplayerRunProbe.IsHost && !MpAiTeammateAfkClient.IsSessionEnabled)
             tips.Add(I18N.T("ai.rec.clientAfk", "Client: enable AFK so the host can enqueue your combat actions."));
 
-        if (!MpCheatSession.InMultiplayerRun && RunManager.Instance?.IsInProgress == true
+        if (!MultiplayerRunProbe.InMultiplayerRun && RunManager.Instance?.IsInProgress == true
             && !SettingsStore.Current.AutoPlayEnabled)
             tips.Add(I18N.T("ai.rec.soloAutoplay", "Solo run: enable AI Host below to automate map, combat, and rewards."));
 

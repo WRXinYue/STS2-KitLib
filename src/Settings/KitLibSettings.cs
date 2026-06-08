@@ -23,9 +23,9 @@ public sealed partial class KitLibSettings {
 
     /// <summary>Tab ids hidden from the in-game rail (settings tab cannot be hidden).</summary>
     public HashSet<string> RailHiddenTabIds { get; set; } =
-        new(RailTabPreferences.DefaultHiddenTabIds, StringComparer.Ordinal);
+        new(DefaultHiddenRailTabIds, StringComparer.Ordinal);
 
-    /// <summary>Whether <see cref="RailTabPreferences.DefaultHiddenTabIds"/> have been merged into saved settings.</summary>
+    /// <summary>Whether <see cref="DefaultHiddenRailTabIds"/> have been merged into saved settings.</summary>
     public int RailLayoutDefaultsVersion { get; set; } = 1;
 
     /// <summary>
@@ -123,6 +123,12 @@ public sealed partial class KitLibSettings {
 
     /// <summary>Migrates legacy toggle binding and game-conflicting key assignments.</summary>
     public int HotkeySettingsVersion { get; set; }
+
+    public static readonly string[] DefaultHiddenRailTabIds = {
+        "devmode.harmonyAnalysis",
+        "devmode.scripts",
+        "devmode.frameworks",
+    };
 }
 
 public static class ThemeNames {

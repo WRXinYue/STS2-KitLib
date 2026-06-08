@@ -6,7 +6,7 @@ using KitLib.AI.AutoPlay.Strategies;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2;
-using KitLib.Multiplayer.Cheat;
+using KitLib.Host;
 using KitLib.Settings;
 using KitLib.UI;
 using Godot;
@@ -25,10 +25,10 @@ internal sealed class AiPlayModule {
 
     public bool IsRunning => _cts != null;
 
-    public static bool IsAutoPlayAllowed => !MpCheatSession.InMultiplayerRun;
+    public static bool IsAutoPlayAllowed => !MultiplayerRunProbe.InMultiplayerRun;
 
     public void OnRunStarted() {
-        if (MpCheatSession.InMultiplayerRun) {
+        if (MultiplayerRunProbe.InMultiplayerRun) {
             DisableMultiplayerAutoPlay();
             return;
         }

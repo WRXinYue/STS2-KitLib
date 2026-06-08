@@ -10,8 +10,7 @@ using MegaCrit.Sts2.Core.Models.Acts;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
-using KitLib.AI.AutoPlay;
-using KitLib.Multiplayer.Cheat;
+using KitLib.Host;
 using KitLib.Settings;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
@@ -37,8 +36,8 @@ public static class GlobalUiReadyPatch {
 
         // NGlobalUi can survive scene changes; TreeExiting may detach HUD while _attached stays set.
         if (_attached == __instance) {
-            AiHudOverlayUI.Attach(__instance);
-            AiHudOverlayUI.SyncState(__instance);
+            KitLibPanelOps.OnPanelAttach?.Invoke(__instance);
+            KitLibPanelOps.OnPanelSync?.Invoke(__instance);
             return;
         }
 
@@ -66,10 +65,8 @@ public static class GlobalUiReadyPatch {
         if (_attached == globalUi) return;
         _attached = globalUi;
         DevPanel.Attach(globalUi);
-        AiHudOverlayUI.SyncState(globalUi);
-
-        if (KitLibState.StatModifiers == null)
-            KitLibState.StatModifiers = new RuntimeStatModifiers();
+        KitLibPanelOps.OnPanelSync?.Invoke(globalUi);
+        KitLibCheatOps.EnsureRuntimeStatModifiers?.Invoke();
 
         if (!skipWarmup) {
             if (_warmup == null)
@@ -109,10 +106,7 @@ public static class GlobalUiReadyPatch {
     }
 
     internal static void Process(double delta) {
-        if (MpCheatApplier.CheatsActive)
-            PlayerCheatEffects.Update();
-        if (MpCheatApplier.FrameCheatsAllowed)
-            KitLibState.StatModifiers?.Update(delta);
+        KitLibCheatOps.ProcessFrame?.Invoke(delta);
         _warmup?.Process(delta);
     }
 }

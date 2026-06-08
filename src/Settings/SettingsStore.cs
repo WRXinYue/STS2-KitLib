@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using KitLib.Multiplayer.Cheat;
+using KitLib.Host;
 
 namespace KitLib.Settings;
 
@@ -53,7 +53,7 @@ public static class SettingsStore {
 
     public static void SetMultiplayerCheatOptIn(bool enabled) {
         Current.MultiplayerCheatOptIn = enabled;
-        MpCheatSession.SetLocalOptIn(enabled);
+        KitLibCheatOps.SetMultiplayerCheatOptIn?.Invoke(enabled);
         Save();
     }
 
@@ -96,7 +96,7 @@ public static class SettingsStore {
     }
 
     public static void SetCombatStatsMpOverlayPosition(float x, float y) {
-        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+        if (KitLibHost.IsDualInstanceActive?.Invoke() == true) {
             KitLibInstance.SessionOverlay.MpOverlayPosX = x;
             KitLibInstance.SessionOverlay.MpOverlayPosY = y;
             return;
@@ -107,7 +107,7 @@ public static class SettingsStore {
     }
 
     public static (float? X, float? Y) GetCombatStatsMpOverlayPosition() {
-        if (KitLibInstanceRegistry.IsDualInstanceActive())
+        if (KitLibHost.IsDualInstanceActive?.Invoke() == true)
             return (KitLibInstance.SessionOverlay.MpOverlayPosX, KitLibInstance.SessionOverlay.MpOverlayPosY);
         return (Current.CombatStatsMpOverlayPosX, Current.CombatStatsMpOverlayPosY);
     }
@@ -118,7 +118,7 @@ public static class SettingsStore {
     }
 
     public static void SetCombatStatsMonsterIntentOverlayPosition(float x, float y) {
-        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+        if (KitLibHost.IsDualInstanceActive?.Invoke() == true) {
             KitLibInstance.SessionOverlay.MonsterIntentOverlayPosX = x;
             KitLibInstance.SessionOverlay.MonsterIntentOverlayPosY = y;
             return;
@@ -129,7 +129,7 @@ public static class SettingsStore {
     }
 
     public static (float? X, float? Y) GetCombatStatsMonsterIntentOverlayPosition() {
-        if (KitLibInstanceRegistry.IsDualInstanceActive())
+        if (KitLibHost.IsDualInstanceActive?.Invoke() == true)
             return (KitLibInstance.SessionOverlay.MonsterIntentOverlayPosX,
                 KitLibInstance.SessionOverlay.MonsterIntentOverlayPosY);
         return (Current.CombatStatsMonsterIntentOverlayPosX, Current.CombatStatsMonsterIntentOverlayPosY);
@@ -158,7 +158,8 @@ public static class SettingsStore {
     private static void ApplyRailLayoutDefaults() {
         if (Current.RailLayoutDefaultsVersion >= 1)
             return;
-        RailTabPreferences.ApplyDefaultHiddenTabs(Current);
+        foreach (var id in KitLibSettings.DefaultHiddenRailTabIds)
+            Current.RailHiddenTabIds.Add(id);
         Current.RailLayoutDefaultsVersion = 1;
         Save();
     }

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KitLib.Icons;
-using KitLib.Multiplayer.Cheat;
+using KitLib.Host;
 using KitLib.Panels;
 
 namespace KitLib.Settings;
@@ -21,11 +21,7 @@ internal static class RailTabPreferences {
     public const string ScriptsTabId = "devmode.scripts";
     public const string FrameworksTabId = "devmode.frameworks";
 
-    public static readonly string[] DefaultHiddenTabIds = {
-        HarmonyAnalysisTabId,
-        ScriptsTabId,
-        FrameworksTabId
-    };
+    public static readonly string[] DefaultHiddenTabIds = KitLibSettings.DefaultHiddenRailTabIds;
 
     private static string GroupKey(DevPanelTabGroup group) =>
         group == DevPanelTabGroup.Primary ? PrimaryKey : UtilityKey;
@@ -136,7 +132,7 @@ internal static class RailTabPreferences {
     }
 
     private static bool IsAvailableInCurrentMode(IDevPanelTab tab) {
-        if (KitLibState.CheatsInRun || MpCheatSession.CanUseMultiplayerCheats) return true;
+        if (KitLibState.CheatsInRun || KitLibCheatOps.CanUseMultiplayerCheats?.Invoke() == true) return true;
         // AI Host is Cheat-kind but must stay visible in DevPanel / LAN minimal-rail sessions.
         if (tab.Id is AiHostTabId or LogsTabId) return true;
         return tab.Kind == DevPanelTabKind.Developer;

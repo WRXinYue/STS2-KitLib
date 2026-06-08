@@ -7,7 +7,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using KitLib.AI.AutoPlay;
 using KitLib.Modding;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
@@ -300,7 +299,7 @@ internal static class SaveSlotManager {
         try {
             await NGame.Instance!.Transition.FadeOut();
 
-            AiPlayModule.Instance.StopLoop();
+            KitLib.Host.KitLibHost.StopAiPlayLoop?.Invoke();
             SkipAnimControl.Reset();
 
             if (RunManager.Instance.IsInProgress)

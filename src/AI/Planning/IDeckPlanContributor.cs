@@ -1,12 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-
 namespace KitLib.AI.Planning;
-
-public interface IDeckPlanContributor {
-    bool AppliesTo(string? characterId);
-    void AdjustPlan(DeckPlan.Builder builder, JsonObject snapshot);
-}
 
 public static class DeckPlanContributorHub {
     static readonly List<IDeckPlanContributor> Contributors = [];
