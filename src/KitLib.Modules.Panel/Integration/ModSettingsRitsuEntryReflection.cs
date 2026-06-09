@@ -44,13 +44,61 @@ internal static class ModSettingsRitsuEntryReflection {
         context.GetType().GetMethod("RequestRefresh", BindingFlags.Public | BindingFlags.Instance)
             ?.Invoke(context, null);
     }
+    public static void RegisterRefresh(object context, Action apply) {
+        var reg = ResolveRegisterRefreshMethod(context.GetType());
+        reg?.Invoke(context, new object[] { apply });
+    }
+
     public static void RegisterRefresh(object context, GodotObject node, Action apply) {
-        var reg = context.GetType().GetMethod("RegisterRefresh", BindingFlags.Public | BindingFlags.Instance);
-        reg?.Invoke(context, new object[] { (Action)(() => {
+        RegisterRefresh(context, () => {
             if (!GodotObject.IsInstanceValid(node))
                 return;
             apply();
-        }) });
+        });
+    }
+
+    /// <summary>
+    /// RitsuLib may declare multiple <c>RegisterRefresh</c> overloads; resolve the single-<see cref="Action" /> callback.
+    /// </summary>
+    internal static MethodInfo? ResolveRegisterRefreshMethod(Type contextType) {
+        const BindingFlags declared = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+        for (var t = contextType; t != null; t = t.BaseType) {
+            try {
+                var exact = t.GetMethod(
+                    "RegisterRefresh",
+                    declared,
+                    binder: null,
+                    types: new[] { typeof(Action) },
+                    modifiers: null);
+                if (exact != null)
+                    return exact;
+            }
+            catch (AmbiguousMatchException) {
+                // Fall through to per-method scan below.
+            }
+
+            foreach (var m in t.GetMethods(declared)) {
+                if (m.Name != "RegisterRefresh")
+                    continue;
+                var ps = m.GetParameters();
+                if (ps.Length == 1 && ps[0].ParameterType == typeof(Action))
+                    return m;
+            }
+        }
+
+        MethodInfo? fallback = null;
+        foreach (var m in contextType.GetMethods(BindingFlags.Public | BindingFlags.Instance)) {
+            if (m.Name != "RegisterRefresh")
+                continue;
+            var ps = m.GetParameters();
+            if (ps.Length != 1 || !typeof(Delegate).IsAssignableFrom(ps[0].ParameterType))
+                continue;
+            if (ps[0].ParameterType == typeof(Action))
+                return m;
+            fallback ??= m;
+        }
+
+        return fallback;
     }
     public static void NavigateToPage(object context, string pageId) {
         if (string.IsNullOrWhiteSpace(pageId))

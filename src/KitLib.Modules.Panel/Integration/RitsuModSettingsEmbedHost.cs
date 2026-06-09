@@ -15,11 +15,15 @@ internal static class RitsuModSettingsEmbedHost {
         if (_submenu != null && GodotObject.IsInstanceValid(_submenu))
             return;
         var asm = RitsuModSettingsBridge.TryGetRitsuAssembly();
-        if (asm == null)
+        if (asm == null) {
+            MainFile.Logger.Warn("KitLib ModPanel: STS2-RitsuLib assembly missing for embed host.");
             return;
+        }
         var submenuType = asm.GetType(SubmenuFullName);
-        if (submenuType == null)
+        if (submenuType == null) {
+            MainFile.Logger.Warn($"KitLib ModPanel: type not found: {SubmenuFullName}");
             return;
+        }
         _pin = new Control {
             Name = "KitLibRitsuSettingsEnginePin",
             CustomMinimumSize = new Vector2(1f, 1f),
@@ -29,6 +33,7 @@ internal static class RitsuModSettingsEmbedHost {
         };
         shellRoot.AddChild(_pin);
         if (Activator.CreateInstance(submenuType) is not Node created) {
+            MainFile.Logger.Warn($"KitLib ModPanel: failed to instantiate {SubmenuFullName}");
             _pin.QueueFree();
             _pin = null;
             return;
@@ -59,4 +64,4 @@ internal static class RitsuModSettingsEmbedHost {
         _pin = null;
         _submenu = null;
     }
-}
+}

@@ -21,6 +21,7 @@ public static partial class ModPanelUI {
     private static Control? _root;
     private static NMainMenu? _hostMainMenu;
     public static void Show(NMainMenu mainMenu) {
+        MainFile.Logger.Info("KitLib: Opening mod panel…");
         TeardownShell();
         // Same parent as vanilla submenus (main_menu.tscn %Submenus): full-rect Control under NMainMenu, not Window root.
         var parent = (Control)mainMenu.SubmenuStack;
@@ -632,6 +633,7 @@ public static partial class ModPanelUI {
         ClearContainerChildren(list);
         ClearContainerChildren(pageTabRow);
         if (!RitsuModSettingsBridge.IsAvailable) {
+            MainFile.Logger.Warn("KitLib ModPanel: STS2-RitsuLib assembly not loaded.");
             SetPageTabChromeVisible(pageTabRow, false);
             list.AddChild(CreateInlineDescription(I18N.T("modpanel.content.ritsuNotLoaded",
                 "STS2-RitsuLib is not loaded. Install/enable it to scan registered mod settings here.")));
@@ -639,6 +641,7 @@ public static partial class ModPanelUI {
         }
         var pages = RitsuModSettingsBridge.GetAllPageObjects(modId);
         if (pages.Count == 0) {
+            MainFile.Logger.Info($"KitLib ModPanel: no registered settings pages for mod '{modId}'.");
             SetPageTabChromeVisible(pageTabRow, false);
             return;
         }
@@ -676,6 +679,8 @@ public static partial class ModPanelUI {
             return;
         var submenu = RitsuModSettingsEmbedHost.TryGetSubmenu();
         if (submenu == null) {
+            MainFile.Logger.Warn(
+                $"KitLib ModPanel: RitsuModSettingsSubmenu embed host failed for mod '{modId}', page '{state.PageId}'.");
             list.AddChild(CreateInlineDescription(I18N.T("modpanel.content.embedHostFailed",
                 "Could not initialize the RitsuLib settings host.")));
             return;
@@ -686,6 +691,8 @@ public static partial class ModPanelUI {
         RitsuModSettingsEmbedHost.SyncSubmenuSelection(ritsuPageModId, state.PageId);
         var body = RitsuModSettingsBridge.TryCreateInteractivePageBody(submenu, ritsuPageModId, activePage, out var err);
         if (body == null) {
+            MainFile.Logger.Warn(
+                $"KitLib ModPanel: page body build failed for mod '{ritsuPageModId}', page '{state.PageId}': {err ?? "—"}");
             list.AddChild(CreateInlineDescription(string.Format(
                 I18N.T("modpanel.content.buildFailed", "Could not build panel UI: {0}"), err ?? "—")));
             return;
@@ -739,4 +746,4 @@ public static partial class ModPanelUI {
             }
         }
     }
-}
+}

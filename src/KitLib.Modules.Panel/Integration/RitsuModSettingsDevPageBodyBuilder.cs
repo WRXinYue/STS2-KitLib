@@ -340,16 +340,11 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
         return host;
     }
     private static void RegisterRefreshWhenAlive(object context, GodotObject? node, Action action) {
-        RegisterRefresh(context, () => {
+        ModSettingsRitsuEntryReflection.RegisterRefresh(context, () => {
             if (!GodotObject.IsInstanceValid(node))
                 return;
             action();
         });
-    }
-    private static void RegisterRefresh(object context, Action action) {
-        var m = context.GetType().GetMethod("RegisterRefresh", BindingFlags.Public | BindingFlags.Instance)
-                ?? throw new MissingMethodException(context.GetType().FullName, "RegisterRefresh");
-        m.Invoke(context, new object[] { action });
     }
     private static ColorRect CreateDivider() {
         return new ColorRect {

@@ -546,14 +546,8 @@ internal static class ModSettingsRitsuEntryControls {
         context.GetType().GetMethod("RequestRefresh", BindingFlags.Public | BindingFlags.Instance)
             ?.Invoke(context, null);
     }
-    private static void RegisterRefresh(object context, GodotObject node, Action apply) {
-        var reg = context.GetType().GetMethod("RegisterRefresh", BindingFlags.Public | BindingFlags.Instance);
-        reg?.Invoke(context, new object[] { (Action)(() => {
-            if (!GodotObject.IsInstanceValid(node))
-                return;
-            apply();
-        }) });
-    }
+    private static void RegisterRefresh(object context, GodotObject node, Action apply)
+        => ModSettingsRitsuEntryReflection.RegisterRefresh(context, node, apply);
     private static string ResolveSubpageTargetId(object entry) {
         foreach (var name in new[] { "TargetPageId", "ChildPageId", "PageId", "NestedPageId" }) {
             if (GetProp(entry, name) is string s && !string.IsNullOrWhiteSpace(s))

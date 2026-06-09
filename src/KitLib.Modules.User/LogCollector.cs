@@ -53,6 +53,7 @@ internal static class LogCollector {
            || entry.Text.Contains(LegacySessionBoundaryMarker, StringComparison.Ordinal);
 
     public static void Initialize() {
+        InstanceLogWriter.Initialize();
         Log.LogCallback += OnLogReceived;
         MainFile.Logger.Info(KitLibInstance.SessionBoundaryMarker);
         LogViewerFilterSync.PublishDefaults();
