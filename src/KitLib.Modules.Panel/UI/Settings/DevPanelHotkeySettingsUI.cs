@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using KitLib.Settings;
 using Godot;
+using KitLib.Settings;
 
 namespace KitLib.UI;
 

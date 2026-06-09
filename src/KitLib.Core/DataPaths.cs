@@ -21,8 +21,8 @@ public static class DataPaths {
 
     public static string SettingsFile => Path.Combine(BaseDir, "settings.json");
     public static string SnapshotsDir => Path.Combine(BaseDir, "snapshots");
-    public static string PresetsDir   => Path.Combine(BaseDir, "presets");
-    public static string ScriptsDir   => Path.Combine(BaseDir, "scripts");
+    public static string PresetsDir => Path.Combine(BaseDir, "presets");
+    public static string ScriptsDir => Path.Combine(BaseDir, "scripts");
     public static string FingerprintFile => Path.Combine(BaseDir, "last_mod_fingerprint.json");
     public static string ProfileBackupsDir => Path.Combine(BaseDir, "profile_backups");
 

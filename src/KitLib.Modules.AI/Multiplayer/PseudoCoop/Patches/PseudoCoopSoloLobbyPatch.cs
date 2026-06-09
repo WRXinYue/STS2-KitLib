@@ -1,6 +1,6 @@
 using System.Linq;
-using KitLib.Settings;
 using HarmonyLib;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;

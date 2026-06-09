@@ -88,11 +88,11 @@ public struct ZzzMpCheatEnvelopeNetMessage : INetMessage {
         Channel = (MpCheatWireChannel)reader.ReadByte();
         switch (Channel) {
             case MpCheatWireChannel.Config: {
-                var (revision, json) = MpCheatEnvelopeCodec.ReadConfig(reader);
-                ConfigRevision = revision;
-                ConfigJson = json;
-                break;
-            }
+                    var (revision, json) = MpCheatEnvelopeCodec.ReadConfig(reader);
+                    ConfigRevision = revision;
+                    ConfigJson = json;
+                    break;
+                }
             case MpCheatWireChannel.Command:
                 Command = MpCheatEnvelopeCodec.ReadCommand(reader);
                 break;

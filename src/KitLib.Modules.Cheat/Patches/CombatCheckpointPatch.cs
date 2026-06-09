@@ -1,7 +1,7 @@
 using System;
-using KitLib.Combat;
 using Godot;
 using HarmonyLib;
+using KitLib.Combat;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Rooms;
 

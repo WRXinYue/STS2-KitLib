@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using KitLib.AI.Core.Schema;
-using KitLib.AI.Planning;
-using KitLib.AI.Knowledge;
-using KitLib.AI.Sts2.Helpers;
-using KitLib.Actions;
 using Godot;
 using HarmonyLib;
+using KitLib.Actions;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Knowledge;
+using KitLib.AI.Planning;
+using KitLib.AI.Sts2.Helpers;
 using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
@@ -16,8 +16,8 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.Events;
 using MegaCrit.Sts2.Core.Nodes.RestSite;
-using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
@@ -28,10 +28,8 @@ using MegaCrit.Sts2.Core.Runs;
 namespace KitLib.AI.Sts2.Snapshots;
 
 /// <summary>Captures overlay / room UI context for non-combat AI decisions.</summary>
-internal static class GameSnapshotPhaseCapture
-{
-    public static void Enrich(JsonObject obj, RunState state, Player player, GamePhase phase)
-    {
+internal static class GameSnapshotPhaseCapture {
+    public static void Enrich(JsonObject obj, RunState state, Player player, GamePhase phase) {
         switch (phase) {
             case GamePhase.EventChoice:
                 CaptureEventChoice(obj, state);
@@ -67,8 +65,7 @@ internal static class GameSnapshotPhaseCapture
             screen, player.HasOpenPotionSlots, obj);
     }
 
-    static void CaptureEventChoice(JsonObject obj, RunState state)
-    {
+    static void CaptureEventChoice(JsonObject obj, RunState state) {
         TryCaptureEventId(obj, state);
 
         var tree = Engine.GetMainLoop() as SceneTree;
@@ -102,8 +99,7 @@ internal static class GameSnapshotPhaseCapture
             obj["eventId"] = "EVENT.NEOW";
     }
 
-    static void CaptureRelicSelection(JsonObject obj, RunState state)
-    {
+    static void CaptureRelicSelection(JsonObject obj, RunState state) {
         var screen = OverlayPhaseHelper.FindRelicSelectionScreen();
         if (screen == null)
             return;
@@ -147,8 +143,7 @@ internal static class GameSnapshotPhaseCapture
         return "combat_reward";
     }
 
-    static void CaptureCardReward(JsonObject obj, RunState state, Player player)
-    {
+    static void CaptureCardReward(JsonObject obj, RunState state, Player player) {
         var screen = OverlayPhaseHelper.FindCardRewardScreen();
         if (screen == null) return;
 
@@ -208,8 +203,7 @@ internal static class GameSnapshotPhaseCapture
         obj["nextFightPreview"] = preview;
     }
 
-    static void CaptureMapNodes(JsonObject obj, RunState state)
-    {
+    static void CaptureMapNodes(JsonObject obj, RunState state) {
         var mapScreen = NMapScreen.Instance;
         if (mapScreen == null || !mapScreen.IsOpen) return;
 
@@ -232,8 +226,7 @@ internal static class GameSnapshotPhaseCapture
         obj["mapNodes"] = arr;
     }
 
-    static List<NMapPoint> GetAvailableMapPoints(RunState state, List<NMapPoint> allPoints)
-    {
+    static List<NMapPoint> GetAvailableMapPoints(RunState state, List<NMapPoint> allPoints) {
         if (state.VisitedMapCoords.Count == 0)
             return allPoints.Where(mp => mp.Point.coord.row == 0).ToList();
 
@@ -246,8 +239,7 @@ internal static class GameSnapshotPhaseCapture
         return allPoints.Where(mp => childCoords.Contains(mp.Point.coord)).ToList();
     }
 
-    static void CaptureShopOffers(JsonObject obj, RunState state, Player player)
-    {
+    static void CaptureShopOffers(JsonObject obj, RunState state, Player player) {
         if (state.CurrentRoom is not MerchantRoom merchantRoom) return;
 
         var inventory = merchantRoom.Inventory;
@@ -302,8 +294,7 @@ internal static class GameSnapshotPhaseCapture
         obj["shopOffers"] = arr;
     }
 
-    static void CaptureRestOptions(JsonObject obj)
-    {
+    static void CaptureRestOptions(JsonObject obj) {
         var tree = Engine.GetMainLoop() as SceneTree;
         var room = tree?.Root?.GetNodeOrNull<NRestSiteRoom>(
             "/root/Game/RootSceneContainer/Run/RoomContainer/RestSiteRoom");
@@ -331,8 +322,7 @@ internal static class GameSnapshotPhaseCapture
         }
     }
 
-    static void TryCaptureEventId(JsonObject obj, RunState state)
-    {
+    static void TryCaptureEventId(JsonObject obj, RunState state) {
         if (state.CurrentRoom is not EventRoom eventRoom)
             return;
 

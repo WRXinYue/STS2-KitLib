@@ -75,8 +75,7 @@ public class DmEventConsoleCmd : AbstractConsoleCmd {
         return base.GetArgumentCompletions(player, args);
     }
 
-    private static string DescribeForce(string eventId, AncientEventEnterRequest? request)
-    {
+    private static string DescribeForce(string eventId, AncientEventEnterRequest? request) {
         if (request?.PinOptionToken is not string pin)
             return $"Forcing event: {eventId}";
 

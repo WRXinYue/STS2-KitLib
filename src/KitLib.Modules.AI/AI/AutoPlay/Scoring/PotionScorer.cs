@@ -78,7 +78,8 @@ public static class PotionScorer {
                     ? CombatSetupEvaluator.PrimaryAttackTargetIndex(state)
                     : -1;
                 score = PotionUseScoring.ScoreSimProfile(state, profile, enemyIndex, ctx);
-            } else {
+            }
+            else {
                 score = ScoreCombatUse(potion, snapshot, plan);
             }
 

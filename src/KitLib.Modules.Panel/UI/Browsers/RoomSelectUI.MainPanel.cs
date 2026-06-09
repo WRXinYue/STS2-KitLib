@@ -1,5 +1,5 @@
-using KitLib.Icons;
 using Godot;
+using KitLib.Icons;
 using MegaCrit.Sts2.Core.Rooms;
 
 namespace KitLib.UI;

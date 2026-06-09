@@ -1,5 +1,5 @@
-using KitLib.UI;
 using HarmonyLib;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Combat;
 
 namespace KitLib.Patches;

@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using KitLib.CombatStats;
 using Godot;
+using KitLib.CombatStats;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;

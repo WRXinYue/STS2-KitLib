@@ -1,5 +1,5 @@
-using HarmonyLib;
 using System.Linq;
+using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;

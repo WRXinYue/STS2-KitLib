@@ -1,5 +1,5 @@
-using KitLib.Host;
 using HarmonyLib;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 

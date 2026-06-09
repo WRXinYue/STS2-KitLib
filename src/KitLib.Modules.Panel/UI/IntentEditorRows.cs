@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using KitLib.EnemyIntent;
 using Godot;
+using KitLib.EnemyIntent;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 

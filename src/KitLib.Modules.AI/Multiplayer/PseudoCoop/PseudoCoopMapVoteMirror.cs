@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using KitLib.Settings;
 using HarmonyLib;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Multiplayer;

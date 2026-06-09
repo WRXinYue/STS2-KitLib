@@ -26,18 +26,12 @@ from lib.ensure_iconify_mdi import ensure_mdi_icons  # noqa: E402
 SKIP_NAMES = frozenset({"Name", "IsAvailable", "Texture"})
 
 # Exclude MdiIcon.Get(…) / MdiIcon.From(…) — otherwise [A-Za-z]+ backtracks to "Ge"/"Fro".
-USAGE_RE = re.compile(
-    r"(?<![\w.])MdiIcon\.(?!(?:Get|From)\s*\()([A-Z][A-Za-z0-9]+)(?!\s*\()"
-)
-DEF_RE = re.compile(
-    r"(?:public\s+)?static\s+readonly\s+MdiIcon\s+([A-Z][A-Za-z0-9]+)\s*=\s*new\(\"([^\"]+)\"\)"
-)
+USAGE_RE = re.compile(r"(?<![\w.])MdiIcon\.(?!(?:Get|From)\s*\()([A-Z][A-Za-z0-9]+)(?!\s*\()")
+DEF_RE = re.compile(r"(?:public\s+)?static\s+readonly\s+MdiIcon\s+([A-Z][A-Za-z0-9]+)\s*=\s*new\(\"([^\"]+)\"\)")
 GET_RE = re.compile(r"MdiIcon\.Get\(\s*\"([^\"]+)\"")
 FROM_RE = re.compile(r"MdiIcon\.From\(\s*\"([^\"]+)\"\s*\)")
 ICON_KEY_RE = re.compile(r"IconKey\s*=\s*\"([^\"]+)\"")
-REGISTER_TAB_ICON_RE = re.compile(
-    r"Register(?:Action)?Tab\(\s*\"[^\"]+\"\s*,\s*\"([^\"]+)\""
-)
+REGISTER_TAB_ICON_RE = re.compile(r"Register(?:Action)?Tab\(\s*\"[^\"]+\"\s*,\s*\"([^\"]+)\"")
 
 
 def _is_generated_icon_cs(path: Path) -> bool:
@@ -45,12 +39,7 @@ def _is_generated_icon_cs(path: Path) -> bool:
 
 
 def _comment_line(trimmed: str) -> bool:
-    return (
-        trimmed.startswith("//")
-        or trimmed.startswith("///")
-        or trimmed.startswith("*")
-        or trimmed.startswith("/*")
-    )
+    return trimmed.startswith("//") or trimmed.startswith("///") or trimmed.startswith("*") or trimmed.startswith("/*")
 
 
 def kebab_to_pascal(kebab: str) -> str:
@@ -209,10 +198,7 @@ def main() -> int:
         extracted[kebab] = entry
 
     if missing:
-        msg = (
-            f"shake_icons: {len(missing)} icon(s) referenced in code but missing from icons.json. "
-            f"Add the icon set or fix the name:\n" + "\n".join(missing)
-        )
+        msg = f"shake_icons: {len(missing)} icon(s) referenced in code but missing from icons.json. " f"Add the icon set or fix the name:\n" + "\n".join(missing)
         print(msg, file=sys.stderr)
         return 1
 

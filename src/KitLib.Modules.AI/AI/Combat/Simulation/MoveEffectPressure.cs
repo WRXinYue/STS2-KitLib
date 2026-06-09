@@ -95,13 +95,16 @@ public static class MoveEffectPressure {
             if (random) {
                 (draw, _) = CombatPileSimulator.InjectStatusAtRandom(
                     draw, cardId, effect.Count, state.ShuffleRngSeed, state.ShuffleRngCounter);
-            } else {
+            }
+            else {
                 draw = CombatPileSimulator.InjectStatus(draw, cardId, effect.Count);
             }
-        } else if (random) {
+        }
+        else if (random) {
             (discard, _) = CombatPileSimulator.InjectStatusAtRandom(
                 discard, cardId, effect.Count, state.ShuffleRngSeed, state.ShuffleRngCounter);
-        } else {
+        }
+        else {
             discard = CombatPileSimulator.InjectStatus(discard, cardId, effect.Count);
         }
 

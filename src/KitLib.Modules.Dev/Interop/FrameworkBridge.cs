@@ -104,22 +104,22 @@ public static class FrameworkBridge {
         }
 
         var ft = FrameworkType!;
-        bool ritsuInit   = GetStaticBool(ft, "IsInitialized");
+        bool ritsuInit = GetStaticBool(ft, "IsInitialized");
         bool ritsuActive = GetStaticBool(ft, "IsActive");
         bool ritsuHasPages = GetStaticBool(ft, "HasRegisteredModSettings");
-        string ritsuVer  = ft.Assembly.GetName().Version?.ToString() ?? "?";
+        string ritsuVer = ft.Assembly.GetName().Version?.ToString() ?? "?";
 
         var pages = GetModSettingsPages(ft);
-        int pageCount    = pages.Count;
+        int pageCount = pages.Count;
         int distinctMods = pages.Select(p => p.modId).Distinct().Count();
         int totalSections = pages.Sum(p => p.sectionCount);
         string inventory = BuildPageInventory(pages);
 
         var constType = ft.Assembly.GetType("STS2RitsuLib.Const");
-        string ritsuName         = GetConstString(constType, "Name")        ?? "RitsuLib";
-        string ritsuVersion      = GetConstString(constType, "Version")     ?? "?";
-        string ritsuModId        = GetConstString(constType, "ModId")       ?? "?";
-        string ritsuSettingsKey  = GetConstString(constType, "SettingsKey") ?? "?";
+        string ritsuName = GetConstString(constType, "Name") ?? "RitsuLib";
+        string ritsuVersion = GetConstString(constType, "Version") ?? "?";
+        string ritsuModId = GetConstString(constType, "ModId") ?? "?";
+        string ritsuSettingsKey = GetConstString(constType, "SettingsKey") ?? "?";
         string ritsuSettingsFile = GetConstString(constType, "SettingsFileName") ?? "?";
 
         return new FrameworkBridgeSnapshot(
@@ -176,17 +176,17 @@ public static class FrameworkBridge {
             foreach (var page in enumerable) {
                 if (page == null) continue;
                 var pageType = page.GetType();
-                string modId      = pageType.GetProperty("ModId")?.GetValue(page) as string ?? "";
-                string pageId     = pageType.GetProperty("Id")?.GetValue(page) as string ?? "";
-                int sortOrder     = (int)(pageType.GetProperty("SortOrder")?.GetValue(page) ?? 0);
-                string parentId   = pageType.GetProperty("ParentPageId")?.GetValue(page) as string ?? "";
-                var sections      = pageType.GetProperty("Sections")?.GetValue(page) as System.Collections.ICollection;
-                int sectionCount  = sections?.Count ?? 0;
+                string modId = pageType.GetProperty("ModId")?.GetValue(page) as string ?? "";
+                string pageId = pageType.GetProperty("Id")?.GetValue(page) as string ?? "";
+                int sortOrder = (int)(pageType.GetProperty("SortOrder")?.GetValue(page) ?? 0);
+                string parentId = pageType.GetProperty("ParentPageId")?.GetValue(page) as string ?? "";
+                var sections = pageType.GetProperty("Sections")?.GetValue(page) as System.Collections.ICollection;
+                int sectionCount = sections?.Count ?? 0;
 
                 string title = "";
                 try {
                     var titleProp = pageType.GetProperty("Title");
-                    var titleVal  = titleProp?.GetValue(page);
+                    var titleVal = titleProp?.GetValue(page);
                     if (titleVal != null) {
                         var resolveMethod = titleVal.GetType().GetMethod("Resolve", Type.EmptyTypes)
                             ?? titleVal.GetType().GetMethod("GetFormattedText", Type.EmptyTypes);
@@ -238,8 +238,8 @@ public static class FrameworkBridge {
     private static void LogFrameworkEvent<T>(T evt) {
         try {
             var type = typeof(T);
-            string modId   = type.GetProperty("FrameworkModId")?.GetValue(evt) as string ?? "?";
-            bool isActive  = (bool)(type.GetProperty("IsActive")?.GetValue(evt) ?? false);
+            string modId = type.GetProperty("FrameworkModId")?.GetValue(evt) as string ?? "?";
+            bool isActive = (bool)(type.GetProperty("IsActive")?.GetValue(evt) ?? false);
             MainFile.Logger.Info(
                 $"[KitLib Bridge] RitsuLib event: modId={modId}, active={isActive}");
         }

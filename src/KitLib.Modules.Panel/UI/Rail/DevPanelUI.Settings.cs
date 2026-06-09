@@ -1,9 +1,9 @@
 using System;
+using Godot;
 using KitLib;
 using KitLib.Icons;
 using KitLib.Panels;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;

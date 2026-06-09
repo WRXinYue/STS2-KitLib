@@ -42,7 +42,8 @@ internal static class PotionSimulator {
                 var card = PotionRandomPools.SampleCard(profile.Random.Pool, state, slot, mcBranch);
                 hand.Add(card with { HandIndex = hand.Count });
             }
-        } else {
+        }
+        else {
             foreach (var effect in profile.Effects)
                 ApplyEffect(effect, profile.TargetType, ref hp, ref maxHp, ref block, ref energy, ref hand, ref draw, ref discard, ref exhaust, ref enemies, ref modifiers, ref rngCounter, state, enemyIndex);
         }

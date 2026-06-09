@@ -136,20 +136,20 @@ internal static class PowerActions {
                 break;
 
             case PowerTarget.AllEnemies: {
-                var cs = CombatManager.Instance.DebugOnlyGetState();
-                if (cs == null) return;
-                foreach (var enemy in cs.Enemies.Where(e => e.IsAlive).ToArray())
-                    await ApplyPower(power, amount, enemy, player.Creature!);
-                break;
-            }
+                    var cs = CombatManager.Instance.DebugOnlyGetState();
+                    if (cs == null) return;
+                    foreach (var enemy in cs.Enemies.Where(e => e.IsAlive).ToArray())
+                        await ApplyPower(power, amount, enemy, player.Creature!);
+                    break;
+                }
 
             case PowerTarget.Allies: {
-                var cs = CombatManager.Instance.DebugOnlyGetState();
-                if (cs == null) return;
-                foreach (var ally in cs.Allies.Where(c => c.IsAlive).ToArray())
-                    await ApplyPower(power, amount, ally, player.Creature!);
-                break;
-            }
+                    var cs = CombatManager.Instance.DebugOnlyGetState();
+                    if (cs == null) return;
+                    foreach (var ally in cs.Allies.Where(c => c.IsAlive).ToArray())
+                        await ApplyPower(power, amount, ally, player.Creature!);
+                    break;
+                }
 
             case PowerTarget.SpecificTarget:
                 await ApplyPower(power, amount, player.Creature!, player.Creature!);

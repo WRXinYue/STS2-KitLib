@@ -1,5 +1,5 @@
-using KitLib.CombatStats;
 using Godot;
+using KitLib.CombatStats;
 
 namespace KitLib.UI;
 

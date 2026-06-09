@@ -1,6 +1,6 @@
 using System;
-using KitLib;
 using Godot;
+using KitLib;
 
 namespace KitLib.UI;
 

@@ -23,7 +23,8 @@ internal static class CombatCardPlayEffects {
             if (card.IsAoe || CombatTargetTypes.IsAllEnemies(card.TargetType)) {
                 var aoeDamage = CombatDamageCalc.OutgoingDamage(card, state, vulnerableOnTarget: 0, skillsInHand);
                 CombatEffectApplier.ApplyAoeDamage(enemies, aoeDamage);
-            } else {
+            }
+            else {
                 var targetIndex = enemyIndex;
                 if (targetIndex < 0)
                     targetIndex = CombatSetupEvaluator.PrimaryAttackTargetIndex(state with {

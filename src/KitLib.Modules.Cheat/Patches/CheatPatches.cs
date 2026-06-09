@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using HarmonyLib;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -13,7 +14,6 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Potions;
 using MegaCrit.Sts2.Core.Odds;
 using MegaCrit.Sts2.Core.Rooms;
-using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace KitLib.Patches;

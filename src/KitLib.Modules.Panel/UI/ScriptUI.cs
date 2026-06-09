@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using KitLib.Scripts;
 using Godot;
+using KitLib.Scripts;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;

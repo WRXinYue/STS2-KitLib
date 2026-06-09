@@ -82,7 +82,7 @@ help:
 	@echo ""
 	@echo "  init         detect STS2 + Godot, generate local.props + .vscode + pre-commit hooks"
 	@echo "  icons        tree-shake MDI (mdi-used.json + MdiIcon.Generated.cs)"
-	@echo "  format       dotnet format KitLib.sln (EditorConfig / pre-commit)"
+	@echo "  format       dotnet format KitLib.sln + black scripts/ (EditorConfig / pre-commit)"
 	@echo "  format-check dotnet format --verify-no-changes (CI)"
 	@echo "  lint-scripts flake8 scripts/ (setup.cfg)"
 	@echo "  check        format-check + lint-scripts"
@@ -146,7 +146,8 @@ icons:
 	$(PYTHON) scripts/shake_icons.py
 
 format:
-	$(DOTNET) format KitLib.sln --verbosity quiet
+	$(DOTNET) format KitLib.sln
+	$(UV) run black scripts
 
 format-check:
 	$(DOTNET) format KitLib.sln --verify-no-changes

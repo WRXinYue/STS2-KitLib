@@ -1,5 +1,5 @@
-using KitLib.Map;
 using HarmonyLib;
+using KitLib.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
 namespace KitLib.Patches.Map;

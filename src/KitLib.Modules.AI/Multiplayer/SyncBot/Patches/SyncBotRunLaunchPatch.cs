@@ -1,5 +1,5 @@
-using KitLib.Multiplayer.PseudoCoop;
 using HarmonyLib;
+using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.SyncBot.Patches;

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 using KitLib.CombatStats;
 using KitLib.Settings;
-using Godot;
 
 namespace KitLib.UI;
 

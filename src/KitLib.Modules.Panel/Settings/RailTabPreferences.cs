@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using KitLib.Icons;
 using KitLib.Host;
+using KitLib.Icons;
 using KitLib.Panels;
 
 namespace KitLib.Settings;

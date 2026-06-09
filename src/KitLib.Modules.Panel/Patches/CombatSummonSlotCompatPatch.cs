@@ -1,5 +1,5 @@
-using KitLib.Actions;
 using HarmonyLib;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -13,20 +13,16 @@ namespace KitLib.Patches;
 /// and auto-layout enemies, matching <see cref="CombatEnemyActions.AddMonster"/>.
 /// </summary>
 [HarmonyPatch(typeof(NCombatRoom), nameof(NCombatRoom.AddCreature))]
-internal static class CombatSummonSlotNormalizePatch
-{
-    static void Prefix(Creature creature)
-    {
+internal static class CombatSummonSlotNormalizePatch {
+    static void Prefix(Creature creature) {
         if (string.IsNullOrEmpty(creature.SlotName))
             creature.SlotName = null;
     }
 }
 
 [HarmonyPatch(typeof(CreatureCmd), nameof(CreatureCmd.Add), typeof(Creature))]
-internal static class CombatSummonSlotRepositionPatch
-{
-    static void Postfix(Creature creature)
-    {
+internal static class CombatSummonSlotRepositionPatch {
+    static void Postfix(Creature creature) {
         if (!creature.IsMonster || creature.PetOwner != null || creature.CombatState == null)
             return;
         if (!string.IsNullOrEmpty(creature.SlotName))

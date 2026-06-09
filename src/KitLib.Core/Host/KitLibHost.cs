@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using MegaCrit.Sts2.Core.Entities.Creatures;
+using KitLib.Abstractions.Host;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
-using KitLib.Abstractions.Host;
 using KitLib.AI.Planning;
 using KitLib.Companion;
+using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 
 namespace KitLib.Host;
@@ -132,7 +132,7 @@ public static class KitLibHost {
         return !string.IsNullOrEmpty(characterId) && CharacterStrategies.TryGetValue(characterId, out strategy!);
     }
 
-    public static bool TryGetCharacterProfile(string? characterId, out CharacterAiProfile profile) {
+    public static bool TryGetCharacterProfile(string? characterId, out CharacterAiProfile? profile) {
         profile = default;
         return !string.IsNullOrEmpty(characterId) && CharacterProfiles.TryGetValue(characterId, out profile);
     }

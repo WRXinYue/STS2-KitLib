@@ -90,20 +90,20 @@ internal sealed class CombatHistoryTailer {
                     CombatStatsTracker.RecordPotionUsed(potion.Potion, roundNumber);
                     break;
                 case PowerReceivedEntry power: {
-                    int stacks = (int)Math.Round(power.Amount);
-                    if (stacks <= 0)
-                        break;
+                        int stacks = (int)Math.Round(power.Amount);
+                        if (stacks <= 0)
+                            break;
 
-                    if (power.Power.Type == PowerType.Debuff) {
-                        CombatStatsTracker.RecordDebuffApplied(
-                            power.Power, power.Actor, power.Applier, roundNumber, stacks);
+                        if (power.Power.Type == PowerType.Debuff) {
+                            CombatStatsTracker.RecordDebuffApplied(
+                                power.Power, power.Actor, power.Applier, roundNumber, stacks);
+                        }
+                        else if (power.Power.Type == PowerType.Buff) {
+                            CombatStatsTracker.RecordBuffApplied(
+                                power.Power, power.Actor, power.Applier, roundNumber, stacks);
+                        }
+                        break;
                     }
-                    else if (power.Power.Type == PowerType.Buff) {
-                        CombatStatsTracker.RecordBuffApplied(
-                            power.Power, power.Actor, power.Applier, roundNumber, stacks);
-                    }
-                    break;
-                }
                 case MonsterPerformedMoveEntry move:
                     CombatStatsTracker.RecordEnemyMove(move.Monster, roundNumber);
                     break;

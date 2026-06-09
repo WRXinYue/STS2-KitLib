@@ -1,6 +1,6 @@
+using HarmonyLib;
 using KitLib.Map;
 using KitLib.Multiplayer.Cheat;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Hooks;
 
 namespace KitLib.Patches.Map;

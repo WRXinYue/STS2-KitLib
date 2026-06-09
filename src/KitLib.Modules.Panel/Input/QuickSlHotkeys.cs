@@ -1,8 +1,8 @@
+using Godot;
 using KitLib.Combat;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Settings;
 using KitLib.UI;
-using Godot;
 using MegaCrit.Sts2.Core.Combat;
 
 namespace KitLib.Hotkeys;

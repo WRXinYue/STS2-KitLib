@@ -1,5 +1,5 @@
-using KitLib.Progress;
 using HarmonyLib;
+using KitLib.Progress;
 using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.Saves.Managers;
 

@@ -1,7 +1,7 @@
+using Godot;
 using KitLib;
 using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 
 namespace KitLib.Multiplayer.PseudoCoop;

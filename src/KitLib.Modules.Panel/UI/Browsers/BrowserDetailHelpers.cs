@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Godot;
 using KitLib.Icons;
 using KitLib.Modding;
-using Godot;
 
 namespace KitLib.UI;
 

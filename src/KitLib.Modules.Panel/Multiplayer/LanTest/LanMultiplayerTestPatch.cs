@@ -1,10 +1,11 @@
-using KitLib.Settings;
 using Godot;
 using HarmonyLib;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Nodes.Debug.Multiplayer;
 
 namespace KitLib.Multiplayer.LanTest;
+
 internal static class LanMultiplayerTestGuards {
     internal static bool IsTestSceneAlive(NMultiplayerTest test)
         => GodotObject.IsInstanceValid(test) && test.IsInsideTree();

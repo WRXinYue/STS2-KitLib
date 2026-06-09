@@ -59,7 +59,8 @@ public static class CombatSimulator {
                 ref modifiers,
                 ref buffs,
                 ref rngCounter);
-        } else {
+        }
+        else {
             int playCount = 1 + Math.Max(0, card.Profile.ReplayCount);
             for (int i = 0; i < playCount; i++) {
                 CombatCardPlayEffects.ApplyIteration(
@@ -94,7 +95,8 @@ public static class CombatSimulator {
             (hand, draw, discard, rngCounter) = CombatPileSimulator.DrawCards(
                 hand, draw, discard, pileEffects.Draw,
                 state.ShuffleRngSeed, rngCounter);
-        } else {
+        }
+        else {
             hand = ReindexHand(hand);
         }
 
@@ -121,9 +123,9 @@ public static class CombatSimulator {
             .WithShuffleRng(state.ShuffleRngSeed, rngCounter)
             .WithModifiers(modifiers)
             .WithNextPlayCostWaive(nextWaive) with {
-                AttacksPlayedThisTurn = attacksPlayed,
-                Buffs = buffs,
-            };
+            AttacksPlayedThisTurn = attacksPlayed,
+            Buffs = buffs,
+        };
     }
 
     static (List<CombatHandCard> hand, List<CombatPileCard> exhaust) ExhaustFromHand(

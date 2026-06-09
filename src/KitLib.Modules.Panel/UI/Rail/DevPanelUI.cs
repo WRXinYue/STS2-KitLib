@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Godot;
 using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
@@ -7,7 +8,6 @@ using KitLib.Icons;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;

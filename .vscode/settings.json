@@ -49,5 +49,11 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
+  },
+  "yaml.schemaStore.enable": false,
+  "yaml.schemas": {
+    "./.vscode/schemas/github-workflow.json": [
+      ".github/workflows/*.{yml,yaml}"
+    ]
   }
 }

@@ -1,7 +1,7 @@
 using System;
+using HarmonyLib;
 using KitLib.Cheat;
 using KitLib.Presets;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;

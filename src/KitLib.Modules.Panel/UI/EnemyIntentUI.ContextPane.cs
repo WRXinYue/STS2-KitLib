@@ -1,5 +1,5 @@
-using KitLib.EnemyIntent;
 using Godot;
+using KitLib.EnemyIntent;
 using MegaCrit.Sts2.Core.Combat;
 
 namespace KitLib.UI;

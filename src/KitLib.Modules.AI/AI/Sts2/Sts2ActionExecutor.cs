@@ -4,20 +4,24 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KitLib;
-using KitLib.AI;
 using KitLib.Actions;
+using KitLib.AI;
+using KitLib.AI.AutoPlay.Scoring;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2.Helpers;
 using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
-using MegaCrit.Sts2.Core.Entities.Multiplayer;
-using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Events;
@@ -25,28 +29,23 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.RestSite;
 using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
-using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
-using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using MegaCrit.Sts2.Core.Nodes.Screens.RelicCollection;
+using MegaCrit.Sts2.Core.Nodes.Screens.Shops;
 using MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
+using MegaCrit.Sts2.Core.Rewards;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
-using KitLib.AI.AutoPlay.Scoring;
-using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
-using KitLib.AI.Sts2.Helpers;
 
 namespace KitLib.AI.Sts2;
 
 /// <summary>
 /// Maps <see cref="GameAction"/> to STS2 game API calls.
 /// </summary>
-public sealed class Sts2ActionExecutor : IGameActionExecutor
-{
+public sealed class Sts2ActionExecutor : IGameActionExecutor {
     private readonly Sts2StateProvider _stateProvider;
     private readonly Action<string> _log;
 
@@ -57,14 +56,12 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
     private NRewardsScreen? _lastRewardScreen;
     private bool _cardRewardDeclined;
 
-    public Sts2ActionExecutor(Sts2StateProvider stateProvider, Action<string> log)
-    {
+    public Sts2ActionExecutor(Sts2StateProvider stateProvider, Action<string> log) {
         _stateProvider = stateProvider;
         _log = log;
     }
 
-    public async Task<ActionResult> ExecuteAsync(GameAction action)
-    {
+    public async Task<ActionResult> ExecuteAsync(GameAction action) {
         if (!_stateProvider.TryGetRunAndPlayer(out var state, out var player))
             return ActionResult.Fail("No active run or player.");
 
@@ -77,8 +74,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
             };
         }
 
-        return action.Type switch
-        {
+        return action.Type switch {
             ActionType.PlayCard => await PlayCard(player, action.TargetIndex, action.SecondaryIndex),
             ActionType.EndTurn => EndTurn(player),
             ActionType.SelectMapNode => await SelectMapNode(state, action.TargetIndex),
@@ -106,8 +102,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ── Combat ──
 
-    private async Task<ActionResult> PlayCard(Player player, int cardIndex, int targetIndex)
-    {
+    private async Task<ActionResult> PlayCard(Player player, int cardIndex, int targetIndex) {
         var combatState = player.PlayerCombatState;
         if (combatState == null) return ActionResult.Fail("Not in combat.");
 
@@ -152,8 +147,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok($"Played [{card.Title}]");
     }
 
-    private static ActionResult EndTurn(Player player)
-    {
+    private static ActionResult EndTurn(Player player) {
         var combatState = player.PlayerCombatState;
         if (combatState == null) return ActionResult.Fail("Not in combat.");
 
@@ -178,14 +172,14 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         switch (card.TargetType) {
             case TargetType.AnyEnemy: {
-                if (combatState.HittableEnemies.Any() == false)
-                    return null;
-                return CombatTargetResolver.ResolveEnemy(combatState, card, targetIndex);
-            }
+                    if (combatState.HittableEnemies.Any() == false)
+                        return null;
+                    return CombatTargetResolver.ResolveEnemy(combatState, card, targetIndex);
+                }
             case TargetType.AnyAlly: {
-                var allies = combatState.PlayerCreatures.Where(c => c.IsAlive);
-                return allies.FirstOrDefault(card.IsValidTarget) ?? player.Creature;
-            }
+                    var allies = combatState.PlayerCreatures.Where(c => c.IsAlive);
+                    return allies.FirstOrDefault(card.IsValidTarget) ?? player.Creature;
+                }
             case TargetType.AnyPlayer:
             case TargetType.Self:
                 // Self-target cards use null creature (matches NCardPlay.TryManualPlay).
@@ -197,8 +191,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ── Map ──
 
-    private async Task<ActionResult> SelectMapNode(RunState state, int nodeIndex)
-    {
+    private async Task<ActionResult> SelectMapNode(RunState state, int nodeIndex) {
         var mapScreen = NMapScreen.Instance;
         if (mapScreen == null || !mapScreen.IsOpen)
             return ActionResult.Fail("Map screen not open.");
@@ -206,12 +199,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         var allPoints = UIHelper.FindAll<NMapPoint>((Node)mapScreen);
 
         List<NMapPoint> available;
-        if (state.VisitedMapCoords.Count == 0)
-        {
+        if (state.VisitedMapCoords.Count == 0) {
             available = allPoints.Where(mp => mp.Point.coord.row == 0).ToList();
         }
-        else
-        {
+        else {
             var visited = state.VisitedMapCoords;
             var lastCoord = visited[visited.Count - 1];
             var lastPoint = allPoints.FirstOrDefault(mp => mp.Point.coord.Equals(lastCoord));
@@ -230,13 +221,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok($"Selected map node at ({target.Point.coord.row}, {target.Point.coord.col})");
     }
 
-    private async Task<ActionResult> Proceed()
-    {
-        if (NOverlayStack.Instance?.Peek() is Node overlayNode)
-        {
+    private async Task<ActionResult> Proceed() {
+        if (NOverlayStack.Instance?.Peek() is Node overlayNode) {
             var btn = UIHelper.FindFirst<NProceedButton>(overlayNode);
-            if (btn is { IsEnabled: true })
-            {
+            if (btn is { IsEnabled: true }) {
                 await UIHelper.Click(btn);
                 return ActionResult.Ok("Proceeded from overlay.");
             }
@@ -246,8 +234,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         var restRoom = root.GetNodeOrNull<NRestSiteRoom>(
             "/root/Game/RootSceneContainer/Run/RoomContainer/RestSiteRoom");
-        if (restRoom?.ProceedButton is { IsEnabled: true } restProceed)
-        {
+        if (restRoom?.ProceedButton is { IsEnabled: true } restProceed) {
             await UIHelper.Click(restProceed);
             return ActionResult.Ok("Left rest site.");
         }
@@ -256,8 +243,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         var cm = CombatManager.Instance;
         var isPostCombatRoom = _stateProvider.TryGetRunAndPlayer(out var state, out _)
             && state.CurrentRoom?.RoomType is RoomType.Monster or RoomType.Elite or RoomType.Boss;
-        if (isPostCombatRoom && cm != null && !cm.IsInProgress)
-        {
+        if (isPostCombatRoom && cm != null && !cm.IsInProgress) {
             bool appeared = await UIHelper.WaitUntil(() =>
                 NOverlayStack.Instance?.Peek() is NRewardsScreen
                 || (NMapScreen.Instance?.IsOpen ?? false),
@@ -269,11 +255,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         }
 
         var roomContainer = root.GetNodeOrNull("/root/Game/RootSceneContainer/Run/RoomContainer");
-        if (roomContainer != null)
-        {
+        if (roomContainer != null) {
             var btn = UIHelper.FindFirst<NProceedButton>(roomContainer);
-            if (btn is { IsEnabled: true })
-            {
+            if (btn is { IsEnabled: true }) {
                 await UIHelper.Click(btn);
                 return ActionResult.Ok("Proceeded from room.");
             }
@@ -284,8 +268,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Rewards ────────
 
-    private async Task<ActionResult> PickCardReward(int cardIndex)
-    {
+    private async Task<ActionResult> PickCardReward(int cardIndex) {
         var screen = OverlayPhaseHelper.FindCardRewardScreen();
         if (screen == null)
             return ActionResult.Fail("Card reward screen not open.");
@@ -340,8 +323,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Fail($"Unsupported card reward screen: {screen.GetType().Name}");
     }
 
-    private async Task<ActionResult> SkipCardReward()
-    {
+    private async Task<ActionResult> SkipCardReward() {
         var screen = OverlayPhaseHelper.FindCardRewardScreen();
         if (screen == null)
             return ActionResult.Fail("Card reward screen not open.");
@@ -402,16 +384,13 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok("Skipped card reward.");
     }
 
-    private async Task<ActionResult> CollectReward(int rewardIndex)
-    {
-        if (NOverlayStack.Instance?.Peek() is not NRewardsScreen screen)
-        {
+    private async Task<ActionResult> CollectReward(int rewardIndex) {
+        if (NOverlayStack.Instance?.Peek() is not NRewardsScreen screen) {
             ResetRewardTracking();
             return ActionResult.Fail("Rewards screen not open.");
         }
 
-        if (_lastRewardScreen != screen)
-        {
+        if (_lastRewardScreen != screen) {
             ResetRewardTracking();
             _lastRewardScreen = screen;
         }
@@ -516,8 +495,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         }
 
         var proceedBtn = UIHelper.FindFirst<NProceedButton>((Node)screen);
-        if (proceedBtn != null)
-        {
+        if (proceedBtn != null) {
             _log($"CollectReward: all rewards collected — clicking proceed (cardDeclined={_cardRewardDeclined}).");
             await UIHelper.WaitUntil(
                 () => proceedBtn.IsEnabled || screen.IsComplete,
@@ -540,8 +518,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Fail("Rewards screen has no clickable buttons yet.");
     }
 
-    private void ResetRewardTracking()
-    {
+    private void ResetRewardTracking() {
         _lastRewardScreen = null;
         _attemptedRewardButtons.Clear();
         _declinedRewardButtons.Clear();
@@ -553,8 +530,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
     /// Mirrors official AutoSlay TreasureRoomHandler:
     /// open chest → pick up relics → click proceed.
     /// </summary>
-    private async Task<ActionResult> HandleTreasureRoom()
-    {
+    private async Task<ActionResult> HandleTreasureRoom() {
         var root = ((SceneTree)Engine.GetMainLoop()).Root;
         var room = root.GetNodeOrNull<NTreasureRoom>(
             "/root/Game/RootSceneContainer/Run/RoomContainer/TreasureRoom");
@@ -563,8 +539,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
         // 1. Open the chest.
         var chest = room.GetNodeOrNull<NClickableControl>("Chest");
-        if (chest != null && chest.IsEnabled)
-        {
+        if (chest != null && chest.IsEnabled) {
             _log("TreasureRoom: opening chest.");
             await UIHelper.Click(chest);
             await UIHelper.WaitUntil(
@@ -574,10 +549,8 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         }
 
         var relicHolders = UIHelper.FindAll<NTreasureRoomRelicHolder>((Node)room);
-        foreach (var holder in relicHolders)
-        {
-            if (holder.IsEnabled && holder.Visible)
-            {
+        foreach (var holder in relicHolders) {
+            if (holder.IsEnabled && holder.Visible) {
                 _log("TreasureRoom: picking up relic.");
                 await UIHelper.Click(holder);
                 await Sts2WaitHelper.ActionsSettled(TimeSpan.FromSeconds(5));
@@ -585,11 +558,9 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         }
 
         var proceedBtn = room.ProceedButton;
-        if (proceedBtn != null)
-        {
+        if (proceedBtn != null) {
             await UIHelper.WaitUntil(() => proceedBtn.IsEnabled, TimeSpan.FromSeconds(5));
-            if (proceedBtn.IsEnabled)
-            {
+            if (proceedBtn.IsEnabled) {
                 _log("TreasureRoom: clicking proceed.");
                 await UIHelper.Click(proceedBtn);
                 return ActionResult.Ok("Treasure room completed.");
@@ -599,8 +570,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok("TreasureRoom: waiting.");
     }
 
-    private async Task<ActionResult> DismissRewards()
-    {
+    private async Task<ActionResult> DismissRewards() {
         if (NOverlayStack.Instance?.Peek() is not NRewardsScreen screen)
             return ActionResult.Fail("Rewards screen not open.");
 
@@ -624,8 +594,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok("Dismissed rewards.");
     }
 
-    private async Task<ActionResult> PickRelic(int relicIndex)
-    {
+    private async Task<ActionResult> PickRelic(int relicIndex) {
         var screen = OverlayPhaseHelper.FindRelicSelectionScreen();
         if (screen == null)
             return ActionResult.Fail("Relic selection screen not open.");
@@ -653,19 +622,16 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Fail("No relic choices found.");
     }
 
-    private async Task<ActionResult> AdvanceOverlay()
-    {
+    private async Task<ActionResult> AdvanceOverlay() {
         if (OverlayPhaseHelper.FindCardRewardScreen() != null)
             return await PickCardReward(0);
 
         var proceed = await Proceed();
         if (proceed.Success) return proceed;
 
-        if (NOverlayStack.Instance?.Peek() is Node overlay)
-        {
+        if (NOverlayStack.Instance?.Peek() is Node overlay) {
             var back = UIHelper.FindFirst<NBackButton>(overlay);
-            if (back is { IsEnabled: true })
-            {
+            if (back is { IsEnabled: true }) {
                 await UIHelper.Click(back);
                 return ActionResult.Ok("Dismissed overlay via back.");
             }
@@ -676,8 +642,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Events ────────
 
-    private async Task<ActionResult> SelectEventChoice(int choiceIndex)
-    {
+    private async Task<ActionResult> SelectEventChoice(int choiceIndex) {
         var root = ((SceneTree)Engine.GetMainLoop()).Root;
         var eventRoom = root.GetNodeOrNull("/root/Game/RootSceneContainer/Run/RoomContainer/EventRoom");
         if (eventRoom == null) return ActionResult.Fail("Event room not found.");
@@ -693,8 +658,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Shop ────────
 
-    private async Task<ActionResult> PurchaseShopItem(int itemIndex)
-    {
+    private async Task<ActionResult> PurchaseShopItem(int itemIndex) {
         var room = FindMerchantRoom();
         if (room == null) return ActionResult.Fail("Shop not found.");
 
@@ -712,8 +676,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok($"Purchased item (cost: {affordable[idx].Entry.Cost}).");
     }
 
-    private async Task<ActionResult> RemoveCardAtShop()
-    {
+    private async Task<ActionResult> RemoveCardAtShop() {
         var room = FindMerchantRoom();
         if (room == null) return ActionResult.Fail("Shop not found.");
 
@@ -727,8 +690,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok("Initiated card removal.");
     }
 
-    private async Task<ActionResult> LeaveShop()
-    {
+    private async Task<ActionResult> LeaveShop() {
         var room = FindMerchantRoom();
         if (room == null) return ActionResult.Fail("Shop not found.");
 
@@ -748,8 +710,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Rest Site ────────
 
-    private async Task<ActionResult> SelectRestSiteOption(int optionIndex)
-    {
+    private async Task<ActionResult> SelectRestSiteOption(int optionIndex) {
         var root = ((SceneTree)Engine.GetMainLoop()).Root;
         var room = root.GetNodeOrNull<NRestSiteRoom>(
             "/root/Game/RootSceneContainer/Run/RoomContainer/RestSiteRoom");
@@ -783,19 +744,16 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Potions ────────
 
-    private static async Task<ActionResult> UsePotionAsync(Player player, int potionSlot, int targetIndex)
-    {
+    private static async Task<ActionResult> UsePotionAsync(Player player, int potionSlot, int targetIndex) {
         var potion = player.GetPotionAtSlotIndex(potionSlot);
         if (potion == null)
             return ActionResult.Fail($"No potion in slot {potionSlot}.");
 
         var potionId = potion.Id.Entry ?? "";
         Creature? target = null;
-        if (potion.TargetType.IsSingleTarget())
-        {
+        if (potion.TargetType.IsSingleTarget()) {
             var combatState = player.Creature.CombatState;
-            if (combatState != null)
-            {
+            if (combatState != null) {
                 target = potion.TargetType == TargetType.AnyEnemy
                     ? CombatTargetResolver.ResolveHittableEnemy(
                         combatState, targetIndex >= 0 ? targetIndex : 0)
@@ -812,8 +770,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
         return ActionResult.Ok($"Used potion [{potionId}] slot {potionSlot}.");
     }
 
-    private static async Task<ActionResult> DiscardPotion(Player player, int potionSlot)
-    {
+    private static async Task<ActionResult> DiscardPotion(Player player, int potionSlot) {
         var potion = player.GetPotionAtSlotIndex(potionSlot);
         if (potion == null)
             return ActionResult.Fail($"No potion in slot {potionSlot}.");
@@ -824,8 +781,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor
 
     // ──────── Helpers ────────
 
-    private static NMerchantRoom? FindMerchantRoom()
-    {
+    private static NMerchantRoom? FindMerchantRoom() {
         var root = ((SceneTree)Engine.GetMainLoop()).Root;
         return root.GetNodeOrNull<NMerchantRoom>(
             "/root/Game/RootSceneContainer/Run/RoomContainer/MerchantRoom");

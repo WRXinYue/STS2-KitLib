@@ -72,22 +72,14 @@ def _warn_existing_instances(repo_root: Path) -> None:
     if not appdata:
         return
 
-    instances_dir = (
-        Path(appdata)
-        / "SlayTheSpire2"
-        / "steam"
-        / "mod_data"
-        / "KitLib"
-        / "instances"
-    )
+    instances_dir = Path(appdata) / "SlayTheSpire2" / "steam" / "mod_data" / "KitLib" / "instances"
     if not instances_dir.is_dir():
         return
 
     locks = list(instances_dir.glob("*.lock"))
     if locks:
         print(
-            f"Note: {len(locks)} DevMode instance lock file(s) found — "
-            "another STS2 session may already be running.",
+            f"Note: {len(locks)} DevMode instance lock file(s) found — " "another STS2 session may already be running.",
             file=sys.stderr,
         )
 

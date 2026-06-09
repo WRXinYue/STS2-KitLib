@@ -1,6 +1,6 @@
 using System;
-using KitLib.Host;
 using Godot;
+using KitLib.Host;
 
 namespace KitLib.Feedback;
 

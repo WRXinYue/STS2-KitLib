@@ -16,10 +16,10 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 using MegaCrit.Sts2.Core.Runs;
-using NetCreatureState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.CreatureState;
-using NetPlayerState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.PlayerState;
 using NetCardState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.CardState;
+using NetCreatureState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.CreatureState;
 using NetPileState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.CombatPileState;
+using NetPlayerState = MegaCrit.Sts2.Core.Entities.Multiplayer.NetFullCombatState.PlayerState;
 
 namespace KitLib.Combat;
 

@@ -1,10 +1,10 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Godot;
 using KitLib.Host;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer;

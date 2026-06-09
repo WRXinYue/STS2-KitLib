@@ -1,5 +1,5 @@
-using KitLib.Settings;
 using Godot;
+using KitLib.Settings;
 
 namespace KitLib.UI;
 

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 using KitLib.Actions;
 using KitLib.EnemyIntent;
 using KitLib.Icons;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 

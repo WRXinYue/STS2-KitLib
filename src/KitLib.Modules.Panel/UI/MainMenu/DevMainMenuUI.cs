@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Godot;
+using HarmonyLib;
 using KitLib;
 using KitLib.Actions;
 using KitLib.Multiplayer.LanTest;
 using KitLib.Settings;
-using Godot;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Debug.Multiplayer;
@@ -463,8 +463,8 @@ internal static class DevMainMenuUI {
         var next = KitLibState.NormalRunMode switch {
             NormalRunMode.Disabled => NormalRunMode.DevPanel,
             NormalRunMode.DevPanel => NormalRunMode.Cheat,
-            NormalRunMode.Cheat   => NormalRunMode.Disabled,
-            _                     => NormalRunMode.Disabled,
+            NormalRunMode.Cheat => NormalRunMode.Disabled,
+            _ => NormalRunMode.Disabled,
         };
         SettingsStore.SetNormalRunMode(next);
     }
@@ -478,8 +478,8 @@ internal static class DevMainMenuUI {
         return KitLibState.NormalRunMode switch {
             NormalRunMode.Disabled => I18N.T("devmenu.persistNormalRun.disabled", "Normal run: disabled"),
             NormalRunMode.DevPanel => I18N.T("devmenu.persistNormalRun.devMode", "Normal run: Dev Mode"),
-            NormalRunMode.Cheat   => I18N.T("devmenu.persistNormalRun.cheatMode", "Normal run: Cheat Mode"),
-            _                     => "",
+            NormalRunMode.Cheat => I18N.T("devmenu.persistNormalRun.cheatMode", "Normal run: Cheat Mode"),
+            _ => "",
         };
     }
 

@@ -1,8 +1,14 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using Godot;
+using KitLib.AI;
+using KitLib.AI.Core;
+using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2.Helpers;
+using KitLib.AI.Sts2.Snapshots;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -14,24 +20,15 @@ using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
-using KitLib.AI;
-using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
-using KitLib.Host;
-using KitLib.AI.Sts2.Helpers;
-using KitLib.AI.Sts2.Snapshots;
 
 namespace KitLib.AI.Sts2;
 
-public sealed class Sts2StateProvider : IGameStateProvider
-{
+public sealed class Sts2StateProvider : IGameStateProvider {
     public bool IsRunActive =>
         RunManager.Instance?.DebugOnlyGetState() != null;
 
-    public GamePhase CurrentPhase
-    {
-        get
-        {
+    public GamePhase CurrentPhase {
+        get {
             // Card / relic picks must win over background map even when NMapScreen is open (LAN Neow).
             if (OverlayPhaseHelper.HasActiveCardRewardScreen())
                 return GamePhase.CardReward;
@@ -41,8 +38,7 @@ public sealed class Sts2StateProvider : IGameStateProvider
             var cm = CombatManager.Instance;
 
             var overlay = NOverlayStack.Instance?.Peek();
-            if (overlay != null)
-            {
+            if (overlay != null) {
                 if (overlay is NRewardsScreen rewardsScreen) {
                     Player? rewardPlayer = null;
                     TryGetRunAndPlayer(out var runState, out rewardPlayer);
@@ -70,14 +66,13 @@ public sealed class Sts2StateProvider : IGameStateProvider
                     return GamePhase.RewardScreen;
                 }
 
-                return overlay switch
-                {
+                return overlay switch {
                     NChooseARelicSelection => GamePhase.RelicSelection,
                     NCardRewardSelectionScreen => GamePhase.CardReward,
                     NDeckCardSelectScreen => GamePhase.CardReward,
                     NChooseACardSelectionScreen => GamePhase.CardReward,
-                    NGameOverScreen       => GamePhase.GameOver,
-                    _                     => cm is { IsInProgress: true }
+                    NGameOverScreen => GamePhase.GameOver,
+                    _ => cm is { IsInProgress: true }
                         ? GamePhase.Combat
                         : GamePhase.Unknown,
                 };
@@ -91,11 +86,9 @@ public sealed class Sts2StateProvider : IGameStateProvider
 
             // Post-combat: wait for rewards overlay to appear
             if (cm != null && !cm.IsInProgress
-                && state.CurrentRoom?.RoomType is RoomType.Monster or RoomType.Elite or RoomType.Boss)
-            {
+                && state.CurrentRoom?.RoomType is RoomType.Monster or RoomType.Elite or RoomType.Boss) {
                 var stack = NOverlayStack.Instance;
-                if (stack == null || stack.ScreenCount == 0)
-                {
+                if (stack == null || stack.ScreenCount == 0) {
                     if (NMapScreen.Instance is not { IsOpen: true })
                         return GamePhase.PostCombatTransition;
                 }
@@ -105,15 +98,13 @@ public sealed class Sts2StateProvider : IGameStateProvider
                 return GamePhase.MapSelection;
 
             var room = state.CurrentRoom;
-            if (room != null)
-            {
-                return room.RoomType switch
-                {
-                    RoomType.Event    => GamePhase.EventChoice,
-                    RoomType.Shop     => GamePhase.Shop,
+            if (room != null) {
+                return room.RoomType switch {
+                    RoomType.Event => GamePhase.EventChoice,
+                    RoomType.Shop => GamePhase.Shop,
                     RoomType.RestSite => GamePhase.RestSite,
                     RoomType.Treasure => GamePhase.TreasureRoom,
-                    _              => GamePhase.Unknown,
+                    _ => GamePhase.Unknown,
                 };
             }
 
@@ -121,15 +112,13 @@ public sealed class Sts2StateProvider : IGameStateProvider
         }
     }
 
-    public JsonObject TakeSnapshot()
-    {
+    public JsonObject TakeSnapshot() {
         if (!TryGetRunAndPlayer(out var state, out var player))
             return new JsonObject();
         return GameSnapshot.Capture(state, player, CurrentPhase);
     }
 
-    public Task<JsonObject> TakeSnapshotAsync()
-    {
+    public Task<JsonObject> TakeSnapshotAsync() {
         if (!TryGetRunAndPlayer(out var state, out var player))
             return Task.FromResult(new JsonObject());
 
@@ -143,11 +132,9 @@ public sealed class Sts2StateProvider : IGameStateProvider
         return Task.FromResult(GameSnapshot.Capture(state, player, CurrentPhase));
     }
 
-    public bool TryGetRunAndPlayer(out RunState state, out Player player)
-    {
+    public bool TryGetRunAndPlayer(out RunState state, out Player player) {
         state = RunManager.Instance?.DebugOnlyGetState();
-        if (state == null)
-        {
+        if (state == null) {
             player = null!;
             return false;
         }

@@ -10,9 +10,7 @@ from pathlib import Path
 def resolve_api_key(explicit: str | None = None) -> str:
     key = (explicit or os.environ.get("NUGET_API_KEY") or "").strip()
     if not key:
-        raise RuntimeError(
-            "NuGet API key missing. Set NUGET_API_KEY in .env or pass --api-key."
-        )
+        raise RuntimeError("NuGet API key missing. Set NUGET_API_KEY in .env or pass --api-key.")
     return key
 
 
@@ -41,9 +39,7 @@ def run_pack(
 ) -> Path:
     dist_dll = repo_root / "build" / "dist" / "KitLib" / "KitLib.dll"
     if not dist_dll.is_file():
-        raise RuntimeError(
-            f"Mod dist not found: {dist_dll}\nRun make zip (or make zip-beta) first."
-        )
+        raise RuntimeError(f"Mod dist not found: {dist_dll}\nRun make zip (or make zip-beta) first.")
 
     out_dir = repo_root / "build" / "nuget"
     out_dir.mkdir(parents=True, exist_ok=True)

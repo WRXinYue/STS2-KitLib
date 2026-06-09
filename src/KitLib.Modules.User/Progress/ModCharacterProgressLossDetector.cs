@@ -133,21 +133,21 @@ internal static class ModCharacterProgressLossDetector {
 
         var lostNames = new List<string>();
 
-            foreach (var (id, backupStat) in backupStats) {
-                if (!ModCharacterCatalog.IsModCharacterId(id))
-                    continue;
-                if (!CharacterProgressActivity.IsMissingOrDegraded(loaded, id, backupStat))
-                    continue;
+        foreach (var (id, backupStat) in backupStats) {
+            if (!ModCharacterCatalog.IsModCharacterId(id))
+                continue;
+            if (!CharacterProgressActivity.IsMissingOrDegraded(loaded, id, backupStat))
+                continue;
 
-                lostNames.Add(ModCharacterCatalog.ResolveCharacterName(id));
-            }
+            lostNames.Add(ModCharacterCatalog.ResolveCharacterName(id));
+        }
 
-            if (lostNames.Count == 0)
-                return null;
+        if (lostNames.Count == 0)
+            return null;
 
-            MainFile.Logger.Info(
-                $"[ProgressGuard] Recoverable mod character loss found in backup {backup.DirectoryName}.");
-            return new ModCharacterProgressLossResult(backup, lostNames);
+        MainFile.Logger.Info(
+            $"[ProgressGuard] Recoverable mod character loss found in backup {backup.DirectoryName}.");
+        return new ModCharacterProgressLossResult(backup, lostNames);
     }
 
     private static IEnumerable<ProfileBackupSummary> EnumerateCandidateBackups(int profileId) {

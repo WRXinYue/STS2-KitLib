@@ -1,7 +1,7 @@
 using KitLib;
+using KitLib.Abstractions.Host;
 using KitLib.AI.AutoPlay;
 using KitLib.AI.Planning;
-using KitLib.Abstractions.Host;
 using KitLib.Companion;
 using KitLib.Host;
 using KitLib.Multiplayer.Cheat;

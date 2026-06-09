@@ -1,7 +1,7 @@
 using System;
+using Godot;
 using KitLib.Feedback;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 

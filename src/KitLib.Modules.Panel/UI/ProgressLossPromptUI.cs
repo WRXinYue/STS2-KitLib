@@ -1,11 +1,11 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Godot;
 using KitLib.Progress;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.UI;

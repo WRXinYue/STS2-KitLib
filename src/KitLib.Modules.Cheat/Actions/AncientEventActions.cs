@@ -9,8 +9,7 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.Actions;
 
-internal static class AncientEventActions
-{
+internal static class AncientEventActions {
     private static readonly PropertyInfo OwnerProperty =
         AccessTools.Property(typeof(EventModel), nameof(EventModel.Owner))
         ?? throw new InvalidOperationException("EventModel.Owner property not found.");
@@ -25,17 +24,14 @@ internal static class AncientEventActions
     internal static bool NeedsOptionPicker(EventModel eventModel) =>
         eventModel is AncientEventModel;
 
-    internal static IReadOnlyList<AncientOptionChoice> GetOptionChoices(AncientEventModel ancient, Player? player)
-    {
+    internal static IReadOnlyList<AncientOptionChoice> GetOptionChoices(AncientEventModel ancient, Player? player) {
         if (player is null)
             return [];
 
         var choices = new List<AncientOptionChoice>();
-        try
-        {
+        try {
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var option in PlayerScopedOptions(ancient, player))
-            {
+            foreach (var option in PlayerScopedOptions(ancient, player)) {
                 if (option.IsLocked)
                     continue;
 
@@ -46,8 +42,7 @@ internal static class AncientEventActions
                 choices.Add(new AncientOptionChoice(token, FormatOptionLabel(option, token)));
             }
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             MainFile.Logger.Warn(
                 $"[KitLib] Failed to list ancient options for {((AbstractModel)ancient).Id.Entry}: {ex.Message}");
         }
@@ -55,8 +50,7 @@ internal static class AncientEventActions
         return choices;
     }
 
-    internal static IReadOnlyList<AncientEnterChoice> GetEnterChoices(EventModel eventModel)
-    {
+    internal static IReadOnlyList<AncientEnterChoice> GetEnterChoices(EventModel eventModel) {
         if (eventModel is not AncientEventModel ancient)
             return [];
 
@@ -93,23 +87,19 @@ internal static class AncientEventActions
             ? new AncientEventEnterRequest(PinOptionToken: args[startIndex].ToUpperInvariant())
             : null;
 
-    internal static string GetOptionToken(EventOption option)
-    {
+    internal static string GetOptionToken(EventOption option) {
         var parts = option.TextKey.Split('.');
         return parts.Length > 0 ? parts[^1] : option.TextKey;
     }
 
-    private static IEnumerable<EventOption> PlayerScopedOptions(AncientEventModel ancient, Player player)
-    {
+    private static IEnumerable<EventOption> PlayerScopedOptions(AncientEventModel ancient, Player player) {
         var mutable = (AncientEventModel)(EventModel)ancient.ToMutable();
         OwnerProperty.SetValue(mutable, player);
         return mutable.AllPossibleOptions;
     }
 
-    private static string FormatOptionLabel(EventOption option, string token)
-    {
-        try
-        {
+    private static string FormatOptionLabel(EventOption option, string token) {
+        try {
             var title = option.Title?.GetFormattedText();
             if (!string.IsNullOrWhiteSpace(title))
                 return title;

@@ -63,11 +63,11 @@ internal sealed class CombatStatsBundle {
 
     public static CombatStatsBundle From(CombatStatsSnapshot? current, CombatStatsSnapshot? last,
         CombatStatsSnapshot runTotal, int runCombatCount) => new() {
-        Current = current == null ? null : CombatStatsSnapshotDto.From(current),
-        Last = last == null ? null : CombatStatsSnapshotDto.From(last),
-        RunTotal = CombatStatsSnapshotDto.From(runTotal),
-        RunCombatCount = runCombatCount,
-    };
+            Current = current == null ? null : CombatStatsSnapshotDto.From(current),
+            Last = last == null ? null : CombatStatsSnapshotDto.From(last),
+            RunTotal = CombatStatsSnapshotDto.From(runTotal),
+            RunCombatCount = runCombatCount,
+        };
 }
 
 internal sealed class CombatStatsSnapshotDto {

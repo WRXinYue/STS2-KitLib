@@ -1,21 +1,18 @@
 using System;
-using KitLib.Actions;
 using Godot;
+using KitLib.Actions;
 using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.UI;
 
-internal static class AncientEventEnterUI
-{
+internal static class AncientEventEnterUI {
     internal static void PopulateChoices(
         EventModel eventModel,
         VBoxContainer host,
-        Action<AncientEventEnterRequest> onChosen)
-    {
+        Action<AncientEventEnterRequest> onChosen) {
         ClearHost(host);
 
-        foreach (var choice in AncientEventActions.GetEnterChoices(eventModel))
-        {
+        foreach (var choice in AncientEventActions.GetEnterChoices(eventModel)) {
             var captured = choice;
             AddChoice(host,
                 FormatChoiceListLabel(captured.Label, captured.Token),
@@ -24,8 +21,7 @@ internal static class AncientEventEnterUI
         }
     }
 
-    private static string FormatChoiceListLabel(string label, string? secondary)
-    {
+    private static string FormatChoiceListLabel(string label, string? secondary) {
         if (string.IsNullOrWhiteSpace(secondary)
             || string.Equals(label, secondary, StringComparison.OrdinalIgnoreCase))
             return label;
@@ -33,14 +29,12 @@ internal static class AncientEventEnterUI
         return $"{label} — {secondary}";
     }
 
-    private static void ClearHost(VBoxContainer host)
-    {
+    private static void ClearHost(VBoxContainer host) {
         foreach (var child in host.GetChildren())
             ((Node)child).QueueFree();
     }
 
-    private static void AddChoice(VBoxContainer host, string label, string? tooltip, Action onPressed)
-    {
+    private static void AddChoice(VBoxContainer host, string label, string? tooltip, Action onPressed) {
         var btn = DevPanelUI.CreateListItemButton(label);
         btn.Alignment = HorizontalAlignment.Left;
         if (!string.IsNullOrWhiteSpace(tooltip))

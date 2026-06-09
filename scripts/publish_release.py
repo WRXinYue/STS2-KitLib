@@ -39,10 +39,7 @@ def _release_tag(version: str, *, beta: bool, sts2_beta_version: str) -> str:
 
 
 def _beta_notice_md(sts2_beta_version: str) -> str:
-    return (
-        f"> **Requires Slay the Spire 2 Steam beta branch v{sts2_beta_version}.** "
-        "Not for the public/stable build.\n\n"
-    )
+    return f"> **Requires Slay the Spire 2 Steam beta branch v{sts2_beta_version}.** " "Not for the public/stable build.\n\n"
 
 
 def _changelog_section(path: Path, version: str) -> str:
@@ -126,9 +123,7 @@ def main() -> int:
     notes_en = _changelog_section(_REPO_ROOT / "CHANGELOG.md", version)
     notes_zh = _changelog_section(_REPO_ROOT / "CHANGELOG.zh-CN.md", version)
     if not notes_en and not notes_zh:
-        print(
-            f"No changelog section for [{version}] - release will have no notes."
-        )
+        print(f"No changelog section for [{version}] - release will have no notes.")
         notes = f"Release {version}"
     else:
         parts = [p for p in (notes_en, notes_zh) if p]

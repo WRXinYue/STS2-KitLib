@@ -1,5 +1,5 @@
-using KitLib.Multiplayer.Cheat;
 using HarmonyLib;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;

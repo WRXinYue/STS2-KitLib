@@ -129,8 +129,7 @@ def _deploy_tool(
 
     if exe is None:
         print(
-            f"Note: tool not built, skipped: {spec['publish_folder']} "
-            f"(expected under {publish_dir})",
+            f"Note: tool not built, skipped: {spec['publish_folder']} " f"(expected under {publish_dir})",
             file=sys.stderr,
         )
         return False

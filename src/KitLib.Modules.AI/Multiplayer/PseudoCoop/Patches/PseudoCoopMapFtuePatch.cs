@@ -1,5 +1,5 @@
-using KitLib.Settings;
 using HarmonyLib;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 
 namespace KitLib.Multiplayer.PseudoCoop.Patches;

@@ -25,10 +25,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
 
 from md_to_nexus import convert_markdown  # noqa: E402
 
-
-_LANG_SWITCH_RE = re.compile(
-    r"^\s*(\*\*[^\*]+\*\*\s*\||\[[^\]]+\]\([^)]*\)\s*\|)"
-)
+_LANG_SWITCH_RE = re.compile(r"^\s*(\*\*[^\*]+\*\*\s*\||\[[^\]]+\]\([^)]*\)\s*\|)")
 
 
 def preprocess(text: str, strip_images: bool = False) -> str:
@@ -94,7 +91,8 @@ def main() -> None:
         help="Markdown files to convert (default: README.md README.zh-CN.md)",
     )
     ap.add_argument(
-        "-o", "--output",
+        "-o",
+        "--output",
         default=str(_REPO_ROOT / "assets" / "readme.nexus.txt"),
         help="Output file (default: assets/readme.nexus.txt)",
     )
@@ -105,10 +103,14 @@ def main() -> None:
     )
     args = ap.parse_args()
 
-    paths = [Path(f) for f in args.files] if args.files else [
-        _REPO_ROOT / "README.md",
-        _REPO_ROOT / "README.zh-CN.md",
-    ]
+    paths = (
+        [Path(f) for f in args.files]
+        if args.files
+        else [
+            _REPO_ROOT / "README.md",
+            _REPO_ROOT / "README.zh-CN.md",
+        ]
+    )
 
     result = build(paths, separator=args.separator)
 

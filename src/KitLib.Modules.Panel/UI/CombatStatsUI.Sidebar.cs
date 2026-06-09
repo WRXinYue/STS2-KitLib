@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using KitLib.CombatStats;
 using Godot;
+using KitLib.CombatStats;
 
 namespace KitLib.UI;
 
@@ -406,8 +406,13 @@ internal static partial class CombatStatsUI {
         private void BuildLegend() {
             foreach (var kind in new[] { "Damage", "Block", "Debuff", "Buff", "Utility", "Potion", "Synergy" }) {
                 int idx = kind switch {
-                    "Damage" => 0, "Block" => 1, "Debuff" => 2, "Buff" => 3,
-                    "Utility" => 4, "Potion" => 5, _ => 6,
+                    "Damage" => 0,
+                    "Block" => 1,
+                    "Debuff" => 2,
+                    "Buff" => 3,
+                    "Utility" => 4,
+                    "Potion" => 5,
+                    _ => 6,
                 };
                 _legend.AddChild(MakeLegendSwatch(LocalizeScoreKind(kind), ScoreKindColor(idx)));
             }

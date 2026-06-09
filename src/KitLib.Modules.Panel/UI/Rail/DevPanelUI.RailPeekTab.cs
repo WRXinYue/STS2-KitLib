@@ -1,7 +1,7 @@
 using System;
+using Godot;
 using KitLib.Icons;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.Core.Logging;
 
 namespace KitLib.UI;
@@ -148,25 +148,25 @@ internal static partial class DevPanelUI {
         float minAlpha;
 
         switch (mode) {
-        case PeekTabMode.LogError:
-            borderDim = new Color(1f, 0.37f, 0.37f, 0.35f);
-            borderBright = new Color(1f, 0.37f, 0.37f);
-            halfCycle = 0.35f;
-            minAlpha = 0.5f;
-            break;
-        case PeekTabMode.LogWarn:
-            borderDim = new Color(1f, 0.78f, 0.25f, 0.35f);
-            borderBright = new Color(1f, 0.78f, 0.25f);
-            halfCycle = 0.65f;
-            minAlpha = 0.5f;
-            break;
-        default:
-            var accent = KitLibTheme.Accent;
-            borderDim = new Color(accent.R, accent.G, accent.B, 0.25f);
-            borderBright = new Color(accent.R, accent.G, accent.B, 1f);
-            halfCycle = 0.55f;
-            minAlpha = 0.45f;
-            break;
+            case PeekTabMode.LogError:
+                borderDim = new Color(1f, 0.37f, 0.37f, 0.35f);
+                borderBright = new Color(1f, 0.37f, 0.37f);
+                halfCycle = 0.35f;
+                minAlpha = 0.5f;
+                break;
+            case PeekTabMode.LogWarn:
+                borderDim = new Color(1f, 0.78f, 0.25f, 0.35f);
+                borderBright = new Color(1f, 0.78f, 0.25f);
+                halfCycle = 0.65f;
+                minAlpha = 0.5f;
+                break;
+            default:
+                var accent = KitLibTheme.Accent;
+                borderDim = new Color(accent.R, accent.G, accent.B, 0.25f);
+                borderBright = new Color(accent.R, accent.G, accent.B, 1f);
+                halfCycle = 0.55f;
+                minAlpha = 0.45f;
+                break;
         }
 
         var bgBase = new Color(ColRailBg.R, ColRailBg.G, ColRailBg.B, 0.6f);

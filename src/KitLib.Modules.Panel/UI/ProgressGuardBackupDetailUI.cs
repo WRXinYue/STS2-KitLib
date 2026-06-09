@@ -2,9 +2,9 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Godot;
 using KitLib.Modding;
 using KitLib.Progress;
-using Godot;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.UI;

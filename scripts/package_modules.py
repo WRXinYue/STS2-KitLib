@@ -121,8 +121,7 @@ def _stage_optional_module(mod_id: str, dist_root: Path) -> Path | None:
     shutil.copy2(dll, modules_dst / f"{mod_id}.dll")
     readme = dst / "INSTALL.txt"
     readme.write_text(
-        f"Optional KitLib module: {mod_id}\n"
-        f"Copy modules/{mod_id}.dll into mods/KitLib/modules/.\n",
+        f"Optional KitLib module: {mod_id}\n" f"Copy modules/{mod_id}.dll into mods/KitLib/modules/.\n",
         encoding="utf-8",
     )
     return dst

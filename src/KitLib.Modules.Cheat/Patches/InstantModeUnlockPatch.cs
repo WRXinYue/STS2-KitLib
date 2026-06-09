@@ -18,7 +18,7 @@ namespace KitLib.Patches;
 [HarmonyPatch]
 public static class InstantModeUnlockPatch {
     [HarmonyTargetMethod]
-    public static MethodBase FindTarget() {
+    public static MethodBase? FindTarget() {
         // async method body is in the nested state-machine type (name contains "GameStartup")
         foreach (var nested in typeof(NGame).GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Public)) {
             if (!nested.Name.Contains("GameStartup")) continue;

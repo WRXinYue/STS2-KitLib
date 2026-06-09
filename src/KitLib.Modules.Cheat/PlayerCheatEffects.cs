@@ -1,6 +1,6 @@
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
-using KitLib.Multiplayer.Cheat;
 
 namespace KitLib;
 

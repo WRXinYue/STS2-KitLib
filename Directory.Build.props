@@ -6,6 +6,8 @@
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Sts2Dir)' != ''">
     <Sts2DataDir>$(Sts2Dir)\data_sts2_windows_x86_64</Sts2DataDir>

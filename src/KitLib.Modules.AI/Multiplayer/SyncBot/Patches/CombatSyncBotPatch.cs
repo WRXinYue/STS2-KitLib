@@ -1,9 +1,9 @@
 using System.Linq;
+using HarmonyLib;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Nodes;

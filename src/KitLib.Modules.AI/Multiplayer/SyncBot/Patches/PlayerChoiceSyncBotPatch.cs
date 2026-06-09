@@ -1,6 +1,6 @@
+using HarmonyLib;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Settings;
-using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Runs;

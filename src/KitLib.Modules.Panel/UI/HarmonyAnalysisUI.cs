@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using KitLib.Interop;
 using Godot;
+using KitLib.Interop;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;

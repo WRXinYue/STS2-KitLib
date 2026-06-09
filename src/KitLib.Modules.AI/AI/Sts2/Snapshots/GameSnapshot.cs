@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.AI.Combat;
-using KitLib.Host;
 using KitLib.AI.Core;
-using SimCombatState = KitLib.AI.Combat.Simulation.CombatState;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
-using MegaCrit.Sts2.Core.MonsterMoves.Intents;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.Runs;
+using SimCombatState = KitLib.AI.Combat.Simulation.CombatState;
 
 namespace KitLib.AI.Sts2.Snapshots;
 
@@ -23,12 +23,9 @@ namespace KitLib.AI.Sts2.Snapshots;
 /// Captures the full STS2 game state into a <see cref="JsonObject"/>
 /// that can be consumed by any <see cref="Core.IDecisionMaker"/>.
 /// </summary>
-internal static class GameSnapshot
-{
-    public static JsonObject Capture(RunState state, Player player, GamePhase phase = GamePhase.None)
-    {
-        var obj = new JsonObject
-        {
+internal static class GameSnapshot {
+    public static JsonObject Capture(RunState state, Player player, GamePhase phase = GamePhase.None) {
+        var obj = new JsonObject {
             ["totalFloor"] = state.TotalFloor,
             ["actIndex"] = state.CurrentActIndex,
             ["actFloor"] = state.ActFloor,
@@ -82,10 +79,8 @@ internal static class GameSnapshot
     }
 
     /// <summary>Post-action combat fragment for MCP <c>afterState</c> (player powers + enemy HP/powers).</summary>
-    internal static JsonObject CaptureCombatAfterState(Player player)
-    {
-        var obj = new JsonObject
-        {
+    internal static JsonObject CaptureCombatAfterState(Player player) {
+        var obj = new JsonObject {
             ["playerPowers"] = player.Creature != null
                 ? CapturePowers(player.Creature.Powers)
                 : new JsonArray(),
@@ -98,8 +93,7 @@ internal static class GameSnapshot
         return obj;
     }
 
-    private static JsonArray CaptureDeck(Player player)
-    {
+    private static JsonArray CaptureDeck(Player player) {
         var arr = new JsonArray();
         foreach (var c in player.Deck.Cards) {
             try {
@@ -112,13 +106,10 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CaptureRelics(Player player)
-    {
+    private static JsonArray CaptureRelics(Player player) {
         var arr = new JsonArray();
-        foreach (var r in player.Relics)
-        {
-            arr.Add(new JsonObject
-            {
+        foreach (var r in player.Relics) {
+            arr.Add(new JsonObject {
                 ["id"] = SafeRelicId(r),
                 ["name"] = SafeRelicTitle(r),
                 ["rarity"] = SafeRelicRarity(r),
@@ -127,8 +118,7 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CapturePotions(Player player)
-    {
+    private static JsonArray CapturePotions(Player player) {
         var arr = new JsonArray();
         var slots = player.PotionSlots;
         for (int slot = 0; slot < slots.Count; slot++) {
@@ -137,8 +127,7 @@ internal static class GameSnapshot
 
             var id = p.Id.Entry ?? "";
             var profile = PotionMechanicIndex.GetOrDefault(id);
-            arr.Add(new JsonObject
-            {
+            arr.Add(new JsonObject {
                 ["id"] = id,
                 ["slot"] = slot,
                 ["category"] = profile.Category.ToString(),
@@ -151,14 +140,12 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonObject CaptureCombat(RunState runState, Player player, PlayerCombatState combatState)
-    {
+    private static JsonObject CaptureCombat(RunState runState, Player player, PlayerCombatState combatState) {
         var isPlayPhase = Sts2CombatCompat.IsCombatPlayPhaseActive();
         var cs = CombatManager.Instance?.DebugOnlyGetState();
         var playerBlock = player.Creature?.Block ?? 0;
 
-        var combat = new JsonObject
-        {
+        var combat = new JsonObject {
             ["maxEnergy"] = player.MaxEnergy,
             ["currentEnergy"] = combatState.Energy,
             ["drawPileCount"] = combatState.DrawPile?.Cards.Count() ?? 0,
@@ -172,23 +159,19 @@ internal static class GameSnapshot
                 : new JsonArray(),
         };
 
-        combat["rngShuffle"] = new JsonObject
-        {
+        combat["rngShuffle"] = new JsonObject {
             ["seed"] = runState.Rng.Shuffle.Seed,
             ["counter"] = runState.Rng.Shuffle.Counter,
         };
 
-        combat["rngEnergyCosts"] = new JsonObject
-        {
+        combat["rngEnergyCosts"] = new JsonObject {
             ["seed"] = runState.Rng.CombatEnergyCosts.Seed,
             ["counter"] = runState.Rng.CombatEnergyCosts.Counter,
         };
 
         var hand = new JsonArray();
-        if (combatState.Hand?.Cards != null)
-        {
-            foreach (var c in combatState.Hand.Cards)
-            {
+        if (combatState.Hand?.Cards != null) {
+            foreach (var c in combatState.Hand.Cards) {
                 try {
                     var cardObj = SnapshotCardJson.FromCard(c);
                     cardObj["canPlay"] = TryCanPlay(c, combatState.Energy);
@@ -236,15 +219,12 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CapturePowers(IEnumerable<PowerModel?> powers)
-    {
+    private static JsonArray CapturePowers(IEnumerable<PowerModel?> powers) {
         var arr = new JsonArray();
-        foreach (var power in powers)
-        {
+        foreach (var power in powers) {
             if (power == null) continue;
 
-            var entry = new JsonObject
-            {
+            var entry = new JsonObject {
                 ["id"] = power.GetType().Name,
                 ["amount"] = power.Amount,
             };
@@ -269,111 +249,104 @@ internal static class GameSnapshot
     private static JsonArray CaptureEnemies(
         MegaCrit.Sts2.Core.Combat.CombatState cs,
         Player player,
-        SimCombatState pressureState)
-    {
+        SimCombatState pressureState) {
         var arr = new JsonArray();
         var targets = cs.PlayerCreatures.ToList();
         var index = 0;
 
-        foreach (var enemy in cs.Enemies)
-        {
+        foreach (var enemy in cs.Enemies) {
             JsonObject obj;
             try {
-            obj = new JsonObject
-            {
-                ["index"] = index++,
-                ["currentHp"] = enemy.CurrentHp,
-                ["maxHp"] = enemy.MaxHp,
-                ["block"] = enemy.Block,
-                ["isAlive"] = enemy.IsAlive,
-                ["isMinion"] = enemy.IsSecondaryEnemy,
-            };
+                obj = new JsonObject {
+                    ["index"] = index++,
+                    ["currentHp"] = enemy.CurrentHp,
+                    ["maxHp"] = enemy.MaxHp,
+                    ["block"] = enemy.Block,
+                    ["isAlive"] = enemy.IsAlive,
+                    ["isMinion"] = enemy.IsSecondaryEnemy,
+                };
 
-            try {
-                var monsterId = enemy.ModelId.Entry;
-                if (!string.IsNullOrWhiteSpace(monsterId))
-                    obj["monsterId"] = monsterId;
-            }
-            catch { }
+                try {
+                    var monsterId = enemy.ModelId.Entry;
+                    if (!string.IsNullOrWhiteSpace(monsterId))
+                        obj["monsterId"] = monsterId;
+                }
+                catch { }
 
-            try {
-                var title = enemy.Monster?.Title?.GetFormattedText();
-                if (!string.IsNullOrWhiteSpace(title))
-                    obj["name"] = title;
-            }
-            catch { }
+                try {
+                    var title = enemy.Monster?.Title?.GetFormattedText();
+                    if (!string.IsNullOrWhiteSpace(title))
+                        obj["name"] = title;
+                }
+                catch { }
 
-            if (enemy.Monster?.NextMove != null)
-            {
-                obj["nextMoveId"] = enemy.Monster.NextMove.Id;
-                var intents = new JsonArray();
-                int intentDamage = 0;
-                int intentBlock = 0;
+                if (enemy.Monster?.NextMove != null) {
+                    obj["nextMoveId"] = enemy.Monster.NextMove.Id;
+                    var intents = new JsonArray();
+                    int intentDamage = 0;
+                    int intentBlock = 0;
 
-                foreach (var intent in enemy.Monster.NextMove.Intents)
-                {
-                    try {
-                        intents.Add(intent.ToString());
-                    }
-                    catch {
-                        intents.Add(intent.IntentType.ToString());
-                    }
-                    if (intent.IntentType == IntentType.Hidden) continue;
-
-                    if (intent is AttackIntent attack)
-                    {
+                    foreach (var intent in enemy.Monster.NextMove.Intents) {
                         try {
-                            intentDamage += attack.GetTotalDamage(targets, enemy);
+                            intents.Add(intent.ToString());
                         }
-                        catch { }
+                        catch {
+                            intents.Add(intent.IntentType.ToString());
+                        }
+                        if (intent.IntentType == IntentType.Hidden) continue;
+
+                        if (intent is AttackIntent attack) {
+                            try {
+                                intentDamage += attack.GetTotalDamage(targets, enemy);
+                            }
+                            catch { }
+                        }
+                        else if (intent.IntentType == IntentType.Defend) {
+                            intentBlock += 5;
+                        }
                     }
-                    else if (intent.IntentType == IntentType.Defend)
-                    {
-                        intentBlock += 5;
+
+                    obj["intents"] = intents;
+                    obj["intentDamage"] = intentDamage;
+                    obj["intentBlock"] = intentBlock;
+
+                    var intentTags = new JsonArray();
+                    foreach (var intent in enemy.Monster.NextMove.Intents) {
+                        if (intent.IntentType == IntentType.Hidden) continue;
+                        intentTags.Add(intent.IntentType.ToString());
                     }
+
+                    string? capturedMonsterId = null;
+                    try { capturedMonsterId = enemy.ModelId.Entry; } catch { }
+                    var moveEffects = MoveEffectIndex.MergeWithRuntimeIntents(
+                        capturedMonsterId,
+                        enemy.Monster.NextMove.Id,
+                        enemy.Monster.NextMove.Intents);
+                    int nonDamageThreat = KitLib.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
+                        pressureState,
+                        capturedMonsterId,
+                        enemy.Monster.NextMove.Id,
+                        moveEffects);
+
+                    obj["intentTags"] = intentTags;
+                    obj["nonDamageThreat"] = nonDamageThreat;
                 }
 
-                obj["intents"] = intents;
-                obj["intentDamage"] = intentDamage;
-                obj["intentBlock"] = intentBlock;
-
-                var intentTags = new JsonArray();
-                foreach (var intent in enemy.Monster.NextMove.Intents) {
-                    if (intent.IntentType == IntentType.Hidden) continue;
-                    intentTags.Add(intent.IntentType.ToString());
+                try {
+                    var steps = KitLibHost.CaptureMonsterIntentSteps?.Invoke(enemy, targets, pressureState);
+                    if (steps == null)
+                        steps = new JsonArray();
+                    if (steps.Count > 0)
+                        obj["intentSteps"] = steps;
                 }
+                catch { }
 
-                string? capturedMonsterId = null;
-                try { capturedMonsterId = enemy.ModelId.Entry; } catch { }
-                var moveEffects = MoveEffectIndex.MergeWithRuntimeIntents(
-                    capturedMonsterId,
-                    enemy.Monster.NextMove.Id,
-                    enemy.Monster.NextMove.Intents);
-                int nonDamageThreat = KitLib.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
-                    pressureState,
-                    capturedMonsterId,
-                    enemy.Monster.NextMove.Id,
-                    moveEffects);
+                obj["powers"] = CapturePowers(enemy.Powers);
 
-                obj["intentTags"] = intentTags;
-                obj["nonDamageThreat"] = nonDamageThreat;
-            }
+                var mechanicFlags = EnemyMechanicResolver.ResolveFlags(obj);
+                obj["mechanicFlags"] = mechanicFlags.ToString();
 
-            try {
-                var steps = KitLibHost.CaptureMonsterIntentSteps?.Invoke(enemy, targets, pressureState);
-                if (steps == null)
-                    steps = new JsonArray();
-                if (steps.Count > 0)
-                    obj["intentSteps"] = steps;
-            }
-            catch { }
-
-            obj["powers"] = CapturePowers(enemy.Powers);
-
-            var mechanicFlags = EnemyMechanicResolver.ResolveFlags(obj);
-            obj["mechanicFlags"] = mechanicFlags.ToString();
-
-            arr.Add(obj);
+                arr.Add(obj);
             }
             catch {
                 // Skip enemies whose intent/card nodes throw during combat UI setup.
@@ -384,14 +357,11 @@ internal static class GameSnapshot
         return arr;
     }
 
-    private static JsonArray CaptureEnemiesBrief(MegaCrit.Sts2.Core.Combat.CombatState cs)
-    {
+    private static JsonArray CaptureEnemiesBrief(MegaCrit.Sts2.Core.Combat.CombatState cs) {
         var arr = new JsonArray();
         var index = 0;
-        foreach (var enemy in cs.Enemies)
-        {
-            arr.Add(new JsonObject
-            {
+        foreach (var enemy in cs.Enemies) {
+            arr.Add(new JsonObject {
                 ["index"] = index++,
                 ["currentHp"] = enemy.CurrentHp,
                 ["maxHp"] = enemy.MaxHp,

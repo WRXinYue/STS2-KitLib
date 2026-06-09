@@ -1,5 +1,5 @@
-using KitLib.AI.Knowledge;
 using HarmonyLib;
+using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.AI.Sts2.Patches;

@@ -63,6 +63,7 @@ def _mcp_description_bbcode(tools_rid: str) -> str:
         "Requires the DevMode mod installed and the game running."
     )
 
+
 def _beta_notice_bbcode(sts2_beta_version: str) -> str:
     return (
         f"[b]Requires Slay the Spire 2 Steam beta branch v{sts2_beta_version}.[/b] "
@@ -107,6 +108,8 @@ def _nexus_attach_options(*, beta: bool, mcp: bool) -> dict[str, object]:
         "archive_existing": True,
         "primary_mod_manager_download": True,
     }
+
+
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
@@ -142,6 +145,7 @@ _POLL_MAX_ATTEMPTS = 60
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _changelog_section(path: Path, version: str) -> str:
     """Return the body of the ## [version] section from a Keep-a-Changelog file."""
@@ -180,15 +184,14 @@ def _api_headers(api_key: str) -> dict[str, str]:
 def _check(resp, label: str) -> dict:
     """Raise on non-2xx, return parsed JSON."""
     if not (200 <= resp.status_code < 300):
-        raise RuntimeError(
-            f"{label} failed — HTTP {resp.status_code}:\n{resp.text}"
-        )
+        raise RuntimeError(f"{label} failed — HTTP {resp.status_code}:\n{resp.text}")
     return resp.json()
 
 
 # ---------------------------------------------------------------------------
 # Upload steps (mirrors Nexus-Mods/upload-action/src/index.ts)
 # ---------------------------------------------------------------------------
+
 
 def step1_create_multipart(zip_path: Path, api_key: str) -> dict:
     """POST /uploads/multipart — obtain presigned part URLs."""
@@ -226,8 +229,7 @@ def step2_upload_parts(zip_path: Path, upload_info: dict) -> list[dict]:
 
             for attempt in range(1, _PART_MAX_RETRIES + 1):
                 print(
-                    f"  Part {part_number}/{total}  ({len(chunk):,} bytes)"
-                    + (f"  [retry {attempt}]" if attempt > 1 else ""),
+                    f"  Part {part_number}/{total}  ({len(chunk):,} bytes)" + (f"  [retry {attempt}]" if attempt > 1 else ""),
                     end="",
                     flush=True,
                 )
@@ -248,11 +250,8 @@ def step2_upload_parts(zip_path: Path, upload_info: dict) -> list[dict]:
                     results.append({"partNumber": part_number, "etag": etag})
                     break
                 if attempt == _PART_MAX_RETRIES:
-                    raise RuntimeError(
-                        f"Part {part_number} upload failed after {_PART_MAX_RETRIES} attempts: "
-                        f"HTTP {resp.status_code}"
-                    )
-                time.sleep(2 ** attempt)
+                    raise RuntimeError(f"Part {part_number} upload failed after {_PART_MAX_RETRIES} attempts: " f"HTTP {resp.status_code}")
+                time.sleep(2**attempt)
 
     return results
 
@@ -261,10 +260,7 @@ def step3_complete_multipart(complete_url: str, parts: list[dict]) -> None:
     """POST S3 CompleteMultipartUpload XML to the presigned complete URL."""
     import requests
 
-    part_xml = "\n".join(
-        f"  <Part>\n    <PartNumber>{p['partNumber']}</PartNumber>\n    <ETag>{p['etag']}</ETag>\n  </Part>"
-        for p in parts
-    )
+    part_xml = "\n".join(f"  <Part>\n    <PartNumber>{p['partNumber']}</PartNumber>\n    <ETag>{p['etag']}</ETag>\n  </Part>" for p in parts)
     xml = f"<CompleteMultipartUpload>\n{part_xml}\n</CompleteMultipartUpload>"
     resp = requests.post(
         complete_url,
@@ -307,7 +303,7 @@ def step5_poll(upload_id: str, api_key: str) -> dict:
             print(" done.")
             return data
         print(".", end="", flush=True)
-        time.sleep(min(interval * (1.5 ** attempt), 30))
+        time.sleep(min(interval * (1.5**attempt), 30))
     raise RuntimeError(f"Upload processing timed out after {_POLL_MAX_ATTEMPTS} polls.")
 
 
@@ -351,6 +347,7 @@ def step6_update_mod_file(
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Upload DevMode zip to Nexus Mods.")
@@ -412,29 +409,22 @@ def main() -> int:
     if not args.dry_run:
         if not api_key:
             print(
-                "ERROR: NEXUS_API_KEY environment variable is not set.\n"
-                "       Get your key at https://www.nexusmods.com/settings/api-keys",
+                "ERROR: NEXUS_API_KEY environment variable is not set.\n" "       Get your key at https://www.nexusmods.com/settings/api-keys",
                 file=sys.stderr,
             )
             return 1
         if not group_id:
             if args.mcp:
                 env_name = "NEXUS_FILE_GROUP_ID_MCP"
-                hint = (
-                    "Create an Optional file for KitLib.Mcp on your mod page first, "
-                    "then copy its group ID from API Info."
-                )
+                hint = "Create an Optional file for KitLib.Mcp on your mod page first, " "then copy its group ID from API Info."
             elif args.beta:
                 env_name = "NEXUS_FILE_GROUP_ID_BETA"
-                hint = (
-                    "Create an Optional file on your mod page first, then copy its group ID from API Info."
-                )
+                hint = "Create an Optional file on your mod page first, then copy its group ID from API Info."
             else:
                 env_name = "NEXUS_FILE_GROUP_ID"
                 hint = "Find it on your mod's Files tab → API Info."
             print(
-                f"ERROR: {env_name} environment variable is not set.\n"
-                f"       {hint}",
+                f"ERROR: {env_name} environment variable is not set.\n" f"       {hint}",
                 file=sys.stderr,
             )
             return 1
@@ -491,9 +481,7 @@ def main() -> int:
         print(f"[dry-run]   version      : {version}")
         print(f"[dry-run]   group_id     : {group_id or '(missing)'}")
         print(f"[dry-run]   file_category: {attach['file_category']}")
-        print(
-            f"[dry-run]   primary_dl   : {attach['primary_mod_manager_download']}"
-        )
+        print(f"[dry-run]   primary_dl   : {attach['primary_mod_manager_download']}")
         print(f"[dry-run]   description  :\n{description[:300] or '(empty)'}")
         return 0
 
@@ -523,10 +511,7 @@ def main() -> int:
     step5_poll(upload_id, api_key)
 
     print("\n[6/6] Attaching file to mod page…")
-    print(
-        f"  Group {group_id}  category={attach['file_category']}  "
-        f"primary={attach['primary_mod_manager_download']}"
-    )
+    print(f"  Group {group_id}  category={attach['file_category']}  " f"primary={attach['primary_mod_manager_download']}")
     file_uid = step6_update_mod_file(
         upload_id,
         group_id,

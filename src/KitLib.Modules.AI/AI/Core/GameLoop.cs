@@ -3,8 +3,8 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using KitLib;
 using KitLib.AI.AutoPlay.Scoring;
-using KitLib.AI.Sts2;
 using KitLib.AI.Core.Schema;
+using KitLib.AI.Sts2;
 
 namespace KitLib.AI.Core;
 
@@ -12,8 +12,7 @@ namespace KitLib.AI.Core;
 /// Generic AI game loop: observe → decide → act.
 /// Reusable across different games and AI strategies.
 /// </summary>
-public sealed class GameLoop
-{
+public sealed class GameLoop {
     private readonly IGameStateProvider _state;
     private readonly IGameActionExecutor _executor;
     private readonly IDecisionMaker _decisionMaker;
@@ -32,8 +31,7 @@ public sealed class GameLoop
         IGameStateProvider state,
         IGameActionExecutor executor,
         IDecisionMaker decisionMaker,
-        Action<string> log)
-    {
+        Action<string> log) {
         _state = state;
         _executor = executor;
         _decisionMaker = decisionMaker;
@@ -54,14 +52,12 @@ public sealed class GameLoop
     /// Called when the game reaches a decision point (e.g. start of player turn,
     /// reward screen shown, map opened, etc.).
     /// </summary>
-    public async Task OnDecisionPointAsync(GamePhase? phaseOverride = null)
-    {
+    public async Task OnDecisionPointAsync(GamePhase? phaseOverride = null) {
         if (_running)
             return;
         _running = true;
 
-        try
-        {
+        try {
             var phase = phaseOverride ?? _state.CurrentPhase;
             if (phase == GamePhase.None)
                 return;
@@ -77,10 +73,8 @@ public sealed class GameLoop
                     return;
                 throw;
             }
-            if (snapshot == null)
-            {
-                if (phase == GamePhase.Combat)
-                {
+            if (snapshot == null) {
+                if (phase == GamePhase.Combat) {
                     _log("GameLoop: Could not capture snapshot.");
                     return;
                 }
@@ -139,12 +133,10 @@ public sealed class GameLoop
             if (decidePhase == GamePhase.Combat && action.Type == ActionType.UsePotion)
                 PotionScorer.NotifyPotionUsed();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _log($"GameLoop: Error — {ex.Message}");
         }
-        finally
-        {
+        finally {
             _running = false;
         }
     }

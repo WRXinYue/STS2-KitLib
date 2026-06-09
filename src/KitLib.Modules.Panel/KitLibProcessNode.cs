@@ -1,10 +1,10 @@
+using Godot;
 using KitLib.Feedback;
 using KitLib.Hotkeys;
 using KitLib.Mcp;
 using KitLib.Patches;
 using KitLib.Scripts;
 using KitLib.Settings;
-using Godot;
 
 namespace KitLib;
 

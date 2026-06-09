@@ -10,7 +10,7 @@ internal static class RunContext {
     private static RunState? _pendingState;
     private static ulong _pendingPlayerNetId;
 
-    public static bool TryGetRunAndPlayer(out RunState state, out Player player) {
+    public static bool TryGetRunAndPlayer(out RunState state, out Player? player) {
         state = RunManager.Instance?.DebugOnlyGetState();
         if (state == null) {
             player = null;
@@ -26,7 +26,7 @@ internal static class RunContext {
         _pendingPlayerNetId = player.NetId;
     }
 
-    public static bool TryResolvePending(out RunState state, out Player player) {
+    public static bool TryResolvePending(out RunState state, out Player? player) {
         state = _pendingState ?? RunManager.Instance?.DebugOnlyGetState();
         if (state == null) {
             player = null;

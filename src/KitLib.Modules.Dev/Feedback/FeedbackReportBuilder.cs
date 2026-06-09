@@ -4,10 +4,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+using Godot;
 using KitLib.CombatStats;
 using KitLib.Interop;
 using KitLib.Modding;
-using Godot;
 using MegaCrit.Sts2.Core.Logging;
 
 namespace KitLib.Feedback;
@@ -115,7 +115,7 @@ internal static class FeedbackReportBuilder {
         foreach (var e in entries) {
             if (LogSuppressor.IsSuppressed(e.Text)) { suppressed++; continue; }
             var levelTag = e.Level switch {
-                LogLevel.Warn  => "WARN ",
+                LogLevel.Warn => "WARN ",
                 LogLevel.Error => "ERROR",
                 _ => "INFO "
             };

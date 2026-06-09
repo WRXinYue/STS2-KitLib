@@ -1,5 +1,5 @@
-using KitLib;
 using Godot;
+using KitLib;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;

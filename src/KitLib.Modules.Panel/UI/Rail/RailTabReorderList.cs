@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 using KitLib.Icons;
 using KitLib.Panels;
 using KitLib.Settings;
-using Godot;
 
 namespace KitLib.UI;
 

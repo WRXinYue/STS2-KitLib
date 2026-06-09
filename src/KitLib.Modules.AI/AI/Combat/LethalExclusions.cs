@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using KitLib.AI.Knowledge;
 using KitLib.AI.Combat.Simulation;
+using KitLib.AI.Knowledge;
 
 namespace KitLib.AI.Combat;
 

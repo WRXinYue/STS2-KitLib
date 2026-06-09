@@ -1,5 +1,5 @@
-using KitLib.AI.AutoPlay;
 using HarmonyLib;
+using KitLib.AI.AutoPlay;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI.Sts2.Patches;

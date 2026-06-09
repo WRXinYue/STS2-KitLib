@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Godot;
 using KitLib.Combat;
 using KitLib.Multiplayer.Cheat;
-using Godot;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
-using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
@@ -244,13 +244,13 @@ internal static class CombatEnemyActions {
             var status = ResourceLoader.LoadThreadedGetStatus(path);
             switch (status) {
                 case ResourceLoader.ThreadLoadStatus.Loaded: {
-                    var resource = ResourceLoader.LoadThreadedGet(path);
-                    if (resource is PackedScene scene)
-                        PreloadManager.Cache.SetAsset(path, scene);
-                    MainFile.Logger.Info(
-                        $"[KitLib.CombatAdd] preload done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
-                    return true;
-                }
+                        var resource = ResourceLoader.LoadThreadedGet(path);
+                        if (resource is PackedScene scene)
+                            PreloadManager.Cache.SetAsset(path, scene);
+                        MainFile.Logger.Info(
+                            $"[KitLib.CombatAdd] preload done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+                        return true;
+                    }
                 case ResourceLoader.ThreadLoadStatus.Failed:
                 case ResourceLoader.ThreadLoadStatus.InvalidResource:
                     MainFile.Logger.Warn(

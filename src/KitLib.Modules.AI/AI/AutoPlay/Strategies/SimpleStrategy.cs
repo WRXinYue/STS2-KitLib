@@ -21,12 +21,9 @@ namespace KitLib.AI.AutoPlay.Strategies;
 /// Cards: pick in early game, skip in late game.
 /// Rest: rest if HP &lt; 60%, otherwise upgrade.
 /// </summary>
-public sealed class SimpleStrategy : IDecisionMaker
-{
-    public Task<GameAction> DecideAsync(JsonObject snapshot, GamePhase phase)
-    {
-        var action = phase switch
-        {
+public sealed class SimpleStrategy : IDecisionMaker {
+    public Task<GameAction> DecideAsync(JsonObject snapshot, GamePhase phase) {
+        var action = phase switch {
             GamePhase.Combat => DecideCombat(snapshot),
             GamePhase.MapSelection => new GameAction { Type = ActionType.SelectMapNode, TargetIndex = 0, Reason = "First available node" },
             GamePhase.CardReward => DecideCardReward(snapshot),
@@ -43,8 +40,7 @@ public sealed class SimpleStrategy : IDecisionMaker
         return Task.FromResult(action);
     }
 
-    private static GameAction DecideCombat(JsonObject snapshot)
-    {
+    private static GameAction DecideCombat(JsonObject snapshot) {
         var combat = snapshot["combat"]?.AsObject();
         if (combat == null)
             return new GameAction { Type = ActionType.EndTurn, Reason = "No combat state" };
@@ -63,16 +59,13 @@ public sealed class SimpleStrategy : IDecisionMaker
         bool lowHp = hp < maxHp * 0.4;
 
         // Low HP: prioritize skills (likely block)
-        if (lowHp)
-        {
-            for (int i = 0; i < hand.Count; i++)
-            {
+        if (lowHp) {
+            for (int i = 0; i < hand.Count; i++) {
                 var card = hand[i]!.AsObject();
                 var cost = card["cost"]?.GetValue<int>() ?? 99;
                 var type = card["cardType"]?.GetValue<string>() ?? "";
                 if (type.Contains("Skill") && cost <= energy)
-                    return new GameAction
-                    {
+                    return new GameAction {
                         Type = ActionType.PlayCard,
                         TargetIndex = i,
                         SecondaryIndex = 0,
@@ -83,8 +76,7 @@ public sealed class SimpleStrategy : IDecisionMaker
 
         // Best affordable attack
         int bestIdx = -1, bestCost = -1;
-        for (int i = 0; i < hand.Count; i++)
-        {
+        for (int i = 0; i < hand.Count; i++) {
             var card = hand[i]!.AsObject();
             var cost = card["cost"]?.GetValue<int>() ?? 99;
             var type = card["cardType"]?.GetValue<string>() ?? "";
@@ -92,29 +84,27 @@ public sealed class SimpleStrategy : IDecisionMaker
             if (!type.Contains("Attack") || cost > energy) continue;
             if (targetType is "AnyAlly" or "AnyPlayer" or "Self") continue;
 
-            if (cost > bestCost)
-            {
+            if (cost > bestCost) {
                 bestIdx = i;
                 bestCost = cost;
             }
         }
         if (bestIdx >= 0)
-            return new GameAction
-            {
-                Type = ActionType.PlayCard, TargetIndex = bestIdx, SecondaryIndex = 0,
+            return new GameAction {
+                Type = ActionType.PlayCard,
+                TargetIndex = bestIdx,
+                SecondaryIndex = 0,
                 Reason = $"Play attack [{hand[bestIdx]!["name"]}]"
             };
 
         // Any affordable card
-        for (int i = 0; i < hand.Count; i++)
-        {
+        for (int i = 0; i < hand.Count; i++) {
             var card = hand[i]!.AsObject();
             var cost = card["cost"]?.GetValue<int>() ?? 99;
             if (cost > energy) continue;
 
             var targetType = card["targetType"]?.GetValue<string>() ?? "";
-            return new GameAction
-            {
+            return new GameAction {
                 Type = ActionType.PlayCard,
                 TargetIndex = i,
                 SecondaryIndex = targetType.Contains("Enemy") ? 0 : -1,
@@ -129,8 +119,7 @@ public sealed class SimpleStrategy : IDecisionMaker
     /// True if snapshot lists at least one enemy with <c>isAlive: true</c>.
     /// Empty/missing enemy list is treated as no targets (end turn).
     /// </summary>
-    private static bool HasAliveEnemy(JsonObject combat)
-    {
+    private static bool HasAliveEnemy(JsonObject combat) {
         var enemies = combat["enemies"]?.AsArray();
         // Snapshot omitted enemy list — don't assume combat is over.
         if (enemies == null)
@@ -138,8 +127,7 @@ public sealed class SimpleStrategy : IDecisionMaker
         if (enemies.Count == 0)
             return false;
 
-        foreach (var node in enemies)
-        {
+        foreach (var node in enemies) {
             if (node is not JsonObject o) continue;
             if (o["isAlive"]?.GetValue<bool>() == true)
                 return true;
@@ -148,8 +136,7 @@ public sealed class SimpleStrategy : IDecisionMaker
         return false;
     }
 
-    private static GameAction DecideCardReward(JsonObject snapshot)
-    {
+    private static GameAction DecideCardReward(JsonObject snapshot) {
         var floor = snapshot["totalFloor"]?.GetValue<int>() ?? 0;
         if (floor < 15)
             return new GameAction { Type = ActionType.PickCardReward, TargetIndex = 0, Reason = "Early game — pick first card" };
@@ -157,8 +144,7 @@ public sealed class SimpleStrategy : IDecisionMaker
         return new GameAction { Type = ActionType.SkipCardReward, Reason = "Late game — keep deck lean" };
     }
 
-    private static GameAction DecideShop(JsonObject snapshot)
-    {
+    private static GameAction DecideShop(JsonObject snapshot) {
         var gold = snapshot["gold"]?.GetValue<int>() ?? 0;
         var deckSize = snapshot["deck"]?.AsArray()?.Count ?? 0;
 
@@ -168,8 +154,7 @@ public sealed class SimpleStrategy : IDecisionMaker
         return new GameAction { Type = ActionType.LeaveShop, Reason = "Not enough gold" };
     }
 
-    private static GameAction DecideRest(JsonObject snapshot)
-    {
+    private static GameAction DecideRest(JsonObject snapshot) {
         var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
         var maxHp = snapshot["maxHp"]?.GetValue<int>() ?? 1;
 

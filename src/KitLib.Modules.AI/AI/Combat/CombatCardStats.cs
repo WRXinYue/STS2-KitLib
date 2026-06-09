@@ -71,14 +71,14 @@ internal static class CombatCardStats {
         int orbCount,
         int statusCards,
         int unblockedDamage) => mode switch {
-        AttackHitScaleMode.Energy => ResolveEnergyScaledHits(cardId, energySpent),
-        AttackHitScaleMode.AttacksPlayedThisTurn => Math.Max(0, attacksPlayed),
-        AttackHitScaleMode.SkillsInHand => Math.Max(0, skillsInHand),
-        AttackHitScaleMode.OrbCount => Math.Max(0, orbCount),
-        AttackHitScaleMode.StatusCardsOwned => Math.Max(0, statusCards),
-        AttackHitScaleMode.UnblockedDamageTakenPlusOne => Math.Max(1, 1 + unblockedDamage),
-        _ => 1,
-    };
+            AttackHitScaleMode.Energy => ResolveEnergyScaledHits(cardId, energySpent),
+            AttackHitScaleMode.AttacksPlayedThisTurn => Math.Max(0, attacksPlayed),
+            AttackHitScaleMode.SkillsInHand => Math.Max(0, skillsInHand),
+            AttackHitScaleMode.OrbCount => Math.Max(0, orbCount),
+            AttackHitScaleMode.StatusCardsOwned => Math.Max(0, statusCards),
+            AttackHitScaleMode.UnblockedDamageTakenPlusOne => Math.Max(1, 1 + unblockedDamage),
+            _ => 1,
+        };
 
     public static int ResolveEnergyCost(JsonObject card, int availableEnergy) {
         var profile = ResolveProfile(card);

@@ -51,14 +51,10 @@ def _posix_godot_predicate(p: Path) -> bool:
         return os.access(p, os.X_OK)
     if _GODOT_POSIX_NAME_RE.match(n):
         return _is_executable_file(p) or os.access(p, os.X_OK)
-    if n.lower().startswith("megadot") and (
-        _is_executable_file(p) or os.access(p, os.X_OK)
-    ):
+    if n.lower().startswith("megadot") and (_is_executable_file(p) or os.access(p, os.X_OK)):
         return True
     nl = n.lower()
-    if "godot" in nl and "mono" in nl and (
-        _is_executable_file(p) or os.access(p, os.X_OK)
-    ):
+    if "godot" in nl and "mono" in nl and (_is_executable_file(p) or os.access(p, os.X_OK)):
         return True
     return False
 

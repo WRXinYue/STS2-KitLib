@@ -1,6 +1,6 @@
+using Godot;
 using KitLib.Settings;
 using KitLib.UI;
-using Godot;
 
 namespace KitLib.Hotkeys;
 

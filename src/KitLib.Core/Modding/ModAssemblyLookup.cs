@@ -12,7 +12,7 @@ internal static class ModAssemblyLookup {
     private static readonly Lazy<Dictionary<string, KitLibModInfo>> _byAssemblySimpleName =
         new(BuildAssemblyMap, isThreadSafe: true);
     private static readonly HashSet<string> _nonModAssemblies = new(StringComparer.Ordinal);
-    private static readonly ConcurrentDictionary<Type, string?> _modDirectoryCache  = new();
+    private static readonly ConcurrentDictionary<Type, string?> _modDirectoryCache = new();
 
     internal static bool TryGetByAssemblySimpleName(string? assemblySimpleName, out KitLibModInfo info) {
         info = default;
@@ -68,7 +68,7 @@ internal static class ModAssemblyLookup {
     //     }
     // }
 
-    private static void RegisterAssembliesForMod(Mod mod, KitLibModInfo info,  Dictionary<string, KitLibModInfo> map) {
+    private static void RegisterAssembliesForMod(Mod mod, KitLibModInfo info, Dictionary<string, KitLibModInfo> map) {
         var modDir = GetOrCacheModDirectory(mod);
 
         foreach (var asm in EnumerateAssembliesLinkedToMod(mod, modDir)) {

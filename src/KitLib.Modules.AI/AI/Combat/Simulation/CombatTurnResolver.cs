@@ -22,7 +22,8 @@ public static class CombatTurnResolver {
         List<CombatHandCard> retained;
         if (RelicCombatRules.RetainHandOnEndTurn(state.RelicIds)) {
             retained = state.Hand.ToList();
-        } else {
+        }
+        else {
             (retained, discard) = CombatPileSimulator.DiscardHand(state.Hand, discard);
         }
 
@@ -89,7 +90,8 @@ public static class CombatTurnResolver {
                     case MonsterMoveEffectKind.PowerAffliction:
                         if (string.Equals(effect.PowerId, "SWIPE", StringComparison.OrdinalIgnoreCase)) {
                             (draw, discard) = StealEffectSimulator.Apply(draw, discard);
-                        } else if (!effect.IsNonDeterministic) {
+                        }
+                        else if (!effect.IsNonDeterministic) {
                             modifiers.Add(MapPowerModifier(effect));
                         }
                         break;
