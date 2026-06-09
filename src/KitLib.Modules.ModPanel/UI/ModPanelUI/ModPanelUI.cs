@@ -12,6 +12,7 @@ using MegaCrit.Sts2.addons.mega_text;
 using KitLib.Abstractions.Modding;
 using KitLib.Modding;
 using KitLib.Integration;
+using KitLib.ModPanel.Diagnostics;
 namespace KitLib.UI;
 /// <summary>
 /// Full-screen overlay: root frame, sidebar column, and content column mirror STS2-RitsuLib
@@ -42,6 +43,9 @@ public static partial class ModPanelUI {
         _root = BuildRoot();
         parent.AddChild(_root);
         parent.MoveChild(_root, parent.GetChildCount() - 1);
+        var openReport = BuildOpenReport();
+        ModPanelDiagnostics.LogOpenReport(openReport);
+        ModPanelDiagnostics.LogSidebarLayoutDeferred(_root, openReport);
         Callable.From(RefitShellDeferred).CallDeferred();
         _root.AddChild(new ShellInputForwarder(TeardownShell) {
             ProcessMode = Node.ProcessModeEnum.Always,
@@ -69,18 +73,26 @@ public static partial class ModPanelUI {
         RitsuModSettingsEmbedHost.ClearAfterShellDisposed();
     }
     public static bool IsVisible => _root != null && GodotObject.IsInstanceValid(_root);
-    private static string ResolveShowcaseModId() {
-        var asmId = typeof(ModPanelUI).Assembly.GetName().Name;
-        if (!string.IsNullOrWhiteSpace(asmId) && !RitsuModSettingsBridge.IsRitsuFrameworkModId(asmId) &&
-            ModPanelModBanner.TryFindMod(asmId) != null)
-            return asmId;
-        foreach (var e in ModRuntime.Catalog.GetSnapshot()) {
-            if (RitsuModSettingsBridge.IsRitsuFrameworkModId(e.Id))
-                continue;
-            if (ModPanelModBanner.TryFindMod(e.Id) != null)
-                return e.Id;
-        }
-        return string.IsNullOrWhiteSpace(asmId) ? "KitLib" : asmId;
+    private static string ResolveShowcaseModId()
+        => ModPanelSidebarPlanner.ResolveShowcaseModId(
+            ModRuntime.Catalog.GetSnapshot(),
+            typeof(ModPanelUI).Assembly.GetName().Name,
+            RitsuModSettingsBridge.IsRitsuFrameworkModId,
+            id => ModPanelModBanner.TryFindMod(id) != null);
+
+    private static ModPanelOpenReport BuildOpenReport() {
+        var snapshot = ModRuntime.Catalog.GetSnapshot();
+        var plan = ModPanelSidebarPlanner.Plan(
+            snapshot,
+            typeof(ModPanelUI).Assembly.GetName().Name,
+            RitsuModSettingsBridge.IsRitsuFrameworkModId,
+            id => ModPanelModBanner.TryFindMod(id) != null);
+        var embedProbe = ModPanelEmbedHostProbe.Probe(RitsuModSettingsBridge.TryGetRitsuAssembly());
+        return ModPanelDiagnostics.BuildOpenReport(
+            plan,
+            embedProbe,
+            ModPanelDiagnostics.CountRawLoadedMods(),
+            snapshot.Count);
     }
     private static ModPanelShellRoot BuildRoot() {
         var root = new ModPanelShellRoot {
@@ -288,25 +300,20 @@ public static partial class ModPanelUI {
         var scroll = SidebarModListScrollBuilder.Create(out var scrollInner);
         scrollInner.AddThemeConstantOverride("separation", 10);
         var modButtonList = new VBoxContainer {
+            Name = "ModPanelSidebarModList",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
         modButtonList.AddThemeConstantOverride("separation", 8);
         scrollInner.AddChild(modButtonList);
-        var ordered = new List<KitLibModInfo>(ModRuntime.GetOrderedLoadedMods());
+        var sidebarPlan = ModPanelSidebarPlanner.Plan(
+            ModRuntime.Catalog.GetSnapshot(),
+            showcaseModId,
+            RitsuModSettingsBridge.IsRitsuFrameworkModId,
+            id => ModPanelModBanner.TryFindMod(id) != null);
+        var ordered = new List<KitLibModInfo>(sidebarPlan.OrderedMods);
         var modRows = new List<SidebarModRowVm>();
-        var initialSelectedId = showcaseModId;
-        if (ordered.Count > 0) {
-            var hasShowcase = false;
-            foreach (var e in ordered) {
-                if (string.Equals(e.Id, showcaseModId, StringComparison.OrdinalIgnoreCase)) {
-                    hasShowcase = true;
-                    break;
-                }
-            }
-            if (!hasShowcase)
-                initialSelectedId = ordered[0].Id;
-        }
+        var initialSelectedId = sidebarPlan.InitialSelectedModId;
         var selectedModId = initialSelectedId;
         var contentState = new ModPanelContentState();
         Control? scopeFocusTarget = null;

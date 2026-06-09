@@ -72,7 +72,7 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 
-.PHONY: help init icons format format-check lint-scripts check hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean \
         build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta upload-all-beta \
         launch launch-beta sync-launch sync-full-launch sync-beta-run dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog \
@@ -87,6 +87,7 @@ help:
 	@echo "  format-check dotnet format --verify-no-changes (CI)"
 	@echo "  lint-scripts flake8 scripts/ (setup.cfg)"
 	@echo "  check        format-check + lint-scripts"
+	@echo "  test         dotnet test KitLib.ModPanel.Tests (sidebar planner + embed probe)"
 	@echo "  hooks-install uv sync (dev) + pre-commit git hook"
 	@echo "  hooks-run    pre-commit run --all-files"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
@@ -157,6 +158,9 @@ lint-scripts:
 	$(UV) run flake8 scripts
 
 check: format-check lint-scripts
+
+test:
+	DOTNET_ROLL_FORWARD=Major $(DOTNET) test tests/KitLib.ModPanel.Tests/KitLib.ModPanel.Tests.csproj -c Debug
 
 hooks-install:
 	$(UV) sync

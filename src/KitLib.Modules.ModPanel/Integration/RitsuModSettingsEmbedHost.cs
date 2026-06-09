@@ -1,13 +1,14 @@
 using System;
 using System.Reflection;
 using Godot;
+using KitLib.Abstractions.Modding;
 namespace KitLib.Integration;
 /// <summary>
 /// Keeps a hidden <c>RitsuModSettingsSubmenu</c> alive so <c>ModSettingsUiContext</c> can bind saves/refreshes
 /// while DevMode renders settings in its own shell.
 /// </summary>
 internal static class RitsuModSettingsEmbedHost {
-    private const string SubmenuFullName = "STS2RitsuLib.Settings.RitsuModSettingsSubmenu";
+    private const string SubmenuFullName = ModPanelEmbedHostProbe.SubmenuFullName;
     private static Control? _pin;
     private static Node? _submenu;
     public static Node? TryGetSubmenu() => _submenu;
