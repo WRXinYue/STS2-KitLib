@@ -311,7 +311,8 @@ public static partial class ModPanelUI {
         void RefreshModRowChrome() {
             foreach (var row in modRows) {
                 var sel = string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase);
-                ApplySidebarModGroupInnerRowStyle(row.InnerStyle, sel, row.Pressing);
+                var focused = row.Host.HasFocus();
+                ApplySidebarModGroupInnerRowStyle(row.InnerStyle, sel, row.Pressing, focused);
             }
         }
         void SelectMod(string id) {
@@ -324,6 +325,12 @@ public static partial class ModPanelUI {
             var tex = ModPanelModBanner.TryLoadModIcon(m, id);
             ApplyPreviewState(tex, m == null, modIcon, previewPlaceholder, previewCaption);
             RebuildRitsuRightPane();
+            var selectedRow = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (selectedRow != null) {
+                shell.SetInitialFocusedControl(selectedRow.Host);
+                if (NControllerManager.Instance?.IsUsingController == true)
+                    Callable.From(() => selectedRow.Host.TryGrabFocus()).CallDeferred();
+            }
         }
         if (ordered.Count == 0) {
             var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
@@ -368,7 +375,7 @@ public static partial class ModPanelUI {
                     MouseFilter = Control.MouseFilterEnum.Stop,
                     MouseDefaultCursorShape = Control.CursorShape.PointingHand,
                     CustomMinimumSize = new Vector2(0f, 62f),
-                    FocusMode = Control.FocusModeEnum.None,
+                    FocusMode = Control.FocusModeEnum.All,
                 };
                 rowHost.TooltipText = tip;
                 var bgPanel = new Panel {
@@ -403,6 +410,13 @@ public static partial class ModPanelUI {
                     Host = rowHost,
                 };
                 modRows.Add(vm);
+                rowHost.FocusEntered += () => {
+                    if (!string.Equals(selectedModId, vm.Id, StringComparison.OrdinalIgnoreCase))
+                        SelectMod(vm.Id);
+                    else
+                        RefreshModRowChrome();
+                };
+                rowHost.FocusExited += RefreshModRowChrome;
                 rowHost.GuiInput += ev => {
                     if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left) {
                         if (mb.Pressed) {
@@ -437,15 +451,17 @@ public static partial class ModPanelUI {
         shell.AddChild(controllerSupport);
         controllerSupport.BindSubmenu(shell);
         controllerSupport.ConfigureSidebar(modRows, () => selectedModId, SelectMod, ritsuContentList);
-        if (modRows.Count > 0) {
-            Callable.From(() => {
+        Callable.From(() => {
+            if (modRows.Count > 0) {
                 ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabRow, ritsuContentList,
                     scopeFocusTarget);
-                shell.SetInitialFocusedControl(null);
-                shell.RefreshControllerFocus();
-                controllerSupport.RefreshHints();
-            }).CallDeferred();
-        }
+                var selectedRow = modRows.Find(r =>
+                    string.Equals(r.Id, selectedModId, StringComparison.OrdinalIgnoreCase));
+                shell.SetInitialFocusedControl(selectedRow?.Host);
+            }
+            shell.RefreshControllerFocus();
+            controllerSupport.RefreshHints();
+        }).CallDeferred();
         return panel;
     }
     private static (Panel Frame, TextureRect Icon, Control Placeholder, MegaRichTextLabel Caption)

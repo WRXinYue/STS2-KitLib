@@ -39,7 +39,22 @@ public partial class ModPanelSubmenu : NSubmenu {
             _signalsConnected = true;
         }
         ModPanelDiagnostics.LogControllerContext(this);
-        Callable.From(RefreshControllerFocus).CallDeferred();
+        Callable.From(() => {
+            RefreshControllerFocus();
+            RefreshControllerHints();
+        }).CallDeferred();
+    }
+
+    protected override void OnSubmenuShown() {
+        base.OnSubmenuShown();
+        Callable.From(RefreshControllerHints).CallDeferred();
+    }
+
+    internal void RefreshControllerHints() {
+        foreach (var child in GetChildren()) {
+            if (child is ModPanelControllerSupport support && GodotObject.IsInstanceValid(support))
+                support.RefreshHints();
+        }
     }
 
     public override void OnSubmenuClosed() {

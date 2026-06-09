@@ -76,6 +76,9 @@ public static class ModPanelDiagnosticLog {
         return sb.ToString();
     }
 
+    public static string FormatControllerHints(bool usingController, bool hintsVisible, int tabCount)
+        => $"{Prefix} controllerHints: usingController={usingController}, hintsVisible={hintsVisible}, tabCount={tabCount}";
+
     public static string FormatControllerInput(string action, bool handled, string? skipReason, string? selectedModId) {
         var sb = new StringBuilder();
         sb.Append($"{Prefix} controllerInput: action={action}, handled={handled}");

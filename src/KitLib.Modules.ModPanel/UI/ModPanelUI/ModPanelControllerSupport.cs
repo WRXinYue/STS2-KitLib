@@ -4,6 +4,7 @@ using Godot;
 using KitLib.Abstractions.Modding;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
 namespace KitLib.UI;
@@ -27,6 +28,7 @@ public partial class ModPanelControllerSupport : Node {
     private Func<string>? _getSelectedModId;
     private Action<string>? _selectMod;
     private Control? _settingsContentRoot;
+    private bool _lastUsingController;
 
     public void Configure(HBoxContainer pageTabRow, Func<string> getPageId, Action<string> switchPage,
         Control hintsRow) {
@@ -64,6 +66,15 @@ public partial class ModPanelControllerSupport : Node {
         }
         if (NInputManager.Instance != null)
             NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, _refreshHintsCallable.Value);
+        _lastUsingController = NControllerManager.Instance?.IsUsingController == true;
+        RefreshHints();
+    }
+
+    public override void _Process(double delta) {
+        var usingController = NControllerManager.Instance?.IsUsingController == true;
+        if (usingController == _lastUsingController)
+            return;
+        _lastUsingController = usingController;
         RefreshHints();
     }
 
@@ -108,6 +119,17 @@ public partial class ModPanelControllerSupport : Node {
             return false;
         }
 
+        SidebarModRowVm? focusedRow = null;
+        var currentId = _getSelectedModId!();
+        foreach (var row in _sidebarRows) {
+            if (string.Equals(row.Id, currentId, StringComparison.OrdinalIgnoreCase)) {
+                focusedRow = row;
+                break;
+            }
+        }
+        if (focusedRow != null)
+            Callable.From(() => focusedRow.Host.TryGrabFocus()).CallDeferred();
+
         MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
             action, handled: true, null, _getSelectedModId?.Invoke()));
         RefreshHints();
@@ -119,18 +141,30 @@ public partial class ModPanelControllerSupport : Node {
         action = "";
         if (@event.IsEcho())
             return false;
-        if (@event.IsActionPressed("ui_up") || @event.IsActionPressed(MegaInput.up)) {
+        if (IsUpPress(@event)) {
             delta = -1;
             action = "up";
             return true;
         }
-        if (@event.IsActionPressed("ui_down") || @event.IsActionPressed(MegaInput.down)) {
+        if (IsDownPress(@event)) {
             delta = 1;
             action = "down";
             return true;
         }
         return false;
     }
+
+    private static bool IsUpPress(InputEvent @event) =>
+        @event.IsActionPressed("ui_up")
+        || @event.IsActionPressed(MegaInput.up)
+        || @event.IsActionPressed(Controller.dPadNorth)
+        || @event.IsActionPressed(Controller.joystickUp);
+
+    private static bool IsDownPress(InputEvent @event) =>
+        @event.IsActionPressed("ui_down")
+        || @event.IsActionPressed(MegaInput.down)
+        || @event.IsActionPressed(Controller.dPadSouth)
+        || @event.IsActionPressed(Controller.joystickDown);
 
     private string? DescribeSkipReason() {
         if (_submenu == null || !GodotObject.IsInstanceValid(_submenu))
@@ -142,7 +176,7 @@ public partial class ModPanelControllerSupport : Node {
             return $"notCurrent(screen={current?.GetType().Name ?? "null"})";
         }
         if (NControllerManager.Instance?.IsUsingController != true)
-            return "mouseMode";
+            return "mouseMode(IsUsingController=false)";
         if (_sidebarRows.Count == 0 || _getSelectedModId == null || _selectMod == null)
             return "sidebarNotReady";
         return null;
@@ -153,6 +187,8 @@ public partial class ModPanelControllerSupport : Node {
             return;
         var usingController = NControllerManager.Instance?.IsUsingController == true;
         _hintsRow.Visible = usingController;
+        MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerHints(
+            usingController, _hintsRow.Visible, CountPageTabs()));
         if (!usingController)
             return;
         if (_backIcon != null) {

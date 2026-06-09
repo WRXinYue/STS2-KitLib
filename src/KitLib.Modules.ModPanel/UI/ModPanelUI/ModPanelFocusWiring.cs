@@ -26,8 +26,19 @@ internal static class ModPanelFocusWiring {
         else if (contentEntry != null) {
             contentEntry.FocusNeighborLeft = selectedRow.GetPath();
         }
+        WireSidebarRowNeighbors(rows, scopeFocusTarget);
         if (scopeFocusTarget != null && rows.Count > 0)
             scopeFocusTarget.FocusNeighborTop = rows[^1].Host.GetPath();
+    }
+
+    public static void WireSidebarRowNeighbors(IReadOnlyList<SidebarModRowVm> rows, Control? scopeFocusTarget) {
+        for (var i = 0; i < rows.Count; i++) {
+            var host = rows[i].Host;
+            host.FocusNeighborTop = i > 0 ? rows[i - 1].Host.GetPath() : host.GetPath();
+            host.FocusNeighborBottom = i < rows.Count - 1
+                ? rows[i + 1].Host.GetPath()
+                : scopeFocusTarget?.GetPath() ?? host.GetPath();
+        }
     }
 
     private static void WirePageTabFocusNeighbors(IReadOnlyList<Button> tabs) {
