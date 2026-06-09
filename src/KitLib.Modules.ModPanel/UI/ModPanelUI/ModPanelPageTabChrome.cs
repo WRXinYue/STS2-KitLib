@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;
 
-/// <summary>Official settings layout: LB/RB flanking a full row of page tabs.</summary>
+/// <summary>LB/RB flanking a full-width row of page tabs (equal stretch across available width).</summary>
 public partial class ModPanelPageTabChrome : Control {
     public readonly record struct PageEntry(string Id, string Label);
 
@@ -15,7 +15,6 @@ public partial class ModPanelPageTabChrome : Control {
 
     private TextureRect _leftTrigger = null!;
     private TextureRect _rightTrigger = null!;
-    private ScrollContainer _tabScroll = null!;
     private HBoxContainer _tabRow = null!;
     private readonly List<PageEntry> _pages = [];
     private string _selectedPageId = "";
@@ -31,7 +30,7 @@ public partial class ModPanelPageTabChrome : Control {
         MouseFilter = MouseFilterEnum.Ignore;
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         SizeFlagsVertical = SizeFlags.ShrinkBegin;
-        CustomMinimumSize = new Vector2(0f, 48f);
+        CustomMinimumSize = new Vector2(0f, 52f);
 
         var row = new HBoxContainer {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -46,24 +45,14 @@ public partial class ModPanelPageTabChrome : Control {
         _leftTrigger.GuiInput += ev => OnTriggerGuiInput(ev, -1);
         row.AddChild(_leftTrigger);
 
-        _tabScroll = new ScrollContainer {
-            Name = "ModPanelPageTabScroll",
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ShrinkCenter,
-            CustomMinimumSize = new Vector2(80f, 40f),
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Auto,
-            VerticalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            MouseFilter = MouseFilterEnum.Pass,
-        };
         _tabRow = new HBoxContainer {
             Name = "ModPanelPageTabRow",
-            SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
             MouseFilter = MouseFilterEnum.Ignore,
         };
         _tabRow.AddThemeConstantOverride("separation", 8);
-        _tabScroll.AddChild(_tabRow);
-        row.AddChild(_tabScroll);
+        row.AddChild(_tabRow);
 
         _rightTrigger = CreateTriggerIcon("RightTriggerIcon");
         _rightTrigger.GuiInput += ev => OnTriggerGuiInput(ev, 1);
@@ -83,12 +72,15 @@ public partial class ModPanelPageTabChrome : Control {
         foreach (var entry in _pages) {
             var capturedId = entry.Id;
             var selected = string.Equals(capturedId, selectedPageId, StringComparison.OrdinalIgnoreCase);
-            var tab = ModPanelUI.CreateDevModePageTab(capturedId, entry.Label, selected, () => SelectPage(capturedId, fromUser: true));
+            var tab = ModPanelUI.CreateDevModePageTab(capturedId, entry.Label, selected,
+                () => SelectPage(capturedId, fromUser: true));
+            tab.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+            tab.SizeFlagsVertical = SizeFlags.ExpandFill;
+            tab.SizeFlagsStretchRatio = 1f;
             _tabRow.AddChild(tab);
         }
         RefreshTabStyles();
         RefreshTriggerIcons();
-        RefitTabLayoutDeferred();
     }
 
     public void ClearPages() {
@@ -141,7 +133,6 @@ public partial class ModPanelPageTabChrome : Control {
         var changed = !string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase);
         _selectedPageId = pageId;
         RefreshTabStyles();
-        ScrollSelectedTabIntoViewDeferred();
         if (changed && fromUser)
             PageSelected?.Invoke(pageId);
     }
@@ -164,37 +155,6 @@ public partial class ModPanelPageTabChrome : Control {
         return 0;
     }
 
-    private Button? FindSelectedTabButton() {
-        foreach (var child in _tabRow.GetChildren()) {
-            if (child is Button b && b.HasMeta("pageId")
-                && string.Equals(b.GetMeta("pageId").AsString(), _selectedPageId, StringComparison.OrdinalIgnoreCase))
-                return b;
-        }
-        return null;
-    }
-
-    private void RefitTabLayoutDeferred() {
-        Callable.From(RefitTabLayout).CallDeferred();
-    }
-
-    private void RefitTabLayout() {
-        if (!GodotObject.IsInstanceValid(_tabScroll) || !GodotObject.IsInstanceValid(_tabRow))
-            return;
-        _tabRow.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
-        _tabRow.SizeFlagsVertical = SizeFlags.ShrinkBegin;
-        ScrollSelectedTabIntoView();
-    }
-
-    private void ScrollSelectedTabIntoViewDeferred() {
-        Callable.From(ScrollSelectedTabIntoView).CallDeferred();
-    }
-
-    private void ScrollSelectedTabIntoView() {
-        var tab = FindSelectedTabButton();
-        if (tab != null && GodotObject.IsInstanceValid(_tabScroll))
-            _tabScroll.EnsureControlVisible(tab);
-    }
-
     private void OnTriggerGuiInput(InputEvent ev, int delta) {
         if (ev is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
             return;
@@ -206,7 +166,7 @@ public partial class ModPanelPageTabChrome : Control {
         return new TextureRect {
             Name = name,
             Visible = false,
-            CustomMinimumSize = new Vector2(52f, 36f),
+            CustomMinimumSize = new Vector2(52f, 40f),
             MouseFilter = MouseFilterEnum.Stop,
             MouseDefaultCursorShape = CursorShape.PointingHand,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,

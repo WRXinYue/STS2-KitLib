@@ -207,7 +207,7 @@ public static partial class ModPanelUI {
             : KitLibTheme.ButtonBgHover;
         b.AddThemeStyleboxOverride("hover", hover);
         b.AddThemeStyleboxOverride("pressed", hover);
-        b.AddThemeFontSizeOverride("font_size", 13);
+        b.AddThemeFontSizeOverride("font_size", 14);
         b.AddThemeColorOverride("font_color", selected ? KitLibTheme.TextPrimary : KitLibTheme.TextSecondary);
     }
     internal static Button CreateDevModePageTab(string pageId, string label, bool selected, Action onSelect) {
@@ -216,8 +216,10 @@ public static partial class ModPanelUI {
             ToggleMode = false,
             FocusMode = Control.FocusModeEnum.All,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
-            CustomMinimumSize = new Vector2(0f, 36f),
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            CustomMinimumSize = new Vector2(0f, 40f),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
         };
         b.SetMeta("pageId", pageId);
         ApplyDevModeTabButtonStyle(b, selected);
