@@ -191,14 +191,14 @@ public static partial class ModPanelUI {
             BorderWidthRight = 1,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,
-            CornerRadiusTopLeft = 6,
-            CornerRadiusTopRight = 6,
-            CornerRadiusBottomLeft = 6,
-            CornerRadiusBottomRight = 6,
-            ContentMarginLeft = 10,
-            ContentMarginRight = 10,
-            ContentMarginTop = 5,
-            ContentMarginBottom = 5,
+            CornerRadiusTopLeft = 4,
+            CornerRadiusTopRight = 4,
+            CornerRadiusBottomLeft = 4,
+            CornerRadiusBottomRight = 4,
+            ContentMarginLeft = 8,
+            ContentMarginRight = 8,
+            ContentMarginTop = 2,
+            ContentMarginBottom = 2,
         };
         b.AddThemeStyleboxOverride("normal", flat);
         var hover = (StyleBoxFlat)flat.Duplicate();
@@ -207,7 +207,7 @@ public static partial class ModPanelUI {
             : KitLibTheme.ButtonBgHover;
         b.AddThemeStyleboxOverride("hover", hover);
         b.AddThemeStyleboxOverride("pressed", hover);
-        b.AddThemeFontSizeOverride("font_size", 14);
+        b.AddThemeFontSizeOverride("font_size", 13);
         b.AddThemeColorOverride("font_color", selected ? KitLibTheme.TextPrimary : KitLibTheme.TextSecondary);
     }
     internal static Button CreateDevModePageTab(string pageId, string label, bool selected, Action onSelect) {

@@ -6,13 +6,20 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;
 
-/// <summary>LB/RB flanking a full-width scrollable row of page tabs.</summary>
+/// <summary>
+/// Page tab strip: full-width scroll row with LB/RB icons overlaid on the sides
+/// (official settings uses a flat HBox; we add scroll for many Ritsu pages).
+/// </summary>
 public partial class ModPanelPageTabChrome : Control {
     public readonly record struct PageEntry(string Id, string Label);
 
     private const int FillWidthMaxTabs = 6;
-    private const float TabMinWidth = 88f;
-    private const float TabMinHeight = 40f;
+    private const float TabMinWidth = 96f;
+    private const float TabMinHeight = 28f;
+    private const float TriggerWidth = 40f;
+    private const float TriggerHeight = 28f;
+    private const float TriggerGutter = 46f;
+    private const float StripHeight = 34f;
 
     private static readonly StringName TabLeftHotkey = MegaInput.viewDeckAndTabLeft;
     private static readonly StringName TabRightHotkey = MegaInput.viewExhaustPileAndTabRight;
@@ -35,43 +42,36 @@ public partial class ModPanelPageTabChrome : Control {
         MouseFilter = MouseFilterEnum.Ignore;
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         SizeFlagsVertical = SizeFlags.ShrinkBegin;
-        CustomMinimumSize = new Vector2(0f, 52f);
-
-        var row = new HBoxContainer {
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            Alignment = BoxContainer.AlignmentMode.Center,
-            MouseFilter = MouseFilterEnum.Ignore,
-        };
-        row.AddThemeConstantOverride("separation", 10);
-        AddChild(row);
-
-        _leftTrigger = CreateTriggerIcon("LeftTriggerIcon");
-        _leftTrigger.GuiInput += ev => OnTriggerGuiInput(ev, -1);
-        row.AddChild(_leftTrigger);
+        CustomMinimumSize = new Vector2(0f, StripHeight);
+        ClipContents = false;
 
         _tabScroll = new ScrollContainer {
             Name = "ModPanelPageTabScroll",
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0f, TabMinHeight),
+            MouseFilter = MouseFilterEnum.Pass,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Auto,
             VerticalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            MouseFilter = MouseFilterEnum.Pass,
         };
+        _tabScroll.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _tabScroll.GrowHorizontal = GrowDirection.Both;
+        _tabScroll.GrowVertical = GrowDirection.Both;
+        AddChild(_tabScroll);
+
         _tabRow = new HBoxContainer {
             Name = "ModPanelPageTabRow",
             SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
             SizeFlagsVertical = SizeFlags.ShrinkBegin,
             MouseFilter = MouseFilterEnum.Ignore,
         };
-        _tabRow.AddThemeConstantOverride("separation", 8);
+        _tabRow.AddThemeConstantOverride("separation", 6);
         _tabScroll.AddChild(_tabRow);
-        row.AddChild(_tabScroll);
 
-        _rightTrigger = CreateTriggerIcon("RightTriggerIcon");
-        _rightTrigger.GuiInput += ev => OnTriggerGuiInput(ev, 1);
-        row.AddChild(_rightTrigger);
+        _leftTrigger = CreateTriggerIcon("LeftTriggerIcon", -1);
+        AddChild(_leftTrigger);
+
+        _rightTrigger = CreateTriggerIcon("RightTriggerIcon", 1);
+        AddChild(_rightTrigger);
+
+        Resized += OnChromeResized;
     }
 
     public void SetPages(IReadOnlyList<PageEntry> pages, string selectedPageId) {
@@ -85,6 +85,7 @@ public partial class ModPanelPageTabChrome : Control {
         }
         Visible = _pages.Count > 1;
         var fillWidth = _pages.Count <= FillWidthMaxTabs;
+        _tabRow.SizeFlagsHorizontal = fillWidth ? SizeFlags.ExpandFill : SizeFlags.ShrinkBegin;
         foreach (var entry in _pages) {
             var capturedId = entry.Id;
             var selected = string.Equals(capturedId, selectedPageId, StringComparison.OrdinalIgnoreCase);
@@ -95,14 +96,14 @@ public partial class ModPanelPageTabChrome : Control {
                 tab.SizeFlagsHorizontal = SizeFlags.ExpandFill;
                 tab.SizeFlagsStretchRatio = 1f;
             }
-            else {
-                tab.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
-            }
             _tabRow.AddChild(tab);
         }
         RefreshTabStyles();
         RefreshTriggerIcons();
-        ScrollSelectedTabIntoViewDeferred();
+        Callable.From(() => {
+            ApplyScrollGutters();
+            ScrollSelectedTabIntoView();
+        }).CallDeferred();
     }
 
     public void ClearPages() {
@@ -116,6 +117,7 @@ public partial class ModPanelPageTabChrome : Control {
         Visible = false;
         _leftTrigger.Visible = false;
         _rightTrigger.Visible = false;
+        ApplyScrollGutters();
     }
 
     public string? GetSelectedPageId() => string.IsNullOrEmpty(_selectedPageId) ? null : _selectedPageId;
@@ -136,17 +138,20 @@ public partial class ModPanelPageTabChrome : Control {
         if (!show) {
             _leftTrigger.Visible = false;
             _rightTrigger.Visible = false;
+            ApplyScrollGutters();
             return;
         }
         var usingController = NControllerManager.Instance?.IsUsingController == true;
         _leftTrigger.Visible = usingController;
         _rightTrigger.Visible = usingController;
-        if (!usingController)
-            return;
-        _leftTrigger.Texture = NInputManager.Instance.GetHotkeyIcon(TabLeftHotkey);
-        _rightTrigger.Texture = NInputManager.Instance.GetHotkeyIcon(TabRightHotkey);
-        _leftTrigger.Modulate = Colors.White;
-        _rightTrigger.Modulate = Colors.White;
+        if (usingController) {
+            _leftTrigger.Texture = NInputManager.Instance.GetHotkeyIcon(TabLeftHotkey);
+            _rightTrigger.Texture = NInputManager.Instance.GetHotkeyIcon(TabRightHotkey);
+            _leftTrigger.Modulate = Colors.White;
+            _rightTrigger.Modulate = Colors.White;
+        }
+        ApplyScrollGutters();
+        LayoutTriggerIcons();
     }
 
     private void SelectPage(string pageId, bool fromUser) {
@@ -197,22 +202,51 @@ public partial class ModPanelPageTabChrome : Control {
             _tabScroll.EnsureControlVisible(tab);
     }
 
-    private void OnTriggerGuiInput(InputEvent ev, int delta) {
-        if (ev is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
-            return;
-        TrySwitchPage(delta);
-        GetViewport()?.SetInputAsHandled();
+    private void OnChromeResized() {
+        ApplyScrollGutters();
+        LayoutTriggerIcons();
     }
 
-    private static TextureRect CreateTriggerIcon(string name) {
-        return new TextureRect {
+    private void ApplyScrollGutters() {
+        if (!GodotObject.IsInstanceValid(_tabScroll))
+            return;
+        var gutter = _leftTrigger.Visible ? TriggerGutter : 0f;
+        _tabScroll.OffsetLeft = gutter;
+        _tabScroll.OffsetRight = -gutter;
+        _tabScroll.OffsetTop = 0f;
+        _tabScroll.OffsetBottom = 0f;
+    }
+
+    private void LayoutTriggerIcons() {
+        if (!GodotObject.IsInstanceValid(_leftTrigger) || !GodotObject.IsInstanceValid(_rightTrigger))
+            return;
+        var h = Size.Y > 0f ? Size.Y : StripHeight;
+        var y = (h - TriggerHeight) * 0.5f;
+        _leftTrigger.Position = new Vector2(0f, y);
+        _leftTrigger.Size = new Vector2(TriggerWidth, TriggerHeight);
+        _rightTrigger.Position = new Vector2(Mathf.Max(0f, Size.X - TriggerWidth), y);
+        _rightTrigger.Size = new Vector2(TriggerWidth, TriggerHeight);
+        _leftTrigger.ZIndex = 2;
+        _rightTrigger.ZIndex = 2;
+    }
+
+    private TextureRect CreateTriggerIcon(string name, int delta) {
+        var icon = new TextureRect {
             Name = name,
             Visible = false,
-            CustomMinimumSize = new Vector2(52f, 40f),
             MouseFilter = MouseFilterEnum.Stop,
             MouseDefaultCursorShape = CursorShape.PointingHand,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
         };
+        icon.GuiInput += ev => OnTriggerGuiInput(ev, delta);
+        return icon;
+    }
+
+    private void OnTriggerGuiInput(InputEvent ev, int delta) {
+        if (ev is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+            return;
+        TrySwitchPage(delta);
+        GetViewport()?.SetInputAsHandled();
     }
 }
