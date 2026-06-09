@@ -1,5 +1,6 @@
 using KitLib.Logging;
 using MegaCrit.Sts2.Core.Logging;
+using AbstractionsKitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib;
 
@@ -8,7 +9,7 @@ namespace KitLib;
 /// Normal <see cref="KitLog"/> calls already reach LogCollector via the game logger callback.
 /// </summary>
 internal sealed class KitLogUserSink : IKitLibLogSink {
-    public void Write(KitLogLevel level, string source, string message) {
+    public void Write(AbstractionsKitLogLevel level, string source, string message) {
         if (!InstanceLogWriter.IsActive)
             return;
 
@@ -20,10 +21,10 @@ internal sealed class KitLogUserSink : IKitLibLogSink {
             LogCollector.Inject(text, ToLogLevel(level));
     }
 
-    static LogLevel ToLogLevel(KitLogLevel level) => level switch {
-        KitLogLevel.Error => LogLevel.Error,
-        KitLogLevel.Warn => LogLevel.Warn,
-        KitLogLevel.Debug => LogLevel.Debug,
+    static LogLevel ToLogLevel(AbstractionsKitLogLevel level) => level switch {
+        AbstractionsKitLogLevel.Error => LogLevel.Error,
+        AbstractionsKitLogLevel.Warn => LogLevel.Warn,
+        AbstractionsKitLogLevel.Debug => LogLevel.Debug,
         _ => LogLevel.Info,
     };
 }

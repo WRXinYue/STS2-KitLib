@@ -19,6 +19,7 @@ MODULES_SUBDIR = "modules"
 
 BUNDLE_DLLS = [
     "KitLib.User",
+    "KitLib.ModPanel",
     "KitLib.Panel",
     "KitLib.Cheat",
     "KitLib.Dev",
@@ -26,6 +27,33 @@ BUNDLE_DLLS = [
 ]
 
 OPTIONAL_MODULE_IDS = BUNDLE_DLLS
+
+CORE_DLL = "KitLib.dll"
+ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
+
+
+def _resolve_abstractions_dll() -> Path:
+    for candidate in (
+        _REPO / "build" / ABSTRACTIONS_DLL,
+        _REPO / "build" / BUNDLE_ID / ABSTRACTIONS_DLL,
+    ):
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(
+        f"Missing {ABSTRACTIONS_DLL} build output. Run dotnet build / make build-all first."
+    )
+
+
+def _assert_core_bundle(bundle_dir: Path) -> None:
+    missing = [
+        name
+        for name in (CORE_DLL, ABSTRACTIONS_DLL)
+        if not (bundle_dir / name).is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}."
+        )
 
 
 def _read_version() -> str:
@@ -84,11 +112,8 @@ def _stage_bundle(dist_root: Path) -> Path:
         shutil.copy2(core_dll, dst / "KitLib.dll")
         shutil.copy2(_REPO / "KitLib.json", dst / "mod_manifest.json")
 
-    abstractions = _REPO / "build" / "KitLib.Abstractions.dll"
-    if not abstractions.is_file():
-        abstractions = _REPO / "build" / BUNDLE_ID / "KitLib.Abstractions.dll"
-    if abstractions.is_file():
-        shutil.copy2(abstractions, dst / "KitLib.Abstractions.dll")
+    shutil.copy2(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL)
+    _assert_core_bundle(dst)
 
     for mod_id in BUNDLE_DLLS:
         dll = _resolve_dll(mod_id)
@@ -101,11 +126,13 @@ def _stage_bundle(dist_root: Path) -> Path:
         "=======================\n"
         "Extract this KitLib/ folder into your STS2 mods directory:\n"
         "  mods/KitLib/\n\n"
+        "Required next to KitLib.dll: KitLib.Abstractions.dll (do not delete).\n"
         "Satellite module DLLs live under mods/KitLib/modules/. Core hot-loads\n"
         "them at startup; a module is skipped when missing, conflicting, or\n"
         "failing to initialize.\n\n"
-        "Optional: delete individual DLLs under modules/ to disable features\n"
-        "(e.g. remove modules/KitLib.AI.dll to disable AI host).\n",
+        "Base modules: KitLib.User.dll and KitLib.ModPanel.dll (main-menu Mods settings).\n"
+        "Optional: delete other DLLs under modules/ to disable features\n"
+        "(e.g. remove modules/KitLib.Panel.dll for no DEVMODE rail; KitLib.AI.dll disables AI host).\n",
         encoding="utf-8",
     )
     return dst

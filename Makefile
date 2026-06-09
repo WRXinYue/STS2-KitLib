@@ -66,7 +66,8 @@ KITLOG_PUBLISH_BIN := $(KITLOG_PUBLISH_DIR)/kitlog
 KITLOG_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(KITLOG_PUBLISH_DIR)
 
 MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
-	src/KitLib.Modules.User/KitLib.User.csproj src/KitLib.Modules.Cheat/KitLib.Cheat.csproj \
+	src/KitLib.Modules.User/KitLib.User.csproj src/KitLib.Modules.ModPanel/KitLib.ModPanel.csproj \
+	src/KitLib.Modules.Cheat/KitLib.Cheat.csproj \
 	src/KitLib.Modules.Dev/KitLib.Dev.csproj src/KitLib.Modules.AI/KitLib.AI.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py

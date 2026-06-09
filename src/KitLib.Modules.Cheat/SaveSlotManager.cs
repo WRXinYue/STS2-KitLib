@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using HarmonyLib;
 using KitLib.Host;
+using KitLib.Abstractions.Modding;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
@@ -225,7 +226,7 @@ internal static class SaveSlotManager {
             }
 
             if (ModAssemblyLookup.TryGetByAssemblySimpleName(asmName, out var matched))
-                manifestModsOnStack.Add(matched);
+                manifestModsOnStack.Add(new KitLibModInfo(matched.Id, matched.DisplayName, matched.Version, matched.Dependencies));
 
             sb.AppendLine().Append("  ").Append(asmName).Append(" → ")
                 .Append(method.DeclaringType.FullName).Append('.').Append(method.Name);

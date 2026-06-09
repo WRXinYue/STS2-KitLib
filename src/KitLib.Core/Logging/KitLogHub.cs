@@ -1,13 +1,13 @@
-using KitLib.Logging;
+using KitLib.Host;
 
 namespace KitLib;
 
-/// <summary>Fan-out hub for optional <see cref="IKitLibLogSink"/> registrations.</summary>
+/// <summary>Fan-out hub for optional log sink registrations (implementations from KitLib.Abstractions).</summary>
 public static class KitLogHub {
-    private static readonly List<IKitLibLogSink> Sinks = [];
-    private static readonly object Lock = new();
+    static readonly List<object> Sinks = [];
+    static readonly object Lock = new();
 
-    public static void RegisterSink(IKitLibLogSink sink) {
+    public static void RegisterSink(object sink) {
         ArgumentNullException.ThrowIfNull(sink);
         lock (Lock) {
             if (!Sinks.Contains(sink))
@@ -15,20 +15,20 @@ public static class KitLogHub {
         }
     }
 
-    public static void UnregisterSink(IKitLibLogSink sink) {
+    public static void UnregisterSink(object sink) {
         ArgumentNullException.ThrowIfNull(sink);
         lock (Lock)
             Sinks.Remove(sink);
     }
 
     internal static void Publish(KitLogLevel level, string source, string message) {
-        IKitLibLogSink[] snapshot;
+        object[] snapshot;
         lock (Lock)
             snapshot = Sinks.ToArray();
 
         foreach (var sink in snapshot) {
             try {
-                sink.Write(level, source, message);
+                HostReflection.InvokeLogSinkWrite(sink, level, source, message);
             }
             catch (Exception ex) {
                 MainFile.Logger.Warn($"[KitLog] Sink failed ({sink.GetType().Name}): {ex.Message}");

@@ -27,13 +27,23 @@ mods/KitLib/
   KitLib.Abstractions.dll
   modules/
     KitLib.User.dll
+    KitLib.ModPanel.dll
     KitLib.Panel.dll
     KitLib.Cheat.dll
     KitLib.Dev.dll
     KitLib.AI.dll
 ```
 
-发布包 **KitLib** 或 **KitLib-Full** 解压到 `mods/` 即可。删除 `modules/` 下某个 DLL 可禁用对应功能（例如删掉 `KitLib.AI.dll` 关闭 AI）。
+| 模块 DLL | 作用 |
+|----------|------|
+| `KitLib.User` | 日志、进度保护、手册、崩溃恢复 |
+| `KitLib.ModPanel` | 主菜单 **Mods** 设置面板 + RitsuLib 桥接 |
+| `KitLib.Panel` | Dev 侧栏 + 标题画面 DEVMODE 入口 |
+| `KitLib.Cheat` | 作弊标签与运行时钩子 |
+| `KitLib.Dev` | 钩子、脚本、Harmony/MCP 工具 |
+| `KitLib.AI` | AI Host、自动游玩、同伴 |
+
+发布包 **KitLib** 或 **KitLib-Full** 解压到 `mods/` 即可。**基础模块**请保留 `KitLib.User.dll` 与 `KitLib.ModPanel.dll`。删除其他 `modules/` 下 DLL 可禁用对应功能（例如删掉 `KitLib.Panel.dll` 关闭 dev 侧栏；删掉 `KitLib.AI.dll` 关闭 AI）。
 
 ## 面板一览
 

@@ -11,7 +11,7 @@ public static class CardTagProviderHub {
         KitLib.Host.KitLibHost.RegisterCardTagProvider(provider);
 
     public static IReadOnlyList<AiTag> MergeTags(string? cardId, IReadOnlyList<AiTag> baseTags) =>
-        KitLib.Host.KitLibHost.MergeCardTags(cardId, baseTags);
+        KitLib.Host.KitLibHost.MergeCardTags(cardId, baseTags.Cast<object>().ToList()).Cast<AiTag>().ToList();
 }
 
 public sealed record CardCatalogEntry(

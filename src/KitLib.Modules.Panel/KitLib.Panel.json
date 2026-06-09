@@ -2,10 +2,10 @@
   "id": "KitLib.Panel",
   "name": "KitLib Panel",
   "author": "WRXinYue",
-  "description": "KitLib in-game rail UI and main-menu entry.",
+  "description": "KitLib dev rail UI and main-menu DEVMODE entry.",
   "version": "0.13.0",
   "has_pck": false,
   "has_dll": true,
-  "dependencies": ["KitLib"],
+  "dependencies": ["KitLib", "KitLib.ModPanel"],
   "affects_gameplay": false
 }

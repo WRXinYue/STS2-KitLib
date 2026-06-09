@@ -73,9 +73,6 @@
     </ItemGroup>
   </Target>
 
-  <ItemGroup>
-    <ProjectReference Include="..\KitLib.Abstractions\KitLib.Abstractions.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="sts2">
@@ -89,6 +86,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KitLib.ModPanel</_Parameter1>
+    </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>KitLib.User</_Parameter1>
     </AssemblyAttribute>
@@ -161,6 +161,7 @@
       Text="ModsDir must be mods/$(ModId), not the entire mods folder ($(ModsDir))." />
     <MakeDir Directories="$(ModsDir)\" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).dll')" />
+    <Copy SourceFiles="$(RepoBuildDir)\KitLib.Abstractions.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.Abstractions.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
   </Target>
 </Project>

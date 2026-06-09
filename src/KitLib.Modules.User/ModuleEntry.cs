@@ -8,6 +8,7 @@ namespace KitLib.User;
 public static class ModuleEntry {
     public static void Initialize() {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.User)) return;
+        KitLibHost.CatalogAccessor = () => Modding.ModCatalog.Default;
         KitLibHost.AnnounceModule(KitLibModuleIds.User);
         KitLibUserOps.CurrentSessionLogFileName = () => GameLogFileHydrator.CurrentSessionLogFileName;
         KitLibUserOps.CurrentSessionLogPath = () => GameLogFileHydrator.CurrentSessionLogPath;

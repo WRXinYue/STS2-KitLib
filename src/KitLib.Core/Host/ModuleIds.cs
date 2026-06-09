@@ -1,6 +1,7 @@
-namespace KitLib.Abstractions.Host;
+namespace KitLib.Host;
 
-public static class KitLibModuleIds {
+/// <summary>Module id strings mirrored from <c>KitLib.Abstractions.Host.KitLibModuleIds</c> (no compile-time Abstractions ref).</summary>
+public static class ModuleIds {
     public const string Core = "KitLib";
     public const string ModPanel = "KitLib.ModPanel";
     public const string Panel = "KitLib.Panel";

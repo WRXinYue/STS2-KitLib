@@ -52,7 +52,8 @@ internal static class DevPanelRegistry {
     /// <summary>Get all tabs for a given group, sorted by <see cref="IDevPanelTab.Order"/> (stable).</summary>
     internal static IReadOnlyList<IDevPanelTab> GetTabs(DevPanelTabGroup group) {
         var kitGroup = group == DevPanelTabGroup.Primary ? KitLibTabGroup.Primary : KitLibTabGroup.Utility;
-        var byId = KitLibHost.GetTabs(kitGroup)
+        var byId = KitLibHost.GetTabs((int)kitGroup)
+            .Cast<KitLibTabDescriptor>()
             .Select(Adapt)
             .ToDictionary(t => t.Id, StringComparer.Ordinal);
 
@@ -70,7 +71,7 @@ internal static class DevPanelRegistry {
     internal static IReadOnlyList<IDevPanelTab> GetAllTabs() {
         var byId = new Dictionary<string, IDevPanelTab>(StringComparer.Ordinal);
         foreach (var kitGroup in new[] { KitLibTabGroup.Primary, KitLibTabGroup.Utility }) {
-            foreach (var descriptor in KitLibHost.GetTabs(kitGroup))
+            foreach (var descriptor in KitLibHost.GetTabs((int)kitGroup).Cast<KitLibTabDescriptor>())
                 byId[descriptor.Id] = Adapt(descriptor);
         }
 

@@ -12,7 +12,6 @@ namespace KitLib.Patches;
 [HarmonyPatch(typeof(NMainMenu))]
 public static class MainMenuPatch {
     private static NMainMenuTextButton? _devModeButton;
-    private static NMainMenuTextButton? _modPanelButton;
     private static NMainMenu? _mainMenuRef;
 
     [HarmonyPrefix]
@@ -36,19 +35,11 @@ public static class MainMenuPatch {
             I18N.T("menu.developerMode", "DEVMODE"),
             OnDevModeButtonPressed);
 
-        _modPanelButton = MainMenuTextButtonFactory.CreateFrom(
-            settingsBtn,
-            container,
-            "ModPanelButton",
-            I18N.T("menu.modPanel", "Mods"),
-            OnModPanelButtonPressed);
-
         var quitBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/QuitButton");
         int insertAt = quitBtn != null ? quitBtn.GetIndex() : container.GetChildCount();
-        container.MoveChild(_modPanelButton, insertAt);
         container.MoveChild(_devModeButton, insertAt);
 
-        MainFile.Logger.Info("KitLib: Main menu Developer Mode and Mods buttons added.");
+        MainFile.Logger.Info("KitLib: Main menu Developer Mode button added.");
     }
 
     [HarmonyPostfix]
@@ -95,24 +86,11 @@ public static class MainMenuPatch {
         if (__instance != _mainMenuRef) return;
 
         var settingsBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/SettingsButton");
-        if (settingsBtn != null) {
-            bool visible = settingsBtn.Visible;
-            if (_devModeButton != null && GodotObject.IsInstanceValid(_devModeButton))
-                _devModeButton.Visible = visible;
-            if (_modPanelButton != null && GodotObject.IsInstanceValid(_modPanelButton))
-                _modPanelButton.Visible = visible;
-        }
+        if (settingsBtn != null && _devModeButton != null && GodotObject.IsInstanceValid(_devModeButton))
+            _devModeButton.Visible = settingsBtn.Visible;
 
         if (DevMainMenuUI.IsVisible)
             DevMainMenuUI.ReapplyHide();
-    }
-
-    private static void OnModPanelButtonPressed(NButton _) {
-        if (_mainMenuRef == null)
-            return;
-
-        MainFile.Logger.Info("KitLib: Opening mod panel…");
-        ModPanelUI.Show(_mainMenuRef);
     }
 
     private static void OnDevModeButtonPressed(NButton _) {

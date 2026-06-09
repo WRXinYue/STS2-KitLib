@@ -1,5 +1,3 @@
-using KitLib.Abstractions.Logging;
-
 namespace KitLib;
 
 /// <summary>Public session paths for KitLib log instances.</summary>
@@ -19,5 +17,5 @@ public static class KitLibSession {
 
     /// <summary>Absolute path to the shared in-game / kitlog filter profile for this process.</summary>
     public static string GetFilterProfilePath(int? pid = null)
-        => Path.Combine(InstancesRoot, (pid ?? ProcessId).ToString(), LogViewerFilterContract.FileName);
+        => Path.Combine(InstancesRoot, (pid ?? ProcessId).ToString(), "log-viewer-filter.json");
 }

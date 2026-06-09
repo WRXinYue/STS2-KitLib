@@ -1,7 +1,14 @@
-using KitLib.Logging;
 using MegaCrit.Sts2.Core.Logging;
 
 namespace KitLib;
+
+/// <summary>Log levels aligned with <c>KitLib.Abstractions.Logging.KitLogLevel</c> ordinals.</summary>
+public enum KitLogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
 
 /// <summary>Unified logging entry for KitLib modules and content mods.</summary>
 public static class KitLog {

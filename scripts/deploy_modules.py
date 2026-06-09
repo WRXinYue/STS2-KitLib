@@ -21,6 +21,7 @@ MODULES_SUBDIR = "modules"
 
 BUNDLE_DLLS = [
     "KitLib.User",
+    "KitLib.ModPanel",
     "KitLib.Panel",
     "KitLib.Cheat",
     "KitLib.Dev",
@@ -33,6 +34,33 @@ LEGACY_MOD_FOLDERS = [BUNDLE_ID, *BUNDLE_DLLS]
 _SKIP_DEPLOY_SUFFIXES = {".pdb"}
 _SKIP_DEPLOY_NAME_SUFFIXES = (".deps.json", ".runtimeconfig.json")
 _SKIP_DEPLOY_NAMES: set[str] = set()
+
+CORE_DLL = "KitLib.dll"
+ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
+
+
+def _resolve_abstractions_dll() -> Path:
+    for candidate in (
+        _REPO / "build" / ABSTRACTIONS_DLL,
+        _REPO / "build" / BUNDLE_ID / ABSTRACTIONS_DLL,
+    ):
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError(
+        f"Missing {ABSTRACTIONS_DLL} build output. Run dotnet build / make build-all first."
+    )
+
+
+def _assert_core_bundle(bundle_dir: Path) -> None:
+    missing = [
+        name
+        for name in (CORE_DLL, ABSTRACTIONS_DLL)
+        if not (bundle_dir / name).is_file()
+    ]
+    if missing:
+        raise FileNotFoundError(
+            f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}."
+        )
 
 
 def _mods_root(game_root: Path) -> Path:
@@ -116,11 +144,8 @@ def _deploy_bundle(mods_root: Path) -> None:
         if manifest.is_file():
             shutil.copy2(manifest, dst / "mod_manifest.json")
 
-    abstractions = _REPO / "build" / "KitLib.Abstractions.dll"
-    if not abstractions.is_file():
-        abstractions = _REPO / "build" / BUNDLE_ID / "KitLib.Abstractions.dll"
-    if abstractions.is_file():
-        shutil.copy2(abstractions, dst / "KitLib.Abstractions.dll")
+    shutil.copy2(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL)
+    _assert_core_bundle(dst)
 
     copied = 0
     for mod_id in BUNDLE_DLLS:

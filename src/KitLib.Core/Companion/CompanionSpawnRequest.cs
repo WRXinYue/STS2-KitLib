@@ -1,4 +1,3 @@
-using KitLib.AI.Core;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Unlocks;
 
@@ -8,7 +7,7 @@ public sealed record CompanionSpawnRequest(
     CharacterModel Character,
     ulong? PreferredNetId = null,
     UnlockState? UnlockState = null,
-    IDecisionMaker? Strategy = null,
+    object? Strategy = null,
     bool EnableAiTeammate = true,
     bool MirrorMapVotes = true,
     bool EnableNonCombatAi = false);

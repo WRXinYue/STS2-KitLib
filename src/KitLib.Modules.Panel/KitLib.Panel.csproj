@@ -17,6 +17,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\KitLib.Modules.ModPanel\KitLib.ModPanel.csproj" />
     <ProjectReference Include="..\KitLib.Modules.Cheat\KitLib.Cheat.csproj" />
     <ProjectReference Include="..\KitLib.Modules.AI\KitLib.AI.csproj" />
     <ProjectReference Include="..\KitLib.Modules.Dev\KitLib.Dev.csproj" />

@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Abstractions", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Core", "src\KitLib.Core\KitLib.Core.csproj", "{A0000000-0000-0000-0000-000000000001}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.ModPanel", "src\KitLib.Modules.ModPanel\KitLib.ModPanel.csproj", "{C0000000-0000-0000-0000-000000000016}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Panel", "src\KitLib.Modules.Panel\KitLib.Panel.csproj", "{C0000000-0000-0000-0000-000000000011}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.User", "src\KitLib.Modules.User\KitLib.User.csproj", "{C0000000-0000-0000-0000-000000000012}"
@@ -31,6 +33,8 @@ Global
 		{C0000000-0000-0000-0000-000000000010}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0000000-0000-0000-0000-000000000001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A0000000-0000-0000-0000-000000000001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0000000-0000-0000-0000-000000000016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0000000-0000-0000-0000-000000000016}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0000000-0000-0000-0000-000000000011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0000000-0000-0000-0000-000000000011}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0000000-0000-0000-0000-000000000012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

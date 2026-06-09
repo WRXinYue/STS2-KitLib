@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using KitLib.AI.Core;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
@@ -61,8 +62,8 @@ internal static class CompanionSpawnService {
             PseudoCoopActionQueue.EnsureQueueForPlayer(companion);
             PseudoCoopMultiplayerUiRefresh.TryRefreshAfterPlayerJoined(state);
 
-            if (request.Strategy != null)
-                CompanionRegistry.Register(netId, request.Strategy);
+            if (request.Strategy is IDecisionMaker strategy)
+                CompanionRegistry.Register(netId, strategy);
 
             if (request.EnableNonCombatAi)
                 CompanionNonCombatRegistry.Enable(netId);

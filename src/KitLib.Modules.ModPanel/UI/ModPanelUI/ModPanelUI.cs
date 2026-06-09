@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.addons.mega_text;
+using KitLib.Abstractions.Modding;
 using KitLib.Modding;
 using KitLib.Integration;
 namespace KitLib.UI;

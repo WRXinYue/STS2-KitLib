@@ -1,5 +1,5 @@
 using System;
-using KitLib.Icons;
+using KitLib.ModPanel.Icons;
 using KitLib.Settings;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;

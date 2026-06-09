@@ -14,6 +14,7 @@ src/
   KitLib.Abstractions/         # NuGet contracts
   KitLib.Core/                 # KitLib.dll — Host, Settings, Harmony entry
   KitLib.Modules.User/         # KitLib.User.dll
+  KitLib.Modules.ModPanel/     # KitLib.ModPanel.dll (main-menu mod settings)
   KitLib.Modules.AI/           # KitLib.AI.dll
   KitLib.Modules.Panel/        # KitLib.Panel.dll (+ Icons, Godot assets)
   KitLib.Modules.Cheat/        # KitLib.Cheat.dll
@@ -31,6 +32,7 @@ mods/KitLib/
   KitLib.Abstractions.dll
   modules/
     KitLib.User.dll
+    KitLib.ModPanel.dll
     KitLib.AI.dll
     KitLib.Panel.dll
     KitLib.Cheat.dll

@@ -1,6 +1,7 @@
 using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.AI.AutoPlay;
+using KitLib.AI.Core;
 using KitLib.AI.Planning;
 using KitLib.Companion;
 using KitLib.Host;
@@ -18,9 +19,11 @@ public static class ModuleEntry {
         KitLibHost.ListCompanionsHandler = CompanionSpawnService.ListForBridge;
         KitLibHost.IsHostMultiplayerRun = () =>
             MultiplayerRunProbe.InMultiplayerRun && MultiplayerRunProbe.IsHost;
-        KitLibHost.RegisterNetIdStrategyDelegate = CompanionRegistry.Register;
+        KitLibHost.RegisterNetIdStrategyDelegate = (netId, strategy) =>
+            CompanionRegistry.Register(netId, (IDecisionMaker)strategy);
         KitLibHost.UnregisterNetIdStrategyDelegate = CompanionRegistry.Unregister;
-        KitLibHost.RegisterDeckPlanContributorHandler = DeckPlanContributorHub.Register;
+        KitLibHost.RegisterDeckPlanContributorHandler = contributor =>
+            DeckPlanContributorHub.Register((IDeckPlanContributor)contributor);
         KitLibHost.StopAiPlayLoop = () => AiPlayModule.Instance.StopLoop();
         KitLibHost.OnCompanionRunEnded = CompanionRegistry.ClearOnRunEnd;
 

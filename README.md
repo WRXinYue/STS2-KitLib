@@ -27,6 +27,7 @@ mods/KitLib/
   KitLib.Abstractions.dll
   modules/
     KitLib.User.dll
+    KitLib.ModPanel.dll
     KitLib.Panel.dll
     KitLib.Cheat.dll
     KitLib.Dev.dll
@@ -36,7 +37,8 @@ mods/KitLib/
 | Module DLL | Role |
 |------------|------|
 | `KitLib.User` | Logs, progress guard, manual, crash recovery |
-| `KitLib.Panel` | Dev rail + title-screen entry |
+| `KitLib.ModPanel` | Main-menu **Mods** settings panel + RitsuLib bridge |
+| `KitLib.Panel` | Dev rail + title-screen DEVMODE entry |
 | `KitLib.Cheat` | Cheat tab registration + runtime hooks |
 | `KitLib.Dev` | Hooks, scripts, Harmony/MCP tools |
 | `KitLib.AI` | AI Host, autoplay, companions |
@@ -44,7 +46,8 @@ mods/KitLib/
 **Packages**
 
 - **KitLib** or **KitLib-Full** zip — extract the single `KitLib/` folder into `mods/`.
-- **Optional modules** — delete DLLs under `modules/` to disable features (e.g. remove `KitLib.AI.dll`).
+- **Base modules** — keep `KitLib.User.dll` and `KitLib.ModPanel.dll` for logs and mod settings.
+- **Optional modules** — delete other DLLs under `modules/` to disable features (e.g. remove `KitLib.Panel.dll` for no dev rail; `KitLib.AI.dll` disables AI host).
 - **Content-mod authors** — NuGet `STS2.KitLib.Abstractions`; runtime needs `KitLib.dll` + any satellite DLLs you depend on under `modules/`.
 
 Build and deploy: `make sync-full`. Package zips: `make zip-full`.

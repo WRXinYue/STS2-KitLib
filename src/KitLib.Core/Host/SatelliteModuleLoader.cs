@@ -1,5 +1,4 @@
 using System.Reflection;
-using KitLib.Abstractions.Host;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib.Host;
@@ -18,11 +17,12 @@ internal static class SatelliteModuleLoader {
         string[] Requires);
 
     static readonly ModuleSpec[] LoadOrder = [
-        new(KitLibModuleIds.User, "KitLib.User", "KitLib.User.ModuleEntry", []),
-        new(KitLibModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", []),
-        new(KitLibModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
-        new(KitLibModuleIds.Cheat, "KitLib.Cheat", "KitLib.Cheat.ModuleEntry", [KitLibModuleIds.Panel]),
-        new(KitLibModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [KitLibModuleIds.Panel]),
+        new(ModuleIds.User, "KitLib.User", "KitLib.User.ModuleEntry", []),
+        new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", []),
+        new(ModuleIds.ModPanel, "KitLib.ModPanel", "KitLib.ModPanelMod.ModuleEntry", []),
+        new(ModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
+        new(ModuleIds.Cheat, "KitLib.Cheat", "KitLib.Cheat.ModuleEntry", [ModuleIds.Panel]),
+        new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Panel]),
     ];
 
     internal static void LoadBundledModules() {
@@ -34,48 +34,54 @@ internal static class SatelliteModuleLoader {
 
         ModAssemblyLoader.EnsureResolveHook(modDir);
         MainFile.Logger.Info($"Satellite loader: modDir={modDir}");
+
+        var loaded = new List<string>();
         foreach (var spec in LoadOrder) {
             MainFile.Logger.Info($"Satellite loader: trying {spec.ModuleId} ({spec.AssemblyName}.dll).");
-            TryLoadModule(modDir, spec);
+            if (TryLoadModule(modDir, spec))
+                loaded.Add(spec.ModuleId);
         }
+
+        if (loaded.Count == 0)
+            MainFile.Logger.Info("Satellite loader done: no bundled modules loaded.");
+        else
+            MainFile.Logger.Info($"Satellite loader done: loaded {loaded.Count} — {string.Join(", ", loaded)}.");
     }
 
-    static void TryLoadModule(string modDir, ModuleSpec spec) {
+    static bool TryLoadModule(string modDir, ModuleSpec spec) {
         if (ModuleCatalog.IsLoaded(spec.ModuleId)) {
             MainFile.Logger.Info($"[KitLib] Module {spec.ModuleId} already active — skipping bundled load.");
-            return;
+            return true;
         }
 
         if (IsExternallyInstalled(spec.ModuleId)) {
             MainFile.Logger.Info($"[KitLib] Module {spec.ModuleId} installed as separate mod — skipping bundled load.");
-            return;
+            return ModuleCatalog.IsLoaded(spec.ModuleId);
         }
 
         foreach (var required in spec.Requires) {
             if (!ModuleCatalog.IsLoaded(required)) {
                 MainFile.Logger.Warn(
                     $"[KitLib] Module {spec.ModuleId} skipped — prerequisite {required} is not loaded.");
-                return;
+                return false;
             }
         }
 
         try {
-            var assembly = LoadAssembly(modDir, spec.AssemblyName);
-            if (assembly == null) {
-                MainFile.Logger.Info($"[KitLib] Module {spec.ModuleId} not present ({spec.AssemblyName}.dll).");
-                return;
-            }
+            var assembly = LoadAssembly(modDir, spec.AssemblyName, spec.ModuleId);
+            if (assembly == null)
+                return false;
 
             if (spec.EntryTypeName == null) {
                 ModuleCatalog.Announce(spec.ModuleId);
                 MainFile.Logger.Info($"[KitLib] Loaded passive module {spec.ModuleId}.");
-                return;
+                return true;
             }
 
             var entryType = assembly.GetType(spec.EntryTypeName, throwOnError: false);
             if (entryType == null) {
                 MainFile.Logger.Warn($"[KitLib] Module {spec.ModuleId} skipped — entry type {spec.EntryTypeName} not found.");
-                return;
+                return false;
             }
 
             var init = entryType.GetMethod(
@@ -86,29 +92,35 @@ internal static class SatelliteModuleLoader {
                 modifiers: null);
             if (init == null) {
                 MainFile.Logger.Warn($"[KitLib] Module {spec.ModuleId} skipped — Initialize() not found.");
-                return;
+                return false;
             }
 
             init.Invoke(null, null);
             if (!ModuleCatalog.IsLoaded(spec.ModuleId))
                 ModuleCatalog.Announce(spec.ModuleId);
+            return ModuleCatalog.IsLoaded(spec.ModuleId);
         }
         catch (TargetInvocationException ex) {
             MainFile.Logger.Warn(
                 $"[KitLib] Module {spec.ModuleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            return false;
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"[KitLib] Module {spec.ModuleId} load conflict — skipped ({ex.Message}).");
+            return false;
         }
     }
 
-    static Assembly? LoadAssembly(string modDir, string assemblyName) {
+    static Assembly? LoadAssembly(string modDir, string assemblyName, string moduleId) {
         var modulesDir = Path.Combine(modDir, ModulesSubdir);
         var path = Path.Combine(modulesDir, assemblyName + ".dll");
         if (!File.Exists(path)) {
             var legacyPath = Path.Combine(modDir, assemblyName + ".dll");
-            if (!File.Exists(legacyPath))
+            if (!File.Exists(legacyPath)) {
+                MainFile.Logger.Info($"[KitLib] Module {moduleId} not present ({assemblyName}.dll).");
                 return null;
+            }
+
             path = legacyPath;
             MainFile.Logger.Info(
                 $"[KitLib] Loading {assemblyName} from mod root (legacy layout). Run make sync-full to move it under {ModulesSubdir}/.");
@@ -119,12 +131,14 @@ internal static class SatelliteModuleLoader {
         }
         catch (ReflectionTypeLoadException ex) {
             var details = string.Join("; ", ex.LoaderExceptions?.Select(e => e?.Message) ?? []);
-            throw new InvalidOperationException($"Failed to load {assemblyName} from {path}: {details}", ex);
+            MainFile.Logger.Warn(
+                $"[KitLib] Module {moduleId} skipped — failed to load {assemblyName} ({details}).");
+            return null;
         }
     }
 
     static bool IsExternallyInstalled(string moduleId) {
-        if (string.Equals(moduleId, KitLibModuleIds.Core, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(moduleId, ModuleIds.Core, StringComparison.OrdinalIgnoreCase))
             return false;
 
         foreach (var mod in EnumerateLoadedMods()) {

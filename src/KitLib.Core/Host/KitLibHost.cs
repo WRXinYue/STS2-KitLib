@@ -1,11 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
-using KitLib.Abstractions.Host;
-using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
-using KitLib.AI.Knowledge;
-using KitLib.AI.Planning;
-using KitLib.Companion;
+using KitLib.Modding;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 
@@ -13,20 +10,22 @@ namespace KitLib.Host;
 
 /// <summary>Core registration platform for KitLib satellite mods and content-mod bridges.</summary>
 public static class KitLibHost {
-    static readonly List<KitLibTabDescriptor> Tabs = [];
-    static readonly List<IAiSnapshotContributor> SnapshotContributors = [];
-    static readonly List<IAiMoveModifier> MoveModifiers = [];
-    static readonly List<ICardTagProvider> CardTagProviders = [];
-    static readonly Dictionary<string, IDecisionMaker> CharacterStrategies = new(StringComparer.OrdinalIgnoreCase);
-    static readonly Dictionary<string, CharacterAiProfile> CharacterProfiles = new(StringComparer.OrdinalIgnoreCase);
-    static readonly Dictionary<ulong, IDecisionMaker> NetIdStrategies = [];
+    static readonly List<object> Tabs = [];
+    static readonly List<object> SnapshotContributors = [];
+    static readonly List<object> MoveModifiers = [];
+    static readonly List<object> CardTagProviders = [];
+    static readonly Dictionary<string, object> CharacterStrategies = new(StringComparer.OrdinalIgnoreCase);
+    static readonly Dictionary<string, object?> CharacterProfiles = new(StringComparer.OrdinalIgnoreCase);
+    static readonly Dictionary<ulong, object> NetIdStrategies = [];
     static bool _bootstrapped;
+
+    internal static Func<object>? CatalogAccessor;
 
     public static void Bootstrap() {
         if (_bootstrapped) return;
         _bootstrapped = true;
         MainFile.Logger.Info("KitLib host bootstrap starting.");
-        ModuleCatalog.Announce(KitLibModuleIds.Core);
+        ModuleCatalog.Announce(ModuleIds.Core);
         MainFile.Logger.Info("KitLib core module announced; loading bundled satellites.");
         SatelliteModuleLoader.LoadBundledModules();
         MainFile.Logger.Info("KitLib Core host ready.");
@@ -34,57 +33,73 @@ public static class KitLibHost {
 
     public static void AnnounceModule(string moduleId) => ModuleCatalog.Announce(moduleId);
 
-    public static void RegisterModule(IKitLibModule module) => ModuleCatalog.Register(module);
+    public static void RegisterModule(object module) => ModuleCatalog.Register(module);
 
     public static bool IsModuleLoaded(string moduleId) => ModuleCatalog.IsLoaded(moduleId);
 
-    public static void RegisterTab(KitLibTabDescriptor tab) {
+    /// <summary>Read-only loaded-mod catalog (cast to <c>KitLib.Abstractions.Modding.IModCatalog</c>).</summary>
+    public static object ModCatalog =>
+        CatalogAccessor?.Invoke() ?? throw new InvalidOperationException("KitLib.User is not loaded.");
+
+    /// <summary>Mod settings panel host; null when <c>KitLib.ModPanel</c> is not loaded.</summary>
+    public static object? ModSettings { get; private set; }
+
+    public static void RegisterModSettingsPanelHost(object host) {
+        ArgumentNullException.ThrowIfNull(host);
+        ModSettings = host;
+    }
+
+    public static void RegisterTab(object tab) {
         ArgumentNullException.ThrowIfNull(tab);
-        Tabs.RemoveAll(t => t.Id == tab.Id);
+        var id = HostReflection.GetStringProperty(tab, "Id");
+        if (!string.IsNullOrEmpty(id))
+            Tabs.RemoveAll(t => string.Equals(HostReflection.GetStringProperty(t, "Id"), id, StringComparison.Ordinal));
         Tabs.Add(tab);
     }
 
-    public static IReadOnlyList<KitLibTabDescriptor> GetTabs(KitLibTabGroup group) {
-        var list = new List<KitLibTabDescriptor>();
+    /// <param name="tabGroup"><c>KitLib.Abstractions.Host.KitLibTabGroup</c> ordinal.</param>
+    public static IReadOnlyList<object> GetTabs(int tabGroup) {
+        var list = new List<object>();
         foreach (var tab in Tabs) {
-            if (tab.Group == group)
+            if (HostReflection.GetIntProperty(tab, "Group") == tabGroup)
                 list.Add(tab);
         }
-        list.Sort((a, b) => a.Order.CompareTo(b.Order));
+        list.Sort((a, b) => HostReflection.GetIntProperty(a, "Order").CompareTo(HostReflection.GetIntProperty(b, "Order")));
         return list;
     }
 
-    public static IReadOnlyList<KitLibTabDescriptor> GetAllTabs() => Tabs.AsReadOnly();
+    public static IReadOnlyList<object> GetAllTabs() => Tabs.AsReadOnly();
 
-    public static void RegisterSnapshotContributor(IAiSnapshotContributor contributor) {
+    public static void RegisterSnapshotContributor(object contributor) {
         SnapshotContributors.Add(contributor);
-        MainFile.Logger.Info($"[KitLibHost] Snapshot contributor key={contributor.ExtensionKey}.");
+        var key = HostReflection.GetStringProperty(contributor, "ExtensionKey") ?? contributor.GetType().Name;
+        MainFile.Logger.Info($"[KitLibHost] Snapshot contributor key={key}.");
     }
 
-    public static void EnrichSnapshot(JsonObject snapshot, Player player, GamePhase phase) {
+    public static void EnrichSnapshot(JsonObject snapshot, Player player, object gamePhase) {
         if (SnapshotContributors.Count == 0) return;
         snapshot["extensions"] ??= new JsonObject();
         foreach (var contributor in SnapshotContributors) {
             try {
-                contributor.Enrich(snapshot, player, phase);
+                HostReflection.InvokeEnrich(contributor, snapshot, player, gamePhase);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLibHost] Snapshot {contributor.ExtensionKey} failed: {ex.Message}");
+                MainFile.Logger.Warn($"[KitLibHost] Snapshot contributor failed: {ex.Message}");
             }
         }
     }
 
-    public static void RegisterMoveModifier(IAiMoveModifier modifier) {
+    public static void RegisterMoveModifier(object modifier) {
         MoveModifiers.Add(modifier);
         MainFile.Logger.Info($"[KitLibHost] Move modifier registered type={modifier.GetType().Name}.");
     }
 
-    public static int ApplyMoveModifiers(JsonObject snapshot, GameAction move, int baseScore, string? characterId) {
+    public static int ApplyMoveModifiers(JsonObject snapshot, object move, int baseScore, string? characterId) {
         var score = baseScore;
         foreach (var modifier in MoveModifiers) {
-            if (!modifier.AppliesTo(characterId)) continue;
+            if (!HostReflection.InvokeAppliesTo(modifier, characterId)) continue;
             try {
-                score = modifier.ModifyScore(snapshot, move, score);
+                score = HostReflection.InvokeModifyScore(modifier, snapshot, move, score);
             }
             catch (Exception ex) {
                 MainFile.Logger.Warn($"[KitLibHost] Move modifier {modifier.GetType().Name} failed: {ex.Message}");
@@ -93,19 +108,19 @@ public static class KitLibHost {
         return score;
     }
 
-    public static void RegisterCardTagProvider(ICardTagProvider provider) {
+    public static void RegisterCardTagProvider(object provider) {
         CardTagProviders.Add(provider);
         MainFile.Logger.Info($"[KitLibHost] Card tag provider registered type={provider.GetType().Name}.");
     }
 
-    public static IReadOnlyList<AiTag> MergeCardTags(string? cardId, IReadOnlyList<AiTag> baseTags) {
+    public static IReadOnlyList<object> MergeCardTags(string? cardId, IReadOnlyList<object> baseTags) {
         if (string.IsNullOrWhiteSpace(cardId) || CardTagProviders.Count == 0)
             return baseTags;
-        var merged = new HashSet<AiTag>(baseTags);
+        var merged = new HashSet<object>(baseTags);
         foreach (var provider in CardTagProviders) {
-            if (!provider.AppliesTo(cardId)) continue;
+            if (!HostReflection.InvokeAppliesTo(provider, cardId)) continue;
             try {
-                foreach (var tag in provider.GetExtraTags(cardId))
+                foreach (var tag in HostReflection.InvokeGetExtraTags(provider, cardId))
                     merged.Add(tag);
             }
             catch (Exception ex) {
@@ -115,7 +130,7 @@ public static class KitLibHost {
         return merged.ToList();
     }
 
-    public static void RegisterCharacterStrategy(string characterId, IDecisionMaker strategy, CharacterAiProfile? profile = null) {
+    public static void RegisterCharacterStrategy(string characterId, object strategy, object? profile = null) {
         CharacterStrategies[characterId] = strategy;
         if (profile != null)
             CharacterProfiles[characterId] = profile;
@@ -127,17 +142,17 @@ public static class KitLibHost {
         CharacterProfiles.Remove(characterId);
     }
 
-    public static bool TryGetCharacterStrategy(string? characterId, out IDecisionMaker strategy) {
+    public static bool TryGetCharacterStrategy(string? characterId, out object strategy) {
         strategy = null!;
         return !string.IsNullOrEmpty(characterId) && CharacterStrategies.TryGetValue(characterId, out strategy!);
     }
 
-    public static bool TryGetCharacterProfile(string? characterId, out CharacterAiProfile? profile) {
+    public static bool TryGetCharacterProfile(string? characterId, out object? profile) {
         profile = default;
         return !string.IsNullOrEmpty(characterId) && CharacterProfiles.TryGetValue(characterId, out profile);
     }
 
-    public static void RegisterNetIdStrategy(ulong netId, IDecisionMaker strategy) {
+    public static void RegisterNetIdStrategy(ulong netId, object strategy) {
         if (netId == 0) return;
         NetIdStrategies[netId] = strategy;
     }
@@ -147,27 +162,27 @@ public static class KitLibHost {
         NetIdStrategies.Remove(netId);
     }
 
-    public static bool TryGetNetIdStrategy(ulong netId, out IDecisionMaker strategy) =>
+    public static bool TryGetNetIdStrategy(ulong netId, out object strategy) =>
         NetIdStrategies.TryGetValue(netId, out strategy!);
 
     public static void ClearRunState() {
         NetIdStrategies.Clear();
     }
 
-    public static Func<CompanionSpawnRequest, CompanionSpawnResult>? TrySummonCompanion { get; set; }
+    public static Func<Companion.CompanionSpawnRequest, Companion.CompanionSpawnResult>? TrySummonCompanion { get; set; }
     public static Func<ulong, bool>? TryDismissCompanion { get; set; }
-    public static Func<IReadOnlyList<CompanionInfo>>? ListCompanionsHandler { get; set; }
+    public static Func<IReadOnlyList<Companion.CompanionInfo>>? ListCompanionsHandler { get; set; }
     public static Func<bool>? TryEnsurePseudoCoopPresetHandler { get; set; }
     public static Func<bool>? IsHostMultiplayerRun { get; set; }
-    public static Action<ulong, IDecisionMaker>? RegisterNetIdStrategyDelegate { get; set; }
+    public static Action<ulong, object>? RegisterNetIdStrategyDelegate { get; set; }
     public static Action<ulong>? UnregisterNetIdStrategyDelegate { get; set; }
-    public static Action<IDeckPlanContributor>? RegisterDeckPlanContributorHandler { get; set; }
+    public static Action<object>? RegisterDeckPlanContributorHandler { get; set; }
     public static Action? StopAiPlayLoop { get; set; }
     public static Action? OnCompanionRunEnded { get; set; }
     public static Func<bool>? IsDualInstanceActive { get; set; }
     public static Action? SyncAiHudOverlay { get; set; }
     public static Func<Creature, IReadOnlyList<Creature>, object, JsonArray>? CaptureMonsterIntentSteps { get; set; }
 
-    public static void RegisterDeckPlanContributor(IDeckPlanContributor contributor) =>
+    public static void RegisterDeckPlanContributor(object contributor) =>
         RegisterDeckPlanContributorHandler?.Invoke(contributor);
 }

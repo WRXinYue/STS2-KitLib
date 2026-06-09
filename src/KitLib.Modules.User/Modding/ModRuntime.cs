@@ -1,25 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KitLib.Abstractions.Modding;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib.Modding;
-
-/// <summary>Stable snapshot of one loaded mod (manifest-backed).</summary>
-public readonly record struct KitLibModInfo(
-    string Id,
-    string DisplayName,
-    string Version,
-    IReadOnlyList<string> Dependencies);
-
-/// <summary>Read-only view of mods the game has already scanned and loaded.</summary>
-public interface IModCatalog {
-    /// <summary>Copies current loaded-mod entries that have a non-empty manifest <c>id</c>.</summary>
-    IReadOnlyList<KitLibModInfo> GetSnapshot();
-
-    /// <summary>Fast membership checks (e.g. log line attribution). Empty if no mods loaded.</summary>
-    HashSet<string> GetIdSet(StringComparer? comparer = null);
-}
 
 /// <summary>Default <see cref="IModCatalog"/> backed by the game's loaded mod enumeration.</summary>
 public sealed class ModCatalog : IModCatalog {
@@ -40,7 +25,7 @@ public sealed class ModCatalog : IModCatalog {
             if (string.IsNullOrEmpty(id)) continue;
             var name = string.IsNullOrEmpty(man.name) ? id : man.name;
             var ver = man.version ?? "";
-            list.Add(new KitLibModInfo(id, name, ver, ModRuntime.CopyDependencies(man)));
+            list.Add(new KitLibModInfo(id, name, ver, CopyDependencies(man)));
         }
 
         return list;
@@ -57,16 +42,11 @@ public sealed class ModCatalog : IModCatalog {
 
         return set;
     }
-}
 
-/// <summary>Game-backed mod catalog; safe to call from main thread after mod load.</summary>
-public static class ModRuntime {
-    public static IModCatalog Catalog => ModCatalog.Default;
-
-    internal static string[] CopyDependencies(ModManifest manifest) {
+    static string[] CopyDependencies(ModManifest manifest) {
         var deps = manifest.dependencies;
         if (deps == null || deps.Count == 0)
-            return Array.Empty<string>();
+            return [];
 
         var list = new List<string>(deps.Count);
 #if STS2_BETA
@@ -82,8 +62,13 @@ public static class ModRuntime {
         }
 #endif
 
-        return list.Count == 0 ? Array.Empty<string>() : list.ToArray();
+        return list.Count == 0 ? [] : list.ToArray();
     }
+}
+
+/// <summary>Game-backed mod catalog; safe to call from main thread after mod load.</summary>
+public static class ModRuntime {
+    public static IModCatalog Catalog => ModCatalog.Default;
 
     /// <summary>Loaded mods with manifest <c>id</c>, sorted by display name for settings UI lists.</summary>
     public static IReadOnlyList<KitLibModInfo> GetOrderedLoadedMods() {
@@ -107,7 +92,7 @@ public static class ModRuntime {
 /// <summary>Shared coordinator for post-mod-load work (KitLib UI and third-party callbacks).</summary>
 internal static class ModLoadCoordinator {
     private static readonly object Sync = new();
-    private static readonly List<Action> Queue = new();
+    private static readonly List<Action> Queue = [];
     private static bool _phaseDone;
 
     public static void Register(Action registration) {
@@ -135,7 +120,7 @@ internal static class ModLoadCoordinator {
         }
     }
 
-    private static void Run(Action registration) {
+    static void Run(Action registration) {
         try {
             registration();
         }

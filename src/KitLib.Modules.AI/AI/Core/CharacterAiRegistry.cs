@@ -7,11 +7,25 @@ public static class CharacterAiRegistry {
     public static void Unregister(string characterId) =>
         KitLib.Host.KitLibHost.UnregisterCharacterStrategy(characterId);
 
-    public static bool TryGet(string? characterId, out IDecisionMaker strategy) =>
-        KitLib.Host.KitLibHost.TryGetCharacterStrategy(characterId, out strategy!);
+    public static bool TryGet(string? characterId, out IDecisionMaker strategy) {
+        if (!KitLib.Host.KitLibHost.TryGetCharacterStrategy(characterId, out var raw) || raw is not IDecisionMaker maker) {
+            strategy = null!;
+            return false;
+        }
 
-    public static bool TryGetProfile(string? characterId, out CharacterAiProfile profile) =>
-        KitLib.Host.KitLibHost.TryGetCharacterProfile(characterId, out profile);
+        strategy = maker;
+        return true;
+    }
+
+    public static bool TryGetProfile(string? characterId, out CharacterAiProfile profile) {
+        if (!KitLib.Host.KitLibHost.TryGetCharacterProfile(characterId, out var raw) || raw is not CharacterAiProfile resolved) {
+            profile = default;
+            return false;
+        }
+
+        profile = resolved;
+        return true;
+    }
 
     public static bool SupportsNonCombat(string? characterId) =>
         TryGetProfile(characterId, out var profile) && profile.SupportsNonCombat;
