@@ -185,7 +185,7 @@ public static partial class ModPanelUI {
         var accent = ModPanelUiPalette.SidebarModActiveAccent;
         var selectedFill = new Color(accent.R, accent.G, accent.B, 0.20f);
         var flat = new StyleBoxFlat {
-            BgColor = selected ? selectedFill : KitLibTheme.ButtonBgNormal,
+            BgColor = selected ? selectedFill : new Color(1f, 1f, 1f, 0.10f),
             BorderColor = selected ? new Color(accent.R, accent.G, accent.B, 0.88f) : KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
@@ -207,7 +207,7 @@ public static partial class ModPanelUI {
             : KitLibTheme.ButtonBgHover;
         b.AddThemeStyleboxOverride("hover", hover);
         b.AddThemeStyleboxOverride("pressed", hover);
-        b.AddThemeFontSizeOverride("font_size", 11);
+        b.AddThemeFontSizeOverride("font_size", 13);
         b.AddThemeColorOverride("font_color", selected ? KitLibTheme.TextPrimary : KitLibTheme.TextSecondary);
     }
     internal static Button CreateDevModePageTab(string pageId, string label, bool selected, Action onSelect) {
@@ -216,6 +216,8 @@ public static partial class ModPanelUI {
             ToggleMode = false,
             FocusMode = Control.FocusModeEnum.All,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
+            CustomMinimumSize = new Vector2(0f, 36f),
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         };
         b.SetMeta("pageId", pageId);
         ApplyDevModeTabButtonStyle(b, selected);

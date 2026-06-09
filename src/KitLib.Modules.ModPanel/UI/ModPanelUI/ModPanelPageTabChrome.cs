@@ -31,11 +31,12 @@ public partial class ModPanelPageTabChrome : Control {
         MouseFilter = MouseFilterEnum.Ignore;
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         SizeFlagsVertical = SizeFlags.ShrinkBegin;
-        CustomMinimumSize = new Vector2(0f, 44f);
+        CustomMinimumSize = new Vector2(0f, 48f);
 
         var row = new HBoxContainer {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            Alignment = BoxContainer.AlignmentMode.Begin,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            Alignment = BoxContainer.AlignmentMode.Center,
             MouseFilter = MouseFilterEnum.Ignore,
         };
         row.AddThemeConstantOverride("separation", 10);
@@ -48,13 +49,15 @@ public partial class ModPanelPageTabChrome : Control {
         _tabScroll = new ScrollContainer {
             Name = "ModPanelPageTabScroll",
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = SizeFlags.ShrinkCenter,
+            CustomMinimumSize = new Vector2(80f, 40f),
             HorizontalScrollMode = ScrollContainer.ScrollMode.Auto,
             VerticalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            MouseFilter = MouseFilterEnum.Ignore,
+            MouseFilter = MouseFilterEnum.Pass,
         };
         _tabRow = new HBoxContainer {
             Name = "ModPanelPageTabRow",
+            SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
             SizeFlagsVertical = SizeFlags.ShrinkBegin,
             MouseFilter = MouseFilterEnum.Ignore,
         };
@@ -85,7 +88,7 @@ public partial class ModPanelPageTabChrome : Control {
         }
         RefreshTabStyles();
         RefreshTriggerIcons();
-        ScrollSelectedTabIntoViewDeferred();
+        RefitTabLayoutDeferred();
     }
 
     public void ClearPages() {
@@ -168,6 +171,18 @@ public partial class ModPanelPageTabChrome : Control {
                 return b;
         }
         return null;
+    }
+
+    private void RefitTabLayoutDeferred() {
+        Callable.From(RefitTabLayout).CallDeferred();
+    }
+
+    private void RefitTabLayout() {
+        if (!GodotObject.IsInstanceValid(_tabScroll) || !GodotObject.IsInstanceValid(_tabRow))
+            return;
+        _tabRow.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
+        _tabRow.SizeFlagsVertical = SizeFlags.ShrinkBegin;
+        ScrollSelectedTabIntoView();
     }
 
     private void ScrollSelectedTabIntoViewDeferred() {
