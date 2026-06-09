@@ -6,29 +6,41 @@ using Godot;
 namespace KitLib.UI;
 
 /// <summary>
-/// Simple pie chart for log source counts (drawn in <see cref="_Draw"/>).
+/// Log source pie chart rendered to a <see cref="TextureRect"/> (avoids missed <c>_Draw</c> during panel slide-in).
 /// </summary>
 internal sealed partial class LogSourcePieChart : Control {
+    private const int RasterSize = 140;
 
     private readonly List<(string Name, int Count, int PaletteIndex)> _slices = new();
+    private readonly TextureRect _texture;
     private int _total;
 
     public LogSourcePieChart() {
-        CustomMinimumSize = new Vector2(140, 140);
+        CustomMinimumSize = new Vector2(RasterSize, RasterSize);
         SizeFlagsHorizontal = SizeFlags.ShrinkCenter;
+        SizeFlagsVertical = SizeFlags.ShrinkCenter;
         MouseFilter = MouseFilterEnum.Stop;
+        ClipContents = false;
+
+        _texture = new TextureRect {
+            Name = "PieTexture",
+            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        _texture.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(_texture);
     }
 
     public override void _Ready() {
         ThemeManager.OnThemeChanged += OnThemeChanged;
         TreeExiting += OnTreeExiting;
+        RefreshTexture();
     }
 
-    private void OnTreeExiting() {
-        ThemeManager.OnThemeChanged -= OnThemeChanged;
-    }
+    private void OnTreeExiting() => ThemeManager.OnThemeChanged -= OnThemeChanged;
 
-    private void OnThemeChanged() => QueueRedraw();
+    private void OnThemeChanged() => RefreshTexture();
 
     /// <summary>Same ordering as the textual stats list (Game first, then by count desc).</summary>
     public void SetData(Dictionary<string, int>? modStats) {
@@ -37,7 +49,7 @@ internal sealed partial class LogSourcePieChart : Control {
         TooltipText = "";
 
         if (modStats == null || modStats.Count == 0) {
-            QueueRedraw();
+            RefreshTexture();
             return;
         }
 
@@ -45,7 +57,7 @@ internal sealed partial class LogSourcePieChart : Control {
             _total += kv.Value;
 
         if (_total <= 0) {
-            QueueRedraw();
+            RefreshTexture();
             return;
         }
 
@@ -66,19 +78,34 @@ internal sealed partial class LogSourcePieChart : Control {
         }
 
         TooltipText = tip.ToString().TrimEnd();
-        QueueRedraw();
+        RefreshTexture();
+        Callable.From(RefreshTexture).CallDeferred();
     }
 
-    public override void _Draw() {
-        var size = Size;
-        var center = size / 2f;
-        float radius = Mathf.Min(size.X, size.Y) * 0.42f;
-        if (radius < 4f) return;
+    internal void RefreshAfterOverlayOpen() {
+        Callable.From(RefreshTexture).CallDeferred();
+        var timer = GetTree()?.CreateTimer(0.9);
+        if (timer != null)
+            timer.Timeout += RefreshTexture;
+    }
+
+    private void RefreshTexture() {
+        _texture.Texture = RasterizePie();
+    }
+
+    private ImageTexture? RasterizePie() {
+        var image = Image.CreateEmpty(RasterSize, RasterSize, false, Image.Format.Rgba8);
+        if (image == null)
+            return null;
+
+        var center = new Vector2(RasterSize / 2f, RasterSize / 2f);
+        float radius = RasterSize * 0.42f;
+        float innerEmpty = radius * 0.38f;
 
         if (_slices.Count == 0 || _total <= 0) {
-            DrawCircle(center, radius * 0.38f, new Color(0.22f, 0.22f, 0.26f, 0.85f));
-            DrawArc(center, radius, 0f, Mathf.Tau, 48, KitLibTheme.Separator, 1f, true);
-            return;
+            FillDisk(image, center, innerEmpty, new Color(0.22f, 0.22f, 0.26f, 0.85f));
+            StrokeRing(image, center, radius, KitLibTheme.Separator);
+            return ImageTexture.CreateFromImage(image);
         }
 
         float start = -Mathf.Pi / 2f;
@@ -86,27 +113,85 @@ internal sealed partial class LogSourcePieChart : Control {
             Color col = SliceColor(name, pIdx);
             float sweep = count / (float)_total * Mathf.Tau;
             float end = start + sweep;
-            DrawWedge(center, radius, start, end, col);
+            FillWedge(image, center, radius, start, end, col);
             start = end;
         }
 
-        DrawArc(center, radius + 0.5f, 0f, Mathf.Tau, 64, KitLibTheme.PanelBorder, 1f, true);
+        StrokeRing(image, center, radius, KitLibTheme.PanelBorder);
+        return ImageTexture.CreateFromImage(image);
     }
 
     private static Color SliceColor(string name, int paletteIndex)
         => LogSourceColors.GetSliceColor(name, paletteIndex);
 
-    private void DrawWedge(Vector2 center, float radius, float fromRad, float toRad, Color color) {
-        const int Segments = 40;
-        var pts = new Vector2[Segments + 2];
-        pts[0] = center;
-        for (int i = 0; i <= Segments; i++) {
-            float t = i / (float)Segments;
-            float ang = Mathf.Lerp(fromRad, toRad, t);
-            pts[i + 1] = center + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * radius;
+    private static void FillDisk(Image image, Vector2 center, float radius, Color color) {
+        int r = Mathf.CeilToInt(radius);
+        int cx = Mathf.RoundToInt(center.X);
+        int cy = Mathf.RoundToInt(center.Y);
+        float r2 = radius * radius;
+        for (int y = cy - r; y <= cy + r; y++) {
+            if (y < 0 || y >= RasterSize) continue;
+            for (int x = cx - r; x <= cx + r; x++) {
+                if (x < 0 || x >= RasterSize) continue;
+                float dx = x - center.X;
+                float dy = y - center.Y;
+                if (dx * dx + dy * dy <= r2)
+                    image.SetPixel(x, y, color);
+            }
         }
+    }
 
-        DrawColoredPolygon(pts, color);
+    private static void FillWedge(Image image, Vector2 center, float radius, float fromRad, float toRad, Color color) {
+        int r = Mathf.CeilToInt(radius);
+        int cx = Mathf.RoundToInt(center.X);
+        int cy = Mathf.RoundToInt(center.Y);
+        float r2 = radius * radius;
+        for (int y = cy - r; y <= cy + r; y++) {
+            if (y < 0 || y >= RasterSize) continue;
+            for (int x = cx - r; x <= cx + r; x++) {
+                if (x < 0 || x >= RasterSize) continue;
+                float dx = x - center.X;
+                float dy = y - center.Y;
+                if (dx * dx + dy * dy > r2)
+                    continue;
+                if (AngleInSweep(Mathf.Atan2(dy, dx), fromRad, toRad))
+                    image.SetPixel(x, y, color);
+            }
+        }
+    }
+
+    private static bool AngleInSweep(float angle, float fromRad, float toRad) {
+        angle = NormalizeAngle(angle);
+        fromRad = NormalizeAngle(fromRad);
+        toRad = NormalizeAngle(toRad);
+        if (fromRad <= toRad)
+            return angle >= fromRad && angle <= toRad;
+        return angle >= fromRad || angle <= toRad;
+    }
+
+    private static float NormalizeAngle(float angle) {
+        while (angle < 0f) angle += Mathf.Tau;
+        while (angle >= Mathf.Tau) angle -= Mathf.Tau;
+        return angle;
+    }
+
+    private static void StrokeRing(Image image, Vector2 center, float radius, Color color) {
+        int cx = Mathf.RoundToInt(center.X);
+        int cy = Mathf.RoundToInt(center.Y);
+        int ri = Mathf.RoundToInt(radius);
+        float outer2 = (radius + 0.5f) * (radius + 0.5f);
+        float inner2 = (radius - 0.5f) * (radius - 0.5f);
+        for (int y = cy - ri - 1; y <= cy + ri + 1; y++) {
+            if (y < 0 || y >= RasterSize) continue;
+            for (int x = cx - ri - 1; x <= cx + ri + 1; x++) {
+                if (x < 0 || x >= RasterSize) continue;
+                float dx = x - center.X;
+                float dy = y - center.Y;
+                float d2 = dx * dx + dy * dy;
+                if (d2 <= outer2 && d2 >= inner2)
+                    image.SetPixel(x, y, color);
+            }
+        }
     }
 }
 
@@ -147,4 +232,3 @@ internal static class LogSourceColors {
     internal static string DimBbHex(string hex, float amount = 0.18f)
         => ColorToBbHex(new Color(hex).Darkened(amount));
 }
-

@@ -16,6 +16,7 @@ VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('KitLib.json',
 
 MOD_MAIN := src/KitLib.Core/KitLib.Core.csproj
 MCP_PROJECT := tools/DevMode.Mcp/KitLib.Mcp.csproj
+KITLOG_PROJECT := tools/KitLog.Cli/KitLog.Cli.csproj
 
 # Runtime identifier for self-contained tool publish (override: make build-tools TOOLS_RID=linux-x64)
 ifeq ($(OS),Windows_NT)
@@ -39,8 +40,10 @@ endif
 endif
 
 TOOLS_PUBLISH_DIR := build/tools/KitLib.Mcp/$(TOOLS_RID)/publish
+KITLOG_PUBLISH_DIR := build/tools/KitLog.Cli/$(TOOLS_RID)/publish
 TOOLS_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(TOOLS_PUBLISH_DIR)
-DEPLOY_TOOLS := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployToolsToMods -p:DeployToolsFromRepoBuild=true -p:ToolsPublishDir=$(TOOLS_PUBLISH_DIR) -p:ToolsRid=$(TOOLS_RID)
+DEPLOY_TOOLS := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID)
+DEPLOY_TOOLS_BUILD := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID) --build-if-missing
 
 # Use -p: (not /p:) so Git Bash on Windows does not treat /p:... as a MSYS path.
 DEPLOY_TO_GAME := -p:DeployToGame=true
@@ -54,8 +57,12 @@ BETA_STS2_VER_ARG := --sts2-beta-version $(STS2_GAME_BETA_VERSION)
 ZIP_BETA_TAG := -sts2beta-v$(STS2_GAME_BETA_VERSION)
 ZIP_NAME_BETA := build/KitLib-v$(VERSION)$(ZIP_BETA_TAG).zip
 ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
+ZIP_KITLOG_NAME := build/KitLog.Cli-v$(VERSION)-$(TOOLS_RID).zip
 MCP_PUBLISH_EXE := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp.exe
 MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
+KITLOG_PUBLISH_EXE := $(KITLOG_PUBLISH_DIR)/kitlog.exe
+KITLOG_PUBLISH_BIN := $(KITLOG_PUBLISH_DIR)/kitlog
+KITLOG_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(KITLOG_PUBLISH_DIR)
 
 MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.User/KitLib.User.csproj src/KitLib.Modules.Cheat/KitLib.Cheat.csproj \
@@ -65,7 +72,8 @@ PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 
 .PHONY: help init icons format deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean \
         build-beta deploy-beta sync-beta sync-beta-launch compile-beta pck-beta zip-beta nexus-beta nuget-beta publish-beta upload-all-beta \
-        launch launch-beta sync-launch sync-beta-run dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
+        launch launch-beta sync-launch sync-full-launch sync-beta-run dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
+        compile-kitlog build-kitlog zip-kitlog \
         upload-github upload-nexus upload-nuget
 
 help:
@@ -77,7 +85,8 @@ help:
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
 	@echo "  sync         build Core to build/KitLib/, then copy into game mods/KitLib/ only"
-	@echo "  sync-full    build-all + deploy mods/KitLib/ (satellite DLLs under modules/)"
+	@echo "  sync-full    build-all + deploy mods/KitLib/ + deploy tools/ (kitlog + MCP)"
+	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build-all    dotnet build solution (Core + satellites)"
 	@echo "  zip-full     build-all + package Core/Full/per-module zips under build/"
 	@echo "  sync-launch  sync + launch game"
@@ -91,9 +100,12 @@ help:
 	@echo ""
 	@echo "  compile-tools dotnet build KitLib.Mcp Release (local MCP / Cursor)"
 	@echo "  build-tools  publish KitLib.Mcp self-contained exe to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
-	@echo "  deploy-tools copy MCP exe into game mods/KitLib/tools/ (requires make init)"
-	@echo "  sync-tools   build-tools + deploy-tools"
+	@echo "  deploy-tools copy kitlog + MCP into mods/KitLib/tools/ (build-if-missing)"
+	@echo "  sync-tools   build-tools + build-kitlog + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
+	@echo "  compile-kitlog dotnet build KitLog.Cli Release"
+	@echo "  build-kitlog publish kitlog self-contained to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
+	@echo "  zip-kitlog   build-kitlog + package build/KitLog.Cli-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
 	@echo "  sync-beta         build-beta + deploy-beta (STS2 Steam beta; Sts2Dir = beta install)"
 	@echo "  sync-beta-launch  sync-beta + launch game (same as LAUNCH=1 make sync-beta)"
@@ -145,6 +157,9 @@ sync: build deploy
 
 sync-full: build-all
 	$(PYTHON) scripts/deploy_modules.py
+	$(DEPLOY_TOOLS_BUILD)
+
+sync-full-launch: sync-full launch
 
 sync-framework-mods:
 	$(DOTNET) msbuild $(MOD_MAIN) -t:SyncFrameworkModsToGame -p:DisableFrameworkModsAfterRestore=false
@@ -181,9 +196,16 @@ build-tools:
 	$(DOTNET) publish $(MCP_PROJECT) $(TOOLS_PUBLISH_FLAGS)
 
 deploy-tools:
+	$(DEPLOY_TOOLS_BUILD)
+
+sync-tools: build-tools build-kitlog
 	$(DEPLOY_TOOLS)
 
-sync-tools: build-tools deploy-tools
+compile-kitlog:
+	$(DOTNET) build $(KITLOG_PROJECT) -c Release
+
+build-kitlog:
+	$(DOTNET) publish $(KITLOG_PROJECT) $(KITLOG_PUBLISH_FLAGS)
 
 compile-beta: deps
 	$(DOTNET) build $(DEPLOY_TO_GAME) $(BETA_FLAG) $(MOD_MAIN)
@@ -238,6 +260,12 @@ zip-mcp: build-tools
 	@echo.
 	@echo Done: $(ZIP_MCP_NAME)
 
+zip-kitlog: build-kitlog
+	@if not exist $(KITLOG_PUBLISH_EXE) (echo ERROR: kitlog.exe not found. Run make build-kitlog first. & exit /b 1)
+	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_KITLOG_NAME)','w',zipfile.ZIP_DEFLATED);z.write(r'$(KITLOG_PUBLISH_EXE)','kitlog.exe');z.close()"
+	@echo.
+	@echo Done: $(ZIP_KITLOG_NAME)
+
 zip-beta: build-beta
 	@if not exist build\KitLib\KitLib.pck (echo ERROR: KitLib.pck not found. Set GodotPath in local.props ^(make init^) and rebuild. & exit /b 1)
 	@if exist build\dist rmdir /s /q build\dist
@@ -273,6 +301,12 @@ zip-mcp: build-tools
 	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_MCP_NAME)','w',zipfile.ZIP_DEFLATED);z.write('$(MCP_PUBLISH_BIN)','KitLib.Mcp');z.close()"
 	@echo ""
 	@echo "Done: $(ZIP_MCP_NAME)"
+
+zip-kitlog: build-kitlog
+	@test -f $(KITLOG_PUBLISH_BIN) || (echo "ERROR: kitlog not found. Run make build-kitlog first." >&2; exit 1)
+	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_KITLOG_NAME)','w',zipfile.ZIP_DEFLATED);z.write('$(KITLOG_PUBLISH_BIN)','kitlog');z.close()"
+	@echo ""
+	@echo "Done: $(ZIP_KITLOG_NAME)"
 
 zip-beta: build-beta
 	@test -f build/KitLib/KitLib.pck || (echo "ERROR: KitLib.pck not found. Set GodotPath in local.props (make init) and rebuild." >&2; exit 1)

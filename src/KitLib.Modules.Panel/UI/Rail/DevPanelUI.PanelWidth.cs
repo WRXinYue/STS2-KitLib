@@ -51,9 +51,8 @@ internal static partial class DevPanelUI {
         float maxWidth = GetMaxBrowserPanelWidth(viewportForClamp);
 
         // Try to load saved width first
-        if (TryGetSavedWidth(rootName, out int savedWidth)) {
+        if (TryGetSavedWidth(rootName, out int savedWidth))
             return Math.Clamp(savedWidth, BrowserPanelWidthMin, maxWidth);
-        }
 
         return codeDefault > 0f ? Math.Min(codeDefault, maxWidth) : codeDefault;
     }

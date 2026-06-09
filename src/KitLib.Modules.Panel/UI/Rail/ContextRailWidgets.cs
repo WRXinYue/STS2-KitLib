@@ -13,13 +13,18 @@ internal static class ContextRailWidgets {
         Action? onPressed = null,
         Color? tint = null,
         int iconSize = 18) {
+        var col = tint ?? ThemeManager.Current.IconNormal;
+        var tex = icon.Texture(iconSize, col);
+        if (tex == null && !icon.IsAvailable)
+            tex = MdiIcon.PuzzleOutline.Texture(iconSize, col);
+
         var btn = new Button {
             CustomMinimumSize = new Vector2(IconBtnSize, IconBtnSize),
             FocusMode = Control.FocusModeEnum.None,
             MouseFilter = Control.MouseFilterEnum.Stop,
             TooltipText = tooltip,
             IconAlignment = HorizontalAlignment.Center,
-            Icon = icon.Texture(iconSize, tint ?? ThemeManager.Current.IconNormal),
+            Icon = tex,
         };
 
         var flat = new StyleBoxFlat {

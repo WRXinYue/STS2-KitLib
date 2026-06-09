@@ -51,28 +51,63 @@ internal static class DevPanelRegistry {
 
     /// <summary>Get all tabs for a given group, sorted by <see cref="IDevPanelTab.Order"/> (stable).</summary>
     internal static IReadOnlyList<IDevPanelTab> GetTabs(DevPanelTabGroup group) {
+        var kitGroup = group == DevPanelTabGroup.Primary ? KitLibTabGroup.Primary : KitLibTabGroup.Utility;
+        var byId = KitLibHost.GetTabs(kitGroup)
+            .Select(Adapt)
+            .ToDictionary(t => t.Id, StringComparer.Ordinal);
+
         if (_dirty) {
             _tabs.Sort((a, b) => a.Order.CompareTo(b.Order));
             _dirty = false;
         }
-        return _tabs.Where(t => t.Group == group).ToList();
+        foreach (var tab in _tabs.Where(t => t.Group == group))
+            byId[tab.Id] = tab;
+
+        return byId.Values.OrderBy(t => t.Order).ToList();
     }
 
     /// <summary>Get all registered tabs across all groups, sorted by order.</summary>
     internal static IReadOnlyList<IDevPanelTab> GetAllTabs() {
+        var byId = new Dictionary<string, IDevPanelTab>(StringComparer.Ordinal);
+        foreach (var kitGroup in new[] { KitLibTabGroup.Primary, KitLibTabGroup.Utility }) {
+            foreach (var descriptor in KitLibHost.GetTabs(kitGroup))
+                byId[descriptor.Id] = Adapt(descriptor);
+        }
+
         if (_dirty) {
             _tabs.Sort((a, b) => a.Order.CompareTo(b.Order));
             _dirty = false;
         }
-        return _tabs.AsReadOnly();
+        foreach (var tab in _tabs)
+            byId[tab.Id] = tab;
+
+        return byId.Values.OrderBy(t => t.Order).ToList();
     }
 
     /// <summary>Deactivate all tabs and clear the registry.</summary>
     internal static void DeactivateAll(NGlobalUi globalUi) {
-        foreach (var tab in _tabs) {
+        foreach (var tab in GetAllTabs()) {
             try { tab.OnDeactivate(globalUi); }
             catch (Exception ex) { MainFile.Logger.Warn($"DevPanelRegistry: OnDeactivate({tab.Id}) failed: {ex.Message}"); }
         }
+    }
+
+    static IDevPanelTab Adapt(KitLibTabDescriptor descriptor) => new HostTabAdapter(descriptor);
+
+    // ── Private adapters ──
+
+    private sealed class HostTabAdapter(KitLibTabDescriptor descriptor) : IDevPanelTab {
+        public string Id => descriptor.Id;
+        public MdiIcon Icon => MdiIcon.From(descriptor.IconKey);
+        public string DisplayName => descriptor.DisplayName;
+        public int Order => descriptor.Order;
+        public DevPanelTabGroup Group =>
+            descriptor.Group == KitLibTabGroup.Primary ? DevPanelTabGroup.Primary : DevPanelTabGroup.Utility;
+        public DevPanelTabKind Kind =>
+            descriptor.Kind == KitLibTabKind.Developer ? DevPanelTabKind.Developer : DevPanelTabKind.Cheat;
+
+        public void OnActivate(NGlobalUi globalUi) => descriptor.OnActivate(globalUi);
+        public void OnDeactivate(NGlobalUi globalUi) => descriptor.OnDeactivate?.Invoke(globalUi);
     }
 
     // ── Private lambda wrapper ──

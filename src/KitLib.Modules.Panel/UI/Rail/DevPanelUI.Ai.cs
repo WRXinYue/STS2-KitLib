@@ -67,19 +67,19 @@ internal static partial class DevPanelUI {
             terminalHint.Text = string.IsNullOrEmpty(logName)
                 ? I18N.T(
                     "ai.terminal.externalHintNoFile",
-                    "AI decisions are written to the session log. Open a system terminal to tail them live.")
+                    "AI decisions are written to the session log. Open kitlog to tail them live.")
                 : I18N.T(
                     "ai.terminal.externalHint",
-                    "Tail AI decisions in your system terminal ({0}). Full log: DevMode → Logs.",
+                    "Tail AI decisions with kitlog ({0}). Full log: KitLib → Logs.",
                     logName);
         }
 
         var openTerminalBtn = CreatePlainButton(
-            I18N.T("ai.terminal.openExternal", "Open in System Terminal"),
+            I18N.T("ai.terminal.openExternal", "Open kitlog tail"),
             MdiIcon.Console);
         openTerminalBtn.Pressed += () => {
             terminalError.Visible = false;
-            if (!AiLogTerminalLauncher.TryOpen(out var error)) {
+            if (!KitLogTerminalLauncher.TryOpenAiTail(out var error)) {
                 terminalError.Text = error ?? I18N.T("ai.terminal.launchFailed", "Could not start a system terminal.");
                 terminalError.Visible = true;
             }

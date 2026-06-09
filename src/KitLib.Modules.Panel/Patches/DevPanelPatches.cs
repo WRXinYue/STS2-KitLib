@@ -25,7 +25,8 @@ public static class GlobalUiReadyPatch {
 
     public static void Postfix(NGlobalUi __instance) {
         if (!KitLibState.IsActive) return;
-        if (KitLibState.PseudoCoopLaunchPending) return;
+        if (KitLibState.PseudoCoopLaunchPending)
+            return;
         if (KitLibState.PseudoCoopDeferHeavyUi) {
             EnsureProcessNodeOnly(__instance);
             return;

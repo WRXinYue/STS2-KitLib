@@ -1,4 +1,5 @@
 using System;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.Panels;
@@ -52,7 +53,8 @@ internal sealed class DevPanelController {
     /// </summary>
     public void SwitchTo(string tabId, Action openPanel, Func<bool>? isPanelVisible = null) {
         if (_activeTabId == tabId) {
-            if (isPanelVisible?.Invoke() ?? true)
+            bool visible = isPanelVisible?.Invoke() ?? true;
+            if (visible)
                 return;
             Reset();
         }

@@ -34,6 +34,10 @@ DEF_RE = re.compile(
 )
 GET_RE = re.compile(r"MdiIcon\.Get\(\s*\"([^\"]+)\"")
 FROM_RE = re.compile(r"MdiIcon\.From\(\s*\"([^\"]+)\"\s*\)")
+ICON_KEY_RE = re.compile(r"IconKey\s*=\s*\"([^\"]+)\"")
+REGISTER_TAB_ICON_RE = re.compile(
+    r"Register(?:Action)?Tab\(\s*\"[^\"]+\"\s*,\s*\"([^\"]+)\""
+)
 
 
 def _is_generated_icon_cs(path: Path) -> bool:
@@ -47,6 +51,11 @@ def _comment_line(trimmed: str) -> bool:
         or trimmed.startswith("*")
         or trimmed.startswith("/*")
     )
+
+
+def kebab_to_pascal(kebab: str) -> str:
+    parts = kebab.split("-")
+    return "".join(p[:1].upper() + p[1:] if p else "" for p in parts)
 
 
 def pascal_to_kebab(pascal: str) -> str:
@@ -110,6 +119,24 @@ def scan_get_from(src_dir: Path) -> tuple[dict[str, str], dict[str, str]]:
     return get_map, from_map
 
 
+def scan_rail_tab_icon_keys(src_dir: Path) -> dict[str, str]:
+    """Collect kebab icon ids from satellite *TabRegistration.cs (KitLibHost.RegisterTab)."""
+    keys: dict[str, str] = {}
+
+    for cs in sorted(src_dir.rglob("*TabRegistration.cs")):
+        for line in cs.read_text(encoding="utf-8").splitlines():
+            trimmed = line.lstrip()
+            if _comment_line(trimmed):
+                continue
+            for m in ICON_KEY_RE.finditer(line):
+                k = m.group(1)
+                keys.setdefault(k, kebab_to_pascal(k))
+            for m in REGISTER_TAB_ICON_RE.finditer(line):
+                k = m.group(1)
+                keys.setdefault(k, kebab_to_pascal(k))
+    return keys
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Tree-shake MDI icons for DevMode.")
     ap.add_argument(
@@ -146,6 +173,10 @@ def main() -> int:
     for kebab, label in get_labels.items():
         kebab_map.setdefault(kebab, label)
     for kebab, label in from_labels.items():
+        kebab_map.setdefault(kebab, label)
+
+    tab_icon_labels = scan_rail_tab_icon_keys(src_dir)
+    for kebab, label in tab_icon_labels.items():
         kebab_map.setdefault(kebab, label)
 
     if not kebab_map and defined_icons:

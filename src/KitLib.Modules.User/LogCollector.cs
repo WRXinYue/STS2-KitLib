@@ -85,6 +85,19 @@ internal static class LogCollector {
         _dirty = true;
     }
 
+    internal static bool TryContainsLiveText(string text) {
+        lock (_lock) {
+            foreach (var entry in _liveEntries) {
+                if (string.Equals(entry.Text, text, StringComparison.Ordinal))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    internal static void Inject(string text, LogLevel level) => OnLogReceived(level, text, 0);
+
     /// <summary>Clears unseen Warn/Error alert state (e.g. when opening the log viewer).</summary>
     public static void AcknowledgeAlerts() {
         lock (_lock)

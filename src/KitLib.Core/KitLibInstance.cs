@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using KitLib.Host;
+using KitLib.Logging;
 
 namespace KitLib;
 
@@ -8,8 +9,8 @@ namespace KitLib;
 /// Identifies this game process for dual-instance (same machine) testing.
 /// </summary>
 public static class KitLibInstance {
-    public const string SessionBoundaryPrefix = "── KitLib log capture started ──";
-    private const string LegacySessionBoundaryPrefix = "── DevMode log capture started ──";
+    public const string SessionBoundaryPrefix = KitLogMarkers.SessionBoundaryPrefix;
+    private const string LegacySessionBoundaryPrefix = KitLogMarkers.LegacySessionBoundaryPrefix;
 
     public static int ProcessId { get; } = Environment.ProcessId;
 

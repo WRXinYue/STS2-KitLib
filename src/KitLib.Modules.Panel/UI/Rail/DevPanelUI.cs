@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using KitLib;
+using KitLib.Abstractions.Host;
+using KitLib.Host;
 using KitLib.Icons;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;

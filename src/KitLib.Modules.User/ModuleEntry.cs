@@ -10,8 +10,10 @@ public static class ModuleEntry {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.User)) return;
         KitLibHost.AnnounceModule(KitLibModuleIds.User);
         KitLibUserOps.CurrentSessionLogFileName = () => GameLogFileHydrator.CurrentSessionLogFileName;
+        KitLibUserOps.CurrentSessionLogPath = () => GameLogFileHydrator.CurrentSessionLogPath;
         SettingsStore.Load();
         LogCollector.Initialize();
+        KitLogHub.RegisterSink(new KitLogUserSink());
         UserTabRegistration.Register();
 
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.User);

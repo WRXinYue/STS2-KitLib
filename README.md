@@ -69,6 +69,7 @@ Build and deploy: `make sync-full`. Package zips: `make zip-full`.
 - **Scripts** — SpireScratch visual scripting (Blockly); live reload via WebSocket
 - **AI Host** — Rule-based bot for **solo** runs (map, combat, rewards). Default **StrongStrategy** (DeckPlan + combat search); set `AutoPlayStrategy: Simple` in settings for legacy heuristics. Disabled during multiplayer hand-play to avoid desync; use Pseudo Co-op / LAN presets instead (see below)
 - **MCP** — Expose game state and actions to MCP clients while the game is running — see **[MCP](#mcp)**
+- **KitLog CLI** — Optional cross-platform `kitlog` tail for session logs — see **[KitLog CLI](#kitlog-cli)**
 
 ### Developer & debug
 
@@ -108,6 +109,23 @@ Open from the in-run **Logs** rail tab or title screen **DEVMODE → Diagnostics
 - **Stats sidebar** — Entry counts by level and mod; **source pie chart**.
 - **Copy all** — Copy the currently filtered log text to the clipboard.
 - **Alerts** — The **Logs** rail icon blinks on unseen Warn/Error until you open the viewer. The peek tab blinks until your first rail hover (then stays dismissed).
+
+## KitLog CLI
+
+Optional standalone tool for tailing KitLib session logs outside the game (like `KitLib.Mcp`, not bundled in the main mod zip).
+
+```bash
+make build-kitlog    # build/tools/KitLog.Cli/<rid>/publish/kitlog
+make zip-kitlog      # build/KitLog.Cli-vX.X.X-<rid>.zip
+```
+
+```bash
+kitlog list
+kitlog path --pid <game-pid>
+kitlog tail -f --filter ai --pid <game-pid>
+```
+
+See **[tools/KitLog.Cli/README.md](tools/KitLog.Cli/README.md)** for install paths and filters. Content mods can log via `KitLog.Info("MyMod", "…")` on `KitLib.dll`.
 
 ## Mod feedback
 

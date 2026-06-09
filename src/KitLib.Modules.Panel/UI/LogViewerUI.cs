@@ -43,9 +43,11 @@ internal static class LogViewerUI {
         void Close() => DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(parent));
         var (root, _, vbox) = DevPanelUI.CreateBrowserOverlayShell(
             globalUi, RootName, PanelW, Close, contentSeparation: 8);
-        BuildPanel(vbox, root, Close);
+        LogSourcePieChart? pieChart = null;
+        BuildPanel(vbox, root, Close, chart => pieChart = chart);
         parent.AddChild(root);
         LogCollector.RefreshFileSnapshot();
+        pieChart?.RefreshAfterOverlayOpen();
     }
 
     public static void ShowOnMainMenu(NMainMenu mainMenu) {
@@ -58,7 +60,7 @@ internal static class LogViewerUI {
         LogCollector.RefreshFileSnapshot();
     }
 
-    private static void BuildPanel(VBoxContainer vbox, Control root, Action onClose) {
+    private static void BuildPanel(VBoxContainer vbox, Control root, Action onClose, Action<LogSourcePieChart>? capturePieChart = null) {
         // ── Header ──
         BuildHeader(vbox, onClose);
 
@@ -285,6 +287,7 @@ internal static class LogViewerUI {
             CustomMinimumSize = new Vector2(StatsSideMinW, 0),
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            ClipContents = false,
         };
         statsColumn.AddThemeConstantOverride("separation", 6);
 
@@ -293,8 +296,15 @@ internal static class LogViewerUI {
         statsTitle.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         statsColumn.AddChild(statsTitle);
 
+        var pieHost = new CenterContainer {
+            CustomMinimumSize = new Vector2(0, 148),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
         var pieChart = new LogSourcePieChart();
-        statsColumn.AddChild(pieChart);
+        pieHost.AddChild(pieChart);
+        statsColumn.AddChild(pieHost);
+        capturePieChart?.Invoke(pieChart);
 
         var statsScroll = new ScrollContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -331,7 +341,6 @@ internal static class LogViewerUI {
         string textFilter = "";
         var modVisible = new Dictionary<string, bool>(StringComparer.Ordinal);
         var modChips = new Dictionary<string, Button>(StringComparer.Ordinal);
-
         void SyncModFilterChips(HashSet<string> loadedModIds) {
             var discovered = new HashSet<string>(StringComparer.Ordinal) { "Game" };
             foreach (var id in loadedModIds)
@@ -811,8 +820,10 @@ internal static class LogViewerUI {
     // ── Header builder ────────────────────────────────────────────────────
 
     private static Button? _clearBtn;
+    private static Label? _kitlogErrorLabel;
 
     private static void BuildHeader(VBoxContainer vbox, Action onClose) {
+        _kitlogErrorLabel = null;
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
 
@@ -837,6 +848,29 @@ internal static class LogViewerUI {
         ApplySmallFlatButton(openFolderBtn);
         openFolderBtn.Pressed += OpenGameLogsFolder;
         row.AddChild(openFolderBtn);
+
+        var openKitlogBtn = new Button {
+            Text = I18N.T("log.openKitlog", "kitlog"),
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(64, 26),
+            Icon = MdiIcon.Console.Texture(14, KitLibTheme.Subtle),
+            TooltipText = I18N.T(
+                "log.openKitlogTip",
+                "Open kitlog in a system terminal to tail this session live"),
+        };
+        ApplySmallFlatButton(openKitlogBtn);
+        openKitlogBtn.Pressed += () => {
+            if (_kitlogErrorLabel != null)
+                _kitlogErrorLabel.Visible = false;
+            if (!KitLogTerminalLauncher.TryOpenSessionTail(out var error)) {
+                if (_kitlogErrorLabel != null) {
+                    _kitlogErrorLabel.Text = error
+                        ?? I18N.T("ai.terminal.launchFailed", "Could not start kitlog.");
+                    _kitlogErrorLabel.Visible = true;
+                }
+            }
+        };
+        row.AddChild(openKitlogBtn);
 
         _clearBtn = new Button {
             Text = I18N.T("log.clear", "Clear"),
@@ -876,6 +910,15 @@ internal static class LogViewerUI {
             dualHint.AddThemeConstantOverride("margin_left", 4);
             vbox.AddChild(dualHint);
         }
+
+        _kitlogErrorLabel = new Label {
+            Visible = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _kitlogErrorLabel.AddThemeFontSizeOverride("font_size", 10);
+        _kitlogErrorLabel.AddThemeColorOverride("font_color", KitLibTheme.RarityCurse);
+        _kitlogErrorLabel.AddThemeConstantOverride("margin_left", 4);
+        vbox.AddChild(_kitlogErrorLabel);
 
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
