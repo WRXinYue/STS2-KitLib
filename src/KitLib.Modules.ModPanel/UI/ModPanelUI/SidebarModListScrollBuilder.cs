@@ -1,66 +1,33 @@
 using Godot;
-using MegaCrit.Sts2.Core.Assets;
-using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace KitLib.UI;
 
-/// <summary>Builds a vanilla-style <see cref="NScrollableContainer" /> for the sidebar mod list.</summary>
+/// <summary>Sidebar mod list scroll host (vanilla <see cref="ScrollContainer" /> — same as GitHub main).</summary>
 internal static class SidebarModListScrollBuilder {
-    public static NScrollableContainer Create(out VBoxContainer contentHost) {
-        // Size flags only: FullRect anchors fight MarginContainer/VBox layout and collapse to 0 height.
-        var scroll = new NScrollableContainer {
+    public static ScrollContainer Create(out VBoxContainer contentHost) {
+        var scroll = new ScrollContainer {
             Name = "ModPanelSidebarModScroll",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+            FollowFocus = true,
+            FocusMode = Control.FocusModeEnum.None,
         };
-
-        var mask = new ColorRect {
-            Name = "Mask",
-            Color = Colors.Transparent,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            ClipChildren = CanvasItem.ClipChildrenMode.Only,
-        };
-        mask.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        mask.GrowHorizontal = Control.GrowDirection.Both;
-        mask.GrowVertical = Control.GrowDirection.Both;
-        scroll.AddChild(mask);
-
         contentHost = new VBoxContainer {
-            Name = "Content",
+            Name = "SidebarScrollInner",
             MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
-        contentHost.SetAnchorsPreset(Control.LayoutPreset.TopWide);
-        contentHost.GrowHorizontal = Control.GrowDirection.Both;
-        mask.AddChild(contentHost);
-
-        var scrollbar = PreloadManager.Cache.GetScene(SceneHelper.GetScenePath("ui/scrollbar"))
-            .Instantiate<NScrollbar>(PackedScene.GenEditState.Disabled);
-        scrollbar.Name = "Scrollbar";
-        scrollbar.AnchorLeft = 1f;
-        scrollbar.AnchorTop = 0f;
-        scrollbar.AnchorRight = 1f;
-        scrollbar.AnchorBottom = 1f;
-        scrollbar.OffsetLeft = 6f;
-        scrollbar.OffsetTop = -8f;
-        scrollbar.OffsetRight = 54f;
-        scrollbar.OffsetBottom = -8f;
-        scrollbar.GrowVertical = Control.GrowDirection.Both;
-        scroll.AddChild(scrollbar);
+        scroll.AddChild(contentHost);
         return scroll;
     }
 
-    public static void ResetScrollTopDeferred(NScrollableContainer scroll) {
+    public static void ResetScrollTopDeferred(ScrollContainer scroll) {
         Callable.From(() => {
             if (!GodotObject.IsInstanceValid(scroll))
                 return;
-            try {
-                scroll.InstantlyScrollToTop();
-            }
-            catch {
-                // Mask/content not ready yet; next ItemRectChanged will relayout.
-            }
+            scroll.ScrollVertical = 0;
         }).CallDeferred();
     }
 }

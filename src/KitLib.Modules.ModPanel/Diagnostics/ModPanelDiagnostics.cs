@@ -51,7 +51,8 @@ internal static class ModPanelDiagnostics {
             return new ModPanelLayoutSnapshot("", null, null, null, null, 0, ShellDisposed: true);
         var scroll = shellRoot.FindChild("ModPanelSidebarModScroll", true, false);
         var modList = shellRoot.FindChild("ModPanelSidebarModList", true, false);
-        var content = scroll?.FindChild("Content", true, false);
+        var content = scroll?.GetNodeOrNull<Control>("SidebarScrollInner")
+            ?? scroll?.FindChild("Content", true, false);
         var sections = CountDescendantsNamed(shellRoot, "SidebarModSection_");
         if (scroll is not Control scrollCtrl) {
             return new ModPanelLayoutSnapshot(
