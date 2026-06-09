@@ -10,7 +10,8 @@ public static partial class ModPanelUI {
         label.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         return label;
     }
-    private static void ApplySidebarModGroupInnerRowStyle(StyleBoxFlat box, bool selected, bool pressed) {
+    internal static void ApplySidebarModGroupInnerRowStyle(StyleBoxFlat box, bool selected, bool pressed,
+        bool focused = false) {
         var a = ModPanelUiMetrics.SidebarModListSubtleAlpha;
         var stripWhite = new Color(1f, 1f, 1f, a);
         if (pressed && selected)
@@ -21,6 +22,11 @@ public static partial class ModPanelUI {
         int bottomBorderW;
         if (selected) {
             modGroupBg = stripWhite;
+            bottomColor = Colors.Transparent;
+            bottomBorderW = 0;
+        }
+        else if (focused) {
+            modGroupBg = new Color(1f, 1f, 1f, a * 0.55f);
             bottomColor = Colors.Transparent;
             bottomBorderW = 0;
         }
@@ -208,7 +214,7 @@ public static partial class ModPanelUI {
         var b = new Button {
             Text = label,
             ToggleMode = false,
-            FocusMode = Control.FocusModeEnum.None,
+            FocusMode = Control.FocusModeEnum.All,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
         };
         b.SetMeta("pageId", pageId);
@@ -278,7 +284,8 @@ public static partial class ModPanelUI {
         title.AddThemeColorOverride("font_color", accent);
         headerRow.AddChild(title);
         var collapseBtn = new Button {
-            FocusMode = Control.FocusModeEnum.None,
+            Name = "ModPanelScopeCollapse",
+            FocusMode = Control.FocusModeEnum.All,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
             CustomMinimumSize = new Vector2(26, 26),
             Icon = MdiIcon.Minus.Texture(14, ModPanelUiPalette.RichTextMuted),
@@ -297,7 +304,7 @@ public static partial class ModPanelUI {
         expandedStack.AddChild(body);
         var collapsedBtn = new Button {
             Name = "ModPanelScopeCollapsed",
-            FocusMode = Control.FocusModeEnum.None,
+            FocusMode = Control.FocusModeEnum.All,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
             Flat = true,
             Text = I18N.T(collapsedSummaryKey, collapsedSummaryFallback),
@@ -465,4 +472,4 @@ public static partial class ModPanelUI {
         btn.AddThemeStyleboxOverride("pressed", hover);
         btn.AddThemeStyleboxOverride("focus", normal);
     }
-}
+}

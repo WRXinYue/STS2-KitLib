@@ -7,6 +7,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 using MegaCrit.Sts2.addons.mega_text;
 using KitLib.Abstractions.Modding;
 using KitLib.Modding;
@@ -19,8 +20,17 @@ namespace KitLib.UI;
 public static partial class ModPanelUI {
     private const string RootName = "KitLibModPanelShell";
     private const int ZOrder = 2000;
-    private static Control? _root;
+    private static ModPanelShellRoot? _root;
     private static NMainMenu? _hostMainMenu;
+
+    public static bool TryGetScreenContext(out IScreenContext? context) {
+        if (_root != null && GodotObject.IsInstanceValid(_root)) {
+            context = _root;
+            return true;
+        }
+        context = null;
+        return false;
+    }
     public static void Show(NMainMenu mainMenu) {
         MainFile.Logger.Info("KitLib: Opening mod panel…");
         TeardownShell();
@@ -72,8 +82,8 @@ public static partial class ModPanelUI {
         }
         return string.IsNullOrWhiteSpace(asmId) ? "KitLib" : asmId;
     }
-    private static Control BuildRoot() {
-        var root = new Control {
+    private static ModPanelShellRoot BuildRoot() {
+        var root = new ModPanelShellRoot {
             Name = RootName,
             ZIndex = ZOrder,
         };
@@ -103,7 +113,8 @@ public static partial class ModPanelUI {
         };
         outer.AddThemeConstantOverride("separation", 18);
         frame.AddChild(outer);
-        outer.AddChild(CreatePaneHotkeyHintsRow());
+        var hintsRow = CreatePaneHotkeyHintsRow();
+        outer.AddChild(hintsRow);
         var body = new HBoxContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
@@ -112,7 +123,7 @@ public static partial class ModPanelUI {
         body.AddThemeConstantOverride("separation", 20);
         outer.AddChild(body);
         var (contentPanel, ritsuContentList, pageTabRow) = BuildContentPanel();
-        body.AddChild(BuildSidebarPanel(ritsuContentList, pageTabRow));
+        body.AddChild(BuildSidebarPanel(root, hintsRow, ritsuContentList, pageTabRow));
         body.AddChild(contentPanel);
         RitsuModSettingsEmbedHost.EnsureAttached(root);
         // Same control as NSubmenu: NBackButton starts off-screen until Enable() (see NSubmenu.OnScreenVisibilityChange).
@@ -126,33 +137,37 @@ public static partial class ModPanelUI {
         Callable.From(backButton.Enable).CallDeferred();
         return root;
     }
-    /// <summary>Controller pane hotkeys row (RitsuLib); hidden for mouse/keyboard until wired to input manager.</summary>
-    private static Control CreatePaneHotkeyHintsRow() {
+    /// <summary>Controller pane hotkeys row; icons filled by <see cref="ModPanelControllerSupport" />.</summary>
+    private static HBoxContainer CreatePaneHotkeyHintsRow() {
         var row = new HBoxContainer {
             Name = "PaneHotkeyHints",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Visible = false,
         };
-        row.AddChild(new TextureRect {
-            CustomMinimumSize = new Vector2(44f, 32f),
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-        });
+        row.AddThemeConstantOverride("separation", 12);
+        row.AddChild(CreatePaneHotkeyIcon("BackHotkeyIcon", true));
         row.AddChild(new Control {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         });
-        row.AddChild(new TextureRect {
+        row.AddChild(CreatePaneHotkeyIcon("TabLeftHotkeyIcon"));
+        row.AddChild(CreatePaneHotkeyIcon("TabRightHotkeyIcon"));
+        row.AddChild(CreatePaneHotkeyIcon("SelectHotkeyIcon", true));
+        return row;
+    }
+    private static TextureRect CreatePaneHotkeyIcon(string name, bool visible = false) {
+        return new TextureRect {
+            Name = name,
+            Visible = visible,
             CustomMinimumSize = new Vector2(44f, 32f),
             MouseFilter = Control.MouseFilterEnum.Ignore,
             ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
             StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-        });
-        return row;
+        };
     }
-    private static Control BuildSidebarPanel(VBoxContainer ritsuContentList, HBoxContainer pageTabRow) {
+    private static Control BuildSidebarPanel(ModPanelShellRoot shell, HBoxContainer hintsRow,
+        VBoxContainer ritsuContentList, HBoxContainer pageTabRow) {
         var showcaseModId = ResolveShowcaseModId();
         var panel = new Panel {
             Name = "ModPanelSidebarPanel",
@@ -269,18 +284,7 @@ public static partial class ModPanelUI {
         listFrame.AddThemeConstantOverride("margin_top", 0);
         listFrame.AddThemeConstantOverride("margin_right", ModPanelUiMetrics.SidebarContentMarginH);
         listFrame.AddThemeConstantOverride("margin_bottom", 0);
-        var scroll = new ScrollContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            FollowFocus = false,
-            FocusMode = Control.FocusModeEnum.None,
-        };
-        var scrollInner = new VBoxContainer {
-            Name = "SidebarScrollInner",
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
+        var scroll = SidebarModListScrollBuilder.Create(out var scrollInner);
         scrollInner.AddThemeConstantOverride("separation", 10);
         var modButtonList = new VBoxContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -304,14 +308,25 @@ public static partial class ModPanelUI {
         }
         var selectedModId = initialSelectedId;
         var contentState = new ModPanelContentState();
+        Control? scopeFocusTarget = null;
+        ModPanelControllerSupport controllerSupport = new();
         void RebuildRitsuRightPane() {
             RefreshRitsuSettingsContent(ritsuContentList, pageTabRow, selectedModId, contentState, RebuildRitsuRightPane);
+            Callable.From(() => {
+                ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabRow, ritsuContentList,
+                    scopeFocusTarget);
+                if (GodotObject.IsInstanceValid(controllerSupport))
+                    controllerSupport.RefreshHints();
+            }).CallDeferred();
         }
+        controllerSupport.Configure(pageTabRow, () => contentState.PageId, id => {
+            contentState.PageId = id;
+            RebuildRitsuRightPane();
+        }, hintsRow);
+        SidebarModRowControl? defaultFocusRow = null;
         void RefreshModRowChrome() {
-            foreach (var row in modRows) {
-                var sel = string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase);
-                ApplySidebarModGroupInnerRowStyle(row.InnerStyle, sel, row.Pressing);
-            }
+            foreach (var row in modRows)
+                row.Control.SetSelected(string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase));
         }
         void SelectMod(string id) {
             selectedModId = id;
@@ -323,6 +338,13 @@ public static partial class ModPanelUI {
             var tex = ModPanelModBanner.TryLoadModIcon(m, id);
             ApplyPreviewState(tex, m == null, modIcon, previewPlaceholder, previewCaption);
             RebuildRitsuRightPane();
+            foreach (var row in modRows) {
+                if (!string.Equals(row.Id, id, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                defaultFocusRow = row.Control;
+                shell.SetDefaultFocusedControl(row.Control);
+                break;
+            }
         }
         if (ordered.Count == 0) {
             var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
@@ -362,62 +384,28 @@ public static partial class ModPanelUI {
                 card.AddChild(cardContent);
                 var innerStyle = new StyleBoxFlat();
                 ApplySidebarModGroupInnerRowStyle(innerStyle, isSel, false);
-                var rowHost = new Control {
-                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-                    MouseFilter = Control.MouseFilterEnum.Stop,
-                    MouseDefaultCursorShape = Control.CursorShape.PointingHand,
-                    CustomMinimumSize = new Vector2(0f, 62f),
-                    FocusMode = Control.FocusModeEnum.None,
-                };
-                rowHost.TooltipText = tip;
-                var bgPanel = new Panel {
-                    MouseFilter = Control.MouseFilterEnum.Ignore,
-                    ClipContents = true,
-                };
-                bgPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-                bgPanel.AddThemeStyleboxOverride("panel", innerStyle);
-                rowHost.AddChild(bgPanel);
-                var titleLbl = new Label {
-                    MouseFilter = Control.MouseFilterEnum.Ignore,
-                    Text = info.DisplayName,
-                    TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    LabelSettings = new LabelSettings {
-                        FontSize = 22,
-                        FontColor = ModPanelUiPalette.LabelPrimary,
-                    },
-                };
-                titleLbl.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-                var labelLeft = 18 + (int)ModPanelUiMetrics.SidebarModAccentBarWidth +
-                    ModPanelUiMetrics.SidebarModAccentTextGutter;
-                titleLbl.OffsetLeft = labelLeft;
-                titleLbl.OffsetRight = -18;
-                titleLbl.OffsetTop = 10;
-                titleLbl.OffsetBottom = -10;
-                rowHost.AddChild(titleLbl);
-                var vm = new SidebarModRowVm {
+                var capturedId = info.Id;
+                var rowHost = new SidebarModRowControl();
+                rowHost.Configure(info.Id, info.DisplayName, tip, innerStyle, () => SelectMod(capturedId));
+                modRows.Add(new SidebarModRowVm {
                     Id = info.Id,
-                    InnerStyle = innerStyle,
-                };
-                modRows.Add(vm);
-                rowHost.GuiInput += ev => {
-                    if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left) {
-                        if (mb.Pressed) {
-                            vm.Pressing = true;
-                            RefreshModRowChrome();
-                        }
-                        else {
-                            vm.Pressing = false;
-                            SelectMod(vm.Id);
-                        }
-                    }
-                };
+                    Control = rowHost,
+                });
                 cardContent.AddChild(rowHost);
             }
             SelectMod(initialSelectedId);
+            if (defaultFocusRow != null) {
+                shell.SetDefaultFocusedControl(defaultFocusRow);
+                var focusRow = defaultFocusRow;
+                Callable.From(() => {
+                    if (!GodotObject.IsInstanceValid(focusRow))
+                        return;
+                    if (NControllerManager.Instance?.IsUsingController == true)
+                        focusRow.TryGrabFocus();
+                    ActiveScreenContext.Instance.Update();
+                }).CallDeferred();
+            }
         }
-        scroll.AddChild(scrollInner);
         listFrame.AddChild(scroll);
         var sidebarLower = new VBoxContainer {
             Name = "ModPanelSidebarLower",
@@ -427,8 +415,19 @@ public static partial class ModPanelUI {
         };
         sidebarLower.AddThemeConstantOverride("separation", 8);
         sidebarLower.AddChild(listFrame);
-        sidebarLower.AddChild(CreateModPanelScopeInfoStrip());
+        var scopeStrip = CreateModPanelScopeInfoStrip();
+        scopeFocusTarget = scopeStrip.GetNodeOrNull<Button>("ModPanelScopeCollapsed")
+            ?? scopeStrip.GetNodeOrNull<Button>("ModPanelScopeCollapse");
+        sidebarLower.AddChild(scopeStrip);
         mainVBox.AddChild(sidebarLower);
+        shell.AddChild(controllerSupport);
+        if (modRows.Count > 0) {
+            Callable.From(() => {
+                ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabRow, ritsuContentList,
+                    scopeFocusTarget);
+                controllerSupport.RefreshHints();
+            }).CallDeferred();
+        }
         return panel;
     }
     private static (Panel Frame, TextureRect Icon, Control Placeholder, MegaRichTextLabel Caption)
@@ -705,11 +704,6 @@ public static partial class ModPanelUI {
                 return;
             ModSettingsRitsuFormDevTheme.ApplyToSubtree(bodyRef);
         }).CallDeferred();
-    }
-    private sealed class SidebarModRowVm {
-        public required string Id { get; init; }
-        public required StyleBoxFlat InnerStyle { get; init; }
-        public bool Pressing;
     }
     private sealed class ModPanelContentState {
         public string PageId = "";
