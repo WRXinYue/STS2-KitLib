@@ -458,15 +458,15 @@ public static partial class ModPanelUI {
         sidebarLower.AddChild(scopeStrip);
         mainVBox.AddChild(sidebarLower);
         shell.AddChild(controllerSupport);
+        controllerSupport.BindShell(shell);
         controllerSupport.ConfigureSidebar(modRows, () => selectedModId, SelectMod, ritsuContentList);
         if (modRows.Count > 0) {
             Callable.From(() => {
                 ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabRow, ritsuContentList,
                     scopeFocusTarget);
-                var defaultFocus = ModPanelFocusWiring.FindFirstFocusableDescendant(pageTabRow)
-                    ?? ModPanelFocusWiring.FindFirstFocusableDescendant(ritsuContentList);
-                shell.SetDefaultFocusedControl(defaultFocus);
+                shell.SetDefaultFocusedControl(null);
                 ActiveScreenContext.Instance.Update();
+                shell.RefreshScreenContextFocus();
                 controllerSupport.RefreshHints();
             }).CallDeferred();
         }

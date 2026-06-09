@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Godot;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 
 namespace KitLib.UI;
 
@@ -20,10 +21,11 @@ public partial class ModPanelControllerSupport : Node {
     private TextureRect? _tabLeftIcon;
     private TextureRect? _tabRightIcon;
     private Callable? _refreshHintsCallable;
+    private ModPanelShellRoot? _shell;
     private IReadOnlyList<SidebarModRowVm> _sidebarRows = [];
     private Func<string>? _getSelectedModId;
     private Action<string>? _selectMod;
-    private Control? _contentRoot;
+    private Control? _settingsContentRoot;
 
     public void Configure(HBoxContainer pageTabRow, Func<string> getPageId, Action<string> switchPage,
         Control hintsRow) {
@@ -37,16 +39,19 @@ public partial class ModPanelControllerSupport : Node {
         _tabRightIcon = hintsRow.GetNodeOrNull<TextureRect>("TabRightHotkeyIcon");
     }
 
+    internal void BindShell(ModPanelShellRoot shell) {
+        _shell = shell;
+    }
+
     internal void ConfigureSidebar(IReadOnlyList<SidebarModRowVm> rows, Func<string> getSelectedModId,
-        Action<string> selectMod, Control contentRoot) {
+        Action<string> selectMod, Control settingsContentRoot) {
         _sidebarRows = rows;
         _getSelectedModId = getSelectedModId;
         _selectMod = selectMod;
-        _contentRoot = contentRoot;
+        _settingsContentRoot = settingsContentRoot;
     }
 
     public override void _Ready() {
-        SetProcessUnhandledInput(true);
         _refreshHintsCallable = Callable.From(RefreshHints);
         NHotkeyManager.Instance.PushHotkeyPressedBinding(TabLeftHotkey, TabLeft);
         NHotkeyManager.Instance.PushHotkeyPressedBinding(TabRightHotkey, TabRight);
@@ -76,24 +81,37 @@ public partial class ModPanelControllerSupport : Node {
             NInputManager.Instance.Disconnect(NInputManager.SignalName.InputRebound, _refreshHintsCallable.Value);
     }
 
-    public override void _UnhandledInput(InputEvent @event) {
+    /// <summary>Handled from <see cref="ModPanelShellRoot._Input" /> (RitsuModSettingsSubmenu pattern).</summary>
+    public bool TryHandleDirectionalInput(InputEvent @event) {
+        if (_shell == null || !GodotObject.IsInstanceValid(_shell) || !_shell.Visible)
+            return false;
+        if (!ActiveScreenContext.Instance.IsCurrent(_shell))
+            return false;
         if (NControllerManager.Instance?.IsUsingController != true)
-            return;
-        if (@event is not InputEventKey { Pressed: true, Echo: false })
-            return;
-        if (!@event.IsActionPressed("ui_up") && !@event.IsActionPressed("ui_down"))
-            return;
+            return false;
+        if (@event.IsEcho())
+            return false;
+
+        int delta = 0;
+        if (@event.IsActionPressed("ui_up") || @event.IsActionPressed(MegaInput.up))
+            delta = -1;
+        else if (@event.IsActionPressed("ui_down") || @event.IsActionPressed(MegaInput.down))
+            delta = 1;
+        else
+            return false;
+
         if (_sidebarRows.Count == 0 || _getSelectedModId == null || _selectMod == null)
-            return;
+            return false;
+
         var focus = GetViewport()?.GuiGetFocusOwner() as Control;
-        if (focus != null && _contentRoot != null && GodotObject.IsInstanceValid(_contentRoot)
-            && _contentRoot.IsAncestorOf(focus))
-            return;
-        var delta = @event.IsActionPressed("ui_up") ? -1 : 1;
-        if (CycleSidebarMod(delta)) {
-            GetViewport()?.SetInputAsHandled();
-            RefreshHints();
-        }
+        if (focus != null && _settingsContentRoot != null && GodotObject.IsInstanceValid(_settingsContentRoot)
+            && _settingsContentRoot.IsAncestorOf(focus))
+            return false;
+
+        if (!CycleSidebarMod(delta))
+            return false;
+        RefreshHints();
+        return true;
     }
 
     public void RefreshHints() {
@@ -149,6 +167,8 @@ public partial class ModPanelControllerSupport : Node {
 
     private void SwitchTab(int delta) {
         if (_pageTabRow == null || _getPageId == null || _switchPage == null)
+            return;
+        if (_shell != null && !ActiveScreenContext.Instance.IsCurrent(_shell))
             return;
         var tabs = CollectTabs();
         if (tabs.Count <= 1)
