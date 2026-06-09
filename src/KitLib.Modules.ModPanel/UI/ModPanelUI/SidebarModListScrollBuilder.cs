@@ -8,15 +8,13 @@ namespace KitLib.UI;
 /// <summary>Builds a vanilla-style <see cref="NScrollableContainer" /> for the sidebar mod list.</summary>
 internal static class SidebarModListScrollBuilder {
     public static NScrollableContainer Create(out VBoxContainer contentHost) {
+        // Size flags only: FullRect anchors fight MarginContainer/VBox layout and collapse to 0 height.
         var scroll = new NScrollableContainer {
             Name = "ModPanelSidebarModScroll",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
-        scroll.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        scroll.GrowHorizontal = Control.GrowDirection.Both;
-        scroll.GrowVertical = Control.GrowDirection.Both;
 
         var mask = new ColorRect {
             Name = "Mask",
@@ -25,15 +23,16 @@ internal static class SidebarModListScrollBuilder {
             ClipChildren = CanvasItem.ClipChildrenMode.Only,
         };
         mask.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        mask.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        mask.SizeFlagsVertical = Control.SizeFlags.ExpandFill;
+        mask.GrowHorizontal = Control.GrowDirection.Both;
+        mask.GrowVertical = Control.GrowDirection.Both;
         scroll.AddChild(mask);
 
         contentHost = new VBoxContainer {
             Name = "Content",
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
+        contentHost.SetAnchorsPreset(Control.LayoutPreset.TopWide);
+        contentHost.GrowHorizontal = Control.GrowDirection.Both;
         mask.AddChild(contentHost);
 
         var scrollbar = PreloadManager.Cache.GetScene(SceneHelper.GetScenePath("ui/scrollbar"))
@@ -49,8 +48,19 @@ internal static class SidebarModListScrollBuilder {
         scrollbar.OffsetBottom = -8f;
         scrollbar.GrowVertical = Control.GrowDirection.Both;
         scroll.AddChild(scrollbar);
-
-        Callable.From(scroll.DisableScrollingIfContentFits).CallDeferred();
         return scroll;
+    }
+
+    public static void ResetScrollTopDeferred(NScrollableContainer scroll) {
+        Callable.From(() => {
+            if (!GodotObject.IsInstanceValid(scroll))
+                return;
+            try {
+                scroll.InstantlyScrollToTop();
+            }
+            catch {
+                // Mask/content not ready yet; next ItemRectChanged will relayout.
+            }
+        }).CallDeferred();
     }
 }

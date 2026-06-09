@@ -408,6 +408,7 @@ public static partial class ModPanelUI {
             }
         }
         listFrame.AddChild(scroll);
+        SidebarModListScrollBuilder.ResetScrollTopDeferred(scroll);
         var sidebarLower = new VBoxContainer {
             Name = "ModPanelSidebarLower",
             MouseFilter = Control.MouseFilterEnum.Ignore,
