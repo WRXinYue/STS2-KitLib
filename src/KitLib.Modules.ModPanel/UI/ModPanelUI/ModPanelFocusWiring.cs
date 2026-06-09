@@ -7,7 +7,6 @@ namespace KitLib.UI;
 internal static class ModPanelFocusWiring {
     public static void Wire(IReadOnlyList<SidebarModRowVm> rows, string selectedModId, string selectedPageId,
         HBoxContainer pageTabRow, Control contentRoot, Control? scopeFocusTarget) {
-        WireSidebarModRowFocusNeighbors(rows, scopeFocusTarget);
         var selectedRow = FindRow(rows, selectedModId);
         var tabs = CollectPageTabs(pageTabRow);
         WirePageTabFocusNeighbors(tabs);
@@ -21,35 +20,14 @@ internal static class ModPanelFocusWiring {
                 if (contentEntry != null)
                     tab.FocusNeighborBottom = contentEntry.GetPath();
             }
-            foreach (var row in rows)
-                row.Control.FocusNeighborRight = activeTab.GetPath();
             if (contentEntry != null)
                 contentEntry.FocusNeighborLeft = activeTab.GetPath();
         }
-        else {
-            foreach (var row in rows)
-                row.Control.FocusNeighborRight = contentEntry?.GetPath() ?? row.Control.GetPath();
-            if (contentEntry != null)
-                contentEntry.FocusNeighborLeft = selectedRow.GetPath();
+        else if (contentEntry != null) {
+            contentEntry.FocusNeighborLeft = selectedRow.GetPath();
         }
         if (scopeFocusTarget != null && rows.Count > 0)
-            scopeFocusTarget.FocusNeighborTop = rows[^1].Control.GetPath();
-    }
-
-    private static void WireSidebarModRowFocusNeighbors(IReadOnlyList<SidebarModRowVm> rows,
-        Control? bottomTarget) {
-        for (var i = 0; i < rows.Count; i++) {
-            var row = rows[i].Control;
-            row.FocusNeighborLeft = row.GetPath();
-            if (i == 0)
-                row.FocusNeighborTop = row.GetPath();
-            else
-                row.FocusNeighborTop = rows[i - 1].Control.GetPath();
-            if (i == rows.Count - 1)
-                row.FocusNeighborBottom = bottomTarget?.GetPath() ?? row.GetPath();
-            else
-                row.FocusNeighborBottom = rows[i + 1].Control.GetPath();
-        }
+            scopeFocusTarget.FocusNeighborTop = rows[^1].Host.GetPath();
     }
 
     private static void WirePageTabFocusNeighbors(IReadOnlyList<Button> tabs) {
@@ -77,12 +55,12 @@ internal static class ModPanelFocusWiring {
         return tabs;
     }
 
-    private static SidebarModRowControl? FindRow(IReadOnlyList<SidebarModRowVm> rows, string selectedModId) {
+    private static Control? FindRow(IReadOnlyList<SidebarModRowVm> rows, string selectedModId) {
         foreach (var row in rows) {
             if (string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase))
-                return row.Control;
+                return row.Host;
         }
-        return rows.Count > 0 ? rows[0].Control : null;
+        return rows.Count > 0 ? rows[0].Host : null;
     }
 
     private static int FindSelectedTabIndex(IReadOnlyList<Button> tabs, string selectedPageId) {

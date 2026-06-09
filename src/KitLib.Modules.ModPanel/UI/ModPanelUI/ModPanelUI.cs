@@ -331,10 +331,11 @@ public static partial class ModPanelUI {
             contentState.PageId = id;
             RebuildRitsuRightPane();
         }, hintsRow);
-        SidebarModRowControl? defaultFocusRow = null;
         void RefreshModRowChrome() {
-            foreach (var row in modRows)
-                row.Control.SetSelected(string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase));
+            foreach (var row in modRows) {
+                var sel = string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase);
+                ApplySidebarModGroupInnerRowStyle(row.InnerStyle, sel, row.Pressing);
+            }
         }
         void SelectMod(string id) {
             selectedModId = id;
@@ -346,13 +347,6 @@ public static partial class ModPanelUI {
             var tex = ModPanelModBanner.TryLoadModIcon(m, id);
             ApplyPreviewState(tex, m == null, modIcon, previewPlaceholder, previewCaption);
             RebuildRitsuRightPane();
-            foreach (var row in modRows) {
-                if (!string.Equals(row.Id, id, StringComparison.OrdinalIgnoreCase))
-                    continue;
-                defaultFocusRow = row.Control;
-                shell.SetDefaultFocusedControl(row.Control);
-                break;
-            }
         }
         if (ordered.Count == 0) {
             var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
@@ -392,27 +386,61 @@ public static partial class ModPanelUI {
                 card.AddChild(cardContent);
                 var innerStyle = new StyleBoxFlat();
                 ApplySidebarModGroupInnerRowStyle(innerStyle, isSel, false);
-                var capturedId = info.Id;
-                var rowHost = new SidebarModRowControl();
-                rowHost.Configure(info.Id, info.DisplayName, tip, innerStyle, () => SelectMod(capturedId));
-                modRows.Add(new SidebarModRowVm {
+                var rowHost = new Control {
+                    SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                    MouseFilter = Control.MouseFilterEnum.Stop,
+                    MouseDefaultCursorShape = Control.CursorShape.PointingHand,
+                    CustomMinimumSize = new Vector2(0f, 62f),
+                    FocusMode = Control.FocusModeEnum.None,
+                };
+                rowHost.TooltipText = tip;
+                var bgPanel = new Panel {
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    ClipContents = true,
+                };
+                bgPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+                bgPanel.AddThemeStyleboxOverride("panel", innerStyle);
+                rowHost.AddChild(bgPanel);
+                var titleLbl = new Label {
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    Text = info.DisplayName,
+                    TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    LabelSettings = new LabelSettings {
+                        FontSize = 22,
+                        FontColor = ModPanelUiPalette.LabelPrimary,
+                    },
+                };
+                titleLbl.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+                var labelLeft = 18 + (int)ModPanelUiMetrics.SidebarModAccentBarWidth +
+                                ModPanelUiMetrics.SidebarModAccentTextGutter;
+                titleLbl.OffsetLeft = labelLeft;
+                titleLbl.OffsetRight = -18;
+                titleLbl.OffsetTop = 10;
+                titleLbl.OffsetBottom = -10;
+                rowHost.AddChild(titleLbl);
+                var vm = new SidebarModRowVm {
                     Id = info.Id,
-                    Control = rowHost,
-                });
+                    InnerStyle = innerStyle,
+                    Host = rowHost,
+                };
+                modRows.Add(vm);
+                rowHost.GuiInput += ev => {
+                    if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left) {
+                        if (mb.Pressed) {
+                            vm.Pressing = true;
+                            RefreshModRowChrome();
+                        }
+                        else {
+                            vm.Pressing = false;
+                            SelectMod(vm.Id);
+                        }
+                    }
+                };
                 cardContent.AddChild(rowHost);
             }
             SelectMod(initialSelectedId);
-            if (defaultFocusRow != null) {
-                shell.SetDefaultFocusedControl(defaultFocusRow);
-                var focusRow = defaultFocusRow;
-                Callable.From(() => {
-                    if (!GodotObject.IsInstanceValid(focusRow))
-                        return;
-                    if (NControllerManager.Instance?.IsUsingController == true)
-                        focusRow.TryGrabFocus();
-                    ActiveScreenContext.Instance.Update();
-                }).CallDeferred();
-            }
         }
         listFrame.AddChild(scroll);
         SidebarModListScrollBuilder.ResetScrollTopDeferred(scroll);
@@ -430,10 +458,15 @@ public static partial class ModPanelUI {
         sidebarLower.AddChild(scopeStrip);
         mainVBox.AddChild(sidebarLower);
         shell.AddChild(controllerSupport);
+        controllerSupport.ConfigureSidebar(modRows, () => selectedModId, SelectMod, ritsuContentList);
         if (modRows.Count > 0) {
             Callable.From(() => {
                 ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabRow, ritsuContentList,
                     scopeFocusTarget);
+                var defaultFocus = ModPanelFocusWiring.FindFirstFocusableDescendant(pageTabRow)
+                    ?? ModPanelFocusWiring.FindFirstFocusableDescendant(ritsuContentList);
+                shell.SetDefaultFocusedControl(defaultFocus);
+                ActiveScreenContext.Instance.Update();
                 controllerSupport.RefreshHints();
             }).CallDeferred();
         }

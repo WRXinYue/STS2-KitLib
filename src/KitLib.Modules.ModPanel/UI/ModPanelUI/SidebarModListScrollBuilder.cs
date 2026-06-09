@@ -11,7 +11,7 @@ internal static class SidebarModListScrollBuilder {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
             VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
-            FollowFocus = true,
+            FollowFocus = false,
             FocusMode = Control.FocusModeEnum.None,
         };
         contentHost = new VBoxContainer {

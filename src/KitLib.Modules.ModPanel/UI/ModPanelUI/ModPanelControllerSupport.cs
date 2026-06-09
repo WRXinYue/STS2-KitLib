@@ -6,7 +6,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;
 
-/// <summary>Controller hotkey hints and LB/RB page-tab cycling while the mod panel is open.</summary>
+/// <summary>Controller hotkey hints, LB/RB page tabs, and sidebar up/down mod cycling.</summary>
 public partial class ModPanelControllerSupport : Node {
     private static readonly StringName TabLeftHotkey = MegaInput.viewDeckAndTabLeft;
     private static readonly StringName TabRightHotkey = MegaInput.viewExhaustPileAndTabRight;
@@ -20,6 +20,10 @@ public partial class ModPanelControllerSupport : Node {
     private TextureRect? _tabLeftIcon;
     private TextureRect? _tabRightIcon;
     private Callable? _refreshHintsCallable;
+    private IReadOnlyList<SidebarModRowVm> _sidebarRows = [];
+    private Func<string>? _getSelectedModId;
+    private Action<string>? _selectMod;
+    private Control? _contentRoot;
 
     public void Configure(HBoxContainer pageTabRow, Func<string> getPageId, Action<string> switchPage,
         Control hintsRow) {
@@ -33,7 +37,16 @@ public partial class ModPanelControllerSupport : Node {
         _tabRightIcon = hintsRow.GetNodeOrNull<TextureRect>("TabRightHotkeyIcon");
     }
 
+    internal void ConfigureSidebar(IReadOnlyList<SidebarModRowVm> rows, Func<string> getSelectedModId,
+        Action<string> selectMod, Control contentRoot) {
+        _sidebarRows = rows;
+        _getSelectedModId = getSelectedModId;
+        _selectMod = selectMod;
+        _contentRoot = contentRoot;
+    }
+
     public override void _Ready() {
+        SetProcessUnhandledInput(true);
         _refreshHintsCallable = Callable.From(RefreshHints);
         NHotkeyManager.Instance.PushHotkeyPressedBinding(TabLeftHotkey, TabLeft);
         NHotkeyManager.Instance.PushHotkeyPressedBinding(TabRightHotkey, TabRight);
@@ -63,6 +76,26 @@ public partial class ModPanelControllerSupport : Node {
             NInputManager.Instance.Disconnect(NInputManager.SignalName.InputRebound, _refreshHintsCallable.Value);
     }
 
+    public override void _UnhandledInput(InputEvent @event) {
+        if (NControllerManager.Instance?.IsUsingController != true)
+            return;
+        if (@event is not InputEventKey { Pressed: true, Echo: false })
+            return;
+        if (!@event.IsActionPressed("ui_up") && !@event.IsActionPressed("ui_down"))
+            return;
+        if (_sidebarRows.Count == 0 || _getSelectedModId == null || _selectMod == null)
+            return;
+        var focus = GetViewport()?.GuiGetFocusOwner() as Control;
+        if (focus != null && _contentRoot != null && GodotObject.IsInstanceValid(_contentRoot)
+            && _contentRoot.IsAncestorOf(focus))
+            return;
+        var delta = @event.IsActionPressed("ui_up") ? -1 : 1;
+        if (CycleSidebarMod(delta)) {
+            GetViewport()?.SetInputAsHandled();
+            RefreshHints();
+        }
+    }
+
     public void RefreshHints() {
         if (_hintsRow == null || !GodotObject.IsInstanceValid(_hintsRow))
             return;
@@ -88,6 +121,22 @@ public partial class ModPanelControllerSupport : Node {
             if (showTabs)
                 _tabRightIcon.Texture = NInputManager.Instance.GetHotkeyIcon(TabRightHotkey);
         }
+    }
+
+    private bool CycleSidebarMod(int delta) {
+        var currentId = _getSelectedModId!();
+        var idx = 0;
+        for (var i = 0; i < _sidebarRows.Count; i++) {
+            if (string.Equals(_sidebarRows[i].Id, currentId, StringComparison.OrdinalIgnoreCase)) {
+                idx = i;
+                break;
+            }
+        }
+        var next = Mathf.Clamp(idx + delta, 0, _sidebarRows.Count - 1);
+        if (next == idx)
+            return false;
+        _selectMod!(_sidebarRows[next].Id);
+        return true;
     }
 
     private void TabLeft() {
