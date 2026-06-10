@@ -121,6 +121,12 @@ public sealed partial class KitLibSettings {
     /// <summary>Whether the mod panel sidebar scope blurb is expanded.</summary>
     public bool ModPanelScopeStripExpanded { get; set; } = true;
 
+    /// <summary>Show fixed top-right Dev performance overlay (toggle via hotkey).</summary>
+    public bool PerfHudEnabled { get; set; }
+
+    /// <summary>Append structured perf events to instances/{pid}/perf-trace.log.</summary>
+    public bool PerfHudTraceToFile { get; set; }
+
     /// <summary>Enable in-game keyboard shortcuts for the DevMode sidebar shell.</summary>
     public bool HotkeysEnabled { get; set; } = true;
 

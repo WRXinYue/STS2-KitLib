@@ -26,6 +26,8 @@ internal static class HotkeyDefaults {
 
     internal static readonly HotkeyBinding QuickReplayTurn = HotkeyBinding.Of(Key.F6);
 
+    internal static readonly HotkeyBinding TogglePerfHud = HotkeyBinding.Of(Key.F3);
+
     internal static HotkeyBinding For(string actionId) => actionId switch {
         HotkeyActionId.ToggleRail => ToggleRail.Clone(),
         HotkeyActionId.ClosePanel => ClosePanel.Clone(),
@@ -36,6 +38,7 @@ internal static class HotkeyDefaults {
         HotkeyActionId.QuickLoad => QuickLoad.Clone(),
         HotkeyActionId.QuickReplayCombat => QuickReplayCombat.Clone(),
         HotkeyActionId.QuickReplayTurn => QuickReplayTurn.Clone(),
+        HotkeyActionId.TogglePerfHud => TogglePerfHud.Clone(),
         _ => new HotkeyBinding()
     };
 
@@ -49,5 +52,6 @@ internal static class HotkeyDefaults {
         settings.HotkeyQuickLoad = QuickLoad.Clone();
         settings.HotkeyQuickReplayCombat = QuickReplayCombat.Clone();
         settings.HotkeyQuickReplayTurn = QuickReplayTurn.Clone();
+        settings.HotkeyTogglePerfHud = TogglePerfHud.Clone();
     }
 }

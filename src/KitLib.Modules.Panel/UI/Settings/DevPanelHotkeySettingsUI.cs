@@ -16,6 +16,7 @@ internal static class DevPanelHotkeySettingsUI {
         (HotkeyActionId.QuickLoad, "hotkeys.quickLoad", "Quick load"),
         (HotkeyActionId.QuickReplayCombat, "hotkeys.quickReplayCombat", "Replay combat"),
         (HotkeyActionId.QuickReplayTurn, "hotkeys.quickReplayTurn", "Replay turn"),
+        (HotkeyActionId.TogglePerfHud, "hotkeys.togglePerfHud", "Performance overlay"),
     };
 
     private static readonly Dictionary<string, Button> BindingButtons = new(StringComparer.Ordinal);

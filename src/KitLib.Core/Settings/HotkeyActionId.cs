@@ -10,9 +10,11 @@ internal static class HotkeyActionId {
     internal const string QuickLoad = "quickLoad";
     internal const string QuickReplayCombat = "quickReplayCombat";
     internal const string QuickReplayTurn = "quickReplayTurn";
+    internal const string TogglePerfHud = "togglePerfHud";
 
     internal static readonly string[] All = {
         ToggleRail, ClosePanel, NextTab, PrevTab, LockRail,
-        QuickSave, QuickLoad, QuickReplayCombat, QuickReplayTurn
+        QuickSave, QuickLoad, QuickReplayCombat, QuickReplayTurn,
+        TogglePerfHud
     };
 }

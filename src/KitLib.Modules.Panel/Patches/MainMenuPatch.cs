@@ -17,6 +17,7 @@ public static class MainMenuPatch {
     [HarmonyPrefix]
     [HarmonyPatch("_Ready")]
     public static void AddDevModeButtonPrefix(NMainMenu __instance) {
+        KitLib.DevPerf.KitLibRootServices.EnsureRootServicesNode();
         CrashRecoveryHooks.EnsureLifecycleNode();
         _mainMenuRef = __instance;
 

@@ -41,8 +41,16 @@ internal sealed class AssetWarmupService {
     private bool _buildOnNextProcess;
     private double _buildRetrySec;
     private int _buildRetryCount;
+    private int _totalJobCount;
+    private Stopwatch? _runStopwatch;
 
     public bool IsCompleted => _completed;
+
+    public int TotalJobCount => _totalJobCount;
+
+    public int PendingJobCount => _jobs.Count;
+
+    public bool IsRunning => _built && !_completed && _totalJobCount > 0;
 
     public void Ready() {
         TryBuildWarmupJobs();
@@ -91,6 +99,11 @@ internal sealed class AssetWarmupService {
         if (_jobs.Count == 0) {
             _completed = true;
             MainFile.Logger.Info($"Asset warmup finished. jobs={_executedJobs}, scenes={_loadedScenes}, textures={_loadedTextures}, errors={_errors}");
+            if (_runStopwatch != null) {
+                _runStopwatch.Stop();
+                DevPerf.DevPerfEventLog.LogTransition("AssetWarmup", _runStopwatch.ElapsedMilliseconds);
+                _runStopwatch = null;
+            }
         }
     }
 
@@ -104,7 +117,10 @@ internal sealed class AssetWarmupService {
             EnqueueMonsters();
             _built = true;
             _buildPending = false;
+            _totalJobCount = _jobs.Count;
             _completed = _jobs.Count == 0;
+            if (!_completed)
+                _runStopwatch = Stopwatch.StartNew();
             if (_completed)
                 MainFile.Logger.Info("Asset warmup skipped (no jobs).");
             else

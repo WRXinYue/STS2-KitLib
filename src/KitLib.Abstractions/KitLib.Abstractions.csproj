@@ -20,4 +20,9 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KitLib.Abstractions.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

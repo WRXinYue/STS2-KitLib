@@ -23,8 +23,11 @@ public static class GlobalUiReadyPatch {
     private static NGlobalUi? _attached;
     private static AssetWarmupService? _warmup;
 
+    internal static AssetWarmupService? Warmup => _warmup;
+
     public static void Postfix(NGlobalUi __instance) {
         if (!KitLibState.IsActive) return;
+        KitLib.DevPerf.KitLibRootServices.EnsureRootServicesNode();
         if (KitLibState.PseudoCoopLaunchPending)
             return;
         if (KitLibState.PseudoCoopDeferHeavyUi) {

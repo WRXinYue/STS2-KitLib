@@ -5,6 +5,7 @@ using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
 using KitLib.Icons;
+using KitLib.DevPerf;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 using KitLib.Settings;
@@ -121,14 +122,39 @@ internal static partial class DevPanelUI {
     }
 
     private static void RefreshRailIconTints() {
+        int nullIcons = 0;
+        int total = _railIconButtons.Count;
         for (int i = 0; i < _railIconButtons.Count; i++) {
             var (btn, icon) = _railIconButtons[i];
             if (IsLogAlertBlinking(btn))
                 continue;
             bool disabled = btn.Disabled;
             bool active = !disabled && i == _activeRailBtnIdx;
-            btn.Icon = icon.Texture(20, disabled ? ColIconDisabled : active ? ColIconActive : ColIconNormal);
+            var tint = disabled ? ColIconDisabled : active ? ColIconActive : ColIconNormal;
+            var tex = ResolveRailIconTexture(icon, tint);
+            if (tex == null)
+                nullIcons++;
+            btn.Icon = tex;
         }
+
+        // #region agent log
+        if (total > 0) {
+            DevDebugSessionLog.Write("B", "DevPanelUI.RefreshRailIconTints", "rail_icons_refreshed", new {
+                runId = "post-fix",
+                total,
+                nullIcons,
+                iconNormal = ColIconNormal.ToHtml(),
+                mdiLoaded = IconifyAdapter.BodyCount,
+            });
+        }
+        // #endregion
+    }
+
+    static ImageTexture? ResolveRailIconTexture(MdiIcon icon, Color tint) {
+        var tex = icon.Texture(20, tint);
+        if (tex != null)
+            return tex;
+        return MdiIcon.PuzzleOutline.Texture(20, tint);
     }
 
     // ──────── Attach ────────
@@ -356,6 +382,24 @@ internal static partial class DevPanelUI {
         if (!KitLibState.DualInstanceMinimalRail)
             AttachContextPane(globalUi);
         ((Node)globalUi).AddChild(root);
+
+        // #region agent log
+        int sampleNull = 0;
+        foreach (var (btn, icon) in _railIconButtons) {
+            if (btn.Icon == null)
+                sampleNull++;
+        }
+        DevDebugSessionLog.Write("D", "DevPanelUI.Attach", "rail_attached", new {
+            runId = "post-fix",
+            railButtons = _railButtons.Count,
+            iconButtons = _railIconButtons.Count,
+            nullIconOnAttach = sampleNull,
+            railModulateA = rail.Modulate.A,
+            railZIndex = root.ZIndex,
+            perfCanvasLayer = KitLibRootServices.Instance?.Layer,
+            mdiLoaded = IconifyAdapter.BodyCount,
+        });
+        // #endregion
     }
 
     // ──────── Detach ────────

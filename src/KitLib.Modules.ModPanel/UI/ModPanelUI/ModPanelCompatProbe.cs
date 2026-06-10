@@ -4,6 +4,7 @@ using System.IO;
 using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
 using KitLib.Host;
+using KitLib.Modding;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib.UI;

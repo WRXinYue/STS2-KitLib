@@ -168,6 +168,10 @@
   "ai.hud.action.treasure": "宝箱房",
   "ai.hud.enabled": "游戏内 AI HUD",
   "ai.hud.enabled.desc": "在游戏画面左上角显示托管状态与模拟遥测数据。",
+  "perfHud.enabled": "性能叠层",
+  "perfHud.enabled.desc": "右上角固定调试文字：过渡耗时、资源预热、帧尖峰。可用下方快捷键开关。",
+  "perfHud.traceToFile": "写入性能 trace 文件",
+  "perfHud.traceToFile.desc": "将过渡与帧尖峰以 CSV 追加到 instances/{pid}/perf-trace.log。",
 
   "syncbot.section": "SyncBot（开发）",
   "syncbot.enabled": "模拟远端玩家",
@@ -354,6 +358,7 @@
   "hotkeys.quickLoad": "快速读档",
   "hotkeys.quickReplayCombat": "重打本局",
   "hotkeys.quickReplayTurn": "重回本回合",
+  "hotkeys.togglePerfHud": "性能叠层",
   "hotkeys.listening": "请按键…",
   "hotkeys.reset": "恢复默认快捷键",
   "hotkeys.unbound": "未绑定",

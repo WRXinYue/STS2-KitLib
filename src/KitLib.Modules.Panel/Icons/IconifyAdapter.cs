@@ -118,4 +118,11 @@ public static class IconifyAdapter {
 
     /// <summary>Clear the texture cache (e.g. on theme change).</summary>
     public static void ClearCache() => _cache.Clear();
+
+    internal static int BodyCount {
+        get {
+            EnsureLoaded();
+            return _bodies.Count;
+        }
+    }
 }

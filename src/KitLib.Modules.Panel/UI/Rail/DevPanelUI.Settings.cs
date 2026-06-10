@@ -45,6 +45,22 @@ internal static partial class DevPanelUI {
                 DevPanelUI.OnGameContextPaneSettingChanged();
             }));
 
+        inner.AddChild(CreateCheatToggle(
+            I18N.T("perfHud.enabled", "Performance overlay"),
+            I18N.T("perfHud.enabled.desc", "Fixed top-right debug text for transitions, warmup, and frame spikes. Toggle with the hotkey below."),
+            () => SettingsStore.Current.PerfHudEnabled,
+            enabled => {
+                SettingsStore.SetPerfHudEnabled(enabled);
+                KitLib.DevPerf.KitLibRootServices.EnsureRootServicesNode();
+                DevPerfOverlayUI.SyncVisibility();
+            }));
+
+        inner.AddChild(CreateCheatToggle(
+            I18N.T("perfHud.traceToFile", "Write perf trace to file"),
+            I18N.T("perfHud.traceToFile.desc", "Append CSV lines to instances/{pid}/perf-trace.log when transitions or frame spikes are logged."),
+            () => SettingsStore.Current.PerfHudTraceToFile,
+            enabled => SettingsStore.SetPerfHudTraceToFile(enabled)));
+
         var gameSpeedBtn = CreatePlainButton(I18N.T("panel.speed", "Speed: {0}", actions.GetGameSpeedLabel()), MdiIcon.SpeedometerMedium);
         gameSpeedBtn.Pressed += () => {
             actions.OnCycleGameSpeed();

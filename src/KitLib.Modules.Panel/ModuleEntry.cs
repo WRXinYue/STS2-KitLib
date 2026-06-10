@@ -1,6 +1,7 @@
 using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
+using KitLib.DevPerf;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.LanTest;
 using KitLib.Multiplayer.PseudoCoop;
@@ -29,6 +30,8 @@ public static class ModuleEntry {
         KitLibPanelOps.OnPanelSync = ui => AiHudOverlayUI.SyncState(ui);
         KitLibPanelOps.OnPanelDetach = ui => AiHudOverlayUI.Detach(ui);
         KitLibHost.SyncAiHudOverlay = () => AiHudOverlayUI.SyncState();
+
+        DevPerfBuiltinProviders.RegisterAll();
 
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.Panel);
         MainFile.Logger.Info("KitLib.Panel module initialized.");

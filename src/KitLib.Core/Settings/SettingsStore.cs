@@ -73,6 +73,16 @@ public static class SettingsStore {
         Save();
     }
 
+    public static void SetPerfHudEnabled(bool enabled) {
+        Current.PerfHudEnabled = enabled;
+        Save();
+    }
+
+    public static void SetPerfHudTraceToFile(bool enabled) {
+        Current.PerfHudTraceToFile = enabled;
+        Save();
+    }
+
     public static void SetHotkeysEnabled(bool enabled) {
         Current.HotkeysEnabled = enabled;
         Save();
@@ -215,6 +225,8 @@ public static class SettingsStore {
             Current.HotkeyQuickReplayCombat = HotkeyDefaults.QuickReplayCombat.Clone();
         if (Current.HotkeyQuickReplayTurn.KeyCode == 0)
             Current.HotkeyQuickReplayTurn = HotkeyDefaults.QuickReplayTurn.Clone();
+        if (Current.HotkeyTogglePerfHud.KeyCode == 0)
+            Current.HotkeyTogglePerfHud = HotkeyDefaults.TogglePerfHud.Clone();
     }
 
     private static void ApplyHotkeySettingsMigration() {

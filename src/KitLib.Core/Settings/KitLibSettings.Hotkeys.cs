@@ -10,6 +10,7 @@ public sealed partial class KitLibSettings {
     public HotkeyBinding HotkeyQuickLoad { get; set; } = HotkeyDefaults.QuickLoad.Clone();
     public HotkeyBinding HotkeyQuickReplayCombat { get; set; } = HotkeyDefaults.QuickReplayCombat.Clone();
     public HotkeyBinding HotkeyQuickReplayTurn { get; set; } = HotkeyDefaults.QuickReplayTurn.Clone();
+    public HotkeyBinding HotkeyTogglePerfHud { get; set; } = HotkeyDefaults.TogglePerfHud.Clone();
 
     /// <summary>Legacy v3 binding; migrated to <see cref="HotkeyQuickReplayCombat"/> on load.</summary>
     public HotkeyBinding HotkeyQuickRestartTurn { get; set; } = new();
@@ -24,6 +25,7 @@ public sealed partial class KitLibSettings {
         HotkeyActionId.QuickLoad => HotkeyQuickLoad,
         HotkeyActionId.QuickReplayCombat => HotkeyQuickReplayCombat,
         HotkeyActionId.QuickReplayTurn => HotkeyQuickReplayTurn,
+        HotkeyActionId.TogglePerfHud => HotkeyTogglePerfHud,
         _ => new HotkeyBinding()
     };
 
@@ -39,6 +41,7 @@ public sealed partial class KitLibSettings {
             case HotkeyActionId.QuickLoad: HotkeyQuickLoad = copy; break;
             case HotkeyActionId.QuickReplayCombat: HotkeyQuickReplayCombat = copy; break;
             case HotkeyActionId.QuickReplayTurn: HotkeyQuickReplayTurn = copy; break;
+            case HotkeyActionId.TogglePerfHud: HotkeyTogglePerfHud = copy; break;
         }
     }
 }
