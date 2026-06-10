@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using KitLib;
+using KitLib.Host;
 using System.Net;
 using System.Net.WebSockets;
 using System.Text;
@@ -31,7 +32,8 @@ internal static class ScriptBridge {
     }
 
     internal static void StartCore() {
-        if (IsRunning) return;
+        if (IsRunning || !KitLibBootstrapGate.CanStartHttpListener)
+            return;
         try {
             _cts = new CancellationTokenSource();
             _listener = new HttpListener();
@@ -41,6 +43,7 @@ internal static class ScriptBridge {
         }
         catch (Exception ex) {
             _listener = null;
+            BootstrapDiagnostics.RecordFailure("ScriptBridge", ex);
         }
     }
 

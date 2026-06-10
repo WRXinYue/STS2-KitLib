@@ -24,7 +24,7 @@ internal static class ModuleBootstrap {
 
     /// <summary>Starts HTTP bridges on demand when the Scripts panel is opened.</summary>
     internal static void EnsureBridgesStarted() {
-        if (_bridgesStarted)
+        if (_bridgesStarted || !KitLibBootstrapGate.CanStartHttpListener)
             return;
         _bridgesStarted = true;
         Callable.From(StartDeferredBridges).CallDeferred();
@@ -63,6 +63,7 @@ internal static class ModuleBootstrap {
             return;
         }
 
+        KitLibBootstrapGate.EnterSceneReadyBootstrap();
         _completing = true;
         try {
             KitLibHost.IsDualInstanceActive = KitLibInstanceRegistry.IsDualInstanceActive;
@@ -87,6 +88,7 @@ internal static class ModuleBootstrap {
             CrashRecoveryStore.MarkSessionStarted();
 
             _completed = true;
+            KitLibBootstrapGate.EnterInteractive();
         }
         finally {
             _completing = false;
@@ -94,6 +96,8 @@ internal static class ModuleBootstrap {
     }
 
     static void StartDeferredBridges() {
+        if (!KitLibBootstrapGate.CanStartHttpListener)
+            return;
         SafeStep("ScriptBridge", () => ScriptBridge.StartCore());
         SafeStep("McpBridge", () => McpBridge.StartCore());
     }
@@ -104,7 +108,8 @@ internal static class ModuleBootstrap {
         try {
             action();
         }
-        catch (Exception) {
+        catch (Exception ex) {
+            BootstrapDiagnostics.RecordFailure(name, ex);
         }
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using Godot;
 using HarmonyLib;
+using KitLib;
+using KitLib.Host;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
@@ -29,7 +31,7 @@ public static class MainMenuPatch {
             settingsBtn,
             container,
             "KitLibButton",
-            "DEVMODE",
+            I18N.T("menu.developerMode", "DEVMODE"),
             OnDevModeButtonPressed);
 
         var quitBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/QuitButton");
@@ -42,6 +44,8 @@ public static class MainMenuPatch {
     public static void AddDevModeButtonPostfix(NMainMenu __instance) {
         if (__instance != _mainMenuRef)
             return;
+
+        BootstrapDiagnostics.FlushDeferred();
 
         if (_devModeButton != null && GodotObject.IsInstanceValid(_devModeButton)) {
             var textRow = __instance.GetNodeOrNull<Control>("%MainMenuTextButtons")

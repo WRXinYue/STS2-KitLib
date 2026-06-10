@@ -3,7 +3,7 @@ using KitLib;
 
 namespace KitLib.Dev;
 
-/// <summary>mod_data root adopted from Core at satellite wire time (H29).</summary>
+/// <summary>mod_data root adopted from Core when Dev satellite delegates are wired.</summary>
 internal static class DevModDataPaths {
     private static string? _root;
 

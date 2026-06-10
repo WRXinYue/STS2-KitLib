@@ -20,7 +20,7 @@ public static class DataPaths {
     /// <summary>Absolute filesystem path to the KitLib user-data root.</summary>
     public static string BaseDir => ResolvedBaseDir();
 
-    /// <summary>Pin paths during mod init; scene-ready bootstrap must not re-call Godot path APIs (H28).</summary>
+    /// <summary>Pin paths during mod init; later phases must use pinned paths only.</summary>
     public static void EnsurePinnedOnMainThread() {
         if (_baseDir == null)
             _baseDir = ResolveBaseDir();
@@ -61,6 +61,9 @@ public static class DataPaths {
     }
 
     private static string ResolveBaseDir() {
+        if (!KitLibBootstrapGate.CanResolveGodotDataPaths && TryGetPinnedBaseDir(out var pinned))
+            return pinned;
+
         var kitLibPath = UserDataPathProvider.GetAccountScopedBasePath(ModDataSubdir);
         var kitLibDir = ProjectSettings.GlobalizePath(kitLibPath);
         var legacyPath = UserDataPathProvider.GetAccountScopedBasePath(LegacyModDataSubdir);

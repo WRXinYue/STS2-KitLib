@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using KitLib;
+using KitLib.Host;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -29,7 +30,7 @@ internal static class McpBridge {
     }
 
     internal static void StartCore() {
-        if (_listener != null)
+        if (_listener != null || !KitLibBootstrapGate.CanStartHttpListener)
             return;
 
         Tools.Register(new GameStateTool());
@@ -62,6 +63,7 @@ internal static class McpBridge {
             _listener = null;
             _cts?.Dispose();
             _cts = null;
+            BootstrapDiagnostics.RecordFailure("McpBridge", ex);
         }
     }
 

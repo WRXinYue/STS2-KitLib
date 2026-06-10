@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using KitLib;
 using KitLib.Dev;
+using KitLib.Host;
 using KitLib.Hooks;
 using MegaCrit.Sts2.Core.Entities.Players;
 
@@ -57,8 +58,9 @@ internal static class ScriptManager {
                 Reload();
                 StartWatcher();
             }
-            catch (Exception) {
-        }
+            catch (Exception ex) {
+                BootstrapDiagnostics.RecordFailure("ScriptManager.Initialize", ex);
+            }
         });
     }
 

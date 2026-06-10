@@ -25,7 +25,7 @@ internal static class KitLibInstanceRegistry {
             Directory.CreateDirectory(InstancesDir);
             WriteLock();
             CleanupStaleLocks();
-            // Heavy folder deletes during bootstrap hard-crash the process (H14); defer to background.
+            // Defer heavy folder deletes; synchronous IO during scene-ready bootstrap is unsafe on stable.
             ThreadPool.QueueUserWorkItem(_ => SafeCleanupStaleInstanceLogs());
         }
         catch (Exception) {

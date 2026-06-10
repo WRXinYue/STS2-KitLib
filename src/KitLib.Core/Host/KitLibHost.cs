@@ -19,7 +19,7 @@ public static class KitLibHost {
     static readonly Dictionary<ulong, object> NetIdStrategies = [];
     static bool _bootstrapped;
 
-    /// <summary>Pinned mod_data root; shared across satellite assemblies (H29).</summary>
+    /// <summary>Pinned mod_data root; propagated to satellite assemblies via delegates.</summary>
     public static string ModDataDir { get; private set; } = "";
 
     internal static void PinModDataDir(string path) => ModDataDir = path;
@@ -207,10 +207,12 @@ public static class KitLibHost {
     }
 
     public static void TryRunDevBootstrap() {
+        KitLibBootstrapGate.EnterSceneReadyBootstrap();
         try {
             RequestDevBootstrap?.Invoke();
         }
-        catch (Exception) {
+        catch (Exception ex) {
+            BootstrapDiagnostics.RecordFailure("TryRunDevBootstrap", ex);
         }
     }
 
