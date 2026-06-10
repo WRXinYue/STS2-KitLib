@@ -11,6 +11,9 @@
     <Version>0.13.0</Version>
     <PackageOutputPath>$(RepoRoot)build\nuget\</PackageOutputPath>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Semver" Version="3.0.0" />
+  </ItemGroup>
   <ItemGroup Condition="'$(Sts2Dir)' != ''">
     <Reference Include="sts2">
       <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>

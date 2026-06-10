@@ -649,14 +649,20 @@ public static partial class ModPanelUI {
             metaParts.Add(author);
         metaParts.Add(modId);
         metaLabel.SetTextAutoSize(string.Join(" · ", metaParts));
+        var descParts = new List<string>();
+        var compatWarning = ModPanelCompatProbe.FormatWarning(ModPanelCompatProbe.Evaluate(mod));
+        if (!string.IsNullOrWhiteSpace(compatWarning))
+            descParts.Add(compatWarning);
         var desc = ModPanelModBanner.ResolveDescription(mod);
-        if (string.IsNullOrWhiteSpace(desc)) {
+        if (!string.IsNullOrWhiteSpace(desc))
+            descParts.Add(desc);
+        if (descParts.Count == 0) {
             descLabel.Visible = false;
             descLabel.SetTextAutoSize("");
         }
         else {
             descLabel.Visible = true;
-            descLabel.SetTextAutoSize(desc);
+            descLabel.SetTextAutoSize(string.Join("\n\n", descParts));
         }
     }
     private static void ApplyPreviewState(Texture2D? tex, bool noModSelected, TextureRect modIcon,
