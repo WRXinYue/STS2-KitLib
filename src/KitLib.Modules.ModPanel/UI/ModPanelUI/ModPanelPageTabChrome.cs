@@ -46,8 +46,9 @@ public partial class ModPanelPageTabChrome : Control {
         _tabScroll = new ScrollContainer {
             Name = "ModPanelPageTabScroll",
             MouseFilter = MouseFilterEnum.Pass,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Auto,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.ShowNever,
             VerticalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            ClipContents = true,
         };
         _tabScroll.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _tabScroll.GrowHorizontal = GrowDirection.Both;
@@ -76,12 +77,20 @@ public partial class ModPanelPageTabChrome : Control {
         _pages.Clear();
         _pages.AddRange(pages);
         _selectedPageId = selectedPageId;
-        while (_tabRow.GetChildCount() > 0) {
-            var child = _tabRow.GetChild(0);
-            _tabRow.RemoveChild(child);
-            child.QueueFree();
-        }
-        Visible = _pages.Count > 1;
+
+        var newRow = new HBoxContainer {
+            Name = "ModPanelPageTabRow",
+            SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        newRow.AddThemeConstantOverride("separation", 6);
+
+        var showStrip = _pages.Count > 1;
+        Visible = showStrip;
+        Modulate = showStrip ? Colors.White : new Color(1f, 1f, 1f, 0f);
+        MouseFilter = showStrip ? MouseFilterEnum.Ignore : MouseFilterEnum.Ignore;
+
         foreach (var entry in _pages) {
             var capturedId = entry.Id;
             var selected = string.Equals(capturedId, selectedPageId, StringComparison.OrdinalIgnoreCase);
@@ -89,9 +98,17 @@ public partial class ModPanelPageTabChrome : Control {
                 () => SelectPage(capturedId, fromUser: true));
             tab.CustomMinimumSize = new Vector2(0f, TabMinHeight);
             tab.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
-            _tabRow.AddChild(tab);
+            tab.SetMeta("wasSelected", selected);
+            newRow.AddChild(tab);
         }
-        RefreshTabStyles();
+
+        _tabScroll.ScrollHorizontal = 0;
+        _tabScroll.RemoveChild(_tabRow);
+        _tabRow.QueueFree();
+        _tabRow = newRow;
+        _tabScroll.AddChild(_tabRow);
+
+        RefreshTabStyles(animateSelection: false);
         RefreshTriggerIcons();
         Callable.From(() => {
             ApplyScrollGutters();
@@ -102,11 +119,21 @@ public partial class ModPanelPageTabChrome : Control {
     public void ClearPages() {
         _pages.Clear();
         _selectedPageId = "";
-        while (_tabRow.GetChildCount() > 0) {
-            var child = _tabRow.GetChild(0);
-            _tabRow.RemoveChild(child);
-            child.QueueFree();
-        }
+        _tabScroll.ScrollHorizontal = 0;
+
+        var emptyRow = new HBoxContainer {
+            Name = "ModPanelPageTabRow",
+            SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = SizeFlags.ShrinkBegin,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        emptyRow.AddThemeConstantOverride("separation", 6);
+        _tabScroll.RemoveChild(_tabRow);
+        _tabRow.QueueFree();
+        _tabRow = emptyRow;
+        _tabScroll.AddChild(_tabRow);
+
+        Modulate = new Color(1f, 1f, 1f, 0f);
         Visible = false;
         _leftTrigger.Visible = false;
         _rightTrigger.Visible = false;
@@ -152,19 +179,23 @@ public partial class ModPanelPageTabChrome : Control {
             return;
         var changed = !string.Equals(_selectedPageId, pageId, StringComparison.OrdinalIgnoreCase);
         _selectedPageId = pageId;
-        RefreshTabStyles();
+        RefreshTabStyles(animateSelection: fromUser);
         ScrollSelectedTabIntoViewDeferred();
         if (changed && fromUser)
             PageSelected?.Invoke(pageId);
     }
 
-    private void RefreshTabStyles() {
+    private void RefreshTabStyles(bool animateSelection) {
         foreach (var child in _tabRow.GetChildren()) {
             if (child is not Button b || !b.HasMeta("pageId"))
                 continue;
             var id = b.GetMeta("pageId").AsString();
-            ModPanelUI.ApplyDevModeTabButtonStyle(b,
-                string.Equals(id, _selectedPageId, StringComparison.OrdinalIgnoreCase));
+            var selected = string.Equals(id, _selectedPageId, StringComparison.OrdinalIgnoreCase);
+            var wasSelected = b.HasMeta("wasSelected") && b.GetMeta("wasSelected").AsBool();
+            ModPanelUI.ApplyDevModeTabButtonStyle(b, selected);
+            if (selected && !wasSelected && animateSelection)
+                ModPanelUiMotion.FadeIn(b, 0.12f);
+            b.SetMeta("wasSelected", selected);
         }
     }
 

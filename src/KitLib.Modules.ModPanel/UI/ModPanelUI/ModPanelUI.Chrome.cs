@@ -239,6 +239,11 @@ public static partial class ModPanelUI {
             : KitLibTheme.ButtonBgHover;
         b.AddThemeStyleboxOverride("hover", hover);
         b.AddThemeStyleboxOverride("pressed", hover);
+        var focus = (StyleBoxFlat)hover.Duplicate();
+        focus.BorderColor = new Color(accent.R, accent.G, accent.B, 0.88f);
+        focus.BorderWidthLeft = focus.BorderWidthTop = focus.BorderWidthRight = focus.BorderWidthBottom = 2;
+        b.AddThemeStyleboxOverride("focus", focus);
+        b.AddThemeStyleboxOverride("disabled", flat);
         b.AddThemeFontSizeOverride("font_size", 13);
         b.AddThemeColorOverride("font_color", selected ? KitLibTheme.TextPrimary : KitLibTheme.TextSecondary);
     }
