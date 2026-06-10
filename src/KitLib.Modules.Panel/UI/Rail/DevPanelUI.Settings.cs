@@ -10,7 +10,6 @@ namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowSettingsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
-        DevPanelHotkeySettingsUI.CancelCapture();
         var existing = ((Node)globalUi).GetNodeOrNull<Control>(SettingsRootName);
         if (existing != null) {
             ((Node)globalUi).RemoveChild(existing);
@@ -54,9 +53,6 @@ internal static partial class DevPanelUI {
         ProgressGuardPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
 
         CrashRecoveryPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
-
-        inner.AddChild(DevPanelHotkeySettingsUI.BuildSection(() =>
-            ShowSettingsOverlay(globalUi, actions)));
 
         inner.AddChild(CreateRailLayoutSection(globalUi, actions));
 
@@ -166,7 +162,7 @@ internal static partial class DevPanelUI {
     private static Control CreateModPanelPrefsHint() {
         var hint = new Label {
             Text = I18N.T("settings.modPanelPrefsHint",
-                "DevMode level, performance HUD, combat sidebar, and diagnostics: Main Menu → Mods → KitLib."),
+                "DevMode level, performance HUD, combat sidebar, hotkeys, and diagnostics: Main Menu → Mods → KitLib."),
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };

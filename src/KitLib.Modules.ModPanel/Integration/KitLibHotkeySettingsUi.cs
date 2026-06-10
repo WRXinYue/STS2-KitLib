@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib.Host;
 using KitLib.Settings;
+using KitLib.UI;
 
-namespace KitLib.UI;
+namespace KitLib.Integration;
 
-internal static class DevPanelHotkeySettingsUI {
+internal static class KitLibHotkeySettingsUi {
     private static readonly (string ActionId, string LabelKey, string LabelFallback)[] Rows = {
         (HotkeyActionId.ToggleRail, "hotkeys.toggleRail", "Toggle sidebar"),
         (HotkeyActionId.ClosePanel, "hotkeys.closePanel", "Close panel"),
@@ -21,34 +23,36 @@ internal static class DevPanelHotkeySettingsUI {
 
     private static readonly Dictionary<string, Button> BindingButtons = new(StringComparer.Ordinal);
 
-    internal static Control BuildSection(Action rebuildSettings) {
-        var col = new VBoxContainer();
-        col.AddThemeConstantOverride("separation", 6);
+    internal static Control BuildSection() {
+        var col = new VBoxContainer {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        col.AddThemeConstantOverride("separation", 8);
         BindingButtons.Clear();
 
-        col.AddChild(DevPanelUI.CreateSectionHeader(I18N.T("settings.section.hotkeys", "Keyboard shortcuts")));
-
-        col.AddChild(DevPanelUI.CreateCheatToggle(
+        col.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
             I18N.T("settings.hotkeysEnabled", "Enable keyboard shortcuts"),
             null,
             () => SettingsStore.Current.HotkeysEnabled,
             enabled => {
                 SettingsStore.SetHotkeysEnabled(enabled);
-                DevPanelUI.RefreshPeekTabHotkeyHint();
-                rebuildSettings();
+                NotifyChanged();
             }));
 
-        foreach (var (actionId, labelKey, labelFallback) in Rows) {
-            col.AddChild(CreateBindingRow(actionId, labelKey, labelFallback, rebuildSettings));
-        }
+        foreach (var (actionId, labelKey, labelFallback) in Rows)
+            col.AddChild(CreateBindingRow(actionId, labelKey, labelFallback));
 
-        var resetBtn = DevPanelUI.CreatePlainButton(I18N.T("hotkeys.reset", "Reset shortcuts to defaults"));
+        var resetBtn = new Button {
+            Text = I18N.T("hotkeys.reset", "Reset shortcuts to defaults"),
+            FocusMode = Control.FocusModeEnum.All,
+        };
+        DevModeFormChrome.ApplyAccentPillButton(resetBtn);
         resetBtn.Pressed += () => {
-            HotkeyCapture.Cancel();
+            CancelCapture();
             SettingsStore.ResetHotkeys();
-            DevPanelUI.RefreshPeekTabHotkeyHint();
+            NotifyChanged();
             RefreshAllBindingButtons();
-            rebuildSettings();
         };
         col.AddChild(resetBtn);
 
@@ -57,39 +61,25 @@ internal static class DevPanelHotkeySettingsUI {
 
     internal static void CancelCapture() => HotkeyCapture.Cancel();
 
-    private static Control CreateBindingRow(
-        string actionId,
-        string labelKey,
-        string labelFallback,
-        Action rebuildSettings) {
-        var row = new HBoxContainer();
-        row.AddThemeConstantOverride("separation", 8);
-        row.CustomMinimumSize = new Vector2(0, 32);
-
-        var lbl = new Label {
-            Text = I18N.T(labelKey, labelFallback),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            ClipText = true
-        };
-        lbl.AddThemeFontSizeOverride("font_size", 12);
-        lbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
-        row.AddChild(lbl);
-
+    private static Control CreateBindingRow(string actionId, string labelKey, string labelFallback) {
         var bindBtn = new Button {
-            CustomMinimumSize = new Vector2(140, 28),
-            FocusMode = Control.FocusModeEnum.None
+            CustomMinimumSize = new Vector2(DevModeFormChrome.Metrics.ChoiceRowMinWidth,
+                DevModeFormChrome.Metrics.ValueColumnMinHeight),
+            FocusMode = Control.FocusModeEnum.All,
         };
-        bindBtn.AddThemeFontSizeOverride("font_size", 11);
         StyleBindingButton(bindBtn, listening: false);
+        DevModeFormChrome.WireRoundedFieldFocusMotion(bindBtn);
         UpdateBindingButtonText(bindBtn, actionId);
-        bindBtn.Pressed += () => BeginListening(actionId, bindBtn, rebuildSettings);
+        bindBtn.Pressed += () => BeginListening(actionId, bindBtn);
         BindingButtons[actionId] = bindBtn;
-        row.AddChild(bindBtn);
 
-        return row;
+        return DevModeFormChrome.CreateLabeledValueRow(
+            I18N.T(labelKey, labelFallback),
+            null,
+            bindBtn);
     }
 
-    private static void BeginListening(string actionId, Button bindBtn, Action rebuildSettings) {
+    private static void BeginListening(string actionId, Button bindBtn) {
         if (HotkeyCapture.IsListening) {
             HotkeyCapture.Cancel();
             RefreshAllBindingButtons();
@@ -109,11 +99,11 @@ internal static class DevPanelHotkeySettingsUI {
                 return;
             }
 
-            if (actionId == HotkeyActionId.ToggleRail)
-                DevPanelUI.RefreshPeekTabHotkeyHint();
-            rebuildSettings();
+            NotifyChanged();
         });
     }
+
+    private static void NotifyChanged() => KitLibHost.NotifyHotkeySettingsChanged?.Invoke();
 
     private static void RefreshAllBindingButtons() {
         foreach (var (actionId, btn) in BindingButtons) {
@@ -131,28 +121,30 @@ internal static class DevPanelHotkeySettingsUI {
     }
 
     private static void StyleBindingButton(Button btn, bool listening) {
-        var bg = listening ? KitLibTheme.Accent : KitLibTheme.PanelBg;
-        var border = listening ? KitLibTheme.Accent : KitLibTheme.PanelBorder;
-        var sb = new StyleBoxFlat {
-            BgColor = bg,
-            BorderColor = border,
-            BorderWidthBottom = 1,
-            BorderWidthTop = 1,
-            BorderWidthLeft = 1,
-            BorderWidthRight = 1,
-            CornerRadiusBottomLeft = 6,
-            CornerRadiusBottomRight = 6,
-            CornerRadiusTopLeft = 6,
-            CornerRadiusTopRight = 6,
-            ContentMarginLeft = 8,
-            ContentMarginRight = 8,
-            ContentMarginTop = 4,
-            ContentMarginBottom = 4
-        };
+        var sb = listening
+            ? new StyleBoxFlat {
+                BgColor = KitLibTheme.Accent,
+                BorderColor = KitLibTheme.Accent,
+                BorderWidthBottom = 2,
+                BorderWidthTop = 2,
+                BorderWidthLeft = 2,
+                BorderWidthRight = 2,
+                CornerRadiusBottomLeft = 8,
+                CornerRadiusBottomRight = 8,
+                CornerRadiusTopLeft = 8,
+                CornerRadiusTopRight = 8,
+                ContentMarginLeft = 11,
+                ContentMarginRight = 11,
+                ContentMarginTop = 7,
+                ContentMarginBottom = 7,
+            }
+            : DevModeFormChrome.RoundedField(false);
+        var hover = listening ? sb : DevModeFormChrome.RoundedField(true);
         btn.AddThemeStyleboxOverride("normal", sb);
-        btn.AddThemeStyleboxOverride("hover", sb);
-        btn.AddThemeStyleboxOverride("pressed", sb);
-        btn.AddThemeStyleboxOverride("focus", sb);
+        btn.AddThemeStyleboxOverride("hover", hover);
+        btn.AddThemeStyleboxOverride("pressed", hover);
+        btn.AddThemeStyleboxOverride("focus", hover);
+        btn.AddThemeFontSizeOverride("font_size", 14);
         btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
     }
 }

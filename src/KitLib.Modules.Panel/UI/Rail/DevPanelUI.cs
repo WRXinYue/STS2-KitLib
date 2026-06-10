@@ -368,7 +368,7 @@ internal static partial class DevPanelUI {
 
     // ──────── Detach ────────
     public static void Detach(NGlobalUi globalUi) {
-        DevPanelHotkeySettingsUI.CancelCapture();
+        KitLib.Integration.KitLibHotkeySettingsUi.CancelCapture();
         _railGlobalUi = null;
         _activeOverlayId = null;
         ResetRailHotkeyState();

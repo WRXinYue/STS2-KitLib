@@ -2,6 +2,7 @@ using Godot;
 using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.ModPanel.Diagnostics;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
@@ -80,6 +81,7 @@ public partial class ModPanelSubmenu : NSubmenu {
 
     public override void OnSubmenuClosed() {
         DisableTabHotkeys();
+        KitLibHotkeySettingsUi.CancelCapture();
         ModRuntime.LoadSettings.Persist();
         RitsuModSettingsEmbedHost.FlushDirtyBindings();
         ModPanelUI.OnSubmenuPopped(this);
@@ -88,6 +90,8 @@ public partial class ModPanelSubmenu : NSubmenu {
 
     public override void _Input(InputEvent @event) {
         if (!ActiveScreenContext.Instance.IsCurrent(this))
+            return;
+        if (HotkeyCapture.TryCapture(@event, GetViewport()!))
             return;
         if (TryHandleControllerInput(@event)) {
             GetViewport()?.SetInputAsHandled();

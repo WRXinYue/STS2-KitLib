@@ -25,6 +25,13 @@ internal static class KitLibNativeModSettingsBootstrap {
             SortOrder = 10,
             BuildBody = BuildPerformancePage,
         });
+        KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
+            ModId = modId,
+            PageId = "hotkeys",
+            Title = I18N.T("modpanel.kitlib.page.hotkeys", "Hotkeys"),
+            SortOrder = 20,
+            BuildBody = BuildHotkeysPage,
+        });
     }
 
     static Control BuildGeneralPage() {
@@ -53,7 +60,7 @@ internal static class KitLibNativeModSettingsBootstrap {
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
             I18N.T("perfHud.enabled", "Performance overlay"),
             I18N.T("perfHud.enabled.desc",
-                "Fixed top-right debug text for transitions, warmup, and frame spikes. Rebind the toggle hotkey in DevPanel → Settings → Keyboard shortcuts."),
+                "Fixed top-right debug text for transitions, warmup, and frame spikes. Rebind the toggle hotkey on the Hotkeys page."),
             () => SettingsStore.Current.PerfHudEnabled,
             enabled => {
                 SettingsStore.SetPerfHudEnabled(enabled);
@@ -65,6 +72,12 @@ internal static class KitLibNativeModSettingsBootstrap {
                 "Append CSV lines to instances/{pid}/perf-trace.log when transitions or frame spikes are logged."),
             () => SettingsStore.Current.PerfHudTraceToFile,
             SettingsStore.SetPerfHudTraceToFile));
+        return stack;
+    }
+
+    static Control BuildHotkeysPage() {
+        var stack = CreatePageStack();
+        stack.AddChild(KitLibHotkeySettingsUi.BuildSection());
         return stack;
     }
 
