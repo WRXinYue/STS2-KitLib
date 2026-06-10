@@ -19,6 +19,7 @@
   "modpanel.content.ritsuNotLoaded": "未加载 STS2-RitsuLib。安装或启用后可在此扫描已注册的模组设置。",
   "modpanel.content.buildFailed": "无法构建面板界面：{0}",
   "modpanel.content.embedHostFailed": "无法初始化 RitsuLib 设置宿主。",
+  "modpanel.content.noSettingsPages": "该模组没有已注册的设置页。",
   "modpanel.kitlib.page.general": "常规",
   "modpanel.kitlib.page.performance": "性能",
   "modpanel.kitlib.page.hotkeys": "快捷键",

@@ -266,19 +266,6 @@ public static partial class ModPanelUI {
         headerClip.AddChild(modHeaderOuter);
         modHeaderOuter.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         mainVBox.AddChild(headerClip);
-        var cardToListDivider = new MarginContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
-        };
-        cardToListDivider.AddThemeConstantOverride("margin_left", ModPanelUiMetrics.SidebarContentMarginH);
-        cardToListDivider.AddThemeConstantOverride("margin_right", ModPanelUiMetrics.SidebarContentMarginH);
-        cardToListDivider.AddThemeConstantOverride("margin_top", 0);
-        cardToListDivider.AddThemeConstantOverride("margin_bottom", 0);
-        var dividerLine = CreateSidebarScrollTopDivider();
-        dividerLine.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        cardToListDivider.AddChild(dividerLine);
-        mainVBox.AddChild(cardToListDivider);
         var listFrame = new MarginContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -293,7 +280,7 @@ public static partial class ModPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
-        listHeader.AddThemeConstantOverride("separation", 6);
+        listHeader.AddThemeConstantOverride("separation", 0);
         listFrame.AddChild(listHeader);
         var gameBuild = ModPanelModBanner.TryResolveGameBuildVersion();
         if (!string.IsNullOrWhiteSpace(gameBuild)) {
@@ -322,13 +309,13 @@ public static partial class ModPanelUI {
         };
         listHeader.AddChild(pendingRestartBanner);
         var scroll = SidebarModListScrollBuilder.Create(out var scrollInner);
-        scrollInner.AddThemeConstantOverride("separation", 10);
+        scrollInner.AddThemeConstantOverride("separation", 0);
         var modButtonList = new VBoxContainer {
             Name = "ModPanelSidebarModList",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore,
         };
-        modButtonList.AddThemeConstantOverride("separation", 8);
+        modButtonList.AddThemeConstantOverride("separation", 0);
         scrollInner.AddChild(modButtonList);
         var sidebarPlan = ModPanelSidebarPlanner.Plan(
             ModRuntime.Registry.GetAllEntries(),
@@ -443,7 +430,7 @@ public static partial class ModPanelUI {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                 };
-                section.AddThemeConstantOverride("separation", 8);
+                section.AddThemeConstantOverride("separation", 0);
                 modButtonList.AddChild(section);
                 var card = new PanelContainer {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -456,7 +443,7 @@ public static partial class ModPanelUI {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                 };
-                cardContent.AddThemeConstantOverride("separation", 8);
+                cardContent.AddThemeConstantOverride("separation", 0);
                 card.AddChild(cardContent);
                 var innerStyle = new StyleBoxFlat();
                 var rowHost = new Control {
@@ -543,6 +530,9 @@ public static partial class ModPanelUI {
             Callable.From(() => SelectMod(deferredInitial)).CallDeferred();
         }
         RefreshPendingRestartBanner();
+        var dividerLine = CreateSidebarScrollTopDivider();
+        dividerLine.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        listHeader.AddChild(dividerLine);
         listHeader.AddChild(scroll);
         SidebarModListScrollBuilder.ResetScrollTopDeferred(scroll);
         var sidebarLower = new VBoxContainer {
@@ -781,6 +771,19 @@ public static partial class ModPanelUI {
         return (panel, contentList, pageTabChrome);
     }
 
+    private static void FinishSettingsBodyPresentation(Control body) {
+        if (!GodotObject.IsInstanceValid(body))
+            return;
+        ModSettingsRitsuFormDevTheme.ApplyToSubtree(body);
+    }
+
+    private static void PresentNoSettingsContent(VBoxContainer list, ModPanelPageTabChrome pageTabChrome,
+        int generation) {
+        pageTabChrome.ClearPages();
+        ModPanelContentMotion.Present(list, generation, CreateInlineDescription(
+            I18N.T("modpanel.content.noSettingsPages", "This mod has no registered settings pages.")));
+    }
+
     private static string ResolveInitialPageId(string modId) {
         if (KitLibModSettingsRegistry.HasPages(modId)) {
             var pages = KitLibModSettingsRegistry.GetPages(modId);
@@ -833,7 +836,7 @@ public static partial class ModPanelUI {
             }
         }
         if (active == null) {
-            ModPanelContentMotion.CancelGeneration(generation);
+            PresentNoSettingsContent(list, pageTabChrome, generation);
             return true;
         }
 
@@ -847,13 +850,8 @@ public static partial class ModPanelUI {
             ModPanelPerf.Log("refresh.total", perf, $"modId={modId} pageId={state.PageId} path=native invalidBody");
             return true;
         }
+        FinishSettingsBodyPresentation(body);
         ModPanelContentMotion.Present(list, generation, body);
-        var bodyRef = body;
-        Callable.From(() => {
-            if (!GodotObject.IsInstanceValid(bodyRef))
-                return;
-            ModSettingsRitsuFormDevTheme.ApplyToSubtree(bodyRef);
-        }).CallDeferred();
         ModPanelPerf.Log("refresh.total", perf, $"modId={modId} pageId={state.PageId} path=native");
         return true;
     }
@@ -873,7 +871,7 @@ public static partial class ModPanelUI {
         ModPanelPerf.Log("refresh.ritsuEnumerate", reflectSw, $"count={pages.Count}");
         if (pages.Count == 0) {
             MainFile.Logger.Info($"KitLib ModPanel: no registered settings pages for mod '{modId}'.");
-            ModPanelContentMotion.CancelGeneration(generation);
+            PresentNoSettingsContent(list, pageTabChrome, generation);
             return;
         }
         var validIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -894,7 +892,7 @@ public static partial class ModPanelUI {
             }
         }
         if (activePage == null) {
-            ModPanelContentMotion.CancelGeneration(generation);
+            PresentNoSettingsContent(list, pageTabChrome, generation);
             return;
         }
         var submenu = RitsuModSettingsEmbedHost.TryGetSubmenu();
@@ -922,13 +920,8 @@ public static partial class ModPanelUI {
                 I18N.T("modpanel.content.buildFailed", "Could not build panel UI: {0}"), err ?? "—")));
             return;
         }
+        FinishSettingsBodyPresentation(body);
         ModPanelContentMotion.Present(list, generation, body);
-        var bodyRef = body;
-        Callable.From(() => {
-            if (!GodotObject.IsInstanceValid(bodyRef))
-                return;
-            ModSettingsRitsuFormDevTheme.ApplyToSubtree(bodyRef);
-        }).CallDeferred();
     }
     private sealed class ModPanelContentState {
         public string PageId = "";

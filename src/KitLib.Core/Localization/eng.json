@@ -19,6 +19,7 @@
   "modpanel.content.ritsuNotLoaded": "STS2-RitsuLib is not loaded. Install/enable it to scan registered mod settings here.",
   "modpanel.content.buildFailed": "Could not build panel UI: {0}",
   "modpanel.content.embedHostFailed": "Could not initialize the RitsuLib settings host.",
+  "modpanel.content.noSettingsPages": "This mod has no registered settings pages.",
   "modpanel.kitlib.page.general": "General",
   "modpanel.kitlib.page.performance": "Performance",
   "modpanel.kitlib.page.hotkeys": "Hotkeys",
