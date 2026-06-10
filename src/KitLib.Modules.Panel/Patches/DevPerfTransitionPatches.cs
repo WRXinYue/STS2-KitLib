@@ -78,8 +78,8 @@ internal static class DevPerfEnterMapPointPatch {
 }
 
 [HarmonyPatch(typeof(SaveSlotManager), nameof(SaveSlotManager.SaveSnapshotToFiles))]
-internal static class DevPerfSaveRunPatch {
-    const string Key = "SaveRun";
+internal static class DevPerfDevSnapshotSavePatch {
+    const string Key = "SaveRun.dev";
 
     [HarmonyPrefix]
     static void Prefix() {

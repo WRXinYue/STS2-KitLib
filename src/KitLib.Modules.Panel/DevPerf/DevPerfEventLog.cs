@@ -5,9 +5,10 @@ namespace KitLib.DevPerf;
 internal static class DevPerfEventLog {
     static readonly DevPerfLogRateLimiter SpikeLimiter = new();
 
-    internal static void LogTransition(string name, long elapsedMs) {
+    internal static void LogTransition(string name, long elapsedMs, int? assetCount = null) {
         DevPerfTransitionStore.Record(name, elapsedMs);
-        MainFile.Logger.Info($"[Perf] {name} {elapsedMs}ms");
+        var assets = assetCount.HasValue ? $" assets={assetCount.Value}" : "";
+        MainFile.Logger.Info($"[Perf] {name} {elapsedMs}ms{assets}");
         DevPerfTraceWriter.TryAppendTransition(name, elapsedMs);
     }
 
@@ -18,4 +19,7 @@ internal static class DevPerfEventLog {
         MainFile.Logger.Info($"[Perf] Frame spike {elapsedMs:F0}ms");
         DevPerfTraceWriter.TryAppendFrameSpike(elapsedMs);
     }
+
+    internal static void LogDetail(string message) =>
+        MainFile.Logger.Info($"[Perf] {message}");
 }
