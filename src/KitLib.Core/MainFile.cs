@@ -13,6 +13,7 @@ public class MainFile {
     public static void Initialize() {
         Logger.Info("KitLib Core initializing...");
         ModDependencyLoader.EnsureLoaded();
+        Sts2RuntimeProfile.Initialize();
         KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID);
         KitLibHost.Bootstrap();
         I18N.Initialize();

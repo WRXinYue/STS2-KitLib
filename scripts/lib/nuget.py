@@ -56,9 +56,6 @@ def run_pack(
         "-p:PackKitLib=true",
         f"-p:PackageVersion={package_version}",
     ]
-    if beta:
-        cmd.append("-p:Sts2Beta=true")
-
     subprocess.run(cmd, cwd=repo_root, check=True)
 
     matches = sorted(out_dir.glob("*.nupkg"), key=lambda p: p.stat().st_mtime, reverse=True)

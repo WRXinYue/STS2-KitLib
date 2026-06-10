@@ -1,4 +1,5 @@
 using System;
+using KitLib;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -117,11 +118,9 @@ internal static class PresetManager {
 
         if (effective.HasFlag(PresetContents.Cards)) {
             try {
-#if STS2_BETA
-                var combatState = player.Creature?.CombatState as MegaCrit.Sts2.Core.Combat.CombatState;
-#else
-                var combatState = player.Creature?.CombatState;
-#endif
+                var combatState = player.Creature != null
+                    ? Sts2CombatCompat.GetCreatureCombatState(player.Creature)
+                    : null;
 
                 if (inCombat && combatState != null) {
                     var combatCards = new List<CardModel>();
@@ -166,11 +165,8 @@ internal static class PresetManager {
                                 var combatCard = combatState.CreateCard(model.CanonicalInstance, player);
                                 for (int u = 0; u < entry.UpgradeLevel; u++)
                                     CardCmd.Upgrade(combatCard);
-#if STS2_BETA
-                                await CardPileCmd.AddGeneratedCardToCombat(combatCard, PileType.Draw, player);
-#else
-                                await CardPileCmd.AddGeneratedCardToCombat(combatCard, PileType.Draw, addedByPlayer: true);
-#endif
+                                await Sts2CardPileCompat.AddGeneratedCardToCombatAsync(
+                                    combatCard, PileType.Draw, player);
                                 combatCard.Pile?.InvokeCardAddFinished();
                             }
                         }
@@ -255,11 +251,7 @@ internal static class PresetManager {
                 var combatCard = combatState.CreateCard(model.CanonicalInstance, player);
                 for (int u = 0; u < entry.UpgradeLevel; u++)
                     CardCmd.Upgrade(combatCard);
-#if STS2_BETA
-                await CardPileCmd.AddGeneratedCardToCombat(combatCard, pileType, player);
-#else
-                await CardPileCmd.AddGeneratedCardToCombat(combatCard, pileType, addedByPlayer: true);
-#endif
+                await Sts2CardPileCompat.AddGeneratedCardToCombatAsync(combatCard, pileType, player);
                 if (pileType is PileType.Draw or PileType.Discard)
                     combatCard.Pile?.InvokeCardAddFinished();
             }

@@ -1,8 +1,10 @@
 using HarmonyLib;
+using KitLib.Abstractions.Compat;
 using KitLib.Actions;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using KitLib;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace KitLib.Patches;
@@ -14,6 +16,8 @@ namespace KitLib.Patches;
 /// </summary>
 [HarmonyPatch(typeof(NCombatRoom), nameof(NCombatRoom.AddCreature))]
 internal static class CombatSummonSlotNormalizePatch {
+    static bool Prepare() => Sts2RuntimeProfile.Current == Sts2GameProfile.StablePre106;
+
     static void Prefix(Creature creature) {
         if (string.IsNullOrEmpty(creature.SlotName))
             creature.SlotName = null;

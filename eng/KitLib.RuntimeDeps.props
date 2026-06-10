@@ -1,0 +1,15 @@
+<Project>
+  <!-- KitLib.Abstractions NuGet runtime deps staged next to KitLib.dll for game deploy. -->
+  <PropertyGroup>
+    <_KitLibRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_KitLibRepoRoot>
+    <_KitLibRepoRoot Condition="'$(_KitLibRepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</_KitLibRepoRoot>
+    <_SemverDll>$(_KitLibRepoRoot)packages\semver\3.0.0\lib\net5.0\Semver.dll</_SemverDll>
+    <_PrimitivesDll>$(_KitLibRepoRoot)packages\microsoft.extensions.primitives\5.0.1\lib\netcoreapp3.0\Microsoft.Extensions.Primitives.dll</_PrimitivesDll>
+    <_AbstractionsDll>$(MSBuildProjectDirectory)\..\KitLib.Abstractions\bin\$(Configuration)\net9.0\KitLib.Abstractions.dll</_AbstractionsDll>
+  </PropertyGroup>
+  <Target Name="CopyKitLibAbstractionsRuntimeDeps" AfterTargets="Build">
+    <Copy SourceFiles="$(_SemverDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(_SemverDll)')" />
+    <Copy SourceFiles="$(_PrimitivesDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(_PrimitivesDll)')" />
+    <Copy SourceFiles="$(_AbstractionsDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(_AbstractionsDll)')" />
+  </Target>
+</Project>

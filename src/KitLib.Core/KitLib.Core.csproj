@@ -1,5 +1,6 @@
 <Project Sdk="Godot.NET.Sdk/4.5.1">
   <Import Project="$(RepoRoot)eng\KitLib.Core.Compile.props" />
+  <Import Project="$(RepoRoot)eng\KitLib.RuntimeDeps.props" />
 
   <PropertyGroup>
     <GodotProjectDir>$(MSBuildThisFileDirectory).no-godot</GodotProjectDir>
@@ -25,8 +26,6 @@
     <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' != 'Windows_NT'">python3</KitLibPython>
     <!-- Default off during sync/deploy so KitLib does not overwrite mods/STS2-RitsuLib (other mods e.g. LustTravel2 use a different package). -->
     <DisableFrameworkModsAfterRestore Condition="'$(DisableFrameworkModsAfterRestore)' == ''">true</DisableFrameworkModsAfterRestore>
-    <!-- Set Sts2Beta=true in local.props when building against the Steam beta branch -->
-    <DefineConstants Condition="'$(Sts2Beta)' == 'true'">$(DefineConstants);STS2_BETA</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(DeployToGame)' == 'false'">
@@ -44,8 +43,7 @@
     <IsPackable>true</IsPackable>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-    <PackageId Condition="'$(Sts2Beta)' != 'true'">STS2.KitLib</PackageId>
-    <PackageId Condition="'$(Sts2Beta)' == 'true'">STS2.KitLib.Beta</PackageId>
+    <PackageId>STS2.KitLib</PackageId>
     <Title>KitLib for Slay the Spire 2</Title>
     <Authors>WRXinYue</Authors>
     <Description>Modular in-game toolkit for Slay the Spire 2 — install Content/KitLib into the game mods folder.</Description>
@@ -73,6 +71,10 @@
     </ItemGroup>
   </Target>
 
+
+  <ItemGroup>
+    <ProjectReference Include="..\KitLib.Abstractions\KitLib.Abstractions.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="sts2">
@@ -162,6 +164,8 @@
     <MakeDir Directories="$(ModsDir)\" />
     <Copy SourceFiles="$(RepoBuildDir)\$(ModId).dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\KitLib.Abstractions.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.Abstractions.dll')" />
+    <Copy SourceFiles="$(RepoBuildDir)\Semver.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Semver.dll')" />
+    <Copy SourceFiles="$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
   </Target>
 </Project>

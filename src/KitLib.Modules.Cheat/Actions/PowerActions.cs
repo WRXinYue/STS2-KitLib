@@ -1,4 +1,5 @@
 using System;
+using KitLib;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -160,11 +161,7 @@ internal static class PowerActions {
     private static async Task ApplyPower(PowerModel power, int amount, Creature target, Creature source) {
         try {
             var mutable = power.ToMutable(0);
-#if STS2_BETA
-            await PowerCmd.Apply(new BlockingPlayerChoiceContext(), mutable, target, (decimal)amount, source, null, false);
-#else
-            await PowerCmd.Apply(mutable, target, (decimal)amount, source, null, false);
-#endif
+            await Sts2PowerCompat.ApplyAsync(mutable, target, amount, source);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"[KitLib] ApplyPower failed ({((AbstractModel)power).Id.Entry}): {ex.Message}");

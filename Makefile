@@ -48,14 +48,15 @@ DEPLOY_TOOLS_BUILD := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID)
 
 # Use -p: (not /p:) so Git Bash on Windows does not treat /p:... as a MSYS path.
 DEPLOY_TO_GAME := -p:DeployToGame=true
-BETA_FLAG     := -p:Sts2Beta=true
 # Copy build/KitLib/ into mods/KitLib/ only — never republish into the game tree.
 DEPLOY_COPY   := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployRepoBuildToMods -p:DeployFromRepoBuild=true
 
-# STS2 Steam beta branch game version (update when Megacrit bumps beta; see beta install release_info.json).
-STS2_GAME_BETA_VERSION ?= 0.105.1
+# Last STS2 game version used for manual smoke (unified build supports stable + beta via runtime profile).
+STS2_GAME_TESTED_VERSION ?= 0.106.1
+# Legacy aliases for upload scripts that still accept --sts2-beta-version.
+STS2_GAME_BETA_VERSION ?= $(STS2_GAME_TESTED_VERSION)
 BETA_STS2_VER_ARG := --sts2-beta-version $(STS2_GAME_BETA_VERSION)
-ZIP_BETA_TAG := -sts2beta-v$(STS2_GAME_BETA_VERSION)
+ZIP_BETA_TAG := -sts2tested-v$(STS2_GAME_TESTED_VERSION)
 ZIP_NAME_BETA := build/KitLib-v$(VERSION)$(ZIP_BETA_TAG).zip
 ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
 ZIP_KITLOG_NAME := build/KitLog.Cli-v$(VERSION)-$(TOOLS_RID).zip
@@ -115,12 +116,12 @@ help:
 	@echo "  build-kitlog publish kitlog self-contained to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
 	@echo "  zip-kitlog   build-kitlog + package build/KitLog.Cli-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
-	@echo "  sync-beta         build-beta + deploy-beta (STS2 Steam beta; Sts2Dir = beta install)"
-	@echo "  sync-beta-launch  sync-beta + launch game (same as LAUNCH=1 make sync-beta)"
-	@echo "  build-beta        publish to build/KitLib/ only (STS2 Steam beta)"
-	@echo "  deploy-beta  copy build/KitLib/ into game mods/KitLib/ (STS2 Steam beta)"
-	@echo "  compile-beta dotnet build to game mods, no .pck (STS2 Steam beta)"
-	@echo "  pck-beta     dotnet publish to game mods + .pck (STS2 Steam beta)"
+	@echo "  sync-beta         alias for sync (unified build; point Sts2Dir at beta or stable install)"
+	@echo "  sync-beta-launch  alias for sync-launch"
+	@echo "  build-beta        alias for build"
+	@echo "  deploy-beta       alias for deploy"
+	@echo "  compile-beta      alias for compile"
+	@echo "  pck-beta          alias for pck"
 	@echo ""
 	@echo "  zip          build + package build/KitLib-vX.X.X.zip"
 	@echo ""
@@ -195,19 +196,16 @@ sync-framework-mods:
 compile: deps
 	$(DOTNET) build $(DEPLOY_TO_GAME) $(MOD_MAIN)
 
-build-beta:
-	$(DOTNET) publish $(BETA_FLAG) $(MOD_MAIN)
+build-beta: build
 
-deploy-beta:
-	$(DEPLOY_COPY)
+deploy-beta: deploy
 
-sync-beta: build-beta deploy-beta
+sync-beta: sync
 ifneq ($(LAUNCH),)
 	$(PYTHON) scripts/launch_sts2.py
 endif
 
-sync-beta-launch sync-beta-run: sync-beta
-	$(PYTHON) scripts/launch_sts2.py
+sync-beta-launch sync-beta-run: sync-launch
 
 launch launch-beta:
 	$(PYTHON) scripts/launch_sts2.py
@@ -235,14 +233,12 @@ compile-kitlog:
 build-kitlog:
 	$(DOTNET) publish $(KITLOG_PROJECT) $(KITLOG_PUBLISH_FLAGS)
 
-compile-beta: deps
-	$(DOTNET) build $(DEPLOY_TO_GAME) $(BETA_FLAG) $(MOD_MAIN)
+compile-beta: compile
 
 pck: deps
 	$(DOTNET) publish $(DEPLOY_TO_GAME) $(MOD_MAIN)
 
-pck-beta: deps
-	$(DOTNET) publish $(DEPLOY_TO_GAME) $(BETA_FLAG) $(MOD_MAIN)
+pck-beta: pck
 
 publish upload-github:
 	$(PYTHON) scripts/publish_release.py $(if $(VERSION),--version $(VERSION),)
@@ -304,8 +300,8 @@ zip-beta: build-beta
 	@xcopy /s /y /q editor\* build\dist\KitLib\editor\ >nul
 	$(PYTHON) -c "import zipfile,os;z=zipfile.ZipFile('$(ZIP_NAME_BETA)','w',zipfile.ZIP_DEFLATED);[z.write(os.path.join(r,f),os.path.join(os.path.relpath(r,'build/dist'),f)) for r,_,fs in os.walk('build/dist/KitLib') for f in fs];z.close()"
 	@echo.
-	@echo Done: $(ZIP_NAME_BETA)  (STS2 Steam beta v$(STS2_GAME_BETA_VERSION))
-	@echo Install: extract into "Slay the Spire 2" beta branch mods folder
+	@echo Done: $(ZIP_NAME_BETA)  (last smoke-tested STS2 v$(STS2_GAME_TESTED_VERSION))
+	@echo Install: extract into Slay the Spire 2 mods folder (stable or beta)
 
 zip: build
 	@if not exist build\KitLib\KitLib.pck (echo ERROR: KitLib.pck not found. Set GodotPath in local.props ^(make init^) and rebuild. & exit /b 1)
@@ -345,8 +341,8 @@ zip-beta: build-beta
 	rm -f $(ZIP_NAME_BETA)
 	cd build/dist && zip -qr ../KitLib-v$(VERSION)$(ZIP_BETA_TAG).zip KitLib
 	@echo ""
-	@echo "Done: $(ZIP_NAME_BETA)  (STS2 Steam beta v$(STS2_GAME_BETA_VERSION))"
-	@echo 'Install: extract into "Slay the Spire 2" beta branch mods/'
+	@echo "Done: $(ZIP_NAME_BETA)  (last smoke-tested STS2 v$(STS2_GAME_TESTED_VERSION))"
+	@echo 'Install: extract into Slay the Spire 2 mods/ (stable or beta)'
 
 zip: build
 	@test -f build/KitLib/KitLib.pck || (echo "ERROR: KitLib.pck not found. Set GodotPath in local.props (make init) and rebuild." >&2; exit 1)

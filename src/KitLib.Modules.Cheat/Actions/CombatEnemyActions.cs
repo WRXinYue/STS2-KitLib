@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
+using KitLib;
 using KitLib.Combat;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Assets;
@@ -28,11 +29,9 @@ internal static class CombatEnemyActions {
     /// <summary>Get the current combat state, or null if not in combat.</summary>
     public static CombatState? GetCombatState() {
         if (!RunContext.TryGetRunAndPlayer(out _, out var player)) return null;
-#if STS2_BETA
-        return player.Creature?.CombatState as CombatState;
-#else
-        return player.Creature?.CombatState;
-#endif
+        return player.Creature != null
+            ? Sts2CombatCompat.GetCreatureCombatState(player.Creature)
+            : null;
     }
 
     /// <summary>Get current enemies in combat.</summary>

@@ -58,11 +58,11 @@ Megacrit **beta 合入 stable** 或 bump 游戏版本后过一遍：
 - `AddCreature` 仍用 `SlotName != null`（不把 `""` 当无槽）→ **patch 仍有必要**（Fabricator、`GetNextSlot` 等路径仍会传 `""`）。
 - 若 vanilla 改为 `!string.IsNullOrEmpty(SlotName)` 且 `GetNextSlot` 无槽时返回 `null` → 可评估 **移除 Normalize patch**，但 Postfix 重排仍建议保留（DevMode 无 scene 遭遇加怪排版）。
 
-### 3. DevMode 构建目标
+### 3. KitLib 统一构建与回归
 
-- **stable 包**：`local.props` 里 `Sts2Beta=false`（或不设），对照 `Slay the Spire 2` 源码。
-- **beta 包**：`Sts2Beta=true` + `make sync-beta`，对照 beta 安装目录源码。
-- 两套都要测：**BYRDONIS_ELITE（或任意无槽位战）→ mid-combat 加 Ovicopter → 等下蛋**，确认不抛 `EncounterSlots is null`。
+- **单构建**：`make sync` / `make sync-full`（`Sts2Dir` 指向 beta 或 stable 安装目录用于编译对照 `sts2.dll`）。
+- **运行时**：`Sts2RuntimeProfile` 按游戏版本 + 平台选择 API profile（stable `0.105.x` vs beta `0.106.x`）。
+- 两套游戏安装都要测：**BYRDONIS_ELITE（或任意无槽位战）→ mid-combat 加 Ovicopter → 等下蛋**，确认不抛 `EncounterSlots is null`。
 
 ## 参考
 

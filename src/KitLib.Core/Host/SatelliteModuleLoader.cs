@@ -49,6 +49,13 @@ internal static class SatelliteModuleLoader {
     }
 
     static bool TryLoadModule(string modDir, ModuleSpec spec) {
+        if (!Sts2RuntimeProfile.AllowHighRiskModules
+            && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
+            MainFile.Logger.Warn(
+                $"[KitLib] Module {spec.ModuleId} skipped — STS2 profile {Sts2RuntimeProfile.Current} is unsupported or sanity mismatch.");
+            return false;
+        }
+
         if (ModuleCatalog.IsLoaded(spec.ModuleId)) {
             MainFile.Logger.Info($"[KitLib] Module {spec.ModuleId} already active — skipping bundled load.");
             return true;

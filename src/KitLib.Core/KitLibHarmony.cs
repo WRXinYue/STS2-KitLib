@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 
@@ -15,7 +16,24 @@ public static class KitLibHarmony {
             return;
 
         var harmony = new Harmony(harmonyId);
-        harmony.PatchAll(moduleAssembly);
-        MainFile.Logger.Info($"KitLib Harmony patches applied: {harmonyId}");
+        var patchTypes = AccessTools.GetTypesFromAssembly(moduleAssembly)
+            .Where(t => t.GetCustomAttributes(typeof(HarmonyPatch), inherit: false).Length > 0)
+            .ToList();
+
+        int applied = 0;
+        int skipped = 0;
+        foreach (var type in patchTypes) {
+            try {
+                harmony.CreateClassProcessor(type).Patch();
+                applied++;
+            }
+            catch (Exception ex) {
+                skipped++;
+                MainFile.Logger.Warn($"KitLib Harmony skipped patch type {type.FullName}: {ex.Message}");
+            }
+        }
+
+        MainFile.Logger.Info(
+            $"KitLib Harmony patches applied: {harmonyId} ({applied} types, {skipped} skipped).");
     }
 }

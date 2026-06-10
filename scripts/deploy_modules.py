@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -37,6 +38,49 @@ _SKIP_DEPLOY_NAMES: set[str] = set()
 
 CORE_DLL = "KitLib.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
+ABSTRACTIONS_RUNTIME_DLLS = [
+    "Semver.dll",
+    "Microsoft.Extensions.Primitives.dll",
+]
+
+
+def _nuget_package_roots() -> list[Path]:
+    roots: list[Path] = []
+    env = os.environ.get("NUGET_PACKAGES")
+    if env:
+        roots.append(Path(env))
+    repo_packages = _REPO / "packages"
+    if repo_packages.is_dir():
+        roots.append(repo_packages)
+    global_packages = Path.home() / ".nuget" / "packages"
+    if global_packages.is_dir():
+        roots.append(global_packages)
+    return roots
+
+
+def _resolve_nuget_lib_dll(package_folder: str, dll_name: str) -> Path | None:
+    lib_candidates = [
+        "lib/net9.0",
+        "lib/net8.0",
+        "lib/net6.0",
+        "lib/net5.0",
+        "lib/netstandard2.1",
+        "lib/netstandard2.0",
+        "lib/netcoreapp3.0",
+    ]
+    for packages_root in _nuget_package_roots():
+        package_dir = packages_root / package_folder
+        if not package_dir.is_dir():
+            continue
+        versions = sorted(package_dir.iterdir(), reverse=True)
+        for version_dir in versions:
+            if not version_dir.is_dir():
+                continue
+            for lib_sub in lib_candidates:
+                candidate = version_dir / lib_sub / dll_name
+                if candidate.is_file():
+                    return candidate
+    return None
 
 
 def _resolve_abstractions_dll() -> Path:
@@ -51,10 +95,29 @@ def _resolve_abstractions_dll() -> Path:
     )
 
 
+def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
+    for candidate in (
+        _REPO / "build" / dll_name,
+        _REPO / "build" / BUNDLE_ID / dll_name,
+    ):
+        if candidate.is_file():
+            return candidate
+    package_folder = dll_name[:-4].lower()
+    if dll_name == "Microsoft.Extensions.Primitives.dll":
+        package_folder = "microsoft.extensions.primitives"
+    nuget = _resolve_nuget_lib_dll(package_folder, dll_name)
+    if nuget is not None:
+        return nuget
+    raise FileNotFoundError(
+        f"Missing {dll_name}. Run dotnet restore (repo packages/ or global NuGet cache)."
+    )
+
+
 def _assert_core_bundle(bundle_dir: Path) -> None:
+    required = [CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [
         name
-        for name in (CORE_DLL, ABSTRACTIONS_DLL)
+        for name in required
         if not (bundle_dir / name).is_file()
     ]
     if missing:
@@ -145,6 +208,8 @@ def _deploy_bundle(mods_root: Path) -> None:
             shutil.copy2(manifest, dst / "mod_manifest.json")
 
     shutil.copy2(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL)
+    for runtime_dll in ABSTRACTIONS_RUNTIME_DLLS:
+        shutil.copy2(_resolve_abstractions_runtime_dll(runtime_dll), dst / runtime_dll)
     _assert_core_bundle(dst)
 
     copied = 0

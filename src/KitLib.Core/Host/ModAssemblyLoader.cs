@@ -17,20 +17,6 @@ internal static class ModAssemblyLoader {
         _modContext ??= AssemblyLoadContext.GetLoadContext(typeof(ModAssemblyLoader).Assembly)
                         ?? AssemblyLoadContext.Default;
 
-    /// <summary>Loads Abstractions without touching <see cref="MainFile"/> (safe for module initializers).</summary>
-    internal static void PreloadAbstractions(string modDir) {
-        if (string.IsNullOrEmpty(modDir))
-            return;
-
-        var path = Path.Combine(modDir, ModDependencyLoader.AbstractionsFileName);
-        if (!File.Exists(path))
-            return;
-
-        _modDir = modDir;
-        ModContext.LoadFromAssemblyPath(Path.GetFullPath(path));
-        EnsureResolveHook(modDir);
-    }
-
     internal static void EnsureResolveHook(string modDir) {
         _modDir = modDir;
         if (_resolveHooked)

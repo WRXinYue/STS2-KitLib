@@ -1,3 +1,4 @@
+using KitLib.Abstractions.Compat;
 using Semver;
 
 namespace KitLib.Abstractions.Modding;
@@ -71,7 +72,7 @@ public static class KitLibCompatEvaluator {
     internal static bool AnyRangeSatisfied(IReadOnlyList<string> ranges, string? rawVersion) {
         if (ranges.Count == 0)
             return true;
-        if (!TryParseVersion(rawVersion, out var version))
+        if (!Sts2SemVersion.TryParse(rawVersion, out var version))
             return false;
         foreach (var rangeText in ranges) {
             if (string.IsNullOrWhiteSpace(rangeText))
@@ -82,19 +83,6 @@ public static class KitLibCompatEvaluator {
                 return true;
         }
         return false;
-    }
-
-    internal static bool TryParseVersion(string? raw, out SemVersion? version) {
-        version = null;
-        if (string.IsNullOrWhiteSpace(raw))
-            return false;
-        var normalized = raw.Trim();
-        if (normalized.StartsWith('v') || normalized.StartsWith('V'))
-            normalized = normalized[1..].TrimStart();
-        if (!SemVersion.TryParse(normalized, SemVersionStyles.Any, out var parsed))
-            return false;
-        version = parsed;
-        return true;
     }
 
     internal static bool TryParseRange(string raw, out SemVersionRange? range) {

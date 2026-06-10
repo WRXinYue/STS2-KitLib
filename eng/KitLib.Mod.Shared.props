@@ -4,7 +4,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' == 'Windows_NT'">python</KitLibPython>
     <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' != 'Windows_NT'">python3</KitLibPython>
-    <DefineConstants Condition="'$(Sts2Beta)' == 'true'">$(DefineConstants);STS2_BETA</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="sts2">
