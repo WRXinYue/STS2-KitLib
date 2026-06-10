@@ -51,15 +51,6 @@ internal static class DevPerfOverlayUI {
         _overlay = new DevPerfOverlayHost();
         _host.AddChild(_overlay);
         _overlay.SyncVisibility();
-        // #region agent log
-        DevDebugSessionLog.Write("A", "DevPerfOverlayUI.EnsureAttached", "overlay_attached", new {
-            hostType = _host.GetType().Name,
-            hostPath = _host.GetPath().ToString(),
-            overlayVisible = _overlay.Visible,
-            overlayPos = $"{_overlay.Position.X:F0},{_overlay.Position.Y:F0}",
-            overlaySize = $"{_overlay.Size.X:F0},{_overlay.Size.Y:F0}",
-        });
-        // #endregion
     }
 
     sealed partial class DevPerfOverlayHost : Control {

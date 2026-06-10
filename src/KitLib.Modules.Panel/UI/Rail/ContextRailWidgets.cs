@@ -1,6 +1,5 @@
 using System;
 using Godot;
-using KitLib.DevPerf;
 using KitLib.Icons;
 
 namespace KitLib.UI;
@@ -18,16 +17,6 @@ internal static class ContextRailWidgets {
         var tex = icon.Texture(iconSize, col);
         if (tex == null && !icon.IsAvailable)
             tex = MdiIcon.PuzzleOutline.Texture(iconSize, col);
-
-        // #region agent log
-        if (tooltip.Length > 0 && tex == null) {
-            DevDebugSessionLog.Write("B", "ContextRailWidgets.CreateContextIconButton", "icon_texture_null", new {
-                icon = icon.Name,
-                available = icon.IsAvailable,
-                mdiBodies = IconifyAdapter.BodyCount,
-            });
-        }
-        // #endregion
 
         var btn = new Button {
             CustomMinimumSize = new Vector2(IconBtnSize, IconBtnSize),

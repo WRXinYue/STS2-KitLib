@@ -34,12 +34,6 @@ internal static class KitLibRootServices {
         root.AddChild(node);
         Instance = node;
         MainFile.Logger.Info("[Perf] Root services CanvasLayer attached.");
-        // #region agent log
-        DevDebugSessionLog.Write("A", "KitLibRootServices.Ensure", "canvas_layer_created", new {
-            layer = CanvasLayerId,
-            rootChildCount = root.GetChildCount(),
-        });
-        // #endregion
     }
 }
 
