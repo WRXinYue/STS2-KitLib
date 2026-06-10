@@ -410,7 +410,7 @@ Before a debugging session, tag saves with **`dev_tag_save_slot`** so agents can
 Local dev (DLL; used by `dotnet exec` config below):
 
 ```bash
-dotnet build tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release
+dotnet build tools/DevMode.Mcp/KitLib.Mcp.csproj -c Release
 ```
 
 Self-contained executable (repo Makefile; default RID is your host OS):
@@ -424,8 +424,8 @@ Output: `build/tools/KitLib.Mcp/<rid>/publish/KitLib.Mcp.exe` (Windows) or `KitL
 Cross-compile manually, for example:
 
 ```bash
-dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/DevMode.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/DevMode.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ### Client configuration
@@ -443,7 +443,7 @@ Paste one of the blocks below into your existing MCP client config (merge with y
       "command": "dotnet",
       "args": [
         "exec",
-        "tools/KitLib.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
+        "tools/DevMode.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
         "--",
         "--port",
         "9877"

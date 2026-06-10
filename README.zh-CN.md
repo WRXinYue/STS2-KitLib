@@ -370,7 +370,7 @@ Bridge 就绪后，典型 MCP Agent 流程：
 本地开发（DLL；供下方 `dotnet exec` 配置使用）：
 
 ```bash
-dotnet build tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release
+dotnet build tools/DevMode.Mcp/KitLib.Mcp.csproj -c Release
 ```
 
 自包含可执行文件（仓库 Makefile；默认 RID 为当前系统）：
@@ -384,8 +384,8 @@ make build-tools
 手动交叉编译示例：
 
 ```bash
-dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/DevMode.Mcp/KitLib.Mcp.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish tools/DevMode.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self-contained true -p:PublishSingleFile=true
 ```
 
 ### 客户端配置
@@ -403,7 +403,7 @@ dotnet publish tools/KitLib.Mcp/KitLib.Mcp.csproj -c Release -r osx-arm64 --self
       "command": "dotnet",
       "args": [
         "exec",
-        "tools/KitLib.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
+        "tools/DevMode.Mcp/bin/Release/net8.0/KitLib.Mcp.dll",
         "--",
         "--port",
         "9877"
