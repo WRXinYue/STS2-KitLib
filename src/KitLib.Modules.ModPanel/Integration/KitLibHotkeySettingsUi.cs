@@ -8,6 +8,8 @@ using KitLib.UI;
 namespace KitLib.Integration;
 
 internal static class KitLibHotkeySettingsUi {
+    internal const string BindingButtonMeta = "kitlib_hotkey_binding";
+
     private static readonly (string ActionId, string LabelKey, string LabelFallback)[] Rows = {
         (HotkeyActionId.ToggleRail, "hotkeys.toggleRail", "Toggle sidebar"),
         (HotkeyActionId.ClosePanel, "hotkeys.closePanel", "Close panel"),
@@ -67,8 +69,8 @@ internal static class KitLibHotkeySettingsUi {
                 DevModeFormChrome.Metrics.ValueColumnMinHeight),
             FocusMode = Control.FocusModeEnum.All,
         };
+        bindBtn.SetMeta(BindingButtonMeta, true);
         StyleBindingButton(bindBtn, listening: false);
-        DevModeFormChrome.WireRoundedFieldFocusMotion(bindBtn);
         UpdateBindingButtonText(bindBtn, actionId);
         bindBtn.Pressed += () => BeginListening(actionId, bindBtn);
         BindingButtons[actionId] = bindBtn;
@@ -121,9 +123,9 @@ internal static class KitLibHotkeySettingsUi {
     }
 
     private static void StyleBindingButton(Button btn, bool listening) {
-        var sb = listening
-            ? new StyleBoxFlat {
-                BgColor = KitLibTheme.Accent,
+        if (listening) {
+            var sb = new StyleBoxFlat {
+                BgColor = new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G, KitLibTheme.Accent.B, 0.42f),
                 BorderColor = KitLibTheme.Accent,
                 BorderWidthBottom = 2,
                 BorderWidthTop = 2,
@@ -137,14 +139,18 @@ internal static class KitLibHotkeySettingsUi {
                 ContentMarginRight = 11,
                 ContentMarginTop = 7,
                 ContentMarginBottom = 7,
-            }
-            : DevModeFormChrome.RoundedField(false);
-        var hover = listening ? sb : DevModeFormChrome.RoundedField(true);
-        btn.AddThemeStyleboxOverride("normal", sb);
-        btn.AddThemeStyleboxOverride("hover", hover);
-        btn.AddThemeStyleboxOverride("pressed", hover);
-        btn.AddThemeStyleboxOverride("focus", hover);
+            };
+            btn.AddThemeStyleboxOverride("normal", sb);
+            btn.AddThemeStyleboxOverride("hover", sb);
+            btn.AddThemeStyleboxOverride("pressed", sb);
+            btn.AddThemeStyleboxOverride("focus", sb);
+        }
+        else {
+            ModSettingsRitsuFormDevTheme.ApplyFieldControl(btn);
+        }
         btn.AddThemeFontSizeOverride("font_size", 14);
         btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
     }
 }

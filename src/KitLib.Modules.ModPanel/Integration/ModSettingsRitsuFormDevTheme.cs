@@ -13,6 +13,9 @@ internal static class ModSettingsRitsuFormDevTheme {
             return;
         ApplyRecursive(root);
     }
+
+    internal static void ApplyFieldControl(Control control) => StyleOptionButtonLike(control);
+
     private static void ApplyRecursive(Node node) {
         switch (node) {
             case HSlider s:
@@ -135,6 +138,10 @@ internal static class ModSettingsRitsuFormDevTheme {
         };
     }
     private static void StylePushButton(Button b) {
+        if (b.HasMeta("kitlib_hotkey_binding")) {
+            StyleOptionButtonLike(b);
+            return;
+        }
         var mini = b.CustomMinimumSize is { X: > 0, Y: > 0 } sz && sz.X <= 48f && sz.Y <= 48f;
         if (mini) {
             b.AddThemeStyleboxOverride("normal", MiniButtonBox(false, false));
@@ -162,4 +169,4 @@ internal static class ModSettingsRitsuFormDevTheme {
         cb.AddThemeFontSizeOverride("font_size", 14);
     }
     private static void StyleSlider(Slider s) => DevModeFormChrome.ApplySliderStyle(s);
-}
+}
