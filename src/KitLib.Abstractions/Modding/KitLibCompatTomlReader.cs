@@ -26,6 +26,7 @@ public static class KitLibCompatTomlReader {
         var gameRanges = new List<string>();
         var kitlibRanges = new List<string>();
         var modules = new List<string>();
+        var modRanges = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var rawLine in text.Split('\n')) {
             var line = StripComment(rawLine).Trim();
@@ -57,17 +58,38 @@ public static class KitLibCompatTomlReader {
                      && string.Equals(key, "modules", StringComparison.OrdinalIgnoreCase)) {
                 modules.AddRange(parsed);
             }
+            else if (string.Equals(section, "dependencies", StringComparison.OrdinalIgnoreCase)) {
+                var modId = NormalizeDependencyKey(key);
+                if (modId.Length == 0)
+                    continue;
+                if (!modRanges.TryGetValue(modId, out var list)) {
+                    list = [];
+                    modRanges[modId] = list;
+                }
+                list.AddRange(parsed);
+            }
         }
 
-        if (gameRanges.Count == 0 && kitlibRanges.Count == 0 && modules.Count == 0)
+        if (gameRanges.Count == 0 && kitlibRanges.Count == 0 && modules.Count == 0 && modRanges.Count == 0)
             return false;
 
         document = new KitLibCompatDocument {
             GameVersionRanges = gameRanges,
             KitLibVersionRanges = kitlibRanges,
             KitLibModules = modules,
+            ModVersionRanges = modRanges.ToDictionary(
+                kv => kv.Key,
+                kv => (IReadOnlyList<string>)kv.Value,
+                StringComparer.OrdinalIgnoreCase),
         };
         return true;
+    }
+
+    static string NormalizeDependencyKey(string key) {
+        var trimmed = key.Trim();
+        if (trimmed.Length >= 2 && trimmed.StartsWith('"') && trimmed.EndsWith('"'))
+            return Unquote(trimmed);
+        return trimmed;
     }
 
     static string StripComment(string line) {

@@ -42,12 +42,29 @@ public static class KitLibCompatEvaluator {
                 flags |= KitLibCompatFlags.MissingKitLibModule;
         }
 
+        var modMismatches = new List<string>();
+        if (document.ModVersionRanges.Count > 0) {
+            var resolve = runtime.ResolveModVersion ?? (_ => null);
+            foreach (var (modId, ranges) in document.ModVersionRanges) {
+                if (ranges.Count == 0)
+                    continue;
+                var loadedVersion = resolve(modId);
+                if (AnyRangeSatisfied(ranges, loadedVersion))
+                    continue;
+                modMismatches.Add(FormatModDependencyMismatch(modId, ranges, loadedVersion));
+            }
+
+            if (modMismatches.Count > 0)
+                flags |= KitLibCompatFlags.ModDependencyVersionMismatch;
+        }
+
         return new KitLibCompatResult {
             HasSidecar = true,
             Flags = flags,
             GameVersionRanges = document.GameVersionRanges,
             KitLibVersionRanges = document.KitLibVersionRanges,
             MissingModules = missing,
+            ModDependencyMismatches = modMismatches,
         };
     }
 
@@ -110,5 +127,11 @@ public static class KitLibCompatEvaluator {
         if (!seen.Add(moduleId))
             return;
         ordered.Add(moduleId);
+    }
+
+    static string FormatModDependencyMismatch(string modId, IReadOnlyList<string> ranges, string? loadedVersion) {
+        var required = string.Join(" or ", ranges);
+        var found = string.IsNullOrWhiteSpace(loadedVersion) ? "not loaded" : loadedVersion.Trim();
+        return $"{modId} requires {required} (found {found})";
     }
 }

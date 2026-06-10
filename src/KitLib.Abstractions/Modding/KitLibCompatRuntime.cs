@@ -7,4 +7,7 @@ public sealed class KitLibCompatRuntime {
     public string? KitLibVersion { get; init; }
 
     public Func<string, bool>? IsModuleLoaded { get; init; }
+
+    /// <summary>Returns the loaded manifest version for a mod id, or null when unknown.</summary>
+    public Func<string, string?>? ResolveModVersion { get; init; }
 }

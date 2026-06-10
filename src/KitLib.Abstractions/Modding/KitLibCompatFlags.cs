@@ -6,4 +6,5 @@ public enum KitLibCompatFlags {
     GameVersionMismatch = 1,
     KitLibVersionMismatch = 2,
     MissingKitLibModule = 4,
+    ModDependencyVersionMismatch = 8,
 }

@@ -9,6 +9,8 @@ public sealed class KitLibCompatResult {
 
     public IReadOnlyList<string> MissingModules { get; init; } = [];
 
+    public IReadOnlyList<string> ModDependencyMismatches { get; init; } = [];
+
     public bool IsCompatible => Flags == KitLibCompatFlags.None;
 
     public bool HasSidecar { get; init; }

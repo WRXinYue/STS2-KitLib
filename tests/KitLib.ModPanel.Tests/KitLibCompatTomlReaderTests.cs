@@ -31,4 +31,21 @@ public sealed class KitLibCompatTomlReaderTests {
         Assert.NotNull(doc);
         Assert.Single(doc!.GameVersionRanges);
     }
+
+    [Fact]
+    public void TryParse_reads_dependencies_section() {
+        const string toml = """
+            [dependencies]
+            "STS2-RitsuLib" = ">=0.4.10"
+            KitLib = [">=0.13.0", "<0.14.0"]
+            """;
+        Assert.True(KitLibCompatTomlReader.TryParse(toml, out var doc));
+        Assert.NotNull(doc);
+        Assert.Equal(2, doc!.ModVersionRanges.Count);
+        Assert.True(doc.ModVersionRanges.TryGetValue("STS2-RitsuLib", out var ritsu));
+        Assert.Single(ritsu!);
+        Assert.Equal(">=0.4.10", ritsu[0]);
+        Assert.True(doc.ModVersionRanges.TryGetValue("KitLib", out var kitLib));
+        Assert.Equal(2, kitLib!.Count);
+    }
 }

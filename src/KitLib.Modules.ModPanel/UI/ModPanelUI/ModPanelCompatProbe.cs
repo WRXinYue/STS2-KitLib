@@ -41,22 +41,32 @@ internal static class ModPanelCompatProbe {
                     "Requires KitLib module(s): {0}."),
                 string.Join(", ", result.MissingModules)));
         }
+        if (result.Flags.HasFlag(KitLibCompatFlags.ModDependencyVersionMismatch)) {
+            parts.Add(string.Format(
+                I18N.T("modpanel.compat.modDependency",
+                    "Incompatible mod dependency: {0}."),
+                string.Join("; ", result.ModDependencyMismatches)));
+        }
         return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 
     static KitLibCompatRuntime BuildRuntime() {
+        var modVersions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         string? kitLibVersion = null;
         foreach (var loaded in ModManagerLoadedMods.Enumerate()) {
             var id = loaded.manifest?.id;
-            if (!string.Equals(id, KitLibModuleIds.Core, StringComparison.OrdinalIgnoreCase))
+            var version = loaded.manifest?.version;
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(version))
                 continue;
-            kitLibVersion = loaded.manifest?.version;
-            break;
+            modVersions[id] = version;
+            if (string.Equals(id, KitLibModuleIds.Core, StringComparison.OrdinalIgnoreCase))
+                kitLibVersion = version;
         }
         return new KitLibCompatRuntime {
             GameVersion = ModPanelModBanner.TryResolveGameBuildVersion(),
             KitLibVersion = kitLibVersion,
             IsModuleLoaded = KitLibHost.IsModuleLoaded,
+            ResolveModVersion = id => modVersions.TryGetValue(id, out var version) ? version : null,
         };
     }
 }

@@ -11,6 +11,13 @@ public sealed class KitLibCompatDocument {
 
     public IReadOnlyList<string> KitLibModules { get; init; } = [];
 
+    /// <summary>Manifest mod id → semver range(s) for other loaded mods (e.g. STS2-RitsuLib).</summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> ModVersionRanges { get; init; }
+        = new Dictionary<string, IReadOnlyList<string>>();
+
     public bool HasConstraints =>
-        GameVersionRanges.Count > 0 || KitLibVersionRanges.Count > 0 || KitLibModules.Count > 0;
+        GameVersionRanges.Count > 0
+        || KitLibVersionRanges.Count > 0
+        || KitLibModules.Count > 0
+        || ModVersionRanges.Count > 0;
 }
