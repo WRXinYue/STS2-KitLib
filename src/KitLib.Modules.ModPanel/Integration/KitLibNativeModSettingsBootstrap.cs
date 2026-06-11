@@ -5,6 +5,7 @@ using KitLib.Abstractions.Modding;
 using KitLib.Host;
 using KitLib.Settings;
 using KitLib.UI;
+using MegaCrit.Sts2.addons.mega_text;
 
 namespace KitLib.Integration;
 
@@ -17,6 +18,13 @@ internal static class KitLibNativeModSettingsBootstrap {
             Title = I18N.T("modpanel.kitlib.page.general", "General"),
             SortOrder = 0,
             BuildBody = BuildGeneralPage,
+        });
+        KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
+            ModId = modId,
+            PageId = "progressGuard",
+            Title = I18N.T("modpanel.kitlib.page.progressGuard", "Progress protection"),
+            SortOrder = 5,
+            BuildBody = BuildProgressGuardPage,
         });
         KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
             ModId = modId,
@@ -80,6 +88,27 @@ internal static class KitLibNativeModSettingsBootstrap {
         var stack = CreatePageStack();
         stack.AddChild(KitLibHotkeySettingsUi.BuildSection());
         return stack;
+    }
+
+    static Control BuildProgressGuardPage() {
+        var built = KitLibPanelUiOps.BuildProgressGuardModSettingsPage?.Invoke();
+        if (built is Control control)
+            return control;
+        return CreateUnavailablePage(
+            I18N.T("modpanel.kitlib.progressGuard.unavailable",
+                "Progress protection requires the KitLib.Panel module."));
+    }
+
+    static MegaRichTextLabel CreateUnavailablePage(string message) {
+        var label = new MegaRichTextLabel {
+            BbcodeEnabled = false,
+            FitContent = true,
+            ScrollActive = false,
+            Text = message,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        label.AddThemeFontSizeOverride("normal_font_size", 14);
+        return label;
     }
 
     static VBoxContainer CreatePageStack() {

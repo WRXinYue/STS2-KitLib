@@ -96,7 +96,7 @@ internal static class ModSettingsRitsuFormDevTheme {
                 ? KitLibTheme.ButtonBgHover
                 : KitLibTheme.ButtonBgNormal;
         return new StyleBoxFlat {
-            BgColor = new Color(bg.R, bg.G, bg.B, pressed ? 0.9f : 0.92f),
+            BgColor = bg,
             BorderColor = KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
@@ -120,7 +120,7 @@ internal static class ModSettingsRitsuFormDevTheme {
                 ? KitLibTheme.ButtonBgHover
                 : KitLibTheme.ButtonBgNormal;
         return new StyleBoxFlat {
-            BgColor = new Color(bg.R, bg.G, bg.B, pressed ? 0.88f : 0.94f),
+            BgColor = bg,
             BorderColor = pressed ? KitLibTheme.Accent : KitLibTheme.PanelBorder,
             BorderWidthLeft = 1,
             BorderWidthRight = 1,
@@ -137,6 +137,11 @@ internal static class ModSettingsRitsuFormDevTheme {
             ShadowSize = 0,
         };
     }
+    internal static void ApplyActionButton(Button b) {
+        b.CustomMinimumSize = new Vector2(0f, 32f);
+        StylePushButton(b);
+    }
+
     private static void StylePushButton(Button b) {
         if (b.HasMeta("kitlib_hotkey_binding")) {
             StyleOptionButtonLike(b);

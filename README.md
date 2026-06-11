@@ -9,10 +9,10 @@ All-in-one in-game toolkit for Slay the Spire 2 — test builds, cheat, script, 
 ## Getting started
 
 - **During a run** — Hover the left-edge **peek tab** to expand the dev rail, then click a panel icon. Browser panels slide in from the left; combat overlays use the game’s right edge or floating windows.
-- **Title screen** — Click **KITLIB** for test runs, snapshots, diagnostics, progress protection, and multiplayer dev tools (no run required).
+- **Title screen** — Click **Dev Mode** for test runs, snapshots, diagnostics, progress protection, and multiplayer dev tools (no run required).
 - **Settings → Sidebar** — Drag to reorder rail tabs and hide panels you do not need. **Harmony analysis**, **Scripts**, and **Frameworks** start hidden; enable them here when needed.
 - **Settings → Game** — **In-game right sidebar** (combat shortcuts + stats rail), game speed, skip animations, overlay toggles.
-- **Normal runs** — From title **KITLIB**, cycle **Normal run: Disabled / Toolkit / Cheat Mode** to keep the rail available outside test runs.
+- **Normal runs** — From title **Dev Mode**, cycle **Normal run: Disabled / Toolkit / Cheat Mode** to keep the rail available outside test runs.
 
 Install from [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) or build from source (`python scripts/init.py`, then `make sync-full`). Steam **beta** builds need the matching beta mod package.
 
@@ -38,7 +38,7 @@ mods/KitLib/
 |------------|------|
 | `KitLib.User` | Logs, progress guard, manual, crash recovery |
 | `KitLib.ModPanel` | Main-menu **Mods** settings panel + RitsuLib bridge |
-| `KitLib.Panel` | Dev rail + title-screen DEVMODE entry |
+| `KitLib.Panel` | Dev rail + title-screen **Dev Mode** entry |
 | `KitLib.Cheat` | Cheat tab registration + runtime hooks |
 | `KitLib.Dev` | Hooks, scripts, Harmony/MCP tools |
 | `KitLib.AI` | AI Host, autoplay, companions |
@@ -100,11 +100,11 @@ These are optional and mostly **off by default** — turn them on under **Settin
 
 During fights, intent badges on the right sidebar stack vertically when an enemy has multiple intents. Opening the full **Combat stats** panel can merge flush with the right rail when the browser is nearly full width.
 
-**Multiplayer cheat sync** — When hosting with **Multiplayer cheat** enabled (title **DEVMODE → Multiplayer**), cheats, card/relic/potion edits, combat enemy tools, powers, and per-player cheat flags can sync across clients (all peers need DevMode).
+**Multiplayer cheat sync** — When hosting with **Multiplayer cheat** enabled (title **Dev Mode → Multiplayer**), cheats, card/relic/potion edits, combat enemy tools, powers, and per-player cheat flags can sync across clients (all peers need KitLib).
 
 ## Logs
 
-Open from the in-run **Logs** rail tab or title screen **DEVMODE → Diagnostics → Logs**.
+Open from the in-run **Logs** rail tab or title screen **Dev Mode → Diagnostics → Logs**.
 
 - **Live + file history** — Streams new log lines and hydrates earlier lines from the session log (`mod_data/KitLib/instances/{pid}/session.log`, with fallback to Godot `user://logs/`).
 - **Filters** — Level chips (All / ≥ Info / ≥ Warn / Error), text search, per-mod source toggles, and toggleable **noise suppression** rules (known benign patterns with hit counts).
@@ -132,7 +132,7 @@ See **[tools/KitLog.Cli/README.md](tools/KitLog.Cli/README.md)** for install pat
 
 ## Mod feedback
 
-Open from the in-run rail or title screen **DEVMODE → Diagnostics → Mod Feedback**.
+Open from the in-run rail or title screen **Dev Mode → Diagnostics → Mod Feedback**.
 
 Fill in a title and description, optionally attach a game log tail, and export a **ZIP report** for mod authors. **Privacy mode** replaces user-data paths with `<user-data>` in all text files.
 
@@ -171,9 +171,9 @@ DevMode can prompt you to export a feedback ZIP after serious failures (without 
 
 Look for log lines prefixed **`[DevMode CrashRecovery]`**.
 
-## Title screen (DEVMODE)
+## Title screen (Dev Mode)
 
-On the main menu, **DEVMODE** replaces separate dev buttons with one submenu:
+On the main menu, **Dev Mode** replaces separate dev buttons with one submenu:
 
 - **New Test** — Start a quick test run
 - **New Test (Seed)** — Test run with an optional seed
@@ -208,11 +208,11 @@ Changing the loaded mod set can cause vanilla save filtering to strip or zero mo
 - After progress loads on the title screen, DevMode scans recent backups for mod character stats that are missing or degraded in the current save (e.g. Ascension / wins reset to zero while a backup still has progress).
 - If recoverable data exists, a **Restore** / **Not now** dialog appears on the main menu.
 - Toggle: **Settings → Progress protection → Prompt on mod character progress loss** (on by default).
-- You can also restore anytime from **DEVMODE → Progress protection**.
+- You can also restore anytime from **Dev Mode → Progress protection**.
 
 ### Manual restore
 
-1. Title screen → **DEVMODE → Progress protection**
+1. Title screen → **Dev Mode → Progress protection**
 2. Choose a backup → **Restore**, or open **Details** first
 3. Confirm; DevMode writes a `progress.save.pre_restore_{timestamp}` next to the active save before overwriting
 4. Reload the main menu or restart the game so progress reloads from disk

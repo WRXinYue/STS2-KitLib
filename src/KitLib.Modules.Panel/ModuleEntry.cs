@@ -94,5 +94,6 @@ public static class ModuleEntry {
         KitLibPanelUiOps.ShowSaveLoadOverlay = ui => DevPanelUI.ShowSaveLoadOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
         KitLibPanelUiOps.ShowSettingsOverlay = ui => DevPanelUI.ShowSettingsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
         KitLibPanelUiOps.ShowAiOverlay = ui => DevPanelUI.ShowAiOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
+        KitLibPanelUiOps.BuildProgressGuardModSettingsPage = () => ProgressGuardModSettingsPage.Build();
     }
 }

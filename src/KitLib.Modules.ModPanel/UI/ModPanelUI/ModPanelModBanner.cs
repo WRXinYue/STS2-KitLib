@@ -73,14 +73,16 @@ internal static class ModPanelModBanner {
         return null;
     }
     internal static string ResolveTitle(Mod? mod, string modId) {
+        string title;
         if (mod?.manifest is ModManifest mm && !string.IsNullOrWhiteSpace(mm.name))
-            return mm.name;
-        if (mod != null) {
+            title = mm.name;
+        else if (mod != null) {
             var n = GetManifestMemberString(mod.manifest, "name", "Name");
-            if (!string.IsNullOrWhiteSpace(n))
-                return n;
+            title = !string.IsNullOrWhiteSpace(n) ? n : modId;
         }
-        return string.IsNullOrWhiteSpace(modId) ? "—" : modId;
+        else
+            title = string.IsNullOrWhiteSpace(modId) ? "—" : modId;
+        return KitLibCompatDisplay.FormatSidebarDisplayName(title, mod?.path);
     }
     internal static string? ResolveVersion(Mod? mod) {
         if (mod?.manifest is ModManifest mm && !string.IsNullOrWhiteSpace(mm.version))

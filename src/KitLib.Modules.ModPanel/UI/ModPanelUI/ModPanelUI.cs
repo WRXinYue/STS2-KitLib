@@ -24,6 +24,8 @@ public static partial class ModPanelUI {
     private static ModPanelSubmenu? _root;
     private static NMainMenu? _hostMainMenu;
     private static string? _pendingInitialModId;
+    private static string? _pendingInitialPageId;
+    private static string? _pendingInitialPageModId;
     private static Action? _themeRefresh;
 
     internal static void RegisterThemeRefresh(Action refresh) => _themeRefresh = refresh;
@@ -40,11 +42,13 @@ public static partial class ModPanelUI {
         context = null;
         return false;
     }
-    public static void Show(NMainMenu mainMenu, string? initialModId = null) {
+    public static void Show(NMainMenu mainMenu, string? initialModId = null, string? initialPageId = null) {
         var perf = ModPanelPerf.Start();
         MainFile.Logger.Info("KitLib: Opening mod panel…");
         TeardownShell();
         _pendingInitialModId = initialModId;
+        _pendingInitialPageId = initialPageId;
+        _pendingInitialPageModId = initialModId;
         RitsuModSettingsEmbedHost.Ensure();
         _hostMainMenu = mainMenu;
         _root = mainMenu.SubmenuStack.PushSubmenuType<ModPanelSubmenu>();
@@ -73,6 +77,9 @@ public static partial class ModPanelUI {
     }
     public static bool IsVisible =>
         _root != null && GodotObject.IsInstanceValid(_root) && _root.Visible;
+
+    internal static NMainMenu? TryGetHostMainMenu() =>
+        _hostMainMenu != null && GodotObject.IsInstanceValid(_hostMainMenu) ? _hostMainMenu : null;
     private static bool IsSelectableSidebarMod(KitLibModEntry entry) => entry.IsLoaded;
 
     private static string ResolveInitialSidebarModId(
@@ -807,12 +814,36 @@ public static partial class ModPanelUI {
     }
 
     private static string ResolveInitialPageId(string modId) {
+        var pendingPage = _pendingInitialPageId;
+        var pendingMod = _pendingInitialPageModId;
+        if (!string.IsNullOrWhiteSpace(pendingPage)
+            && !string.IsNullOrWhiteSpace(pendingMod)
+            && string.Equals(pendingMod, modId, StringComparison.OrdinalIgnoreCase)
+            && PageExistsForMod(modId, pendingPage)) {
+            _pendingInitialPageId = null;
+            _pendingInitialPageModId = null;
+            return pendingPage;
+        }
         if (KitLibModSettingsRegistry.HasPages(modId)) {
             var pages = KitLibModSettingsRegistry.GetPages(modId);
             return pages.Count > 0 ? pages[0].PageId : "";
         }
         var ritsuPages = RitsuModSettingsBridge.GetAllPageObjects(modId);
         return ritsuPages.Count > 0 ? RitsuModSettingsBridge.GetPageId(ritsuPages[0]) : "";
+    }
+
+    private static bool PageExistsForMod(string modId, string pageId) {
+        if (KitLibModSettingsRegistry.HasPages(modId)) {
+            foreach (var page in KitLibModSettingsRegistry.GetPages(modId)) {
+                if (string.Equals(page.PageId, pageId, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+        }
+        foreach (var page in RitsuModSettingsBridge.GetAllPageObjects(modId)) {
+            if (string.Equals(RitsuModSettingsBridge.GetPageId(page), pageId, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+        return false;
     }
 
     private static void RefreshSettingsContent(VBoxContainer list, ModPanelPageTabChrome pageTabChrome, string modId,

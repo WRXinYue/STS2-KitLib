@@ -50,7 +50,7 @@ internal static partial class DevPanelUI {
         };
         inner.AddChild(skipAnimBtn);
 
-        ProgressGuardPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
+        inner.AddChild(CreateProgressGuardModPanelHint());
 
         CrashRecoveryPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
 
@@ -157,6 +157,18 @@ internal static partial class DevPanelUI {
         col.AddChild(resetWidthBtn);
 
         return col;
+    }
+
+    private static Control CreateProgressGuardModPanelHint() {
+        var hint = new Label {
+            Text = I18N.T("settings.progressGuardModPanelHint",
+                "Progress protection (backups, restore, fingerprint status): Main Menu → Mods → KitLib → Progress protection."),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        hint.AddThemeFontSizeOverride("font_size", 11);
+        hint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        return hint;
     }
 
     private static Control CreateModPanelPrefsHint() {

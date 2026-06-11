@@ -44,7 +44,9 @@ public sealed class Sts2ModRegistry : IModRegistry {
         var man = mod.manifest;
         if (man == null || string.IsNullOrEmpty(man.id))
             return null;
-        var name = string.IsNullOrEmpty(man.name) ? man.id : man.name;
+        var name = KitLibCompatDisplay.FormatSidebarDisplayName(
+            string.IsNullOrEmpty(man.name) ? man.id : man.name,
+            mod.path);
         var ver = man.version ?? "";
         var enabled = settings == null || !settings.IsModDisabled(man.id, mod.modSource);
         return new KitLibModEntry(

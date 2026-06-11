@@ -9,10 +9,10 @@
 ## 快速上手
 
 - **局内** — 鼠标移到左侧 **peek 标签** 展开 dev 侧栏，点击图标打开面板。浏览器面板从左侧滑入；战斗 overlay 在游戏右侧或浮动窗口。
-- **标题画面** — 点击 **KITLIB** 可开测试局、读快照、诊断、进度保护、联机开发工具（无需进 run）。
+- **标题画面** — 点击 **开发模式** 可开测试局、读快照、诊断、进度保护、联机开发工具（无需进 run）。
 - **设置 → 侧栏（Sidebar）** — 拖拽排序、隐藏不需要的标签。**Harmony 分析**、**脚本**、**框架** 默认隐藏，需要时在此开启。
 - **设置 → 游戏（Game）** — **局内右侧边栏**（战斗快捷 + 统计 rail）、游戏速度、跳过动画、overlay 开关。
-- **普通 run** — 标题 **KITLIB** 中切换 **Normal run: 关闭 / 工具箱 / 作弊模式**，在非测试局也保留侧栏。
+- **普通 run** — 标题 **开发模式** 中切换 **Normal run: 关闭 / 工具箱 / 作弊模式**，在非测试局也保留侧栏。
 
 可从 [Releases](https://github.com/WRXinYue/STS2-DevMode/releases) 安装，或源码构建（`python scripts/init.py`，再 `make sync-full`）。Steam **beta** 分支需使用对应的 beta mod 包。
 
@@ -38,7 +38,7 @@ mods/KitLib/
 |----------|------|
 | `KitLib.User` | 日志、进度保护、手册、崩溃恢复 |
 | `KitLib.ModPanel` | 主菜单 **Mods** 设置面板 + RitsuLib 桥接 |
-| `KitLib.Panel` | Dev 侧栏 + 标题画面 DEVMODE 入口 |
+| `KitLib.Panel` | Dev 侧栏 + 标题画面 **开发模式** 入口 |
 | `KitLib.Cheat` | 作弊标签与运行时钩子 |
 | `KitLib.Dev` | 钩子、脚本、Harmony/MCP 工具 |
 | `KitLib.AI` | AI Host、自动游玩、同伴 |
@@ -92,11 +92,11 @@ mods/KitLib/
 
 打开完整 **战斗统计** 面板且浏览器几乎全宽时，可与右侧 rail 对齐合并。
 
-**联机作弊同步** — 主机在标题 **DEVMODE → Multiplayer** 开启 **Multiplayer cheat** 后，作弊、卡牌/遗物/药水编辑、战斗敌人工具、能力及 per-player 作弊标记可跨客户端同步（所有 peer 需安装 DevMode）。
+**联机作弊同步** — 主机在标题 **开发模式 → Multiplayer** 开启 **Multiplayer cheat** 后，作弊、卡牌/遗物/药水编辑、战斗敌人工具、能力及 per-player 作弊标记可跨客户端同步（所有 peer 需安装 KitLib）。
 
 ## 日志
 
-从局内 **日志** rail 标签，或标题 **DEVMODE → Diagnostics → Logs** 打开。
+从局内 **日志** rail 标签，或标题 **开发模式 → Diagnostics → Logs** 打开。
 
 - **实时 + 文件历史** — 流式接收新日志，并从会话日志回填更早行（`mod_data/KitLib/instances/{pid}/session.log`，回退 Godot `user://logs/`）。
 - **筛选** — 级别 chip（全部 / ≥ Info / ≥ Warn / Error）、文本搜索、按 mod 来源开关、可切换的**噪音抑制**规则（已知无害模式 + 命中次数）。
@@ -107,7 +107,7 @@ mods/KitLib/
 
 ## Mod 反馈
 
-从局内 rail 或标题 **DEVMODE → Diagnostics → Mod Feedback** 打开。
+从局内 rail 或标题 **开发模式 → Diagnostics → Mod Feedback** 打开。
 
 填写标题与描述，可选附加游戏日志尾部，导出供 mod 作者使用的 **ZIP 报告**。**隐私模式** 会将用户数据路径替换为 `<user-data>`。
 
@@ -146,9 +146,9 @@ DevMode 可在严重故障后提示导出反馈 ZIP（不会对每条日志 Erro
 
 关注日志前缀 **`[DevMode CrashRecovery]`**。
 
-## 标题画面（DEVMODE）
+## 标题画面（开发模式）
 
-主菜单 **DEVMODE** 合并原分散 dev 按钮为一个子菜单：
+主菜单 **开发模式** 合并原分散 dev 按钮为一个子菜单：
 
 - **New Test** — 快速测试局
 - **New Test (Seed)** — 可填种子的测试局
@@ -183,11 +183,11 @@ DevMode 可在严重故障后提示导出反馈 ZIP（不会对每条日志 Erro
 - 标题画面加载进度后，DevMode 会扫描最近备份，查找当前存档中缺失或降级的 mod 角色进度（例如进阶/胜场被归零，但备份里仍有数据）。
 - 若存在可恢复数据，主菜单会弹出 **恢复** / **暂不** 对话框。
 - 开关：**设置 → 进度保护 → mod 角色进度丢失时提示恢复**（默认开启）。
-- 也可随时从 **DEVMODE → 进度保护** 手动恢复。
+- 也可随时从 **开发模式 → 进度保护** 手动恢复。
 
 ### 手动恢复
 
-1. 标题画面 → **DEVMODE → 进度保护**
+1. 标题画面 → **开发模式 → 进度保护**
 2. 选择备份 → **恢复**，或先打开 **详情**
 3. 确认后，DevMode 会在覆盖前于当前存档目录写入 `progress.save.pre_restore_{timestamp}`
 4. 重新进入主菜单或重启游戏，以便从磁盘重新加载进度

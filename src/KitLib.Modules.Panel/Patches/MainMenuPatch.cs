@@ -31,7 +31,7 @@ public static class MainMenuPatch {
             settingsBtn,
             container,
             "KitLibButton",
-            I18N.T("menu.developerMode", "DEVMODE"),
+            I18N.T("menu.developerMode", "Dev Mode"),
             OnDevModeButtonPressed);
 
         var quitBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/QuitButton");

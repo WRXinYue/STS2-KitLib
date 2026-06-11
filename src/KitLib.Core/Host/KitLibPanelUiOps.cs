@@ -6,6 +6,7 @@ public static class KitLibPanelUiOps {
     public static Action<object>? ShowSaveLoadOverlay { get; set; }
     public static Action<object>? ShowSettingsOverlay { get; set; }
     public static Action<object>? ShowAiOverlay { get; set; }
+    public static Func<object?>? BuildProgressGuardModSettingsPage { get; set; }
     public static Action<object>? SyncAiHud { get; set; }
     public static Action<object>? AttachAiHud { get; set; }
     public static Action<object>? DetachAiHud { get; set; }

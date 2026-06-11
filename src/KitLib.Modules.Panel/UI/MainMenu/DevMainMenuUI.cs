@@ -95,10 +95,6 @@ internal static class DevMainMenuUI {
 
         AddButton(container, template, I18N.T("devmenu.diagnostics", "Diagnostics"), ShowDiagnosticsMenu);
 
-        AddButton(container, template, I18N.T("devmenu.progressGuard", "Progress protection"), () => {
-            ProgressGuardUI.ShowOnMainMenu(mainMenu);
-        });
-
         AddButton(container, template, I18N.T("devmenu.back", "Back"), Hide);
     }
 
