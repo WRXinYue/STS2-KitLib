@@ -1,0 +1,46 @@
+nova:
+  sidebar:
+    docs: 用户指南
+    api: 扩展接口
+    panels: 轨道面板
+    dev: 参与贡献
+
+nav:
+  home: 首页
+  guide: 用户指南
+  contributing: 参与贡献
+  extending: 开发者
+  intro: 前言
+  install: 安装
+  panels_overview: 轨道面板
+  panel_cards: 卡牌
+  panel_relics: 遗物
+  panel_enemies: 敌人
+  panel_powers: 能力
+  panel_potions: 药水
+  panel_events: 事件
+  panel_rooms: 房间
+  panel_console: 控制台
+  panel_presets: 预设
+  panel_hooks: 钩子
+  panel_scripts: 脚本
+  panel_logs: 日志
+  panel_save_load: 存档 / 读档
+  panel_settings: 设置
+  changelog: 更新日志
+  dev_panel: 开发者面板
+  mod_runtime: Mod 运行时
+  sts2_compat: STS2 版本兼容
+  api_profiles: API profiles（维护者）
+
+category:
+  guide: 用户指南
+  dev: 参与贡献
+  extending: 开发者
+
+hero:
+  actions:
+    get-started: 快速开始
+
+tooltip:
+  edit_this_page: 在 GitHub 上编辑此页

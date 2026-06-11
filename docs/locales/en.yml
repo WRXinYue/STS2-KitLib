@@ -1,0 +1,46 @@
+nova:
+  sidebar:
+    docs: User guide
+    api: Extension API
+    panels: Rail panels
+    dev: Contributing
+
+nav:
+  home: Home
+  guide: User guide
+  contributing: Contributing
+  extending: Developer
+  intro: Introduction
+  install: Install
+  panels_overview: Rail panels
+  panel_cards: Cards
+  panel_relics: Relics
+  panel_enemies: Enemies
+  panel_powers: Powers
+  panel_potions: Potions
+  panel_events: Events
+  panel_rooms: Rooms
+  panel_console: Console
+  panel_presets: Presets
+  panel_hooks: Hooks
+  panel_scripts: Scripts
+  panel_logs: Logs
+  panel_save_load: Save / Load
+  panel_settings: Settings
+  changelog: Changelog
+  dev_panel: Dev panel
+  mod_runtime: Mod runtime
+  sts2_compat: STS2 compatibility
+  api_profiles: API profiles (maintainers)
+
+category:
+  guide: User guide
+  dev: Contributing
+  extending: Developer
+
+hero:
+  actions:
+    get-started: Get started
+
+tooltip:
+  edit_this_page: Edit this page on GitHub

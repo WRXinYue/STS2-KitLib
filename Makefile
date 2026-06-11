@@ -70,7 +70,7 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 
-.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles extract-touchpoints check-api verify-profiles capture-sts2-ref \
         launch sync-launch sync-full-launch dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog \
@@ -129,6 +129,9 @@ help:
 	@echo "  upload-nuget   zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE; alias: nuget)"
 	@echo "  upload-all     upload-github then upload-nexus then upload-nuget (one zip build)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
+	@echo ""
+	@echo "  docs           Valaxy docs dev server (docs/)"
+	@echo "  docs-build     static site → docs/dist/"
 	@echo ""
 	@echo "  clean        remove build/ + dotnet clean"
 
@@ -257,6 +260,12 @@ upload-all: publish nexus nuget
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py
+
+docs:
+	cd docs && pnpm install && pnpm dev
+
+docs-build:
+	cd docs && pnpm install && pnpm run build:ssg
 
 # ── zip: build + package into build/KitLib-vX.X.X.zip ──
 ZIP_NAME := build/KitLib-v$(VERSION).zip

@@ -1,5 +1,7 @@
 # STS2 dual-profile API checks
 
+> **Published on the docs site:** [STS2 API profiles (maintainers)](./pages/developer/sts2-api-profiles.md) · Mod authors: [STS2 version compatibility](./pages/developer/extending/sts2-compat.md)
+
 KitLib supports two pinned game API lines (see `Sts2ProfileMap`):
 
 | Profile | Pinned version | MSBuild |
