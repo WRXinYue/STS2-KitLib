@@ -361,8 +361,14 @@ internal static partial class DevPanelUI {
 
         RefreshRailHintPresentation();
 
-        if (!KitLibState.DualInstanceMinimalRail)
-            AttachContextPane(globalUi);
+        if (!KitLibState.DualInstanceMinimalRail) {
+            try {
+                AttachContextPane(globalUi);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"DevPanel: Failed to attach context pane: {ex.Message}");
+            }
+        }
         ((Node)globalUi).AddChild(root);
     }
 

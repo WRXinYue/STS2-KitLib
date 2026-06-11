@@ -19,6 +19,7 @@ internal static class SatelliteModuleLoader {
 
     static readonly (string AssemblyName, string[] BeforeModuleIds)[] PreloadBeforeInit = [
         ("KitLib.Cheat", [ModuleIds.Ai, ModuleIds.Panel]),
+        ("KitLib.Dev", [ModuleIds.Panel]),
     ];
 
     static readonly ModuleSpec[] LoadOrder = [

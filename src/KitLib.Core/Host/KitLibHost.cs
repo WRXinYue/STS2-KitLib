@@ -191,6 +191,13 @@ public static class KitLibHost {
     public static Action? NotifyHotkeySettingsChanged { get; set; }
     public static Func<Creature, IReadOnlyList<Creature>, object, JsonArray>? CaptureMonsterIntentSteps { get; set; }
 
+    /// <summary>CombatState is passed as object to avoid cross-ALC MissingMethod on Panel→Dev calls.</summary>
+    public static Func<object?, bool>? IsMonsterIntentOverlayReady { get; set; }
+
+    public static Func<object?, object?>? CaptureMonsterIntentCurrent { get; set; }
+
+    public static Func<object?, object?>? CaptureMonsterIntentNextTurn { get; set; }
+
     /// <summary>Registered by <c>KitLib.Dev.ModuleEntry</c>; invoked from <c>KitLibProcessNode</c> when SceneTree is ready.</summary>
     public static Action? RequestDevBootstrap { get; set; }
 

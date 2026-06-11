@@ -53,7 +53,7 @@ internal static partial class MonsterIntentOverlayUI {
     private static bool ShouldShow() {
         if (!KitLibState.IsActive)
             return false;
-        return MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState());
+        return MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState());
     }
 
     private static void EnsureAttached() {
@@ -172,7 +172,7 @@ internal static partial class MonsterIntentOverlayUI {
             }
 
             var state = CombatManager.Instance.DebugOnlyGetState();
-            var entries = MonsterIntentReader.CaptureCurrent(state);
+            var entries = MonsterIntentOps.CaptureCurrent(state);
             if (entries.Count == 0) {
                 ClearEnemyRows();
                 _panel.Visible = true;

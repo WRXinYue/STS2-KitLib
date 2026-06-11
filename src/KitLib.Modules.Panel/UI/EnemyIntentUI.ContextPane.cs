@@ -68,14 +68,14 @@ internal static partial class EnemyIntentUI {
 
         public void Refresh() {
             if (!KitLibState.IsActive
-                || !MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState())) {
+                || !MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState())) {
                 Clear();
                 _hasContent = false;
                 return;
             }
 
             var state = CombatManager.Instance!.DebugOnlyGetState();
-            var entries = MonsterIntentReader.CaptureNextTurn(state);
+            var entries = MonsterIntentOps.CaptureNextTurn(state);
             if (entries.Count == 0) {
                 Clear();
                 _hasContent = false;

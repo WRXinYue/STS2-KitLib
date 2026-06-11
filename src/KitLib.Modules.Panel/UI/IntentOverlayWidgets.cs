@@ -19,7 +19,7 @@ internal static class IntentOverlayLayout {
 
 internal static class IntentTooltip {
     public static string Format(AbstractIntent intent, IReadOnlyList<Creature> targets, Creature owner) {
-        if (!MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+        if (!MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
             return "";
 
         HoverTip tip = intent.GetHoverTip(targets, owner);
@@ -34,7 +34,7 @@ internal static class IntentTooltip {
 
     public static string FormatStep(MonsterIntentStep step, IReadOnlyList<Creature> targets, Creature owner) {
         var lines = new List<string> { step.MoveName };
-        if (MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState())) {
+        if (MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState())) {
             foreach (AbstractIntent intent in step.Intents)
                 lines.Add(Format(intent, targets, owner));
         }
@@ -273,7 +273,7 @@ internal sealed partial class IntentEnemyPreviewRow : VBoxContainer {
             panel.Modulate = new Color(1f, 1f, 1f, 0.55f);
 
         panel.AddChild(intentsRow);
-        if (MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+        if (MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
             panel.TooltipText = IntentTooltip.FormatStep(step, targets, owner);
         return panel;
     }
@@ -329,7 +329,7 @@ internal sealed partial class IntentOverlayBadge : Control {
         _intent = intent;
         _targets = targets;
         _owner = owner;
-        if (MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+        if (MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
             TooltipText = IntentTooltip.Format(intent, targets, owner);
         else
             TooltipText = "";
@@ -339,7 +339,7 @@ internal sealed partial class IntentOverlayBadge : Control {
     private void UpdateVisuals() {
         if (_intent == null || _owner == null)
             return;
-        if (!MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+        if (!MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
             return;
 
         _animationName = _intent.GetAnimation(_targets, _owner);
@@ -364,7 +364,7 @@ internal sealed partial class IntentOverlayBadge : Control {
         AbstractIntent intent,
         IReadOnlyList<Creature> targets,
         Creature owner) {
-        if (!MonsterIntentReader.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
+        if (!MonsterIntentOps.IsOverlayCombatReady(CombatManager.Instance?.DebugOnlyGetState()))
             return "";
         if (intent is AttackIntent or StatusIntent)
             return intent.GetIntentLabel(targets, owner).GetFormattedText() ?? "";

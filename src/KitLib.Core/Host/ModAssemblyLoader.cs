@@ -96,7 +96,7 @@ internal static class ModAssemblyLoader {
         if (string.IsNullOrEmpty(simple))
             return null;
 
-        foreach (var dir in new[] { modDir, Path.Combine(modDir, SatelliteModuleLoader.ModulesSubdir) }) {
+        foreach (var dir in new[] { Path.Combine(modDir, SatelliteModuleLoader.ModulesSubdir), modDir }) {
             var path = Path.Combine(dir, simple + ".dll");
             if (File.Exists(path))
                 return Path.GetFullPath(path);

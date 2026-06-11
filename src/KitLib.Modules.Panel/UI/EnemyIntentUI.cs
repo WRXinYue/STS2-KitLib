@@ -122,7 +122,7 @@ internal static partial class EnemyIntentUI {
             return;
         }
 
-        var entries = MonsterIntentReader.CaptureCurrent(state);
+        var entries = MonsterIntentOps.CaptureCurrent(state);
         if (entries.Count == 0) {
             ClearPreviewList(_browserPreviewList);
             _browserStatus.Text = I18N.T("enemyIntent.empty", "No active enemies.");
