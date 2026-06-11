@@ -62,9 +62,11 @@ make zip-full     # package Core / Full / per-module zips
 
 ## Runtime load order
 
-`SatelliteModuleLoader` loads from `mods/KitLib/modules/`:
+`SatelliteModuleLoader` loads from `mods/KitLib/modules/` according to user settings in `settings.json` (Mod settings → **Modules**; restart required):
 
-1. User → 2. AI → 3. Panel → 4. Cheat (needs Panel) → 5. Dev (needs Panel)
+1. User → 2. AI → 3. ModPanel → 4. Panel → 5. Cheat (needs Panel) → 6. Dev (needs Panel)
+
+`KitLib.User` and `KitLib.ModPanel` are always loaded. New installs default to the **Standard** profile (Panel on; AI/Cheat/Dev off). Existing settings migrate to **Full** (all modules enabled).
 
 ## Content-mod authors
 

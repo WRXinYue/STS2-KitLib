@@ -41,7 +41,7 @@ mods/KitLib/
 | `KitLib.Dev` | 钩子、脚本、Harmony/MCP 工具 |
 | `KitLib.AI` | AI Host、自动游玩、同伴 |
 
-发布包 **KitLib** 或 **KitLib-Full** 解压到 `mods/` 即可。**基础模块**请保留 `KitLib.User.dll` 与 `KitLib.ModPanel.dll`。删除其他 `modules/` 下 DLL 可禁用对应功能（例如删掉 `KitLib.Panel.dll` 关闭 dev 侧栏；删掉 `KitLib.AI.dll` 关闭 AI）。
+发布包 **KitLib** 或 **KitLib-Full** 解压到 `mods/` 即可。**基础模块**请保留 `KitLib.User.dll` 与 `KitLib.ModPanel.dll`。删除其他 `modules/` 下 DLL 可禁用对应功能（例如删掉 `KitLib.Panel.dll` 关闭 dev 侧栏；删掉 `KitLib.AI.dll` 关闭 AI），**或在 KitLib → Mod 设置 → 模块** 中选择加载方案（精简 / 标准 / 完整）或单独开关各模块。**更改需重启游戏后生效。**
 
 ## 面板一览
 

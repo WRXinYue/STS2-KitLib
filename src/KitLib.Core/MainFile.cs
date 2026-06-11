@@ -1,4 +1,5 @@
 using KitLib.Host;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib;
@@ -16,6 +17,7 @@ public class MainFile {
         Sts2RuntimeProfile.Initialize();
         ModKitLibLogBridge.Initialize();
         DataPaths.EnsurePinnedOnMainThread();
+        SettingsStore.Load();
         KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID);
         KitLibHost.Bootstrap();
         I18N.Initialize();

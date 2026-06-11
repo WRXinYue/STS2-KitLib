@@ -45,7 +45,7 @@ mods/KitLib/
 
 - **KitLib** or **KitLib-Full** zip — extract the single `KitLib/` folder into `mods/`.
 - **Base modules** — keep `KitLib.User.dll` and `KitLib.ModPanel.dll` for logs and mod settings.
-- **Optional modules** — delete other DLLs under `modules/` to disable features (e.g. remove `KitLib.Panel.dll` for no dev rail; `KitLib.AI.dll` disables AI host).
+- **Optional modules** — delete other DLLs under `modules/` to disable features (e.g. remove `KitLib.Panel.dll` for no dev rail; `KitLib.AI.dll` disables AI host), **or** use **KitLib → Mod settings → Modules** to choose a load profile (Minimal / Standard / Full) or toggle individual modules. Changes apply after **restarting the game**.
 - **Content-mod authors** — NuGet `STS2.KitLib.Abstractions`; runtime needs `KitLib.dll` + any satellite DLLs you depend on under `modules/`.
 
 Build and deploy: `make sync-full`. Package zips: `make zip-full`.

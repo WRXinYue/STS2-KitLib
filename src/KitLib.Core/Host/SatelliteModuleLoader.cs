@@ -1,4 +1,6 @@
 using System.Reflection;
+using KitLib.Abstractions.Host;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib.Host;
@@ -41,11 +43,12 @@ internal static class SatelliteModuleLoader {
         ModAssemblyLoader.EnsureResolveHook(modDir);
         MainFile.Logger.Info($"Satellite loader: modDir={modDir}");
 
+        var resolvedToggles = SettingsStore.GetResolvedSatelliteModulesEnabled();
         var loaded = new List<string>();
         foreach (var spec in LoadOrder) {
             MainFile.Logger.Info($"Satellite loader: trying {spec.ModuleId} ({spec.AssemblyName}.dll).");
             PreloadSatelliteDependencies(modDir, spec.ModuleId);
-            if (TryLoadModule(modDir, spec))
+            if (TryLoadModule(modDir, spec, resolvedToggles))
                 loaded.Add(spec.ModuleId);
         }
 
@@ -86,7 +89,7 @@ internal static class SatelliteModuleLoader {
         }
     }
 
-    static bool TryLoadModule(string modDir, ModuleSpec spec) {
+    static bool TryLoadModule(string modDir, ModuleSpec spec, IReadOnlyDictionary<string, bool> resolvedToggles) {
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
             KitLog.Warn($"Module {spec.ModuleId} skipped — STS2 profile {Sts2RuntimeProfile.Current} is unsupported or sanity mismatch.");
@@ -101,6 +104,13 @@ internal static class SatelliteModuleLoader {
         if (IsExternallyInstalled(spec.ModuleId)) {
             KitLog.Info($"Module {spec.ModuleId} installed as separate mod — skipping bundled load.");
             return ModuleCatalog.IsLoaded(spec.ModuleId);
+        }
+
+        var dllExists = ModuleAssemblyExists(modDir, spec.AssemblyName);
+        if (!SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists)) {
+            if (dllExists)
+                KitLog.Info($"Module {spec.ModuleId} skipped — disabled in settings (restart required).");
+            return false;
         }
 
         foreach (var required in spec.Requires) {
@@ -219,6 +229,13 @@ internal static class SatelliteModuleLoader {
         catch (Exception ex) {
             KitLog.Warn($"Module {moduleId} init failed — skipped ({ex.Message}).");
         }
+    }
+
+    static bool ModuleAssemblyExists(string modDir, string assemblyName) {
+        var modulesDir = Path.Combine(modDir, ModulesSubdir);
+        if (File.Exists(Path.Combine(modulesDir, assemblyName + ".dll")))
+            return true;
+        return File.Exists(Path.Combine(modDir, assemblyName + ".dll"));
     }
 
     static Assembly? LoadAssembly(string modDir, string assemblyName, string moduleId) {

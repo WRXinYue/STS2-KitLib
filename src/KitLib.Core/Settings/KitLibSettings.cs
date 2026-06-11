@@ -136,6 +136,15 @@ public sealed partial class KitLibSettings {
     /// <summary>Launch optional kitlog CLI in a system terminal when KitLib.User starts (session tail, --sync-viewer).</summary>
     public bool LaunchKitlogOnStartup { get; set; }
 
+    /// <summary>Migration version for satellite module load settings.</summary>
+    public int SatelliteModuleSettingsVersion { get; set; }
+
+    /// <summary>Minimal | Standard | Full | Custom — see <see cref="SatelliteModulesEnabled"/>.</summary>
+    public string SatelliteLoadProfile { get; set; } = SatelliteModuleLoadProfileNames.Standard;
+
+    /// <summary>Per-module enable flags for toggleable satellites (User/ModPanel are always on).</summary>
+    public Dictionary<string, bool> SatelliteModulesEnabled { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Enable in-game keyboard shortcuts for the DevMode sidebar shell.</summary>
     public bool HotkeysEnabled { get; set; } = true;
 

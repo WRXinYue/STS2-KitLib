@@ -22,6 +22,14 @@ internal static class KitLibNativeModSettingsBootstrap {
         });
         KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
             ModId = modId,
+            PageId = "modules",
+            TitleKey = "modpanel.kitlib.page.modules",
+            Title = "Modules",
+            SortOrder = 3,
+            BuildBody = () => KitLibSatelliteModuleSettingsUi.BuildPage(),
+        });
+        KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
+            ModId = modId,
             PageId = "progressGuard",
             TitleKey = "modpanel.kitlib.page.progressGuard",
             Title = "Progress protection",

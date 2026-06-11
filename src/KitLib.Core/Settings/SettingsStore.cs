@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using KitLib.Abstractions.Host;
 using KitLib.Host;
 
 namespace KitLib.Settings;
@@ -25,6 +27,7 @@ public static class SettingsStore {
             try {
                 if (!File.Exists(FilePath)) {
                     Current = new KitLibSettings { RailIntroDismissed = false };
+                    ApplySatelliteModuleDefaults(isFreshInstall: true);
                     ApplyNormalRunModeFromSettings();
                     Save();
                     return;
@@ -36,6 +39,7 @@ public static class SettingsStore {
                 ApplyProgressGuardDefaults();
                 ApplyHotkeyDefaults();
                 ApplyHotkeySettingsMigration();
+                ApplySatelliteModuleDefaults(isFreshInstall: false);
                 ApplyNormalRunModeFromSettings();
                 return;
             }
@@ -90,6 +94,33 @@ public static class SettingsStore {
 
     public static void SetLaunchKitlogOnStartup(bool enabled) {
         Current.LaunchKitlogOnStartup = enabled;
+        Save();
+    }
+
+    public static IReadOnlyDictionary<string, bool> GetResolvedSatelliteModulesEnabled() =>
+        SatelliteModuleLoadPolicy.ResolveEnabled(Current.SatelliteLoadProfile, Current.SatelliteModulesEnabled);
+
+    public static void ApplySatelliteLoadProfile(string profile) {
+        var normalized = NormalizeSatelliteProfile(profile);
+        Current.SatelliteLoadProfile = normalized;
+        Current.SatelliteModulesEnabled = new Dictionary<string, bool>(
+            SatelliteModuleLoadPolicy.GetPreset(normalized),
+            StringComparer.OrdinalIgnoreCase);
+        Save();
+    }
+
+    public static void SetSatelliteModuleEnabled(string moduleId, bool enabled) {
+        if (!SatelliteModuleLoadPolicy.IsToggleable(moduleId))
+            return;
+
+        var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        foreach (var module in SatelliteModuleLoadPolicy.Modules.Where(m => !m.AlwaysOn)) {
+            toggles[module.Id] = Current.SatelliteModulesEnabled.TryGetValue(module.Id, out var on) && on;
+        }
+
+        SatelliteModuleLoadPolicy.ApplyDependencyRulesToToggles(toggles, moduleId, enabled);
+        Current.SatelliteModulesEnabled = toggles;
+        Current.SatelliteLoadProfile = SatelliteModuleLoadPolicy.DetectMatchingProfile(toggles);
         Save();
     }
 
@@ -214,6 +245,38 @@ public static class SettingsStore {
         Current.PromptOnModCharacterProgressLoss = true;
         Current.ProgressGuardSettingsVersion = 1;
         Save();
+    }
+
+    private static void ApplySatelliteModuleDefaults(bool isFreshInstall) {
+        if (Current.SatelliteModuleSettingsVersion >= 1)
+            return;
+
+        if (isFreshInstall) {
+            ApplySatelliteLoadProfileInMemory(SatelliteModuleLoadProfileNames.Standard);
+        }
+        else {
+            ApplySatelliteLoadProfileInMemory(SatelliteModuleLoadProfileNames.Full);
+        }
+
+        Current.SatelliteModuleSettingsVersion = 1;
+        Save();
+    }
+
+    static void ApplySatelliteLoadProfileInMemory(string profile) {
+        var normalized = NormalizeSatelliteProfile(profile);
+        Current.SatelliteLoadProfile = normalized;
+        Current.SatelliteModulesEnabled = new Dictionary<string, bool>(
+            SatelliteModuleLoadPolicy.GetPreset(normalized),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
+    static string NormalizeSatelliteProfile(string profile) {
+        foreach (var known in SatelliteModuleLoadPolicy.KnownProfiles) {
+            if (string.Equals(known, profile, StringComparison.OrdinalIgnoreCase))
+                return known;
+        }
+
+        return SatelliteModuleLoadProfileNames.Standard;
     }
 
     private static void ApplyHotkeyDefaults() {
