@@ -167,6 +167,12 @@ internal static class ModSettingsRitsuFormDevTheme {
         b.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         b.AddThemeColorOverride("font_disabled_color", KitLibTheme.Subtle);
     }
-    private static void StyleCheckBoxOnlyColors(CheckBox cb) => DevModeFormChrome.ApplyToggle(cb);
+    private static void StyleCheckBoxOnlyColors(CheckBox cb) {
+        cb.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        cb.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        cb.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
+        cb.AddThemeFontSizeOverride("font_size", 14);
+        DevModeFormChrome.ApplyCheckboxIconContrast(cb);
+    }
     private static void StyleSlider(Slider s) => DevModeFormChrome.ApplySliderStyle(s);
 }

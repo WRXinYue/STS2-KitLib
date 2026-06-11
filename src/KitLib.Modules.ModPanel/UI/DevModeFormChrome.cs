@@ -1,4 +1,3 @@
-using System;
 using Godot;
 namespace KitLib.UI;
 /// <summary>
@@ -182,96 +181,72 @@ internal static class DevModeFormChrome {
         var noFocus = new StyleBoxEmpty();
         cb.AddThemeStyleboxOverride("focus", noFocus);
         cb.AddThemeStyleboxOverride("hover", noFocus);
-        ApplyCheckboxIcons(cb);
+        ApplyCheckboxIconContrast(cb);
     }
 
-    static void ApplyCheckboxIcons(CheckBox cb) {
-        cb.AddThemeIconOverride("unchecked", CreateCheckboxIcon(false));
-        cb.AddThemeIconOverride("unchecked_disabled", CreateCheckboxIcon(false, disabled: true));
-        cb.AddThemeIconOverride("checked", CreateCheckboxIcon(true));
-        cb.AddThemeIconOverride("checked_disabled", CreateCheckboxIcon(true, disabled: true));
-    }
-
-    static ImageTexture CreateCheckboxIcon(bool @checked, bool disabled = false) {
-        const int size = 48;
-        var img = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
-        img.Fill(Colors.Transparent);
-
+    /// <summary>Overrides only the unchecked icon so it stays visible on dark panels; checked icons stay on the default theme.</summary>
+    public static void ApplyCheckboxIconContrast(CheckBox cb) {
         var panelLum = KitLibTheme.PanelBg.R * 0.299f + KitLibTheme.PanelBg.G * 0.587f + KitLibTheme.PanelBg.B * 0.114f;
         var onLightPanel = panelLum > 0.52f;
+        cb.AddThemeIconOverride("unchecked", CreateUncheckedCheckboxIcon(onLightPanel, disabled: false));
+        cb.AddThemeIconOverride("unchecked_disabled", CreateUncheckedCheckboxIcon(onLightPanel, disabled: true));
+    }
 
-        Color fill;
-        Color border;
-        if (@checked) {
-            var ac = KitLibTheme.Accent;
-            fill = new Color(ac.R, ac.G, ac.B, disabled ? 0.42f : 0.78f);
-            border = new Color(ac.R, ac.G, ac.B, disabled ? 0.55f : 1f);
-        }
-        else {
-            fill = onLightPanel
-                ? new Color(0f, 0f, 0f, disabled ? 0.04f : 0.07f)
-                : new Color(1f, 1f, 1f, disabled ? 0.08f : 0.14f);
-            border = onLightPanel
-                ? new Color(0f, 0f, 0f, disabled ? 0.18f : 0.32f)
-                : new Color(1f, 1f, 1f, disabled ? 0.28f : 0.50f);
-        }
-
-        const int pad = 8;
-        const int borderPx = 3;
-        var inner = pad + borderPx;
-        var outer = size - pad - borderPx;
-        PaintRect(img, inner, inner, outer - inner, outer - inner, fill);
-        PaintBorder(img, pad, pad, size - pad * 2, borderPx, border);
-
-        if (@checked)
-            PaintCheckMark(img, onLightPanel ? Colors.White : new Color(0.06f, 0.06f, 0.08f, 1f));
-
+    static ImageTexture CreateUncheckedCheckboxIcon(bool onLightPanel, bool disabled) {
+        const int size = 16;
+        const int inset = 2;
+        const int thickness = 2;
+        var img = Image.CreateEmpty(size, size, false, Image.Format.Rgba8);
+        img.Fill(Colors.Transparent);
+        var border = onLightPanel
+            ? new Color(0.08f, 0.08f, 0.10f, disabled ? 0.28f : 0.52f)
+            : new Color(0.92f, 0.92f, 0.94f, disabled ? 0.32f : 0.68f);
+        PaintRoundedBorder(img, inset, inset, size - inset * 2, size - inset * 2, thickness, 2, border);
         return ImageTexture.CreateFromImage(img);
     }
 
-    static void PaintRect(Image img, int x, int y, int w, int h, Color color) {
+    static void PaintRoundedBorder(Image img, int x, int y, int w, int h, int thickness, int radius, Color color) {
+        var innerRadius = Mathf.Max(0, radius - thickness);
         for (var iy = y; iy < y + h; iy++) {
             for (var ix = x; ix < x + w; ix++) {
                 if (ix < 0 || iy < 0 || ix >= img.GetWidth() || iy >= img.GetHeight())
                     continue;
-                img.SetPixel(ix, iy, color);
+                var px = ix + 0.5f;
+                var py = iy + 0.5f;
+                if (InsideRoundedRect(px, py, x, y, w, h, radius)
+                    && !InsideRoundedRect(px, py, x + thickness, y + thickness, w - thickness * 2, h - thickness * 2, innerRadius))
+                    img.SetPixel(ix, iy, color);
             }
         }
     }
 
-    static void PaintBorder(Image img, int x, int y, int size, int thickness, Color color) {
-        PaintRect(img, x, y, size, thickness, color);
-        PaintRect(img, x, y + size - thickness, size, thickness, color);
-        PaintRect(img, x, y + thickness, thickness, size - thickness * 2, color);
-        PaintRect(img, x + size - thickness, y + thickness, thickness, size - thickness * 2, color);
-    }
-
-    static void PaintCheckMark(Image img, Color color) {
-        PaintLine(img, 14, 26, 21, 33, color);
-        PaintLine(img, 21, 33, 35, 16, color);
-    }
-
-    static void PaintLine(Image img, int x0, int y0, int x1, int y1, Color color) {
-        var dx = Math.Abs(x1 - x0);
-        var dy = Math.Abs(y1 - y0);
-        var sx = x0 < x1 ? 1 : -1;
-        var sy = y0 < y1 ? 1 : -1;
-        var err = dx - dy;
-        while (true) {
-            if (x0 >= 0 && y0 >= 0 && x0 < img.GetWidth() && y0 < img.GetHeight())
-                img.SetPixel(x0, y0, color);
-            if (x0 == x1 && y0 == y1)
-                break;
-            var e2 = err * 2;
-            if (e2 > -dy) {
-                err -= dy;
-                x0 += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y0 += sy;
-            }
+    static bool InsideRoundedRect(float px, float py, float x, float y, float w, float h, float radius) {
+        if (px < x || py < y || px >= x + w || py >= y + h)
+            return false;
+        var r = Mathf.Min(radius, Mathf.Min(w, h) * 0.5f);
+        if (r <= 0f)
+            return true;
+        if (px < x + r && py < y + r) {
+            var dx = px - (x + r);
+            var dy = py - (y + r);
+            return dx * dx + dy * dy <= r * r;
         }
+        if (px >= x + w - r && py < y + r) {
+            var dx = px - (x + w - r);
+            var dy = py - (y + r);
+            return dx * dx + dy * dy <= r * r;
+        }
+        if (px < x + r && py >= y + h - r) {
+            var dx = px - (x + r);
+            var dy = py - (y + h - r);
+            return dx * dx + dy * dy <= r * r;
+        }
+        if (px >= x + w - r && py >= y + h - r) {
+            var dx = px - (x + w - r);
+            var dy = py - (y + h - r);
+            return dx * dx + dy * dy <= r * r;
+        }
+        return true;
     }
 
     public static void ApplyOptionButton(OptionButton ob) {
