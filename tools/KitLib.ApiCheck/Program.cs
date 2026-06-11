@@ -1,33 +1,44 @@
-using System.Reflection;
+using Mono.Cecil;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace KitLib.ApiCheck;
 
-internal sealed record ManifestDocument(
-    Dictionary<string, string> Profiles,
-    List<TouchpointDocument> Touchpoints);
-
-internal sealed record TouchpointDocument
+internal sealed class ManifestDocument
 {
-    public string Id { get; init; } = "";
-    public string? Type { get; init; }
-    public string? Member { get; init; }
-    public string? Kind { get; init; }
-    public bool Dynamic { get; init; }
-    public Dictionary<string, ProfileMemberDocument>? Profiles { get; init; }
-    public List<string>? Sources { get; init; }
+    public Dictionary<string, string> Profiles { get; set; } = new(StringComparer.Ordinal);
+    public List<TouchpointDocument> Touchpoints { get; set; } = [];
 }
 
-internal sealed record ProfileMemberDocument
+internal sealed class TouchpointDocument
 {
-    public string? Member { get; init; }
+    public string Id { get; set; } = "";
+    public string? Type { get; set; }
+    public string? Member { get; set; }
+    public string? Kind { get; set; }
+    public bool Dynamic { get; set; }
+    public bool Optional { get; set; }
+    public Dictionary<string, ProfileMemberDocument>? Profiles { get; set; }
+    public List<string>? Sources { get; set; }
+}
+
+internal sealed class ProfileMemberDocument
+{
+    public string? Member { get; set; }
+    public bool Skip { get; set; }
 }
 
 internal static class Program
 {
     static int Main(string[] args)
     {
+        if (args.Length >= 3
+            && args[0] == "--list-type"
+            && !string.IsNullOrWhiteSpace(args[1])
+            && !string.IsNullOrWhiteSpace(args[2])) {
+            return ListTypeMembers(new FileInfo(args[2]), args[1]);
+        }
+
         string? dllPath = null;
         string? profile = null;
         string? manifestPath = null;
@@ -63,6 +74,23 @@ internal static class Program
     static void PrintUsage()
     {
         Console.Error.WriteLine("Usage: KitLib.ApiCheck --dll <sts2.dll> --profile stable|beta --manifest eng/api_touchpoints.yaml");
+        Console.Error.WriteLine("       KitLib.ApiCheck --list-type <TypeName> <sts2.dll>");
+    }
+
+    static int ListTypeMembers(FileInfo dll, string shortName)
+    {
+        if (!dll.Exists) {
+            Console.Error.WriteLine($"DLL not found: {dll.FullName}");
+            return 1;
+        }
+
+        using var asm = AssemblyDefinition.ReadAssembly(dll.FullName);
+        foreach (var type in asm.MainModule.Types.Where(t => t.Name == shortName)) {
+            Console.WriteLine(type.FullName);
+            Console.WriteLine("  properties: " + string.Join(", ", type.Properties.Select(p => p.Name)));
+            Console.WriteLine("  methods: " + string.Join(", ", type.Methods.Select(m => m.Name).Take(20)));
+        }
+        return 0;
     }
 
     static int Run(FileInfo dll, string profile, FileInfo manifest)
@@ -84,16 +112,16 @@ internal static class Program
         ManifestDocument doc;
         try {
             doc = deserializer.Deserialize<ManifestDocument>(File.ReadAllText(manifest.FullName))
-                ?? new ManifestDocument(new Dictionary<string, string>(), []);
+                ?? new ManifestDocument();
         }
         catch (Exception ex) {
             Console.Error.WriteLine($"Failed to parse manifest: {ex.Message}");
             return 1;
         }
 
-        Assembly asm;
+        AssemblyIndex index;
         try {
-            asm = Assembly.LoadFrom(dll.FullName);
+            index = AssemblyIndex.Load(dll.FullName);
         }
         catch (Exception ex) {
             Console.Error.WriteLine($"Failed to load assembly: {ex.Message}");
@@ -117,13 +145,29 @@ internal static class Program
                 continue;
             }
 
+            if (ShouldSkipTouchpoint(tp, profile)) {
+                skipped++;
+                warns.Add($"[SKIP] {profile} {tp.Id} (profile override)");
+                continue;
+            }
+
             var member = ResolveMemberName(tp, profile);
-            if (!TryResolveType(asm, tp.Type!, out var resolvedType)) {
+            if (!index.TryResolveType(tp.Type!, out var resolvedType)) {
+                if (tp.Optional) {
+                    skipped++;
+                    warns.Add($"[OPTIONAL] {profile} {tp.Id} — type not found: {tp.Type}");
+                    continue;
+                }
                 fails.Add(FormatFail(profile, tp, member, $"type not found: {tp.Type}"));
                 continue;
             }
 
             if (!MemberExists(resolvedType!, member, tp.Kind ?? "method")) {
+                if (tp.Optional) {
+                    skipped++;
+                    warns.Add($"[OPTIONAL] {profile} {tp.Id} ({member}) — member missing");
+                    continue;
+                }
                 fails.Add(FormatFail(profile, tp, member, "member missing"));
                 continue;
             }
@@ -145,6 +189,11 @@ internal static class Program
         return fails.Count == 0 ? 0 : 1;
     }
 
+    static bool ShouldSkipTouchpoint(TouchpointDocument tp, string profile) =>
+        tp.Profiles != null
+        && tp.Profiles.TryGetValue(profile, out var alias)
+        && alias.Skip;
+
     static string ResolveMemberName(TouchpointDocument tp, string profile)
     {
         if (tp.Profiles != null
@@ -160,30 +209,56 @@ internal static class Program
         return $"[FAIL] {profile} {tp.Id} ({member}) — {reason} [{src}]";
     }
 
-    static bool TryResolveType(Assembly asm, string typeName, out Type? resolved)
+    static bool MemberExists(TypeDefinition type, string member, string kind)
     {
-        resolved = asm.GetType(typeName, throwOnError: false, ignoreCase: false);
-        if (resolved != null)
-            return true;
-
-        var shortName = typeName.Contains('.') ? typeName.Split('.')[^1] : typeName;
-        foreach (var t in asm.GetTypes()) {
-            if (string.Equals(t.Name, shortName, StringComparison.Ordinal)) {
-                resolved = t;
-                return true;
-            }
-        }
-        return false;
+        return kind.ToLowerInvariant() switch {
+            "property" => type.Properties.Any(p => string.Equals(p.Name, member, StringComparison.Ordinal))
+                || HasMethod(type, "get_" + member),
+            "field" => type.Fields.Any(f => string.Equals(f.Name, member, StringComparison.Ordinal)),
+            _ => HasMethod(type, member),
+        };
     }
 
-    static bool MemberExists(Type type, string member, string kind)
+    static bool HasMethod(TypeDefinition type, string name) =>
+        type.Methods.Any(m => string.Equals(m.Name, name, StringComparison.Ordinal));
+
+    static bool IsPreferredSts2Type(TypeDefinition type) =>
+        type.Namespace?.StartsWith("MegaCrit.Sts2", StringComparison.Ordinal) == true;
+
+    sealed class AssemblyIndex
     {
-        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-        return kind.ToLowerInvariant() switch {
-            "property" => type.GetProperty(member, flags) != null,
-            "field" => type.GetField(member, flags) != null,
-            _ => type.GetMethods(flags).Any(m => string.Equals(m.Name, member, StringComparison.Ordinal))
-                 || type.GetMethod(member, flags) != null,
-        };
+        readonly Dictionary<string, TypeDefinition> _byFullName = new(StringComparer.Ordinal);
+        readonly Dictionary<string, TypeDefinition> _byShortName = new(StringComparer.Ordinal);
+
+        public static AssemblyIndex Load(string dllPath)
+        {
+            var index = new AssemblyIndex();
+            using var asm = AssemblyDefinition.ReadAssembly(
+                dllPath,
+                new ReaderParameters { ReadingMode = ReadingMode.Deferred });
+            foreach (var type in asm.MainModule.GetTypes()) {
+                if (type.Name.StartsWith("<", StringComparison.Ordinal))
+                    continue;
+                index._byFullName[type.FullName] = type;
+                if (!index._byShortName.TryGetValue(type.Name, out var existing))
+                    index._byShortName[type.Name] = type;
+                else if (IsPreferredSts2Type(type) && !IsPreferredSts2Type(existing))
+                    index._byShortName[type.Name] = type;
+            }
+            return index;
+        }
+
+        public bool TryResolveType(string typeName, out TypeDefinition? resolved)
+        {
+            if (_byFullName.TryGetValue(typeName, out resolved))
+                return true;
+
+            if (typeName.Contains('.')) {
+                resolved = null;
+                return false;
+            }
+
+            return _byShortName.TryGetValue(typeName, out resolved);
+        }
     }
 }

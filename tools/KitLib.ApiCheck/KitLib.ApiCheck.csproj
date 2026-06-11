@@ -8,6 +8,7 @@
     <AssemblyName>KitLib.ApiCheck</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="0.11.6" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 </Project>

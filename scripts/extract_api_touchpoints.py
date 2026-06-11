@@ -39,6 +39,16 @@ _RE_ACCESS_TOOLS = re.compile(
 )
 _RE_HARMONY_TARGET_METHOD = re.compile(r"\[HarmonyTargetMethod\]")
 
+_KITLIB_SHORT_TYPES = frozenset({"SaveSlotManager"})
+
+
+def _is_sts2_touchpoint_type(type_name: str) -> bool:
+    if type_name in _KITLIB_SHORT_TYPES:
+        return False
+    if type_name.startswith("MegaCrit."):
+        return True
+    return "." not in type_name
+
 
 @dataclass
 class Touchpoint:
@@ -90,6 +100,8 @@ def _scan_file(path: Path, class_types: list[str], touchpoints: dict[str, Touchp
 
     for m in _RE_HARMONY_TYPEOF_NAMEOF.finditer(text):
         type_name = _normalize_type(m.group("type"))
+        if not _is_sts2_touchpoint_type(type_name):
+            continue
         member = _member_from_nameof(m.group("nameof_expr"))
         if not member:
             continue
@@ -103,6 +115,8 @@ def _scan_file(path: Path, class_types: list[str], touchpoints: dict[str, Touchp
 
     for m in _RE_HARMONY_TYPEOF_STRING.finditer(text):
         type_name = _normalize_type(m.group("type"))
+        if not _is_sts2_touchpoint_type(type_name):
+            continue
         member = m.group("member")
         tp = touchpoints.setdefault(
             f"{type_name.split('.')[-1]}.{member}",
@@ -127,6 +141,8 @@ def _scan_file(path: Path, class_types: list[str], touchpoints: dict[str, Touchp
 
     for m in _RE_ACCESS_TOOLS.finditer(text):
         type_name = _normalize_type(m.group("type"))
+        if not _is_sts2_touchpoint_type(type_name):
+            continue
         member = m.group("member")
         kind = m.group("kind").lower()
         tp = touchpoints.setdefault(

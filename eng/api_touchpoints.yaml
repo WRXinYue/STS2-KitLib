@@ -81,6 +81,9 @@ touchpoints:
     type: CombatManager
     member: IsPlayPhase
     kind: property
+    profiles:
+      beta:
+        skip: true
     sources:
       - src/KitLib.Core/Sts2CombatCompat.cs
       - src/KitLib.Core/Sts2RuntimeProfile.cs
@@ -89,6 +92,7 @@ touchpoints:
     type: CombatManager
     member: IsPlayerReadyToBeginEnemyTurn
     kind: method
+    optional: true
     sources:
       - src/KitLib.Core/Sts2CombatCompat.cs
 
@@ -179,16 +183,18 @@ touchpoints:
       - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatReadyPatch.cs
 
   - id: EventRoom.EventModel
-    type: EventRoom
+    type: MegaCrit.Sts2.Core.Rooms.EventRoom
     member: EventModel
     kind: property
+    optional: true
     sources:
       - src/KitLib.Modules.AI/AI/Sts2/Snapshots/GameSnapshotPhaseCapture.cs
 
   - id: EventRoom.Model
-    type: EventRoom
+    type: MegaCrit.Sts2.Core.Rooms.EventRoom
     member: Model
     kind: property
+    optional: true
     sources:
       - src/KitLib.Modules.AI/AI/Sts2/Snapshots/GameSnapshotPhaseCapture.cs
 
@@ -297,13 +303,6 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib.Modules.Panel/Patches/CombatSummonSlotCompatPatch.cs
-
-  - id: NGame.InitializeGame
-    type: NGame
-    member: InitializeGame
-    kind: method
-    sources:
-      - src/KitLib.Modules.Cheat/Patches/InstantModeUnlockPatch.cs
 
   - id: NGame.StartNewSingleplayerRun
     type: NGame
@@ -698,13 +697,6 @@ touchpoints:
     sources:
       - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
       - src/KitLib.Modules.User/Patches/ModChangeGuardPatch.cs
-
-  - id: SaveSlotManager.SaveSnapshotToFiles
-    type: SaveSlotManager
-    member: SaveSnapshotToFiles
-    kind: method
-    sources:
-      - src/KitLib.Modules.Panel/Patches/DevPerfTransitionPatches.cs
 
   - id: StartRunLobby.IsAboutToBeginGame
     type: StartRunLobby
