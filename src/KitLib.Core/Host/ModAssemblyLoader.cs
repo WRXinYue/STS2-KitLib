@@ -79,7 +79,8 @@ internal static class ModAssemblyLoader {
                 continue;
             try {
                 return PreloadIntoContext(context, path);
-            } catch (FileNotFoundException) {
+            }
+            catch (FileNotFoundException) {
             }
         }
 

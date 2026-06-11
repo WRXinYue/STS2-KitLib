@@ -17,7 +17,7 @@ public static class CharacterAiRegistry {
         return true;
     }
 
-    public static bool TryGetProfile(string? characterId, out CharacterAiProfile profile) {
+    public static bool TryGetProfile(string? characterId, out CharacterAiProfile? profile) {
         if (!KitLib.Host.KitLibHost.TryGetCharacterProfile(characterId, out var raw) || raw is not CharacterAiProfile resolved) {
             profile = default;
             return false;

@@ -201,7 +201,7 @@ internal static class CombatStatsTracker {
         var stats = GetOrCreate(receiver);
         stats.BlockGained += amount;
 
-        string cardKey = ResolveCardKey(cardPlay?.Card);
+        string? cardKey = ResolveCardKey(cardPlay?.Card);
         if (cardKey != null)
             AddToDict(stats.BlockByCard, cardKey, amount);
 

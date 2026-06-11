@@ -86,7 +86,7 @@ internal static partial class AiHudOverlayUI {
             return;
         }
 
-        var parent = (Node)_globalUi;
+        var parent = (Node)_globalUi!;
         var existing = parent.GetNodeOrNull<Control>(RootName);
         if (existing is AiHudOverlayHost host && GodotObject.IsInstanceValid(host)) {
             _overlay = host;

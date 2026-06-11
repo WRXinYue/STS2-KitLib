@@ -677,4 +677,4 @@ internal static class ModSettingsRitsuEntryControls {
         }
         return v.ToString(CultureInfo.InvariantCulture);
     }
-}
+}

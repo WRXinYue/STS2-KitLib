@@ -4,14 +4,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace KitLib.ApiCheck;
 
-internal sealed class ManifestDocument
-{
+internal sealed class ManifestDocument {
     public Dictionary<string, string> Profiles { get; set; } = new(StringComparer.Ordinal);
     public List<TouchpointDocument> Touchpoints { get; set; } = [];
 }
 
-internal sealed class TouchpointDocument
-{
+internal sealed class TouchpointDocument {
     public string Id { get; set; } = "";
     public string? Type { get; set; }
     public string? Member { get; set; }
@@ -22,16 +20,13 @@ internal sealed class TouchpointDocument
     public List<string>? Sources { get; set; }
 }
 
-internal sealed class ProfileMemberDocument
-{
+internal sealed class ProfileMemberDocument {
     public string? Member { get; set; }
     public bool Skip { get; set; }
 }
 
-internal static class Program
-{
-    static int Main(string[] args)
-    {
+internal static class Program {
+    static int Main(string[] args) {
         if (args.Length >= 3
             && args[0] == "--list-type"
             && !string.IsNullOrWhiteSpace(args[1])
@@ -71,14 +66,12 @@ internal static class Program
         return Run(new FileInfo(dllPath), profile, new FileInfo(manifestPath));
     }
 
-    static void PrintUsage()
-    {
+    static void PrintUsage() {
         Console.Error.WriteLine("Usage: KitLib.ApiCheck --dll <sts2.dll> --profile stable|beta --manifest eng/api_touchpoints.yaml");
         Console.Error.WriteLine("       KitLib.ApiCheck --list-type <TypeName> <sts2.dll>");
     }
 
-    static int ListTypeMembers(FileInfo dll, string shortName)
-    {
+    static int ListTypeMembers(FileInfo dll, string shortName) {
         if (!dll.Exists) {
             Console.Error.WriteLine($"DLL not found: {dll.FullName}");
             return 1;
@@ -93,8 +86,7 @@ internal static class Program
         return 0;
     }
 
-    static int Run(FileInfo dll, string profile, FileInfo manifest)
-    {
+    static int Run(FileInfo dll, string profile, FileInfo manifest) {
         if (!dll.Exists) {
             Console.Error.WriteLine($"DLL not found: {dll.FullName}");
             return 1;
@@ -194,8 +186,7 @@ internal static class Program
         && tp.Profiles.TryGetValue(profile, out var alias)
         && alias.Skip;
 
-    static string ResolveMemberName(TouchpointDocument tp, string profile)
-    {
+    static string ResolveMemberName(TouchpointDocument tp, string profile) {
         if (tp.Profiles != null
             && tp.Profiles.TryGetValue(profile, out var alias)
             && !string.IsNullOrWhiteSpace(alias.Member))
@@ -203,14 +194,12 @@ internal static class Program
         return tp.Member!;
     }
 
-    static string FormatFail(string profile, TouchpointDocument tp, string member, string reason)
-    {
+    static string FormatFail(string profile, TouchpointDocument tp, string member, string reason) {
         var src = tp.Sources is { Count: > 0 } ? tp.Sources[0] : "?";
         return $"[FAIL] {profile} {tp.Id} ({member}) — {reason} [{src}]";
     }
 
-    static bool MemberExists(TypeDefinition type, string member, string kind)
-    {
+    static bool MemberExists(TypeDefinition type, string member, string kind) {
         return kind.ToLowerInvariant() switch {
             "property" => type.Properties.Any(p => string.Equals(p.Name, member, StringComparison.Ordinal))
                 || HasMethod(type, "get_" + member),
@@ -225,13 +214,11 @@ internal static class Program
     static bool IsPreferredSts2Type(TypeDefinition type) =>
         type.Namespace?.StartsWith("MegaCrit.Sts2", StringComparison.Ordinal) == true;
 
-    sealed class AssemblyIndex
-    {
+    sealed class AssemblyIndex {
         readonly Dictionary<string, TypeDefinition> _byFullName = new(StringComparer.Ordinal);
         readonly Dictionary<string, TypeDefinition> _byShortName = new(StringComparer.Ordinal);
 
-        public static AssemblyIndex Load(string dllPath)
-        {
+        public static AssemblyIndex Load(string dllPath) {
             var index = new AssemblyIndex();
             using var asm = AssemblyDefinition.ReadAssembly(
                 dllPath,
@@ -248,8 +235,7 @@ internal static class Program
             return index;
         }
 
-        public bool TryResolveType(string typeName, out TypeDefinition? resolved)
-        {
+        public bool TryResolveType(string typeName, out TypeDefinition? resolved) {
             if (_byFullName.TryGetValue(typeName, out resolved))
                 return true;
 

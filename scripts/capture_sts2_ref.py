@@ -21,9 +21,7 @@ from lib.sts2_profiles import (  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(
-        description="Capture STS2 compile refs into eng/sts2-refs/<profile>/<version>/."
-    )
+    ap = argparse.ArgumentParser(description="Capture STS2 compile refs into eng/sts2-refs/<profile>/<version>/.")
     ap.add_argument("profile", choices=("stable", "beta"))
     ap.add_argument(
         "--repo-root",

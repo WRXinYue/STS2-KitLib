@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using KitLib.Modding;
 using Godot;
+using KitLib.Modding;
 namespace KitLib.Integration;
 /// <summary>
 /// Optional STS2-RitsuLib <c>ModSettingsRegistry</c> via reflection (no compile-time reference to RitsuLib).
@@ -324,4 +324,4 @@ public static class RitsuModSettingsBridge {
     }
 }
 public readonly record struct RitsuRootPageSummary(string PageId, string Title, IReadOnlyList<RitsuSectionSummary> Sections);
-public readonly record struct RitsuSectionSummary(string SectionId, string Title, int EntryCount);
+public readonly record struct RitsuSectionSummary(string SectionId, string Title, int EntryCount);

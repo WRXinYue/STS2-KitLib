@@ -90,9 +90,7 @@ def _resolve_abstractions_dll() -> Path:
     ):
         if candidate.is_file():
             return candidate
-    raise FileNotFoundError(
-        f"Missing {ABSTRACTIONS_DLL} build output. Run dotnet build / make build-all first."
-    )
+    raise FileNotFoundError(f"Missing {ABSTRACTIONS_DLL} build output. Run dotnet build / make build-all first.")
 
 
 def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
@@ -108,22 +106,14 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
     nuget = _resolve_nuget_lib_dll(package_folder, dll_name)
     if nuget is not None:
         return nuget
-    raise FileNotFoundError(
-        f"Missing {dll_name}. Run dotnet restore (repo packages/ or global NuGet cache)."
-    )
+    raise FileNotFoundError(f"Missing {dll_name}. Run dotnet restore (repo packages/ or global NuGet cache).")
 
 
 def _assert_core_bundle(bundle_dir: Path) -> None:
     required = [CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
-    missing = [
-        name
-        for name in required
-        if not (bundle_dir / name).is_file()
-    ]
+    missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
-        raise FileNotFoundError(
-            f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}."
-        )
+        raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
 
 
 def _mods_root(game_root: Path) -> Path:
@@ -196,8 +186,7 @@ def _try_reset_bundle_dir(dst: Path) -> bool:
         return True
     except PermissionError:
         print(
-            f"Note: {dst} is in use; updating files in place. "
-            "Close the game if sync reports locked DLLs.",
+            f"Note: {dst} is in use; updating files in place. " "Close the game if sync reports locked DLLs.",
             file=sys.stderr,
         )
         dst.mkdir(parents=True, exist_ok=True)
@@ -319,8 +308,7 @@ def main() -> int:
     if failed:
         names = ", ".join(path.name for path in failed)
         print(
-            f"Deploy incomplete: {len(failed)} locked file(s): {names}. "
-            "Close Slay the Spire 2 and run make sync again.",
+            f"Deploy incomplete: {len(failed)} locked file(s): {names}. " "Close Slay the Spire 2 and run make sync again.",
             file=sys.stderr,
         )
         return 1

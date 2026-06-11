@@ -2,11 +2,11 @@ using System;
 using System.IO;
 using System.Reflection;
 using Godot;
+using KitLib.Abstractions.Modding;
+using KitLib.Modding;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Modding;
-using KitLib.Abstractions.Modding;
-using KitLib.Modding;
 namespace KitLib.UI;
 /// <summary>
 /// Resolves loaded-mod manifest fields for the mod panel sidebar header (same idea as RitsuLib

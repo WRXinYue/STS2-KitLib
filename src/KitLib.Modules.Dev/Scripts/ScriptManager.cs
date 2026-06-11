@@ -6,8 +6,8 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using KitLib;
 using KitLib.Dev;
-using KitLib.Host;
 using KitLib.Hooks;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Entities.Players;
 
 namespace KitLib.Scripts;

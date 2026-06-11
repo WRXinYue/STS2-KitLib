@@ -226,4 +226,4 @@ internal static class ModSettingsRitsuEntryReflection {
             }
         }
     }
-}
+}

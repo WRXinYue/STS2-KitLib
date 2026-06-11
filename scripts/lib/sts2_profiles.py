@@ -92,10 +92,7 @@ def assert_capture_source_matches_profile(profile: ProfileName, source: Path) ->
     version = read_release_version(source)
     pinned = pinned_version(profile)
     if not version:
-        raise RuntimeError(
-            f"No release_info.json under {source}. "
-            "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder."
-        )
+        raise RuntimeError(f"No release_info.json under {source}. " "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder.")
     normalized = version.lstrip("vV").strip()
     if normalized != pinned:
         inferred = compile_profile_from_game_version(version) or "unknown"
@@ -122,9 +119,7 @@ def resolve_capture_source(
     root = repo_root or Path(__file__).resolve().parents[2]
     fallback = read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
     if fallback is None:
-        raise RuntimeError(
-            "STS2 install not found. Run make init (local.props Sts2Dir) or pass --source."
-        )
+        raise RuntimeError("STS2 install not found. Run make init (local.props Sts2Dir) or pass --source.")
     assert_capture_source_matches_profile(profile, fallback)
     return fallback
 
@@ -170,33 +165,15 @@ def resolve_profile_dir(profile: ProfileName, *, repo_root: Path | None = None) 
     if ref_is_valid(ref):
         return ref
 
-    raise RuntimeError(
-        f"No STS2 {profile} ref at {ref}. "
-        f"Run: make capture-sts2-ref PROFILE={profile} "
-        "(with Steam on the matching branch; see eng/sts2-refs/README.md)."
-    )
+    raise RuntimeError(f"No STS2 {profile} ref at {ref}. " f"Run: make capture-sts2-ref PROFILE={profile} " "(with Steam on the matching branch; see eng/sts2-refs/README.md).")
 
 
 def resolve_sts2_dll(game_root: Path) -> Path:
-    mac_dylib = (
-        game_root
-        / "SlayTheSpire2.app"
-        / "Contents"
-        / "Resources"
-        / "data_sts2_macos_arm64"
-        / "sts2.dylib"
-    )
+    mac_dylib = game_root / "SlayTheSpire2.app" / "Contents" / "Resources" / "data_sts2_macos_arm64" / "sts2.dylib"
     if mac_dylib.is_file():
         return mac_dylib
 
-    mac_dylib_x64 = (
-        game_root
-        / "SlayTheSpire2.app"
-        / "Contents"
-        / "Resources"
-        / "data_sts2_macos_x86_64"
-        / "sts2.dylib"
-    )
+    mac_dylib_x64 = game_root / "SlayTheSpire2.app" / "Contents" / "Resources" / "data_sts2_macos_x86_64" / "sts2.dylib"
     if mac_dylib_x64.is_file():
         return mac_dylib_x64
 
@@ -248,10 +225,7 @@ def read_game_version(dll_path: Path) -> str | None:
 
 
 def format_profile_paths(repo_root: Path) -> dict[str, Path]:
-    return {
-        profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root))
-        for profile in ("stable", "beta")
-    }
+    return {profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root)) for profile in ("stable", "beta")}
 
 
 def main(argv: list[str] | None = None) -> int:

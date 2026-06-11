@@ -1,7 +1,7 @@
 using System;
 using System.IO;
-using KitLib.Logging;
 using KitLib.Host;
+using KitLib.Logging;
 
 namespace KitLib;
 

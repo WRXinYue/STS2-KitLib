@@ -1,10 +1,10 @@
 using HarmonyLib;
+using KitLib;
 using KitLib.Abstractions.Compat;
 using KitLib.Actions;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
-using KitLib;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace KitLib.Patches;

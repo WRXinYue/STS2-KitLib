@@ -15,13 +15,11 @@ _SRC_ROOT = _REPO_ROOT / "src"
 _MANIFEST = _REPO_ROOT / "eng" / "api_touchpoints.yaml"
 
 _RE_HARMONY_TYPEOF_NAMEOF = re.compile(
-    r"\[HarmonyPatch\s*\(\s*typeof\s*\(\s*(?P<type>[^)]+?)\s*\)\s*,\s*"
-    r"nameof\s*\(\s*(?P<nameof_expr>[^)]+?)\s*\)\s*(?:,\s*[^)]*)?\)\s*\]",
+    r"\[HarmonyPatch\s*\(\s*typeof\s*\(\s*(?P<type>[^)]+?)\s*\)\s*,\s*" r"nameof\s*\(\s*(?P<nameof_expr>[^)]+?)\s*\)\s*(?:,\s*[^)]*)?\)\s*\]",
     re.MULTILINE,
 )
 _RE_HARMONY_TYPEOF_STRING = re.compile(
-    r"\[HarmonyPatch\s*\(\s*typeof\s*\(\s*(?P<type>[^)]+?)\s*\)\s*,\s*"
-    r'"(?P<member>[^"]+)"',
+    r"\[HarmonyPatch\s*\(\s*typeof\s*\(\s*(?P<type>[^)]+?)\s*\)\s*,\s*" r'"(?P<member>[^"]+)"',
     re.MULTILINE,
 )
 _RE_HARMONY_NAMEOF_ONLY = re.compile(
@@ -33,8 +31,7 @@ _RE_CLASS_HARMONY_TYPE = re.compile(
     re.MULTILINE,
 )
 _RE_ACCESS_TOOLS = re.compile(
-    r"AccessTools\.(?P<kind>Method|Property|Field)\s*\(\s*typeof\s*\(\s*(?P<type>[^)]+?)\s*\)\s*,\s*"
-    r'"(?P<member>[^"]+)"',
+    r"AccessTools\.(?P<kind>Method|Property|Field)\s*\(\s*typeof\s*\(\s*(?P<type>[^)]+?)\s*\)\s*,\s*" r'"(?P<member>[^"]+)"',
     re.MULTILINE,
 )
 _RE_HARMONY_TARGET_METHOD = re.compile(r"\[HarmonyTargetMethod\]")

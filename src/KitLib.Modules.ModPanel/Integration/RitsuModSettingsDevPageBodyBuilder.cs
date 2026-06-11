@@ -356,4 +356,4 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
     private static string SanitizeName(string text) {
         return string.Join("_", text.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
     }
-}
+}

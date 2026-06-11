@@ -1,7 +1,7 @@
 using KitLib;
 using KitLib.Abstractions.Host;
-using KitLib.Host;
 using KitLib.DevPerf;
+using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.LanTest;
 using KitLib.Multiplayer.PseudoCoop;

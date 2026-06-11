@@ -1,10 +1,11 @@
 using System;
+using Godot;
 using KitLib.Abstractions.Modding;
 using KitLib.ModPanel.Icons;
 using KitLib.Settings;
-using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 namespace KitLib.UI;
+
 public static partial class ModPanelUI {
     private static MegaRichTextLabel CreateInlineDescription(string text) {
         var label = CreateHeaderLabel(text, 16, HorizontalAlignment.Left, ModPanelUiPalette.RichTextSecondary);

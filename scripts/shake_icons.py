@@ -193,10 +193,7 @@ def _shake_bundle(repo_root: Path, full_json: Path, module_name: str) -> int:
         extracted[kebab] = entry
 
     if missing:
-        msg = (
-            f"shake_icons [{module_name}]: {len(missing)} icon(s) referenced in code but missing from icons.json. "
-            f"Add the icon set or fix the name:\n" + "\n".join(missing)
-        )
+        msg = f"shake_icons [{module_name}]: {len(missing)} icon(s) referenced in code but missing from icons.json. " f"Add the icon set or fix the name:\n" + "\n".join(missing)
         print(msg, file=sys.stderr)
         return 1
 

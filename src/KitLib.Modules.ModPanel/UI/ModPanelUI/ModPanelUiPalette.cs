@@ -14,4 +14,4 @@ public static class ModPanelUiPalette {
     public const string CompatWarningBbColor = "#EB6157";
     public static readonly Color SidebarSection = new(0.88f, 0.855f, 0.795f);
     public static Color SidebarModActiveAccent => KitLibTheme.Accent;
-}
+}

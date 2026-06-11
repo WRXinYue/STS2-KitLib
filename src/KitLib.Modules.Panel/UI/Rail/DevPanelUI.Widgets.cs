@@ -2,6 +2,7 @@ using System;
 using Godot;
 using KitLib.Icons;
 namespace KitLib.UI;
+
 internal static partial class DevPanelUI {
     // ── Browser-panel factory (spliced to rail, same visual language as Cards/Relics) ─────────
     /// <summary>
@@ -656,4 +657,4 @@ internal static partial class DevPanelUI {
         };
         return row;
     }
-}
+}
