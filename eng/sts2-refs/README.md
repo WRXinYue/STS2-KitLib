@@ -8,8 +8,8 @@ Layout mirrors a game install root:
 eng/sts2-refs/
   stable/0.103.3/data_sts2_windows_x86_64/sts2.dll
   stable/0.103.3/data_sts2_windows_x86_64/0Harmony.dll
-  beta/0.106.1/data_sts2_windows_x86_64/sts2.dll
-  beta/0.106.1/data_sts2_windows_x86_64/0Harmony.dll
+  beta/0.107.0/data_sts2_windows_x86_64/sts2.dll
+  beta/0.107.0/data_sts2_windows_x86_64/0Harmony.dll
 ```
 
 Versions match `Sts2ProfileMap` / `scripts/lib/sts2_profiles.py`.
@@ -26,10 +26,4 @@ Only `sts2.dll` and `0Harmony.dll` are stored (Git LFS). That is enough for comp
 
 Requires [Git LFS](https://git-lfs.com/) (`git lfs install` once per machine).
 
-## Override
-
-Optional `.env` fallback when refs are missing locally:
-
-- `STS2_DIR_STABLE` / `STS2_DIR_BETA` — full Steam install roots
-
-Normal workflow uses refs only; no second Steam copy needed.
+`make build-profiles` uses these refs only. Daily `make sync` uses `local.props` Sts2Dir (one Steam install).

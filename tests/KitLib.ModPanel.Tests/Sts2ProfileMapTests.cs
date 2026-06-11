@@ -11,17 +11,17 @@ public sealed class Sts2ProfileMapTests {
     }
 
     [Fact]
-    public void Resolve_beta_1061_windows() {
+    public void Resolve_beta_1070_windows() {
         Assert.Equal(
             Sts2GameProfile.Beta106Plus,
-            Sts2ProfileMap.Resolve("0.106.1", Sts2Platform.Windows));
+            Sts2ProfileMap.Resolve("0.107.0", Sts2Platform.Windows));
     }
 
     [Fact]
     public void Resolve_v_prefix_beta() {
         Assert.Equal(
             Sts2GameProfile.Beta106Plus,
-            Sts2ProfileMap.Resolve("v0.106.1", Sts2Platform.macOS));
+            Sts2ProfileMap.Resolve("v0.107.0", Sts2Platform.macOS));
     }
 
     [Fact]
@@ -29,6 +29,9 @@ public sealed class Sts2ProfileMapTests {
         Assert.Equal(
             Sts2GameProfile.Unknown,
             Sts2ProfileMap.Resolve("0.105.9", Sts2Platform.Windows));
+        Assert.Equal(
+            Sts2GameProfile.Unknown,
+            Sts2ProfileMap.Resolve("0.106.1", Sts2Platform.Windows));
         Assert.Equal(
             Sts2GameProfile.Unknown,
             Sts2ProfileMap.Resolve("0.108.0", Sts2Platform.Windows));
@@ -48,11 +51,11 @@ public sealed class Sts2ProfileMapTests {
     public void Resolve_android_unknown_even_when_pinned() {
         Assert.Equal(
             Sts2GameProfile.Unknown,
-            Sts2ProfileMap.Resolve("0.106.1", Sts2Platform.Android));
+            Sts2ProfileMap.Resolve("0.107.0", Sts2Platform.Android));
     }
 
     [Fact]
     public void PinnedGameVersions_lists_exact_pins() {
-        Assert.Equal(["0.103.3", "0.106.1"], Sts2ProfileMap.PinnedGameVersions);
+        Assert.Equal(["0.103.3", "0.107.0"], Sts2ProfileMap.PinnedGameVersions);
     }
 }

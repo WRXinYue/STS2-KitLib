@@ -65,7 +65,7 @@ public sealed class KitLibCompatTomlReaderTests {
         Assert.NotNull(doc);
         Assert.Equal("=0.103.2", doc!.GameVersionRanges[0]);
         Assert.Equal("^0.13.0", doc.KitLibVersionRanges[0]);
-        var runtime = new KitLibCompatRuntime { GameVersion = "0.106.1", KitLibVersion = "0.13.5" };
+        var runtime = new KitLibCompatRuntime { GameVersion = "0.107.0", KitLibVersion = "0.13.5" };
         Assert.False(KitLibCompatEvaluator.Evaluate(doc, runtime).IsCompatible);
     }
 }

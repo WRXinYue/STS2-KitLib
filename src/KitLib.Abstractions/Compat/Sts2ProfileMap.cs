@@ -12,7 +12,7 @@ public static class Sts2ProfileMap {
     /// <summary>Exact game versions KitLib is built and tested against; add a row when STS2 ships a new API line.</summary>
     private static readonly (SemVersion Version, Sts2GameProfile Profile)[] PinnedVersions = [
         (new SemVersion(0, 103, 3), Sts2GameProfile.StablePre106),
-        (new SemVersion(0, 106, 1), Sts2GameProfile.Beta106Plus),
+        (new SemVersion(0, 107, 0), Sts2GameProfile.Beta106Plus),
     ];
 
     public static readonly string[] PinnedGameVersions = PinnedVersions

@@ -204,7 +204,7 @@ def _write_manifest(
         "",
         "profiles:",
         f'  stable: "{profile_versions.get("stable", "0.103.3")}"',
-        f'  beta: "{profile_versions.get("beta", "0.106.1")}"',
+        f'  beta: "{profile_versions.get("beta", "0.107.0")}"',
         "",
         "touchpoints:",
     ]
@@ -276,7 +276,7 @@ def main() -> int:
 
     existing = _parse_yaml_simple(args.manifest)
     overrides: dict[str, dict[str, dict[str, str]]] = existing.get("overrides", {})
-    profile_versions = existing.get("profiles") or {"stable": "0.103.3", "beta": "0.106.1"}
+    profile_versions = existing.get("profiles") or {"stable": "0.103.3", "beta": "0.107.0"}
 
     touchpoints: dict[str, Touchpoint] = {}
     for cs in sorted(src_root.rglob("*.cs")):

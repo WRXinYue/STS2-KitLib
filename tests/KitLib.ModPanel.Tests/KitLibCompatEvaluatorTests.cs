@@ -4,7 +4,7 @@ namespace KitLib.ModPanel.Tests;
 
 public sealed class KitLibCompatEvaluatorTests {
     static KitLibCompatRuntime Runtime(
-        string? game = "0.106.1",
+        string? game = "0.107.0",
         string? kitLib = "0.13.0",
         IReadOnlyDictionary<string, string>? modVersions = null,
         params string[] loadedModules) {

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import html
-import os
 import sys
 from pathlib import Path
 
@@ -46,7 +45,7 @@ def main() -> int:
     sts2_dir = resolve_sts2_dir()
     if not sts2_dir:
         print(
-            "Slay the Spire 2 not found. Set STS2_DIR in .env.",
+            "Slay the Spire 2 not found. Install via Steam or set STS2_DIR for a custom path.",
             file=sys.stderr,
         )
         return 1
@@ -58,12 +57,14 @@ def main() -> int:
     if not godot_path:
         print("MegaDot/Godot not found. 'make pck' will not work. " "Set GODOT_PATH in .env.")
 
-    props = _prop_line("Sts2Dir", str(sts2_dir))
-    profile = os.environ.get("STS2_PROFILE", "").strip()
-    if not profile:
-        from lib.sts2_profiles import resolve_compile_profile
+    from lib.sts2_profiles import resolve_compile_profile
 
-        profile = resolve_compile_profile(repo_root=root, sts2_dir=sts2_dir)
+    props = _prop_line("Sts2Dir", str(sts2_dir))
+    profile = resolve_compile_profile(
+        repo_root=root,
+        sts2_dir=sts2_dir,
+        allow_game_inference=True,
+    )
     props += _prop_line("Sts2Profile", profile)
     props += _prop_line("GodotPath", str(godot_path) if godot_path else None)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy sts2.dll (+ Harmony) from current Steam install into eng/sts2-refs/."""
+"""Copy sts2.dll (+ Harmony) from a matching STS2 install into eng/sts2-refs/."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.dotenv import load_dotenv  # noqa: E402
-from lib.steam import resolve_sts2_dir  # noqa: E402
 from lib.sts2_profiles import (  # noqa: E402
     capture_profile_ref,
     pinned_version,
+    resolve_capture_source,
     resolve_sts2_dll,
 )
 
@@ -34,19 +34,17 @@ def main() -> int:
         "--source",
         type=Path,
         default=None,
-        help="Steam install root (default: STS2_DIR / auto-detect)",
+        help="STS2 install root (default: local.props Sts2Dir). release_info.json must match profile.",
     )
     args = ap.parse_args()
 
     load_dotenv(args.repo_root / ".env")
-    source = args.source
-    if source is None:
-        source = resolve_sts2_dir()
-    if source is None:
-        print("STS2 install not found. Set STS2_DIR in .env.", file=sys.stderr)
-        return 1
-
     try:
+        source = resolve_capture_source(
+            args.profile,
+            explicit=args.source,
+            repo_root=args.repo_root,
+        )
         dest = capture_profile_ref(
             args.profile,
             repo_root=args.repo_root,
@@ -58,12 +56,12 @@ def main() -> int:
 
     dll = resolve_sts2_dll(dest)
     print(f"Captured {args.profile} ref (pinned {pinned_version(args.profile)})")
-    print(f"  source={source.resolve()}")
+    print(f"  source={source}")
     print(f"  dest={dest}")
     print(f"  dll={dll}")
     print("")
     print("Next: git add eng/sts2-refs && git commit (Git LFS tracks *.dll under refs).")
-    print(f"Switch Steam branch and run again for the other profile if needed.")
+    print("For the other profile, switch Steam branch and capture again.")
     return 0
 
 

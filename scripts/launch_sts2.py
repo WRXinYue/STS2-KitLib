@@ -56,7 +56,7 @@ def main() -> int:
     if sys.platform == "win32":
         if not game_root:
             print(
-                "STS2 install not found. Run `make init` or set STS2_DIR in .env.",
+                "STS2 install not found. Run `make init` to generate local.props.",
                 file=sys.stderr,
             )
             return 1

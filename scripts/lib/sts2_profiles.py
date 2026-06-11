@@ -13,14 +13,9 @@ from lib.steam import _sts2_game_root_valid, read_sts2_dir_from_local_props, res
 
 ProfileName = str  # "stable" | "beta"
 
-_ENV_BY_PROFILE: dict[str, str] = {
-    "stable": "STS2_DIR_STABLE",
-    "beta": "STS2_DIR_BETA",
-}
-
 _PINNED_VERSIONS: dict[str, str] = {
     "stable": "0.103.3",
-    "beta": "0.106.1",
+    "beta": "0.107.0",
 }
 
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
@@ -68,23 +63,70 @@ def read_local_props_profile(repo_root: Path) -> ProfileName | None:
     return value if value in ("stable", "beta") else None
 
 
-def resolve_compile_profile(*, repo_root: Path | None = None, sts2_dir: Path | None = None) -> ProfileName:
-    env_profile = os.environ.get("STS2_PROFILE", "").strip().lower()
-    if env_profile in ("stable", "beta"):
-        return env_profile
+def resolve_compile_profile(
+    *,
+    repo_root: Path | None = None,
+    sts2_dir: Path | None = None,
+    allow_game_inference: bool = False,
+) -> ProfileName:
+    """Resolve MSBuild Sts2Profile for compile (#if STS2_BETA106PLUS).
 
+    Daily builds use local.props Sts2Profile only (set via make init when switching branches).
+    """
     root = repo_root or Path(__file__).resolve().parents[2]
     props_profile = read_local_props_profile(root)
     if props_profile:
         return props_profile
 
-    game_root = sts2_dir or read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
-    if game_root is not None:
-        inferred = compile_profile_from_game_version(read_release_version(game_root))
-        if inferred:
-            return inferred
+    if allow_game_inference:
+        game_root = sts2_dir or read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
+        if game_root is not None:
+            inferred = compile_profile_from_game_version(read_release_version(game_root))
+            if inferred:
+                return inferred
 
     return "stable"
+
+
+def assert_capture_source_matches_profile(profile: ProfileName, source: Path) -> None:
+    version = read_release_version(source)
+    pinned = pinned_version(profile)
+    if not version:
+        raise RuntimeError(
+            f"No release_info.json under {source}. "
+            "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder."
+        )
+    normalized = version.lstrip("vV").strip()
+    if normalized != pinned:
+        inferred = compile_profile_from_game_version(version) or "unknown"
+        raise RuntimeError(
+            f"Ref capture profile mismatch: PROFILE={profile} expects v{pinned}, "
+            f"but {source} reports {version!r} (looks like {inferred}). "
+            "Switch Steam branch (same Sts2Dir) or pass --source explicitly."
+        )
+
+
+def resolve_capture_source(
+    profile: ProfileName,
+    *,
+    explicit: Path | None = None,
+    repo_root: Path | None = None,
+) -> Path:
+    if explicit is not None:
+        source = Path(os.path.expandvars(str(explicit))).expanduser().resolve()
+        if not ref_is_valid(source):
+            raise RuntimeError(f"--source is not a valid STS2 install: {source}")
+        assert_capture_source_matches_profile(profile, source)
+        return source
+
+    root = repo_root or Path(__file__).resolve().parents[2]
+    fallback = read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
+    if fallback is None:
+        raise RuntimeError(
+            "STS2 install not found. Run make init (local.props Sts2Dir) or pass --source."
+        )
+    assert_capture_source_matches_profile(profile, fallback)
+    return fallback
 
 
 def pinned_version(profile: ProfileName) -> str:
@@ -128,21 +170,10 @@ def resolve_profile_dir(profile: ProfileName, *, repo_root: Path | None = None) 
     if ref_is_valid(ref):
         return ref
 
-    env_key = _ENV_BY_PROFILE[profile]
-    raw = os.environ.get(env_key, "").strip()
-    if raw:
-        path = Path(os.path.expandvars(raw)).expanduser().resolve()
-        if ref_is_valid(path):
-            return path
-        raise RuntimeError(
-            f"{env_key}={path} is not a valid STS2 install or ref tree "
-            "(expected data_sts2_*/sts2.dll)."
-        )
-
     raise RuntimeError(
         f"No STS2 {profile} ref at {ref}. "
         f"Run: make capture-sts2-ref PROFILE={profile} "
-        f"(with Steam on the matching branch), or set {env_key} in .env."
+        "(with Steam on the matching branch; see eng/sts2-refs/README.md)."
     )
 
 
@@ -190,11 +221,7 @@ def capture_profile_ref(
     source_root: Path | None = None,
 ) -> Path:
     root = repo_root or Path(__file__).resolve().parents[2]
-    source = source_root or resolve_sts2_dir()
-    if source is None or not ref_is_valid(source):
-        raise RuntimeError(
-            "STS2 install not found. Set STS2_DIR in .env or pass --source."
-        )
+    source = resolve_capture_source(profile, explicit=source_root, repo_root=root)
 
     dest_root = ref_root(root, profile)
     copied = 0

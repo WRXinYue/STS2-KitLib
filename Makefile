@@ -49,7 +49,7 @@ DEPLOY_TOOLS_BUILD := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID)
 # Use -p: (not /p:) so Git Bash on Windows does not treat /p:... as a MSYS path.
 DEPLOY_TO_GAME := -p:DeployToGame=true
 
-# Sts2Profile drives STS2_BETA106PLUS (see Directory.Build.props). Auto-detect from release_info.json.
+# Sts2Profile from local.props (make init) drives STS2_BETA106PLUS (see Directory.Build.props).
 STS2_COMPILE_PROFILE ?= $(shell $(PYTHON) scripts/resolve_sts2_compile_profile.py)
 STS2_MSBUILD_PROFILE := -p:Sts2Profile=$(STS2_COMPILE_PROFILE)
 # Copy build/KitLib/ into mods/KitLib/ only — never republish into the game tree.
@@ -100,7 +100,7 @@ help:
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against both sts2.dll"
 	@echo "  verify-profiles  build-profiles + check-api (pre-release)"
-	@echo "  capture-sts2-ref stable|beta  copy sts2.dll from STS2_DIR into eng/sts2-refs/ (Git LFS)"
+	@echo "  capture-sts2-ref PROFILE=stable|beta  copy sts2.dll into eng/sts2-refs/ (validates release_info)"
 	@echo "  zip-full     build-all + package Core/Full/per-module zips under build/"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
@@ -165,9 +165,11 @@ deps:
 	$(DOTNET) restore $(MOD_MAIN)
 
 build:
+	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile; make init after branch switch)"
 	$(DOTNET) publish $(MOD_MAIN) $(STS2_MSBUILD_PROFILE)
 
 build-all:
+	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile; make init after branch switch)"
 	$(DOTNET) build KitLib.sln $(STS2_MSBUILD_PROFILE)
 
 build-stable:

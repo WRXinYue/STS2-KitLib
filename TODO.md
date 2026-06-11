@@ -49,7 +49,7 @@ Megacrit **beta 合入 stable** 或 bump 游戏版本后过一遍：
 | 版本 | `Ovicopter.LayEggsMove` 行为 |
 |------|------------------------------|
 | **stable（旧）** | `LastOrDefault(..., string.Empty)`，**无条件** `CreatureCmd.Add<ToughEgg>(..., slotName)` → 无槽位时传 `""`，必崩 |
-| **beta 0.106.1+** | `LastOrDefault` 无默认、`if (text != null)` 才 Add → 无槽位时跳过下蛋，**不再因 Ovicopter 自身崩** |
+| **beta 0.106.1+ / 0.107.0** | `LastOrDefault` 无默认、`if (text != null)` 才 Add → 无槽位时跳过下蛋，**不再因 Ovicopter 自身崩** |
 
 **动作**：打开新 stable 的 `Core/Models/Monsters/Ovicopter.cs`。若已是 beta 写法，Ovicopter 单点崩溃可降级；若仍是 `string.Empty` 默认 + 无条件 Add，**必须保留** `CombatSummonSlotCompatPatch`。
 
@@ -60,10 +60,10 @@ Megacrit **beta 合入 stable** 或 bump 游戏版本后过一遍：
 
 ### 3. KitLib 统一构建与回归
 
-- **双版本编译**：`make build-profiles`（`STS2_DIR_STABLE` / `STS2_DIR_BETA` in `.env`，见 [docs/sts2-api-profiles.md](docs/sts2-api-profiles.md)）
+- **双版本编译**：`make build-profiles`（`eng/sts2-refs/`，见 [docs/sts2-api-profiles.md](docs/sts2-api-profiles.md)）
 - **反射触点**：`make extract-touchpoints` → `make check-api`；发版前 `make verify-profiles`
-- **日常开发**：`make sync` / `make sync-full`（`local.props` 单一 `Sts2Dir`；beta 安装设 `STS2_PROFILE=beta`）
-- **运行时**：`Sts2RuntimeProfile` 按游戏版本 + 平台选择 API profile（stable `0.103.x` vs beta `0.106.x`）
+- **日常开发**：`make init` → `make sync` / `make sync-full`（`local.props` 的 `Sts2Dir` + `Sts2Profile`；切 Steam 分支后重新 `make init`）
+- **运行时**：`Sts2RuntimeProfile` 按游戏版本 + 平台选择 API profile（stable `0.103.x` vs beta `0.107.x`）
 - 两套游戏安装都要测：**BYRDONIS_ELITE（或任意无槽位战）→ mid-combat 加 Ovicopter → 等下蛋**，确认不抛 `EncounterSlots is null`。
 
 ## 参考
