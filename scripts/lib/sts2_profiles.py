@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -21,10 +22,7 @@ _PINNED_VERSIONS: dict[str, str] = {
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
 
 
-def read_release_version(sts2_dir: Path) -> str | None:
-    path = sts2_dir / "release_info.json"
-    if not path.is_file():
-        return None
+def _read_release_version_file(path: Path) -> str | None:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -33,6 +31,24 @@ def read_release_version(sts2_dir: Path) -> str | None:
     if not isinstance(version, str) or not version.strip():
         return None
     return version.strip()
+
+
+def read_release_version(sts2_dir: Path) -> str | None:
+    root_file = sts2_dir / "release_info.json"
+    if root_file.is_file():
+        version = _read_release_version_file(root_file)
+        if version:
+            return version
+
+    for data_dir in list_ref_data_dirs(sts2_dir):
+        candidate = data_dir / "release_info.json"
+        if not candidate.is_file():
+            continue
+        version = _read_release_version_file(candidate)
+        if version:
+            return version
+
+    return None
 
 
 def compile_profile_from_game_version(raw: str | None) -> ProfileName | None:
@@ -63,20 +79,59 @@ def read_local_props_profile(repo_root: Path) -> ProfileName | None:
     return value if value in ("stable", "beta") else None
 
 
+def read_sts2_profile_env() -> ProfileName | None:
+    value = os.environ.get("STS2_PROFILE", "").strip().lower()
+    return value if value in ("stable", "beta") else None
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def infer_profile_from_ref_hash(game_root: Path, *, repo_root: Path) -> ProfileName | None:
+    try:
+        install_dll = resolve_sts2_dll(game_root)
+        install_hash = _file_sha256(install_dll)
+    except OSError:
+        return None
+
+    for profile in _PINNED_VERSIONS:
+        ref = ref_root(repo_root, profile)
+        if not ref_is_valid(ref):
+            continue
+        try:
+            ref_dll = resolve_sts2_dll(ref)
+            if _file_sha256(ref_dll) == install_hash:
+                return profile
+        except OSError:
+            continue
+
+    return None
+
+
 def resolve_compile_profile(
     *,
     repo_root: Path | None = None,
     sts2_dir: Path | None = None,
-    allow_game_inference: bool = False,
+    allow_game_inference: bool = True,
 ) -> ProfileName:
     """Resolve MSBuild Sts2Profile for compile (#if STS2_BETA106PLUS).
 
-    Daily builds use local.props Sts2Profile only (set via make init when switching branches).
+    Precedence: local.props Sts2Profile, STS2_PROFILE env, release_info.json,
+    eng/sts2-refs sts2.dll hash match, then stable.
     """
     root = repo_root or Path(__file__).resolve().parents[2]
     props_profile = read_local_props_profile(root)
     if props_profile:
         return props_profile
+
+    env_profile = read_sts2_profile_env()
+    if env_profile:
+        return env_profile
 
     if allow_game_inference:
         game_root = sts2_dir or read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
@@ -84,6 +139,10 @@ def resolve_compile_profile(
             inferred = compile_profile_from_game_version(read_release_version(game_root))
             if inferred:
                 return inferred
+
+            matched = infer_profile_from_ref_hash(game_root, repo_root=root)
+            if matched:
+                return matched
 
     return "stable"
 

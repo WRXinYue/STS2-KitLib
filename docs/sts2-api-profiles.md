@@ -43,7 +43,7 @@ Profile builds (`make build-profiles`) compile against these refs and skip ILRep
 
 ## Daily dev
 
-`make init` writes `local.props` (`Sts2Dir`, `Sts2Profile`) → `make sync-full` deploys to that install. Re-run `make init` after switching Steam branch. Profile CI gates use LFS refs.
+`make init` writes `local.props` (`Sts2Dir`, optional `Sts2Profile`) → `make sync-full` deploys to that install. **`make build` / `make sync-full` auto-detect profile** from `release_info.json` or a hash match against `eng/sts2-refs/` when `Sts2Profile` is omitted. Set `<Sts2Profile>` in `local.props` or `STS2_PROFILE` in `.env` to override. Re-run `make init` after switching Steam branch if you want the override written for you. Profile CI gates use LFS refs.
 
 ## Commands
 

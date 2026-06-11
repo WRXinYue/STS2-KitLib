@@ -165,11 +165,11 @@ deps:
 	$(DOTNET) restore $(MOD_MAIN)
 
 build:
-	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile; make init after branch switch)"
+	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile or auto from install)"
 	$(DOTNET) publish $(MOD_MAIN) $(STS2_MSBUILD_PROFILE)
 
 build-all:
-	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile; make init after branch switch)"
+	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile or auto from install)"
 	$(DOTNET) build KitLib.sln $(STS2_MSBUILD_PROFILE)
 
 build-stable:
