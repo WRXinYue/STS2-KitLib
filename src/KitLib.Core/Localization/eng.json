@@ -400,7 +400,6 @@
   "settings.gameContextPane": "In-game right sidebar",
   "settings.gameContextPane.desc": "Show the right combat sidebar during fights (stats, enemy intent, combat tools)",
   "settings.modPanelPrefsHint": "DevMode level, performance HUD, combat sidebar, hotkeys, and diagnostics: Main Menu → Mods → KitLib.",
-  "settings.progressGuardModPanelHint": "Progress protection (backups, restore, fingerprint status): Main Menu → Mods → KitLib → Progress protection.",
   "settings.section.hotkeys": "Keyboard shortcuts",
   "settings.hotkeysEnabled": "Enable keyboard shortcuts",
   "hotkeys.toggleRail": "Toggle sidebar",

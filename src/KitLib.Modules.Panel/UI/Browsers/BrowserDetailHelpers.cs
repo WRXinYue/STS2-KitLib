@@ -30,6 +30,7 @@ internal static class BrowserDetailHelpers {
 
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 6);
+        row.Alignment = BoxContainer.AlignmentMode.Center;
 
         var heading = new Label {
             Text = I18N.T("browser.modSource", "Mod source"),

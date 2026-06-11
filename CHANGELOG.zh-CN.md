@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mod 来源筛选（浏览器）** — 卡牌、遗物、药水等内容浏览器中，**Mod 来源** 下拉 chip 与标签垂直对齐。
+
 ## [0.20.0] - 2026-06-11
 
 ### Added

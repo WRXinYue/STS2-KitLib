@@ -400,7 +400,6 @@
   "settings.gameContextPane": "对局右侧栏",
   "settings.gameContextPane.desc": "战斗中显示屏幕右侧栏（战斗统计、敌人意图、战斗工具等）",
   "settings.modPanelPrefsHint": "DevMode 等级、性能 HUD、对局右侧栏、快捷键与诊断：主菜单 → Mods → KitLib。",
-  "settings.progressGuardModPanelHint": "进度保护（备份、恢复、指纹状态）：主菜单 → Mods → KitLib → 进度保护。",
   "settings.section.hotkeys": "键盘快捷键",
   "settings.hotkeysEnabled": "启用键盘快捷键",
   "hotkeys.toggleRail": "展开/收起侧边栏",

@@ -121,28 +121,38 @@ def resolve_compile_profile(
 ) -> ProfileName:
     """Resolve MSBuild Sts2Profile for compile (#if STS2_BETA106PLUS).
 
-    Precedence: local.props Sts2Profile, STS2_PROFILE env, release_info.json,
-    eng/sts2-refs sts2.dll hash match, then stable.
+    Precedence: STS2_PROFILE env, then game install (release_info / ref hash),
+    then local.props Sts2Profile, then stable.
+
+    When Sts2Dir points at a live install, the game branch wins over a stale
+    local.props Sts2Profile (e.g. after switching Steam from beta to release).
     """
     root = repo_root or Path(__file__).resolve().parents[2]
-    props_profile = read_local_props_profile(root)
-    if props_profile:
-        return props_profile
 
     env_profile = read_sts2_profile_env()
     if env_profile:
         return env_profile
 
+    game_inferred: ProfileName | None = None
     if allow_game_inference:
         game_root = sts2_dir or read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
         if game_root is not None:
-            inferred = compile_profile_from_game_version(read_release_version(game_root))
-            if inferred:
-                return inferred
+            game_inferred = compile_profile_from_game_version(read_release_version(game_root))
+            if not game_inferred:
+                game_inferred = infer_profile_from_ref_hash(game_root, repo_root=root)
 
-            matched = infer_profile_from_ref_hash(game_root, repo_root=root)
-            if matched:
-                return matched
+    props_profile = read_local_props_profile(root)
+    if game_inferred:
+        if props_profile and props_profile != game_inferred:
+            print(
+                f"Note: local.props Sts2Profile={props_profile} but STS2 install looks like "
+                f"{game_inferred} — compiling for {game_inferred}. Run make init to refresh local.props.",
+                file=sys.stderr,
+            )
+        return game_inferred
+
+    if props_profile:
+        return props_profile
 
     return "stable"
 
