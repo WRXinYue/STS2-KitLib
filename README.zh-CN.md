@@ -33,14 +33,14 @@ mods/KitLib/
     KitLib.AI.dll
 ```
 
-| 模块 DLL | 作用 |
-|----------|------|
-| `KitLib.User` | 日志、进度保护、手册、崩溃恢复 |
-| `KitLib.ModPanel` | 主菜单 **Mods** 设置面板 + RitsuLib 桥接 |
-| `KitLib.Panel` | Dev 侧栏 + 标题画面 **开发模式** 入口 |
-| `KitLib.Cheat` | 作弊标签与运行时钩子 |
-| `KitLib.Dev` | 钩子、脚本、Harmony/MCP 工具 |
-| `KitLib.AI` | AI Host、自动游玩、同伴 |
+卫星模块：
+
+- `KitLib.User` — 日志、进度保护、手册、崩溃恢复
+- `KitLib.ModPanel` — 主菜单 Mods 设置面板与 RitsuLib 桥接
+- `KitLib.Panel` — 开发侧栏与标题画面开发模式入口
+- `KitLib.Cheat` — 作弊标签与运行时钩子
+- `KitLib.Dev` — 钩子、脚本、Harmony/MCP 工具
+- `KitLib.AI` — AI Host、自动游玩、同伴
 
 发布包 **KitLib** 或 **KitLib-Full** 解压到 `mods/` 即可。**基础模块**请保留 `KitLib.User.dll` 与 `KitLib.ModPanel.dll`。删除其他 `modules/` 下 DLL 可禁用对应功能（例如删掉 `KitLib.Panel.dll` 关闭 dev 侧栏；删掉 `KitLib.AI.dll` 关闭 AI），**或在 KitLib → Mod 设置 → 模块** 中选择加载方案（精简 / 标准 / 完整）或单独开关各模块。**更改需重启游戏后生效。**
 
@@ -323,13 +323,6 @@ CompanionBridge.TrySummon(new CompanionSpawnRequest(
 ```
 
 当 `CharacterAiProfile.SupportsNonCombat` 为 true 时，`CompanionDecisionHost` 在 overlay 阶段为已注册 companion 运行 `GameLoop`。地图投票默认仍镜像主机（`MirrorMapVotes`）。
-
-### 参考桥接
-
-| Mod | 桥接项目 | 注册内容 |
-|-----|----------|----------|
-| LustTravel2（狐姬） | `LustTravel2.DevModeBridge` | 耐力快照、FoxHime 策略与 move modifier |
-| WineFox（CombatMaid） | `STS2_CombatMaid` | 合成/压力快照、WineFox 策略与 move modifier |
 
 桥接 DLL 须针对最新 `KitLib.dll` 编译（`dotnet build` 后的 `build/KitLib/KitLib.dll`）。以独立 mod 发布，`dependencies` 只需声明内容 mod（KitLib 仅运行时依赖）。
 

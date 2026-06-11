@@ -33,14 +33,14 @@ mods/KitLib/
     KitLib.AI.dll
 ```
 
-| Module DLL | Role |
-|------------|------|
-| `KitLib.User` | Logs, progress guard, manual, crash recovery |
-| `KitLib.ModPanel` | Main-menu **Mods** settings panel + RitsuLib bridge |
-| `KitLib.Panel` | Dev rail + title-screen **Dev Mode** entry |
-| `KitLib.Cheat` | Cheat tab registration + runtime hooks |
-| `KitLib.Dev` | Hooks, scripts, Harmony/MCP tools |
-| `KitLib.AI` | AI Host, autoplay, companions |
+Satellite modules:
+
+- `KitLib.User` — logs, progress guard, manual, crash recovery
+- `KitLib.ModPanel` — main-menu Mods settings panel and RitsuLib bridge
+- `KitLib.Panel` — dev rail and title-screen Dev Mode entry
+- `KitLib.Cheat` — cheat tab registration and runtime hooks
+- `KitLib.Dev` — hooks, scripts, Harmony/MCP tools
+- `KitLib.AI` — AI Host, autoplay, companions
 
 **Packages**
 
@@ -345,13 +345,6 @@ CompanionBridge.TrySummon(new CompanionSpawnRequest(
 ```
 
 `CompanionDecisionHost` runs `GameLoop` for registered companions in overlay phases when `CharacterAiProfile.SupportsNonCombat` is true. Map votes still mirror the host by default (`MirrorMapVotes`).
-
-### Reference bridges
-
-| Mod | Bridge project | Registers |
-|-----|----------------|-----------|
-| LustTravel2 (FoxHime) | `LustTravel2.DevModeBridge` | stamina snapshot, FoxHime strategy + move modifier |
-| WineFox (CombatMaid) | `STS2_CombatMaid` | craft/stress snapshot, WineFox strategy + move modifier |
 
 Build a bridge DLL against a fresh `KitLib.dll` (`build/KitLib/KitLib.dll` after `dotnet build`). Ship the bridge as a separate mod with `"dependencies": ["YourContentMod"]` (KitLib is runtime-only).
 
