@@ -105,10 +105,6 @@ internal sealed class AiCombatCardSelector : ICardSelector {
         MainFile.Logger.Info($"[AiHost] {msg}");
         AiDecisionLog.Record("AutoPlay", msg);
     }
-
-    CardRewardSelection ICardSelector.GetSelectedCardReward(IReadOnlyList<CardCreationResult> options, IReadOnlyList<CardRewardAlternative> alternatives) {
-        throw new NotImplementedException();
-    }
 }
 
 internal readonly record struct HandSelectContext(
