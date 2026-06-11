@@ -21,11 +21,11 @@ public static class PotionMechanicIndex {
                 ById[id] = BuildProfile(potion);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiMechanic] Skipped potion {potion.Id.Entry}: {ex.Message}");
+                KitLog.Warn("AiMechanic", $"Skipped potion {potion.Id.Entry}: {ex.Message}");
             }
         }
 
-        MainFile.Logger.Info($"[AiMechanic] PotionMechanicIndex indexed {ById.Count} potions.");
+        KitLog.Info("AiMechanic", $"PotionMechanicIndex indexed {ById.Count} potions.");
     }
 
     public static bool TryGet(string? id, out PotionMechanicProfile profile) {

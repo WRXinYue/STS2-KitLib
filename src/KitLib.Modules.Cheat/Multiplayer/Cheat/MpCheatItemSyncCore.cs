@@ -102,7 +102,7 @@ internal static class MpCheatItemSyncCore {
             RequesterNetId = localNetId,
             Payload = payload,
         });
-        MainFile.Logger.Info($"[MpCheat] {logTag} client request id={clientRequestId} kind={payload.Kind} item={payload.ItemId}.");
+        KitLog.Info("MpCheat", $"{logTag} client request id={clientRequestId} kind={payload.Kind} item={payload.ItemId}.");
 
         try {
             using var cts = new CancellationTokenSource(ClientRequestTimeoutMs);
@@ -133,8 +133,7 @@ internal static class MpCheatItemSyncCore {
         }
 
         if (completion == null) {
-            MainFile.Logger.Debug(
-                $"[MpCheat] Item client result id={result.ClientRequestId} ignored (no pending UI).");
+            KitLog.Debug("MpCheat", $"Item client result id={result.ClientRequestId} ignored (no pending UI).");
             return;
         }
 
@@ -148,8 +147,7 @@ internal static class MpCheatItemSyncCore {
         if (!MpCheatSession.CanUseMultiplayerCheats || message.Item == null) return;
         if (MpCheatSession.IsHost) return;
 
-        MainFile.Logger.Info(
-            $"[MpCheat] {logTag} prepare id={message.CommandId} kind={message.Item.Kind} item={message.Item.ItemId}");
+        KitLog.Info("MpCheat", $"{logTag} prepare id={message.CommandId} kind={message.Item.Kind} item={message.Item.ItemId}");
         var ok = validate(message.Item, out var error);
         var peerNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.SendAddCardAck(new MpCheatAddCardAckMessage {
@@ -169,13 +167,12 @@ internal static class MpCheatItemSyncCore {
 
         lock (Gate) {
             if (!TrackExecuted(message.CommandId)) {
-                MainFile.Logger.Debug($"[MpCheat] {logTag} execute id={message.CommandId} skipped (duplicate).");
+                KitLog.Debug("MpCheat", $"{logTag} execute id={message.CommandId} skipped (duplicate).");
                 return;
             }
         }
 
-        MainFile.Logger.Info(
-            $"[MpCheat] {logTag} execute id={message.CommandId} kind={message.Item.Kind} item={message.Item.ItemId}");
+        KitLog.Info("MpCheat", $"{logTag} execute id={message.CommandId} kind={message.Item.Kind} item={message.Item.ItemId}");
         TaskHelper.RunSafely(execute(message.Item));
     }
 
@@ -293,8 +290,7 @@ internal static class MpCheatItemSyncCore {
             PendingByCommandId[commandId] = pending;
         }
 
-        MainFile.Logger.Info(
-            $"[MpCheat] {logTag} host start id={commandId} kind={payload.Kind} item={payload.ItemId} ackPeers={awaitingPeers.Count}.");
+        KitLog.Info("MpCheat", $"{logTag} host start id={commandId} kind={payload.Kind} item={payload.ItemId} ackPeers={awaitingPeers.Count}.");
 
         BroadcastCommand(prepareKind, commandId, payload);
 
@@ -326,8 +322,7 @@ internal static class MpCheatItemSyncCore {
         BroadcastCommand(pending.ExecuteKind, commandId, pending.Payload);
         await pending.Execute(pending.Payload);
         RemovePending(commandId);
-        MainFile.Logger.Info(
-            $"[MpCheat] {pending.LogTag} command {commandId} executed kind={pending.Payload.Kind} item={pending.Payload.ItemId}.");
+        KitLog.Info("MpCheat", $"{pending.LogTag} command {commandId} executed kind={pending.Payload.Kind} item={pending.Payload.ItemId}.");
         var acked = pending.Acks.Count(a => a.Value.Success);
         var baseMsg = formatSuccess(pending.Payload);
         if (pending.RequiredAckCount > 0) {
@@ -351,7 +346,7 @@ internal static class MpCheatItemSyncCore {
         var pending = PendingByCommandId[oldest];
         pending.Completion.TrySetResult(false);
         PendingByCommandId.Remove(oldest);
-        MainFile.Logger.Warn($"[MpCheat] Dropped oldest pending item command {oldest} (capacity).");
+        KitLog.Warn("MpCheat", $"Dropped oldest pending item command {oldest} (capacity).");
     }
 
     private static bool TrackExecuted(ulong commandId) {

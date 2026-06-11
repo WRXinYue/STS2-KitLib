@@ -26,7 +26,7 @@ internal static class BootstrapDiagnostics {
                 return;
 
             foreach (var (step, message) in Pending)
-                MainFile.Logger.Warn($"[KitLib] Bootstrap step '{step}' failed: {message}");
+                KitLog.Warn($"Bootstrap step '{step}' failed: {message}");
             Pending.Clear();
         }
     }

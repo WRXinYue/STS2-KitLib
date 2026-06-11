@@ -72,7 +72,7 @@ internal static class CrashRecoveryStore {
                 WritePendingReportLocked(report);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLib CrashRecovery] Failed to record crash: {ex.Message}");
+                KitLog.Warn("CrashRecovery", $"Failed to record crash: {ex.Message}");
             }
         }
     }

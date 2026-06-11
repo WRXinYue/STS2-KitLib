@@ -77,7 +77,7 @@ internal static class ScriptBridge {
             catch when (ct.IsCancellationRequested) { break; }
             catch (Exception ex) {
                 if (!ct.IsCancellationRequested)
-                    MainFile.Logger.Warn($"[ScriptBridge] Accept error: {ex.Message}");
+                    KitLog.Warn("ScriptBridge", $"Accept error: {ex.Message}");
             }
         }
     }
@@ -89,7 +89,7 @@ internal static class ScriptBridge {
         try {
             var wsCtx = await ctx.AcceptWebSocketAsync(subProtocol: null);
             ws = wsCtx.WebSocket;
-            MainFile.Logger.Info("[ScriptBridge] Editor connected.");
+            KitLog.Info("ScriptBridge", $"Editor connected.");
 
             // Push initial state so editor knows the game is alive
             await SendAsync(ws, MakeState(), ct);
@@ -110,10 +110,10 @@ internal static class ScriptBridge {
             }
         }
         catch when (ct.IsCancellationRequested) { }
-        catch (Exception ex) { MainFile.Logger.Warn($"[ScriptBridge] Client error: {ex.Message}"); }
+        catch (Exception ex) { KitLog.Warn("ScriptBridge", $"Client error: {ex.Message}"); }
         finally {
             ws?.Dispose();
-            MainFile.Logger.Info("[ScriptBridge] Editor disconnected.");
+            KitLog.Info("ScriptBridge", $"Editor disconnected.");
         }
     }
 

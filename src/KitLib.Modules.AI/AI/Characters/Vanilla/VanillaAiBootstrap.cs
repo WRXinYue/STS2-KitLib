@@ -20,7 +20,7 @@ public static class VanillaAiBootstrap {
         MonsterMechanicIndex.Initialize();
         PotionTierCatalog.EnsureLoaded();
         RegisterPacksOnce();
-        MainFile.Logger.Info("[AiVanilla] Registered 5 character DeckPlan packs.");
+        KitLog.Info("AiVanilla", $"Registered 5 character DeckPlan packs.");
     }
 
     static void RegisterPacksOnce() {

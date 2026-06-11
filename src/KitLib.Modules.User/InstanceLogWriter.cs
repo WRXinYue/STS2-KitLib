@@ -41,7 +41,7 @@ internal static class InstanceLogWriter {
             };
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] Instance log writer failed: {ex.Message}");
+            KitLog.Warn($"Instance log writer failed: {ex.Message}");
             _writer = null;
         }
     }
@@ -69,7 +69,7 @@ internal static class InstanceLogWriter {
                 _writer.Flush();
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLib] Instance log write failed: {ex.Message}");
+                KitLog.Warn($"Instance log write failed: {ex.Message}");
             }
         }
     }

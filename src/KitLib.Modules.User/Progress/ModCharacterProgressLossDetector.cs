@@ -21,20 +21,20 @@ internal static class ModCharacterProgressLossDetector {
         if (Pending != null) {
             var names = string.Join(", ", Pending.LostCharacterNames);
             if (SettingsStore.Current.PromptOnModCharacterProgressLoss) {
-                MainFile.Logger.Info(
-                    $"[ProgressGuard] Mod character progress loss detected ({Pending.LostCharacterNames.Count}): {names}. " +
+                KitLog.Info("ProgressGuard",
+                    $"Mod character progress loss detected ({Pending.LostCharacterNames.Count}): {names}. " +
                     $"Backup: {Pending.Backup.DirectoryName}.");
             }
             else {
-                MainFile.Logger.Info(
-                    $"[ProgressGuard] Mod character progress loss detected ({Pending.LostCharacterNames.Count}): {names}. " +
+                KitLog.Info("ProgressGuard",
+                    $"Mod character progress loss detected ({Pending.LostCharacterNames.Count}): {names}. " +
                     "Startup prompt disabled in settings.");
             }
             return;
         }
 
-        MainFile.Logger.Info(
-            $"[ProgressGuard] Startup loss scan: no restorable mod character loss " +
+        KitLog.Info("ProgressGuard",
+            $"Startup loss scan: no restorable mod character loss " +
             $"(prompt={(SettingsStore.Current.PromptOnModCharacterProgressLoss ? "on" : "off")}).");
     }
 
@@ -61,7 +61,7 @@ internal static class ModCharacterProgressLossDetector {
             return null;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ProgressGuard] Mod character loss detection failed: {ex.Message}");
+            KitLog.Warn("ProgressGuard", $"Mod character loss detection failed: {ex.Message}");
             return null;
         }
     }
@@ -84,7 +84,7 @@ internal static class ModCharacterProgressLossDetector {
             return TryLoadStatsFromFile(progressPath);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ProgressGuard] Could not read active progress.save: {ex.Message}");
+            KitLog.Warn("ProgressGuard", $"Could not read active progress.save: {ex.Message}");
             return null;
         }
     }
@@ -94,8 +94,7 @@ internal static class ModCharacterProgressLossDetector {
         int backupsScanned,
         IReadOnlyDictionary<ModelId, CharacterStats> loaded) {
         if (backupsScanned == 0) {
-            MainFile.Logger.Info(
-                $"[ProgressGuard] Startup loss scan: no backups found for profile {profileId}.");
+            KitLog.Info("ProgressGuard", $"Startup loss scan: no backups found for profile {profileId}.");
             return;
         }
 
@@ -117,8 +116,8 @@ internal static class ModCharacterProgressLossDetector {
                 var backupSummary =
                     $"A{backupStat.MaxAscension} {backupStat.TotalWins}W/{backupStat.TotalLosses}L";
 
-                MainFile.Logger.Info(
-                    $"[ProgressGuard] Startup loss scan: backup {backup.DirectoryName} has mod char " +
+                KitLog.Info("ProgressGuard",
+                    $"Startup loss scan: backup {backup.DirectoryName} has mod char " +
                     $"{ModCharacterCatalog.ResolveCharacterName(id)} ({backupSummary}); loaded={loadedSummary}.");
             }
         }
@@ -145,8 +144,7 @@ internal static class ModCharacterProgressLossDetector {
         if (lostNames.Count == 0)
             return null;
 
-        MainFile.Logger.Info(
-            $"[ProgressGuard] Recoverable mod character loss found in backup {backup.DirectoryName}.");
+        KitLog.Info("ProgressGuard", $"Recoverable mod character loss found in backup {backup.DirectoryName}.");
         return new ModCharacterProgressLossResult(backup, lostNames);
     }
 
@@ -171,8 +169,8 @@ internal static class ModCharacterProgressLossDetector {
         if (!ModChangeGuard.ModSetChangedThisSession)
             return;
 
-        MainFile.Logger.Info(
-            $"[ProgressGuard] Mod set changed this session but no restorable mod character loss " +
+        KitLog.Info("ProgressGuard",
+            $"Mod set changed this session but no restorable mod character loss " +
             $"(scanned recent backups for profile {profileId}; latest backup may already be filtered).");
     }
 
@@ -209,7 +207,7 @@ internal static class ModCharacterProgressLossDetector {
             return TryLoadStatsFromFile(progressPath);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ProgressGuard] Could not read backup stats: {ex.Message}");
+            KitLog.Warn("ProgressGuard", $"Could not read backup stats: {ex.Message}");
             return null;
         }
     }

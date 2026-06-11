@@ -233,7 +233,7 @@ internal static class FeedbackReportUI {
         else {
             statusLabel.Text = I18N.T("feedback.error", "Export failed: {0}", errorMsg ?? "unknown error");
             statusLabel.AddThemeColorOverride("font_color", new Color(1f, 0.42f, 0.42f));
-            MainFile.Logger.Warn($"[KitLib Feedback] Export failed: {errorMsg}");
+            KitLog.Warn("Feedback", $"Export failed: {errorMsg}");
         }
     }
 

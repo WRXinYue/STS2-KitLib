@@ -35,7 +35,7 @@ internal static class HookManager {
                     HookActionExecutor.Execute(action, player!);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[Hook] Error executing '{hook.Name}' ({trigger}): {ex.Message}");
+                KitLog.Warn("Hook", $"Error executing '{hook.Name}' ({trigger}): {ex.Message}");
             }
         }
     }

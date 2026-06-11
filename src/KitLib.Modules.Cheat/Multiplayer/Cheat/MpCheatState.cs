@@ -22,7 +22,7 @@ public static class MpCheatState {
         }
         else {
             _config.ApplyToKitLibState();
-            MainFile.Logger.Info($"[MpCheat] Applied config rev={revision} ({reason}).");
+            KitLog.Info("MpCheat", $"Applied config rev={revision} ({reason}).");
         }
     }
 
@@ -31,20 +31,19 @@ public static class MpCheatState {
         if (!MpCheatSession.InMultiplayerRun) return;
         var netId = MpCheatSession.ResolveLocalPlayerNetId();
         if (netId == 0) {
-            MainFile.Logger.Warn("[MpCheat] Optimistic config skipped: local player net id is 0.");
+            KitLog.Warn("MpCheat", $"Optimistic config skipped: local player net id is 0.");
             return;
         }
         _config = MpCheatConfig.MergeLocalEdits(_config, netId, MpCheatSession.IsHost);
         _config.SessionEnabled = true;
-        MainFile.Logger.Info(
-            $"[MpCheat] Optimistic per-player config applied netId={netId} infiniteBlock={KitLibState.PlayerCheats.InfiniteBlock}.");
+        KitLog.Info("MpCheat", $"Optimistic per-player config applied netId={netId} infiniteBlock={KitLibState.PlayerCheats.InfiniteBlock}.");
     }
 
     private static void LogPerPlayerState(long revision, string reason, ulong localNetId) {
         _config.TryGetPlayerFlags(localNetId, out var local);
         var keys = string.Join(",", _config.PerPlayer.Keys);
-        MainFile.Logger.Info(
-            $"[MpCheat] Applied config rev={revision} ({reason}) localNetId={localNetId} perPlayerKeys=[{keys}] "
+        KitLog.Info("MpCheat",
+            $"Applied config rev={revision} ({reason}) localNetId={localNetId} perPlayerKeys=[{keys}] "
             + $"localInfiniteBlock={local.InfiniteBlock} sessionEnabled={_config.SessionEnabled}");
     }
 

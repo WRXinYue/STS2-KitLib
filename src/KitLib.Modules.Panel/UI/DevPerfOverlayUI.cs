@@ -135,7 +135,7 @@ internal static class DevPerfOverlayUI {
             foreach (var line in lines)
                 _stack.AddChild(MakeLabel(line.Text, line.Alert));
 
-            MainFile.Logger.Debug($"[Perf] Overlay refreshed lines={lines.Count}");
+            KitLog.Debug("Perf", $"Overlay refreshed lines={lines.Count}");
         }
 
         static Label MakeLabel(string text, bool alert) {

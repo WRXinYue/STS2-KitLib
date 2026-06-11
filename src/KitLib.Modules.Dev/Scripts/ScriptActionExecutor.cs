@@ -71,7 +71,7 @@ internal static class ScriptActionExecutor {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[Script] Action {action.Type} failed: {ex.Message}");
+            KitLog.Warn("Script", $"Action {action.Type} failed: {ex.Message}");
         }
     }
 

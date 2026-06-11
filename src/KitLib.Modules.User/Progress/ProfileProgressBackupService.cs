@@ -56,8 +56,7 @@ internal static class ProfileProgressBackupService {
         try {
             var progressPath = ResolveProfileScopedPath(profileId, "saves/progress.save");
             if (!File.Exists(progressPath)) {
-                MainFile.Logger.Info(
-                    $"[ModChangeGuard] No progress.save for profile {profileId}; skipping backup.");
+                KitLog.Info("ModChangeGuard", $"No progress.save for profile {profileId}; skipping backup.");
                 return null;
             }
 
@@ -94,12 +93,11 @@ internal static class ProfileProgressBackupService {
 
             TrimOldBackups(profileId);
 
-            MainFile.Logger.Info(
-                $"[ModChangeGuard] Backed up profile {profileId} progress to {backupDir} ({reason}).");
+            KitLog.Info("ModChangeGuard", $"Backed up profile {profileId} progress to {backupDir} ({reason}).");
             return backupDir;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ModChangeGuard] Profile backup failed: {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Profile backup failed: {ex.Message}");
             return null;
         }
     }
@@ -159,7 +157,7 @@ internal static class ProfileProgressBackupService {
             });
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ModChangeGuard] Failed to read backup meta: {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Failed to read backup meta: {ex.Message}");
             return null;
         }
     }
@@ -192,17 +190,16 @@ internal static class ProfileProgressBackupService {
             var loadResult = SaveManager.Instance.InitProgressData();
             if (!loadResult.Success) {
                 TryRollbackRestore(targetPath, preRestorePath);
-                MainFile.Logger.Warn(
-                    $"[ModChangeGuard] Restore reload failed: {loadResult.Status}");
+                KitLog.Warn("ModChangeGuard", $"Restore reload failed: {loadResult.Status}");
                 return ProgressRestoreResult.LoadFailed;
             }
 
-            MainFile.Logger.Info($"[ModChangeGuard] Restored progress from {backupDir}.");
+            KitLog.Info("ModChangeGuard", $"Restored progress from {backupDir}.");
             return ProgressRestoreResult.Success;
         }
         catch (Exception ex) {
             TryRollbackRestore(targetPath, preRestorePath);
-            MainFile.Logger.Warn($"[ModChangeGuard] Restore failed: {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Restore failed: {ex.Message}");
             return ProgressRestoreResult.IoError;
         }
     }
@@ -214,10 +211,10 @@ internal static class ProfileProgressBackupService {
         try {
             File.Copy(preRestorePath, targetPath, overwrite: true);
             SaveManager.Instance.InitProgressData();
-            MainFile.Logger.Info("[ModChangeGuard] Rolled back progress.restore after failed reload.");
+            KitLog.Info("ModChangeGuard", $"Rolled back progress.restore after failed reload.");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ModChangeGuard] Restore rollback failed: {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Restore rollback failed: {ex.Message}");
         }
     }
 
@@ -244,7 +241,7 @@ internal static class ProfileProgressBackupService {
                 Directory.Delete(dirs[i], recursive: true);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[ModChangeGuard] Failed to trim old backup '{dirs[i]}': {ex.Message}");
+                KitLog.Warn("ModChangeGuard", $"Failed to trim old backup '{dirs[i]}': {ex.Message}");
             }
         }
     }

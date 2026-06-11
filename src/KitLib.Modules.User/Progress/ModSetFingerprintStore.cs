@@ -39,7 +39,7 @@ internal static class ModSetFingerprintStore {
             return JsonSerializer.Deserialize<ModSetFingerprintData>(File.ReadAllText(FilePath), JsonOpts);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ModChangeGuard] Failed to load mod fingerprint: {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Failed to load mod fingerprint: {ex.Message}");
             return null;
         }
     }
@@ -63,7 +63,7 @@ internal static class ModSetFingerprintStore {
                 System.Threading.Thread.Sleep(40);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[ModChangeGuard] Failed to save mod fingerprint: {ex.Message}");
+                KitLog.Warn("ModChangeGuard", $"Failed to save mod fingerprint: {ex.Message}");
                 return;
             }
         }

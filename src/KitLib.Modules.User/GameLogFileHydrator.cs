@@ -54,7 +54,7 @@ internal static class GameLogFileHydrator {
             return ParseFile(path, referenceDate);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[LogViewer] Failed to read session log file: {ex.Message}");
+            KitLog.Warn("LogViewer", $"Failed to read session log file: {ex.Message}");
             return [];
         }
     }

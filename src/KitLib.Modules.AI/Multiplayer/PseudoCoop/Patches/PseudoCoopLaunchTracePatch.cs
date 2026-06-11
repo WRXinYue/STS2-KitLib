@@ -9,10 +9,10 @@ namespace KitLib.Multiplayer.PseudoCoop.Patches;
 [HarmonyPatch(typeof(NSceneContainer), nameof(NSceneContainer.SetCurrentScene))]
 internal static class PseudoCoopSetSceneTracePatch {
     [HarmonyPrefix]
-    static void Prefix() => MainFile.Logger.Info("[PseudoCoop] SetCurrentScene(NRun) starting…");
+    static void Prefix() => KitLog.Info("PseudoCoop", $"SetCurrentScene(NRun) starting…");
 
     [HarmonyPostfix]
-    static void Postfix() => MainFile.Logger.Info("[PseudoCoop] SetCurrentScene(NRun) complete.");
+    static void Postfix() => KitLog.Info("PseudoCoop", $"SetCurrentScene(NRun) complete.");
 }
 
 [HarmonyPatch(typeof(RunManager), nameof(RunManager.Launch))]
@@ -21,19 +21,19 @@ internal static class PseudoCoopLaunchTracePatch {
     [HarmonyPriority(Priority.Last)]
     static void Postfix() {
         KitLibPseudoCoopOps.RunDualInstanceLanPresets?.Invoke();
-        MainFile.Logger.Info("[PseudoCoop] RunManager.Launch postfixes done.");
+        KitLog.Info("PseudoCoop", $"RunManager.Launch postfixes done.");
     }
 }
 
 [HarmonyPatch(typeof(NRun), "_Ready")]
 internal static class PseudoCoopNRunReadyTracePatch {
     [HarmonyPrefix]
-    static void Prefix() => MainFile.Logger.Info("[PseudoCoop] NRun._Ready starting…");
+    static void Prefix() => KitLog.Info("PseudoCoop", $"NRun._Ready starting…");
 
     [HarmonyPostfix]
     static void Postfix() {
         KitLibPseudoCoopOps.RunDualInstanceLanPresets?.Invoke();
-        MainFile.Logger.Info("[PseudoCoop] NRun._Ready complete.");
+        KitLog.Info("PseudoCoop", $"NRun._Ready complete.");
     }
 }
 
@@ -41,11 +41,11 @@ internal static class PseudoCoopNRunReadyTracePatch {
 internal static class PseudoCoopEnterActTracePatch {
     [HarmonyPrefix]
     static void Prefix(int currentActIndex) =>
-        MainFile.Logger.Info($"[PseudoCoop] EnterAct({currentActIndex}) starting…");
+        KitLog.Info("PseudoCoop", $"EnterAct({currentActIndex}) starting…");
 
     [HarmonyPostfix]
     static void Postfix(int currentActIndex) {
-        MainFile.Logger.Info($"[PseudoCoop] EnterAct({currentActIndex}) complete.");
+        KitLog.Info("PseudoCoop", $"EnterAct({currentActIndex}) complete.");
         if (currentActIndex == 0)
             PseudoCoopDeferredInit.TryScheduleAfterEnterAct0();
     }

@@ -57,7 +57,7 @@ internal static class ModChangeGuard {
             CompletedForSession = true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ModChangeGuard] Guard run failed ({reason}): {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Guard run failed ({reason}): {ex.Message}");
         }
     }
 }

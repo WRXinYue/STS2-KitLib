@@ -84,7 +84,7 @@ internal static class McpBridge {
             catch (ObjectDisposedException) { break; }
             catch (HttpListenerException) { break; }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[McpBridge] Listen error: {ex.Message}");
+                KitLog.Warn("McpBridge", $"Listen error: {ex.Message}");
             }
         }
     }
@@ -118,7 +118,7 @@ internal static class McpBridge {
             await res.OutputStream.WriteAsync(buffer);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[McpBridge] Request error: {ex.Message}");
+            KitLog.Warn("McpBridge", $"Request error: {ex.Message}");
         }
         finally {
             try { res.Close(); } catch { }

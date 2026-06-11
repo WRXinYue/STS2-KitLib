@@ -23,8 +23,7 @@ public static class MapPointDevJumpPatch {
             return true;
 
         if (!VanillaMapNavigator.TryGoTo(point.coord)) {
-            MainFile.Logger.Warn(
-                $"[KitLib.MapJump] TryGoTo failed, vanilla fallback: {point.coord} {point.PointType}");
+            KitLog.Warn("MapJump", $"TryGoTo failed, vanilla fallback: {point.coord} {point.PointType}");
             return true;
         }
 

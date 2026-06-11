@@ -121,7 +121,7 @@ internal static partial class EnemySelectUI {
             var result = MpCheatSession.IsHost
                 ? await MpCheatCombatEnemyCoordinator.TryHostKillEnemyAsync(enemy)
                 : await MpCheatCombatEnemyCoordinator.TryClientRequestKillEnemyAsync(enemy);
-            MainFile.Logger.Info($"[MpCheat] Combat kill result: {result}");
+            KitLog.Info("MpCheat", $"Combat kill result: {result}");
             RefreshCombatContext();
             onChanged?.Invoke();
         }
@@ -137,7 +137,7 @@ internal static partial class EnemySelectUI {
 
         async System.Threading.Tasks.Task SyncKillAllAsync() {
             var result = await MpCheatCombatEnemyCoordinator.TryHostKillAllAsync();
-            MainFile.Logger.Info($"[MpCheat] Combat kill all result: {result}");
+            KitLog.Info("MpCheat", $"Combat kill all result: {result}");
             RefreshCombatContext();
             onChanged?.Invoke();
         }
@@ -156,8 +156,7 @@ internal static partial class EnemySelectUI {
     }
 
     internal static void RunSyncedCombatAddMonster(MonsterModel monster, Action? onChanged = null) {
-        MainFile.Logger.Info(
-            $"[KitLib.CombatAdd] UI request: {((AbstractModel)monster).Id.Entry} mp={MpCheatSession.InMultiplayerRun}");
+        KitLog.Info("CombatAdd", $"UI request: {((AbstractModel)monster).Id.Entry} mp={MpCheatSession.InMultiplayerRun}");
         if (!MpCheatSession.InMultiplayerRun) {
             DevPanelUI.RunCombatAction(async () => { await CombatEnemyActions.AddMonster(monster); }, onChanged);
             return;
@@ -178,7 +177,7 @@ internal static partial class EnemySelectUI {
             var result = MpCheatSession.IsHost
                 ? await MpCheatCombatEnemyCoordinator.TryHostAddMonsterAsync(monster)
                 : await MpCheatCombatEnemyCoordinator.TryClientRequestAddMonsterAsync(monster);
-            MainFile.Logger.Info($"[MpCheat] Combat add monster result: {result}");
+            KitLog.Info("MpCheat", $"Combat add monster result: {result}");
             RefreshCombatContext();
             onChanged?.Invoke();
         }
@@ -205,7 +204,7 @@ internal static partial class EnemySelectUI {
             var result = MpCheatSession.IsHost
                 ? await MpCheatCombatEnemyCoordinator.TryHostAddEncounterAsync(encounter)
                 : await MpCheatCombatEnemyCoordinator.TryClientRequestAddEncounterAsync(encounter);
-            MainFile.Logger.Info($"[MpCheat] Combat add result: {result}");
+            KitLog.Info("MpCheat", $"Combat add result: {result}");
             RefreshCombatContext();
             onChanged?.Invoke();
         }

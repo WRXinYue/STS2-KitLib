@@ -46,7 +46,7 @@ internal static class DevPerfTraceWriter {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[Perf] trace write failed: {ex.Message}");
+            KitLog.Warn("Perf", $"trace write failed: {ex.Message}");
         }
     }
 

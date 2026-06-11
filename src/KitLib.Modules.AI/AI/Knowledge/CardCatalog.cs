@@ -51,12 +51,12 @@ public static class CardCatalog {
                     tags);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiKnowledge] Skipped card {card.Id.Entry}: {ex.Message}");
+                KitLog.Warn("AiKnowledge", $"Skipped card {card.Id.Entry}: {ex.Message}");
             }
         }
 
         _initialized = true;
-        MainFile.Logger.Info($"[AiKnowledge] CardCatalog indexed {ById.Count} cards.");
+        KitLog.Info("AiKnowledge", $"CardCatalog indexed {ById.Count} cards.");
     }
 
     public static bool TryGet(string? id, out CardCatalogEntry entry) {

@@ -29,11 +29,11 @@ public static class KitLibHost {
     public static void Bootstrap() {
         if (_bootstrapped) return;
         _bootstrapped = true;
-        MainFile.Logger.Info("KitLib host bootstrap starting.");
+        KitLog.Info("KitLib host bootstrap starting.");
         ModuleCatalog.Announce(ModuleIds.Core);
-        MainFile.Logger.Info("KitLib core module announced; loading bundled satellites.");
+        KitLog.Info("KitLib core module announced; loading bundled satellites.");
         SatelliteModuleLoader.LoadBundledModules();
-        MainFile.Logger.Info("KitLib Core host ready.");
+        KitLog.Info("KitLib Core host ready.");
     }
 
     public static void AnnounceModule(string moduleId) => ModuleCatalog.Announce(moduleId);
@@ -78,7 +78,7 @@ public static class KitLibHost {
     public static void RegisterSnapshotContributor(object contributor) {
         SnapshotContributors.Add(contributor);
         var key = HostReflection.GetStringProperty(contributor, "ExtensionKey") ?? contributor.GetType().Name;
-        MainFile.Logger.Info($"[KitLibHost] Snapshot contributor key={key}.");
+        KitLog.Info("Host", $"Snapshot contributor key={key}.");
     }
 
     public static void EnrichSnapshot(JsonObject snapshot, Player player, object gamePhase) {
@@ -89,14 +89,14 @@ public static class KitLibHost {
                 HostReflection.InvokeEnrich(contributor, snapshot, player, gamePhase);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLibHost] Snapshot contributor failed: {ex.Message}");
+                KitLog.Warn("Host", $"Snapshot contributor failed: {ex.Message}");
             }
         }
     }
 
     public static void RegisterMoveModifier(object modifier) {
         MoveModifiers.Add(modifier);
-        MainFile.Logger.Info($"[KitLibHost] Move modifier registered type={modifier.GetType().Name}.");
+        KitLog.Info("Host", $"Move modifier registered type={modifier.GetType().Name}.");
     }
 
     public static int ApplyMoveModifiers(JsonObject snapshot, object move, int baseScore, string? characterId) {
@@ -107,7 +107,7 @@ public static class KitLibHost {
                 score = HostReflection.InvokeModifyScore(modifier, snapshot, move, score);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLibHost] Move modifier {modifier.GetType().Name} failed: {ex.Message}");
+                KitLog.Warn("Host", $"Move modifier {modifier.GetType().Name} failed: {ex.Message}");
             }
         }
         return score;
@@ -115,7 +115,7 @@ public static class KitLibHost {
 
     public static void RegisterCardTagProvider(object provider) {
         CardTagProviders.Add(provider);
-        MainFile.Logger.Info($"[KitLibHost] Card tag provider registered type={provider.GetType().Name}.");
+        KitLog.Info("Host", $"Card tag provider registered type={provider.GetType().Name}.");
     }
 
     public static IReadOnlyList<object> MergeCardTags(string? cardId, IReadOnlyList<object> baseTags) {
@@ -129,7 +129,7 @@ public static class KitLibHost {
                     merged.Add(tag);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLibHost] Card tag provider {provider.GetType().Name} failed: {ex.Message}");
+                KitLog.Warn("Host", $"Card tag provider {provider.GetType().Name} failed: {ex.Message}");
             }
         }
         return merged.ToList();
@@ -139,7 +139,7 @@ public static class KitLibHost {
         CharacterStrategies[characterId] = strategy;
         if (profile != null)
             CharacterProfiles[characterId] = profile;
-        MainFile.Logger.Info($"[KitLibHost] Character strategy registered id={characterId}.");
+        KitLog.Info("Host", $"Character strategy registered id={characterId}.");
     }
 
     public static void UnregisterCharacterStrategy(string characterId) {
@@ -209,7 +209,7 @@ public static class KitLibHost {
             EnsureDevHarmonyApplied?.Invoke();
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] Dev Harmony apply failed: {ex.Message}");
+            KitLog.Warn($"Dev Harmony apply failed: {ex.Message}");
         }
     }
 

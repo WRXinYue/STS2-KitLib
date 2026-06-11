@@ -15,7 +15,7 @@ internal static class DualInstanceTestBootstrap {
     public static void EnsureMultiplayerDevActive(string reason) {
         if (KitLibState.NormalRunMode == NormalRunMode.Disabled) {
             KitLibState.NormalRunMode = NormalRunMode.DevPanel;
-            MainFile.Logger.Info($"[LanTest] DevMode active for multiplayer dev session ({reason}).");
+            KitLog.Info("LanTest", $"DevMode active for multiplayer dev session ({reason}).");
         }
 
         EnsureCheatsEnabled(reason);
@@ -29,15 +29,14 @@ internal static class DualInstanceTestBootstrap {
 
         if (!SettingsStore.Current.MultiplayerCheatOptIn) {
             SettingsStore.SetMultiplayerCheatOptIn(true);
-            MainFile.Logger.Info($"[DualInstance] Multiplayer cheat opt-in enabled ({reason}).");
+            KitLog.Info("DualInstance", $"Multiplayer cheat opt-in enabled ({reason}).");
         }
         else {
             MpCheatSession.SetLocalOptIn(true);
         }
 
-        MainFile.Logger.Info($"[DualInstance] Cheat mode enabled for dual-instance test ({reason}).");
-        MainFile.Logger.Warn(
-            "[DualInstance] Use different game profiles per window (profile1 + profile2) to avoid save conflicts.");
+        KitLog.Info("DualInstance", $"Cheat mode enabled for dual-instance test ({reason}).");
+        KitLog.Warn("DualInstance", $"Use different game profiles per window (profile1 + profile2) to avoid save conflicts.");
     }
 
     /// <summary>Dual-instance LAN: auto-apply host-drive + client AFK presets so half-config cannot desync.</summary>
@@ -48,21 +47,21 @@ internal static class DualInstanceTestBootstrap {
         if (netType == NetGameType.Host) {
             if (SettingsStore.Current.MpAiTeammateEnabled
                 && SettingsStore.Current.MpAiTeammateDriveLiveEnet) {
-                MainFile.Logger.Info("[DualInstance] LAN host preset already active.");
+                KitLog.Info("DualInstance", $"LAN host preset already active.");
                 return;
             }
 
             PseudoCoopBootstrap.ApplyLanHostPreset();
-            MainFile.Logger.Info("[DualInstance] Auto-applied LAN host preset (dual-instance).");
+            KitLog.Info("DualInstance", $"Auto-applied LAN host preset (dual-instance).");
         }
         else if (netType == NetGameType.Client) {
             if (MpAiTeammateAfkClient.IsSessionEnabled) {
-                MainFile.Logger.Info("[DualInstance] LAN client AFK already active.");
+                KitLog.Info("DualInstance", $"LAN client AFK already active.");
                 return;
             }
 
             PseudoCoopBootstrap.ApplyLanClientPreset();
-            MainFile.Logger.Info("[DualInstance] Auto-applied LAN client AFK preset (dual-instance).");
+            KitLog.Info("DualInstance", $"Auto-applied LAN client AFK preset (dual-instance).");
         }
     }
 }

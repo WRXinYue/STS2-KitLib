@@ -68,13 +68,12 @@ internal static class CompanionSpawnService {
             if (request.EnableNonCombatAi)
                 CompanionNonCombatRegistry.Enable(netId);
 
-            MainFile.Logger.Info(
-                $"[Companion] Spawned netId={netId} character={request.Character.Id.Entry}.");
+            KitLog.Info("Companion", $"Spawned netId={netId} character={request.Character.Id.Entry}.");
 
             return new(true, netId, null, companion);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[Companion] Spawn failed: {ex}");
+            KitLog.Warn("Companion", $"Spawn failed: {ex}");
             return new(false, netId, ex.Message);
         }
     }
@@ -107,7 +106,7 @@ internal static class CompanionSpawnService {
         CompanionRegistry.Unregister(netId);
         PseudoCoopLobbyRoster.UnregisterSimulatedPeer(netId);
         SimulatedPeerRegistry.Refresh();
-        MainFile.Logger.Info($"[Companion] Dismissed netId={netId} (AI/roster only).");
+        KitLog.Info("Companion", $"Dismissed netId={netId} (AI/roster only).");
         return true;
     }
 

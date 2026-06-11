@@ -82,53 +82,51 @@ internal static class SatelliteModuleLoader {
             ModAssemblyLoader.LoadFromModPath(path);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] Preload {assemblyName} failed — {ex.Message}");
+            KitLog.Warn($"Preload {assemblyName} failed — {ex.Message}");
         }
     }
 
     static bool TryLoadModule(string modDir, ModuleSpec spec) {
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
-            MainFile.Logger.Warn(
-                $"[KitLib] Module {spec.ModuleId} skipped — STS2 profile {Sts2RuntimeProfile.Current} is unsupported or sanity mismatch.");
+            KitLog.Warn($"Module {spec.ModuleId} skipped — STS2 profile {Sts2RuntimeProfile.Current} is unsupported or sanity mismatch.");
             return false;
         }
 
         if (ModuleCatalog.IsLoaded(spec.ModuleId)) {
-            MainFile.Logger.Info($"[KitLib] Module {spec.ModuleId} already active — skipping bundled load.");
+            KitLog.Info($"Module {spec.ModuleId} already active — skipping bundled load.");
             return true;
         }
 
         if (IsExternallyInstalled(spec.ModuleId)) {
-            MainFile.Logger.Info($"[KitLib] Module {spec.ModuleId} installed as separate mod — skipping bundled load.");
+            KitLog.Info($"Module {spec.ModuleId} installed as separate mod — skipping bundled load.");
             return ModuleCatalog.IsLoaded(spec.ModuleId);
         }
 
         foreach (var required in spec.Requires) {
             if (!ModuleCatalog.IsLoaded(required)) {
-                MainFile.Logger.Warn(
-                    $"[KitLib] Module {spec.ModuleId} skipped — prerequisite {required} is not loaded.");
+                KitLog.Warn($"Module {spec.ModuleId} skipped — prerequisite {required} is not loaded.");
                 return false;
             }
         }
 
         try {
-            MainFile.Logger.Info($"[KitLib] Satellite loader: loading {spec.AssemblyName}.dll assembly file.");
+            KitLog.Info($"Satellite loader: loading {spec.AssemblyName}.dll assembly file.");
             var assembly = LoadAssembly(modDir, spec.AssemblyName, spec.ModuleId);
             if (assembly == null)
                 return false;
-            MainFile.Logger.Info($"[KitLib] Satellite loader: {spec.AssemblyName} assembly loaded.");
+            KitLog.Info($"Satellite loader: {spec.AssemblyName} assembly loaded.");
 
             if (spec.EntryTypeName == null) {
                 ModuleCatalog.Announce(spec.ModuleId);
-                MainFile.Logger.Info($"[KitLib] Loaded passive module {spec.ModuleId}.");
+                KitLog.Info($"Loaded passive module {spec.ModuleId}.");
                 return true;
             }
 
-            MainFile.Logger.Info($"[KitLib] Satellite loader: resolving entry {spec.EntryTypeName}.");
+            KitLog.Info($"Satellite loader: resolving entry {spec.EntryTypeName}.");
             var entryType = assembly.GetType(spec.EntryTypeName, throwOnError: false);
             if (entryType == null) {
-                MainFile.Logger.Warn($"[KitLib] Module {spec.ModuleId} skipped — entry type {spec.EntryTypeName} not found.");
+                KitLog.Warn($"Module {spec.ModuleId} skipped — entry type {spec.EntryTypeName} not found.");
                 return false;
             }
 
@@ -139,7 +137,7 @@ internal static class SatelliteModuleLoader {
                 types: Type.EmptyTypes,
                 modifiers: null);
             if (init == null) {
-                MainFile.Logger.Warn($"[KitLib] Module {spec.ModuleId} skipped — Initialize() not found.");
+                KitLog.Warn($"Module {spec.ModuleId} skipped — Initialize() not found.");
                 return false;
             }
 
@@ -154,25 +152,24 @@ internal static class SatelliteModuleLoader {
             return ModuleCatalog.IsLoaded(spec.ModuleId);
         }
         catch (TargetInvocationException ex) {
-            MainFile.Logger.Warn(
-                $"[KitLib] Module {spec.ModuleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            KitLog.Warn($"Module {spec.ModuleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
             return false;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] Module {spec.ModuleId} load conflict — skipped ({ex.Message}).");
+            KitLog.Warn($"Module {spec.ModuleId} load conflict — skipped ({ex.Message}).");
             return false;
         }
     }
 
     static void WireDevModuleDelegates(Assembly? devAssembly) {
         if (devAssembly == null) {
-            MainFile.Logger.Warn("[KitLib] KitLib.Dev assembly not resolved — Dev runtime wiring skipped.");
+            KitLog.Warn($"KitLib.Dev assembly not resolved — Dev runtime wiring skipped.");
             return;
         }
 
         var bootstrap = devAssembly.GetType("KitLib.Dev.ModuleBootstrap", throwOnError: false);
         if (bootstrap == null) {
-            MainFile.Logger.Warn("[KitLib] KitLib.Dev.ModuleBootstrap not found.");
+            KitLog.Warn($"KitLib.Dev.ModuleBootstrap not found.");
             return;
         }
 
@@ -217,11 +214,10 @@ internal static class SatelliteModuleLoader {
             init.Invoke(null, null);
         }
         catch (TargetInvocationException ex) {
-            MainFile.Logger.Warn(
-                $"[KitLib] Module {moduleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            KitLog.Warn($"Module {moduleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] Module {moduleId} init failed — skipped ({ex.Message}).");
+            KitLog.Warn($"Module {moduleId} init failed — skipped ({ex.Message}).");
         }
     }
 
@@ -231,13 +227,12 @@ internal static class SatelliteModuleLoader {
         if (!File.Exists(path)) {
             var legacyPath = Path.Combine(modDir, assemblyName + ".dll");
             if (!File.Exists(legacyPath)) {
-                MainFile.Logger.Info($"[KitLib] Module {moduleId} not present ({assemblyName}.dll).");
+                KitLog.Info($"Module {moduleId} not present ({assemblyName}.dll).");
                 return null;
             }
 
             path = legacyPath;
-            MainFile.Logger.Info(
-                $"[KitLib] Loading {assemblyName} from mod root (legacy layout). Run make sync-full to move it under {ModulesSubdir}/.");
+            KitLog.Info($"Loading {assemblyName} from mod root (legacy layout). Run make sync-full to move it under {ModulesSubdir}/.");
         }
 
         try {
@@ -245,8 +240,7 @@ internal static class SatelliteModuleLoader {
         }
         catch (ReflectionTypeLoadException ex) {
             var details = string.Join("; ", ex.LoaderExceptions?.Select(e => e?.Message) ?? []);
-            MainFile.Logger.Warn(
-                $"[KitLib] Module {moduleId} skipped — failed to load {assemblyName} ({details}).");
+            KitLog.Warn($"Module {moduleId} skipped — failed to load {assemblyName} ({details}).");
             return null;
         }
     }

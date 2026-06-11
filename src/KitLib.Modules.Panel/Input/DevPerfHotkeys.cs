@@ -14,13 +14,13 @@ internal static class DevPerfHotkeys {
             return false;
 
         if (!SettingsStore.Current.HotkeysEnabled) {
-            MainFile.Logger.Info("[Perf] F3 ignored: keyboard shortcuts disabled in settings.");
+            KitLog.Info("Perf", $"F3 ignored: keyboard shortcuts disabled in settings.");
             viewport.SetInputAsHandled();
             return true;
         }
 
         if (!KitLibState.IsActive) {
-            MainFile.Logger.Info("[Perf] F3 ignored: DevMode inactive (enable DevPanel/Cheat on normal runs or start a dev test run).");
+            KitLog.Info("Perf", $"F3 ignored: DevMode inactive (enable DevPanel/Cheat on normal runs or start a dev test run).");
             viewport.SetInputAsHandled();
             return true;
         }
@@ -29,7 +29,7 @@ internal static class DevPerfHotkeys {
         SettingsStore.SetPerfHudEnabled(next);
         KitLibRootServices.EnsureRootServicesNode();
         DevPerfOverlayUI.SyncVisibility();
-        MainFile.Logger.Info($"[Perf] Overlay toggled {(next ? "ON" : "OFF")} via hotkey.");
+        KitLog.Info("Perf", $"Overlay toggled {(next ? "ON" : "OFF")} via hotkey.");
         viewport.SetInputAsHandled();
         return true;
     }

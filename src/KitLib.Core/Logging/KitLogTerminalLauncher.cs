@@ -39,7 +39,7 @@ public static class KitLogTerminalLauncher {
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLog] kitlog launch failed ({executable}): {ex.Message}");
+            KitLog.Warn("KitLog", $"kitlog launch failed ({executable}): {ex.Message}");
             error = I18N.T("ai.terminal.launchFailed", "Could not start kitlog: {0}", ex.Message);
             return false;
         }

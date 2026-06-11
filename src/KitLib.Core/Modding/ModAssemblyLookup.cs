@@ -40,7 +40,13 @@ internal static class ModAssemblyLookup {
                 continue;
 
             var display = string.IsNullOrEmpty(man.name) ? man.id : man.name;
-            var info = new ModAssemblyInfo(man.id, display, man.version ?? "", ModManifestDeps.Copy(man));
+            var entryAssembly = TryGetEntryAssemblySimpleName(mod);
+            var info = new ModAssemblyInfo(
+                man.id,
+                display,
+                man.version ?? "",
+                ModManifestDeps.Copy(man),
+                entryAssembly);
             RegisterAssembliesForMod(mod, info, map);
         }
 
@@ -353,6 +359,77 @@ internal static class ModAssemblyLookup {
     internal static bool IsGameCoreAssembly(string assemblySimpleName) =>
         string.Equals(assemblySimpleName, "sts2", StringComparison.Ordinal);
 
+    internal static string? TryDeriveScope(string assemblySimpleName, in ModAssemblyInfo mod) {
+        if (string.IsNullOrEmpty(assemblySimpleName))
+            return null;
+
+        if (!string.IsNullOrEmpty(mod.EntryAssemblySimpleName)
+            && string.Equals(assemblySimpleName, mod.EntryAssemblySimpleName, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        if (ModIdMatchesAssembly(mod.Id, assemblySimpleName)
+            || ModIdMatchesAssembly(mod.DisplayName, assemblySimpleName))
+            return null;
+
+        if (!string.IsNullOrEmpty(mod.EntryAssemblySimpleName)
+            && TryStripAssemblyPrefix(assemblySimpleName, mod.EntryAssemblySimpleName, out var fromEntry))
+            return fromEntry;
+
+        if (TryStripAssemblyPrefix(assemblySimpleName, mod.Id, out var fromId))
+            return fromId;
+
+        if (TryStripAssemblyPrefix(assemblySimpleName, mod.DisplayName, out var fromDisplay))
+            return fromDisplay;
+
+        return assemblySimpleName;
+    }
+
+    static string? TryGetEntryAssemblySimpleName(Mod mod) {
+        foreach (var asm in ExtractAssembliesViaReflection(mod)) {
+            var simple = asm.GetName().Name;
+            if (!string.IsNullOrEmpty(simple))
+                return simple;
+        }
+
+        return null;
+    }
+
+    static bool ModIdMatchesAssembly(string modKey, string assemblySimpleName) {
+        if (string.IsNullOrEmpty(modKey))
+            return false;
+        if (string.Equals(modKey, assemblySimpleName, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return NormalizeModKey(modKey) == NormalizeModKey(assemblySimpleName);
+    }
+
+    static bool TryStripAssemblyPrefix(string assemblySimpleName, string prefix, out string scope) {
+        scope = "";
+        if (string.IsNullOrEmpty(prefix))
+            return false;
+
+        if (assemblySimpleName.Length <= prefix.Length)
+            return false;
+
+        if (!assemblySimpleName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var rest = assemblySimpleName[prefix.Length..];
+        if (rest.Length == 0)
+            return false;
+
+        if (rest[0] is '.' or '-' or '_')
+            rest = rest[1..];
+
+        if (string.IsNullOrEmpty(rest))
+            return false;
+
+        scope = rest;
+        return true;
+    }
+
+    static string NormalizeModKey(string value)
+        => value.ToLowerInvariant().Replace('-', '_').Replace('.', '_');
+
     internal static string FormatAssemblyVersion(Assembly asm) {
         var an = asm.GetName();
         var ver = an.Version?.ToString() ?? "?";
@@ -365,13 +442,11 @@ internal static class ModAssemblyLookup {
     #region Logging Helpers
 
     private static void LogAssemblyMapStats(Dictionary<string, ModAssemblyInfo> map) {
-        MainFile.Logger.Info(
-            $"[ModAssemblyLookup] Built assembly map with {map.Count} entries");
+        KitLog.Info("ModAssemblyLookup", $"Built assembly map with {map.Count} entries");
     }
 
     private static void LogReflectionError(Type modType, string memberName, Exception ex) {
-        MainFile.Logger.Warn(
-            $"[ModAssemblyLookup] Failed to reflect member '{memberName}' on '{modType.Name}': {ex.Message}");
+        KitLog.Warn("ModAssemblyLookup", $"Failed to reflect member '{memberName}' on '{modType.Name}': {ex.Message}");
     }
 
     #endregion

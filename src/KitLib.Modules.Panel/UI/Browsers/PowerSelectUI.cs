@@ -406,7 +406,7 @@ internal static class PowerSelectUI {
                 var result = MpCheatSession.IsHost
                     ? await MpCheatPowerCoordinator.TryHostAddPowerAsync(target, s.Selected!, s.Amount, s.Target)
                     : await MpCheatPowerCoordinator.TryClientRequestAddPowerAsync(target, s.Selected!, s.Amount, s.Target);
-                MainFile.Logger.Info($"[MpCheat] Power apply: {result}");
+                KitLog.Info("MpCheat", $"Power apply: {result}");
                 RefreshCurrentPowers(s);
             }
         };
@@ -484,7 +484,7 @@ internal static class PowerSelectUI {
                 var result = MpCheatSession.IsHost
                     ? await MpCheatPowerCoordinator.TryHostClearPowersAsync(target)
                     : await MpCheatPowerCoordinator.TryClientRequestClearPowersAsync(target);
-                MainFile.Logger.Info($"[MpCheat] Power clear: {result}");
+                KitLog.Info("MpCheat", $"Power clear: {result}");
                 RefreshCurrentPowers(s);
             }
         };
@@ -814,7 +814,7 @@ internal static class PowerSelectUI {
                     var result = MpCheatSession.IsHost
                         ? await MpCheatPowerCoordinator.TryHostRemovePowerAsync(player, powerId)
                         : await MpCheatPowerCoordinator.TryClientRequestRemovePowerAsync(player, powerId);
-                    MainFile.Logger.Info($"[MpCheat] Power remove: {result}");
+                    KitLog.Info("MpCheat", $"Power remove: {result}");
                     RefreshCurrentPowers(s);
                 }
             };

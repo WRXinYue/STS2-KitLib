@@ -21,7 +21,7 @@ internal static class MapScreenReflection {
 
     public static void RecalculateTravelability(NMapScreen screen) {
         if (RecalculateTravelabilityMethod == null) {
-            MainFile.Logger.Warn("[KitLib.MapJump] RecalculateTravelability method not found");
+            KitLog.Warn("MapJump", $"RecalculateTravelability method not found");
             return;
         }
 
@@ -29,13 +29,13 @@ internal static class MapScreenReflection {
             RecalculateTravelabilityMethod.Invoke(screen, null);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib.MapJump] RecalculateTravelability failed: {ex.Message}");
+            KitLog.Warn("MapJump", $"RecalculateTravelability failed: {ex.Message}");
         }
     }
 
     public static Dictionary<MapCoord, NMapPoint>? GetMapPoints(NMapScreen screen) {
         if (MapPointDictionaryRef == null) {
-            MainFile.Logger.Warn("[KitLib.MapJump] _mapPointDictionary field not found");
+            KitLog.Warn("MapJump", $"_mapPointDictionary field not found");
             return null;
         }
 
@@ -43,14 +43,14 @@ internal static class MapScreenReflection {
             return MapPointDictionaryRef(screen);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib.MapJump] GetMapPoints failed: {ex.Message}");
+            KitLog.Warn("MapJump", $"GetMapPoints failed: {ex.Message}");
             return null;
         }
     }
 
     public static Dictionary<(MapCoord, MapCoord), IReadOnlyList<TextureRect>>? GetPaths(NMapScreen screen) {
         if (PathsField == null) {
-            MainFile.Logger.Warn("[KitLib.MapAiPath] _paths field not found");
+            KitLog.Warn("MapAiPath", $"_paths field not found");
             return null;
         }
 
@@ -58,7 +58,7 @@ internal static class MapScreenReflection {
             return PathsField.GetValue(screen) as Dictionary<(MapCoord, MapCoord), IReadOnlyList<TextureRect>>;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib.MapAiPath] GetPaths failed: {ex.Message}");
+            KitLog.Warn("MapAiPath", $"GetPaths failed: {ex.Message}");
             return null;
         }
     }

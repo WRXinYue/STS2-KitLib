@@ -18,7 +18,7 @@ internal static class PseudoCoopLobbyRoster {
         if (lobby == null) return;
         if (ConnectedIdsField.GetValue(lobby) is not HashSet<ulong> ids) return;
         if (!ids.Add(netId)) return;
-        MainFile.Logger.Info($"[PseudoCoop] RunLobby connected roster +{netId} (now {ids.Count}).");
+        KitLog.Info("PseudoCoop", $"RunLobby connected roster +{netId} (now {ids.Count}).");
     }
 
     internal static void UnregisterSimulatedPeer(ulong netId) {
@@ -26,7 +26,7 @@ internal static class PseudoCoopLobbyRoster {
         if (lobby == null) return;
         if (ConnectedIdsField.GetValue(lobby) is not HashSet<ulong> ids) return;
         if (!ids.Remove(netId)) return;
-        MainFile.Logger.Info($"[PseudoCoop] RunLobby connected roster -{netId}.");
+        KitLog.Info("PseudoCoop", $"RunLobby connected roster -{netId}.");
     }
 
     internal static void OnRunEnded() {

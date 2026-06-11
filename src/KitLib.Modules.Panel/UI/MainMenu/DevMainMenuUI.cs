@@ -643,7 +643,7 @@ internal static class DevMainMenuUI {
             var seed = seedInput.Text?.Trim();
             if (!string.IsNullOrEmpty(seed)) {
                 KitLibState.PendingRestartSeed = SeedHelper.CanonicalizeSeed(seed);
-                MainFile.Logger.Info($"[KitLib] MainMenu seed input: '{KitLibState.PendingRestartSeed}'.");
+                KitLog.Info($"MainMenu seed input: '{KitLibState.PendingRestartSeed}'.");
             }
 
             overlay.QueueFree();

@@ -31,7 +31,7 @@ public static class KitLogHub {
                 HostReflection.InvokeLogSinkWrite(sink, level, source, message);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLog] Sink failed ({sink.GetType().Name}): {ex.Message}");
+                KitLog.Warn("KitLog", $"Sink failed ({sink.GetType().Name}): {ex.Message}");
             }
         }
     }

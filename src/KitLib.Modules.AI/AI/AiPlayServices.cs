@@ -7,5 +7,5 @@ internal static class AiPlayServices {
     public static Sts2StateProvider StateProvider { get; } = new();
 
     public static Sts2ActionExecutor ActionExecutor { get; } =
-        new(StateProvider, msg => MainFile.Logger.Info($"[AiHost] {msg}"));
+        new(StateProvider, msg => KitLog.Info("AiHost", $"{msg}"));
 }

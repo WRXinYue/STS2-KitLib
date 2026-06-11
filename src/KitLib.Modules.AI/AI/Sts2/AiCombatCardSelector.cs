@@ -102,7 +102,7 @@ internal sealed class AiCombatCardSelector : ICardSelector {
             return $"{c.Title}(keep={keep})";
         });
         var msg = $"Hand select [{kind}]: {string.Join(", ", parts)}";
-        MainFile.Logger.Info($"[AiHost] {msg}");
+        KitLog.Info("AiHost", $"{msg}");
         AiDecisionLog.Record("AutoPlay", msg);
     }
 }

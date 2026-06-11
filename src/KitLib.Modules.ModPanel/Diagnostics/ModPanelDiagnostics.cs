@@ -33,9 +33,9 @@ internal static class ModPanelDiagnostics {
     public static void LogOpenReport(ModPanelOpenReport report) {
         if (!ModPanelPerf.IsEnabled)
             return;
-        MainFile.Logger.Info(ModPanelDiagnosticLog.FormatOpen(report));
+        KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatOpen(report));
         foreach (var warning in ModPanelDiagnosticLog.CollectOpenWarnings(report))
-            MainFile.Logger.Warn(warning);
+            KitLog.Warn(ModPanelDiagnosticLog.Scope, warning);
     }
 
     public static void LogSidebarLayoutDeferred(Control? shellRoot, ModPanelOpenReport? openReport = null) {
@@ -47,7 +47,7 @@ internal static class ModPanelDiagnostics {
     public static void LogControllerContext(ModPanelSubmenu submenu) {
         if (!ModPanelPerf.IsEnabled)
             return;
-        MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerContext(CaptureControllerContext(submenu)));
+        KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerContext(CaptureControllerContext(submenu)));
     }
 
     public static ModPanelControllerContext CaptureControllerContext(ModPanelSubmenu submenu) {
@@ -74,10 +74,10 @@ internal static class ModPanelDiagnostics {
 
     public static void LogSidebarLayout(Control shellRoot, ModPanelOpenReport? openReport = null) {
         var snapshot = CaptureLayoutSnapshot(shellRoot);
-        MainFile.Logger.Info(ModPanelDiagnosticLog.FormatLayout(snapshot));
+        KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatLayout(snapshot));
         if (openReport is { } report) {
             foreach (var warning in ModPanelDiagnosticLog.CollectLayoutWarnings(report, snapshot))
-                MainFile.Logger.Warn(warning);
+                KitLog.Warn(ModPanelDiagnosticLog.Scope, warning);
         }
     }
 

@@ -29,11 +29,11 @@ public static class MonsterMechanicIndex {
                 ById[id] = OfficialMonsterProbe.BuildProfile(monster, hintedSpawns);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiMechanic] Skipped monster {monster.Id.Entry}: {ex.Message}");
+                KitLog.Warn("AiMechanic", $"Skipped monster {monster.Id.Entry}: {ex.Message}");
             }
         }
 
-        MainFile.Logger.Info($"[AiMechanic] MonsterMechanicIndex indexed {ById.Count} monsters.");
+        KitLog.Info("AiMechanic", $"MonsterMechanicIndex indexed {ById.Count} monsters.");
     }
 
     public static bool TryGet(string? id, out MonsterMechanicProfile profile) {

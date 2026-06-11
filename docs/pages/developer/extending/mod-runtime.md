@@ -15,7 +15,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 | --- | --- | --- |
 | Purpose | Utility — mod metadata and timing hooks | UI — add tabs to the DevMode rail |
 | Has UI | No | Yes |
-| Typical use | Logging, save metadata, mod filters | In-game developer panels |
+| Typical use | Logging ([KitLib log API](/developer/extending/kitlib-log)), save metadata, mod filters | In-game developer panels |
 | Available | Any time after mods load | Only when DevMode rail is attached |
 
 Use `ModRuntime` when you need mod metadata or a safe post-init timing point, regardless of whether you also register a panel.
@@ -27,7 +27,7 @@ Use `ModRuntime` when you need mod metadata or a safe post-init timing point, re
 | --- | --- | --- |
 | 用途 | 工具层 — mod 元数据与时机钩子 | UI 层 — 向 DevMode 轨道添加标签页 |
 | 是否涉及 UI | 否 | 是 |
-| 典型场景 | 日志、存档元数据、mod 过滤 | 游戏内开发者面板 |
+| 典型场景 | 日志（[KitLib 日志 API](/developer/extending/kitlib-log)）、存档元数据、mod 过滤 | 游戏内开发者面板 |
 | 可用时机 | mod 加载完成后任意时刻 | 仅当 DevMode 轨道已附着时 |
 
 需要 mod 元数据或安全的初始化后时机时，使用 `ModRuntime`，与是否同时注册面板无关。

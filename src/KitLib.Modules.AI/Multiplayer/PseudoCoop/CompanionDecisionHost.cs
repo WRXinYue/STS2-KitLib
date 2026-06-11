@@ -93,7 +93,7 @@ internal static class CompanionDecisionHost {
             await loop.OnDecisionPointAsync(phase);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[CompanionAi] Decision failed netId={player.NetId}: {ex.Message}");
+            KitLog.Warn("CompanionAi", $"Decision failed netId={player.NetId}: {ex.Message}");
         }
         finally {
             AiHostContext.Clear();

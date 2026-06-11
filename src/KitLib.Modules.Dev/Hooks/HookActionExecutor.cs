@@ -29,7 +29,7 @@ internal static class HookActionExecutor {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[Hook] Action {action.Type} failed: {ex.Message}");
+            KitLog.Warn("Hook", $"Action {action.Type} failed: {ex.Message}");
         }
     }
 
@@ -38,7 +38,7 @@ internal static class HookActionExecutor {
 
         var power = FindPower(action.TargetId);
         if (power == null) {
-            MainFile.Logger.Warn($"[Hook] Power not found: {action.TargetId}");
+            KitLog.Warn("Hook", $"Power not found: {action.TargetId}");
             return;
         }
 
@@ -49,7 +49,7 @@ internal static class HookActionExecutor {
     private static void ExecuteAddCard(HookAction action, Player player) {
         var card = FindCard(action.TargetId);
         if (card == null) {
-            MainFile.Logger.Warn($"[Hook] Card not found: {action.TargetId}");
+            KitLog.Warn("Hook", $"Card not found: {action.TargetId}");
             return;
         }
 
@@ -69,7 +69,7 @@ internal static class HookActionExecutor {
             p != null && string.Equals(p.Id.Entry, action.TargetId, StringComparison.OrdinalIgnoreCase));
 
         if (potion == null) {
-            MainFile.Logger.Warn($"[Hook] Potion not found in inventory: {action.TargetId}");
+            KitLog.Warn("Hook", $"Potion not found in inventory: {action.TargetId}");
             return;
         }
 

@@ -21,7 +21,6 @@ internal static class PlayerChoiceSyncBotPatch {
             : MpCheatSyncBot.DefaultIndexChoice();
 
         sync.ReceiveReplayChoice(player, choiceId, choice);
-        MainFile.Logger.Debug(
-            $"[SyncBot] Pre-filled choice id={choiceId} for player {player.NetId}.");
+        KitLog.Debug("SyncBot", $"Pre-filled choice id={choiceId} for player {player.NetId}.");
     }
 }

@@ -33,10 +33,10 @@ internal static class MpCheatRunSavedData {
 
             // Best-effort: slot may already be registered statically elsewhere in future.
             var json = JsonSerializer.Serialize(config);
-            MainFile.Logger.Debug($"[MpCheat] RunSavedData write skipped (register-only bootstrap); json len={json.Length}");
+            KitLog.Debug("MpCheat", $"RunSavedData write skipped (register-only bootstrap); json len={json.Length}");
         }
         catch (Exception ex) {
-            MainFile.Logger.Debug($"[MpCheat] RunSavedData unavailable: {ex.Message}");
+            KitLog.Debug("MpCheat", $"RunSavedData unavailable: {ex.Message}");
         }
     }
 

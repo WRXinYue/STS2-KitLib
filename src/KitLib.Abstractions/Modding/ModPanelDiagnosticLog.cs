@@ -5,10 +5,11 @@ namespace KitLib.Abstractions.Modding;
 
 /// <summary>Pure diagnostic log lines for ModPanel sidebar/embed probes (no Godot).</summary>
 public static class ModPanelDiagnosticLog {
-    public const string Prefix = "[ModPanelDiag]";
+    /// <summary>KitLib log scope; full line is <c>[KitLib][ModPanelDiag] …</c>.</summary>
+    public const string Scope = "ModPanelDiag";
 
     public static string FormatOpen(ModPanelOpenReport report)
-        => $"{Prefix} open: {FormatOpenPayload(report)}";
+        => $"open: {FormatOpenPayload(report)}";
 
     public static string FormatOpenPayload(ModPanelOpenReport report) {
         var sb = new StringBuilder();
@@ -26,7 +27,7 @@ public static class ModPanelDiagnosticLog {
     }
 
     public static string FormatLayout(ModPanelLayoutSnapshot snapshot)
-        => $"{Prefix} layout: {FormatLayoutPayload(snapshot)}";
+        => $"layout: {FormatLayoutPayload(snapshot)}";
 
     public static string FormatLayoutPayload(ModPanelLayoutSnapshot snapshot) {
         if (snapshot.ShellDisposed)
@@ -50,17 +51,17 @@ public static class ModPanelDiagnosticLog {
     public static IReadOnlyList<string> CollectOpenWarnings(ModPanelOpenReport report) {
         var warnings = new List<string>();
         if (report.ExpectedRowCount == 0 && report.RawLoadedModCount > 0)
-            warnings.Add($"{Prefix} loaded mods exist but registry snapshot is empty — check manifest id fields.");
+            warnings.Add($"loaded mods exist but registry snapshot is empty — check manifest id fields.");
         if (report.CatalogSnapshotCount > report.RawLoadedModCount)
-            warnings.Add($"{Prefix} registry lists disabled/failed mods — enable in sidebar and restart to load.");
+            warnings.Add($"registry lists disabled/failed mods — enable in sidebar and restart to load.");
         if (report.ExpectedRowCount > 0 && report.EmbedProbe.Status != ModPanelEmbedHostStatus.Ready)
             warnings.Add(
-                $"{Prefix} sidebar expects {report.ExpectedRowCount} rows but embed host is {report.EmbedProbe.Status}.");
+                $"sidebar expects {report.ExpectedRowCount} rows but embed host is {report.EmbedProbe.Status}.");
         return warnings;
     }
 
     public static string FormatControllerContext(ModPanelControllerContext context)
-        => $"{Prefix} controller: {FormatControllerContextPayload(context)}";
+        => $"controller: {FormatControllerContextPayload(context)}";
 
     public static string FormatControllerContextPayload(ModPanelControllerContext context) {
         var sb = new StringBuilder();
@@ -79,11 +80,11 @@ public static class ModPanelDiagnosticLog {
     }
 
     public static string FormatControllerHints(bool usingController, bool hintsVisible, int tabCount)
-        => $"{Prefix} controllerHints: usingController={usingController}, hintsVisible={hintsVisible}, tabCount={tabCount}";
+        => $"controllerHints: usingController={usingController}, hintsVisible={hintsVisible}, tabCount={tabCount}";
 
     public static string FormatControllerInput(string action, bool handled, string? skipReason, string? selectedModId) {
         var sb = new StringBuilder();
-        sb.Append($"{Prefix} controllerInput: action={action}, handled={handled}");
+        sb.Append($"controllerInput: action={action}, handled={handled}");
         if (!string.IsNullOrWhiteSpace(skipReason))
             sb.Append($", reason={skipReason}");
         if (!string.IsNullOrWhiteSpace(selectedModId))
@@ -99,14 +100,14 @@ public static class ModPanelDiagnosticLog {
             return warnings;
         if (openReport.ExpectedRowCount > 0 && layout.ModSectionCount == 0)
             warnings.Add(
-                $"{Prefix} sidebar expects {openReport.ExpectedRowCount} rows but UI built 0 mod sections.");
+                $"sidebar expects {openReport.ExpectedRowCount} rows but UI built 0 mod sections.");
         if (openReport.ExpectedRowCount > 0
             && layout.ModSectionCount > 0
             && openReport.ExpectedRowCount != layout.ModSectionCount)
             warnings.Add(
-                $"{Prefix} row count mismatch: plan={openReport.ExpectedRowCount}, uiSections={layout.ModSectionCount}.");
+                $"row count mismatch: plan={openReport.ExpectedRowCount}, uiSections={layout.ModSectionCount}.");
         if (!layout.ScrollMissing && layout.ScrollVisible == false)
-            warnings.Add($"{Prefix} sidebar scroll container is not visible.");
+            warnings.Add($"sidebar scroll container is not visible.");
         return warnings;
     }
 }

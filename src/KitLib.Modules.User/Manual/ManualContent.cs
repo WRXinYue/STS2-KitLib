@@ -31,7 +31,7 @@ internal static class ManualContent {
         var resourceName = $"KitLib.Manual.{lang}.{topicId}";
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
         if (stream == null) {
-            MainFile.Logger.Warn($"[ManualContent] Missing manual topic '{topicId}' for '{lang}'.");
+            KitLog.Warn("ManualContent", $"Missing manual topic '{topicId}' for '{lang}'.");
             return "";
         }
 

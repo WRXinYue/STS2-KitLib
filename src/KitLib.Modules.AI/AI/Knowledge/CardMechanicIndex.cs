@@ -66,11 +66,11 @@ public static class CardMechanicIndex {
                 ById[id] = BuildProfile(card);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiMechanic] Skipped card {card.Id.Entry}: {ex.Message}");
+                KitLog.Warn("AiMechanic", $"Skipped card {card.Id.Entry}: {ex.Message}");
             }
         }
 
-        MainFile.Logger.Info($"[AiMechanic] CardMechanicIndex indexed {ById.Count} cards.");
+        KitLog.Info("AiMechanic", $"CardMechanicIndex indexed {ById.Count} cards.");
     }
 
     public static bool TryGet(string? id, out CardMechanicProfile profile) {

@@ -16,19 +16,19 @@ internal static class VanillaMapNavigator {
         try {
             var rm = RunManager.Instance;
             if (rm == null || !rm.IsInProgress) {
-                MainFile.Logger.Warn("[KitLib.MapJump] TryGoTo: no run in progress");
+                KitLog.Warn("MapJump", $"TryGoTo: no run in progress");
                 return false;
             }
 
             var state = rm.DebugOnlyGetState();
             if (state?.Map == null) {
-                MainFile.Logger.Warn("[KitLib.MapJump] TryGoTo: no map on run state");
+                KitLog.Warn("MapJump", $"TryGoTo: no map on run state");
                 return false;
             }
 
             var point = state.Map.GetPoint(coord);
             if (point == null) {
-                MainFile.Logger.Warn($"[KitLib.MapJump] TryGoTo: no map point at {coord}");
+                KitLog.Warn("MapJump", $"TryGoTo: no map point at {coord}");
                 return false;
             }
 
@@ -37,13 +37,12 @@ internal static class VanillaMapNavigator {
             if (!state.VisitedMapCoords.Contains(coord))
                 state.AddVisitedMapCoord(coord);
 
-            MainFile.Logger.Info(
-                $"[KitLib.MapJump] EnterMapPointInternal: coord={coord} type={actualType} actFloor={coord.row + 1}");
+            KitLog.Info("MapJump", $"EnterMapPointInternal: coord={coord} type={actualType} actFloor={coord.row + 1}");
             TaskHelper.RunSafely(rm.EnterMapPointInternal(coord.row + 1, actualType, null, saveGame: true));
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib.MapJump] TryGoTo({coord}) failed: {ex.Message}");
+            KitLog.Warn("MapJump", $"TryGoTo({coord}) failed: {ex.Message}");
             return false;
         }
     }

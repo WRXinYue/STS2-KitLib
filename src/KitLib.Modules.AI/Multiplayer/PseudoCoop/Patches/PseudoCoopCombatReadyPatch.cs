@@ -62,7 +62,7 @@ internal static class PseudoCoopCombatReady {
             if (cm.IsPlayerReadyToEndTurn(peer)) continue;
 
             cm.SetReadyToEndTurn(peer, canBackOut: false);
-            MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-end-turn netId={peer.NetId}.");
+            KitLog.Info("PseudoCoop", $"Auto ready-to-end-turn netId={peer.NetId}.");
         }
     }
 
@@ -81,7 +81,7 @@ internal static class PseudoCoopCombatReady {
             if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) continue;
 
             cm.SetReadyToBeginEnemyTurn(peer);
-            MainFile.Logger.Info($"[PseudoCoop] Auto ready-to-begin-enemy-turn netId={peer.NetId}.");
+            KitLog.Info("PseudoCoop", $"Auto ready-to-begin-enemy-turn netId={peer.NetId}.");
         }
     }
 }

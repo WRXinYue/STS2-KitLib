@@ -15,7 +15,7 @@ public static class AiKnowledgeBootstrap {
                 _registered = true;
             }
             catch (System.Exception ex) {
-                MainFile.Logger.Warn($"[AiKnowledge] Bootstrap failed (will retry): {ex.Message}");
+                KitLog.Warn("AiKnowledge", $"Bootstrap failed (will retry): {ex.Message}");
             }
         }
     }

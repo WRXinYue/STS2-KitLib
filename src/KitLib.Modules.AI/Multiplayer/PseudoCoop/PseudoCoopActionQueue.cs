@@ -38,7 +38,7 @@ internal static class PseudoCoopActionQueue {
         ActionsField.SetValue(queue, new List<GameAction>());
         queues.Add(queue);
 
-        MainFile.Logger.Info($"[PseudoCoop] Action queue added for netId={player.NetId}.");
+        KitLog.Info("PseudoCoop", $"Action queue added for netId={player.NetId}.");
     }
 
     internal static bool HasQueuedActions(ulong netId) {

@@ -76,8 +76,7 @@ internal sealed class AiPlayModule {
 
         _cts = new CancellationTokenSource();
         TaskHelper.RunSafely(RunPollLoop(_cts.Token));
-        MainFile.Logger.Info(
-            $"[AiHost] Started delay={SettingsStore.Current.AutoPlayDelayMs}ms poll={AiPlayConfig.PollIntervalMs}ms");
+        KitLog.Info("AiHost", $"Started delay={SettingsStore.Current.AutoPlayDelayMs}ms poll={AiPlayConfig.PollIntervalMs}ms");
         AiDecisionLog.Record("AiHost", "AutoPlay loop started.");
         KitLibHost.SyncAiHudOverlay?.Invoke();
         Callable.From(() => KitLibHost.SyncAiHudOverlay?.Invoke()).CallDeferred();
@@ -105,7 +104,7 @@ internal sealed class AiPlayModule {
             SettingsStore.Save();
         }
         Instance.StopLoop();
-        MainFile.Logger.Info("[AiHost] AutoPlay disabled in multiplayer (use Host AI Teammate for phantom peers only).");
+        KitLog.Info("AiHost", $"AutoPlay disabled in multiplayer (use Host AI Teammate for phantom peers only).");
     }
 
     async Task RunPollLoop(CancellationToken ct) {
@@ -128,7 +127,7 @@ internal sealed class AiPlayModule {
                 break;
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiHost] Poll error — {ex.Message}");
+                KitLog.Warn("AiHost", $"Poll error — {ex.Message}");
                 await Task.Delay(1000, ct);
             }
         }

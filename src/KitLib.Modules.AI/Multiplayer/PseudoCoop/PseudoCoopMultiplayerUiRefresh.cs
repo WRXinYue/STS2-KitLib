@@ -65,8 +65,8 @@ internal static class PseudoCoopMultiplayerUiRefresh {
         RunManager.Instance?.MapSelectionSynchronizer?.OnLocationChanged(state.MapLocation);
         globalUi.MultiplayerPlayerContainer.ShowImmediately();
 
-        MainFile.Logger.Info(
-            $"[PseudoCoop] Multiplayer UI refreshed ({state.Players.Count} players: "
+        KitLog.Info("PseudoCoop",
+            $"Multiplayer UI refreshed ({state.Players.Count} players: "
             + $"{string.Join(", ", state.Players.Select(p => p.NetId))}).");
     }
 

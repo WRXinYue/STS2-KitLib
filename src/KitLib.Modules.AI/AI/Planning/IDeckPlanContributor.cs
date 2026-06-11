@@ -7,7 +7,7 @@ public static class DeckPlanContributorHub {
 
     public static void Register(IDeckPlanContributor contributor) {
         Contributors.Add(contributor);
-        MainFile.Logger.Info($"[AiPlan] DeckPlan contributor registered type={contributor.GetType().Name}.");
+        KitLog.Info("AiPlan", $"DeckPlan contributor registered type={contributor.GetType().Name}.");
     }
 
     public static void ApplyContributors(DeckPlan.Builder builder, JsonObject snapshot) {
@@ -18,7 +18,7 @@ public static class DeckPlanContributorHub {
                 contributor.AdjustPlan(builder, snapshot);
             }
             catch (System.Exception ex) {
-                MainFile.Logger.Warn($"[AiPlan] Contributor {contributor.GetType().Name} failed: {ex.Message}");
+                KitLog.Warn("AiPlan", $"Contributor {contributor.GetType().Name} failed: {ex.Message}");
             }
         }
     }

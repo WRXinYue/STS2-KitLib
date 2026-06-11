@@ -66,17 +66,17 @@ public static class MpCheatSession {
         MpCheatNetBus.TryRegisterHandlers();
         if (!MpCheatNetBus.IsReady) {
             Disarm("net_handlers_unavailable");
-            MainFile.Logger.Warn("[MpCheat] NetMessage handlers unavailable; sync disabled.");
+            KitLog.Warn("MpCheat", $"NetMessage handlers unavailable; sync disabled.");
             return;
         }
 
         SessionArmed = true;
-        MainFile.Logger.Info($"[MpCheat] Session armed ({reason}).");
+        KitLog.Info("MpCheat", $"Session armed ({reason}).");
     }
 
     public static void Disarm(string reason) {
         if (SessionArmed)
-            MainFile.Logger.Info($"[MpCheat] Session disarmed: {reason}");
+            KitLog.Info("MpCheat", $"Session disarmed: {reason}");
         SessionArmed = false;
         LastBlockReason = reason;
         MpCheatState.Clear();

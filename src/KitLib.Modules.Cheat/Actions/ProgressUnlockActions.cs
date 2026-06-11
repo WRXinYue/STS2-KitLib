@@ -47,6 +47,6 @@ internal static class ProgressUnlockActions {
             progress.GetOrCreateCharacterStats(character.Id).MaxAscension = AscensionManager.maxAscensionAllowed;
 
         save.SaveProgressFile();
-        MainFile.Logger.Info("[KitLib] Unlocked all save progress (timeline, ascension, compendium).");
+        KitLog.Info($"Unlocked all save progress (timeline, ascension, compendium).");
     }
 }

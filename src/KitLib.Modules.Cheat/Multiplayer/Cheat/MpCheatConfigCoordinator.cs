@@ -43,7 +43,7 @@ internal static class MpCheatConfigCoordinator {
             RequesterNetId = localNetId,
             ConfigJson = configJson,
         });
-        MainFile.Logger.Info($"[MpCheat] Config client request id={clientRequestId}.");
+        KitLog.Info("MpCheat", $"Config client request id={clientRequestId}.");
 
         try {
             using var cts = new CancellationTokenSource(ClientRequestTimeoutMs);
@@ -89,7 +89,7 @@ internal static class MpCheatConfigCoordinator {
 
         var merged = MpCheatState.Config.MergeClientPlayerPatch(config, senderId);
         MpCheatNetBus.HostPublishConfig(merged, $"client_request:{senderId}");
-        MainFile.Logger.Info($"[MpCheat] Per-player config merged from client {senderId}.");
+        KitLog.Info("MpCheat", $"Per-player config merged from client {senderId}.");
         Reply(true, I18N.T("mpcheat.config.published", "Cheat config synced."));
     }
 

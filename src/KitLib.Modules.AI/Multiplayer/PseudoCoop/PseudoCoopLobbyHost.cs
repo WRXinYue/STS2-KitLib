@@ -76,12 +76,11 @@ internal static class PseudoCoopLobbyHost {
             KitLibState.PseudoCoopAwaitingMapFinish = true;
             lobby.SetReady(ready: true);
 
-            MainFile.Logger.Info(
-                "[PseudoCoop] Host lobby ready; embarked without pushing character select UI.");
+            KitLog.Info("PseudoCoop", $"Host lobby ready; embarked without pushing character select UI.");
             return Task.FromResult((true, string.Empty));
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[PseudoCoop] Host start failed: {ex}");
+            KitLog.Warn("PseudoCoop", $"Host start failed: {ex}");
             return Task.FromResult((false, ex.Message));
         }
     }

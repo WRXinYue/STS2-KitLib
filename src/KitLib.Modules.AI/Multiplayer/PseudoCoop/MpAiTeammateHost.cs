@@ -69,7 +69,7 @@ internal static class MpAiTeammateHost {
             MpAiTeammateCombatActions.ForceSignalEndTurnForHostDrivenPeer(peer);
         }
 
-        MainFile.Logger.Info("[MpAiTeammate] Host AI disabled — flushed stale in-flight and signaled end turn for host-driven peers.");
+        KitLog.Info("MpAiTeammate", $"Host AI disabled — flushed stale in-flight and signaled end turn for host-driven peers.");
     }
 
     public static void Poll(double delta, ref double accum) {
@@ -105,8 +105,7 @@ internal static class MpAiTeammateHost {
             if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
 
             if (HasExcessiveEnqueueStreak(player.NetId)) {
-                MainFile.Logger.Warn(
-                    $"[MpAiTeammate] Repeated play enqueue without progress netId={player.NetId}; ending turn.");
+                KitLog.Warn("MpAiTeammate", $"Repeated play enqueue without progress netId={player.NetId}; ending turn.");
                 ResetPlayStreak(player.NetId);
                 MpAiTeammateCombatActions.SignalEndTurn(player);
                 continue;
@@ -137,7 +136,7 @@ internal static class MpAiTeammateHost {
             await loop.OnDecisionPointAsync(GamePhase.Combat);
         }
         catch (System.Exception ex) {
-            MainFile.Logger.Warn($"[MpAiTeammate] Decision failed netId={player.NetId}: {ex.Message}");
+            KitLog.Warn("MpAiTeammate", $"Decision failed netId={player.NetId}: {ex.Message}");
         }
         finally {
             AiHostContext.Clear();

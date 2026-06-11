@@ -28,20 +28,19 @@ internal static class EventActions {
     public static bool TryForceEnterEvent(EventModel eventModel, AncientEventEnterRequest? request = null) {
         try {
             if (!RunManager.Instance.IsInProgress) {
-                MainFile.Logger.Warn("[KitLib] ForceEnterEvent: no run in progress.");
+                KitLog.Warn($"ForceEnterEvent: no run in progress.");
                 return false;
             }
 
             if (!RunContext.TryGetRunAndPlayer(out _, out var player)) {
-                MainFile.Logger.Warn("[KitLib] ForceEnterEvent: could not get active player.");
+                KitLog.Warn($"ForceEnterEvent: could not get active player.");
                 return false;
             }
 
             if (eventModel is AncientEventModel ancient
                 && request?.PinOptionToken is string pin
                 && !AncientEventActions.IsValidChoice(ancient, pin, player)) {
-                MainFile.Logger.Warn(
-                    $"[KitLib] ForceEnterEvent: invalid ancient choice '{pin}' for current run/deck.");
+                KitLog.Warn($"ForceEnterEvent: invalid ancient choice '{pin}' for current run/deck.");
                 return false;
             }
 
@@ -55,7 +54,7 @@ internal static class EventActions {
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] ForceEnterEvent failed: {ex.Message}");
+            KitLog.Warn($"ForceEnterEvent failed: {ex.Message}");
             return false;
         }
     }

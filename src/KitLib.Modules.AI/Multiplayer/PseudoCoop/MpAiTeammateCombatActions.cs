@@ -29,7 +29,7 @@ internal static class MpAiTeammateCombatActions {
 
     public static void EnqueueEndTurn(Player player) {
         if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) {
-            MainFile.Logger.Debug($"[MpAiTeammate] End turn already queued netId={player.NetId}.");
+            KitLog.Debug("MpAiTeammate", $"End turn already queued netId={player.NetId}.");
             return;
         }
 
@@ -38,7 +38,7 @@ internal static class MpAiTeammateCombatActions {
         var round = CombatManager.Instance?.DebugOnlyGetState()?.RoundNumber ?? 1;
         var action = new EndPlayerTurnAction(player, round);
         RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(action);
-        MainFile.Logger.Info($"[MpAiTeammate] Enqueued end turn netId={player.NetId} round={round}.");
+        KitLog.Info("MpAiTeammate", $"Enqueued end turn netId={player.NetId} round={round}.");
     }
 
     static void EnqueueOrSetReady(Player player) {

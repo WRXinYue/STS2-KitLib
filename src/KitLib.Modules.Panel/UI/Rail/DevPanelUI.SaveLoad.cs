@@ -221,18 +221,18 @@ internal static partial class DevPanelUI {
                 if (preset != null) {
                     CheatRestartState.PendingRestartPreset = preset;
                     CheatRestartState.PendingRestartScope = scope;
-                    MainFile.Logger.Info($"[KitLib] RestartWithSeed: captured preset scope={scope}.");
+                    KitLog.Info($"RestartWithSeed: captured preset scope={scope}.");
                 }
             }
 
             if (goldToggle.ButtonPressed && hasRun && RunContext.TryGetRunAndPlayer(out _, out var player)) {
                 KitLibState.PendingRestartGold = player.Gold;
-                MainFile.Logger.Info($"[KitLib] RestartWithSeed: captured gold={player.Gold}.");
+                KitLog.Info($"RestartWithSeed: captured gold={player.Gold}.");
             }
 
             if (!string.IsNullOrEmpty(seed)) {
                 KitLibState.PendingRestartSeed = seed;
-                MainFile.Logger.Info($"[KitLib] RestartWithSeed: seed override set to '{seed}'.");
+                KitLog.Info($"RestartWithSeed: seed override set to '{seed}'.");
             }
 
             KitLibState.AutoProceedToCharSelect = true;

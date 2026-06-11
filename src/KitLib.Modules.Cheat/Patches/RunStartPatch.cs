@@ -51,14 +51,14 @@ public static class RunStartPatch {
             var gold = KitLibState.PendingRestartGold.Value;
             foreach (var player in runState.Players)
                 player.Gold = gold;
-            MainFile.Logger.Info($"[KitLib] Restart: applied gold {gold}.");
+            KitLog.Info($"Restart: applied gold {gold}.");
         }
 
         // Apply carried-over cards / relics (async via game command queue)
         if (CheatRestartState.PendingRestartPreset != null) {
             var preset = CheatRestartState.PendingRestartPreset;
             var scope = CheatRestartState.PendingRestartScope;
-            MainFile.Logger.Info($"[KitLib] Restart: scheduling preset apply (scope: {scope}).");
+            KitLog.Info($"Restart: scheduling preset apply (scope: {scope}).");
             TaskHelper.RunSafely(PresetManager.ApplyToRunAsync(preset, scope));
         }
 
@@ -100,7 +100,7 @@ public static class SeedInjectPatch {
         if (KitLibState.PendingRestartSeed == null) return;
 
         var canonicalized = SeedHelper.CanonicalizeSeed(KitLibState.PendingRestartSeed);
-        MainFile.Logger.Info($"[KitLib] SeedInject: overriding seed '{seed}' → '{canonicalized}'.");
+        KitLog.Info($"SeedInject: overriding seed '{seed}' → '{canonicalized}'.");
         seed = canonicalized;
 
         // Consumed — clear so a subsequent normal run is not affected.

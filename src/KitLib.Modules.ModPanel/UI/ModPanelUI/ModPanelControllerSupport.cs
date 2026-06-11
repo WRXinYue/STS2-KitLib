@@ -114,7 +114,7 @@ public partial class ModPanelControllerSupport : Node {
 
         var skip = DescribeSkipReason();
         if (skip != null) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 action, handled: false, skip, _getSelectedModId?.Invoke()));
             return false;
         }
@@ -122,13 +122,13 @@ public partial class ModPanelControllerSupport : Node {
         var focus = GetViewport()?.GuiGetFocusOwner() as Control;
         if (focus != null && _settingsContentRoot != null && GodotObject.IsInstanceValid(_settingsContentRoot)
             && _settingsContentRoot.IsAncestorOf(focus)) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 action, handled: false, "focusInSettingsContent", _getSelectedModId?.Invoke()));
             return false;
         }
 
         if (!CycleSidebarMod(delta)) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 action, handled: false, "cycleBlocked", _getSelectedModId?.Invoke()));
             return false;
         }
@@ -201,7 +201,7 @@ public partial class ModPanelControllerSupport : Node {
             return;
         var usingController = NControllerManager.Instance?.IsUsingController == true;
         _hintsRow.Visible = usingController;
-        MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerHints(
+        KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerHints(
             usingController, _hintsRow.Visible, _pageTabChrome?.PageCount ?? 0));
         if (!usingController)
             return;
@@ -249,19 +249,19 @@ public partial class ModPanelControllerSupport : Node {
         if (!CanHandleTabHotkeys(out var skip))
             return false;
         if (_pageTabChrome == null || _pageTabChrome.PageCount <= 1) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 "tab", handled: false, "pageTabsUnavailable", _getSelectedModId?.Invoke()));
             return false;
         }
 
         if (@event.IsActionPressed(TabLeftHotkey)) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 "tabLeft", handled: true, null, _getSelectedModId?.Invoke()));
             SwitchTab(-1);
             return true;
         }
         if (@event.IsActionPressed(TabRightHotkey)) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 "tabRight", handled: true, null, _getSelectedModId?.Invoke()));
             SwitchTab(1);
             return true;
@@ -282,13 +282,13 @@ public partial class ModPanelControllerSupport : Node {
         if (_pageTabChrome == null)
             return;
         if (!CanHandleTabHotkeys(out var skip)) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 delta < 0 ? "tabLeft" : "tabRight", handled: false, skip ?? "tabHotkeyBlocked",
                 _getSelectedModId?.Invoke()));
             return;
         }
         if (!_pageTabChrome.TrySwitchPage(delta)) {
-            MainFile.Logger.Info(ModPanelDiagnosticLog.FormatControllerInput(
+            KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerInput(
                 delta < 0 ? "tabLeft" : "tabRight", handled: false, "tabAtEdge", _getSelectedModId?.Invoke()));
             return;
         }

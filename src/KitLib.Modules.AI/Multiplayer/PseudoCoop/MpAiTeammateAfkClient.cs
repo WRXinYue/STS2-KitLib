@@ -24,8 +24,8 @@ internal static class MpAiTeammateAfkClient {
             && !MpCheatSession.IsHost
             && KitLibHost.IsDualInstanceActive?.Invoke() != true
             && !SettingsStore.Current.MpAiTeammateDriveLiveEnet) {
-            MainFile.Logger.Warn(
-                "[MpAiTeammate] AFK client enabled but host DriveLiveEnet is off in shared settings — "
+            KitLog.Warn("MpAiTeammate",
+                "AFK client enabled but host DriveLiveEnet is off in shared settings — "
                 + "host must apply LAN host preset or desync is likely.");
         }
 
@@ -37,8 +37,8 @@ internal static class MpAiTeammateAfkClient {
         }
 
         if (enabled) AiPlayModule.Instance.StopLoop();
-        MainFile.Logger.Info(
-            $"[MpAiTeammate] AFK client {(enabled ? "enabled" : "disabled")} pid={KitLibInstance.ProcessId} dual={KitLibHost.IsDualInstanceActive?.Invoke() == true}");
+        KitLog.Info("MpAiTeammate",
+            $"AFK client {(enabled ? "enabled" : "disabled")} pid={KitLibInstance.ProcessId} dual={KitLibHost.IsDualInstanceActive?.Invoke() == true}");
     }
 
     public static bool ShouldBlockLocalCombatInput(Player? player) {

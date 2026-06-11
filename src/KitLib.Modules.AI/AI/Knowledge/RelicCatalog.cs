@@ -59,7 +59,7 @@ public static class RelicCatalog {
                 InferRelicTags(id));
         }
 
-        MainFile.Logger.Info($"[AiKnowledge] RelicCatalog indexed {ById.Count} relics.");
+        KitLog.Info("AiKnowledge", $"RelicCatalog indexed {ById.Count} relics.");
     }
 
     static IReadOnlyList<AiTag> InferRelicTags(string id) {

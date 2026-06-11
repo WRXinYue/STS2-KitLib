@@ -22,7 +22,7 @@ internal static class LanMultiplayerTestBeginRunPatch {
         KitLibState.PseudoCoopDeferHeavyUi = true;
         KitLibState.PseudoCoopDeferMpCheatPublish = true;
         KitLibState.PseudoCoopAwaitingMapFinish = true;
-        MainFile.Logger.Info("[LanTest] Deferring DevPanel/warmup until map opens.");
+        KitLog.Info("LanTest", $"Deferring DevPanel/warmup until map opens.");
     }
 }
 

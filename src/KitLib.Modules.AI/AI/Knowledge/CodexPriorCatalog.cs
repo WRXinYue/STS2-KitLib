@@ -165,7 +165,7 @@ public static class CodexPriorCatalog {
     static JsonObject? LoadRoot() {
         var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(ResourceName);
         if (stream == null) {
-            MainFile.Logger.Info("[AiPrior] codex-priors.json not embedded; priors disabled.");
+            KitLog.Info("AiPrior", $"codex-priors.json not embedded; priors disabled.");
             return null;
         }
 
@@ -173,12 +173,12 @@ public static class CodexPriorCatalog {
             using var reader = new StreamReader(stream);
             var node = JsonNode.Parse(reader.ReadToEnd());
             if (node is JsonObject obj) {
-                MainFile.Logger.Info($"[AiPrior] Loaded codex priors v{obj["version"]?.GetValue<int>() ?? 0}.");
+                KitLog.Info("AiPrior", $"Loaded codex priors v{obj["version"]?.GetValue<int>() ?? 0}.");
                 return obj;
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[AiPrior] Failed to load priors: {ex.Message}");
+            KitLog.Warn("AiPrior", $"Failed to load priors: {ex.Message}");
         }
         return null;
     }

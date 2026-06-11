@@ -127,7 +127,7 @@ internal static class PowerActions {
         }
 
         if (!CombatManager.Instance.IsInProgress) {
-            MainFile.Logger.Warn("[KitLib] AddPower: no active combat — powers require an in-progress combat session.");
+            KitLog.Warn($"AddPower: no active combat — powers require an in-progress combat session.");
             return;
         }
 
@@ -164,7 +164,7 @@ internal static class PowerActions {
             await Sts2PowerCompat.ApplyAsync(mutable, target, amount, source);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] ApplyPower failed ({((AbstractModel)power).Id.Entry}): {ex.Message}");
+            KitLog.Warn($"ApplyPower failed ({((AbstractModel)power).Id.Entry}): {ex.Message}");
         }
     }
 

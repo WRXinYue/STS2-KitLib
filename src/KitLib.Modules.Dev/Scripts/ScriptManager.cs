@@ -78,7 +78,7 @@ internal static class ScriptManager {
         if (!_dirty) return;
         _dirty = false;
         Reload();
-        MainFile.Logger.Info($"[ScriptManager] Hot-reloaded — {_scripts.Count} script(s)");
+        KitLog.Info("ScriptManager", $"Hot-reloaded — {_scripts.Count} script(s)");
     }
 
     // ──────── Fire ────────
@@ -103,7 +103,7 @@ internal static class ScriptManager {
                 ScriptActionExecutor.Execute(entry.RootAction, player!);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[Script] Error executing '{entry.Name}' ({trigger}): {ex.Message}");
+                KitLog.Warn("Script", $"Error executing '{entry.Name}' ({trigger}): {ex.Message}");
             }
         }
     }
@@ -168,7 +168,7 @@ internal static class ScriptManager {
             File.WriteAllText(Path.Combine(ScriptsDir, safe), rawJson);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ScriptManager] Save failed: {ex.Message}");
+            KitLog.Warn("ScriptManager", $"Save failed: {ex.Message}");
         }
     }
 
@@ -187,7 +187,7 @@ internal static class ScriptManager {
                 File.Delete(path);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ScriptManager] Delete failed: {ex.Message}");
+            KitLog.Warn("ScriptManager", $"Delete failed: {ex.Message}");
         }
     }
 
@@ -208,7 +208,7 @@ internal static class ScriptManager {
             _watcher.Renamed += (_, _) => _dirty = true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ScriptManager] Watcher setup failed: {ex.Message}");
+            KitLog.Warn("ScriptManager", $"Watcher setup failed: {ex.Message}");
         }
     }
 

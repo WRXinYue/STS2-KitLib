@@ -43,8 +43,7 @@ internal static class AncientEventActions {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn(
-                $"[KitLib] Failed to list ancient options for {((AbstractModel)ancient).Id.Entry}: {ex.Message}");
+            KitLog.Warn($"Failed to list ancient options for {((AbstractModel)ancient).Id.Entry}: {ex.Message}");
         }
 
         return choices;

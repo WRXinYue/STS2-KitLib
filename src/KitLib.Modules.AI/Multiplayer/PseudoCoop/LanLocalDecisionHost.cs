@@ -80,7 +80,7 @@ internal static class LanLocalDecisionHost {
             await _loop.OnDecisionPointAsync(phase);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[LanLocal] Decision failed netId={local.NetId}: {ex.Message}");
+            KitLog.Warn("LanLocal", $"Decision failed netId={local.NetId}: {ex.Message}");
         }
         finally {
             AiHostContext.Clear();

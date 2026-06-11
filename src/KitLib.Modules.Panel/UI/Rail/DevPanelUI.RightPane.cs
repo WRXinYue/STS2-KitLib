@@ -150,13 +150,13 @@ internal static partial class DevPanelUI {
     private static async System.Threading.Tasks.Task WrapCombatAction(
         Func<System.Threading.Tasks.Task> action,
         Action? onCompleted) {
-        MainFile.Logger.Info("[KitLib.CombatAdd] RunCombatAction starting");
+        KitLog.Info("CombatAdd", $"RunCombatAction starting");
         try {
             await action();
-            MainFile.Logger.Info("[KitLib.CombatAdd] RunCombatAction finished");
+            KitLog.Info("CombatAdd", $"RunCombatAction finished");
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib.CombatAdd] RunCombatAction failed: {ex}");
+            KitLog.Warn("CombatAdd", $"RunCombatAction failed: {ex}");
             throw;
         }
         finally {

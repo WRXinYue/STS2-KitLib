@@ -53,15 +53,14 @@ internal static class PseudoCoopMapVoteMirror {
             // Official rejects votes when source != _acceptingVotesFromSource (see MapSelectionSynchronizer.cs:50).
             var accepting = (MapLocation)AcceptingVotesFromSourceField.GetValue(sync)!;
             if (accepting != source) {
-                MainFile.Logger.Warn(
-                    $"[PseudoCoop] Map vote source mismatch: vote={source} accepting={accepting}; using accepting.");
+                KitLog.Warn("PseudoCoop", $"Map vote source mismatch: vote={source} accepting={accepting}; using accepting.");
                 source = accepting;
             }
 
             var peers = SimulatedPeerRegistry.GetMapMirrorTargets().ToList();
             if (peers.Count == 0) {
-                MainFile.Logger.Warn(
-                    $"[PseudoCoop] No simulated peers to mirror {destination.coord} "
+                KitLog.Warn("PseudoCoop",
+                    $"No simulated peers to mirror {destination.coord} "
                     + $"(players={state.Players.Count}, votes={VoteCount(sync)}, hostNetId={run.NetService.NetId}).");
                 return;
             }
@@ -74,13 +73,13 @@ internal static class PseudoCoopMapVoteMirror {
                     continue;
 
                 sync.PlayerVotedForMapCoord(peer, source, destination);
-                MainFile.Logger.Info($"[PseudoCoop] Auto map vote netId={peer.NetId} -> {destination.coord}");
+                KitLog.Info("PseudoCoop", $"Auto map vote netId={peer.NetId} -> {destination.coord}");
             }
 
             mapScreen.RefreshAllMapPointVotes();
         }
         catch (System.Exception ex) {
-            MainFile.Logger.Warn($"[PseudoCoop] Map vote mirror failed: {ex}");
+            KitLog.Warn("PseudoCoop", $"Map vote mirror failed: {ex}");
         }
         finally {
             _mirroring = false;
@@ -113,8 +112,7 @@ internal static class PseudoCoopMapVoteMirror {
         if (votes.Count >= state.Players.Count) return;
 
         sync.OnLocationChanged(state.MapLocation);
-        MainFile.Logger.Info(
-            $"[PseudoCoop] Map vote slots expanded {votes.Count} -> {state.Players.Count}.");
+        KitLog.Info("PseudoCoop", $"Map vote slots expanded {votes.Count} -> {state.Players.Count}.");
     }
 
     static int VoteCount(MapSelectionSynchronizer sync) =>

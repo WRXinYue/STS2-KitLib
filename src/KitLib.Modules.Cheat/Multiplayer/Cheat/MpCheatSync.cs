@@ -29,7 +29,7 @@ public static class MpCheatSync {
         if (!MpCheatSession.CanEditMultiplayerCheats) return;
         var netId = MpCheatSession.ResolveLocalPlayerNetId();
         if (netId == 0) {
-            MainFile.Logger.Warn($"[MpCheat] Host publish skipped ({reason}): local player net id is 0.");
+            KitLog.Warn("MpCheat", $"Host publish skipped ({reason}): local player net id is 0.");
             return;
         }
         var config = MpCheatConfig.MergeLocalEdits(MpCheatState.Config, netId, includeSharedGlobals: true);
@@ -42,7 +42,7 @@ public static class MpCheatSync {
         if (MpCheatState.Revision > 0 && reason != "run_start") return;
         var netId = MpCheatSession.ResolveLocalPlayerNetId();
         if (netId == 0) {
-            MainFile.Logger.Debug($"[MpCheat] Initial host config deferred ({reason}): net id not ready.");
+            KitLog.Debug("MpCheat", $"Initial host config deferred ({reason}): net id not ready.");
             return;
         }
         var config = MpCheatConfig.MergeLocalEdits(MpCheatState.Config, netId, includeSharedGlobals: true);

@@ -39,7 +39,7 @@ internal static class PseudoCoopActReadyPatch {
 
         foreach (var peer in SimulatedPeerRegistry.GetMapMirrorTargets()) {
             __instance.OnPlayerReady(peer);
-            MainFile.Logger.Info($"[PseudoCoop] Auto act-ready vote netId={peer.NetId}.");
+            KitLog.Info("PseudoCoop", $"Auto act-ready vote netId={peer.NetId}.");
         }
     }
 }

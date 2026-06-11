@@ -26,7 +26,7 @@ internal static class ProgressGuardUI {
         DevMainMenuOverlay.RemoveAnywhere(RestoreConfirmName);
 
         var result = ProfileProgressBackupService.TryRestoreProgress(backupDir, profileId);
-        MainFile.Logger.Info($"[ProgressGuard] Restore finished: {result}");
+        KitLog.Info("ProgressGuard", $"Restore finished: {result}");
 
         switch (result) {
             case ProgressRestoreResult.Success:

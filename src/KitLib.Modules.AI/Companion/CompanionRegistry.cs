@@ -13,12 +13,12 @@ public static class CompanionRegistry {
     public static void Register(ulong netId, IDecisionMaker strategy) {
         ArgumentNullException.ThrowIfNull(strategy);
         Strategies[netId] = strategy;
-        MainFile.Logger.Info($"[Companion] Strategy registered netId={netId}.");
+        KitLog.Info("Companion", $"Strategy registered netId={netId}.");
     }
 
     public static void Unregister(ulong netId) {
         if (Strategies.Remove(netId))
-            MainFile.Logger.Info($"[Companion] Strategy unregistered netId={netId}.");
+            KitLog.Info("Companion", $"Strategy unregistered netId={netId}.");
     }
 
     public static void ClearOnRunEnd() => Strategies.Clear();

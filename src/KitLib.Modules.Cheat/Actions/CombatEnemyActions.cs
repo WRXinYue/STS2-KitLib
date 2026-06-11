@@ -126,8 +126,8 @@ internal static class CombatEnemyActions {
         string encId = enc != null ? ((AbstractModel)enc).Id.Entry : "null";
         int aliveEnemies = cs?.Enemies?.Count(e => !e.IsDead) ?? -1;
         string room = state?.CurrentRoom?.GetType().Name ?? "null";
-        MainFile.Logger.Info(
-            $"[KitLib.CombatAdd] {phase}: inProgress={inProgress} combatState={(cs != null)} " +
+        KitLog.Info("CombatAdd",
+            $"{phase}: inProgress={inProgress} combatState={(cs != null)} " +
             $"aliveEnemies={aliveEnemies} encounter={encId} hasScene={enc?.HasScene} " +
             $"combatRoom={NCombatRoom.Instance != null} actFloor={state?.ActFloor} room={room}");
     }
@@ -137,8 +137,7 @@ internal static class CombatEnemyActions {
         var sw = Stopwatch.StartNew();
 
         if (MpCheatSession.InMultiplayerRun && !mpSync) {
-            MainFile.Logger.Warn(
-                $"[KitLib.CombatAdd] blocked (mp, no sync): {monsterId}");
+            KitLog.Warn("CombatAdd", $"blocked (mp, no sync): {monsterId}");
             return null;
         }
 
@@ -147,13 +146,12 @@ internal static class CombatEnemyActions {
 
         var cs = GetCombatState();
         if (cs == null) {
-            MainFile.Logger.Warn($"[KitLib.CombatAdd] abort: not in combat ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+            KitLog.Warn("CombatAdd", $"abort: not in combat ({monsterId}, {sw.ElapsedMilliseconds}ms)");
             return null;
         }
 
         if (!CombatManager.Instance.IsInProgress) {
-            MainFile.Logger.Warn(
-                $"[KitLib.CombatAdd] abort: combat not in progress ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+            KitLog.Warn("CombatAdd", $"abort: combat not in progress ({monsterId}, {sw.ElapsedMilliseconds}ms)");
             return null;
         }
 
@@ -165,40 +163,34 @@ internal static class CombatEnemyActions {
             if (string.IsNullOrEmpty(slot)) slot = null;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib.CombatAdd] GetNextSlot failed: {ex.Message}");
+            KitLog.Warn("CombatAdd", $"GetNextSlot failed: {ex.Message}");
         }
 
-        MainFile.Logger.Info(
-            $"[KitLib.CombatAdd] slot={slot ?? "(auto)"} side={cs.CurrentSide} ({monsterId})");
+        KitLog.Info("CombatAdd", $"slot={slot ?? "(auto)"} side={cs.CurrentSide} ({monsterId})");
 
         if (slot == null && cs.Encounter is { HasScene: false })
             LogSlotlessSummonWarning((AbstractModel)canonicalMonster);
 
         try {
             if (!await TryPreloadMonsterVisualsAsync(monsterId, sw))
-                MainFile.Logger.Warn(
-                    $"[KitLib.CombatAdd] preload incomplete, Add may hitch ({monsterId})");
+                KitLog.Warn("CombatAdd", $"preload incomplete, Add may hitch ({monsterId})");
 
-            MainFile.Logger.Info($"[KitLib.CombatAdd] CreatureCmd.Add starting ({monsterId})");
+            KitLog.Info("CombatAdd", $"CreatureCmd.Add starting ({monsterId})");
             var creature = await CreatureCmd.Add(mutable, cs, CombatSide.Enemy, slot)
                 .ConfigureAwait(false);
-            MainFile.Logger.Info(
-                $"[KitLib.CombatAdd] CreatureCmd.Add done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+            KitLog.Info("CombatAdd", $"CreatureCmd.Add done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
 
             if (slot == null) {
-                MainFile.Logger.Info($"[KitLib.CombatAdd] RepositionEnemies starting ({monsterId})");
+                KitLog.Info("CombatAdd", $"RepositionEnemies starting ({monsterId})");
                 RepositionEnemies(cs);
-                MainFile.Logger.Info(
-                    $"[KitLib.CombatAdd] RepositionEnemies done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+                KitLog.Info("CombatAdd", $"RepositionEnemies done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
             }
 
-            MainFile.Logger.Info(
-                $"[KitLib.CombatAdd] success: {monsterId} ({sw.ElapsedMilliseconds}ms)");
+            KitLog.Info("CombatAdd", $"success: {monsterId} ({sw.ElapsedMilliseconds}ms)");
             return creature;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn(
-                $"[KitLib.CombatAdd] failed: {monsterId} ({sw.ElapsedMilliseconds}ms): {ex}");
+            KitLog.Warn("CombatAdd", $"failed: {monsterId} ({sw.ElapsedMilliseconds}ms): {ex}");
             return null;
         }
     }
@@ -223,19 +215,19 @@ internal static class CombatEnemyActions {
     private static async Task<bool> TryPreloadMonsterVisualsAsync(string monsterId, Stopwatch sw) {
         string path = GetMonsterVisualScenePath(monsterId);
         if (PreloadManager.Cache.ContainsKey(path)) {
-            MainFile.Logger.Info($"[KitLib.CombatAdd] preload cache hit ({monsterId})");
+            KitLog.Info("CombatAdd", $"preload cache hit ({monsterId})");
             return true;
         }
 
         if (!ResourceLoader.Exists(path)) {
-            MainFile.Logger.Warn($"[KitLib.CombatAdd] preload missing scene ({monsterId}): {path}");
+            KitLog.Warn("CombatAdd", $"preload missing scene ({monsterId}): {path}");
             return false;
         }
 
-        MainFile.Logger.Info($"[KitLib.CombatAdd] preload threaded load ({monsterId}): {path}");
+        KitLog.Info("CombatAdd", $"preload threaded load ({monsterId}): {path}");
         var err = ResourceLoader.LoadThreadedRequest(path, "PackedScene", true);
         if (err != Error.Ok) {
-            MainFile.Logger.Warn($"[KitLib.CombatAdd] preload request failed ({monsterId}): {err}");
+            KitLog.Warn("CombatAdd", $"preload request failed ({monsterId}): {err}");
             return false;
         }
 
@@ -246,14 +238,12 @@ internal static class CombatEnemyActions {
                         var resource = ResourceLoader.LoadThreadedGet(path);
                         if (resource is PackedScene scene)
                             PreloadManager.Cache.SetAsset(path, scene);
-                        MainFile.Logger.Info(
-                            $"[KitLib.CombatAdd] preload done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
+                        KitLog.Info("CombatAdd", $"preload done ({monsterId}, {sw.ElapsedMilliseconds}ms)");
                         return true;
                     }
                 case ResourceLoader.ThreadLoadStatus.Failed:
                 case ResourceLoader.ThreadLoadStatus.InvalidResource:
-                    MainFile.Logger.Warn(
-                        $"[KitLib.CombatAdd] preload failed ({monsterId}): status={status}");
+                    KitLog.Warn("CombatAdd", $"preload failed ({monsterId}): status={status}");
                     return false;
                 default:
                     await Task.Delay(16).ConfigureAwait(false);
@@ -261,8 +251,7 @@ internal static class CombatEnemyActions {
             }
         }
 
-        MainFile.Logger.Warn(
-            $"[KitLib.CombatAdd] preload timeout ({monsterId}, {MonsterVisualPreloadTimeoutMs}ms)");
+        KitLog.Warn("CombatAdd", $"preload timeout ({monsterId}, {MonsterVisualPreloadTimeoutMs}ms)");
         return false;
     }
 

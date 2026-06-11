@@ -26,11 +26,11 @@ public static class RelicMechanicIndex {
                 ById[id] = BuildProfile(relic);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[AiMechanic] Skipped relic {relic.Id.Entry}: {ex.Message}");
+                KitLog.Warn("AiMechanic", $"Skipped relic {relic.Id.Entry}: {ex.Message}");
             }
         }
 
-        MainFile.Logger.Info($"[AiMechanic] RelicMechanicIndex indexed {ById.Count} relics.");
+        KitLog.Info("AiMechanic", $"RelicMechanicIndex indexed {ById.Count} relics.");
     }
 
     public static bool TryGet(string? id, out RelicMechanicProfile profile) {

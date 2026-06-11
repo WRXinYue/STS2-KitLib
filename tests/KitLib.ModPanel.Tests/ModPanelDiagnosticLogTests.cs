@@ -22,9 +22,14 @@ public sealed class ModPanelDiagnosticLogTests {
     }
 
     [Fact]
+    public void Scope_constant_is_ModPanelDiag() {
+        Assert.Equal("ModPanelDiag", ModPanelDiagnosticLog.Scope);
+    }
+
+    [Fact]
     public void FormatOpen_includes_prefix_and_row_counts() {
         var line = ModPanelDiagnosticLog.FormatOpen(SampleOpen(modIds: ["AlphaMod", "BetaMod"]));
-        Assert.StartsWith("[ModPanelDiag] open:", line, StringComparison.Ordinal);
+        Assert.StartsWith("open:", line, StringComparison.Ordinal);
         Assert.Contains("expectedRows=2", line, StringComparison.Ordinal);
         Assert.Contains("modIds=[AlphaMod, BetaMod]", line, StringComparison.Ordinal);
     }
@@ -37,7 +42,7 @@ public sealed class ModPanelDiagnosticLogTests {
         Assert.Contains("expectedRows=0", stub.InfoLines[0], StringComparison.Ordinal);
         Assert.Contains("rawLoaded=3", stub.InfoLines[0], StringComparison.Ordinal);
         Assert.Single(stub.WarnLines);
-        Assert.Contains("catalog snapshot is empty", stub.WarnLines[0], StringComparison.Ordinal);
+        Assert.Contains("registry snapshot is empty", stub.WarnLines[0], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -95,7 +100,7 @@ public sealed class ModPanelDiagnosticLogTests {
             FocusOwnerPath: "/root/MainMenu/Submenus/ModPanelSubmenu",
             MainMenuButtonsVisible: "hidden");
         var line = ModPanelDiagnosticLog.FormatControllerContext(ctx);
-        Assert.StartsWith("[ModPanelDiag] controller:", line, StringComparison.Ordinal);
+        Assert.StartsWith("controller:", line, StringComparison.Ordinal);
         Assert.Contains("submenusOpen=True", line, StringComparison.Ordinal);
         Assert.Contains("stackPeek=ModPanelSubmenu", line, StringComparison.Ordinal);
         Assert.Contains("isCurrent=True", line, StringComparison.Ordinal);

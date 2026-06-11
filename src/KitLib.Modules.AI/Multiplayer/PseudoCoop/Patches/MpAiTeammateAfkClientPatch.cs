@@ -20,8 +20,7 @@ internal static class MpAiTeammateAfkRequestEnqueuePatch {
         var owner = ResolveOwner(action);
         if (!MpAiTeammateAfkClient.ShouldBlockLocalCombatInput(owner)) return true;
 
-        MainFile.Logger.Debug(
-            $"[MpAiTeammate] Blocked local RequestEnqueue for netId={owner?.NetId} (AFK client).");
+        KitLog.Debug("MpAiTeammate", $"Blocked local RequestEnqueue for netId={owner?.NetId} (AFK client).");
         return false;
     }
 

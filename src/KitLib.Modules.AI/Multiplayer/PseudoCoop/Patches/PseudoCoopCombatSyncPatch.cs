@@ -45,7 +45,7 @@ internal static class PseudoCoopCombatSyncPatch {
             var player = state.GetPlayer(netId);
             syncData[netId] = player.ToSerializable();
             injected = true;
-            MainFile.Logger.Info($"[PseudoCoop] Injected combat sync for simulated peer netId={netId}.");
+            KitLog.Info("PseudoCoop", $"Injected combat sync for simulated peer netId={netId}.");
         }
 
         // StartSync already calls CheckSyncCompleted; solo pseudo-coop lobby may complete

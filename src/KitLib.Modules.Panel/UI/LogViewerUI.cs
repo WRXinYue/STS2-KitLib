@@ -857,7 +857,7 @@ internal static class LogViewerUI {
             OS.ShellOpen(dir);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[LogViewer] Open logs folder failed: {ex.Message}");
+            KitLog.Warn("LogViewer", $"Open logs folder failed: {ex.Message}");
         }
     }
 

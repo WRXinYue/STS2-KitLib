@@ -96,6 +96,7 @@ export default defineValaxyConfig<ThemeConfig>({
         subNav: [
           { locale: 'nav.dev_panel', link: '/developer/extending/panel-registry' },
           { locale: 'nav.mod_runtime', link: '/developer/extending/mod-runtime' },
+          { locale: 'nav.kitlib_log', link: '/developer/extending/kitlib-log' },
           { locale: 'nav.sts2_compat', link: '/developer/extending/sts2-compat' },
           { locale: 'nav.api_profiles', link: '/developer/sts2-api-profiles' },
           {

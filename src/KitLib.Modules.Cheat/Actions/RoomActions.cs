@@ -18,7 +18,7 @@ internal static class RoomActions {
         try {
             var rm = RunManager.Instance;
             if (rm == null || !rm.IsInProgress) {
-                MainFile.Logger.Warn("[KitLib] TryEnterRoom: no run in progress.");
+                KitLog.Warn($"TryEnterRoom: no run in progress.");
                 return false;
             }
 
@@ -39,7 +39,7 @@ internal static class RoomActions {
             return true;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] TryEnterRoom({roomType}) failed: {ex.Message}");
+            KitLog.Warn($"TryEnterRoom({roomType}) failed: {ex.Message}");
             return false;
         }
     }

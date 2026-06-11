@@ -89,8 +89,7 @@ internal static class MpCheatCardEditCoordinator {
             RequesterNetId = localNetId,
             Payload = payload,
         });
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard client request id={clientRequestId} card={payload.CardId} target={localNetId} pile={payload.Target} idx={payload.PileIndex}.");
+        KitLog.Info("MpCheat", $"EditCard client request id={clientRequestId} card={payload.CardId} target={localNetId} pile={payload.Target} idx={payload.PileIndex}.");
 
         try {
             using var cts = new CancellationTokenSource(ClientRequestTimeoutMs);
@@ -121,13 +120,11 @@ internal static class MpCheatCardEditCoordinator {
         }
 
         if (completion == null) {
-            MainFile.Logger.Debug(
-                $"[MpCheat] EditCard client result id={result.ClientRequestId} ignored (no pending UI).");
+            KitLog.Debug("MpCheat", $"EditCard client result id={result.ClientRequestId} ignored (no pending UI).");
             return;
         }
 
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard client result id={result.ClientRequestId} ok={result.Success}.");
+        KitLog.Info("MpCheat", $"EditCard client result id={result.ClientRequestId} ok={result.Success}.");
         completion.TrySetResult(result.Message);
     }
 
@@ -165,8 +162,7 @@ internal static class MpCheatCardEditCoordinator {
         }
 
         var (state, player, card, target, template) = resolved.Value;
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard client request from {senderId} card={request.Payload.CardId}.");
+        KitLog.Info("MpCheat", $"EditCard client request from {senderId} card={request.Payload.CardId}.");
 
         var (success, message) = await TryHostEditCardCoreAsync(state, player, card, target, template);
         Reply(success, message);
@@ -205,8 +201,7 @@ internal static class MpCheatCardEditCoordinator {
             PendingByCommandId[commandId] = pending;
         }
 
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard host start id={commandId} card={cardId} target={targetPlayer.NetId} pile={payload.Target} idx={payload.PileIndex} ackPeers={awaitingPeers.Count}.");
+        KitLog.Info("MpCheat", $"EditCard host start id={commandId} card={cardId} target={targetPlayer.NetId} pile={payload.Target} idx={payload.PileIndex} ackPeers={awaitingPeers.Count}.");
 
         BroadcastCommand(MpCheatCommandKind.EditCardPrepare, commandId, payload);
 
@@ -235,8 +230,7 @@ internal static class MpCheatCardEditCoordinator {
         if (!MpCheatSession.CanUseMultiplayerCheats || message.EditCard == null) return;
         if (MpCheatSession.IsHost) return;
 
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard prepare id={message.CommandId} card={message.EditCard.CardId} target={message.EditCard.TargetPlayerNetId}");
+        KitLog.Info("MpCheat", $"EditCard prepare id={message.CommandId} card={message.EditCard.CardId} target={message.EditCard.TargetPlayerNetId}");
         var (ok, error) = TryResolveAndValidate(message.EditCard);
         var peerNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         MpCheatNetBus.SendAddCardAck(new MpCheatAddCardAckMessage {
@@ -245,8 +239,7 @@ internal static class MpCheatCardEditCoordinator {
             Success = ok,
             Error = error,
         });
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
+        KitLog.Info("MpCheat", $"EditCard ack sent id={message.CommandId} peer={peerNetId} ok={ok} err={error ?? ""}");
     }
 
     public static void OnExecuteReceived(MpCheatCommandMessage message) {
@@ -255,16 +248,15 @@ internal static class MpCheatCardEditCoordinator {
 
         lock (Gate) {
             if (!TrackExecuted(message.CommandId)) {
-                MainFile.Logger.Debug($"[MpCheat] EditCard execute id={message.CommandId} skipped (duplicate).");
+                KitLog.Debug("MpCheat", $"EditCard execute id={message.CommandId} skipped (duplicate).");
                 return;
             }
         }
 
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard execute id={message.CommandId} card={message.EditCard.CardId} target={message.EditCard.TargetPlayerNetId}");
+        KitLog.Info("MpCheat", $"EditCard execute id={message.CommandId} card={message.EditCard.CardId} target={message.EditCard.TargetPlayerNetId}");
         var resolved = TryResolveForExecute(message.EditCard);
         if (resolved == null) {
-            MainFile.Logger.Warn($"[MpCheat] EditCard execute skipped: {message.EditCard.CardId}");
+            KitLog.Warn("MpCheat", $"EditCard execute skipped: {message.EditCard.CardId}");
             return;
         }
 
@@ -297,8 +289,7 @@ internal static class MpCheatCardEditCoordinator {
         CardEditActions.ApplyTemplate(pending.Card, pending.Template);
         RemovePending(commandId);
         var targetLabel = MpCheatPlayerLabels.FormatLogLabel(pending.TargetPlayer);
-        MainFile.Logger.Info(
-            $"[MpCheat] EditCard command {commandId} executed card={cardId} target={targetLabel}.");
+        KitLog.Info("MpCheat", $"EditCard command {commandId} executed card={cardId} target={targetLabel}.");
         var acked = pending.Acks.Count(a => a.Value.Success);
         if (pending.RequiredAckCount > 0) {
             return string.Format(
@@ -325,7 +316,7 @@ internal static class MpCheatCardEditCoordinator {
         var pending = PendingByCommandId[oldest];
         pending.Completion.TrySetResult(false);
         PendingByCommandId.Remove(oldest);
-        MainFile.Logger.Warn($"[MpCheat] Dropped oldest pending edit-card command {oldest} (capacity).");
+        KitLog.Warn("MpCheat", $"Dropped oldest pending edit-card command {oldest} (capacity).");
     }
 
     private static bool TrackExecuted(ulong commandId) {

@@ -18,7 +18,7 @@ internal static class PhantomPlayerSpawner {
 
         var host = state.Players[0];
         if (host.Character == null) {
-            MainFile.Logger.Warn("[SyncBot] Phantom player spawn failed: host character is null.");
+            KitLog.Warn("SyncBot", $"Phantom player spawn failed: host character is null.");
             return false;
         }
 
@@ -28,7 +28,7 @@ internal static class PhantomPlayerSpawner {
             UnlockState: host.UnlockState));
 
         if (!result.Ok)
-            MainFile.Logger.Warn($"[SyncBot] Phantom player spawn failed: {result.Error}");
+            KitLog.Warn("SyncBot", $"Phantom player spawn failed: {result.Error}");
 
         return result.Ok;
     }

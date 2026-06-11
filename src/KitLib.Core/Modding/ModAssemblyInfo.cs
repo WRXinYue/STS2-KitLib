@@ -5,4 +5,5 @@ internal readonly record struct ModAssemblyInfo(
     string Id,
     string DisplayName,
     string Version,
-    IReadOnlyList<string> Dependencies);
+    IReadOnlyList<string> Dependencies,
+    string? EntryAssemblySimpleName = null);

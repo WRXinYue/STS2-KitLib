@@ -4,6 +4,6 @@ namespace KitLib.AI;
 public static class AiPlayInitializer {
     public static void Initialize() {
         // Catalog + vanilla packs register after ModelDb.Init (see ModelDbInitPatch).
-        MainFile.Logger.Info("[AiHost] Module ready (AI knowledge deferred until ModelDb.Init).");
+        KitLog.Info("AiHost", $"Module ready (AI knowledge deferred until ModelDb.Init).");
     }
 }

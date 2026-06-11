@@ -18,7 +18,7 @@ internal static class PseudoCoopBootstrap {
         SimulatedPeerRegistry.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
         AiPlayModule.Instance.StopLoop();
-        MainFile.Logger.Info("[PseudoCoop] Preset applied (hand-play host + AI teammate + SyncBot).");
+        KitLog.Info("PseudoCoop", $"Preset applied (hand-play host + AI teammate + SyncBot).");
     }
 
     /// <summary>LAN dual-instance: host drives live ENet teammates via action queue; no phantom/SyncBot ACK.</summary>
@@ -34,8 +34,7 @@ internal static class PseudoCoopBootstrap {
         SimulatedPeerRegistry.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
         AiPlayModule.Instance.StopLoop();
-        MainFile.Logger.Info(
-            "[PseudoCoop] LAN host preset applied (AI drives live ENet teammates — enable AFK on client).");
+        KitLog.Info("PseudoCoop", $"LAN host preset applied (AI drives live ENet teammates — enable AFK on client).");
     }
 
     public static void TryAutoPresetOnLaunch() {
@@ -47,6 +46,6 @@ internal static class PseudoCoopBootstrap {
     public static void ApplyLanClientPreset() {
         MpAiTeammateAfkClient.SetSessionEnabled(true);
         AiPlayModule.Instance.StopLoop();
-        MainFile.Logger.Info("[PseudoCoop] LAN client AFK preset applied.");
+        KitLog.Info("PseudoCoop", $"LAN client AFK preset applied.");
     }
 }

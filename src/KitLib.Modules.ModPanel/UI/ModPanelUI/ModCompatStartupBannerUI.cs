@@ -31,7 +31,7 @@ internal static class ModCompatStartupBannerUI {
 
         var issues = ModPanelCompatProbe.CollectStartupIssues();
         if (issues.Count == 0) {
-            MainFile.Logger.Info("[KitLib] compat startup: no issues to show");
+            KitLog.Info($"compat startup: no issues to show");
             return;
         }
 

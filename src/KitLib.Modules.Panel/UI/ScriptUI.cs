@@ -98,7 +98,7 @@ internal static class ScriptUI {
         openBtn.AddThemeFontSizeOverride("font_size", 12);
         openBtn.Pressed += () => {
             try { OS.ShellOpen(ScriptManager.ScriptsDir); }
-            catch (Exception ex) { MainFile.Logger.Warn($"[ScriptUI] Open folder failed: {ex.Message}"); }
+            catch (Exception ex) { KitLog.Warn("ScriptUI", $"Open folder failed: {ex.Message}"); }
         };
         titleRow.AddChild(openBtn);
 
@@ -116,9 +116,9 @@ internal static class ScriptUI {
                 if (System.IO.File.Exists(editorPath))
                     OS.ShellOpen(editorPath);
                 else
-                    MainFile.Logger.Warn($"[ScriptUI] Editor not found at: {editorPath}");
+                    KitLog.Warn("ScriptUI", $"Editor not found at: {editorPath}");
             }
-            catch (Exception ex) { MainFile.Logger.Warn($"[ScriptUI] Open editor failed: {ex.Message}"); }
+            catch (Exception ex) { KitLog.Warn("ScriptUI", $"Open editor failed: {ex.Message}"); }
         };
         titleRow.AddChild(editorBtn);
 
@@ -132,7 +132,7 @@ internal static class ScriptUI {
             migrateBtn.AddThemeFontSizeOverride("font_size", 12);
             migrateBtn.Pressed += () => {
                 int migrated = Scripts.HookMigration.MigrateAll();
-                MainFile.Logger.Info($"[ScriptUI] Migrated {migrated} hook(s) to scripts.");
+                KitLog.Info("ScriptUI", $"Migrated {migrated} hook(s) to scripts.");
                 Show(globalUi);
             };
             titleRow.AddChild(migrateBtn);

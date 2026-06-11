@@ -39,7 +39,7 @@ internal static class RemovedModProgressScanner {
             progressText = File.ReadAllText(progressPath);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[ModChangeGuard] Could not read progress for residue scan: {ex.Message}");
+            KitLog.Warn("ModChangeGuard", $"Could not read progress for residue scan: {ex.Message}");
             return;
         }
 
@@ -56,8 +56,8 @@ internal static class RemovedModProgressScanner {
             ? "no backup created"
             : $"backup at {backupDir}";
 
-        MainFile.Logger.Warn(
-            $"[ModChangeGuard] Mod set changed and progress.save still contains data from unloaded mod(s): " +
+        KitLog.Warn("ModChangeGuard",
+            $"Mod set changed and progress.save still contains data from unloaded mod(s): " +
             $"{string.Join(", ", hits)}. {backupNote}. " +
             "Vanilla save filtering may remove this progress on the next write.");
     }

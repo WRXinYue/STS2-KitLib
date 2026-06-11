@@ -36,7 +36,7 @@ internal static class CombatSummonSlotRepositionPatch {
             var id = creature.Monster != null
                 ? ((MegaCrit.Sts2.Core.Models.AbstractModel)creature.Monster).Id.Entry
                 : "?";
-            MainFile.Logger.Info($"[KitLib.CombatAdd] summon reposition hook: {id}");
+            KitLog.Info("CombatAdd", $"summon reposition hook: {id}");
             CombatEnemyActions.RepositionEnemies(cs);
         }
     }

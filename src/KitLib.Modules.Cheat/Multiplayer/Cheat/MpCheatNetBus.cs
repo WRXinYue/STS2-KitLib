@@ -30,7 +30,7 @@ internal static class MpCheatNetBus {
 
         netService.RegisterMessageHandler<ZzzMpCheatEnvelopeNetMessage>(OnEnvelopeReceived);
         _registeredService = netService;
-        MainFile.Logger.Info("[MpCheat] NetMessage handlers registered (envelope).");
+        KitLog.Info("MpCheat", $"NetMessage handlers registered (envelope).");
         TryFlushPendingHostPublish();
         if (ShouldAutoPublishHostConfig())
             MpCheatSync.TryPublishInitialHostConfig("handlers_ready");
@@ -63,7 +63,7 @@ internal static class MpCheatNetBus {
         if (!CanSendNetMessages(netService)) {
             _pendingHostConfig = config;
             _pendingHostReason = reason;
-            MainFile.Logger.Debug($"[MpCheat] Config publish deferred ({reason}); net not connected.");
+            KitLog.Debug("MpCheat", $"Config publish deferred ({reason}); net not connected.");
             return;
         }
 
@@ -71,7 +71,7 @@ internal static class MpCheatNetBus {
         _pendingHostReason = null;
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromConfig((ulong)_hostRevision, MpCheatNetJson.SerializeConfig(config)));
         MpCheatRunSavedData.TryWrite(config);
-        MainFile.Logger.Info($"[MpCheat] Config broadcast rev={_hostRevision} ({reason}).");
+        KitLog.Info("MpCheat", $"Config broadcast rev={_hostRevision} ({reason}).");
     }
 
     public static void BroadcastCommand(MpCheatCommandMessage message) {
@@ -81,7 +81,7 @@ internal static class MpCheatNetBus {
         if (netService == null || !CanSendNetMessages(netService)) return;
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromCommand(message));
-        MainFile.Logger.Info($"[MpCheat] Command broadcast kind={message.Kind} id={message.CommandId}.");
+        KitLog.Info("MpCheat", $"Command broadcast kind={message.Kind} id={message.CommandId}.");
         KitLibSyncBotOps.InjectPrepareAcks?.Invoke(message);
     }
 
@@ -101,8 +101,7 @@ internal static class MpCheatNetBus {
         if (netService == null || !CanSendNetMessages(netService)) return;
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromAddCardRequest(request));
-        MainFile.Logger.Debug(
-            $"[MpCheat] AddCard request sent to host id={request.ClientRequestId}.");
+        KitLog.Debug("MpCheat", $"AddCard request sent to host id={request.ClientRequestId}.");
     }
 
     /// <summary>Host → client: add-card request outcome.</summary>
@@ -122,8 +121,7 @@ internal static class MpCheatNetBus {
         if (netService == null || !CanSendNetMessages(netService)) return;
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromRemoveCardRequest(request));
-        MainFile.Logger.Debug(
-            $"[MpCheat] RemoveCard request sent to host id={request.ClientRequestId}.");
+        KitLog.Debug("MpCheat", $"RemoveCard request sent to host id={request.ClientRequestId}.");
     }
 
     public static void HostSendRemoveCardRequestResult(ulong peerNetId, MpCheatAddCardClientResultMessage result) {
@@ -142,8 +140,7 @@ internal static class MpCheatNetBus {
         if (netService == null || !CanSendNetMessages(netService)) return;
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromEditCardRequest(request));
-        MainFile.Logger.Debug(
-            $"[MpCheat] EditCard request sent to host id={request.ClientRequestId}.");
+        KitLog.Debug("MpCheat", $"EditCard request sent to host id={request.ClientRequestId}.");
     }
 
     public static void HostSendEditCardRequestResult(ulong peerNetId, MpCheatAddCardClientResultMessage result) {
@@ -162,8 +159,7 @@ internal static class MpCheatNetBus {
         if (netService == null || !CanSendNetMessages(netService)) return;
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromItemRequest(request));
-        MainFile.Logger.Debug(
-            $"[MpCheat] Item request sent to host id={request.ClientRequestId} kind={request.Payload.Kind}.");
+        KitLog.Debug("MpCheat", $"Item request sent to host id={request.ClientRequestId} kind={request.Payload.Kind}.");
     }
 
     public static void HostSendItemRequestResult(ulong peerNetId, MpCheatAddCardClientResultMessage result) {
@@ -182,7 +178,7 @@ internal static class MpCheatNetBus {
         if (netService == null || !CanSendNetMessages(netService)) return;
 
         SendEnvelope(netService, ZzzMpCheatEnvelopeNetMessage.FromConfigRequest(request));
-        MainFile.Logger.Debug($"[MpCheat] Config request sent to host id={request.ClientRequestId}.");
+        KitLog.Debug("MpCheat", $"Config request sent to host id={request.ClientRequestId}.");
     }
 
     public static void HostSendConfigRequestResult(ulong peerNetId, MpCheatAddCardClientResultMessage result) {
@@ -265,12 +261,12 @@ internal static class MpCheatNetBus {
                     MpCheatConfigCoordinator.OnClientConfigResultReceived(msg.AddCardRequestResult);
                     break;
                 default:
-                    MainFile.Logger.Warn($"[MpCheat] Unknown envelope channel: {msg.Channel}");
+                    KitLog.Warn("MpCheat", $"Unknown envelope channel: {msg.Channel}");
                     break;
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[MpCheat] OnEnvelopeReceived failed ({msg.Channel}): {ex.Message}");
+            KitLog.Warn("MpCheat", $"OnEnvelopeReceived failed ({msg.Channel}): {ex.Message}");
         }
     }
 
@@ -278,7 +274,7 @@ internal static class MpCheatNetBus {
         if ((long)revision <= MpCheatState.Revision) return;
         var config = MpCheatNetJson.DeserializeConfig(configJson);
         if (config == null) {
-            MainFile.Logger.Warn("[MpCheat] Config message had empty/invalid JSON.");
+            KitLog.Warn("MpCheat", $"Config message had empty/invalid JSON.");
             return;
         }
         MpCheatState.ApplySnapshot(config, (long)revision, "net_config");

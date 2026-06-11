@@ -12,7 +12,7 @@ public static class AiDecisionLog {
     static readonly object Gate = new();
 
     public static void Record(string source, string message) {
-        MainFile.Logger.Info($"[{source}] {message}");
+        KitLog.Info(source, message);
         var line = $"[{DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}] [{source}] {message}";
         lock (Gate) {
             Lines.Enqueue(line);

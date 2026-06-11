@@ -60,8 +60,7 @@ internal static class MpCheatSyncBot {
         }
 
         if (ackPeers.Count > 0)
-            MainFile.Logger.Debug(
-                $"[SyncBot] Injected {ackPeers.Count} ACK(s) for command {message.CommandId} kind={message.Kind}.");
+            KitLog.Debug("SyncBot", $"Injected {ackPeers.Count} ACK(s) for command {message.CommandId} kind={message.Kind}.");
     }
 
     static bool IsPrepareKind(MpCheatCommandKind kind) => kind switch {

@@ -60,7 +60,7 @@ internal static class LogViewerFilterSync {
             File.WriteAllText(path, JsonSerializer.Serialize(profile, JsonOptions));
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[LogViewer] Failed to sync kitlog filters: {ex.Message}");
+            KitLog.Warn("LogViewer", $"Failed to sync kitlog filters: {ex.Message}");
         }
     }
 

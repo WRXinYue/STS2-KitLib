@@ -14,6 +14,7 @@ public class MainFile {
         Logger.Info("KitLib Core initializing...");
         ModDependencyLoader.EnsureLoaded();
         Sts2RuntimeProfile.Initialize();
+        ModKitLibLogBridge.Initialize();
         DataPaths.EnsurePinnedOnMainThread();
         KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID);
         KitLibHost.Bootstrap();

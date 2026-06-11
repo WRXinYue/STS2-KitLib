@@ -51,7 +51,7 @@ internal static partial class CardBrowserUI {
                 modelForNode = CardPreviewHelper.GetDisplayModel(card, useLibraryUpgradePreview);
             }
             catch (Exception ex) {
-                MainFile.Logger.Warn($"[KitLib] Card preview model failed for {card.Id}: {ex.Message}");
+                KitLog.Warn($"Card preview model failed for {card.Id}: {ex.Message}");
                 modelForNode = card;
                 useLibraryUpgradePreview = false;
             }
@@ -73,7 +73,7 @@ internal static partial class CardBrowserUI {
             }
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"[KitLib] NCard.Create failed for {card.Id}: {ex.Message}");
+            KitLog.Warn($"NCard.Create failed for {card.Id}: {ex.Message}");
         }
         AddCardFallback(host, card);
         return null;
