@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Build the mod zip, pack a NuGet package, and push to a NuGet feed.
+"""Build the mod zip, pack NuGet packages, and push to a NuGet feed.
+
+Publishes:
+    STS2.KitLib              — mod content under Content/KitLib/
+    STS2.KitLib.Abstractions — compile-time contracts for content mods
 
 Environment variables:
     NUGET_API_KEY  - API key for the target feed (required unless --dry-run)
@@ -30,7 +34,7 @@ load_dotenv(_REPO_ROOT / ".env")
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Pack and push DevMode to NuGet.")
+    ap = argparse.ArgumentParser(description="Pack and push KitLib NuGet packages.")
     ap.add_argument("--version", default="", help="Semver (default: KitLib.json)")
     ap.add_argument(
         "--source",
@@ -69,30 +73,14 @@ def main() -> int:
     print(f"NuGet package version: {version}")
 
     try:
-        package = nuget_ops.run_pack(_REPO_ROOT, package_version=version)
+        kitlib = nuget_ops.run_pack(_REPO_ROOT, package_version=version)
+        abstractions = nuget_ops.run_pack_abstractions(_REPO_ROOT, package_version=version)
     except RuntimeError as ex:
         print(str(ex), file=sys.stderr)
         return 1
 
-    print(f"Packed: {package}")
-
-    print("Packing STS2.KitLib.Abstractions...")
-    abstractions_out = _REPO_ROOT / "build" / "nuget"
-    abstractions_out.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        [
-            "dotnet",
-            "pack",
-            str(_REPO_ROOT / "src" / "KitLib.Abstractions" / "KitLib.Abstractions.csproj"),
-            "-c",
-            "Release",
-            "-o",
-            str(abstractions_out),
-            f"-p:Version={version}",
-        ],
-        cwd=_REPO_ROOT,
-        check=True,
-    )
+    print(f"Packed: {kitlib.name}")
+    print(f"Packed: {abstractions.name}")
 
     if args.dry_run:
         print("Dry run — skipping NuGet push.")
@@ -106,13 +94,15 @@ def main() -> int:
         return 1
 
     print(f"Pushing to {source} ...")
-    try:
-        nuget_ops.run_push(package, source=source, api_key=api_key)
-    except subprocess.CalledProcessError:
-        print("dotnet nuget push failed", file=sys.stderr)
-        return 1
+    for package in (kitlib, abstractions):
+        print(f"  {package.name}")
+        try:
+            nuget_ops.run_push(package, source=source, api_key=api_key)
+        except subprocess.CalledProcessError:
+            print(f"dotnet nuget push failed for {package.name}", file=sys.stderr)
+            return 1
 
-    print(f"Done! Published {package.name} to {source}.")
+    print(f"Done! Published {kitlib.name} and {abstractions.name} to {source}.")
     return 0
 
 

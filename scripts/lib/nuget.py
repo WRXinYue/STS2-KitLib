@@ -1,10 +1,13 @@
-"""NuGet pack/push helpers for DevMode release scripts."""
+"""NuGet pack/push helpers for KitLib release scripts."""
 
 from __future__ import annotations
 
 import os
 import subprocess
 from pathlib import Path
+
+KITLIB_PACKAGE_ID = "STS2.KitLib"
+ABSTRACTIONS_PACKAGE_ID = "STS2.KitLib.Abstractions"
 
 
 def resolve_api_key(explicit: str | None = None) -> str:
@@ -19,6 +22,10 @@ def resolve_source(explicit: str | None = None) -> str:
     if not source:
         raise RuntimeError("NuGet source missing. Set NUGET_SOURCE in .env or pass --source.")
     return source
+
+
+def nupkg_path(out_dir: Path, package_id: str, version: str) -> Path:
+    return out_dir / f"{package_id}.{version}.nupkg"
 
 
 def run_pack(
@@ -48,10 +55,38 @@ def run_pack(
     ]
     subprocess.run(cmd, cwd=repo_root, check=True)
 
-    matches = sorted(out_dir.glob("*.nupkg"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not matches:
-        raise RuntimeError(f"dotnet pack produced no .nupkg under {out_dir}")
-    return matches[0]
+    package = nupkg_path(out_dir, KITLIB_PACKAGE_ID, package_version)
+    if not package.is_file():
+        raise RuntimeError(f"dotnet pack produced no package: {package}")
+    return package
+
+
+def run_pack_abstractions(
+    repo_root: Path,
+    *,
+    package_version: str,
+    configuration: str = "Release",
+) -> Path:
+    out_dir = repo_root / "build" / "nuget"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            "dotnet",
+            "pack",
+            str(repo_root / "src" / "KitLib.Abstractions" / "KitLib.Abstractions.csproj"),
+            "-c",
+            configuration,
+            "-o",
+            str(out_dir),
+            f"-p:Version={package_version}",
+        ],
+        cwd=repo_root,
+        check=True,
+    )
+    package = nupkg_path(out_dir, ABSTRACTIONS_PACKAGE_ID, package_version)
+    if not package.is_file():
+        raise RuntimeError(f"dotnet pack produced no package: {package}")
+    return package
 
 
 def run_push(package: Path, *, source: str, api_key: str) -> None:
