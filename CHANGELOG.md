@@ -8,21 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-06-11
+
 ### Added
 
-- **Modular KitLib split** — Core (`KitLib`) is patch/UI-free; satellites (`KitLib.Panel`, `KitLib.User`, `KitLib.Cheat`, `KitLib.Dev`, `KitLib.AI`) register tabs via `KitLibHost`; shared runtime ships in `KitLib.Features`. Releases include **KitLib-Full** plus per-module zips. NuGet **`STS2.KitLib.Abstractions`** exposes compile-time bridge contracts.
+- **Modular KitLib split** — One in-game mod with a thin Core host (`KitLib.dll`) and optional satellite DLLs under `modules/` (`KitLib.User`, `KitLib.ModPanel`, `KitLib.Panel`, `KitLib.AI`, `KitLib.Cheat`, `KitLib.Dev`). Satellites register dev-rail tabs and features via `KitLibHost`; shared runtime lives in `KitLib.Features`. Remove a satellite DLL (or pick a load profile) to disable that feature without uninstalling KitLib. Releases ship **KitLib-Full** plus per-module zips. NuGet **`STS2.KitLib.Abstractions`** is the compile-time contract for content mods.
+- **Main-menu Mod settings panel** — Native KitLib settings in the game's mod list (RitsuLib bridge): browse and configure KitLib without the in-run dev rail.
+- **Mod Panel sidebar** — Enable or disable loaded mods from the sidebar; each row shows a version badge and STS2-style focus cursor.
+- **Satellite load profiles** — Choose Minimal, Standard, Full, or Custom sets of bundled KitLib modules from Mod settings.
+- **Mod settings: hotkeys** — Rebind dev sidebar shortcuts (open/close rail, switch tabs, quick save/load, combat checkpoints) on a dedicated settings page.
+- **Mod settings: accent theme** — Optional orange accent for KitLib UI chrome.
+- **Mod compatibility (`kitlib.compat.toml`)** — Settings surface dependency and version warnings from each mod's compat manifest.
+- **Content mod logging (`KitLibLog` / `ModLog`)** — Other mods can log through KitLib so lines appear in the log viewer with correct mod source tags and colors; reusable log-level row for mod settings pages.
+- **KitLog CLI** — Optional `kitlog` tool (tools zip): `tail` for `session.log`, `attach` for a structured named-pipe stream, `--sync-viewer` to mirror in-game filters, optional auto-open in Windows Terminal when KitLib loads.
+- **STS2 stable/beta dual build** — KitLib ships stable- and beta-targeted builds; auto-detects your Steam install profile and shows a startup banner when the installed game version does not match the mod build.
+- **Dev perf overlay** — Optional HUD (dev rail) with preload and save-serialization timing probes.
 - **AI Host & StrongStrategy** — Mod AI platform with an **AI Host** panel in the dev rail, external companion terminal APIs, and **StrongStrategy** solo autoplay informed by Codex priors.
-- **Combat beam planner** — In-fight AI uses deck simulation and multi-turn line scoring (block-first lines, relic/power hooks, potion sim in search, minion engagement, mechanic discovery).
+- **Combat simulation & beam planner** — In-fight AI simulates deck EV, multi-turn lines, relic/power hooks, potion use in search, minion engagement, and enemy mechanic discovery.
 - **AI HUD overlay** — Top-left run overlay with big/small deck forecast, win estimate, and live sim telemetry (replaces the older heuristic HUD).
-- **Reward & map AI** — Card rewards scored by marginal deck/sim value; map routing weighs path risk; rest sites prefer campfires when the deck needs upgrades; scored hand picks for exhaust and upgrade prompts.
-- **Ancient event debug (dev tools)** — From **Events** or **Room Teleport → Ancient Ones**, pick any ancient in the extension panel and enter randomly or pin a listed option (same picker for Darv, Orobas, and mod ancients); `dmevent force <eventId> [choice]`.
+- **Reward, map & rest AI** — Card rewards scored by marginal deck/sim value (including next-fight beam preview); map routing weighs path risk; rest sites prefer campfires when the deck needs upgrades; scored hand picks for exhaust and upgrade prompts.
+- **Ancient event debug (dev tools)** — From **Events** or **Room Teleport → Ancient Ones**, pick any ancient in the extension panel and enter randomly or pin a listed option (Darv, Orobas, and mod ancients share one picker); `dmevent force <eventId> [choice]`.
 - **MCP Nexus upload** — Pipeline to publish mod packages to Nexus from the MCP tooling (see README **MCP**).
 
 ### Changed
 
-- **Breaking: monolith → modules** — Existing users should install **KitLib-Full** (or Core + Shared + Features + desired satellites). `make sync` deploys Core only; use `make sync-full` for local dev with every module.
+- **Breaking: monolith → modules** — DevMode's single DLL becomes Core + satellites. Install **KitLib-Full** (recommended) or Core + `KitLib.Features` + the satellite zips you need. `make sync` deploys Core only; `make sync-full` deploys the full local bundle. Existing installs migrate module toggles to **Full** (all satellites on); new installs default to **Standard** (Panel on; AI/Cheat/Dev off).
 - **Rebrand to KitLib** — Mod id, assembly, C# root namespace, user-data path (`mod_data/KitLib`), and NuGet package id (`STS2.KitLib`) replace DevMode. Legacy `mod_data/DevMode` settings migrate automatically on first launch. Dependent mods should reference `KitLib.dll` and `KitLib.*` namespaces (e.g. `KitLib.Companion.CompanionBridge`).
-- **Combat AI** — Focus fire, vulnerable setup, and block timing follow sim-backed tradeoffs instead of fixed heuristics; potion use is unified under beam scoring with a narrower emergency path.
+- **Content-mod integration** — Ship a `kitlib.compat.toml` sidecar for version/dependency checks in Mod settings; reference **`STS2.KitLib.Abstractions`** at compile time and `KitLib.dll` (+ any satellite you need) at runtime.
+- **Mod Panel navigation** — Page tabs use an LB/RB shoulder carousel; controller hints and focusable sidebar rows; opens through the official submenu stack for reliable gamepad navigation.
+- **Progress protection** — Settings, backup list, restore flow, and startup progress-loss prompt live under Mod Panel (replacing the legacy DEVMODE menu entry).
+- **Log format & viewer** — KitLib internal lines use `[KitLib][scope]` without duplicate `[KitLib]` prefixes; secondary scope tags render dimmer than primary mod tags in the log viewer and kitlog.
+- **Combat stats sidebar** — Context-pane score bar uses readable scale ticks aligned to the bar height.
+- **Combat AI behavior** — Block-first lines, sim-backed focus fire and vulnerable setup, potion scoring in beam search, weak mitigation modeling, skip-anim-safe card play, no premature end-turn with playable cards, save/load after AI combat, and reward-screen skip loops resolved.
+
+### Fixed
+
+- **Install packages** — Release zips again include the required PCK after the modular packaging split.
+- **STS2 stable + Dev Mode** — Dev bootstrap on the stable game branch no longer crashes or double-applies Harmony on the main menu.
 
 ## [0.13.0] - 2026-06-02
 

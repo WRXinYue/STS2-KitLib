@@ -3,7 +3,7 @@
   "name": "KitLib Mod Panel",
   "author": "WRXinYue",
   "description": "Main-menu mod settings panel and RitsuLib settings bridge.",
-  "version": "0.13.0",
+  "version": "0.20.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": ["KitLib"],

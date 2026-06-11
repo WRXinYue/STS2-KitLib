@@ -8,21 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-06-11
+
 ### Added
 
-- **KitLib 模块化拆分** — Core（`KitLib`）无 patch/UI；卫星 mod（Panel / User / Cheat / Dev / AI）经 `KitLibHost` 注册；共享实现在 `KitLib.Features`。发布包含 **KitLib-Full** 与各模块独立 zip；NuGet **`STS2.KitLib.Abstractions`** 供内容 mod 编译期引用。
+- **KitLib 模块化拆分** — 游戏内仍是一个 mod：轻量 Core 宿主（`KitLib.dll`）+ `modules/` 下可选卫星 DLL（`KitLib.User`、`KitLib.ModPanel`、`KitLib.Panel`、`KitLib.AI`、`KitLib.Cheat`、`KitLib.Dev`）。卫星经 `KitLibHost` 注册侧栏 Tab 与功能；共享运行时在 `KitLib.Features`。删除卫星 DLL（或选择加载档位）即可关闭对应功能而无需卸载 KitLib。发布含 **KitLib-Full** 与各模块独立 zip。NuGet **`STS2.KitLib.Abstractions`** 为内容 mod 编译期契约。
+- **主菜单 Mod 设置面板** — 游戏 mod 列表中的 KitLib 原生设置（RitsuLib 桥接）：无需进入对局开发侧栏即可浏览与配置 KitLib。
+- **Mod Panel 侧栏** — 在侧栏中开关已加载 mod；每行显示版本徽章与 STS2 风格焦点光标。
+- **卫星模块加载档位** — 在 Mod 设置中选择 Minimal / Standard / Full / Custom 等 bundled 模块组合。
+- **Mod 设置：快捷键** — 独立页面重绑开发侧栏快捷键（展开/收起、切换 Tab、快速存读、战斗检查点等）。
+- **Mod 设置：强调色** — 可选橙色 KitLib UI 强调色。
+- **Mod 兼容性（`kitlib.compat.toml`）** — 设置页展示各 mod 兼容清单中的依赖与版本警告。
+- **内容 mod 日志（`KitLibLog` / `ModLog`）** — 其他 mod 经 KitLib 输出日志，在游戏内日志查看器显示正确 mod 来源与颜色；mod 设置页可复用日志级别行组件。
+- **KitLog CLI** — 可选 `kitlog` 工具（tools zip）：`tail` 读 `session.log`，`attach` 接结构化命名管道，`--sync-viewer` 同步游戏内筛选，可选 KitLib 加载时在 Windows Terminal 自动打开。
+- **STS2 稳定版/beta 双构建** — KitLib 分别针对稳定版与 beta 构建；自动检测 Steam 安装对应配置，版本不匹配时启动显示提示横幅。
+- **开发性能浮层** — 可选 HUD（开发侧栏）显示预加载与存档序列化耗时探针。
 - **AI Host 与 StrongStrategy** — Mod AI 平台：开发侧栏 **AI Host** 面板、外部伴侣终端 API，以及基于 Codex 先验的 **StrongStrategy** 单机自动出牌。
-- **战斗 beam 规划器** — 对局内 AI 使用牌组模拟与多回合线路评分（优先挡牌线路、遗物/能力钩子、搜索内药水模拟、小怪 engagement、机制发现）。
+- **战斗模拟与 beam 规划器** — 对局内 AI 模拟牌组 EV、多回合线路、遗物/能力钩子、搜索内药水、小怪 engagement 与敌人机制发现。
 - **AI HUD 浮层** — 对局左上角 overlay：大小牌组预测、胜率估计与实时模拟遥测（取代旧版启发式 HUD）。
-- **奖励与地图 AI** — 卡牌奖励按边际牌组/模拟价值评分；地图选路权衡路径风险；牌组需升级时休息点优先营火；耗竭/升级选手牌按评分选择。
-- **先古事件调试（开发工具）** — 在 **事件** 或 **房间传送 → 先古之民** 中，从右侧扩展面板选择任意先古，随机进入或置顶列表中的某一选项（达弗、欧洛巴斯及 mod 先古使用同一套列表）；`dmevent force <eventId> [choice]`。
+- **奖励、地图与休息点 AI** — 卡牌奖励按边际牌组/模拟价值评分（含下场战斗 beam 预览）；地图选路权衡路径风险；牌组需升级时休息点优先营火；耗竭/升级选手牌按评分选择。
+- **先古事件调试（开发工具）** — 在 **事件** 或 **房间传送 → 先古之民** 中，从扩展面板选择任意先古，随机进入或置顶某一选项（达弗、欧洛巴斯与 mod 先古共用同一套列表）；`dmevent force <eventId> [choice]`。
 - **MCP Nexus 上传** — 通过 MCP 工具链发布 mod 包到 Nexus（见 README **MCP**）。
 
 ### Changed
 
-- **破坏性：单体 → 模块** — 现有用户请安装 **KitLib-Full**（或 Core + Shared + Features + 所需卫星）。`make sync` 仅部署 Core；本地开发用 `make sync-full`。
+- **破坏性：单体 → 模块** — 原 DevMode 单 DLL 拆为 Core + 卫星。请安装 **KitLib-Full**（推荐）或 Core + `KitLib.Features` + 所需卫星 zip。`make sync` 仅部署 Core；`make sync-full` 部署完整本地 bundle。已有安装迁移为 **Full**（全部卫星开启）；新安装默认 **Standard**（Panel 开；AI/Cheat/Dev 关）。
 - **更名为 KitLib** — mod id、程序集、C# 根命名空间、用户数据路径（`mod_data/KitLib`）及 NuGet 包 id（`STS2.KitLib`）取代 DevMode。首次启动会自动迁移旧版 `mod_data/DevMode` 设置。依赖本 mod 的其他 mod 请改为引用 `KitLib.dll` 与 `KitLib.*` 命名空间（如 `KitLib.Companion.CompanionBridge`）。
-- **战斗 AI** — 集火、易伤铺垫与挡牌时机改为模拟驱动的权衡，不再依赖固定启发式；药水使用统一纳入 beam 评分，紧急路径收窄。
+- **内容 mod 对接** — 随 mod 发布 `kitlib.compat.toml` sidecar，在 Mod 设置中做版本/依赖检查；编译期引用 **`STS2.KitLib.Abstractions`**，运行时需要 `KitLib.dll`（及所依赖的卫星 DLL）。
+- **Mod Panel 导航** — 分页标签改为 LB/RB 肩键轮播；显示手柄提示与可聚焦侧栏行；经官方子菜单栈打开以保证手柄导航可靠。
+- **进度保护** — 设置、备份列表、恢复流程与启动时进度丢失提示均移至 Mod Panel（取代旧版 DEVMODE 主菜单入口）。
+- **日志格式与查看器** — KitLib 内部日志为 `[KitLib][scope]`，session 日志不再重复 `[KitLib]`；游戏内查看器与 kitlog 中次级 scope 标签比主 mod 标签更暗。
+- **战斗统计侧栏** — 上下文面板分数条按条高显示可读刻度。
+- **战斗 AI 行为** — 优先挡牌线路、模拟驱动集火与易伤铺垫、beam 搜索内药水评分、虚弱减伤建模、跳过动画下出牌不卡死、有牌可出时不提前结束回合、AI 战斗后可正常存读、奖励界面跳过循环已处理。
+
+### Fixed
+
+- **安装包** — 模块化打包拆分后，发布 zip 再次包含所需的 PCK 文件。
+- **STS2 稳定版 + Dev Mode** — 稳定版游戏分支上打开开发工具不再在主菜单崩溃或重复应用 Harmony。
 
 ## [0.13.0] - 2026-06-02
 
