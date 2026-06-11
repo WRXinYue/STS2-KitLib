@@ -685,6 +685,9 @@ internal static class LogViewerUI {
         if (LogLevelBracketTags.Contains(candidate))
             return false;
 
+        if (!LooksLikeModOrScopeTag(candidate))
+            return false;
+
         if (loadedModIds.Contains(candidate)) {
             modId = candidate;
             return true;
@@ -748,7 +751,6 @@ internal static class LogViewerUI {
         string modCol = LogSourceColors.ColorToBbHex(LogSourceColors.GetModHighlightColor(source));
         string prefix = entry.Text[..tagStart];
         string tag = entry.Text[tagStart..tagEnd];
-        string suffix = entry.Text[tagEnd..];
 
         if (prefix.Length > 0)
             sb.Append($" [color={levelCol}]{EscapeBbCode(prefix)}[/color]");
@@ -757,8 +759,92 @@ internal static class LogViewerUI {
 
         sb.Append($"[color={modCol}]{EscapeBbCode(tag)}[/color]");
 
-        if (suffix.Length > 0)
-            sb.Append($"[color={levelCol}]{EscapeBbCode(suffix)}[/color]");
+        int pos = tagEnd;
+        while (TryFindSecondaryTagSpan(
+                   entry.Text,
+                   pos,
+                   source,
+                   loadedModIds,
+                   modIdAliases,
+                   out int secondaryStart,
+                   out int secondaryEnd,
+                   out bool isContentModTag,
+                   out var secondaryInner)) {
+            sb.Append($"[color={levelCol}]{EscapeBbCode(entry.Text[pos..secondaryStart])}[/color]");
+
+            string secondaryCol = isContentModTag
+                ? LogSourceColors.ColorToBbHex(LogSourceColors.GetModHighlightColor(secondaryInner))
+                : ColTime;
+            sb.Append($"[color={secondaryCol}]{EscapeBbCode(entry.Text[secondaryStart..secondaryEnd])}[/color]");
+            pos = secondaryEnd;
+        }
+
+        if (pos < entry.Text.Length)
+            sb.Append($"[color={levelCol}]{EscapeBbCode(entry.Text[pos..])}[/color]");
+    }
+
+    private static bool TryFindSecondaryTagSpan(
+        string text,
+        int searchFrom,
+        string primaryModId,
+        HashSet<string> loadedModIds,
+        Dictionary<string, string> modIdAliases,
+        out int tagStart,
+        out int tagEndExclusive,
+        out bool isContentModTag,
+        out string tagInner) {
+        tagStart = 0;
+        tagEndExclusive = 0;
+        isContentModTag = false;
+        tagInner = "";
+
+        int pos = searchFrom;
+        while (pos < text.Length) {
+            while (pos < text.Length && char.IsWhiteSpace(text[pos]))
+                pos++;
+
+            if (pos >= text.Length || text[pos] != '[')
+                return false;
+
+            int open = pos;
+            int close = text.IndexOf(']', open + 1);
+            if (close <= open + 1) {
+                pos = open + 1;
+                continue;
+            }
+
+            tagInner = text.Substring(open + 1, close - open - 1);
+            if (LogLevelBracketTags.Contains(tagInner)) {
+                pos = close + 1;
+                continue;
+            }
+
+            if (tagInner.Equals(primaryModId, StringComparison.OrdinalIgnoreCase)) {
+                pos = close + 1;
+                continue;
+            }
+
+            if (!LooksLikeModOrScopeTag(tagInner)) {
+                pos = close + 1;
+                continue;
+            }
+
+            tagStart = open;
+            tagEndExclusive = close + 1;
+            if (TryResolveModId(tagInner, loadedModIds, modIdAliases, out _))
+                isContentModTag = true;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    static bool LooksLikeModOrScopeTag(string inner) {
+        if (string.IsNullOrWhiteSpace(inner))
+            return false;
+
+        return inner.IndexOf('=') < 0 && inner.IndexOf(',') < 0;
     }
 
     private static void RefreshStatsPanel(

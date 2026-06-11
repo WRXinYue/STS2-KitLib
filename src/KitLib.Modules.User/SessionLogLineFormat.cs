@@ -9,7 +9,7 @@ internal static class SessionLogLineFormat {
         return $"{time} {LevelToken(level)} {text}";
     }
 
-    static string LevelToken(LogLevel level) => level switch {
+    internal static string LevelToken(LogLevel level) => level switch {
         LogLevel.Error => "ERROR",
         LogLevel.Warn => "WARN",
         LogLevel.Debug => "DEBUG",

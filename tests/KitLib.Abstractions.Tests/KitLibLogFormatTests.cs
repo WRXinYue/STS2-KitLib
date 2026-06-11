@@ -30,6 +30,22 @@ public class KitLibLogFormatTests {
     }
 
     [Fact]
+    public void FormatGameLoggerText_hostOmitsRepeatedModId() {
+        Assert.Equal("loaded", KitLibLogFormat.FormatGameLoggerText("KitLib", null, "loaded"));
+        Assert.Equal("[PseudoCoop] starting", KitLibLogFormat.FormatGameLoggerText("KitLib", "PseudoCoop", "starting"));
+    }
+
+    [Fact]
+    public void FormatGameLoggerText_contentModKeepsFullPrefix() {
+        Assert.Equal("[my-mod][Combat] turn 3", KitLibLogFormat.FormatGameLoggerText("my-mod", "Combat", "turn 3"));
+    }
+
+    [Fact]
+    public void FormatGameCallbackText_hostScoped() {
+        Assert.Equal("[KitLib] [PseudoCoop] starting", KitLibLogFormat.FormatGameCallbackText("KitLib", "PseudoCoop", "starting"));
+    }
+
+    [Fact]
     public void FormatCompoundSource_Scoped() {
         Assert.Equal("my-mod][Combat", KitLibLogFormat.FormatCompoundSource("my-mod", "Combat"));
     }

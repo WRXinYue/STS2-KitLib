@@ -58,6 +58,7 @@ internal partial class KitLibProcessNode : Node {
             Instance = null;
         CrashRecoveryStore.MarkSessionCleanExit();
         McpBridge.Shutdown();
+        LogStreamPipeServer.Stop();
         InstanceLogWriter.Shutdown();
         KitLibInstanceRegistry.Unregister();
     }

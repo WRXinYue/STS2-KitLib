@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib.Logging;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -55,6 +56,7 @@ internal static class LogCollector {
 
     public static void Initialize() {
         InstanceLogWriter.Initialize();
+        LogStreamPipeServer.Start();
         Log.LogCallback += OnLogReceived;
         MainFile.Logger.Info(KitLibInstance.SessionBoundaryMarker);
         LogViewerFilterSync.PublishDefaults();
@@ -119,6 +121,23 @@ internal static class LogCollector {
                 _unseenAlertSeverity = MaxSeverity(_unseenAlertSeverity, level);
         }
         _dirty = true;
+
+        PublishStreamEntry(level, text);
+    }
+
+    static void PublishStreamEntry(LogLevel level, string text) {
+        var lvl = SessionLogLineFormat.LevelToken(level).ToLowerInvariant();
+        var fingerprint = $"{lvl}|{text}";
+        if (StructuredLogDedupe.TryConsume(fingerprint))
+            return;
+
+        var boundary = IsSessionBoundary(new Entry(level, text, DateTime.Now));
+        var entry = LogStreamEntry.FromGameCallback(
+            lvl,
+            text,
+            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            boundary);
+        LogStreamHub.Publish(entry);
     }
 
     internal static bool TryContainsLiveText(string text) {

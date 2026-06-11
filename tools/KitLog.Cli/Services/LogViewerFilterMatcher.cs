@@ -79,7 +79,7 @@ internal static class LogViewerFilterMatcher {
             }
 
             string inner = text.Substring(open + 1, close - open - 1);
-            if (TryResolveModId(inner, loadedModIds, modIdAliases, out modId)) {
+            if (LooksLikeModOrScopeTag(inner) && TryResolveModId(inner, loadedModIds, modIdAliases, out modId)) {
                 tagStart = open;
                 tagEndExclusive = close + 1;
                 return true;
@@ -121,7 +121,7 @@ internal static class LogViewerFilterMatcher {
             }
 
             var inner = text.Substring(open + 1, close - open - 1);
-            if (!LogLevelBracketTags.Contains(inner)) {
+            if (LooksLikeModOrScopeTag(inner) && !LogLevelBracketTags.Contains(inner)) {
                 tagStart = open;
                 tagEndExclusive = close + 1;
                 tagInner = inner;
@@ -132,6 +132,78 @@ internal static class LogViewerFilterMatcher {
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Next bracket tag after the primary mod tag: content-mod id (highlight) or sub-module scope (dim).
+    /// Skips a duplicate <paramref name="primaryModId"/> prefix left by older log lines.
+    /// </summary>
+    public static bool TryFindSecondaryTagSpan(
+        string text,
+        int searchFrom,
+        string primaryModId,
+        HashSet<string>? loadedModIds,
+        Dictionary<string, string>? modIdAliases,
+        out int tagStart,
+        out int tagEndExclusive,
+        out bool isContentModTag,
+        out string tagInner) {
+        tagStart = 0;
+        tagEndExclusive = 0;
+        isContentModTag = false;
+        tagInner = "";
+
+        int pos = searchFrom;
+        while (pos < text.Length) {
+            while (pos < text.Length && char.IsWhiteSpace(text[pos]))
+                pos++;
+
+            if (pos >= text.Length || text[pos] != '[')
+                return false;
+
+            int open = pos;
+            int close = text.IndexOf(']', open + 1);
+            if (close <= open + 1) {
+                pos = open + 1;
+                continue;
+            }
+
+            tagInner = text.Substring(open + 1, close - open - 1);
+            if (LogLevelBracketTags.Contains(tagInner)) {
+                pos = close + 1;
+                continue;
+            }
+
+            if (tagInner.Equals(primaryModId, StringComparison.OrdinalIgnoreCase)) {
+                pos = close + 1;
+                continue;
+            }
+
+            if (!LooksLikeModOrScopeTag(tagInner)) {
+                pos = close + 1;
+                continue;
+            }
+
+            tagStart = open;
+            tagEndExclusive = close + 1;
+            if (loadedModIds != null
+                && loadedModIds.Count > 0
+                && modIdAliases != null
+                && TryResolveModId(tagInner, loadedModIds, modIdAliases, out _))
+                isContentModTag = true;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Mod/scope tags are simple ids; skip Godot-style diagnostic blobs like <c>[k=v, k2=v2]</c>.</summary>
+    internal static bool LooksLikeModOrScopeTag(string inner) {
+        if (string.IsNullOrWhiteSpace(inner))
+            return false;
+
+        return inner.IndexOf('=') < 0 && inner.IndexOf(',') < 0;
     }
 
     static readonly HashSet<string> LogLevelBracketTags = new(StringComparer.OrdinalIgnoreCase) {
@@ -146,6 +218,9 @@ internal static class LogViewerFilterMatcher {
         modId = "";
 
         if (LogLevelBracketTags.Contains(candidate))
+            return false;
+
+        if (!LooksLikeModOrScopeTag(candidate))
             return false;
 
         if (loadedModIds.Contains(candidate)) {

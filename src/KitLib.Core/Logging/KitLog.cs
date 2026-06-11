@@ -32,12 +32,21 @@ public static class KitLog {
 
     /// <summary>Content-mod line format: <c>[modId]</c> or <c>[modId][scope]</c>.</summary>
     public static void WriteMod(KitLogLevel level, string modId, string? scope, string message) {
-        var line = KitLib.Logging.KitLibLogFormat.FormatLine(modId, scope, message);
-        WriteRaw(level, line);
+        var absLevel = MapAbsLevel(level);
+        var entry = KitLib.Logging.LogStreamEntry.FromKitLog(absLevel, modId, scope, message, MainFile.ModID);
+        KitLib.Logging.LogStreamHub.Publish(entry);
+        KitLib.Logging.StructuredLogDedupe.Mark(entry.Fingerprint);
 
-        var compoundSource = KitLib.Logging.KitLibLogFormat.FormatCompoundSource(modId, scope);
-        KitLogHub.Publish(level, compoundSource, message);
+        var line = KitLib.Logging.KitLibLogFormat.FormatGameLoggerText(modId, scope, message, MainFile.ModID);
+        WriteRaw(level, line);
     }
+
+    static KitLib.Logging.KitLogLevel MapAbsLevel(KitLogLevel level) => level switch {
+        KitLogLevel.Error => KitLib.Logging.KitLogLevel.Error,
+        KitLogLevel.Warn => KitLib.Logging.KitLogLevel.Warn,
+        KitLogLevel.Debug => KitLib.Logging.KitLogLevel.Debug,
+        _ => KitLib.Logging.KitLogLevel.Info,
+    };
 
     static void WriteRaw(KitLogLevel level, string text) {
         switch (level) {

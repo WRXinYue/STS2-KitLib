@@ -18,6 +18,30 @@ public static class KitLibLogFormat {
         return string.IsNullOrEmpty(message) ? prefix : $"{prefix} {message}";
     }
 
+    /// <summary>
+    /// Text for the host mod game logger; the engine prepends <c>[hostModId]</c> in callbacks.
+    /// Host-internal lines omit the repeated mod id and use <c>[scope]</c> when scoped.
+    /// </summary>
+    public static string FormatGameLoggerText(string modId, string? scope, string? message, string hostModId = "KitLib") {
+        if (string.IsNullOrWhiteSpace(modId))
+            modId = "Unknown";
+
+        if (!string.Equals(modId, hostModId, StringComparison.OrdinalIgnoreCase))
+            return FormatLine(modId, scope, message);
+
+        var prefix = string.IsNullOrWhiteSpace(scope) ? "" : $"[{scope.Trim()}]";
+        if (string.IsNullOrEmpty(message))
+            return prefix;
+
+        return string.IsNullOrEmpty(prefix) ? message : $"{prefix} {message}";
+    }
+
+    /// <summary>Full text expected from <c>Log.LogCallback</c> after the engine prepends <c>[hostModId]</c>.</summary>
+    public static string FormatGameCallbackText(string modId, string? scope, string? message, string hostModId = "KitLib") {
+        var body = FormatGameLoggerText(modId, scope, message, hostModId);
+        return string.IsNullOrEmpty(body) ? $"[{hostModId}]" : $"[{hostModId}] {body}";
+    }
+
     /// <summary>Prefixes a message with caller location: <c>File.cs:42 MethodName | message</c>.</summary>
     public static string FormatWithCaller(string message, string member, string file, int line) {
         var fileName = string.IsNullOrEmpty(file) ? "?" : Path.GetFileName(file);

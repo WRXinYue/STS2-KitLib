@@ -7,7 +7,7 @@ namespace KitLib;
 
 /// <summary>Launches the optional <c>kitlog</c> CLI in a system terminal.</summary>
 public static class KitLogTerminalLauncher {
-    const string SessionTailArgsTemplate = "tail -f --tail 0 --sync-viewer --pid {0}";
+    const string SessionTailArgsTemplate = "attach --pid {0} --follow --sync-viewer --tail 0";
     const string AiTailArgsTemplate = "tail -f --tail 40 --filter ai --pid {0}";
 
     public static bool TryOpenSessionTail(out string? error)
