@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using MegaCrit.Sts2.Core.Logging;
 
 namespace KitLib;
 
@@ -46,12 +47,12 @@ internal static class InstanceLogWriter {
         }
     }
 
-    public static void Enqueue(string text) {
+    public static void Enqueue(LogLevel level, string text) {
         if (_writer == null)
             return;
 
         lock (WriteLock)
-            PendingLines.Enqueue(text);
+            PendingLines.Enqueue(SessionLogLineFormat.Format(level, text));
     }
 
     /// <summary>Drains pending lines to disk with a single flush. Safe on the main thread.</summary>

@@ -16,17 +16,8 @@ internal static class LogLineRenderer {
         var levelAnsi = AnsiCodes.ForLevel(line.Level);
         var reset = AnsiCodes.Reset;
 
-        if (viewerState == null
-            || viewerState.LoadedModIds.Count == 0
-            || !LogViewerFilterMatcher.TryFindModTagSpan(
-                line.RawLine,
-                viewerState.LoadedModIds,
-                viewerState.ModIdAliases,
-                out int tagStart,
-                out int tagEnd,
-                out var modId)) {
+        if (!TryFindModTag(line.RawLine, viewerState, out int tagStart, out int tagEnd, out var modId))
             return $"{levelAnsi}{line.RawLine}{reset}";
-        }
 
         var modAnsi = AnsiCodes.TrueColorFg(LogModColors.ForId(modId));
         var prefix = line.RawLine[..tagStart];
@@ -40,5 +31,25 @@ internal static class LogLineRenderer {
             return $"{levelAnsi}{prefix}{modAnsi}{tag}{reset}";
 
         return $"{levelAnsi}{prefix}{modAnsi}{tag}{reset}{levelAnsi}{suffix}{reset}";
+    }
+
+    static bool TryFindModTag(
+        string rawLine,
+        LogViewerFilterState? viewerState,
+        out int tagStart,
+        out int tagEnd,
+        out string modId) {
+        if (viewerState != null
+            && viewerState.LoadedModIds.Count > 0
+            && LogViewerFilterMatcher.TryFindModTagSpan(
+                rawLine,
+                viewerState.LoadedModIds,
+                viewerState.ModIdAliases,
+                out tagStart,
+                out tagEnd,
+                out modId))
+            return true;
+
+        return LogViewerFilterMatcher.TryFindAnyModTagSpan(rawLine, out tagStart, out tagEnd, out modId);
     }
 }

@@ -2,25 +2,21 @@ using KitLog.Cli.Services;
 
 namespace KitLog.Cli.Rendering;
 
+/// <summary>ANSI colors aligned with in-game LogViewerUI BBCode palette.</summary>
 internal static class AnsiCodes {
     public const string Reset = "\x1b[0m";
-    public const string Grey = "\x1b[90m";
-    public const string Red = "\x1b[31m";
-    public const string Yellow = "\x1b[33m";
-    public const string Cyan = "\x1b[36m";
-    public const string White = "\x1b[37m";
 
     public static string ForLevel(ParsedLogLevel level) => level switch {
-        ParsedLogLevel.Error => Red,
-        ParsedLogLevel.Warn => Yellow,
-        ParsedLogLevel.Debug or ParsedLogLevel.VeryDebug => Grey,
-        ParsedLogLevel.Load => Cyan,
-        _ => White,
+        ParsedLogLevel.Error => TrueColorFg("FF5F5F"),
+        ParsedLogLevel.Warn => TrueColorFg("FFC840"),
+        ParsedLogLevel.Debug or ParsedLogLevel.VeryDebug => TrueColorFg("6A6A8A"),
+        ParsedLogLevel.Load => TrueColorFg("7ADCDC"),
+        _ => TrueColorFg("C8C8DC"),
     };
 
     public static string TrueColorFg(string hexRgb) {
         if (hexRgb.Length != 6)
-            return White;
+            return "\x1b[37m";
 
         var r = Convert.ToInt32(hexRgb[..2], 16);
         var g = Convert.ToInt32(hexRgb[2..4], 16);
@@ -29,5 +25,5 @@ internal static class AnsiCodes {
     }
 
     public static void WriteStatusLine(string message) =>
-        Console.WriteLine($"{Grey}{message}{Reset}");
+        Console.WriteLine($"{TrueColorFg("6A6A8A")}{message}{Reset}");
 }

@@ -109,7 +109,7 @@ internal static class LogCollector {
     }
 
     private static void OnLogReceived(LogLevel level, string text, int _) {
-        InstanceLogWriter.Enqueue(text);
+        InstanceLogWriter.Enqueue(level, text);
         lock (_lock) {
             _liveEntries.Enqueue(new Entry(level, text, DateTime.Now));
             while (_liveEntries.Count > MaxLiveEntries)

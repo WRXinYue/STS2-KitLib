@@ -98,6 +98,42 @@ internal static class LogViewerFilterMatcher {
         out string modId)
         => TryFindModTagSpan(text, loadedModIds, modIdAliases, out _, out _, out modId);
 
+    /// <summary>First non-level <c>[tag]</c> segment; used to color KitLib and other framework tags in session.log.</summary>
+    public static bool TryFindAnyModTagSpan(
+        string text,
+        out int tagStart,
+        out int tagEndExclusive,
+        out string tagInner) {
+        tagStart = 0;
+        tagEndExclusive = 0;
+        tagInner = "";
+
+        int i = 0;
+        while (i < text.Length) {
+            int open = text.IndexOf('[', i);
+            if (open < 0)
+                break;
+
+            int close = text.IndexOf(']', open + 1);
+            if (close <= open + 1) {
+                i = open + 1;
+                continue;
+            }
+
+            var inner = text.Substring(open + 1, close - open - 1);
+            if (!LogLevelBracketTags.Contains(inner)) {
+                tagStart = open;
+                tagEndExclusive = close + 1;
+                tagInner = inner;
+                return true;
+            }
+
+            i = close + 1;
+        }
+
+        return false;
+    }
+
     static readonly HashSet<string> LogLevelBracketTags = new(StringComparer.OrdinalIgnoreCase) {
         "INFO", "WARN", "WARNING", "ERROR", "DEBUG", "LOAD", "VERYDEBUG", "VDB", "DBG",
     };
