@@ -46,14 +46,49 @@ public static class KitLogTerminalLauncher {
     }
 
     static ProcessStartInfo BuildStartInfo(string executable, string args) {
-        // Launch the console exe directly so kitlog owns the console and can enable VT/ANSI.
-        // Nested "cmd /k" breaks color on some Windows hosts even when kitlog writes escape codes.
+        var workDir = Path.GetDirectoryName(executable) ?? "";
+
+        if (OperatingSystem.IsWindows()
+            && TryBuildWindowsTerminalStartInfo(executable, args, workDir, out var terminalInfo))
+            return terminalInfo;
+
+        // Standard .NET pattern: ShellExecute the console app; Windows allocates a new console.
         return new ProcessStartInfo {
             FileName = executable,
             Arguments = args,
             UseShellExecute = true,
-            WorkingDirectory = Path.GetDirectoryName(executable) ?? "",
+            WorkingDirectory = workDir,
         };
+    }
+
+    static bool TryBuildWindowsTerminalStartInfo(
+        string executable,
+        string args,
+        string workDir,
+        out ProcessStartInfo startInfo) {
+        startInfo = null!;
+        var wt = ResolveWindowsTerminalExecutable();
+        if (wt == null)
+            return false;
+
+        startInfo = new ProcessStartInfo {
+            FileName = wt,
+            Arguments = FormattableString.Invariant(
+                $"-d \"{workDir}\" --title \"KitLog\" -- \"{executable}\" {args}"),
+            UseShellExecute = true,
+        };
+        return true;
+    }
+
+    static string? ResolveWindowsTerminalExecutable() {
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (!string.IsNullOrEmpty(localAppData)) {
+            var storeAlias = Path.Combine(localAppData, "Microsoft", "WindowsApps", "wt.exe");
+            if (File.Exists(storeAlias))
+                return storeAlias;
+        }
+
+        return FindOnPath("wt.exe");
     }
 
     static string? ResolveKitLogExecutable() {
