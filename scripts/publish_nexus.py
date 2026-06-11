@@ -5,9 +5,10 @@ Environment variables (required):
     NEXUS_API_KEY              - Your personal API key from nexusmods.com/settings/api-keys
     NEXUS_FILE_GROUP_ID        - Main file group ID (Files tab → API Info)
     NEXUS_FILE_GROUP_ID_MCP    - Optional file group ID for KitLib.Mcp stdio proxy (separate line)
+    NEXUS_FILE_GROUP_ID_KITLOG - Optional file group ID for KitLog CLI (separate line)
 
 Usage:
-    python scripts/publish_nexus.py [--version X.Y.Z] [--mcp] [--dry-run]
+    python scripts/publish_nexus.py [--version X.Y.Z] [--mcp | --kitlog] [--dry-run]
 """
 
 from __future__ import annotations
@@ -39,37 +40,58 @@ def _mcp_zip_path(version: str, tools_rid: str) -> Path:
     return _REPO_ROOT / "build" / f"KitLib.Mcp-v{version}-{tools_rid}.zip"
 
 
+def _kitlog_zip_path(version: str, tools_rid: str) -> Path:
+    return _REPO_ROOT / "build" / f"KitLog.Cli-v{version}-{tools_rid}.zip"
+
+
 def _mcp_description_bbcode(tools_rid: str) -> str:
     exe = "KitLib.Mcp.exe" if tools_rid.startswith("win") else "KitLib.Mcp"
     return (
-        "[b]DevMode MCP stdio proxy[/b] (optional dev tool)\n\n"
+        "[b]KitLib MCP stdio proxy[/b] (optional dev tool)\n\n"
         "Connect MCP clients (Cursor, Claude Desktop, etc.) to a running Slay the Spire 2 session "
-        "with DevMode loaded.\n\n"
-        f"Extract [code]{exe}[/code] and point your MCP client [code]devmode[/code] entry at it with "
-        "[code]--port 9877[/code]. Full setup: GitHub README → MCP section.\n\n"
-        "Requires the DevMode mod installed and the game running."
+        "with KitLib loaded.\n\n"
+        f"Extract [code]{exe}[/code] and point your MCP client at it with [code]--port 9877[/code]. "
+        "Full setup: GitHub README → MCP section.\n\n"
+        "Requires KitLib installed and the game running."
     )
 
 
-def _resolve_nexus_group_id(*, mcp: bool) -> str:
-    if mcp:
+def _kitlog_description_bbcode(tools_rid: str) -> str:
+    exe = "kitlog.exe" if tools_rid.startswith("win") else "kitlog"
+    return (
+        "[b]KitLog CLI[/b] (optional terminal log viewer)\n\n"
+        "Tail KitLib session logs from a terminal. Use [code]kitlog attach[/code] for live structured "
+        "logs over a named pipe while the game runs; [code]kitlog tail[/code] reads [code]session.log[/code] "
+        "offline.\n\n"
+        f"Extract [code]{exe}[/code] to [code]PATH[/code] or [code]mods/KitLib/tools/[/code]. "
+        "The in-game log viewer can launch attach automatically.\n\n"
+        "Full usage: GitHub README → KitLog CLI section."
+    )
+
+
+def _resolve_nexus_group_id(*, tool: str | None) -> str:
+    if tool == "mcp":
         return os.environ.get("NEXUS_FILE_GROUP_ID_MCP", "").strip()
+    if tool == "kitlog":
+        return os.environ.get("NEXUS_FILE_GROUP_ID_KITLOG", "").strip()
     return os.environ.get("NEXUS_FILE_GROUP_ID", "").strip()
 
 
 def _nexus_display_name(
     version: str,
     *,
-    mcp: bool,
+    tool: str | None,
     tools_rid: str,
 ) -> str:
-    if mcp:
+    if tool == "mcp":
         return f"KitLib.Mcp v{version} ({tools_rid})"
+    if tool == "kitlog":
+        return f"KitLog v{version} ({tools_rid})"
     return f"KitLib v{version}"
 
 
-def _nexus_attach_options(*, mcp: bool) -> dict[str, object]:
-    if mcp:
+def _nexus_attach_options(*, tool: str | None) -> dict[str, object]:
+    if tool:
         return {
             "file_category": "optional",
             "archive_existing": True,
@@ -80,6 +102,36 @@ def _nexus_attach_options(*, mcp: bool) -> dict[str, object]:
         "archive_existing": True,
         "primary_mod_manager_download": True,
     }
+
+
+def _zip_path_for(version: str, *, tool: str | None, tools_rid: str) -> Path:
+    if tool == "mcp":
+        return _mcp_zip_path(version, tools_rid)
+    if tool == "kitlog":
+        return _kitlog_zip_path(version, tools_rid)
+    return _zip_path(version)
+
+
+def _make_target_for(*, tool: str | None) -> str:
+    if tool == "mcp":
+        return "zip-mcp"
+    if tool == "kitlog":
+        return "zip-kitlog"
+    return "zip"
+
+
+def _tool_env_hint(tool: str) -> tuple[str, str]:
+    if tool == "mcp":
+        return (
+            "NEXUS_FILE_GROUP_ID_MCP",
+            "Create an Optional file for KitLib.Mcp on your mod page first, "
+            "then copy its group ID from API Info.",
+        )
+    return (
+        "NEXUS_FILE_GROUP_ID_KITLOG",
+        "Create an Optional file for KitLog on your mod page first, "
+        "then copy its group ID from API Info.",
+    )
 
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
@@ -105,7 +157,7 @@ def _load_dotenv() -> None:
 
 
 _load_dotenv()
-_USER_AGENT = "STS2-DevMode/publish_nexus.py"
+_USER_AGENT = "STS2-KitLib/publish_nexus.py"
 
 # Multipart upload: retry each part up to this many times on transient errors.
 _PART_MAX_RETRIES = 3
@@ -322,17 +374,23 @@ def step6_update_mod_file(
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Upload DevMode zip to Nexus Mods.")
+    ap = argparse.ArgumentParser(description="Upload KitLib zip to Nexus Mods.")
     ap.add_argument("--version", default="", help="Semver, e.g. 0.6.0 (default: KitLib.json)")
-    ap.add_argument(
+    tool_group = ap.add_mutually_exclusive_group()
+    tool_group.add_argument(
         "--mcp",
         action="store_true",
         help="Build/package/upload the KitLib.Mcp stdio proxy (make zip-mcp).",
     )
+    tool_group.add_argument(
+        "--kitlog",
+        action="store_true",
+        help="Build/package/upload the KitLog CLI (make zip-kitlog).",
+    )
     ap.add_argument(
         "--tools-rid",
         default="",
-        help="Runtime ID for MCP zip (default: TOOLS_RID env or host default).",
+        help="Runtime ID for tool zips (default: TOOLS_RID env or host default).",
     )
     ap.add_argument(
         "--dry-run",
@@ -349,17 +407,16 @@ def main() -> int:
         version = str(manifest["version"])
         print(f"Version auto-detected from KitLib.json: {version}")
 
+    tool: str | None = "mcp" if args.mcp else "kitlog" if args.kitlog else None
     tools_rid = _tools_rid(args.tools_rid)
-    if args.mcp:
-        zip_path = _mcp_zip_path(version, tools_rid)
-        print(f"MCP runtime: {tools_rid}")
-    else:
-        zip_path = _zip_path(version)
+    zip_path = _zip_path_for(version, tool=tool, tools_rid=tools_rid)
+    if tool:
+        print(f"Tool runtime: {tools_rid}")
 
     # ── check credentials ────────────────────────────────────────────────────
     api_key = os.environ.get("NEXUS_API_KEY", "").strip()
-    group_id = _resolve_nexus_group_id(mcp=args.mcp)
-    attach = _nexus_attach_options(mcp=args.mcp)
+    group_id = _resolve_nexus_group_id(tool=tool)
+    attach = _nexus_attach_options(tool=tool)
 
     if not args.dry_run:
         if not api_key:
@@ -369,9 +426,8 @@ def main() -> int:
             )
             return 1
         if not group_id:
-            if args.mcp:
-                env_name = "NEXUS_FILE_GROUP_ID_MCP"
-                hint = "Create an Optional file for KitLib.Mcp on your mod page first, " "then copy its group ID from API Info."
+            if tool:
+                env_name, hint = _tool_env_hint(tool)
             else:
                 env_name = "NEXUS_FILE_GROUP_ID"
                 hint = "Find it on your mod's Files tab → API Info."
@@ -383,12 +439,12 @@ def main() -> int:
 
     # ── ensure zip exists ────────────────────────────────────────────────────
     if not zip_path.is_file():
-        make_target = "zip-mcp" if args.mcp else "zip"
+        make_target = _make_target_for(tool=tool)
         print(f"Zip not found at {zip_path} — running 'make {make_target}' first…")
         import subprocess
 
         env = os.environ.copy()
-        if args.mcp:
+        if tool:
             env["TOOLS_RID"] = tools_rid
         r = subprocess.run(["make", make_target], cwd=_REPO_ROOT, env=env)
         if r.returncode != 0:
@@ -400,8 +456,10 @@ def main() -> int:
         return 1
 
     # ── build file description ───────────────────────────────────────────────
-    if args.mcp:
+    if tool == "mcp":
         description = _mcp_description_bbcode(tools_rid)
+    elif tool == "kitlog":
+        description = _kitlog_description_bbcode(tools_rid)
     else:
         from md_to_nexus import convert_markdown  # noqa: PLC0415
 
@@ -416,7 +474,7 @@ def main() -> int:
 
     display_name = _nexus_display_name(
         version,
-        mcp=args.mcp,
+        tool=tool,
         tools_rid=tools_rid,
     )
 
@@ -470,7 +528,7 @@ def main() -> int:
     )
 
     print(f"\nDone! File UID: {file_uid}")
-    section = "Optional files" if args.mcp else "Main files"
+    section = "Optional files" if tool else "Main files"
     print(f"      {display_name} is now live on Nexus Mods ({section}).")
     return 0
 

@@ -73,7 +73,7 @@ PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles extract-touchpoints check-api verify-profiles capture-sts2-ref \
         launch sync-launch sync-full-launch dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
-        compile-kitlog build-kitlog zip-kitlog \
+        compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
         upload-github upload-nexus upload-nuget
 
 help:
@@ -126,6 +126,7 @@ help:
 	@echo "  upload-github  zip + GitHub Release (requires gh CLI; alias: publish)"
 	@echo "  upload-nexus   zip + upload to Nexus Main file (NEXUS_FILE_GROUP_ID; alias: nexus)"
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
+	@echo "  upload-nexus-kitlog  zip-kitlog + Nexus Optional KitLog CLI (NEXUS_FILE_GROUP_ID_KITLOG; alias: nexus-kitlog)"
 	@echo "  upload-nuget   zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE; alias: nuget)"
 	@echo "  upload-all     upload-github then upload-nexus then upload-nuget (one zip build)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
@@ -251,6 +252,9 @@ nexus upload-nexus:
 
 nexus-mcp upload-nexus-mcp:
 	$(PYTHON) scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
+
+nexus-kitlog upload-nexus-kitlog:
+	$(PYTHON) scripts/publish_nexus.py --kitlog $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
 nuget upload-nuget:
 	$(PYTHON) scripts/publish_nuget.py $(if $(VERSION),--version $(VERSION),)
