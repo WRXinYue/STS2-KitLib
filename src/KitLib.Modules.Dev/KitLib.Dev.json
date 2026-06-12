@@ -3,7 +3,7 @@
   "name": "KitLib Dev",
   "author": "WRXinYue",
   "description": "KitLib developer tools — hooks, scripts, Harmony analysis, MCP bridge.",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": ["KitLib", "KitLib.Panel"],

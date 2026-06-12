@@ -3,7 +3,7 @@
   "name": "KitLib User",
   "author": "WRXinYue",
   "description": "KitLib logs, progress guard, manual, and crash recovery.",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": ["KitLib"],

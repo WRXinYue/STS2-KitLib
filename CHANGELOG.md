@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-06-13
+
 ### Added
 
 - **In-run hotkeys panel** — Open **Settings → Keyboard shortcuts** from a compact slide-out on the dev rail during a run, not only from the main-menu mod settings.

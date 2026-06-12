@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-06-13
+
 ### Added
 
 - **对局内快捷键面板** — 对局中可在开发侧栏通过紧凑滑出面板打开 **设置 → 键盘快捷键**，不必退回主菜单 Mod 设置。
