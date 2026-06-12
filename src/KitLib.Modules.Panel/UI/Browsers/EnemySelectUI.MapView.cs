@@ -47,6 +47,8 @@ internal static partial class EnemySelectUI {
 
         var runState = RunManager.Instance?.DebugOnlyGetState();
         if (runState?.Map == null || !KitLibState.InDevRun) {
+            if (_mapDetailHost != null)
+                ClearDetailHost(_mapDetailHost);
             state.ContentHost.AddChild(new Label {
                 Text = I18N.T("enemy.mapUnavailable", "Start a dev run to edit encounters on the map."),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
@@ -55,13 +57,7 @@ internal static partial class EnemySelectUI {
             return;
         }
 
-        var split = new HBoxContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
-        split.AddThemeConstantOverride("separation", 12);
-
         var mapColumn = new Control {
-            CustomMinimumSize = new Vector2(360, 0),
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
@@ -83,7 +79,7 @@ internal static partial class EnemySelectUI {
             RunState = runState,
             Browser = state,
             Canvas = null!,
-            DetailHost = new VBoxContainer(),
+            DetailHost = _mapDetailHost!,
             HoverHost = hoverHost,
             MapScroll = mapScroll,
             RefreshAll = () => {
@@ -107,43 +103,8 @@ internal static partial class EnemySelectUI {
         mapScroll.AddChild(session.Canvas);
         mapColumn.AddChild(mapScroll);
         mapColumn.AddChild(hoverHost);
-        split.AddChild(mapColumn);
+        state.ContentHost.AddChild(mapColumn);
 
-        var detailPanel = new PanelContainer {
-            CustomMinimumSize = new Vector2(320, 0),
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        detailPanel.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
-            BgColor = new Color(KitLibTheme.PanelBg.R, KitLibTheme.PanelBg.G, KitLibTheme.PanelBg.B, 0.85f),
-            BorderColor = KitLibTheme.PanelBorder,
-            BorderWidthLeft = 1,
-            BorderWidthRight = 1,
-            BorderWidthTop = 1,
-            BorderWidthBottom = 1,
-            CornerRadiusTopLeft = 10,
-            CornerRadiusTopRight = 10,
-            CornerRadiusBottomLeft = 10,
-            CornerRadiusBottomRight = 10,
-            ContentMarginLeft = 12,
-            ContentMarginRight = 12,
-            ContentMarginTop = 12,
-            ContentMarginBottom = 12,
-        });
-
-        var detailScroll = new ScrollContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
-        };
-        session.DetailHost.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        session.DetailHost.AddThemeConstantOverride("separation", 8);
-        detailScroll.AddChild(session.DetailHost);
-        detailPanel.AddChild(detailScroll);
-        split.AddChild(detailPanel);
-
-        state.ContentHost.AddChild(split);
         _activeMapSession = session;
         session.Canvas.Rebuild(null);
         RebuildMapDetail(session);
@@ -737,14 +698,13 @@ internal static partial class EnemySelectUI {
                 }
             }
 
-            var lines = new MapEdgeLayer(_edges, minCol, maxRow, Pad, CellW, CellH);
+            var canvasSize = CustomMinimumSize;
+            var lines = new MapEdgeLayer(_edges, minCol, maxRow, canvasSize);
             AddChild(lines);
             MoveChild(lines, 0);
 
             foreach (var point in points)
                 AddChild(CreateNodeButton(point, minCol, maxRow));
-
-            QueueRedraw();
         }
 
         private Control CreateNodeButton(MapPoint point, int minCol, int maxRow) {
@@ -849,37 +809,56 @@ internal static partial class EnemySelectUI {
         };
 
         private sealed partial class MapEdgeLayer : Control {
-            private readonly List<(MapPoint from, MapPoint to)> _edges;
-            private readonly int _minCol;
-            private readonly int _maxRow;
-            private readonly float _pad;
-            private readonly float _cellW;
-            private readonly float _cellH;
-
             public MapEdgeLayer(
                 List<(MapPoint from, MapPoint to)> edges,
                 int minCol,
                 int maxRow,
-                float pad,
-                float cellW,
-                float cellH) {
-                _edges = edges;
-                _minCol = minCol;
-                _maxRow = maxRow;
-                _pad = pad;
-                _cellW = cellW;
-                _cellH = cellH;
+                Vector2 canvasSize) {
                 MouseFilter = MouseFilterEnum.Ignore;
-                SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-            }
+                ClipContents = false;
+                ZIndex = -1;
+                CustomMinimumSize = canvasSize;
+                Size = canvasSize;
+                Position = Vector2.Zero;
 
-            public override void _Draw() {
-                var lineColor = new Color(0.45f, 0.48f, 0.58f, 0.55f);
-                foreach (var (from, to) in _edges) {
-                    Vector2 a = NodePos(from.coord, _minCol, _maxRow);
-                    Vector2 b = NodePos(to.coord, _minCol, _maxRow);
-                    DrawLine(a, b, lineColor, 2f, true);
+                int w = Mathf.Max(1, Mathf.RoundToInt(canvasSize.X));
+                int h = Mathf.Max(1, Mathf.RoundToInt(canvasSize.Y));
+
+                var container = new SubViewportContainer {
+                    Name = "MapEdgeViewportContainer",
+                    CustomMinimumSize = canvasSize,
+                    Size = canvasSize,
+                    Position = Vector2.Zero,
+                    Stretch = true,
+                    MouseFilter = MouseFilterEnum.Ignore,
+                };
+
+                var viewport = new SubViewport {
+                    Name = "MapEdgeViewport",
+                    Size = new Vector2I(w, h),
+                    TransparentBg = true,
+                    RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
+                };
+
+                var root = new Node2D { Name = "MapEdgeRoot" };
+                viewport.AddChild(root);
+
+                var lineColor = new Color(0.45f, 0.48f, 0.58f, 0.85f);
+                foreach (var (from, to) in edges) {
+                    var line = new Line2D {
+                        Points = [
+                            NodePos(from.coord, minCol, maxRow),
+                            NodePos(to.coord, minCol, maxRow),
+                        ],
+                        DefaultColor = lineColor,
+                        Width = 2f,
+                        Antialiased = true,
+                    };
+                    root.AddChild(line);
                 }
+
+                container.AddChild(viewport);
+                AddChild(container);
             }
         }
     }

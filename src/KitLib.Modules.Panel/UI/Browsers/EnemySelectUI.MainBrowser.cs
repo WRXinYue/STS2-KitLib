@@ -29,19 +29,43 @@ internal static partial class EnemySelectUI {
         _mainDual = dual;
         _mainGlobalUi = globalUi;
 
+        _mapDetailScroll = new ScrollContainer {
+            Name = "EnemyMapDetailScroll",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+        };
+        _mapDetailHost = new VBoxContainer {
+            Name = "EnemyMapDetailHost",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        _mapDetailHost.AddThemeConstantOverride("separation", 8);
+        _mapDetailScroll.AddChild(_mapDetailHost);
+
         _extensionHost = new VBoxContainer {
             Name = "EnemyExtensionHost",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            Visible = false,
         };
         _extensionHost.AddThemeConstantOverride("separation", 8);
-        dual.ExtContent.AddChild(_extensionHost);
+
+        var extLayout = new VBoxContainer {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        extLayout.AddChild(_mapDetailScroll);
+        extLayout.AddChild(_extensionHost);
+        dual.ExtContent.AddChild(extLayout);
 
         dual.Root.TreeExiting += () => {
             if (_mainDual?.Root != dual.Root)
                 return;
             _mainDual = null;
             _mainGlobalUi = null;
+            _mapDetailScroll = null;
+            _mapDetailHost = null;
             _extensionHost = null;
             _activeMapSession = null;
         };
@@ -68,6 +92,10 @@ internal static partial class EnemySelectUI {
 
         SwitchMainView(state);
         dual.AttachToScene();
+        Callable.From(() => {
+            dual.PrepareExtensionVisible();
+            dual.AnimateExtensionSlideIn();
+        }).CallDeferred();
     }
 
     private static void BuildMainNav(VBoxContainer vbox) {

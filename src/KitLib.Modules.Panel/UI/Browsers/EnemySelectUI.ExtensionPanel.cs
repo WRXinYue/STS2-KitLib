@@ -9,10 +9,12 @@ namespace KitLib.UI;
 internal static partial class EnemySelectUI {
     private const string DualMetaKey = "dm_dual_enemy_select";
     private const string CarrierNodeName = "EnemySelectDualCarrier";
-    private const float DefaultMainWidth = 800f;
-    private const float DefaultExtWidth = 480f;
+    private const float DefaultMainWidth = 600f;
+    private const float DefaultExtWidth = 440f;
 
     private static DevPanelUI.DualColumnOverlayHandle? _mainDual;
+    private static ScrollContainer? _mapDetailScroll;
+    private static VBoxContainer? _mapDetailHost;
     private static VBoxContainer? _extensionHost;
     private static NGlobalUi? _mainGlobalUi;
 
@@ -29,7 +31,22 @@ internal static partial class EnemySelectUI {
         if (_mainDual == null || !GodotObject.IsInstanceValid(_mainDual.Root))
             return;
 
-        _mainDual.CloseExtension(ClearExtensionHost);
+        ClearExtensionHost();
+        ShowMapDetailPanel();
+    }
+
+    private static void ShowMapDetailPanel() {
+        if (_extensionHost != null)
+            _extensionHost.Visible = false;
+        if (_mapDetailScroll != null)
+            _mapDetailScroll.Visible = true;
+    }
+
+    private static void ShowPickerPanel() {
+        if (_mapDetailScroll != null)
+            _mapDetailScroll.Visible = false;
+        if (_extensionHost != null)
+            _extensionHost.Visible = true;
     }
 
     internal static void ShowEncounterInExtension(
@@ -46,6 +63,7 @@ internal static partial class EnemySelectUI {
             bool alreadyOpen = _mainDual.ExtSlot.Visible;
             _mainDual.KillExtCloseTween();
             ClearExtensionHost();
+            ShowPickerPanel();
 
             var builderOptions = new EncounterPickerOptions {
                 CloseOnSelect = options.CloseOnSelect,
@@ -98,6 +116,7 @@ internal static partial class EnemySelectUI {
             bool alreadyOpen = _mainDual.ExtSlot.Visible;
             _mainDual.KillExtCloseTween();
             ClearExtensionHost();
+            ShowPickerPanel();
 
             BuildCombatAddPicker(
                 _extensionHost,

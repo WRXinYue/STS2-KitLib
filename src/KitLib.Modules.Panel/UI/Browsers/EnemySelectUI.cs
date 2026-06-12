@@ -134,9 +134,12 @@ internal static partial class EnemySelectUI {
 
         var dual = _mainDual;
         var extHost = _extensionHost;
+        var detailHost = _mapDetailHost;
         _mainDual = null;
         _mainGlobalUi = null;
         _extensionHost = null;
+        _mapDetailScroll = null;
+        _mapDetailHost = null;
 
         if (dual != null && GodotObject.IsInstanceValid(dual.Root)) {
             dual.KillExtCloseTween();
@@ -148,6 +151,11 @@ internal static partial class EnemySelectUI {
 
         if (extHost != null && GodotObject.IsInstanceValid(extHost)) {
             foreach (var child in extHost.GetChildren())
+                ((Node)child).QueueFree();
+        }
+
+        if (detailHost != null && GodotObject.IsInstanceValid(detailHost)) {
+            foreach (var child in detailHost.GetChildren())
                 ((Node)child).QueueFree();
         }
 
