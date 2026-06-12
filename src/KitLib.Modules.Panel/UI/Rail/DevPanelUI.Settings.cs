@@ -2,6 +2,7 @@ using System;
 using Godot;
 using KitLib;
 using KitLib.Icons;
+using KitLib.Integration;
 using KitLib.Panels;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -10,29 +11,36 @@ namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowSettingsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
-        var existing = ((Node)globalUi).GetNodeOrNull<Control>(SettingsRootName);
-        if (existing != null) {
-            ((Node)globalUi).RemoveChild(existing);
-            existing.QueueFree();
-        }
+        KitLibHotkeySettingsUi.CancelCapture();
+        ((Node)globalUi).GetNodeOrNull<Control>(SettingsRootName)?.QueueFree();
 
-        var (root, _, vbox) = CreateOverlayRoot(globalUi, SettingsRootName, 480f);
+        void FallbackClose() => ((Node)globalUi).GetNodeOrNull<Control>(SettingsRootName)?.QueueFree();
 
-        AddBrowserNavTab(vbox, I18N.T("panel.settings", "Settings"));
+        var dual = CreateDualColumnOverlay(new DualColumnOverlayOptions {
+            GlobalUi = globalUi,
+            RootName = SettingsRootName,
+            DualMetaKey = "dm_dual_settings",
+            CarrierNodeName = "SettingsDualCarrier",
+            MainWidthKey = SettingsRootName,
+            ExtWidthKey = SettingsExtensionWidthKey,
+            MainDefaultWidth = 480f,
+            ExtDefaultWidth = 360f,
+            FallbackClose = FallbackClose,
+        });
+
+        AddBrowserNavTab(dual.MainContent, I18N.T("panel.settings", "Settings"));
 
         var scroll = new ScrollContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
         var inner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         inner.AddThemeConstantOverride("separation", 4);
 
-        // ── Section: Appearance ──
         inner.AddChild(CreateSectionHeader(I18N.T("appearance.title", "Appearance")));
         inner.AddChild(CreateAppearanceSection(() => ShowSettingsOverlay(globalUi, actions)));
 
-        // ── Section: Game (in-run controls only; KitLib prefs → Main Menu → Mods → KitLib) ──
         inner.AddChild(CreateSectionHeader(I18N.T("panel.section.game", "Game")));
         inner.AddChild(CreateModPanelPrefsHint());
 
@@ -52,19 +60,40 @@ internal static partial class DevPanelUI {
 
         CrashRecoveryPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
 
+        var hotkeysBtn = CreatePlainButton(
+            I18N.T("hotkeys.openInRunPanel", "Keyboard shortcuts…"),
+            MdiIcon.ChevronRight);
+        hotkeysBtn.Pressed += () => {
+            if (dual.ExtSlot.Visible)
+                dual.CloseExtension(() => KitLibHotkeySettingsUi.CancelCapture());
+            else
+                dual.OpenExtension();
+        };
+        inner.AddChild(hotkeysBtn);
+
         inner.AddChild(CreateRailLayoutSection(globalUi, actions));
 
         scroll.AddChild(inner);
-        vbox.AddChild(scroll);
+        dual.MainContent.AddChild(scroll);
 
-        ((Node)globalUi).AddChild(root);
+        AddBrowserNavTab(dual.ExtContent, I18N.T("settings.section.hotkeys", "Keyboard shortcuts"));
+
+        var extScroll = new ScrollContainer {
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
+        extScroll.AddChild(KitLibHotkeySettingsUi.BuildSection(compact: true));
+        dual.ExtContent.AddChild(extScroll);
+
+        dual.Root.TreeExiting += () => KitLibHotkeySettingsUi.CancelCapture();
+        dual.AttachToScene();
     }
 
     private static Control CreateAppearanceSection(Action rebuild) {
         var col = new VBoxContainer();
         col.AddThemeConstantOverride("separation", 6);
 
-        // ── Mode toggle row: label + single icon button ──
         var modeRow = new HBoxContainer();
         modeRow.AddThemeConstantOverride("separation", 8);
 
@@ -72,14 +101,12 @@ internal static partial class DevPanelUI {
             Text = ThemeManager.IsDarkMode
                 ? I18N.T("appearance.mode.dark", "Dark Mode")
                 : I18N.T("appearance.mode.light", "Light Mode"),
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         modeLbl.AddThemeFontSizeOverride("font_size", 12);
         modeLbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         modeRow.AddChild(modeLbl);
 
-        // Icon button: shows sun (→ switch to dark) when in light mode,
-        //              shows moon (→ switch to light) when in dark mode
         var modeIcon = ThemeManager.IsDarkMode ? MdiIcon.WeatherNight : MdiIcon.WeatherSunny;
         var modeBtn = new Button {
             CustomMinimumSize = new Vector2(36, 36),
@@ -87,7 +114,7 @@ internal static partial class DevPanelUI {
             Icon = modeIcon.Texture(20, KitLibTheme.Accent),
             TooltipText = ThemeManager.IsDarkMode
                 ? I18N.T("appearance.mode.light", "Light Mode")
-                : I18N.T("appearance.mode.dark", "Dark Mode")
+                : I18N.T("appearance.mode.dark", "Dark Mode"),
         };
         var modeBtnStyle = new StyleBoxFlat {
             BgColor = KitLibTheme.ButtonBgNormal,
@@ -98,7 +125,7 @@ internal static partial class DevPanelUI {
             ContentMarginLeft = 6,
             ContentMarginRight = 6,
             ContentMarginTop = 6,
-            ContentMarginBottom = 6
+            ContentMarginBottom = 6,
         };
         var modeBtnHover = new StyleBoxFlat {
             BgColor = KitLibTheme.ButtonBgHover,
@@ -109,7 +136,7 @@ internal static partial class DevPanelUI {
             ContentMarginLeft = 6,
             ContentMarginRight = 6,
             ContentMarginTop = 6,
-            ContentMarginBottom = 6
+            ContentMarginBottom = 6,
         };
         modeBtn.AddThemeStyleboxOverride("normal", modeBtnStyle);
         modeBtn.AddThemeStyleboxOverride("hover", modeBtnHover);
@@ -122,7 +149,6 @@ internal static partial class DevPanelUI {
         modeRow.AddChild(modeBtn);
         col.AddChild(modeRow);
 
-        // ── Dark theme selector ──
         var darkThemeBtn = CreatePlainButton(
             I18N.T("appearance.darkTheme", "Dark Theme: {0}",
                 I18N.T("theme." + SettingsStore.Current.DarkThemeName.ToLowerInvariant(),
@@ -134,7 +160,6 @@ internal static partial class DevPanelUI {
         };
         col.AddChild(darkThemeBtn);
 
-        // ── Light theme selector ──
         var lightThemeBtn = CreatePlainButton(
             I18N.T("appearance.lightTheme", "Light Theme: {0}",
                 I18N.T("theme." + SettingsStore.Current.LightThemeName.ToLowerInvariant(),
@@ -160,7 +185,7 @@ internal static partial class DevPanelUI {
     private static Control CreateModPanelPrefsHint() {
         var hint = new Label {
             Text = I18N.T("settings.modPanelPrefsHint",
-                "DevMode level, performance HUD, combat sidebar, hotkeys, and diagnostics: Main Menu → Mods → KitLib."),
+                "DevMode level, performance HUD, combat sidebar, and diagnostics: Main Menu → Mods → KitLib."),
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
@@ -178,7 +203,7 @@ internal static partial class DevPanelUI {
         var hint = new Label {
             Text = I18N.T("rail.hint", "Drag to reorder. Uncheck to hide a panel from the sidebar."),
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         hint.AddThemeFontSizeOverride("font_size", 11);
         hint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);

@@ -5,9 +5,9 @@ namespace KitLib.Integration;
 internal static class KitLibHotkeySettingsUi {
     internal const string BindingButtonMeta = "kitlib_hotkey_binding";
 
-    internal static Control BuildSection() {
+    internal static Control BuildSection(bool compact = false) {
         var section = new KitLibHotkeySettingsSection();
-        section.Build();
+        section.Build(compact);
         return section;
     }
 

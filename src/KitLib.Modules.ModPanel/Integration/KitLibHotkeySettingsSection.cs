@@ -29,11 +29,11 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
 
     private readonly Dictionary<string, Button> _bindingButtons = new(StringComparer.Ordinal);
     private string? _listeningActionId;
+    private bool _compact;
 
     internal KitLibHotkeySettingsSection() {
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         MouseFilter = MouseFilterEnum.Ignore;
-        AddThemeConstantOverride("separation", 8);
         SetProcessUnhandledInput(true);
         SetProcessUnhandledKeyInput(true);
     }
@@ -46,15 +46,27 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
             Active = null;
     }
 
-    internal void Build() {
-        AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
-            I18N.T("settings.hotkeysEnabled", "Enable keyboard shortcuts"),
-            null,
-            () => SettingsStore.Current.HotkeysEnabled,
-            enabled => {
-                SettingsStore.SetHotkeysEnabled(enabled);
-                NotifyChanged();
-            }));
+    internal void Build(bool compact = false) {
+        _compact = compact;
+        AddThemeConstantOverride("separation", compact ? 4 : 8);
+
+        if (compact)
+            AddChild(CreateCompactBoolToggle(
+                I18N.T("settings.hotkeysEnabled", "Enable keyboard shortcuts"),
+                () => SettingsStore.Current.HotkeysEnabled,
+                enabled => {
+                    SettingsStore.SetHotkeysEnabled(enabled);
+                    NotifyChanged();
+                }));
+        else
+            AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
+                I18N.T("settings.hotkeysEnabled", "Enable keyboard shortcuts"),
+                null,
+                () => SettingsStore.Current.HotkeysEnabled,
+                enabled => {
+                    SettingsStore.SetHotkeysEnabled(enabled);
+                    NotifyChanged();
+                }));
 
         foreach (var (actionId, labelKey, labelFallback) in Rows)
             AddChild(CreateBindingRow(actionId, labelKey, labelFallback));
@@ -63,7 +75,14 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
             Text = I18N.T("hotkeys.reset", "Reset shortcuts to defaults"),
             FocusMode = FocusModeEnum.All,
         };
-        DevModeFormChrome.ApplyAccentPillButton(resetBtn);
+        if (compact) {
+            resetBtn.CustomMinimumSize = new Vector2(0, 32);
+            resetBtn.AddThemeFontSizeOverride("font_size", 12);
+            ModSettingsRitsuFormDevTheme.ApplyFieldControl(resetBtn);
+        }
+        else {
+            DevModeFormChrome.ApplyAccentPillButton(resetBtn);
+        }
         resetBtn.Pressed += () => {
             CancelListening();
             SettingsStore.ResetHotkeys();
@@ -130,11 +149,47 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
     }
 
     private Control CreateBindingRow(string actionId, string labelKey, string labelFallback) {
-        var bindBtn = new Button {
-            CustomMinimumSize = new Vector2(DevModeFormChrome.Metrics.ChoiceRowMinWidth,
-                DevModeFormChrome.Metrics.ValueColumnMinHeight),
-            FocusMode = FocusModeEnum.All,
+        if (_compact)
+            return CreateCompactBindingRow(actionId, labelKey, labelFallback);
+
+        var bindBtn = CreateBindingButton(actionId);
+        bindBtn.CustomMinimumSize = new Vector2(
+            DevModeFormChrome.Metrics.ChoiceRowMinWidth,
+            DevModeFormChrome.Metrics.ValueColumnMinHeight);
+
+        return DevModeFormChrome.CreateLabeledValueRow(
+            I18N.T(labelKey, labelFallback),
+            null,
+            bindBtn);
+    }
+
+    private Control CreateCompactBindingRow(string actionId, string labelKey, string labelFallback) {
+        var row = new HBoxContainer {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            MouseFilter = MouseFilterEnum.Ignore,
         };
+        row.AddThemeConstantOverride("separation", 8);
+        row.CustomMinimumSize = new Vector2(0, 30);
+
+        var label = new Label {
+            Text = I18N.T(labelKey, labelFallback),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            ClipText = true,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        label.AddThemeFontSizeOverride("font_size", 12);
+        label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        row.AddChild(label);
+
+        var bindBtn = CreateBindingButton(actionId);
+        bindBtn.CustomMinimumSize = new Vector2(108, 28);
+        bindBtn.SizeFlagsHorizontal = SizeFlags.ShrinkEnd;
+        row.AddChild(bindBtn);
+        return row;
+    }
+
+    private Button CreateBindingButton(string actionId) {
+        var bindBtn = new Button { FocusMode = FocusModeEnum.All };
         bindBtn.SetMeta(KitLibHotkeySettingsUi.BindingButtonMeta, true);
         StyleBindingButton(bindBtn, listening: false);
         UpdateBindingButtonText(bindBtn, actionId);
@@ -143,11 +198,34 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
             BeginListening(actionId, bindBtn);
         };
         _bindingButtons[actionId] = bindBtn;
+        return bindBtn;
+    }
 
-        return DevModeFormChrome.CreateLabeledValueRow(
-            I18N.T(labelKey, labelFallback),
-            null,
-            bindBtn);
+    private static Control CreateCompactBoolToggle(string label, Func<bool> get, Action<bool> set) {
+        var row = new HBoxContainer {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        row.AddThemeConstantOverride("separation", 8);
+        row.CustomMinimumSize = new Vector2(0, 30);
+
+        var title = new Label {
+            Text = label,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            ClipText = true,
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        title.AddThemeFontSizeOverride("font_size", 12);
+        title.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        row.AddChild(title);
+
+        var check = new CheckBox {
+            ButtonPressed = get(),
+            FocusMode = FocusModeEnum.All,
+        };
+        check.Toggled += on => set(on);
+        row.AddChild(check);
+        return row;
     }
 
     private void BeginListening(string actionId, Button bindBtn) {
@@ -174,7 +252,8 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         btn.Text = SettingsStore.GetHotkeyBinding(actionId).FormatLabel();
     }
 
-    private static void StyleBindingButton(Button btn, bool listening) {
+    private void StyleBindingButton(Button btn, bool listening) {
+        var fontSize = _compact ? 11 : 14;
         if (listening) {
             var sb = new StyleBoxFlat {
                 BgColor = new Color(KitLibTheme.Accent.R, KitLibTheme.Accent.G, KitLibTheme.Accent.B, 0.42f),
@@ -187,10 +266,10 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
                 CornerRadiusBottomRight = 8,
                 CornerRadiusTopLeft = 8,
                 CornerRadiusTopRight = 8,
-                ContentMarginLeft = 11,
-                ContentMarginRight = 11,
-                ContentMarginTop = 7,
-                ContentMarginBottom = 7,
+                ContentMarginLeft = _compact ? 8 : 11,
+                ContentMarginRight = _compact ? 8 : 11,
+                ContentMarginTop = _compact ? 4 : 7,
+                ContentMarginBottom = _compact ? 4 : 7,
             };
             btn.AddThemeStyleboxOverride("normal", sb);
             btn.AddThemeStyleboxOverride("hover", sb);
@@ -200,7 +279,7 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         else {
             ModSettingsRitsuFormDevTheme.ApplyFieldControl(btn);
         }
-        btn.AddThemeFontSizeOverride("font_size", 14);
+        btn.AddThemeFontSizeOverride("font_size", fontSize);
         btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
         btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
