@@ -78,9 +78,6 @@ internal static partial class DevPanelUI {
     private static void ReconcileBrowserRail(NGlobalUi globalUi) {
         bool browserOpen = (_browserOverlayCount + _browserRailHoldCount) > 0;
         SpliceRail(globalUi, browserOpen);
-        if (!browserOpen)
-            UnwireBrowserPanelMergeTracking();
-        ScheduleBrowserContextMerge(globalUi);
     }
 
     // ── Colour palette — delegates to active theme ──

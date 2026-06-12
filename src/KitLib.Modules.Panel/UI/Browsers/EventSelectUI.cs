@@ -100,7 +100,6 @@ internal static class EventSelectUI {
                 else {
                     dual.PrepareExtensionVisible();
                 }
-                DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
             }).CallDeferred();
         }
 

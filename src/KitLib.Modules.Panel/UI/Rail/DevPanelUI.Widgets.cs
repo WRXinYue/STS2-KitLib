@@ -59,6 +59,27 @@ internal static partial class DevPanelUI {
         panel.AddChild(content);
         return panel;
     }
+
+    internal static void SpliceBrowserPanelRight(PanelContainer panel, bool joined) {
+        if (!GodotObject.IsInstanceValid(panel))
+            return;
+        if (panel.GetThemeStylebox("panel") is not StyleBoxFlat sb)
+            return;
+
+        int r = joined ? 0 : BrowserRailRadius;
+        sb.CornerRadiusTopRight = r;
+        sb.CornerRadiusBottomRight = r;
+        sb.BorderWidthRight = joined ? 0 : 1;
+        if (joined) {
+            sb.ShadowOffset = Vector2.Zero;
+            sb.ShadowSize = 16;
+        }
+        else {
+            sb.ShadowOffset = new Vector2(20, 0);
+            sb.ShadowSize = 20;
+        }
+    }
+
     /// <summary>
     /// Same chrome as <see cref="CreateBrowserPanel"/> for a fixed pixel width, but horizontal
     /// offsets are <c>0 … width</c> (parent must already account for <see cref="BrowserPanelLeft"/>).

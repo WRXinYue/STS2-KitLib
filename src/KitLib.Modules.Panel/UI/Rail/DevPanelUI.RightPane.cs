@@ -27,7 +27,6 @@ internal static partial class DevPanelUI {
     private static DevPanelSidebarHost? _contextHost;
     private static readonly Dictionary<string, IDevPanelSidebarProvider> _contextProviders = new();
     private static string[] _defaultContextIds = ["default.players"];
-    private static bool _contextPaneJoined;
     private static bool _contextRefreshPending;
     private static bool _contextRefreshNeedsIntent;
     private static ulong _lastIntentRefreshFrame;
@@ -36,6 +35,8 @@ internal static partial class DevPanelUI {
     private static bool _contextPaneShown;
     private static Tween? _contextPaneTween;
 
+    private const float ContextPaneDefaultTop = 0.15f;
+    private const float ContextPaneDefaultBottom = 0.85f;
     private const float ContextPaneVisibleOffsetLeft = -(BrowserRailLeft + BrowserRailW);
     private const float ContextPaneVisibleOffsetRight = -BrowserRailLeft;
     private const float ContextPaneHiddenOffsetLeft = -BrowserRailLeft;
@@ -93,7 +94,6 @@ internal static partial class DevPanelUI {
             _contextPaneStyle = null;
             _contextHost = null;
             _contextProviders.Clear();
-            _contextPaneJoined = false;
             _contextGlobalUi = null;
             _contextPaneShown = false;
         };
@@ -117,7 +117,6 @@ internal static partial class DevPanelUI {
         _contextPaneStyle = null;
         _contextHost = null;
         _contextProviders.Clear();
-        _contextPaneJoined = false;
         _contextGlobalUi = null;
         _contextPaneShown = false;
         ((Node)globalUi).GetNodeOrNull<Control>(ContextPaneRootName)?.QueueFree();
@@ -236,8 +235,6 @@ internal static partial class DevPanelUI {
             EnemySelectUI.RefreshCombatContext();
         }
         UpdateContextPaneVisibility();
-        if (_contextGlobalUi != null)
-            NotifyBrowserContextLayoutChanged(_contextGlobalUi);
     }
 
     internal static void ResetContextPaneToDefault() {
@@ -246,12 +243,6 @@ internal static partial class DevPanelUI {
         EnemyIntentUI.RefreshDefaultContext();
         EnemySelectUI.RefreshCombatContext();
         UpdateContextPaneVisibility();
-    }
-
-    /// <summary>Flush inner-left edge when a browser panel is open (mirrors left-rail splice).</summary>
-    public static void SpliceContextPane(bool joined) {
-        _contextPaneJoined = joined;
-        ApplyContextPaneSplice();
     }
 
     private static StyleBoxFlat CreateMirroredRailStyle() {
@@ -274,29 +265,11 @@ internal static partial class DevPanelUI {
         };
     }
 
-    private static void ApplyContextPaneSplice() {
-        if (_contextPaneStyle == null)
-            return;
-        int r = _contextPaneJoined ? 0 : Radius;
-        _contextPaneStyle.CornerRadiusTopLeft = r;
-        _contextPaneStyle.CornerRadiusBottomLeft = r;
-        _contextPaneStyle.BorderWidthLeft = _contextPaneJoined ? 0 : 1;
-        if (_contextPaneJoined) {
-            _contextPaneStyle.ShadowSize = 0;
-            _contextPaneStyle.ShadowOffset = Vector2.Zero;
-        }
-        else {
-            _contextPaneStyle.ShadowSize = 8;
-            _contextPaneStyle.ShadowOffset = Vector2.Zero;
-        }
-    }
-
     private static void ApplyContextPaneTheme() {
         if (_contextPaneStyle == null)
             return;
         _contextPaneStyle.BgColor = ColRailBg;
         _contextPaneStyle.BorderColor = ColRailBorder;
-        ApplyContextPaneSplice();
     }
 
     private static void OnCombatStatsTrackerChanged() {
@@ -377,8 +350,6 @@ internal static partial class DevPanelUI {
                 : Control.MouseFilterEnum.Ignore;
         }
         ReconcileContextPaneBrowserMargin(_contextGlobalUi);
-        if (_contextGlobalUi != null)
-            ScheduleBrowserContextMerge(_contextGlobalUi);
 
         bool browserOpen = (_browserOverlayCount + _browserRailHoldCount) > 0;
         _contextPaneTween?.Kill();
@@ -411,11 +382,6 @@ internal static partial class DevPanelUI {
                 .TweenProperty(_contextPane, "modulate:a", targetAlpha, 0.15f)
                 .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
         }
-
-        _contextPaneTween.Chain().TweenCallback(Callable.From(() => {
-            if (_contextGlobalUi != null)
-                NotifyBrowserContextLayoutChanged(_contextGlobalUi);
-        }));
     }
 
     private static void ReconcileContextPaneBrowserMargin(NGlobalUi? globalUi) {

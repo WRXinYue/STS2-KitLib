@@ -158,7 +158,6 @@ internal static partial class CombatStatsUI {
                 bool rebuild = pendingForceRebuild;
                 pendingForceRebuild = false;
                 UpdateDisplay(rebuild, shouldAnimate);
-                DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
                 SyncMultiplayerOverlayState(globalUi);
                 MonsterIntentOverlayUI.SyncState(globalUi);
             }).CallDeferred();

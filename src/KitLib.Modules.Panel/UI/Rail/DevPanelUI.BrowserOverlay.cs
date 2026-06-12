@@ -180,7 +180,6 @@ internal static partial class DevPanelUI {
         clipHost.AddChild(panel);
         root.AddChild(clipHost);
         RegisterBrowserPanelWidthGrip(root, panel, rootName);
-        WireBrowserPanelMergeTracking(globalUi, panel);
     }
 
     private static VBoxContainer GetPanelContent(PanelContainer panel, int contentSeparation) {
@@ -222,8 +221,6 @@ internal static partial class DevPanelUI {
                 if (root?.GetParent() is Control parentRoot)
                     root = parentRoot;
                 root?.GetNodeOrNull<BrowserPanelWidthGrip>("PanelWidthGrip")?.Sync();
-                if (_mergeGlobalUi != null)
-                    NotifyBrowserContextLayoutChanged(_mergeGlobalUi);
             }));
     }
 

@@ -30,13 +30,7 @@ internal static partial class EnemySelectUI {
         if (_mainDual == null || !GodotObject.IsInstanceValid(_mainDual.Root))
             return;
 
-        var globalUi = _mainGlobalUi;
-        var dual = _mainDual;
-        _mainDual.CloseExtension(() => {
-            ClearExtensionHost();
-            if (globalUi != null && GodotObject.IsInstanceValid(dual.Root))
-                DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
-        });
+        _mainDual.CloseExtension(ClearExtensionHost);
     }
 
     internal static void ShowEncounterInExtension(
@@ -88,7 +82,6 @@ internal static partial class EnemySelectUI {
             }
 
             GrabEncounterSearchFocus(_extensionHost);
-            DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
         }).CallDeferred();
     }
 
@@ -127,7 +120,6 @@ internal static partial class EnemySelectUI {
             }
 
             GrabEncounterSearchFocus(_extensionHost);
-            DevPanelUI.NotifyBrowserContextLayoutChanged(globalUi);
         }).CallDeferred();
     }
 }
