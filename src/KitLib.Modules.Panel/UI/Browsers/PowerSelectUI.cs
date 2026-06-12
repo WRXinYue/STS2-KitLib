@@ -117,15 +117,9 @@ internal static class PowerSelectUI {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
-        var extMargin = new MarginContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
-        extMargin.AddThemeConstantOverride("margin_left", 16);
-        extMargin.AddThemeConstantOverride("margin_right", 16);
-        extMargin.AddThemeConstantOverride("margin_top", 16);
-        extMargin.AddThemeConstantOverride("margin_bottom", 16);
-        extScroll.AddChild(extMargin);
+        var extInner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        extInner.AddThemeConstantOverride("separation", 10);
+        extScroll.AddChild(extInner);
         dual.ExtContent.AddChild(extScroll);
 
         // ── Nav bar (title + type filter chips + search) ──
@@ -142,7 +136,7 @@ internal static class PowerSelectUI {
         vbox.AddChild(MakeDivider());
 
         BuildLeftPane(vbox, s);
-        BuildRightPane(extMargin, s, player, globalUi);
+        BuildRightPane(extInner, s, player, globalUi);
 
         WireFilterChips(filterChips, s);
 
@@ -258,11 +252,7 @@ internal static class PowerSelectUI {
 
     // ─────────────────────────────── Extension detail pane ───────────────────────────────
 
-    private static void BuildRightPane(MarginContainer extRoot, State s, Player player, NGlobalUi globalUi) {
-        var inner = new VBoxContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
+    private static void BuildRightPane(VBoxContainer inner, State s, Player player, NGlobalUi globalUi) {
         inner.AddThemeConstantOverride("separation", 10);
 
         if (s.MpItemSync)
@@ -358,8 +348,8 @@ internal static class PowerSelectUI {
         targetHdr.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         inner.AddChild(targetHdr);
 
-        var targetRow = new HBoxContainer();
-        targetRow.AddThemeConstantOverride("separation", 6);
+        var targetRow = new VBoxContainer();
+        targetRow.AddThemeConstantOverride("separation", 4);
         s.BtnSelf = MakeTargetButton(I18N.T("power.target.self", "Self"));
         s.BtnAllEnemies = MakeTargetButton(I18N.T("power.target.allEnemies", "All Enemies"));
         s.BtnAllies = MakeTargetButton(I18N.T("power.target.allies", "Allies"));
@@ -379,6 +369,7 @@ internal static class PowerSelectUI {
             Text = I18N.T("power.amount", "Amount"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             VerticalAlignment = VerticalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         amountLbl.AddThemeFontSizeOverride("font_size", 12);
         amountLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
@@ -467,6 +458,7 @@ internal static class PowerSelectUI {
         var curLbl = new Label {
             Text = I18N.T("power.current", "Active Powers"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         curLbl.AddThemeFontSizeOverride("font_size", 11);
         curLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
@@ -514,6 +506,7 @@ internal static class PowerSelectUI {
         var autoLbl = new Label {
             Text = I18N.T("power.autoApply.title", "Auto-Apply (Combat Start)"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
         autoLbl.AddThemeFontSizeOverride("font_size", 11);
         autoLbl.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
@@ -541,8 +534,6 @@ internal static class PowerSelectUI {
         s.AutoApplyList.AddThemeConstantOverride("separation", 4);
         autoScroll.AddChild(s.AutoApplyList);
         inner.AddChild(autoScroll);
-
-        extRoot.AddChild(inner);
 
         RefreshCurrentPowers(s);
         RefreshAutoApplyList(s);
@@ -835,6 +826,7 @@ internal static class PowerSelectUI {
                 Text = $"{PowerActions.GetPowerDisplayName(p)}  ×{p.Amount}",
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 VerticalAlignment = VerticalAlignment.Center,
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };
             nameLabel.AddThemeFontSizeOverride("font_size", 11);
             nameLabel.AddThemeColorOverride("font_color", col.Lerp(ColLight, 0.4f));
@@ -1008,6 +1000,7 @@ internal static class PowerSelectUI {
                     Text = $"{action.TargetId}  x{action.Amount}",
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                     VerticalAlignment = VerticalAlignment.Center,
+                    AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 };
                 nameLabel.AddThemeFontSizeOverride("font_size", 11);
                 nameLabel.AddThemeColorOverride("font_color", targetCol.Lerp(ColLight, 0.4f));
