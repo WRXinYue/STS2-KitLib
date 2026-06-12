@@ -71,11 +71,6 @@ public static class SettingsStore {
         Save();
     }
 
-    public static void SetGameContextPaneEnabled(bool enabled) {
-        Current.GameContextPaneEnabled = enabled;
-        Save();
-    }
-
     public static void SetPerfHudEnabled(bool enabled) {
         Current.PerfHudEnabled = enabled;
         Save();

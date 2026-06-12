@@ -28,7 +28,7 @@ internal static partial class DevPanelUI {
     public const float BrowserPanelLeft = BrowserRailLeft + BrowserRailW;   // 76f
     public const float BrowserPanelRight = 24f;
     public const int BrowserOverlayZIndex = 1250;
-    /// <summary>Left rail + right context pane — above browser slide-ins.</summary>
+    /// <summary>Left rail chrome — above browser slide-ins.</summary>
     public const int SidebarChromeZIndex = BrowserOverlayZIndex + 10;
     public const int BrowserRailRadius = Radius;
 
@@ -110,7 +110,6 @@ internal static partial class DevPanelUI {
         ApplyPeekTabTheme();
 
         RefreshRailIconTints();
-        ApplyContextPaneTheme();
         RefreshRailHintPresentation();
     }
 
@@ -362,12 +361,9 @@ internal static partial class DevPanelUI {
         RefreshRailHintPresentation();
 
         if (!KitLibState.DualInstanceMinimalRail) {
-            try {
-                AttachContextPane(globalUi);
-            }
-            catch (Exception ex) {
-                MainFile.Logger.Warn($"DevPanel: Failed to attach context pane: {ex.Message}");
-            }
+            CombatStatsUI.AttachMultiplayerOverlay(globalUi);
+            MonsterIntentOverlayUI.Attach(globalUi);
+            MonsterIntentOverlayUI.SyncState(globalUi);
         }
         ((Node)globalUi).AddChild(root);
     }
@@ -394,13 +390,14 @@ internal static partial class DevPanelUI {
         _railIndicator = null;
         _moveRailIndicator = null;
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
-        DetachContextPane(globalUi);
+        CombatStatsUI.DetachMultiplayerOverlay(globalUi);
+        MonsterIntentOverlayUI.Detach(globalUi);
         ((Node)globalUi).GetNodeOrNull<Control>(LegacyTopBarName)?.QueueFree();
         _onRefreshPanel = null;
     }
 
     // ──────── Close all known overlays (internal + external UIs) ────────
-    private static readonly HashSet<string> _keepNodes = new() { RootName, ContextPaneRootName };
+    private static readonly HashSet<string> _keepNodes = new() { RootName };
 
     /// <summary>
     /// Close the internal overlay (cheats/save/ai) and remove all DevMode external

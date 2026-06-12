@@ -122,7 +122,7 @@ internal static partial class EnemySelectUI {
                 ? await MpCheatCombatEnemyCoordinator.TryHostKillEnemyAsync(enemy)
                 : await MpCheatCombatEnemyCoordinator.TryClientRequestKillEnemyAsync(enemy);
             KitLog.Info("MpCheat", $"Combat kill result: {result}");
-            RefreshCombatContext();
+            RefreshMapCombatDetailIfOpen();
             onChanged?.Invoke();
         }
     }
@@ -138,7 +138,7 @@ internal static partial class EnemySelectUI {
         async System.Threading.Tasks.Task SyncKillAllAsync() {
             var result = await MpCheatCombatEnemyCoordinator.TryHostKillAllAsync();
             KitLog.Info("MpCheat", $"Combat kill all result: {result}");
-            RefreshCombatContext();
+            RefreshMapCombatDetailIfOpen();
             onChanged?.Invoke();
         }
     }
@@ -178,7 +178,7 @@ internal static partial class EnemySelectUI {
                 ? await MpCheatCombatEnemyCoordinator.TryHostAddMonsterAsync(monster)
                 : await MpCheatCombatEnemyCoordinator.TryClientRequestAddMonsterAsync(monster);
             KitLog.Info("MpCheat", $"Combat add monster result: {result}");
-            RefreshCombatContext();
+            RefreshMapCombatDetailIfOpen();
             onChanged?.Invoke();
         }
     }
@@ -205,7 +205,7 @@ internal static partial class EnemySelectUI {
                 ? await MpCheatCombatEnemyCoordinator.TryHostAddEncounterAsync(encounter)
                 : await MpCheatCombatEnemyCoordinator.TryClientRequestAddEncounterAsync(encounter);
             KitLog.Info("MpCheat", $"Combat add result: {result}");
-            RefreshCombatContext();
+            RefreshMapCombatDetailIfOpen();
             onChanged?.Invoke();
         }
     }

@@ -12,6 +12,7 @@ namespace KitLib.UI;
 /// <summary>DevPanel overlay for per-combat damage statistics (MVP).</summary>
 internal static partial class CombatStatsUI {
     private const string RootName = "KitLibCombatStats";
+    private static bool _panelOpen;
     private const float PanelW = 960f;
     private const int PieSplitInitialRight = 280;
     private const int PieSplitMinRight = 220;
@@ -240,11 +241,6 @@ internal static partial class CombatStatsUI {
             panelPie.Refresh();
         }
 
-        void RefreshGameContextPane(CombatStatsSnapshot? snap, PlayerCombatStats? player, bool isRun) {
-            RefreshPanelPie(player);
-            SyncGameContextPane(mode, snap, player, isRun);
-        }
-
         void UpdateDisplay(bool forceRebuild, bool animate) {
             if (!GodotObject.IsInstanceValid(root))
                 return;
@@ -258,7 +254,7 @@ internal static partial class CombatStatsUI {
                     var runPlayer = CombatStatsTracker.RunTotal.PrimaryPlayer;
                     if (runPlayer != null) {
                         RefreshExtended(inner, runPlayer, CombatStatsTracker.RunTotal.MaxTurn, animate);
-                        RefreshGameContextPane(CombatStatsTracker.RunTotal, runPlayer, isRun: true);
+                        RefreshPanelPie(runPlayer);
                     }
                     return;
                 }
@@ -267,7 +263,7 @@ internal static partial class CombatStatsUI {
                 contentFingerprint = runFingerprint;
                 BuildRunView(inner);
                 ResetScrollLayout(scroll);
-                RefreshGameContextPane(CombatStatsTracker.RunTotal, CombatStatsTracker.RunTotal.PrimaryPlayer, isRun: true);
+                RefreshPanelPie(CombatStatsTracker.RunTotal.PrimaryPlayer);
                 return;
             }
 
@@ -288,7 +284,7 @@ internal static partial class CombatStatsUI {
                     inner.AddChild(MakeHintLabel(I18N.T("combatStats.emptyHint",
                         "Tracking starts automatically when Dev Mode is active and a combat begins.")));
                 ResetScrollLayout(scroll);
-                RefreshGameContextPane(null, null, isRun: false);
+                RefreshPanelPie(null);
                 return;
             }
 
@@ -311,7 +307,7 @@ internal static partial class CombatStatsUI {
 
             if (canRefresh) {
                 RefreshContent(inner, mode, player, snap.MaxTurn, animate);
-                RefreshGameContextPane(snap, player, isRun: false);
+                RefreshPanelPie(player);
                 return;
             }
 
@@ -348,7 +344,7 @@ internal static partial class CombatStatsUI {
             }
 
             ResetScrollLayout(scroll);
-            RefreshGameContextPane(snap, player, isRun: false);
+            RefreshPanelPie(player);
         }
 
         Action onStatsChanged = () => {
@@ -365,7 +361,6 @@ internal static partial class CombatStatsUI {
             _panelOpen = false;
             detachSplitInit();
             detachMergeStyle();
-            DevPanelUI.ResetContextPaneToDefault();
         };
 
         dual.AttachToScene();
@@ -392,7 +387,6 @@ internal static partial class CombatStatsUI {
 
     public static void Remove(NGlobalUi globalUi) {
         _panelOpen = false;
-        DevPanelUI.ResetContextPaneToDefault();
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
         SyncMultiplayerOverlayState(globalUi);
         MonsterIntentOverlayUI.SyncState(globalUi);

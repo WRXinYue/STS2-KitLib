@@ -11,6 +11,7 @@ namespace KitLib.UI;
 internal static partial class EnemyIntentUI {
     private const string RootName = "KitLibEnemyIntent";
     private const float PanelW = 720f;
+    private static bool _panelOpen;
 
     private static VBoxContainer? _browserPreviewList;
     private static Label? _browserStatus;
@@ -85,14 +86,11 @@ internal static partial class EnemyIntentUI {
             _browserStatus = null;
             if (_globalUi == globalUi)
                 _globalUi = null;
-            DevPanelUI.ResetContextPaneToDefault();
         };
 
         dual.AttachToScene();
-        DevPanelUI.SetContextPaneActive(PanelContextId);
         RefreshBrowserPreview();
         MonsterIntentOverlayUI.SyncState(globalUi);
-        DevPanelUI.RefreshContextPane();
     }
 
     public static void Remove(NGlobalUi globalUi) {
@@ -101,7 +99,6 @@ internal static partial class EnemyIntentUI {
         _browserStatus = null;
         if (_globalUi == globalUi)
             _globalUi = null;
-        DevPanelUI.ResetContextPaneToDefault();
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
         MonsterIntentOverlayUI.SyncState(globalUi);
     }
@@ -109,7 +106,6 @@ internal static partial class EnemyIntentUI {
     internal static void RefreshAfterApply(MonsterIntentEntry appliedEntry) {
         RefreshBrowserPreview(preserveSelection: true);
         MonsterIntentOverlayUI.SyncState(_globalUi);
-        DevPanelUI.RefreshContextPane();
     }
 
     private static void RefreshBrowserPreview(bool preserveSelection = false) {

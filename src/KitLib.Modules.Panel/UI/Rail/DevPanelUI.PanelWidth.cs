@@ -24,7 +24,7 @@ internal static partial class DevPanelUI {
             return DefaultMaxFallback;
 
         float visibleWidth = viewport.GetVisibleRect().Size.X;
-        return Math.Max(BrowserPanelWidthMin, visibleWidth - BrowserPanelLeft - EffectiveBrowserContentRight);
+        return Math.Max(BrowserPanelWidthMin, visibleWidth - BrowserPanelLeft - BrowserPanelRight);
     }
 
     internal static (float Main, float Ext) ResolveDualColumnWidths(

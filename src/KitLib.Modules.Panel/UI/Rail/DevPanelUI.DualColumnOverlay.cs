@@ -153,7 +153,7 @@ internal static partial class DevPanelUI {
             (Node)globalUi);
 
         var clipHost = CreateBrowserPanelClipHost();
-        clipHost.OffsetRight = -EffectiveBrowserContentRight;
+        clipHost.OffsetRight = -BrowserPanelRight;
 
         var mover = new Control {
             Name = options.CarrierNodeName,

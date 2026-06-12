@@ -59,15 +59,6 @@ internal static class KitLibNativeModSettingsBootstrap {
         stack.AddChild(KitLibNativeModSettingsUi.CreateAccentColorRow());
         stack.AddChild(KitLibNativeModSettingsUi.CreateNormalRunModeRow());
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
-            I18N.T("settings.gameContextPane", "In-game right sidebar"),
-            I18N.T("settings.gameContextPane.desc",
-                "Show the right combat sidebar during fights (stats, enemy intent, combat tools)."),
-            () => SettingsStore.Current.GameContextPaneEnabled,
-            enabled => {
-                SettingsStore.SetGameContextPaneEnabled(enabled);
-                KitLibHost.NotifyGameContextPaneChanged?.Invoke();
-            }));
-        stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
             I18N.T("modpanel.kitlib.diagnosticMode", "Mod panel diagnostic mode"),
             I18N.T("modpanel.kitlib.diagnosticMode.desc",
                 "Log [ModPanelPerf] timings and verbose sidebar diagnostics to the main log."),

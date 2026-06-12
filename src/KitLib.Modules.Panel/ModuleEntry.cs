@@ -34,7 +34,6 @@ public static class ModuleEntry {
             KitLibRootServices.EnsureRootServicesNode();
             DevPerfOverlayUI.SyncVisibility();
         };
-        KitLibHost.NotifyGameContextPaneChanged = DevPanelUI.OnGameContextPaneSettingChanged;
         KitLibHost.NotifyHotkeySettingsChanged = DevPanelUI.RefreshPeekTabHotkeyHint;
 
         DevPerfBuiltinProviders.RegisterAll();
