@@ -1,6 +1,5 @@
 using Godot;
 using KitLib.Dev;
-using KitLib.Feedback;
 using KitLib.Host;
 using KitLib.Mcp;
 using KitLib.Patches;
@@ -45,7 +44,6 @@ internal partial class KitLibProcessNode : Node {
     public override void _ExitTree() {
         if (Instance == this)
             Instance = null;
-        CrashRecoveryStore.MarkSessionCleanExit();
         McpBridge.Shutdown();
         LogStreamPipeServer.Stop();
         InstanceLogWriter.Shutdown();

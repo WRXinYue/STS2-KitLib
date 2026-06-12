@@ -90,6 +90,7 @@ internal static class ModuleBootstrap {
 
             CrashRecoveryHooks.RegisterHandlers();
             CrashRecoveryStore.MarkSessionStarted();
+            Callable.From(CrashRecoveryHooks.EnsureLifecycleNode).CallDeferred();
 
             _completed = true;
             KitLibBootstrapGate.EnterInteractive();

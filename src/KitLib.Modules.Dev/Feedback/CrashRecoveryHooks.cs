@@ -18,31 +18,26 @@ internal static class CrashRecoveryHooks {
         AppDomain.CurrentDomain.ProcessExit += (_, _) => CrashRecoveryStore.MarkSessionCleanExit();
     }
 
-    internal static void Register() {
-        RegisterHandlers();
-        Callable.From(() => EnsureLifecycleNode()).CallDeferred();
-    }
-
     /// <summary>
     /// Hooks Godot shutdown so <see cref="CrashRecoveryStore.MarkSessionCleanExit"/> runs
     /// even when <see cref="AppDomain.ProcessExit"/> does not (common on normal game quit).
     /// </summary>
-    internal static void EnsureLifecycleNode(Node? parent = null) {
-        if (parent == null || !GodotObject.IsInstanceValid(parent)) {
-            if (Engine.GetMainLoop() is not SceneTree tree)
-                return;
-            var root = tree.Root;
-            if (root == null || !GodotObject.IsInstanceValid(root))
-                return;
-            parent = root.GetNodeOrNull<Node>("KitLibRootServices");
-            if (parent == null || !GodotObject.IsInstanceValid(parent))
-                return;
-        }
-
-        if (parent.GetNodeOrNull<Node>(LifecycleNodeName) != null)
+    internal static void EnsureLifecycleNode() {
+        if (Engine.GetMainLoop() is not SceneTree tree)
             return;
 
-        parent.AddChild(new CrashRecoveryLifecycleNode { Name = LifecycleNodeName });
+        var root = tree.Root;
+        if (root == null || !GodotObject.IsInstanceValid(root))
+            return;
+
+        if (root.GetNodeOrNull<Node>(LifecycleNodeName) != null)
+            return;
+
+        var node = new CrashRecoveryLifecycleNode {
+            Name = LifecycleNodeName,
+            ProcessMode = Node.ProcessModeEnum.Always,
+        };
+        root.AddChild(node);
     }
 
     private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e) {
@@ -50,8 +45,7 @@ internal static class CrashRecoveryHooks {
         CrashRecoveryStore.RecordCrash(exception);
 
         try {
-            var tree = Engine.GetMainLoop() as SceneTree;
-            if (tree == null)
+            if (Engine.GetMainLoop() is not SceneTree)
                 return;
 
             var report = CrashRecoveryStore.TryConsumePendingReport();

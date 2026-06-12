@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using KitLib.Dev;
+using KitLib.Host;
 
 namespace KitLib.Feedback;
 
@@ -25,51 +26,87 @@ internal sealed class CrashReport {
 }
 
 /// <summary>
-/// Persists session markers and pending crash reports under adopted <see cref="DevModDataPaths.Root"/>.
+/// Persists session markers and pending crash reports under KitLib mod_data.
 /// Thread-safe for calls from the unhandled-exception handler.
 /// </summary>
 internal static class CrashRecoveryStore {
     private const int MaxStackTraceLines = 24;
+    private const string SessionActiveFileName = "session.active";
+    private const string SessionCleanFileName = "session.clean";
+
     private static readonly object FileLock = new();
+    private static bool _cleanExitHandled;
 
     private static readonly JsonSerializerOptions JsonOpts = new() {
         WriteIndented = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private static string ModDataRoot => DevModDataPaths.Root;
-
-    private static string PendingReportPath => Path.Combine(ModDataRoot, "pending-crash-report.json");
-
-    private static string SessionActivePath =>
-        Path.Combine(ModDataRoot, "instances", KitLibInstance.ProcessId.ToString(), "session.active");
-
     internal static void MarkSessionStarted() {
         lock (FileLock) {
+            _cleanExitHandled = false;
             try {
                 DetectOrphanSessionsLocked();
-                var dir = Path.GetDirectoryName(SessionActivePath);
-                if (!string.IsNullOrEmpty(dir))
-                    Directory.CreateDirectory(dir);
-                File.WriteAllText(SessionActivePath, $"{DateTime.UtcNow:O}\n{KitLibInstance.ProcessId}");
+                TouchSessionMarkerLocked(KitLibInstance.ProcessId);
             }
-            catch {
-                // Best-effort session marker; startup prompt is the fallback.
+            catch (Exception ex) {
+                KitLog.Warn("CrashRecovery", $"Failed to start session marker: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>Refresh the active-session marker without scanning for orphan sessions.</summary>
+    internal static void TouchSessionMarker() {
+        lock (FileLock) {
+            try {
+                TouchSessionMarkerLocked(KitLibInstance.ProcessId);
+            }
+            catch (Exception ex) {
+                KitLog.Warn("CrashRecovery", $"Failed to refresh session marker: {ex.Message}");
             }
         }
     }
 
     internal static void MarkSessionCleanExit() {
         lock (FileLock) {
-            TryDelete(SessionActivePath);
+            if (_cleanExitHandled)
+                return;
+
+            try {
+                if (!TryGetModDataRoot(out var root)) {
+                    KitLog.Warn("CrashRecovery", "Clean exit skipped: mod_data root unavailable.");
+                    return;
+                }
+
+                int pid = KitLibInstance.ProcessId;
+                ClearSessionArtifactsLocked(root, pid, writeCleanMarker: true);
+                _cleanExitHandled = true;
+                KitLog.Info("CrashRecovery", $"Session marker cleared (PID {pid}).");
+            }
+            catch (Exception ex) {
+                KitLog.Warn("CrashRecovery", $"Failed to clear session marker: {ex.Message}");
+            }
+        }
+    }
+
+    internal static void AcknowledgeOrphanReport(CrashReport report) {
+        lock (FileLock) {
+            ClearPendingReportLocked();
+            if (report.Kind != CrashReportKind.OrphanSession || report.OrphanProcessId is not int orphanPid)
+                return;
+
+            if (!TryGetModDataRoot(out var root))
+                return;
+
+            ClearSessionArtifactsLocked(root, orphanPid, writeCleanMarker: true);
+            KitLog.Info("CrashRecovery", $"Orphan session acknowledged (PID {orphanPid}).");
         }
     }
 
     internal static void RecordCrash(Exception? exception, CrashReportKind kind = CrashReportKind.UnhandledException) {
         lock (FileLock) {
             try {
-                var report = BuildReport(exception, kind);
-                WritePendingReportLocked(report);
+                WritePendingReportLocked(BuildReport(exception, kind));
             }
             catch (Exception ex) {
                 KitLog.Warn("CrashRecovery", $"Failed to record crash: {ex.Message}");
@@ -81,14 +118,14 @@ internal static class CrashRecoveryStore {
         lock (FileLock) {
             var report = TryReadPendingReportLocked();
             if (report != null)
-                TryDelete(PendingReportPath);
+                ClearPendingReportLocked();
             return report;
         }
     }
 
     internal static void ClearPendingReport() {
         lock (FileLock)
-            TryDelete(PendingReportPath);
+            ClearPendingReportLocked();
     }
 
     internal static string FormatPrefillTitle(CrashReport report) =>
@@ -153,16 +190,27 @@ internal static class CrashRecoveryStore {
             summary);
     }
 
+    private static void TouchSessionMarkerLocked(int pid) {
+        if (!TryGetModDataRoot(out var root))
+            return;
+
+        var instanceDir = GetInstanceDir(root, pid);
+        Directory.CreateDirectory(instanceDir);
+        TryDelete(Path.Combine(instanceDir, SessionCleanFileName));
+        File.WriteAllText(
+            Path.Combine(instanceDir, SessionActiveFileName),
+            $"{DateTime.UtcNow:O}\n{pid}");
+    }
+
     private static void DetectOrphanSessionsLocked() {
-        var instancesDir = Path.Combine(ModDataRoot, "instances");
+        if (!TryGetModDataRoot(out var modDataRoot))
+            return;
+
+        var instancesDir = Path.Combine(modDataRoot, "instances");
         if (!Directory.Exists(instancesDir))
             return;
 
         foreach (var dir in Directory.GetDirectories(instancesDir)) {
-            var marker = Path.Combine(dir, "session.active");
-            if (!File.Exists(marker))
-                continue;
-
             var name = Path.GetFileName(dir);
             if (!int.TryParse(name, out int pid))
                 continue;
@@ -170,10 +218,22 @@ internal static class CrashRecoveryStore {
             if (pid == KitLibInstance.ProcessId)
                 continue;
 
+            var activePath = Path.Combine(dir, SessionActiveFileName);
+            var cleanPath = Path.Combine(dir, SessionCleanFileName);
+            if (!File.Exists(activePath)) {
+                TryDelete(cleanPath);
+                continue;
+            }
+
+            if (File.Exists(cleanPath)) {
+                ClearSessionArtifactsLocked(modDataRoot, pid, writeCleanMarker: false);
+                continue;
+            }
+
             if (IsProcessAlive(pid))
                 continue;
 
-            TryDelete(marker);
+            ClearSessionArtifactsLocked(modDataRoot, pid, writeCleanMarker: false);
 
             if (TryReadPendingReportLocked() != null)
                 continue;
@@ -185,12 +245,67 @@ internal static class CrashRecoveryStore {
                 DevModeVersion = GetDevModeVersion(),
                 OrphanProcessId = pid
             });
+            KitLog.Info("CrashRecovery", $"Orphan session detected (PID {pid}); wrote pending crash report.");
         }
+    }
+
+    private static void ClearSessionArtifactsLocked(string modDataRoot, int pid, bool writeCleanMarker) {
+        var instanceDir = GetInstanceDir(modDataRoot, pid);
+        TryDelete(Path.Combine(instanceDir, SessionActiveFileName));
+        TryDelete(Path.Combine(modDataRoot, "instances", $"{pid}.lock"));
+
+        if (writeCleanMarker) {
+            Directory.CreateDirectory(instanceDir);
+            File.WriteAllText(
+                Path.Combine(instanceDir, SessionCleanFileName),
+                $"{DateTime.UtcNow:O}\n{pid}");
+        }
+        else {
+            TryDelete(Path.Combine(instanceDir, SessionCleanFileName));
+        }
+    }
+
+    private static string GetInstanceDir(string modDataRoot, int pid) =>
+        Path.Combine(modDataRoot, "instances", pid.ToString());
+
+    private static bool TryGetModDataRoot(out string root) {
+        if (DevModDataPaths.IsSet) {
+            root = DevModDataPaths.Root;
+            return true;
+        }
+
+        if (!string.IsNullOrEmpty(KitLibHost.ModDataDir)) {
+            root = KitLibHost.ModDataDir;
+            return true;
+        }
+
+        try {
+            if (DataPaths.TryGetPinnedBaseDir(out root))
+                return true;
+        }
+        catch {
+            // DataPaths may not be pinned yet during very early startup.
+        }
+
+        root = "";
+        return false;
+    }
+
+    private static string? TryGetPendingReportPath() {
+        if (!TryGetModDataRoot(out var root))
+            return null;
+        return Path.Combine(root, "pending-crash-report.json");
+    }
+
+    private static void ClearPendingReportLocked() {
+        var path = TryGetPendingReportPath();
+        if (path != null)
+            TryDelete(path);
     }
 
     private static CrashReport BuildReport(Exception? exception, CrashReportKind kind) {
         var ex = exception;
-        if (ex is System.Reflection.TargetInvocationException tie && tie.InnerException != null)
+        if (ex is TargetInvocationException tie && tie.InnerException != null)
             ex = tie.InnerException;
 
         return new CrashReport {
@@ -218,9 +333,10 @@ internal static class CrashRecoveryStore {
 
     private static CrashReport? TryReadPendingReportLocked() {
         try {
-            if (!File.Exists(PendingReportPath))
+            var path = TryGetPendingReportPath();
+            if (path == null || !File.Exists(path))
                 return null;
-            var json = File.ReadAllText(PendingReportPath);
+            var json = File.ReadAllText(path);
             return JsonSerializer.Deserialize<CrashReport>(json, JsonOpts);
         }
         catch {
@@ -229,21 +345,26 @@ internal static class CrashRecoveryStore {
     }
 
     private static void WritePendingReportLocked(CrashReport report) {
-        var dir = Path.GetDirectoryName(PendingReportPath);
+        var path = TryGetPendingReportPath();
+        if (path == null)
+            return;
+        var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir))
             Directory.CreateDirectory(dir);
-        var tmp = PendingReportPath + ".tmp";
+        var tmp = path + ".tmp";
         File.WriteAllText(tmp, JsonSerializer.Serialize(report, JsonOpts));
-        File.Move(tmp, PendingReportPath, overwrite: true);
+        File.Move(tmp, path, overwrite: true);
     }
 
-    private static void TryDelete(string path) {
+    private static bool TryDelete(string path) {
         try {
-            if (File.Exists(path))
-                File.Delete(path);
+            if (!File.Exists(path))
+                return false;
+            File.Delete(path);
+            return true;
         }
         catch {
-            // Best-effort cleanup only.
+            return false;
         }
     }
 

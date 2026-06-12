@@ -2,6 +2,7 @@ using System;
 using Godot;
 using HarmonyLib;
 using KitLib;
+using KitLib.Feedback;
 using KitLib.Host;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -46,6 +47,7 @@ public static class MainMenuPatch {
             return;
 
         BootstrapDiagnostics.FlushDeferred();
+        CrashRecoveryStore.TouchSessionMarker();
 
         if (_devModeButton != null && GodotObject.IsInstanceValid(_devModeButton)) {
             var textRow = __instance.GetNodeOrNull<Control>("%MainMenuTextButtons")

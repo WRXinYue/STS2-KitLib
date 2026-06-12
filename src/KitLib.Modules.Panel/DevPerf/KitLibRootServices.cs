@@ -45,7 +45,7 @@ internal partial class KitLibRootServicesNode : CanvasLayer {
         KitLibRootServices.Instance = this;
         SetProcess(true);
         Callable.From(EnsureOverlayAttached).CallDeferred();
-        Callable.From(() => CrashRecoveryHooks.EnsureLifecycleNode(this)).CallDeferred();
+        Callable.From(() => CrashRecoveryHooks.EnsureLifecycleNode()).CallDeferred();
     }
 
     public override void _ExitTree() {

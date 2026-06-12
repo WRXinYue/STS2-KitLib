@@ -10,6 +10,7 @@ internal static class CrashRecoveryPromptUI {
     private const string PromptName = "KitLibCrashRecoveryPrompt";
 
     private static bool DismissedForSession { get; set; }
+    private static CrashReport? _activeReport;
 
     public static bool IsVisible =>
         GodotObject.IsInstanceValid(
@@ -46,6 +47,7 @@ internal static class CrashRecoveryPromptUI {
         if (DismissedForSession || !GodotObject.IsInstanceValid(mainMenu))
             return;
 
+        _activeReport = report;
         var root = mainMenu.GetTree().Root;
         HideAnywhere();
 
@@ -72,7 +74,13 @@ internal static class CrashRecoveryPromptUI {
 
     private static void Acknowledge() {
         DismissedForSession = true;
-        CrashRecoveryStore.ClearPendingReport();
+        if (_activeReport != null) {
+            CrashRecoveryStore.AcknowledgeOrphanReport(_activeReport);
+            _activeReport = null;
+        }
+        else {
+            CrashRecoveryStore.ClearPendingReport();
+        }
         HideAnywhere();
     }
 
