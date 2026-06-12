@@ -16,12 +16,24 @@ internal static partial class DevPanelUI {
         sb.BorderWidthRight = joined ? 0 : 1;
         if (joined) {
             sb.ShadowOffset = Vector2.Zero;
-            sb.ShadowSize = 16;
+            sb.ShadowSize = 0;
         }
         else {
             sb.ShadowOffset = new Vector2(20, 0);
             sb.ShadowSize = 20;
         }
+    }
+
+    internal static void SpliceBrowserPanelLeft(PanelContainer panel, bool joined) {
+        if (!GodotObject.IsInstanceValid(panel))
+            return;
+        if (panel.GetThemeStylebox("panel") is not StyleBoxFlat sb)
+            return;
+
+        int r = joined ? 0 : BrowserRailRadius;
+        sb.CornerRadiusTopLeft = r;
+        sb.CornerRadiusBottomLeft = r;
+        sb.BorderWidthLeft = joined ? 0 : 1;
     }
 
     /// <summary>

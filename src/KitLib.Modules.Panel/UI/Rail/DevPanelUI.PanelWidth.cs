@@ -29,6 +29,36 @@ internal static partial class DevPanelUI {
         return codeDefault > 0f ? Math.Min(codeDefault, maxWidth) : codeDefault;
     }
 
+    /// <summary>Clip-host width budget for main + ext columns (matches <see cref="CreateBrowserPanelClipHost"/>).</summary>
+    internal static float GetDualColumnClipHostWidth(Node? viewportForClamp) {
+        Viewport? viewport = GetViewport(viewportForClamp);
+        if (viewport == null)
+            return DefaultMaxFallback;
+
+        float visibleWidth = viewport.GetVisibleRect().Size.X;
+        return Math.Max(BrowserPanelWidthMin, visibleWidth - BrowserPanelLeft - EffectiveBrowserContentRight);
+    }
+
+    internal static (float Main, float Ext) ResolveDualColumnWidths(
+        string mainKey,
+        string extKey,
+        float mainDefault,
+        float extDefault,
+        Node? viewportForClamp) {
+        float available = GetDualColumnClipHostWidth(viewportForClamp);
+        float mainW = ResolveBrowserPanelWidth(mainKey, mainDefault, viewportForClamp);
+        float extW = ResolveBrowserPanelWidth(extKey, extDefault, viewportForClamp);
+
+        if (mainW + extW <= available)
+            return (mainW, extW);
+
+        extW = Math.Clamp(extW, BrowserPanelWidthMin, extW);
+        mainW = Math.Max(BrowserPanelWidthMin, available - extW);
+        if (mainW + extW > available)
+            mainW = Math.Max(BrowserPanelWidthMin, available - extW);
+        return (mainW, extW);
+    }
+
     private static Viewport? GetViewport(Node? node) {
         if (node?.GetViewport() is { } viewport)
             return viewport;

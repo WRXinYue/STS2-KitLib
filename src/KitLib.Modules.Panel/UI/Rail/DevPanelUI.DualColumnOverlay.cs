@@ -18,13 +18,14 @@ internal static partial class DevPanelUI {
         public float MainDefaultWidth { get; init; } = 520f;
         public float ExtDefaultWidth { get; init; } = 420f;
         public float ExtSlideOutSec { get; init; } = 0.28f;
-        public int ZIndex { get; init; } = 1250;
+        public int ZIndex { get; init; } = BrowserOverlayZIndex;
     }
 
     internal sealed class DualColumnOverlayHandle {
         private readonly DualColumnOverlayOptions _options;
-        private readonly Control _mainSlot;
         private readonly Control _clipHost;
+        private readonly float _nominalMainW;
+        private readonly float _nominalExtW;
         private Tween? _extCloseTween;
 
         internal Control Root { get; }
@@ -33,6 +34,7 @@ internal static partial class DevPanelUI {
         internal PanelContainer MainPanel { get; }
         internal PanelContainer ExtPanel { get; }
         internal Control ExtSlot { get; }
+        internal Control ExtSlideHost { get; }
         internal Control Mover { get; }
 
         internal DualColumnOverlayHandle(
@@ -45,22 +47,25 @@ internal static partial class DevPanelUI {
             VBoxContainer mainContent,
             VBoxContainer extContent,
             PanelContainer extPanel,
-            Control extSlot) {
+            Control extSlot,
+            Control extSlideHost,
+            float nominalMainW,
+            float nominalExtW) {
             _options = options;
             Root = root;
             _clipHost = clipHost;
-            _mainSlot = mainSlot;
+            _nominalMainW = nominalMainW;
+            _nominalExtW = nominalExtW;
             Mover = mover;
             MainPanel = mainPanel;
             MainContent = mainContent;
             ExtContent = extContent;
             ExtPanel = extPanel;
             ExtSlot = extSlot;
+            ExtSlideHost = extSlideHost;
         }
 
         internal void AttachToScene() {
-            _clipHost.Resized += SyncMoverWidth;
-
             bool opened = false;
             _clipHost.TreeEntered += () => {
                 if (opened) return;
@@ -91,25 +96,27 @@ internal static partial class DevPanelUI {
 
         internal void PrepareExtensionVisible() {
             KillExtCloseTween();
+            ExtSlideHost.Position = Vector2.Zero;
             ExtPanel.Position = Vector2.Zero;
+            ExtPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
             ExtSlot.Visible = true;
             SyncMoverWidth();
         }
 
-        internal void AnimateExtensionSlideIn() => PlayBrowserPanelOpenFromLeft(ExtPanel);
+        internal void AnimateExtensionSlideIn() => PlayControlSlideOpenFromLeft(ExtSlideHost);
 
         internal void CloseExtension(Action? onHidden = null) {
             if (!ExtSlot.Visible) return;
             KillExtCloseTween();
-            float w = Mathf.Max(1f, ExtPanel.GetRect().Size.X);
-            _extCloseTween = ExtPanel.CreateTween();
+            float w = Mathf.Max(1f, ExtSlideHost.GetRect().Size.X);
+            _extCloseTween = ExtSlideHost.CreateTween();
             _extCloseTween.SetTrans(Tween.TransitionType.Cubic);
             _extCloseTween.SetEase(Tween.EaseType.In);
-            _extCloseTween.TweenProperty(ExtPanel, "position:x", w, _options.ExtSlideOutSec);
+            _extCloseTween.TweenProperty(ExtSlideHost, "position:x", w, _options.ExtSlideOutSec);
             _extCloseTween.TweenCallback(Callable.From(() => {
                 _extCloseTween = null;
                 onHidden?.Invoke();
-                ExtPanel.Position = Vector2.Zero;
+                ExtSlideHost.Position = Vector2.Zero;
                 ExtSlot.Visible = false;
                 SyncMoverWidth();
             }));
@@ -121,10 +128,12 @@ internal static partial class DevPanelUI {
         }
 
         internal void SyncMoverWidth() {
-            float totalW = _mainSlot.CustomMinimumSize.X + (ExtSlot.Visible ? ExtSlot.CustomMinimumSize.X : 0f);
+            float totalW = _nominalMainW + (ExtSlot.Visible ? _nominalExtW : 0f);
             Mover.OffsetLeft = 0;
             Mover.OffsetRight = Mathf.Max(1f, totalW);
-            SpliceBrowserPanelRight(MainPanel, ExtSlot.Visible);
+            bool joined = ExtSlot.Visible;
+            SpliceBrowserPanelRight(MainPanel, joined);
+            SpliceBrowserPanelLeft(ExtPanel, joined);
         }
     }
 
@@ -137,15 +146,21 @@ internal static partial class DevPanelUI {
         root.AddChild(CreateBrowserBackdrop(
             () => RequestCloseBrowserOverlay(globalUi, options.RootName, options.FallbackClose)));
 
-        float mainW = ResolveBrowserPanelWidth(options.MainWidthKey, options.MainDefaultWidth, (Node)globalUi);
-        float extW = ResolveBrowserPanelWidth(options.ExtWidthKey, options.ExtDefaultWidth, (Node)globalUi);
+        float mainW;
+        float extW;
+        (mainW, extW) = ResolveDualColumnWidths(
+            options.MainWidthKey,
+            options.ExtWidthKey,
+            options.MainDefaultWidth,
+            options.ExtDefaultWidth,
+            (Node)globalUi);
 
         var clipHost = CreateBrowserPanelClipHost();
+        clipHost.OffsetRight = -EffectiveBrowserContentRight;
 
         var mover = new Control {
             Name = options.CarrierNodeName,
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            ClipContents = true,
         };
         mover.AnchorLeft = 0;
         mover.AnchorRight = 0;
@@ -166,6 +181,7 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             MouseFilter = Control.MouseFilterEnum.Ignore,
+            ZIndex = 1,
         };
 
         var mainPanel = CreateBrowserPanelInner(mainW, joinFlushOnRight: false);
@@ -180,13 +196,17 @@ internal static partial class DevPanelUI {
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             Visible = false,
-            ClipContents = true,
             MouseFilter = Control.MouseFilterEnum.Ignore,
+            ZIndex = 0,
         };
+
+        var extSlideHost = new Control { Name = "ExtSlideHost" };
+        extSlideHost.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
         var extPanel = CreateBrowserPanelInner(extW);
         extPanel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        extSlot.AddChild(extPanel);
+        extSlideHost.AddChild(extPanel);
+        extSlot.AddChild(extSlideHost);
 
         var extContent = extPanel.GetNodeOrNull<VBoxContainer>("Content")
             ?? throw new InvalidOperationException($"Dual column extension panel missing Content ({options.RootName})");
@@ -198,7 +218,8 @@ internal static partial class DevPanelUI {
         root.AddChild(clipHost);
 
         return new DualColumnOverlayHandle(
-            options, root, clipHost, mainSlot, mover, mainPanel, mainContent, extContent, extPanel, extSlot);
+            options, root, clipHost, mainSlot, mover, mainPanel, mainContent, extContent, extPanel, extSlot,
+            extSlideHost, mainW, extW);
     }
 
     internal static string ExtensionWidthKeyFor(string rootName) => rootName + "_ext";
@@ -208,7 +229,7 @@ internal static partial class DevPanelUI {
         string rootName,
         float mainDefaultWidth,
         Action fallbackClose,
-        int zIndex = 1250,
+        int zIndex = BrowserOverlayZIndex,
         int contentSeparation = 10) {
         var dual = CreateDualColumnOverlay(new DualColumnOverlayOptions {
             GlobalUi = globalUi,

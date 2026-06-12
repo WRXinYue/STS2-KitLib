@@ -27,6 +27,9 @@ internal static partial class DevPanelUI {
     public const float BrowserRailW = RailW;
     public const float BrowserPanelLeft = BrowserRailLeft + BrowserRailW;   // 76f
     public const float BrowserPanelRight = 24f;
+    public const int BrowserOverlayZIndex = 1250;
+    /// <summary>Left rail + right context pane — above browser slide-ins.</summary>
+    public const int SidebarChromeZIndex = BrowserOverlayZIndex + 10;
     public const int BrowserRailRadius = Radius;
 
     private static Action? _onRefreshPanel;
@@ -176,7 +179,7 @@ internal static partial class DevPanelUI {
         var root = new Control {
             Name = RootName,
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            ZIndex = 1200
+            ZIndex = SidebarChromeZIndex
         };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 

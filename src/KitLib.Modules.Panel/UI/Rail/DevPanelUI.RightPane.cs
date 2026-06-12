@@ -49,7 +49,7 @@ internal static partial class DevPanelUI {
         var root = new Control {
             Name = ContextPaneRootName,
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            ZIndex = 1200,
+            ZIndex = SidebarChromeZIndex,
         };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
@@ -397,7 +397,12 @@ internal static partial class DevPanelUI {
             if (!name.StartsWith("KitLib", StringComparison.Ordinal))
                 continue;
 
-            var clipHost = root.GetNodeOrNull<Control>("BrowserPanelClipHost");
+            var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
+            if (clipHost != null && root.HasMeta(DualCarrierMetaKey)) {
+                clipHost.OffsetRight = -EffectiveBrowserContentRight;
+                continue;
+            }
+
             var panel = clipHost?.GetNodeOrNull<PanelContainer>("BrowserPanel");
             if (panel == null || panel.AnchorRight < 0.5f)
                 continue;

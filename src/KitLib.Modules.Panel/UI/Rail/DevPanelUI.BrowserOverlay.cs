@@ -42,7 +42,7 @@ internal static partial class DevPanelUI {
         var clipHost = new Control {
             Name = BrowserPanelClipHostName,
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            ClipContents = true
+            ClipContents = true,
         };
         clipHost.AnchorLeft = 0;
         clipHost.AnchorRight = 1;
@@ -128,7 +128,10 @@ internal static partial class DevPanelUI {
             .TweenCallback(Callable.From(() => mover.SetMeta(BrowserPanelAnimatingMetaKey, false)));
     }
 
-    internal static void PlayBrowserPanelOpenFromLeft(PanelContainer panel, float durationSec = 0.82f) {
+    internal static void PlayBrowserPanelOpenFromLeft(PanelContainer panel, float durationSec = 0.82f) =>
+        PlayControlSlideOpenFromLeft(panel, durationSec);
+
+    internal static void PlayControlSlideOpenFromLeft(Control panel, float durationSec = 0.82f) {
         if (!panel.IsInsideTree())
             return;
 
@@ -146,6 +149,9 @@ internal static partial class DevPanelUI {
         t.SetEase(Tween.EaseType.Out);
         t.TweenProperty(panel, "position:x", targetX, durationSec);
         t.Chain()
-            .TweenCallback(Callable.From(() => panel.SetMeta(BrowserPanelAnimatingMetaKey, false)));
+            .TweenCallback(Callable.From(() => {
+                panel.Position = new Vector2(targetX, 0f);
+                panel.SetMeta(BrowserPanelAnimatingMetaKey, false);
+            }));
     }
 }
