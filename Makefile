@@ -148,6 +148,7 @@ format:
 	$(UV) run black scripts
 
 format-check:
+	@test -f eng/sts2-refs/stable/0.103.3/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs (git lfs pull?). Run: make capture-sts2-ref PROFILE=stable" >&2; exit 1)
 	$(DOTNET) format KitLib.sln --verify-no-changes
 
 lint-scripts:

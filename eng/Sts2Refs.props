@@ -6,8 +6,10 @@
   <PropertyGroup>
     <KitLibSts2RefsStableVersion>0.103.3</KitLibSts2RefsStableVersion>
     <KitLibSts2RefsStableRoot>$(RepoRoot)eng/sts2-refs/stable/$(KitLibSts2RefsStableVersion)</KitLibSts2RefsStableRoot>
+    <KitLibSts2RefsStableDataDir>$(KitLibSts2RefsStableRoot)/data_sts2_windows_x86_64</KitLibSts2RefsStableDataDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Sts2Dir)' == '' and Exists('$(KitLibSts2RefsStableRoot)/data_sts2_windows_x86_64/sts2.dll')">
+  <PropertyGroup Condition="'$(Sts2Dir)' == '' and Exists('$(KitLibSts2RefsStableDataDir)/sts2.dll')">
     <Sts2Dir>$(KitLibSts2RefsStableRoot)</Sts2Dir>
+    <Sts2DataDir>$(KitLibSts2RefsStableDataDir)</Sts2DataDir>
   </PropertyGroup>
 </Project>

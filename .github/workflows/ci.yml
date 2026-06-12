@@ -29,7 +29,15 @@ jobs:
           test -f eng/sts2-refs/stable/0.103.3/data_sts2_windows_x86_64/0Harmony.dll
 
       - name: Format check
-        run: dotnet format KitLib.sln --verify-no-changes
+        run: |
+          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py stable)"
+          printf '%s\n' \
+            '<Project>' \
+            '  <PropertyGroup>' \
+            "    <Sts2Dir>${STS2_DIR}</Sts2Dir>" \
+            '  </PropertyGroup>' \
+            '</Project>' > local.props
+          dotnet format KitLib.sln --verify-no-changes
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
