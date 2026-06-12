@@ -52,8 +52,16 @@ internal static class Sts2CombatCompat {
         CombatManager.Instance?.DebugOnlyGetState()?.RoundNumber ?? 0;
 
     public static bool IsPlayerReadyToBeginEnemyTurn(CombatManager cm, Player player) {
-        var method = AccessTools.Method(typeof(CombatManager), "IsPlayerReadyToBeginEnemyTurn", [typeof(Player)]);
-        return method != null && (bool)method.Invoke(cm, [player])!;
+        var field = AccessTools.Field(typeof(CombatManager), "_playersReadyToBeginEnemyTurn");
+        if (field?.GetValue(cm) is not System.Collections.IEnumerable readyPlayers)
+            return false;
+
+        foreach (var entry in readyPlayers) {
+            if (entry is Player ready && ReferenceEquals(ready, player))
+                return true;
+        }
+
+        return false;
     }
 
     public static CombatState? GetCreatureCombatState(Creature creature) =>

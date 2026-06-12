@@ -81,7 +81,8 @@ internal static class Program {
         foreach (var type in asm.MainModule.Types.Where(t => t.Name == shortName)) {
             Console.WriteLine(type.FullName);
             Console.WriteLine("  properties: " + string.Join(", ", type.Properties.Select(p => p.Name)));
-            Console.WriteLine("  methods: " + string.Join(", ", type.Methods.Select(m => m.Name).Take(20)));
+            Console.WriteLine("  fields: " + string.Join(", ", type.Fields.Select(f => f.Name)));
+            Console.WriteLine("  methods: " + string.Join(", ", type.Methods.Select(m => m.Name)));
         }
         return 0;
     }

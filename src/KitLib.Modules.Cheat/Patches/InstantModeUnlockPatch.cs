@@ -28,7 +28,9 @@ public static class InstantModeUnlockPatch {
         }
 
         // Fallback for older game versions that used a synchronous InitializeGame method
-        var legacy = AccessTools.Method(typeof(NGame), "InitializeGame");
+        var legacy = typeof(NGame).GetMethod(
+            "InitializeGame",
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (legacy != null) return legacy;
 
         // Target not found — return null so Harmony silently skips this patch

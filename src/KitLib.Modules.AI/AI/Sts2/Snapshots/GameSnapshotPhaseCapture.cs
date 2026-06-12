@@ -336,8 +336,7 @@ internal static class GameSnapshotPhaseCapture {
             return;
 
         try {
-            var modelProp = AccessTools.Property(typeof(EventRoom), "Model")
-                ?? AccessTools.Property(typeof(EventRoom), "EventModel");
+            var modelProp = AccessTools.Property(typeof(EventRoom), "CanonicalEvent");
             if (modelProp?.GetValue(eventRoom) is EventModel model)
                 obj["eventId"] = model.Id.Entry ?? "";
         }

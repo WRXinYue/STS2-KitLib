@@ -185,10 +185,14 @@ def _parse_yaml_simple(path: Path) -> dict:
                 overrides[current_id].setdefault("stable", {})["member"] = member
             elif stripped.endswith("stable:"):
                 in_profiles_block = True
+            elif stripped == "skip: true":
+                overrides[current_id].setdefault("stable", {})["skip"] = "true"
         elif current_id and in_touchpoint_profiles and stripped.startswith("beta:"):
             if "member:" in stripped:
                 member = stripped.split("member:", 1)[1].strip()
                 overrides[current_id].setdefault("beta", {})["member"] = member
+            elif stripped == "skip: true":
+                overrides[current_id].setdefault("beta", {})["skip"] = "true"
         elif stripped.startswith("member:") and current_id and in_touchpoint_profiles and in_profiles_block:
             member = stripped.split(":", 1)[1].strip()
             overrides[current_id].setdefault("stable", {})["member"] = member
@@ -241,9 +245,15 @@ def _write_manifest(
         if ov:
             lines.append("    profiles:")
             for profile in ("stable", "beta"):
-                if profile in ov and "member" in ov[profile]:
+                if profile not in ov:
+                    continue
+                prof = ov[profile]
+                if "member" in prof or prof.get("skip") == "true":
                     lines.append(f"      {profile}:")
-                    lines.append(f"        member: {_yaml_quote(ov[profile]['member'])}")
+                    if prof.get("skip") == "true":
+                        lines.append("        skip: true")
+                    elif "member" in prof:
+                        lines.append(f"        member: {_yaml_quote(prof['member'])}")
         lines.append("    sources:")
         for src in sorted(tp.sources):
             lines.append(f"      - {src}")
@@ -275,6 +285,19 @@ def _ensure_manual_overrides(overrides: dict[str, dict[str, dict[str, str]]]) ->
     if "member" not in beta:
         beta["member"] = "SetUpNewSingleplayer"
 
+    saved = overrides.setdefault("RunManager.SetUpSavedSinglePlayer", {})
+    saved_stable = saved.setdefault("stable", {})
+    if "member" not in saved_stable:
+        saved_stable["member"] = "SetUpSavedSinglePlayer"
+    saved_beta = saved.setdefault("beta", {})
+    if "member" not in saved_beta:
+        saved_beta["member"] = "SetUpSavedSingleplayer"
+
+    play_phase = overrides.setdefault("CombatManager.IsPlayPhase", {})
+    play_beta = play_phase.setdefault("beta", {})
+    if play_beta.get("skip") != "true":
+        play_beta["skip"] = "true"
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Extract KitLib API touchpoints into eng/api_touchpoints.yaml")
@@ -301,6 +324,17 @@ def main() -> int:
         canonical = touchpoints["RunManager.SetUpNewSingleplayer"]
         canonical.sources.update(stale.sources)
     _ensure_manual_overrides(overrides)
+    stale_saved = touchpoints.pop("RunManager.SetUpSavedSingleplayer", None)
+    if stale_saved:
+        canonical_saved = touchpoints.setdefault(
+            "RunManager.SetUpSavedSinglePlayer",
+            Touchpoint(
+                type_name="RunManager",
+                member="SetUpSavedSinglePlayer",
+                kind="method",
+            ),
+        )
+        canonical_saved.sources.update(stale_saved.sources)
     _write_manifest(args.manifest, touchpoints, profile_versions, overrides)
     static = sum(1 for t in touchpoints.values() if not t.dynamic)
     dynamic = sum(1 for t in touchpoints.values() if t.dynamic)

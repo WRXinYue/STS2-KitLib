@@ -81,14 +81,17 @@ touchpoints:
     type: CombatManager
     member: IsPlayPhase
     kind: property
+    profiles:
+      beta:
+        skip: true
     sources:
       - src/KitLib.Core/Sts2CombatCompat.cs
       - src/KitLib.Core/Sts2RuntimeProfile.cs
 
-  - id: CombatManager.IsPlayerReadyToBeginEnemyTurn
+  - id: CombatManager._playersReadyToBeginEnemyTurn
     type: CombatManager
-    member: IsPlayerReadyToBeginEnemyTurn
-    kind: method
+    member: _playersReadyToBeginEnemyTurn
+    kind: field
     sources:
       - src/KitLib.Core/Sts2CombatCompat.cs
 
@@ -178,16 +181,9 @@ touchpoints:
     sources:
       - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatReadyPatch.cs
 
-  - id: EventRoom.EventModel
+  - id: EventRoom.CanonicalEvent
     type: EventRoom
-    member: EventModel
-    kind: property
-    sources:
-      - src/KitLib.Modules.AI/AI/Sts2/Snapshots/GameSnapshotPhaseCapture.cs
-
-  - id: EventRoom.Model
-    type: EventRoom
-    member: Model
+    member: CanonicalEvent
     kind: property
     sources:
       - src/KitLib.Modules.AI/AI/Sts2/Snapshots/GameSnapshotPhaseCapture.cs
@@ -297,13 +293,6 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib.Modules.Panel/Patches/CombatSummonSlotCompatPatch.cs
-
-  - id: NGame.InitializeGame
-    type: NGame
-    member: InitializeGame
-    kind: method
-    sources:
-      - src/KitLib.Modules.Cheat/Patches/InstantModeUnlockPatch.cs
 
   - id: NGame.StartNewSingleplayerRun
     type: NGame
@@ -660,13 +649,11 @@ touchpoints:
     type: RunManager
     member: SetUpSavedSinglePlayer
     kind: method
-    sources:
-      - src/KitLib.Modules.Cheat/SaveSlotManager.cs
-
-  - id: RunManager.SetUpSavedSingleplayer
-    type: RunManager
-    member: SetUpSavedSingleplayer
-    kind: method
+    profiles:
+      stable:
+        member: SetUpSavedSinglePlayer
+      beta:
+        member: SetUpSavedSingleplayer
     sources:
       - src/KitLib.Modules.Cheat/SaveSlotManager.cs
 
