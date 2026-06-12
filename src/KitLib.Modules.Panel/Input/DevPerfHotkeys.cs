@@ -10,30 +10,22 @@ internal static class DevPerfHotkeys {
         if (!key.Pressed || key.Echo)
             return false;
 
-        var binding = SettingsStore.Current.HotkeyTogglePerfHud;
-        if (!binding.Matches(key)) {
-            HotkeyDiagnostics.LogNearMatch(nameof(DevPerfHotkeys), binding, key);
+        if (!SettingsStore.Current.HotkeyTogglePerfHud.Matches(key))
             return false;
-        }
 
         if (!SettingsStore.Current.HotkeysEnabled) {
-            HotkeyDiagnostics.LogBlocked(nameof(DevPerfHotkeys), "keyboard shortcuts disabled in settings");
             viewport.SetInputAsHandled();
             return true;
         }
 
         if (!KitLibState.IsActive) {
-            HotkeyDiagnostics.LogBlocked(nameof(DevPerfHotkeys),
-                "DevMode inactive (enable DevPanel/Cheat or start a dev test run)");
             viewport.SetInputAsHandled();
             return true;
         }
 
-        bool next = !SettingsStore.Current.PerfHudEnabled;
-        SettingsStore.SetPerfHudEnabled(next);
+        SettingsStore.SetPerfHudEnabled(!SettingsStore.Current.PerfHudEnabled);
         KitLibRootServices.EnsureRootServicesNode();
         DevPerfOverlayUI.SyncVisibility();
-        HotkeyDiagnostics.LogHandled(nameof(DevPerfHotkeys), $"perf overlay {(next ? "ON" : "OFF")}");
         viewport.SetInputAsHandled();
         return true;
     }

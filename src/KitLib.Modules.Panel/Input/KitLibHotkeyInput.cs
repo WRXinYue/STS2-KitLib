@@ -9,11 +9,9 @@ namespace KitLib.Hotkeys;
 /// official <c>NInputManager</c> (before keycode-only game shortcuts run).
 /// </summary>
 internal static class KitLibHotkeyInput {
-    internal static bool TryHandleAll(InputEvent @event, Viewport viewport, string pipeline) {
+    internal static bool TryHandleAll(InputEvent @event, Viewport viewport) {
         if (@event is not InputEventKey key || !key.Pressed || key.Echo)
             return false;
-
-        HotkeyDiagnostics.LogKeyReceived(pipeline, key);
 
         if (KitLibHotkeySettingsSection.TryCaptureInputEvent(key, viewport))
             return true;
@@ -26,8 +24,6 @@ internal static class KitLibHotkeyInput {
             return true;
 
         if (ShouldSuppressOfficialModifiedShortcut(key)) {
-            HotkeyDiagnostics.LogBlocked(pipeline,
-                $"suppressed official keycode-only shortcut for {HotkeyBinding.From(key).FormatLabel()}");
             viewport.SetInputAsHandled();
             return true;
         }

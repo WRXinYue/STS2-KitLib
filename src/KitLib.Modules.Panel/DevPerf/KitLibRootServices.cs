@@ -22,7 +22,7 @@ internal static class KitLibRootServices {
         var existing = root.GetNodeOrNull<KitLibRootServicesNode>(RootNodeName);
         if (existing != null && GodotObject.IsInstanceValid(existing)) {
             Instance = existing;
-            DevPerfOverlayUI.SyncVisibility();
+            existing.EnsureOverlayAttached();
             KitLibHost.TryRunDevBootstrap();
             return;
         }
@@ -30,6 +30,7 @@ internal static class KitLibRootServices {
         var node = new KitLibRootServicesNode { Name = RootNodeName };
         root.AddChild(node);
         Instance = node;
+        node.EnsureOverlayAttached();
         KitLibHost.TryRunDevBootstrap();
     }
 }
@@ -54,6 +55,7 @@ internal partial class KitLibRootServicesNode : CanvasLayer {
 
     internal void EnsureOverlayAttached() {
         DevPerfOverlayUI.Attach(this);
+        DevPerfOverlayUI.SyncVisibility();
     }
 
     public override void _Process(double delta) {

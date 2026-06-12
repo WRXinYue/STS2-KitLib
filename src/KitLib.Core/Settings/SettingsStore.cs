@@ -81,6 +81,7 @@ public static class SettingsStore {
         Current.PerfHudEnabled = enabled;
         Save();
         KitLibHost.NotifyPerfHudEnabledChanged?.Invoke();
+        KitLibHost.SyncPerfHudOverlay?.Invoke();
     }
 
     public static void SetPerfHudTraceToFile(bool enabled) {

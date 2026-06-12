@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using HarmonyLib;
+using KitLib.DevPerf;
 using KitLib.Host;
 using KitLib.Settings;
 using KitLib.UI;

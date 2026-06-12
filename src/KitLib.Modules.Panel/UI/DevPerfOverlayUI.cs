@@ -15,7 +15,6 @@ internal static class DevPerfOverlayUI {
 
     static DevPerfOverlayHost? _overlay;
     static Node? _host;
-    static bool _lastVisible;
 
     internal static bool ShouldShow() {
         if (!KitLibState.IsActive)
@@ -23,7 +22,17 @@ internal static class DevPerfOverlayUI {
         return SettingsStore.Current.PerfHudEnabled;
     }
 
-    internal static void SyncVisibility() => _overlay?.SyncVisibility();
+    internal static void SyncVisibility() {
+        if (_host == null || !GodotObject.IsInstanceValid(_host)) {
+            if (KitLibRootServices.Instance != null && GodotObject.IsInstanceValid(KitLibRootServices.Instance))
+                Attach(KitLibRootServices.Instance);
+        }
+
+        if (_overlay == null || !GodotObject.IsInstanceValid(_overlay))
+            EnsureAttached();
+
+        _overlay?.SyncVisibility();
+    }
 
     internal static void Attach(Node host) {
         if (host == null || !GodotObject.IsInstanceValid(host))
@@ -91,8 +100,6 @@ internal static class DevPerfOverlayUI {
         public void SyncVisibility() {
             var show = ShouldShow();
             Visible = show;
-            if (show != _lastVisible)
-                _lastVisible = show;
 
             if (show) {
                 MoveToFront();
@@ -134,8 +141,6 @@ internal static class DevPerfOverlayUI {
 
             foreach (var line in lines)
                 _stack.AddChild(MakeLabel(line.Text, line.Alert));
-
-            KitLog.Debug("Perf", $"Overlay refreshed lines={lines.Count}");
         }
 
         static Label MakeLabel(string text, bool alert) {

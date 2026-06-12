@@ -24,7 +24,6 @@ internal static class QuickSlHotkeys {
             return false;
 
         if (!RunContext.TryGetRunAndPlayer(out _, out _)) {
-            HotkeyDiagnostics.LogBlocked(nameof(QuickSlHotkeys), "not in an active run");
             viewport.SetInputAsHandled();
             return true;
         }
@@ -36,7 +35,6 @@ internal static class QuickSlHotkeys {
         }
 
         if (save) {
-            HotkeyDiagnostics.LogHandled(nameof(QuickSlHotkeys), HotkeyActionId.QuickSave);
             if (SaveSlotManager.QuickSave())
                 QuickSlToastUI.Show(I18N.T("quickSl.saved", "Quick save complete"));
             else
