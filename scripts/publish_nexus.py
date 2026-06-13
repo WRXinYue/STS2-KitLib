@@ -513,7 +513,7 @@ def main() -> int:
     try:
         import requests  # noqa: F401
     except ImportError:
-        print("ERROR: 'requests' package not found. Run: pip install requests", file=sys.stderr)
+        print("ERROR: 'requests' package not found. Run: uv sync", file=sys.stderr)
         return 1
 
     print(f"\nUploading {zip_path.name} to Nexus Mods...")

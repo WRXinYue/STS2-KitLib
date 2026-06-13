@@ -9,6 +9,7 @@ dev = [
     "black>=24.0.0",
     "flake8>=7.0.0",
     "pre-commit>=3.7.0",
+    "requests>=2.31.0",
 ]
 
 [tool.uv]
