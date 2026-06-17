@@ -92,15 +92,26 @@ internal static class FeedbackReportUI {
 
         // ── Log file selection ─────────────────────────────────────────────
         var logFiles = FeedbackReportBuilder.ScanLogFiles();
-        var logOption = BuildLogDropdown(logFiles, out int defaultLogIndex);
-        var logRow = new HBoxContainer();
-        logRow.AddThemeConstantOverride("separation", 8);
-        var logLabel = MakeFieldLabel(I18N.T("feedback.log.label", "Attach game log file"));
-        logLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        logLabel.VerticalAlignment = VerticalAlignment.Center;
-        logRow.AddChild(logLabel);
-        logRow.AddChild(logOption);
-        vbox.AddChild(logRow);
+        OptionButton? logOption = null;
+        string? crashAutoLog = null;
+
+        if (prefill != null) {
+            // Crash-triggered: silently attach the previous session's log without asking the user.
+            foreach (var f in logFiles) {
+                if (!f.IsCurrentSession) { crashAutoLog = f.AbsPath; break; }
+            }
+        }
+        else {
+            logOption = BuildLogDropdown(logFiles);
+            var logRow = new HBoxContainer();
+            logRow.AddThemeConstantOverride("separation", 8);
+            var logLabel = MakeFieldLabel(I18N.T("feedback.log.label", "Attach game log file"));
+            logLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            logLabel.VerticalAlignment = VerticalAlignment.Center;
+            logRow.AddChild(logLabel);
+            logRow.AddChild(logOption);
+            vbox.AddChild(logRow);
+        }
 
         // ── Privacy mode ───────────────────────────────────────────────────
         var privacyRow = new HBoxContainer();
@@ -147,17 +158,20 @@ internal static class FeedbackReportUI {
             exportBtn.Text = I18N.T("feedback.exporting", "Generating…");
             statusLabel.Visible = false;
 
-            // Resolve selected log file path
-            string? selectedLog = null;
-            int sel = logOption.Selected;
-            if (sel != NoLogIndex && sel - 1 < logFiles.Count)
-                selectedLog = logFiles[sel - 1].AbsPath;
+            string? selectedLog = crashAutoLog;
+            if (logOption != null) {
+                int sel = logOption.Selected;
+                selectedLog = sel != NoLogIndex && sel - 1 < logFiles.Count
+                    ? logFiles[sel - 1].AbsPath
+                    : null;
+            }
 
             var req = new FeedbackReportBuilder.BuildRequest(
                 Title: titleInput.Text,
                 Description: descInput.Text,
                 LogFilePath: selectedLog,
-                PrivacyMode: privacyToggle.ButtonPressed);
+                PrivacyMode: privacyToggle.ButtonPressed,
+                CrashReport: prefill?.CrashReport);
 
             TaskHelper.RunSafely(RunExport(req, exportBtn, statusLabel));
         };
@@ -172,8 +186,7 @@ internal static class FeedbackReportUI {
     // ── Log file dropdown ─────────────────────────────────────────────────
 
     private static OptionButton BuildLogDropdown(
-        IReadOnlyList<(string DisplayName, string AbsPath)> logFiles,
-        out int defaultIndex) {
+        IReadOnlyList<(string DisplayName, string AbsPath, bool IsCurrentSession)> logFiles) {
 
         var opt = new OptionButton {
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkEnd,
@@ -185,19 +198,10 @@ internal static class FeedbackReportUI {
         // Index 0 = no log file
         opt.AddItem(I18N.T("feedback.log.none", "(none)"), 0);
 
-        foreach (var (name, _) in logFiles)
+        foreach (var (name, _, _) in logFiles)
             opt.AddItem(name);
 
-        // Default: select the first (most recent) log file if any
-        if (logFiles.Count > 0) {
-            opt.Selected = 1;
-            defaultIndex = 1;
-        }
-        else {
-            opt.Selected = 0;
-            defaultIndex = 0;
-        }
-
+        opt.Selected = logFiles.Count > 0 ? 1 : 0;
         return opt;
     }
 

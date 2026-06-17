@@ -53,7 +53,8 @@ internal static class CrashRecoveryPromptUI {
 
         var prefill = new FeedbackPrefill(
             CrashRecoveryStore.FormatPrefillTitle(report),
-            CrashRecoveryStore.FormatPrefillDescription(report));
+            CrashRecoveryStore.FormatPrefillDescription(report),
+            report);
 
         var titleText = report.Kind == CrashReportKind.OrphanSession
             ? I18N.T("crashRecovery.startup.title", "Previous session may have crashed")

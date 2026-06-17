@@ -61,7 +61,8 @@ internal static class ErrorFeedbackPromptUI {
 
         var prefill = new FeedbackPrefill(
             CrashRecoveryStore.FormatPrefillTitle(report),
-            CrashRecoveryStore.FormatPrefillDescription(report));
+            CrashRecoveryStore.FormatPrefillDescription(report),
+            report);
 
         var overlay = BuildOverlay(
             CrashRecoveryStore.FormatPromptBody(report),

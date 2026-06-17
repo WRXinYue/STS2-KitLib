@@ -249,13 +249,13 @@ publish upload-github:
 	$(PYTHON) scripts/publish_release.py $(if $(VERSION),--version $(VERSION),)
 
 nexus upload-nexus:
-	$(UV) run python scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
+	$(PYTHON) scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
 
 nexus-mcp upload-nexus-mcp:
-	$(UV) run python scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
+	$(PYTHON) scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
 nexus-kitlog upload-nexus-kitlog:
-	$(UV) run python scripts/publish_nexus.py --kitlog $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
+	$(PYTHON) scripts/publish_nexus.py --kitlog $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
 nuget upload-nuget:
 	$(PYTHON) scripts/publish_nuget.py $(if $(VERSION),--version $(VERSION),)

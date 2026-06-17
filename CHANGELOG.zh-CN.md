@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **反馈报告附错日志** — 崩溃恢复提示触发导出时，ZIP 附加的是崩溃后新进程的启动日志，而非崩溃进程的日志。现在 crash 触发时不再显示日志下拉框，直接自动附加最近一次非当前会话的 log 文件。
+- **反馈报告缺少崩溃细节** — `pending-crash-report.json` 在 `Build()` 执行前就被 Consume 删除，导致异常类型、消息和调用栈从 ZIP 中消失。崩溃信息现在通过 `FeedbackPrefill` 传递，并以 `crash-report.json` 写入压缩包。
+- **`FeedbackReportBuilder.ScanLogFiles()` 丢弃 `IsCurrentSession`** — 公开包装层丢弃了 `GameLogFileHydrator` 返回的 `IsCurrentSession` 标志，导致 UI 无法区分当前会话与历史 log。
+
 ## [0.21.0] - 2026-06-13
 
 ### Added
