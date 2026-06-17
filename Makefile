@@ -72,7 +72,7 @@ PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles extract-touchpoints check-api verify-profiles capture-sts2-ref \
-        launch sync-launch sync-full-launch dev-session compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
+        launch sync-launch sync-full-launch dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
         upload-github upload-nexus upload-nuget
 
@@ -106,6 +106,8 @@ help:
 	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
 	@echo "  sync-framework-mods  copy DevMode NuGet STS2-RitsuLib into game (overwrites other RitsuLib builds)"
 	@echo "  launch       launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)"
+	@echo "  push-android build then adb push to Android mods dir (default: StS2LauncherMM/Mods)"
+	@echo "  push-android-wsdx233  push to game sandbox (run-as) + restart game"
 	@echo "  build        publish to build/KitLib/ only (no game)"
 	@echo "  deploy       copy build/KitLib/ into game mods/KitLib/ (no republish)"
 	@echo "  compile      dotnet build to game mods (no .pck)"
@@ -223,6 +225,12 @@ sync-launch: sync launch
 
 dev-session:
 	$(PYTHON) scripts/dev_session.py --sync --launch --wait-bridge 120
+
+push-android: build
+	$(PYTHON) scripts/push_android.py --no-build
+
+push-android-wsdx233: build
+	$(PYTHON) scripts/push_android.py --no-build --target game --restart
 
 compile-tools:
 	$(DOTNET) build $(MCP_PROJECT) -c Release

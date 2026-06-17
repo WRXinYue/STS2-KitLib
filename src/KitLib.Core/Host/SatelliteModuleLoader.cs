@@ -1,4 +1,5 @@
 using System.Reflection;
+using KitLib.Abstractions.Compat;
 using KitLib.Abstractions.Host;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
@@ -89,7 +90,23 @@ internal static class SatelliteModuleLoader {
         }
     }
 
+    // Modules that create Godot partial-class nodes and add them to the SceneTree.
+    // On Android (wsdx233 community build) this causes a native SIGABRT; skip them.
+    static readonly string[] AndroidUnsupportedModules = [
+        ModuleIds.Panel,
+        ModuleIds.ModPanel,
+        ModuleIds.Ai,
+        ModuleIds.Cheat,
+        ModuleIds.Dev,
+    ];
+
     static bool TryLoadModule(string modDir, ModuleSpec spec, IReadOnlyDictionary<string, bool> resolvedToggles) {
+        if (Sts2RuntimeProfile.Platform == Sts2Platform.Android
+            && Array.Exists(AndroidUnsupportedModules, id => id == spec.ModuleId)) {
+            KitLog.Warn($"Module {spec.ModuleId} skipped — Godot scene modules are not supported on Android.");
+            return false;
+        }
+
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
             KitLog.Warn($"Module {spec.ModuleId} skipped — STS2 profile {Sts2RuntimeProfile.Current} is unsupported or sanity mismatch.");
