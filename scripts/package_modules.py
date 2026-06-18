@@ -184,22 +184,6 @@ def _stage_bundle(dist_root: Path) -> Path:
     if manifest.is_file():
         shutil.copy2(manifest, dst / "mod_manifest.json")
 
-    readme = dst / "INSTALL.txt"
-    readme.write_text(
-        "KitLib single-mod install\n"
-        "=======================\n"
-        "Extract this KitLib/ folder into your STS2 mods directory:\n"
-        "  mods/KitLib/\n\n"
-        "Required next to KitLib.dll: KitLib.Abstractions.dll, Semver.dll,\n"
-        "Microsoft.Extensions.Primitives.dll (do not delete).\n"
-        "Satellite module DLLs live under mods/KitLib/modules/. Core hot-loads\n"
-        "them at startup; a module is skipped when missing, conflicting, or\n"
-        "failing to initialize.\n\n"
-        "Base modules: KitLib.User.dll and KitLib.ModPanel.dll (main-menu Mods settings).\n"
-        "Optional: delete other DLLs under modules/ to disable features\n"
-        "(e.g. remove modules/KitLib.Panel.dll for no DEVMODE rail; KitLib.AI.dll disables AI host).\n",
-        encoding="utf-8",
-    )
     return dst
 
 
