@@ -33,6 +33,10 @@ ABSTRACTIONS_RUNTIME_DLLS = [
     "Microsoft.Extensions.Primitives.dll",
 ]
 
+# Build artifacts that must not ship in mods/KitLib/ (STS2 treats some JSON as mod manifests).
+_SKIP_PACKAGE_SUFFIXES = {".pdb"}
+_SKIP_PACKAGE_NAME_SUFFIXES = (".deps.json", ".runtimeconfig.json")
+
 
 def _resolve_abstractions_dll() -> Path:
     candidate = _REPO / "build" / BUNDLE_ID / ABSTRACTIONS_DLL
@@ -113,6 +117,19 @@ def _dotnet_build() -> None:
     )
 
 
+def _should_package_root_item(item: Path) -> bool:
+    if item.name == MODULES_SUBDIR and item.is_dir():
+        return False
+    lower = item.name.lower()
+    if any(lower.endswith(suffix) for suffix in _SKIP_PACKAGE_NAME_SUFFIXES):
+        return False
+    if item.suffix.lower() in _SKIP_PACKAGE_SUFFIXES:
+        return False
+    if item.suffix.lower() == ".dll" and item.stem in BUNDLE_DLLS:
+        return False
+    return True
+
+
 def _resolve_dll(mod_id: str) -> Path | None:
     bundled = _REPO / "build" / BUNDLE_ID / MODULES_SUBDIR / f"{mod_id}.dll"
     subdir = _REPO / "build" / mod_id / f"{mod_id}.dll"
@@ -139,7 +156,7 @@ def _stage_bundle(dist_root: Path) -> Path:
                     if module_file.is_file():
                         shutil.copy2(module_file, modules_dst / module_file.name)
                 continue
-            if item.suffix.lower() == ".dll" and item.stem in BUNDLE_DLLS:
+            if not _should_package_root_item(item):
                 continue
             target = dst / item.name
             if item.is_dir():
@@ -162,6 +179,10 @@ def _stage_bundle(dist_root: Path) -> Path:
         dll = _resolve_dll(mod_id)
         if dll is not None:
             shutil.copy2(dll, modules_dst / f"{mod_id}.dll")
+
+    manifest = _REPO / "KitLib.json"
+    if manifest.is_file():
+        shutil.copy2(manifest, dst / "mod_manifest.json")
 
     readme = dst / "INSTALL.txt"
     readme.write_text(

@@ -8,6 +8,8 @@
     <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
     <AnalysisLevel>latest</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Mods load inside the game host; .deps.json in mods/ is parsed as a mod manifest. -->
+    <GenerateDependencyFile>false</GenerateDependencyFile>
   </PropertyGroup>
   <!-- Must run before Sts2DataDir is derived (CI has no local.props). -->
   <Import Project="$(RepoRoot)eng/Sts2Refs.props" Condition="Exists('$(RepoRoot)eng/Sts2Refs.props')" />
