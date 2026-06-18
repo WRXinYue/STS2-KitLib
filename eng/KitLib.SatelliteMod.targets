@@ -8,6 +8,8 @@
   </PropertyGroup>
   <Target Name="ForceModOutputPath" BeforeTargets="CoreCompile">
     <PropertyGroup>
+      <RepoBuildDir>$(RepoRoot)build\$(ModId)</RepoBuildDir>
+      <PublishDir>$(RepoBuildDir)</PublishDir>
       <OutputPath>$(RepoBuildDir)\</OutputPath>
       <OutDir>$(RepoBuildDir)\</OutDir>
       <IntermediateOutputPath>$(RepoBuildDir)\obj\</IntermediateOutputPath>
@@ -20,11 +22,5 @@
       <Compile Remove="@(Compile)" Condition="$([System.String]::Copy('%(Identity)').Contains('Godot.SourceGenerators'))" />
       <Compile Remove="@(Compile)" Condition="$([System.String]::Copy('%(Identity)').Contains('GodotPlugins'))" />
     </ItemGroup>
-  </Target>
-  <Target Name="CopySatelliteManifest" AfterTargets="Build">
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\$(ModId).json"
-          DestinationFiles="$(PublishDir)\mod_manifest.json"
-          SkipUnchangedFiles="true"
-          Condition="Exists('$(MSBuildProjectDirectory)\$(ModId).json')" />
   </Target>
 </Project>

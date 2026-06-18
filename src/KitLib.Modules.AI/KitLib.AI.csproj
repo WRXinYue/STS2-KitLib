@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
-  <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
   <PropertyGroup>
     <ModId>KitLib.AI</ModId>
     <AssemblyName>KitLib.AI</AssemblyName>
     <RootNamespace>KitLib</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
+  <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
   <Import Project="$(RepoRoot)eng\KitLib.Satellite.Compile.props" />
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">

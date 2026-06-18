@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
-  <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
   <PropertyGroup>
     <ModId>KitLib.Panel</ModId>
     <AssemblyName>KitLib.Panel</AssemblyName>
@@ -8,6 +7,9 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GodotExportPreset>BasicExport</GodotExportPreset>
     <RunPckExport>false</RunPckExport>
+  </PropertyGroup>
+  <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
+  <PropertyGroup>
     <ModPckPath>$(PublishDir)\$(ModId).pck</ModPckPath>
   </PropertyGroup>
   <Import Project="$(RepoRoot)eng\KitLib.Satellite.Compile.props" />

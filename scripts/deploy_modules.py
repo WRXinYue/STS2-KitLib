@@ -84,22 +84,16 @@ def _resolve_nuget_lib_dll(package_folder: str, dll_name: str) -> Path | None:
 
 
 def _resolve_abstractions_dll() -> Path:
-    for candidate in (
-        _REPO / "build" / ABSTRACTIONS_DLL,
-        _REPO / "build" / BUNDLE_ID / ABSTRACTIONS_DLL,
-    ):
-        if candidate.is_file():
-            return candidate
+    candidate = _REPO / "build" / BUNDLE_ID / ABSTRACTIONS_DLL
+    if candidate.is_file():
+        return candidate
     raise FileNotFoundError(f"Missing {ABSTRACTIONS_DLL} build output. Run dotnet build / make build-all first.")
 
 
 def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
-    for candidate in (
-        _REPO / "build" / dll_name,
-        _REPO / "build" / BUNDLE_ID / dll_name,
-    ):
-        if candidate.is_file():
-            return candidate
+    candidate = _REPO / "build" / BUNDLE_ID / dll_name
+    if candidate.is_file():
+        return candidate
     package_folder = dll_name[:-4].lower()
     if dll_name == "Microsoft.Extensions.Primitives.dll":
         package_folder = "microsoft.extensions.primitives"
@@ -124,15 +118,12 @@ def _mods_root(game_root: Path) -> Path:
 
 
 def _resolve_dll(mod_id: str) -> Path | None:
-    subdir = _REPO / "build" / mod_id / f"{mod_id}.dll"
-    flat = _REPO / "build" / f"{mod_id}.dll"
     bundled = _REPO / "build" / BUNDLE_ID / MODULES_SUBDIR / f"{mod_id}.dll"
+    subdir = _REPO / "build" / mod_id / f"{mod_id}.dll"
     if bundled.is_file():
         return bundled
     if subdir.is_file():
         return subdir
-    if flat.is_file():
-        return flat
     return None
 
 
@@ -239,7 +230,7 @@ def _deploy_bundle(mods_root: Path) -> list[Path]:
     else:
         core_dll = _resolve_dll(BUNDLE_ID)
         if core_dll is None:
-            raise FileNotFoundError(f"Missing Core build output under build/{BUNDLE_ID}/ or build/KitLib.dll")
+            raise FileNotFoundError(f"Missing Core build output under build/{BUNDLE_ID}/")
         if not _copy_file_safe(core_dll, dst / "KitLib.dll"):
             failed.append(dst / "KitLib.dll")
         manifest = _REPO / "KitLib.json"
