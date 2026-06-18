@@ -101,7 +101,7 @@ help:
 	@echo "  check-api    reflect KitLib API touchpoints against both sts2.dll"
 	@echo "  verify-profiles  build-profiles + check-api (pre-release)"
 	@echo "  capture-sts2-ref PROFILE=stable|beta  copy sts2.dll into eng/sts2-refs/ (validates release_info)"
-	@echo "  zip-full     build-all + package Core/Full/per-module zips under build/"
+	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
 	@echo "  sync-framework-mods  copy DevMode NuGet STS2-RitsuLib into game (overwrites other RitsuLib builds)"

@@ -44,7 +44,7 @@ Satellite modules:
 
 **Packages**
 
-- **KitLib** or **KitLib-Full** zip — extract the single `KitLib/` folder into `mods/`.
+- **KitLib** zip — extract the single `KitLib/` folder into `mods/`.
 - **Base modules** — keep `KitLib.User.dll` and `KitLib.ModPanel.dll` for logs and mod settings.
 - **Optional modules** — delete other DLLs under `modules/` to disable features (e.g. remove `KitLib.Panel.dll` for no dev rail; `KitLib.AI.dll` disables AI host), **or** use **KitLib → Mod settings → Modules** to choose a load profile (Minimal / Standard / Full) or toggle individual modules. Changes apply after **restarting the game**.
 - **Content-mod authors** — NuGet `STS2.KitLib.Abstractions`; runtime needs `KitLib.dll` + any satellite DLLs you depend on under `modules/`.
@@ -268,7 +268,7 @@ Detailed architecture, verification checklist, and desync history: **[docs/lan-h
 
 KitLib exposes a **soft-dependency** AI platform for content mods. KitLib owns the loop, snapshot capture, action execution, and vanilla combat scoring; your mod bridge supplies character semantics (snapshot extensions, strategy rules, score tweaks).
 
-**Requires:** KitLib loaded at runtime (typically **KitLib-Full** or Core + `KitLib.AI`). Reference `KitLib.dll` or **`STS2.KitLib.Abstractions`** at compile time only (do not bundle KitLib in your mod).
+**Requires:** KitLib loaded at runtime. Reference `KitLib.dll` or **`STS2.KitLib.Abstractions`** at compile time only (do not bundle KitLib in your mod).
 
 ### Registration (mod init)
 

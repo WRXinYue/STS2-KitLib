@@ -45,7 +45,7 @@ Satellite modules:
 [b]Packages[/b]
 
 [list]
-[*][b]KitLib[/b] or [b]KitLib-Full[/b] zip — extract the single [i]KitLib/[/i] folder into [i]mods/[/i].
+[*][b]KitLib[/b] zip — extract the single [i]KitLib/[/i] folder into [i]mods/[/i].
 [*][b]Base modules[/b] — keep [i]KitLib.User.dll[/i] and [i]KitLib.ModPanel.dll[/i] for logs and mod settings.
 [*][b]Optional modules[/b] — delete other DLLs under [i]modules/[/i] to disable features (e.g. remove [i]KitLib.Panel.dll[/i] for no dev rail; [i]KitLib.AI.dll[/i] disables AI host), [b]or[/b] use [b]KitLib → Mod settings → Modules[/b] to choose a load profile (Minimal / Standard / Full) or toggle individual modules. Changes apply after [b]restarting the game[/b].
 [*][b]Content-mod authors[/b] — NuGet [i]STS2.KitLib.Abstractions[/i]; runtime needs [i]KitLib.dll[/i] + any satellite DLLs you depend on under [i]modules/[/i].
@@ -304,7 +304,7 @@ Detailed architecture, verification checklist, and desync history: [b][url=./doc
 
 KitLib exposes a [b]soft-dependency[/b] AI platform for content mods. KitLib owns the loop, snapshot capture, action execution, and vanilla combat scoring; your mod bridge supplies character semantics (snapshot extensions, strategy rules, score tweaks).
 
-[b]Requires:[/b] KitLib loaded at runtime (typically [b]KitLib-Full[/b] or Core + [i]KitLib.AI[/i]). Reference [i]KitLib.dll[/i] or [b][i]STS2.KitLib.Abstractions[/i][/b] at compile time only (do not bundle KitLib in your mod).
+[b]Requires:[/b] KitLib loaded at runtime. Reference [i]KitLib.dll[/i] or [b][i]STS2.KitLib.Abstractions[/i][/b] at compile time only (do not bundle KitLib in your mod).
 
 [b]Registration (mod init)[/b]
 
@@ -602,7 +602,7 @@ mods/KitLib/
 [*][i]KitLib.AI[/i] — AI Host、自动游玩、同伴
 [/list]
 
-发布包 [b]KitLib[/b] 或 [b]KitLib-Full[/b] 解压到 [i]mods/[/i] 即可。[b]基础模块[/b]请保留 [i]KitLib.User.dll[/i] 与 [i]KitLib.ModPanel.dll[/i]。删除其他 [i]modules/[/i] 下 DLL 可禁用对应功能（例如删掉 [i]KitLib.Panel.dll[/i] 关闭 dev 侧栏；删掉 [i]KitLib.AI.dll[/i] 关闭 AI），[b]或在 KitLib → Mod 设置 → 模块[/b] 中选择加载方案（精简 / 标准 / 完整）或单独开关各模块。[b]更改需重启游戏后生效。[/b]
+发布包 [b]KitLib[/b] 解压到 [i]mods/[/i] 即可。[b]基础模块[/b]请保留 [i]KitLib.User.dll[/i] 与 [i]KitLib.ModPanel.dll[/i]。删除其他 [i]modules/[/i] 下 DLL 可禁用对应功能（例如删掉 [i]KitLib.Panel.dll[/i] 关闭 dev 侧栏；删掉 [i]KitLib.AI.dll[/i] 关闭 AI），[b]或在 KitLib → Mod 设置 → 模块[/b] 中选择加载方案（精简 / 标准 / 完整）或单独开关各模块。[b]更改需重启游戏后生效。[/b]
 
 [b]面板一览[/b]
 
@@ -855,7 +855,7 @@ macOS / Linux 下 [i]%AppData%[/i] 对应游戏账号作用域的用户数据目
 
 KitLib 提供面向内容 mod 的 [b]软依赖[/b] AI 平台：KitLib 负责循环、快照、执行与 vanilla 战斗打分；mod 桥接层提供角色语义（快照扩展、策略规则、分数修正）。
 
-[b]前提：[/b] 运行时须加载 KitLib（通常 [b]KitLib-Full[/b] 或 Core + [i]KitLib.AI[/i]）。编译时引用 [i]KitLib.dll[/i] 或 [b][i]STS2.KitLib.Abstractions[/i][/b]，[b]不要[/b]把 KitLib 打进自己的 mod 包。
+[b]前提：[/b] 运行时须加载 KitLib。编译时引用 [i]KitLib.dll[/i] 或 [b][i]STS2.KitLib.Abstractions[/i][/b]，[b]不要[/b]把 KitLib 打进自己的 mod 包。
 
 [b]注册（mod 初始化）[/b]
 

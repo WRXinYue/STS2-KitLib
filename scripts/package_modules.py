@@ -26,8 +26,6 @@ BUNDLE_DLLS = [
     "KitLib.AI",
 ]
 
-OPTIONAL_MODULE_IDS = BUNDLE_DLLS
-
 CORE_DLL = "KitLib.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
@@ -193,22 +191,6 @@ def _stage_bundle(dist_root: Path) -> Path:
     return dst
 
 
-def _stage_optional_module(mod_id: str, dist_root: Path) -> Path | None:
-    dll = _resolve_dll(mod_id)
-    if dll is None:
-        return None
-    dst = dist_root / mod_id
-    modules_dst = dst / MODULES_SUBDIR
-    modules_dst.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(dll, modules_dst / f"{mod_id}.dll")
-    readme = dst / "INSTALL.txt"
-    readme.write_text(
-        f"Optional KitLib module: {mod_id}\n" f"Copy modules/{mod_id}.dll into mods/KitLib/modules/.\n",
-        encoding="utf-8",
-    )
-    return dst
-
-
 def _zip_dir(src_dir: Path, zip_path: Path) -> None:
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     if zip_path.exists():
@@ -241,17 +223,7 @@ def main() -> int:
     main_zip = _REPO / "build" / f"KitLib-v{version}.zip"
     _zip_dir(bundle_dir, main_zip)
 
-    full_zip = _REPO / "build" / f"KitLib-Full-v{version}.zip"
-    _zip_dir(bundle_dir, full_zip)
-
-    for mod_id in OPTIONAL_MODULE_IDS:
-        optional = _stage_optional_module(mod_id, dist)
-        if optional is None:
-            continue
-        _zip_dir(optional, _REPO / "build" / f"{mod_id}-v{version}.zip")
-
-    print(f"Packaged main zip: {main_zip.name}")
-    print(f"Packaged full zip: {full_zip.name}")
+    print(f"Packaged release zip: {main_zip.name}")
     return 0
 
 

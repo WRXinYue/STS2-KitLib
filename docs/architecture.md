@@ -57,7 +57,7 @@ Cross-module internals use `InternalsVisibleTo` within the KitLib family and `Ki
 
 ```bash
 make sync-full    # build-all + deploy bundle to game mods/KitLib/
-make zip-full     # package Core / Full / per-module zips
+make zip-full     # package build/KitLib-vX.X.X.zip
 ```
 
 ## Runtime load order
