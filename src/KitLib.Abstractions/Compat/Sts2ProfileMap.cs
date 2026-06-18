@@ -30,7 +30,8 @@ public static class Sts2ProfileMap {
                 return profile;
         }
 
-        return Sts2GameProfile.Unknown;
+        // Unpinned or mistyped stable builds (e.g. 0.103.2) use the stable API line.
+        return Sts2GameProfile.StablePre106;
     }
 
     public static Sts2GameProfile Resolve(string? rawVersion, Sts2Platform platform) {

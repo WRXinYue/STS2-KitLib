@@ -22,7 +22,7 @@ public sealed class KitLibCompatStartupScanTests {
             ],
             id => id switch {
                 "NoSidecar" => new KitLibCompatResult(),
-                _ => IncompatibleGame("=0.103.2"),
+                _ => IncompatibleGame("=0.103.3"),
             });
         Assert.Empty(issues);
     }
@@ -31,7 +31,7 @@ public sealed class KitLibCompatStartupScanTests {
     public void Collect_includes_enabled_failed_mod_with_compat_sidecar() {
         var issues = KitLibCompatStartupScan.Collect(
             [Entry("LustTravel2", ModEntryLoadStatus.Failed)],
-            _ => IncompatibleGame("=0.103.2"));
+            _ => IncompatibleGame("=0.103.3"));
         Assert.Single(issues);
         Assert.Equal("LustTravel2", issues[0].ModId);
     }

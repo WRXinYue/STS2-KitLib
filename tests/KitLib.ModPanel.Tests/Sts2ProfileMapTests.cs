@@ -25,15 +25,18 @@ public sealed class Sts2ProfileMapTests {
     }
 
     [Fact]
-    public void Resolve_unpinned_versions_unknown() {
+    public void Resolve_unpinned_non_beta_versions_fall_back_to_stable() {
         Assert.Equal(
-            Sts2GameProfile.Unknown,
+            Sts2GameProfile.StablePre106,
+            Sts2ProfileMap.Resolve("0.103.2", Sts2Platform.Windows));
+        Assert.Equal(
+            Sts2GameProfile.StablePre106,
             Sts2ProfileMap.Resolve("0.105.9", Sts2Platform.Windows));
         Assert.Equal(
-            Sts2GameProfile.Unknown,
+            Sts2GameProfile.StablePre106,
             Sts2ProfileMap.Resolve("0.106.1", Sts2Platform.Windows));
         Assert.Equal(
-            Sts2GameProfile.Unknown,
+            Sts2GameProfile.StablePre106,
             Sts2ProfileMap.Resolve("0.108.0", Sts2Platform.Windows));
     }
 

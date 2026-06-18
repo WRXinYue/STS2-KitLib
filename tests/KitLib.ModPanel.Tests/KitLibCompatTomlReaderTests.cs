@@ -53,7 +53,7 @@ public sealed class KitLibCompatTomlReaderTests {
     public void TryParse_reads_lust_travel2_compat_sidecar() {
         const string toml = """
             [game]
-            version = "=0.103.2"
+            version = "=0.103.3"
 
             [kitlib]
             version = "^0.13.0"
@@ -63,7 +63,7 @@ public sealed class KitLibCompatTomlReaderTests {
             """;
         Assert.True(KitLibCompatTomlReader.TryParse(toml, out var doc));
         Assert.NotNull(doc);
-        Assert.Equal("=0.103.2", doc!.GameVersionRanges[0]);
+        Assert.Equal("=0.103.3", doc!.GameVersionRanges[0]);
         Assert.Equal("^0.13.0", doc.KitLibVersionRanges[0]);
         var runtime = new KitLibCompatRuntime { GameVersion = "0.107.0", KitLibVersion = "0.13.5" };
         Assert.False(KitLibCompatEvaluator.Evaluate(doc, runtime).IsCompatible);
