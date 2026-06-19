@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **STS2 v0.107.1** — KitLib requires the current game build (**v0.107.1**). Older versions (including **0.103.3**) are not supported.
+
 ### Fixed
 
-- **Feedback report — wrong log attached on crash** — When the crash-recovery prompt triggered the feedback export, the ZIP attached the current (post-crash) session log instead of the crashed session's log. The log file dropdown is no longer shown when the report is crash-triggered; the most recent previous-session log is selected automatically.
-- **Feedback report — crash details missing from ZIP** — `pending-crash-report.json` was consumed and deleted before `Build()` ran, so exception type, message, and stack trace were absent from the exported ZIP. The crash report is now carried through `FeedbackPrefill` and written as `crash-report.json` inside the archive.
-- **`FeedbackReportBuilder.ScanLogFiles()` dropped `IsCurrentSession`** — The public wrapper stripped the `IsCurrentSession` flag returned by `GameLogFileHydrator`, making it impossible for the UI to distinguish the current session from older logs.
+- **Crash feedback report** — Export from the crash-recovery prompt now attaches the crashed session’s log (not the new launch) and includes exception details in the ZIP again.
+- **Multiplayer** — KitLib no longer breaks joining or hosting on the current game version.
 
 ## [0.21.0] - 2026-06-13
 

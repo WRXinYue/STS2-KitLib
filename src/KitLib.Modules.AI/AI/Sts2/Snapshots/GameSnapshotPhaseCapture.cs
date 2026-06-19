@@ -242,21 +242,13 @@ internal static class GameSnapshotPhaseCapture {
     static void CaptureShopOffers(JsonObject obj, RunState state, Player player) {
         if (state.CurrentRoom is not MerchantRoom merchantRoom) return;
 
-#if STS2_BETA106PLUS
         var inventory = merchantRoom.GetLocalInventory();
-#else
-        var inventory = merchantRoom.Inventory;
-#endif
         if (inventory == null) return;
 
         var arr = new JsonArray();
         int idx = 0;
 
-#if STS2_BETA106PLUS
         var cardEntries = inventory.CharacterCardEntries.Concat(inventory.ColorlessCardEntries);
-#else
-        var cardEntries = inventory.CardEntries;
-#endif
         foreach (var entry in cardEntries.Where(e => e.IsStocked)) {
             var card = entry.CreationResult?.Card;
             if (card == null) continue;

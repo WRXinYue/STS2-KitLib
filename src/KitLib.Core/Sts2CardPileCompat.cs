@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Reflection;
-using KitLib.Abstractions.Compat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -13,15 +12,12 @@ internal static class Sts2CardPileCompat {
         CardModel combatCard,
         PileType pileType,
         Player player) {
-        if (Sts2RuntimeProfile.Current == Sts2GameProfile.Beta106Plus) {
-            if (await TryInvokeAddGeneratedCardToCombat(combatCard, pileType, player, preferPlayerArg: true))
-                return;
-        }
-        else if (await TryInvokeAddGeneratedCardToCombat(combatCard, pileType, player, preferPlayerArg: false))
+        if (await TryInvokeAddGeneratedCardToCombat(combatCard, pileType, player, preferPlayerArg: true))
+            return;
+        if (await TryInvokeAddGeneratedCardToCombat(combatCard, pileType, player, preferPlayerArg: false))
             return;
 
-        throw new MissingMethodException(
-            "Unable to resolve AddGeneratedCardToCombat for current sts2.dll profile.");
+        throw new MissingMethodException("Unable to resolve AddGeneratedCardToCombat on CardPileCmd.");
     }
 
     static async Task<bool> TryInvokeAddGeneratedCardToCombat(
@@ -34,7 +30,7 @@ internal static class Sts2CardPileCompat {
             .ToArray();
 
         foreach (var method in methods) {
-            if (!MatchesAddProfile(method, preferPlayerArg))
+            if (!MatchesAddSignature(method, preferPlayerArg))
                 continue;
             if (!TryBuildAddArguments(method, combatCard, pileType, player, out var args))
                 continue;
@@ -46,7 +42,7 @@ internal static class Sts2CardPileCompat {
         return false;
     }
 
-    static bool MatchesAddProfile(MethodInfo method, bool preferPlayerArg) {
+    static bool MatchesAddSignature(MethodInfo method, bool preferPlayerArg) {
         var parameters = method.GetParameters();
         if (parameters.Length < 2)
             return false;

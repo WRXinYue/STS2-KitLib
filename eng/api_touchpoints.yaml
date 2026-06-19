@@ -2,8 +2,8 @@
 # profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.
 
 profiles:
-  stable: "0.103.3"
-  beta: "0.107.0"
+  stable: "0.107.1"
+  beta: "0.107.1"
 
 touchpoints:
   - id: ActChangeSynchronizer.OnPlayerReady

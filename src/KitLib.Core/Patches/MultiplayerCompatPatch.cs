@@ -44,11 +44,7 @@ internal static class MultiplayerCompatRules {
     }
 
     public static void NormalizeInitialGameInfoMessage(ref InitialGameInfoMessage message) {
-        message.mods = FilterIgnoredModSignatures(message.mods, out var removed);
-        if (removed > 0 && !_loggedModFilter) {
-            _loggedModFilter = true;
-            MainFile.Logger.Info($"Multiplayer: filtered {removed} mod signature(s) from handshake.");
-        }
+        FilterHandshakeModFields(ref message);
 
         if (CanNormalizeModelIdHash() && message.idDatabaseHash != ModelIdSerializationCache.Hash) {
             message.idDatabaseHash = ModelIdSerializationCache.Hash;
@@ -57,6 +53,36 @@ internal static class MultiplayerCompatRules {
                 MainFile.Logger.Warn("Normalized multiplayer ModelDb hash for KitLib compatibility.");
             }
         }
+    }
+
+    private static void FilterHandshakeModFields(ref InitialGameInfoMessage message) {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
+        var type = message.GetType();
+
+        var modsField = type.GetField("mods", flags);
+        if (modsField?.FieldType == typeof(List<string>)) {
+            var current = (List<string>?)modsField.GetValue(message);
+            modsField.SetValue(message, FilterIgnoredModSignatures(current, out var removed));
+            LogModFilter(removed);
+            return;
+        }
+
+        var gameplayField = type.GetField("gameplayAffectingMods", flags);
+        var otherField = type.GetField("otherMods", flags);
+        if (gameplayField?.FieldType != typeof(List<string>) || otherField?.FieldType != typeof(List<string>))
+            return;
+
+        var gameplay = (List<string>?)gameplayField.GetValue(message);
+        var other = (List<string>?)otherField.GetValue(message);
+        gameplayField.SetValue(message, FilterIgnoredModSignatures(gameplay, out var removedGameplay));
+        otherField.SetValue(message, FilterIgnoredModSignatures(other, out var removedOther));
+        LogModFilter(removedGameplay + removedOther);
+    }
+
+    private static void LogModFilter(int removed) {
+        if (removed <= 0 || _loggedModFilter) return;
+        _loggedModFilter = true;
+        MainFile.Logger.Info($"Multiplayer: filtered {removed} mod signature(s) from handshake.");
     }
 
     private static bool CanNormalizeModelIdHash() {

@@ -60,7 +60,6 @@ internal sealed class AiCombatCardSelector : ICardSelector {
         return Task.FromResult(picked.AsEnumerable());
     }
 
-#if STS2_BETA106PLUS
     public CardRewardSelection GetSelectedCardReward(
         IReadOnlyList<CardCreationResult> options,
         IReadOnlyList<CardRewardAlternative> alternatives) {
@@ -68,14 +67,6 @@ internal sealed class AiCombatCardSelector : ICardSelector {
             return default;
         return new CardRewardSelection { card = options[0].Card };
     }
-#else
-    public CardModel? GetSelectedCardReward(
-        IReadOnlyList<CardCreationResult> options,
-        IReadOnlyList<CardRewardAlternative> alternatives) {
-        if (options.Count == 0) return null;
-        return options[0].Card;
-    }
-#endif
 
     HandSelectContext BuildContext() {
         if (!_stateProvider.TryGetRunAndPlayer(out var state, out var player))

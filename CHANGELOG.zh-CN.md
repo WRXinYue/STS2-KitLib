@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **STS2 v0.107.1** — KitLib 需要当前游戏版本（**v0.107.1**），不再支持更旧版本（含 **0.103.3**）。
+
 ### Fixed
 
-- **反馈报告附错日志** — 崩溃恢复提示触发导出时，ZIP 附加的是崩溃后新进程的启动日志，而非崩溃进程的日志。现在 crash 触发时不再显示日志下拉框，直接自动附加最近一次非当前会话的 log 文件。
-- **反馈报告缺少崩溃细节** — `pending-crash-report.json` 在 `Build()` 执行前就被 Consume 删除，导致异常类型、消息和调用栈从 ZIP 中消失。崩溃信息现在通过 `FeedbackPrefill` 传递，并以 `crash-report.json` 写入压缩包。
-- **`FeedbackReportBuilder.ScanLogFiles()` 丢弃 `IsCurrentSession`** — 公开包装层丢弃了 `GameLogFileHydrator` 返回的 `IsCurrentSession` 标志，导致 UI 无法区分当前会话与历史 log。
+- **崩溃反馈报告** — 从崩溃恢复提示导出时，ZIP 会附加崩溃会话的日志（而非重启后的新日志），并再次包含异常详情。
+- **联机** — 在当前游戏版本下加载 KitLib 不再导致无法正常加入或主持联机。
 
 ## [0.21.0] - 2026-06-13
 

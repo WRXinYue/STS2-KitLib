@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Reflection;
-using KitLib.Abstractions.Compat;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib;
@@ -11,9 +10,6 @@ internal static class Sts2ManifestCompat {
         if (deps == null)
             return [];
 
-        if (Sts2RuntimeProfile.Current == Sts2GameProfile.StablePre106)
-            return CopyStringDependencies(deps);
-
         return CopyStructuredDependencies(deps);
     }
 
@@ -22,15 +18,6 @@ internal static class Sts2ManifestCompat {
             "dependencies",
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
         return prop?.GetValue(manifest) as IEnumerable;
-    }
-
-    static string[] CopyStringDependencies(IEnumerable deps) {
-        var list = new List<string>();
-        foreach (var dep in deps) {
-            if (dep is string s && !string.IsNullOrEmpty(s))
-                list.Add(s);
-        }
-        return list.Count == 0 ? [] : list.ToArray();
     }
 
     static string[] CopyStructuredDependencies(IEnumerable deps) {

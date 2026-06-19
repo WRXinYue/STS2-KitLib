@@ -109,7 +109,7 @@ internal static class SatelliteModuleLoader {
 
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
-            KitLog.Warn($"Module {spec.ModuleId} skipped — STS2 profile {Sts2RuntimeProfile.Current} is unsupported or sanity mismatch.");
+            KitLog.Warn($"Module {spec.ModuleId} skipped — unsupported STS2 version {Sts2RuntimeProfile.RawVersion ?? "?"}.");
             return false;
         }
 

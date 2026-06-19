@@ -14,9 +14,10 @@ from lib.steam import _sts2_game_root_valid, read_sts2_dir_from_local_props, res
 
 ProfileName = str  # "stable" | "beta"
 
+# Public (stable) and Steam beta currently ship the same v0.107.1 API; pins may diverge later.
 _PINNED_VERSIONS: dict[str, str] = {
-    "stable": "0.103.3",
-    "beta": "0.107.0",
+    "stable": "0.107.1",
+    "beta": "0.107.1",
 }
 
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
@@ -61,10 +62,9 @@ def compile_profile_from_game_version(raw: str | None) -> ProfileName | None:
     major = int(match.group(1))
     minor = int(match.group(2))
     if major == 0 and minor >= 106:
-        return "beta"
-    if major == 0 and minor <= 105:
+        # Same install path/version for public + beta today; default to stable (public).
         return "stable"
-    return "beta" if minor >= 106 else "stable"
+    return None
 
 
 def read_local_props_profile(repo_root: Path) -> ProfileName | None:
@@ -99,6 +99,7 @@ def infer_profile_from_ref_hash(game_root: Path, *, repo_root: Path) -> ProfileN
     except OSError:
         return None
 
+    matched: ProfileName | None = None
     for profile in _PINNED_VERSIONS:
         ref = ref_root(repo_root, profile)
         if not ref_is_valid(ref):
@@ -106,11 +107,13 @@ def infer_profile_from_ref_hash(game_root: Path, *, repo_root: Path) -> ProfileN
         try:
             ref_dll = resolve_sts2_dll(ref)
             if _file_sha256(ref_dll) == install_hash:
-                return profile
+                matched = profile
+                if profile == "beta":
+                    return profile
         except OSError:
             continue
 
-    return None
+    return matched
 
 
 def resolve_compile_profile(
@@ -119,7 +122,7 @@ def resolve_compile_profile(
     sts2_dir: Path | None = None,
     allow_game_inference: bool = True,
 ) -> ProfileName:
-    """Resolve MSBuild Sts2Profile for compile (#if STS2_BETA106PLUS).
+    """Resolve MSBuild Sts2Profile for compile (stable|beta ref channel).
 
     Precedence: STS2_PROFILE env, then game install (release_info / ref hash),
     then local.props Sts2Profile, then stable.

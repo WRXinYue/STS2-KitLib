@@ -1,29 +1,15 @@
 using HarmonyLib;
 using KitLib;
-using KitLib.Abstractions.Compat;
 using KitLib.Actions;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
-using MegaCrit.Sts2.Core.Nodes.Rooms;
 
 namespace KitLib.Patches;
 
 /// <summary>
-/// Mid-combat adds (including vanilla monster summons like Ovicopter lay eggs) may pass
-/// <c>slotName == ""</c> when the current encounter has no slot scene. Treat empty like null
-/// and auto-layout enemies, matching <see cref="CombatEnemyActions.AddMonster"/>.
+/// Mid-combat adds may pass <c>slotName == ""</c>; auto-layout enemies when empty.
 /// </summary>
-[HarmonyPatch(typeof(NCombatRoom), nameof(NCombatRoom.AddCreature))]
-internal static class CombatSummonSlotNormalizePatch {
-    static bool Prepare() => Sts2RuntimeProfile.Current == Sts2GameProfile.StablePre106;
-
-    static void Prefix(Creature creature) {
-        if (string.IsNullOrEmpty(creature.SlotName))
-            creature.SlotName = null;
-    }
-}
-
 [HarmonyPatch(typeof(CreatureCmd), nameof(CreatureCmd.Add), typeof(Creature))]
 internal static class CombatSummonSlotRepositionPatch {
     static void Postfix(Creature creature) {

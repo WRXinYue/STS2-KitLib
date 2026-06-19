@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Reflection;
-using KitLib.Abstractions.Compat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models;
@@ -13,14 +12,12 @@ internal static class Sts2PowerCompat {
         Creature target,
         decimal amount,
         Creature source) {
-        var preferChoiceContext = Sts2RuntimeProfile.Current == Sts2GameProfile.Beta106Plus;
-        if (await TryInvokeApply(mutable, target, amount, source, preferChoiceContext))
+        if (await TryInvokeApply(mutable, target, amount, source, preferChoiceContext: true))
+            return;
+        if (await TryInvokeApply(mutable, target, amount, source, preferChoiceContext: false))
             return;
 
-        if (preferChoiceContext && await TryInvokeApply(mutable, target, amount, source, false))
-            return;
-
-        throw new MissingMethodException("Unable to resolve PowerCmd.Apply for current sts2.dll profile.");
+        throw new MissingMethodException("Unable to resolve PowerCmd.Apply.");
     }
 
     static async Task<bool> TryInvokeApply(
@@ -34,7 +31,7 @@ internal static class Sts2PowerCompat {
             .ToArray();
 
         foreach (var method in methods) {
-            if (!MatchesApplyProfile(method, preferChoiceContext))
+            if (!MatchesApplySignature(method, preferChoiceContext))
                 continue;
             if (!TryBuildApplyArguments(method, mutable, target, amount, source, out var args))
                 continue;
@@ -46,7 +43,7 @@ internal static class Sts2PowerCompat {
         return false;
     }
 
-    static bool MatchesApplyProfile(MethodInfo method, bool preferChoiceContext) {
+    static bool MatchesApplySignature(MethodInfo method, bool preferChoiceContext) {
         var parameters = method.GetParameters();
         if (parameters.Length < 5)
             return false;

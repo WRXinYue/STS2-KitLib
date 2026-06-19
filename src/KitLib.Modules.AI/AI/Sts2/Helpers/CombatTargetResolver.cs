@@ -3,11 +3,7 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Models;
 
-#if STS2_BETA106PLUS
 using LiveCombatState = MegaCrit.Sts2.Core.Combat.ICombatState;
-#else
-using LiveCombatState = MegaCrit.Sts2.Core.Combat.CombatState;
-#endif
 
 namespace KitLib.AI.Sts2.Helpers;
 

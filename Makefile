@@ -49,7 +49,7 @@ DEPLOY_TOOLS_BUILD := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID)
 # Use -p: (not /p:) so Git Bash on Windows does not treat /p:... as a MSYS path.
 DEPLOY_TO_GAME := -p:DeployToGame=true
 
-# Sts2Profile from local.props (make init) drives STS2_BETA106PLUS (see Directory.Build.props).
+# Sts2Profile from local.props (make init) selects stable|beta ref channel (see Directory.Build.props).
 STS2_COMPILE_PROFILE ?= $(shell $(PYTHON) scripts/resolve_sts2_compile_profile.py)
 STS2_MSBUILD_PROFILE := -p:Sts2Profile=$(STS2_COMPILE_PROFILE)
 # Copy build/KitLib/ into mods/KitLib/ only — never republish into the game tree.
@@ -150,7 +150,7 @@ format:
 	$(UV) run black scripts
 
 format-check:
-	@test -f eng/sts2-refs/stable/0.103.3/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs (git lfs pull?). Run: make capture-sts2-ref PROFILE=stable" >&2; exit 1)
+	@test -f eng/sts2-refs/stable/0.107.1/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs (git lfs pull?). Run: make capture-sts2-ref PROFILE=stable" >&2; exit 1)
 	$(DOTNET) format KitLib.sln --verify-no-changes
 
 lint-scripts:
