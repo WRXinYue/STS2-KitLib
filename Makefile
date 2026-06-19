@@ -71,7 +71,8 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,)
 STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync $(STEAM_SYNC_FLAGS)
-STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload
+STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload --optional
+STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles extract-touchpoints check-api verify-profiles capture-sts2-ref \
@@ -282,7 +283,7 @@ steam-workspace: build-all
 	$(STEAM_SYNC) --skip-build
 
 upload-steam: steam-workspace
-	$(STEAM_UPLOAD)
+	$(STEAM_UPLOAD_STRICT)
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py

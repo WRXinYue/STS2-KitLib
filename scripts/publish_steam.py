@@ -40,18 +40,31 @@ def _read_kitlib_manifest() -> dict:
     return json.loads((_REPO / "KitLib.json").read_text(encoding="utf-8"))
 
 
-def _resolve_uploader() -> Path:
+def _uploader_setup_error() -> str | None:
     raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
     if not raw:
-        raise RuntimeError(
+        return (
             "STS2_MOD_UPLOADER is not set.\n"
             "  Add it to .env (copy from .env.example), e.g.:\n"
             "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
         )
     path = Path(os.path.expandvars(raw)).expanduser()
     if not path.is_file():
-        raise RuntimeError(f"STS2_MOD_UPLOADER points to a missing file: {path}")
-    return path.resolve()
+        return (
+            f"STS2_MOD_UPLOADER points to a missing file: {path}\n"
+            "  Download ModUploader-win-x64.zip from:\n"
+            "  https://github.com/megacrit/sts2-mod-uploader/releases/latest\n"
+            "  Extract ModUploader.exe to the path above."
+        )
+    return None
+
+
+def _resolve_uploader() -> Path:
+    err = _uploader_setup_error()
+    if err:
+        raise RuntimeError(err)
+    raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
+    return Path(os.path.expandvars(raw)).expanduser().resolve()
 
 
 def _stage_bundle(skip_build: bool) -> Path:
@@ -114,7 +127,7 @@ def sync_workspace(skip_build: bool, change_note: str | None, *, prefer_unreleas
     print(f"Workshop content synced -> {_CONTENT.relative_to(_REPO)} ({file_count} files)")
 
 
-def upload_workspace(dry_run: bool) -> int:
+def upload_workspace(dry_run: bool, *, optional: bool = False) -> int:
     for name in ("workshop.json", "image.png"):
         if not (_WORKSPACE / name).is_file():
             print(f"ERROR: missing {_WORKSPACE.relative_to(_REPO)}/{name}. Run: make steam-workspace", file=sys.stderr)
@@ -122,6 +135,13 @@ def upload_workspace(dry_run: bool) -> int:
     if not _CONTENT.is_dir() or not any(_CONTENT.iterdir()):
         print(f"ERROR: {_CONTENT.relative_to(_REPO)} is empty. Run: make steam-workspace", file=sys.stderr)
         return 1
+
+    err = _uploader_setup_error()
+    if err:
+        if optional:
+            print(f"WARN: Steam Workshop upload skipped.\n  {err}", file=sys.stderr)
+            return 0
+        raise RuntimeError(err)
 
     uploader = _resolve_uploader()
     cmd = [str(uploader), "upload", "-w", str(_WORKSPACE.resolve())]
@@ -155,12 +175,17 @@ def main() -> int:
 
     upload_ap = sub.add_parser("upload", help="Run ModUploader.exe upload -w steam/workshop")
     upload_ap.add_argument("--dry-run", action="store_true", help="Print command only")
+    upload_ap.add_argument(
+        "--optional",
+        action="store_true",
+        help="Exit 0 with a warning if STS2_MOD_UPLOADER is missing (for upload-all)",
+    )
 
     args = ap.parse_args()
     if args.command == "sync":
         sync_workspace(args.skip_build, args.change_note or None, prefer_unreleased=args.unreleased)
         return 0
-    return upload_workspace(args.dry_run)
+    return upload_workspace(args.dry_run, optional=args.optional)
 
 
 if __name__ == "__main__":
