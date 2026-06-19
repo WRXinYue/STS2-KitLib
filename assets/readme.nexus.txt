@@ -1,4 +1,4 @@
-Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference NuGet [i]STS2.KitLib.Abstractions[/i] and ship [i]kitlib.compat.toml[/i] for version checks.
+Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference NuGet STS2.KitLib.Abstractions and ship kitlib.compat.toml for version checks.
 
 [b]Getting started[/b]
 
@@ -10,18 +10,18 @@ Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host w
 [*][b]Normal runs[/b] — Title [b]Dev Mode → Normal run[/b] cycles Disabled / Toolkit / Cheat Mode.
 [/list]
 
-Install from [url=https://github.com/WRXinYue/STS2-KitLib/releases]Releases[/url] or build from source ([i]python scripts/init.py[/i], then [i]make sync-full[/i]). One package supports pinned stable and beta STS2 builds; a startup banner appears when the mod build mismatches your game.
+Install from [url=https://github.com/WRXinYue/STS2-KitLib/releases]Releases[/url] or build from source (python scripts/init.py, then make sync-full). One package supports pinned stable and beta STS2 builds; a startup banner appears when the mod build mismatches your game.
 
 [b]Features at a glance[/b]
 
-| Area | Highlights |
-| --- | --- |
-| [b]Gameplay[/b] | Cheats, cards, relics, powers, potions, enemies, events, rooms, presets |
-| [b]Automation[/b] | Hooks, SpireScratch scripts, AI Host (solo), MCP, KitLog CLI |
-| [b]Debug[/b] | Logs, combat stats, enemy intents, console, Harmony analysis, mod feedback |
-| [b]Utility[/b] | Save/load slots, themes & overlays |
+[list]
+[*][b]Gameplay[/b] — Cheats, cards, relics, powers, potions, enemies, events, rooms, presets
+[*][b]Automation[/b] — Hooks, SpireScratch scripts, AI Host (solo), MCP, KitLog CLI
+[*][b]Debug[/b] — Logs, combat stats, enemy intents, console, Harmony analysis, mod feedback
+[*][b]Utility[/b] — Save/load slots, themes & overlays
+[/list]
 
-Panel-by-panel help: [b][url=docs/pages/index.md]docs site[/url][/b] ([i]make docs[/i]) — [url=docs/pages/guide/panels/index.md]Rail panels[/url].
+Panel-by-panel help: [b][url=docs/pages/index.md]docs site[/url][/b] (make docs) — [url=docs/pages/guide/panels/index.md]Rail panels[/url].
 
 [b]Contributing[/b]
 
@@ -43,7 +43,7 @@ See [url=https://github.com/WRXinYue/STS2-KitLib/blob/main/CHANGELOG.md]CHANGELO
 
 [line]
 
-《杀戮尖塔 2》模块化游戏内工具箱。KitLib 以轻量 Core 宿主加载可选卫星模块，覆盖开发侧栏、作弊、AI、日志与主菜单 Mod 设置。内容 mod 可引用 NuGet [i]STS2.KitLib.Abstractions[/i]，并随包发布 [i]kitlib.compat.toml[/i] 做版本检查。
+《杀戮尖塔 2》模块化游戏内工具箱。KitLib 以轻量 Core 宿主加载可选卫星模块，覆盖开发侧栏、作弊、AI、日志与主菜单 Mod 设置。内容 mod 可引用 NuGet STS2.KitLib.Abstractions，并随包发布 kitlib.compat.toml 做版本检查。
 
 [b]快速上手[/b]
 
@@ -55,18 +55,18 @@ See [url=https://github.com/WRXinYue/STS2-KitLib/blob/main/CHANGELOG.md]CHANGELO
 [*][b]普通 run[/b] — 标题 [b]开发模式 → Normal run[/b] 在关闭 / 工具箱 / 作弊模式间切换。
 [/list]
 
-可从 [url=https://github.com/WRXinYue/STS2-KitLib/releases]Releases[/url] 安装，或源码构建（[i]python scripts/init.py[/i]，再 [i]make sync-full[/i]）。同一安装包支持 stable 与 beta；版本不匹配时启动会显示提示横幅。
+可从 [url=https://github.com/WRXinYue/STS2-KitLib/releases]Releases[/url] 安装，或源码构建（python scripts/init.py，再 make sync-full）。同一安装包支持 stable 与 beta；版本不匹配时启动会显示提示横幅。
 
 [b]功能概览[/b]
 
-| 类别 | 内容 |
-| --- | --- |
-| [b]玩法[/b] | 作弊、卡牌、遗物、能力、药水、敌人、事件、房间、预设 |
-| [b]自动化[/b] | 钩子、SpireScratch 脚本、AI 托管（单人）、MCP、KitLog CLI |
-| [b]调试[/b] | 日志、战斗统计、敌人意图、控制台、Harmony 分析、Mod 反馈 |
-| [b]工具[/b] | 存读档槽、主题与 overlay |
+[list]
+[*][b]玩法[/b] — 作弊、卡牌、遗物、能力、药水、敌人、事件、房间、预设
+[*][b]自动化[/b] — 钩子、SpireScratch 脚本、AI 托管（单人）、MCP、KitLog CLI
+[*][b]调试[/b] — 日志、战斗统计、敌人意图、控制台、Harmony 分析、Mod 反馈
+[*][b]工具[/b] — 存读档槽、主题与 overlay
+[/list]
 
-各面板说明：[b][url=docs/pages/index.md]文档站[/url][/b]（[i]make docs[/i]）— [url=docs/pages/guide/panels/index.md]轨道面板[/url]。
+各面板说明：[b][url=docs/pages/index.md]文档站[/url][/b]（make docs）— [url=docs/pages/guide/panels/index.md]轨道面板[/url]。
 
 [b]参与贡献[/b]
 

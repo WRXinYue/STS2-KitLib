@@ -2,7 +2,7 @@
 
 **English** | [中文](./README.zh-CN.md)
 
-Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference NuGet `STS2.KitLib.Abstractions` and ship `kitlib.compat.toml` for version checks.
+Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference NuGet STS2.KitLib.Abstractions and ship kitlib.compat.toml for version checks.
 
 ## Getting started
 
@@ -12,18 +12,16 @@ Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host w
 - **Settings → Sidebar / Game** — Reorder rail tabs, hide panels, combat overlays, game speed, skip animations.
 - **Normal runs** — Title **Dev Mode → Normal run** cycles Disabled / Toolkit / Cheat Mode.
 
-Install from [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or build from source (`python scripts/init.py`, then `make sync-full`). One package supports pinned stable and beta STS2 builds; a startup banner appears when the mod build mismatches your game.
+Install from [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or build from source (python scripts/init.py, then make sync-full). One package supports pinned stable and beta STS2 builds; a startup banner appears when the mod build mismatches your game.
 
 ## Features at a glance
 
-| Area | Highlights |
-| --- | --- |
-| **Gameplay** | Cheats, cards, relics, powers, potions, enemies, events, rooms, presets |
-| **Automation** | Hooks, SpireScratch scripts, AI Host (solo), MCP, KitLog CLI |
-| **Debug** | Logs, combat stats, enemy intents, console, Harmony analysis, mod feedback |
-| **Utility** | Save/load slots, themes & overlays |
+- **Gameplay** — Cheats, cards, relics, powers, potions, enemies, events, rooms, presets
+- **Automation** — Hooks, SpireScratch scripts, AI Host (solo), MCP, KitLog CLI
+- **Debug** — Logs, combat stats, enemy intents, console, Harmony analysis, mod feedback
+- **Utility** — Save/load slots, themes & overlays
 
-Panel-by-panel help: **[docs site](docs/pages/index.md)** (`make docs`) — [Rail panels](docs/pages/guide/panels/index.md).
+Panel-by-panel help: **[docs site](docs/pages/index.md)** (make docs) — [Rail panels](docs/pages/guide/panels/index.md).
 
 ## Contributing
 
