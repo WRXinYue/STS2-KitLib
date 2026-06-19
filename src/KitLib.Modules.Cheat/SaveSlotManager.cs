@@ -14,8 +14,10 @@ using KitLib.Host;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
+using MegaCrit.Sts2.Core.Saves.Runs;
 
 namespace KitLib;
 
@@ -70,7 +72,7 @@ internal static class SaveSlotManager {
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
 
-            var save = rm!.ToSave(state.CurrentRoom);
+            var save = rm!.ToSave(SnapshotPreFinishedRoom(state.CurrentRoom));
             var json = SaveManager.ToJson(save);
             AtomicWrite(savePath, json);
 
@@ -180,6 +182,16 @@ internal static class SaveSlotManager {
     }
 
     // ──────── Helpers ────────
+
+    // AbstractRoom.FromSerializable only restores combat and event rooms; shop/rest/treasure/map must reload via map coord.
+    private static AbstractRoom? SnapshotPreFinishedRoom(AbstractRoom? room) =>
+        room != null && IsRestorablePreFinishedRoomType(room.RoomType) ? room : null;
+
+    private static SerializableRoom? LoadPreFinishedRoom(SerializableRoom? room) =>
+        room != null && IsRestorablePreFinishedRoomType(room.RoomType) ? room : null;
+
+    private static bool IsRestorablePreFinishedRoomType(RoomType roomType) =>
+        roomType is RoomType.Monster or RoomType.Elite or RoomType.Boss or RoomType.Event;
 
     private static string SlotPath(int slot) => Path.Combine(SnapshotDir, $"slot{slot}.json");
     private static string MetaPath(int slot) => Path.Combine(SnapshotDir, $"slot{slot}_meta.json");
@@ -321,7 +333,7 @@ internal static class SaveSlotManager {
                 NGame.Instance.ReactionContainer.InitializeNetworking(
                     new MegaCrit.Sts2.Core.Multiplayer.NetSingleplayerGameService());
 
-                await NGame.Instance.LoadRun(state, save.PreFinishedRoom);
+                await NGame.Instance.LoadRun(state, LoadPreFinishedRoom(save.PreFinishedRoom));
                 MainFile.Logger.Info("SaveSlotManager: Save loaded successfully.");
             }
             catch (Exception ex) {

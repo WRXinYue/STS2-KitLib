@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **快速存读** — 在篝火、商店、宝箱或地图界面 Quick Save 后再读档不再因 `ArgumentOutOfRangeException` 崩溃；快照 `PreFinishedRoom` 与官方 Continue 一致，旧快照中非法房间类型在读档时自动忽略。
+
 ## [0.22.1] - 2026-06-19
 
 ### Removed

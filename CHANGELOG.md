@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Quick save / load** — Saving at a rest site, shop, treasure room, or on the map no longer crashes on load with `ArgumentOutOfRangeException`. Snapshots now follow the same `PreFinishedRoom` rules as the game's Continue save; older snapshots with an invalid room type are repaired on load.
+
 ## [0.22.1] - 2026-06-19
 
 ### Removed
