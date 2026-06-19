@@ -114,7 +114,8 @@ def main() -> int:
     print("  make deploy    -- deploy from build/KitLib/ (after make build)")
     print("  make build     -- artifacts under build/KitLib/ only (no game copy)")
     print("  make upload-nuget  -- zip + NuGet pack/push (NUGET_API_KEY in .env)")
-    print("  make upload-all    -- upload-github + upload-nexus + upload-nuget (one zip build)")
+    print("  make upload-steam  -- Workshop upload (STS2_MOD_UPLOADER in .env)")
+    print("  make upload-all    -- upload-github + upload-nexus + upload-nuget + upload-steam (one zip build)")
     return 0
 
 

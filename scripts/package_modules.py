@@ -203,16 +203,31 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Package KitLib single-mod releases.")
     ap.add_argument("--version", default="", help="Override version (default: KitLib.json)")
     ap.add_argument("--skip-build", action="store_true", help="Use existing build/ artifacts")
+    ap.add_argument(
+        "--stage-dir",
+        type=Path,
+        default=None,
+        help="Stage mods/KitLib/ tree at STAGE-DIR/KitLib/ and exit (no zip).",
+    )
     args = ap.parse_args()
+
+    if not args.skip_build:
+        _dotnet_build()
+
+    if args.stage_dir is not None:
+        stage_root = args.stage_dir.resolve()
+        if stage_root.exists():
+            shutil.rmtree(stage_root)
+        stage_root.mkdir(parents=True)
+        bundle_dir = _stage_bundle(stage_root)
+        print(f"Staged bundle: {bundle_dir}")
+        return 0
 
     version = args.version.strip() or _read_version()
     dist = _REPO / "build" / "dist"
     if dist.exists():
         shutil.rmtree(dist)
     dist.mkdir(parents=True)
-
-    if not args.skip_build:
-        _dotnet_build()
 
     bundle_dir = _stage_bundle(dist)
 

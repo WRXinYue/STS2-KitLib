@@ -69,12 +69,15 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Dev/KitLib.Dev.csproj src/KitLib.Modules.AI/KitLib.AI.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
+STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,)
+STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync $(STEAM_SYNC_FLAGS)
+STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles extract-touchpoints check-api verify-profiles capture-sts2-ref \
         launch sync-launch sync-full-launch dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
-        upload-github upload-nexus upload-nuget
+        upload-github upload-nexus upload-nuget steam-workspace upload-steam
 
 help:
 	@echo "KitLib — targets"
@@ -130,7 +133,9 @@ help:
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
 	@echo "  upload-nexus-kitlog  zip-kitlog + Nexus Optional KitLog CLI (NEXUS_FILE_GROUP_ID_KITLOG; alias: nexus-kitlog)"
 	@echo "  upload-nuget   zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE; alias: nuget)"
-	@echo "  upload-all     upload-github then upload-nexus then upload-nuget (one zip build)"
+	@echo "  upload-all     upload-github + upload-nexus + upload-nuget + upload-steam (one zip build)"
+	@echo "  steam-workspace  build-all + fill steam/workshop/ (content, image, bilingual changeNote)"
+	@echo "  upload-steam   steam-workspace + ModUploader (STS2_MOD_UPLOADER in .env)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo ""
 	@echo "  docs           Valaxy docs dev server (docs/)"
@@ -270,6 +275,14 @@ nuget upload-nuget:
 
 upload-all: publish nexus nuget
 	$(PYTHON) scripts/publish_nuget.py --skip-build $(if $(VERSION),--version $(VERSION),)
+	$(STEAM_SYNC) --skip-build
+	$(STEAM_UPLOAD)
+
+steam-workspace: build-all
+	$(STEAM_SYNC) --skip-build
+
+upload-steam: steam-workspace
+	$(STEAM_UPLOAD)
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py
