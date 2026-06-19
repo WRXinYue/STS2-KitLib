@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Reflection;
 using Godot;
-using KitLib.Abstractions.Modding;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Debug;
@@ -48,10 +47,7 @@ internal static class ModPanelModBanner {
         if (string.IsNullOrWhiteSpace(modsRoot))
             return null;
         var candidate = Path.Combine(modsRoot, modId);
-        if (!Directory.Exists(candidate))
-            return null;
-        var compatPath = Path.Combine(candidate, KitLibCompatDocument.FileName);
-        return File.Exists(compatPath) ? candidate : null;
+        return Directory.Exists(candidate) ? candidate : null;
     }
 
     internal static Mod? TryFindMod(string modId) {

@@ -11,15 +11,6 @@ public static class ModMainMenuPatch {
     private static NMainMenuTextButton? _modPanelButton;
     private static NMainMenu? _mainMenuRef;
 
-    [HarmonyPostfix]
-    [HarmonyPatch("_Ready")]
-    public static void AttachCompatBannerPostfix(NMainMenu __instance) {
-        // Defer twice so NDebugInfoLabelManager.UpdateText has sized %ModdedWarning first.
-        Callable.From(() => {
-            Callable.From(() => ModCompatStartupBannerUI.TryAttach(__instance)).CallDeferred();
-        }).CallDeferred();
-    }
-
     [HarmonyPrefix]
     [HarmonyPatch("_Ready")]
     public static void AddModPanelButtonPrefix(NMainMenu __instance) {

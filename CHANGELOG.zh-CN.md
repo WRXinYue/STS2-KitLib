@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **崩溃反馈报告** — 从崩溃恢复提示导出时，ZIP 会附加崩溃会话的日志（而非重启后的新日志），并再次包含异常详情。
 - **联机** — 在当前游戏版本下加载 KitLib 不再导致无法正常加入或主持联机。
 
+### Removed
+
+- **`kitlib.compat.toml` sidecar** — KitLib 不再读取 compat sidecar，也不在 Mod 设置或主菜单显示版本/依赖警告。请在游戏官方 mod 清单（`min_game_version`、`dependencies`）中声明依赖。
+
 ## [0.21.0] - 2026-06-13
 
 ### Added

@@ -661,20 +661,8 @@ public static partial class ModPanelUI {
             versionLabel.Text = ModPanelModBanner.FormatVersionBadgeText(entry.Version);
         }
         metaLabel.SetTextAutoSize($"{entry.Id} · {entry.LoadStatus}");
-        var descParts = new List<string>();
-        if (!entry.IsLoaded) {
-            var compatWarning = ModPanelCompatProbe.TryFormatWarningForModId(entry.Id);
-            if (!string.IsNullOrWhiteSpace(compatWarning))
-                descParts.Add(FormatCompatWarningBb(compatWarning));
-        }
-        if (descParts.Count == 0) {
-            descLabel.Visible = false;
-            descLabel.SetTextAutoSize("");
-        }
-        else {
-            descLabel.Visible = true;
-            descLabel.SetTextAutoSize(string.Join("\n\n", descParts));
-        }
+        descLabel.Visible = false;
+        descLabel.SetTextAutoSize("");
     }
     private static void ApplySidebarTexts(Mod? mod, string modId, MegaRichTextLabel titleLabel,
         PanelContainer versionBadgePanel, Label versionLabel, MegaRichTextLabel metaLabel,
@@ -851,12 +839,10 @@ public static partial class ModPanelUI {
         var perf = ModPanelPerf.Start();
         var generation = ModPanelContentMotion.BeginRefresh(list);
         if (ModPanelModBanner.TryFindMod(modId) == null) {
-            var compatWarning = ModPanelCompatProbe.TryFormatWarningForModId(modId);
             ModPanelContentMotion.Present(list, generation,
                 CreateModStatusDescription(
                     I18N.T("modpanel.content.modNotLoaded",
-                        "This mod is disabled or failed to load. Enable it in the list and restart the game to edit settings here."),
-                    compatWarning));
+                        "This mod is disabled or failed to load. Enable it in the list and restart the game to edit settings here.")));
             ModPanelPerf.Log("refresh.modNotLoaded", perf, $"modId={modId}");
             return;
         }

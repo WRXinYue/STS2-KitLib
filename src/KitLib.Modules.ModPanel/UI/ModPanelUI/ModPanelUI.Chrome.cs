@@ -13,17 +13,8 @@ public static partial class ModPanelUI {
         return label;
     }
 
-    internal static string FormatCompatWarningBb(string text) =>
-        string.IsNullOrWhiteSpace(text)
-            ? text
-            : $"[color={ModPanelUiPalette.CompatWarningBbColor}]{text}[/color]";
-
-    internal static MegaRichTextLabel CreateModStatusDescription(string statusText, string? compatWarning) {
-        var parts = new List<string> { statusText };
-        if (!string.IsNullOrWhiteSpace(compatWarning))
-            parts.Add(FormatCompatWarningBb(compatWarning));
-        return CreateInlineDescription(string.Join("\n\n", parts));
-    }
+    internal static MegaRichTextLabel CreateModStatusDescription(string statusText)
+        => CreateInlineDescription(statusText);
     internal static Color ResolveSidebarModTitleColor(ModEntryLoadStatus status) => status switch {
         ModEntryLoadStatus.Loaded => ModPanelUiPalette.LabelPrimary,
         ModEntryLoadStatus.Failed => ModPanelUiPalette.CompatWarning,
