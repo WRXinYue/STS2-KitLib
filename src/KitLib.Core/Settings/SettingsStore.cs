@@ -410,11 +410,6 @@ public static class SettingsStore {
         Save();
     }
 
-    public static void SetPromptOnCrashFeedback(bool enabled) {
-        Current.PromptOnCrashFeedback = enabled;
-        Save();
-    }
-
     public static void Save() {
         for (int attempt = 0; attempt < 3; attempt++) {
             try {

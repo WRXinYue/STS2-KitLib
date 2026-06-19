@@ -1318,24 +1318,5 @@
   "feedback.export": "Export report ZIP",
   "feedback.exporting": "Generating…",
   "feedback.success": "Saved: {0}",
-  "feedback.error": "Export failed: {0}",
-
-  "settings.section.crashRecovery": "Crash recovery",
-  "crashRecovery.settings.prompt": "Prompt to export feedback on crash",
-  "crashRecovery.settings.prompt.desc": "Show a dialog when an unhandled error occurs or the previous session exited abnormally",
-  "crashRecovery.startup.title": "Previous session may have crashed",
-  "crashRecovery.startup.bodyOrphan": "The game may have exited unexpectedly during your last session (PID {0}). Export a feedback ZIP to share logs with mod authors.",
-  "crashRecovery.startup.notNow": "Not now",
-  "errorFeedback.prompt.title": "Something went wrong",
-  "errorFeedback.prompt.body": "An unhandled error occurred:\n\n{0}\n\nExport a feedback ZIP to share logs with mod authors.",
-  "errorFeedback.prompt.unknownError": "Unknown error",
-  "errorFeedback.prompt.viewLogs": "View logs",
-  "errorFeedback.prompt.exportReport": "Export feedback ZIP",
-  "errorFeedback.prompt.dismiss": "Close",
-  "errorFeedback.prefill.title.orphan": "Unexpected game exit",
-  "errorFeedback.prefill.title.exception": "Unhandled error: {0}",
-  "errorFeedback.prefill.header": "Automatic crash summary:",
-  "errorFeedback.prefill.orphanDetail": "  Previous session (PID {0}) did not shut down cleanly.",
-  "errorFeedback.prefill.stackTrace": "Stack trace:",
-  "errorFeedback.prefill.stepsHint": "Steps to reproduce:"
+  "feedback.error": "Export failed: {0}"
 }

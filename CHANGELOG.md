@@ -14,11 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Crash feedback report** — Export from the crash-recovery prompt now attaches the crashed session’s log (not the new launch) and includes exception details in the ZIP again.
+- **Mod Feedback** — The log file dropdown now lists session logs from other game instances (`instances/<pid>/session.log`), not only the current window.
 - **Multiplayer** — KitLib no longer breaks joining or hosting on the current game version.
 
 ### Removed
 
+- **Automatic crash feedback prompts** — KitLib no longer detects unhandled errors or abnormal exits and opens a feedback dialog. Use **Dev Mode → Diagnostics → Mod Feedback** (or the in-run dev rail) to export a report manually.
 - **`kitlib.compat.toml` sidecar** — KitLib no longer reads or shows version/dependency warnings from compat sidecars in Mod settings or on the main menu. Declare requirements in the game's official mod manifest (`min_game_version`, `dependencies`) instead.
 
 ## [0.21.0] - 2026-06-13

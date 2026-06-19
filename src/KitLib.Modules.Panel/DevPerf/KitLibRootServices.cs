@@ -1,5 +1,4 @@
 using Godot;
-using KitLib.Feedback;
 using KitLib.Host;
 using KitLib.UI;
 
@@ -45,7 +44,6 @@ internal partial class KitLibRootServicesNode : CanvasLayer {
         KitLibRootServices.Instance = this;
         SetProcess(true);
         Callable.From(EnsureOverlayAttached).CallDeferred();
-        Callable.From(() => CrashRecoveryHooks.EnsureLifecycleNode()).CallDeferred();
     }
 
     public override void _ExitTree() {

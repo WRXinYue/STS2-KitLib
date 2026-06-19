@@ -22,25 +22,25 @@ internal static class FeedbackReportUI {
     // Sentinel index in the OptionButton meaning "do not attach a log file"
     private const int NoLogIndex = 0;
 
-    public static void Show(NGlobalUi globalUi, FeedbackPrefill? prefill = null) {
+    public static void Show(NGlobalUi globalUi) {
         var parent = (Node)globalUi;
         Remove(parent);
         Action close = () => Remove(parent);
         var dual = DevPanelUI.CreateMainOnlyDualOverlay(
             globalUi, RootName, PanelW, close, contentSeparation: 12);
-        BuildPanel(dual.MainContent, prefill);
+        BuildPanel(dual.MainContent);
         dual.AttachToScene();
     }
 
-    public static void ShowOnMainMenu(NMainMenu mainMenu, FeedbackPrefill? prefill = null) {
+    public static void ShowOnMainMenu(NMainMenu mainMenu) {
         var parent = mainMenu.GetTree().Root;
         HideAnywhere();
         Action close = HideAnywhere;
         var (_, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 12);
-        BuildPanel(vbox, prefill);
+        BuildPanel(vbox);
     }
 
-    private static void BuildPanel(VBoxContainer vbox, FeedbackPrefill? prefill = null) {
+    private static void BuildPanel(VBoxContainer vbox) {
         // ── Title ──────────────────────────────────────────────────────────
         var titleBox = new VBoxContainer();
         titleBox.AddThemeConstantOverride("separation", 4);
@@ -68,8 +68,6 @@ internal static class FeedbackReportUI {
             CustomMinimumSize = new Vector2(0, 28)
         };
         titleInput.AddThemeFontSizeOverride("font_size", 12);
-        if (prefill != null && !string.IsNullOrWhiteSpace(prefill.Value.Title))
-            titleInput.Text = prefill.Value.Title;
         form.AddChild(titleInput);
 
         // Description field
@@ -84,34 +82,21 @@ internal static class FeedbackReportUI {
         descInput.AddThemeFontSizeOverride("font_size", 11);
         descInput.AddThemeStyleboxOverride("normal", MakeInputStyle());
         descInput.AddThemeStyleboxOverride("focus", MakeInputFocusStyle());
-        if (prefill != null && !string.IsNullOrWhiteSpace(prefill.Value.Description))
-            descInput.Text = prefill.Value.Description;
         form.AddChild(descInput);
 
         vbox.AddChild(form);
 
         // ── Log file selection ─────────────────────────────────────────────
         var logFiles = FeedbackReportBuilder.ScanLogFiles();
-        OptionButton? logOption = null;
-        string? crashAutoLog = null;
-
-        if (prefill != null) {
-            // Crash-triggered: silently attach the previous session's log without asking the user.
-            foreach (var f in logFiles) {
-                if (!f.IsCurrentSession) { crashAutoLog = f.AbsPath; break; }
-            }
-        }
-        else {
-            logOption = BuildLogDropdown(logFiles);
-            var logRow = new HBoxContainer();
-            logRow.AddThemeConstantOverride("separation", 8);
-            var logLabel = MakeFieldLabel(I18N.T("feedback.log.label", "Attach game log file"));
-            logLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-            logLabel.VerticalAlignment = VerticalAlignment.Center;
-            logRow.AddChild(logLabel);
-            logRow.AddChild(logOption);
-            vbox.AddChild(logRow);
-        }
+        var logOption = BuildLogDropdown(logFiles);
+        var logRow = new HBoxContainer();
+        logRow.AddThemeConstantOverride("separation", 8);
+        var logLabel = MakeFieldLabel(I18N.T("feedback.log.label", "Attach game log file"));
+        logLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        logLabel.VerticalAlignment = VerticalAlignment.Center;
+        logRow.AddChild(logLabel);
+        logRow.AddChild(logOption);
+        vbox.AddChild(logRow);
 
         // ── Privacy mode ───────────────────────────────────────────────────
         var privacyRow = new HBoxContainer();
@@ -158,20 +143,16 @@ internal static class FeedbackReportUI {
             exportBtn.Text = I18N.T("feedback.exporting", "Generating…");
             statusLabel.Visible = false;
 
-            string? selectedLog = crashAutoLog;
-            if (logOption != null) {
-                int sel = logOption.Selected;
-                selectedLog = sel != NoLogIndex && sel - 1 < logFiles.Count
-                    ? logFiles[sel - 1].AbsPath
-                    : null;
-            }
+            string? selectedLog = null;
+            int sel = logOption.Selected;
+            if (sel != NoLogIndex && sel - 1 < logFiles.Count)
+                selectedLog = logFiles[sel - 1].AbsPath;
 
             var req = new FeedbackReportBuilder.BuildRequest(
                 Title: titleInput.Text,
                 Description: descInput.Text,
                 LogFilePath: selectedLog,
-                PrivacyMode: privacyToggle.ButtonPressed,
-                CrashReport: prefill?.CrashReport);
+                PrivacyMode: privacyToggle.ButtonPressed);
 
             TaskHelper.RunSafely(RunExport(req, exportBtn, statusLabel));
         };
@@ -201,8 +182,24 @@ internal static class FeedbackReportUI {
         foreach (var (name, _, _) in logFiles)
             opt.AddItem(name);
 
-        opt.Selected = logFiles.Count > 0 ? 1 : 0;
+        opt.Selected = ResolveDefaultLogIndex(logFiles);
         return opt;
+    }
+
+    static int ResolveDefaultLogIndex(
+        IReadOnlyList<(string DisplayName, string AbsPath, bool IsCurrentSession)> logFiles) {
+        if (logFiles.Count == 0)
+            return NoLogIndex;
+
+        int currentIdx = -1;
+        for (int i = 0; i < logFiles.Count; i++) {
+            if (logFiles[i].IsCurrentSession) {
+                currentIdx = i;
+                break;
+            }
+        }
+
+        return (currentIdx >= 0 ? currentIdx : 0) + 1;
     }
 
     // ── Export logic ──────────────────────────────────────────────────────

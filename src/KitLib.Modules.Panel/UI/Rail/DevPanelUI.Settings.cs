@@ -56,8 +56,6 @@ internal static partial class DevPanelUI {
         };
         inner.AddChild(skipAnimBtn);
 
-        CrashRecoveryPanelBuilder.AddToggleSection(inner, includeSectionHeader: true);
-
         var hotkeysBtn = CreatePlainButton(
             I18N.T("hotkeys.openInRunPanel", "Keyboard shortcuts…"),
             MdiIcon.ChevronRight);

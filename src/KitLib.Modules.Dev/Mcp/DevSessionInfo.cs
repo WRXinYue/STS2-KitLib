@@ -17,8 +17,6 @@ internal static class DevSessionInfo {
         var phase = ResolvePhase(provider, runActive);
 
         var prompts = new JsonArray();
-        if (KitLibPanelOps.IsCrashRecoveryPromptVisible?.Invoke() == true)
-            prompts.Add("CrashRecovery");
         if (KitLibPanelOps.IsProgressLossPromptVisible?.Invoke() == true)
             prompts.Add("ProgressLoss");
 

@@ -91,6 +91,8 @@ internal static class GameLogFileHydrator {
                 rows.Add((name, path, isCurrent, File.GetLastWriteTime(path)));
             }
 
+            TryAddOtherInstanceSessionLogs(rows, current, currentTag);
+
             var logsDir = LogsDirectory;
             if (Directory.Exists(logsDir)) {
                 foreach (var path in Directory.GetFiles(logsDir)) {
@@ -111,6 +113,37 @@ internal static class GameLogFileHydrator {
         }
         catch {
             return Array.Empty<(string, string, bool)>();
+        }
+    }
+
+    static void TryAddOtherInstanceSessionLogs(
+        List<(string Name, string Path, bool IsCurrent, DateTime WriteTime)> rows,
+        string? current,
+        string currentTag) {
+        try {
+            var instancesDir = Path.Combine(DataPaths.BaseDir, "instances");
+            if (!Directory.Exists(instancesDir))
+                return;
+
+            foreach (var dir in Directory.GetDirectories(instancesDir)) {
+                if (!int.TryParse(Path.GetFileName(dir), out var pid))
+                    continue;
+
+                var path = Path.Combine(dir, "session.log");
+                if (!File.Exists(path))
+                    continue;
+
+                if (rows.Exists(r => string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                bool isCurrent = pid == KitLibInstance.ProcessId
+                    || (current != null && string.Equals(path, current, StringComparison.OrdinalIgnoreCase));
+                var name = $"instances/{pid}/session.log" + (isCurrent ? " " + currentTag : "");
+                rows.Add((name, path, isCurrent, File.GetLastWriteTime(path)));
+            }
+        }
+        catch {
+            // Best-effort scan only.
         }
     }
 

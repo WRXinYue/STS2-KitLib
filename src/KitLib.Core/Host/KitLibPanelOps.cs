@@ -14,8 +14,6 @@ public static class KitLibPanelOps {
     public static bool RequestDismiss(NGlobalUi globalUi) =>
         TryDismissCurrent?.Invoke(globalUi) ?? true;
 
-    public static Action<object>? ShowErrorFeedbackFromCrash { get; set; }
-    public static Func<bool>? IsCrashRecoveryPromptVisible { get; set; }
     public static Func<bool>? IsProgressLossPromptVisible { get; set; }
     public static Action? HideDevMainMenuIfVisible { get; set; }
 }

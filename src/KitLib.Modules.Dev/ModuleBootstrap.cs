@@ -88,10 +88,6 @@ internal static class ModuleBootstrap {
 
             SafeStep("DevTabRegistration", () => DevTabRegistration.Register());
 
-            CrashRecoveryHooks.RegisterHandlers();
-            CrashRecoveryStore.MarkSessionStarted();
-            Callable.From(CrashRecoveryHooks.EnsureLifecycleNode).CallDeferred();
-
             _completed = true;
             KitLibBootstrapGate.EnterInteractive();
         }

@@ -14,11 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **崩溃反馈报告** — 从崩溃恢复提示导出时，ZIP 会附加崩溃会话的日志（而非重启后的新日志），并再次包含异常详情。
+- **Mod 反馈** — 日志下拉列表现可看到其他游戏实例的 session 日志（`instances/<pid>/session.log`），不仅限当前窗口。
 - **联机** — 在当前游戏版本下加载 KitLib 不再导致无法正常加入或主持联机。
 
 ### Removed
 
+- **自动崩溃反馈提示** — KitLib 不再检测未捕获异常或异常退出并弹出反馈对话框。请通过 **开发者模式 → 诊断 → Mod 反馈**（或局内 dev 侧栏）手动导出报告。
 - **`kitlib.compat.toml` sidecar** — KitLib 不再读取 compat sidecar，也不在 Mod 设置或主菜单显示版本/依赖警告。请在游戏官方 mod 清单（`min_game_version`、`dependencies`）中声明依赖。
 
 ## [0.21.0] - 2026-06-13

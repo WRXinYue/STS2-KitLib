@@ -28,9 +28,7 @@ internal static class FeedbackReportBuilder {
         /// <summary>Absolute path of the game log file to attach, or null to skip.</summary>
         string? LogFilePath,
         /// <summary>When true, replaces the user data dir path with &lt;user-data&gt; in all text.</summary>
-        bool PrivacyMode,
-        /// <summary>Crash report captured at the time the feedback prompt was shown, or null.</summary>
-        CrashReport? CrashReport = null);
+        bool PrivacyMode);
 
     /// <summary>
     /// Scans <c>user://logs/</c> for game log files, sorted newest first.
@@ -62,9 +60,6 @@ internal static class FeedbackReportBuilder {
         WriteEntry(archive, "harmony-patches.txt", BuildHarmonyDump(), req, userDataDir);
         WriteEntry(archive, "framework-bridge.txt", BuildFrameworkBridge(), req, userDataDir);
         WriteEntry(archive, "combat-stats.json", BuildCombatStatsJson(), req, userDataDir);
-
-        if (req.CrashReport != null)
-            WriteEntry(archive, "crash-report.json", BuildCrashReportJson(req.CrashReport), req, userDataDir);
 
         if (req.LogFilePath != null && File.Exists(req.LogFilePath)) {
             var logName = Path.GetFileName(req.LogFilePath);
@@ -135,18 +130,6 @@ internal static class FeedbackReportBuilder {
     private static string BuildHarmonyDump() {
         var report = HarmonyPatchReportBuilder.BuildReport(out var error);
         return string.IsNullOrEmpty(error) ? report : $"(error generating report: {error})";
-    }
-
-    private static string BuildCrashReportJson(CrashReport report) {
-        try {
-            return System.Text.Json.JsonSerializer.Serialize(report, new System.Text.Json.JsonSerializerOptions {
-                WriteIndented = true,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            });
-        }
-        catch (Exception ex) {
-            return $"{{\"error\":\"{ex.Message}\"}}";
-        }
     }
 
     private static string BuildCombatStatsJson() {

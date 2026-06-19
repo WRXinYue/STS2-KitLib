@@ -69,9 +69,6 @@ public static class ModuleEntry {
         KitLibCheatOps.IsSkipAnimSkipping = () => SkipAnimControl.IsSkipping;
         KitLibCheatOps.IsMpHooksDisabledInMultiplayer = () => MpCheatUi.IsHooksDisabledInMultiplayer;
 
-        KitLibPanelOps.ShowErrorFeedbackFromCrash = report =>
-            ErrorFeedbackPromptUI.TryShowFromCrash((KitLib.Feedback.CrashReport)report);
-        KitLibPanelOps.IsCrashRecoveryPromptVisible = () => CrashRecoveryPromptUI.IsVisible;
         KitLibPanelOps.IsProgressLossPromptVisible = () => ProgressLossPromptUI.IsVisible;
         KitLibPanelOps.HideDevMainMenuIfVisible = () => {
             if (DevMainMenuUI.IsVisible)
