@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **In-game Manual rail panel** — Embedded `manual/` help and the **Manual** utility tab are removed. Use the [docs site](https://wrxinyue.github.io/STS2-KitLib/) or repo README instead.
+- **In-game Manual rail panel** — Embedded `manual/` help and the **Manual** utility tab are removed. Use the [docs site](https://github.com/WRXinYue/STS2-KitLib/tree/main/docs/pages) or repo README instead.
 
 ## [0.22.0] - 2026-06-19
 
