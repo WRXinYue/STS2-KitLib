@@ -77,17 +77,6 @@ touchpoints:
     sources:
       - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
 
-  - id: CombatManager.IsPlayPhase
-    type: CombatManager
-    member: IsPlayPhase
-    kind: property
-    profiles:
-      beta:
-        skip: true
-    sources:
-      - src/KitLib.Core/Sts2CombatCompat.cs
-      - src/KitLib.Core/Sts2RuntimeProfile.cs
-
   - id: CombatManager._playersReadyToBeginEnemyTurn
     type: CombatManager
     member: _playersReadyToBeginEnemyTurn
@@ -637,23 +626,13 @@ touchpoints:
     type: MegaCrit.Sts2.Core.Runs.RunManager
     member: SetUpNewSingleplayer
     kind: method
-    profiles:
-      stable:
-        member: SetUpNewSinglePlayer
-      beta:
-        member: SetUpNewSingleplayer
     sources:
       - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
 
   - id: RunManager.SetUpSavedSinglePlayer
     type: RunManager
-    member: SetUpSavedSinglePlayer
+    member: SetUpSavedSingleplayer
     kind: method
-    profiles:
-      stable:
-        member: SetUpSavedSinglePlayer
-      beta:
-        member: SetUpSavedSingleplayer
     sources:
       - src/KitLib.Modules.Cheat/SaveSlotManager.cs
 

@@ -277,26 +277,20 @@ def _ensure_manual_touchpoints(touchpoints: dict[str, Touchpoint]) -> None:
 
 
 def _ensure_manual_overrides(overrides: dict[str, dict[str, dict[str, str]]]) -> None:
-    run = overrides.setdefault("RunManager.SetUpNewSingleplayer", {})
-    stable = run.setdefault("stable", {})
-    if "member" not in stable:
-        stable["member"] = "SetUpNewSinglePlayer"
-    beta = run.setdefault("beta", {})
-    if "member" not in beta:
-        beta["member"] = "SetUpNewSingleplayer"
+    overrides.pop("CombatManager.IsPlayPhase", None)
+    run = overrides.get("RunManager.SetUpNewSingleplayer")
+    if run:
+        run.pop("stable", None)
+        run.pop("beta", None)
+        if not run:
+            overrides.pop("RunManager.SetUpNewSingleplayer", None)
 
-    saved = overrides.setdefault("RunManager.SetUpSavedSinglePlayer", {})
-    saved_stable = saved.setdefault("stable", {})
-    if "member" not in saved_stable:
-        saved_stable["member"] = "SetUpSavedSinglePlayer"
-    saved_beta = saved.setdefault("beta", {})
-    if "member" not in saved_beta:
-        saved_beta["member"] = "SetUpSavedSingleplayer"
-
-    play_phase = overrides.setdefault("CombatManager.IsPlayPhase", {})
-    play_beta = play_phase.setdefault("beta", {})
-    if play_beta.get("skip") != "true":
-        play_beta["skip"] = "true"
+    saved = overrides.get("RunManager.SetUpSavedSinglePlayer")
+    if saved:
+        saved.pop("stable", None)
+        saved.pop("beta", None)
+        if not saved:
+            overrides.pop("RunManager.SetUpSavedSinglePlayer", None)
 
 
 def main() -> int:
@@ -330,7 +324,7 @@ def main() -> int:
             "RunManager.SetUpSavedSinglePlayer",
             Touchpoint(
                 type_name="RunManager",
-                member="SetUpSavedSinglePlayer",
+                member="SetUpSavedSingleplayer",
                 kind="method",
             ),
         )
