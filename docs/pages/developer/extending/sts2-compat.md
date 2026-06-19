@@ -216,9 +216,8 @@ Not required for consumer mods:
 
 - `eng/api_touchpoints.yaml` and `KitLib.ApiCheck` — KitLib’s private contract tests against pinned `sts2.dll` refs
 - ILRepack / satellite module loader — KitLib packaging only
-- In-game **Manual** rail (`manual/`) — short per-panel help embedded in the game
 
-Use this Valaxy site for extension guides; use the in-game Manual for panel UX while playing.
+Use this Valaxy site for extension guides and the **[rail panels](/guide/panels/)** overview while playing.
 :::
 
 ::: zh-CN
@@ -226,9 +225,8 @@ Use this Valaxy site for extension guides; use the in-game Manual for panel UX w
 
 - `eng/api_touchpoints.yaml` 与 `KitLib.ApiCheck` — KitLib 对固定 `sts2.dll` ref 的私有契约测试
 - ILRepack / 卫星模块加载器 — 仅 KitLib 打包
-- 游戏内 **Manual** 轨道（`manual/`）— 嵌入游戏的各面板简短说明
 
-扩展开发读 Valaxy 文档站；游玩时看游戏内 Manual。
+扩展开发与本站 **[轨道面板](/guide/panels/)** 概览即可；不再内嵌游戏内手册。
 :::
 
 ## Related{lang="en"}

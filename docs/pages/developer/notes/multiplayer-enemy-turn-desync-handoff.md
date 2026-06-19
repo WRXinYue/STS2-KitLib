@@ -1,6 +1,17 @@
-# LAN 敌人回合 ready 软锁 — 交接摘要
+---
+title:
+  en: Multiplayer enemy-turn desync handoff
+  zh-CN: 联机敌人回合 desync 交接
+top: 9590
+cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
+---
 
-> 主文档：[lan-host-drive-afk.md](./lan-host-drive-afk.md) issue **#9** / **#10**
+## Overview{lang="en"}
+
+## 概述{lang="zh-CN"}
+
+::: en
+> 主文档：[LAN host-drive & AFK co-op](/developer/lan-host-drive-afk) issue **#9** / **#10**
 
 ## 现象（210300 / godot.log ~17:50）
 
@@ -57,3 +68,8 @@ Client 窗口手动点「准备进入敌人回合」（若有 UI 按钮）。
 | `ERROR: Cannot get class ''` | FoxHime EnergyVfx PCK 缺失，进战斗 UI 警告 |
 | `[BurstClothingSync]` | 回合边界外 off-queue 伤害；**勿在 end turn 时点爆衣**（LustTravel2 侧可加 PlayPhase guard） |
 | `InvalidOperationException Index`（215260） | 旧局 Neow/NewLeaf，非本局 |
+:::
+
+::: zh-CN
+（维护者向长文；用户向说明见 README.zh-CN.md 与 [文档站](/guide/panels/)。）
+:::

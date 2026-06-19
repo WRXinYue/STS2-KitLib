@@ -88,6 +88,10 @@ export default defineValaxyConfig<ThemeConfig>({
           { locale: 'nav.intro', link: '/guide/preface' },
           { locale: 'nav.install', link: '/guide/install' },
           { locale: 'nav.panels_overview', link: '/guide/panels' },
+          { text: { en: 'Progress protection', 'zh-CN': '进度保护' }, link: '/guide/progress-protection' },
+          { text: { en: 'Title Dev Mode', 'zh-CN': '标题开发模式' }, link: '/guide/title-dev-mode' },
+          { text: { en: 'Mod feedback', 'zh-CN': 'Mod 反馈' }, link: '/guide/mod-feedback' },
+          { text: 'MCP', link: '/guide/mcp' },
         ],
       },
       {
@@ -98,7 +102,11 @@ export default defineValaxyConfig<ThemeConfig>({
           { locale: 'nav.mod_runtime', link: '/developer/extending/mod-runtime' },
           { locale: 'nav.kitlib_log', link: '/developer/extending/kitlib-log' },
           { locale: 'nav.sts2_compat', link: '/developer/extending/sts2-compat' },
+          { text: { en: 'Mod AI integration', 'zh-CN': 'Mod AI 集成' }, link: '/developer/extending/mod-ai-integration' },
           { locale: 'nav.api_profiles', link: '/developer/sts2-api-profiles' },
+          { text: { en: 'Architecture', 'zh-CN': '架构' }, link: '/developer/architecture' },
+          { text: { en: 'AI algorithm', 'zh-CN': 'AI 算法' }, link: '/developer/ai-algorithm' },
+          { text: { en: 'LAN co-op testing', 'zh-CN': 'LAN 联机测试' }, link: '/developer/lan-host-drive-afk' },
           {
             locale: 'nav.contributing',
             link: '/developer/dev',

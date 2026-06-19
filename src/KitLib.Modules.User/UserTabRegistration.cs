@@ -15,15 +15,5 @@ internal static class UserTabRegistration {
             OwningModuleId = KitLibModuleIds.User,
             OnActivate = _ => KitLibUserOps.OpenLogs?.Invoke(),
         });
-        KitLibHost.RegisterTab(new KitLibTabDescriptor {
-            Id = "devmode.manual",
-            IconKey = "book-open-variant",
-            DisplayName = I18N.T("panel.manual", "Manual"),
-            Order = 950,
-            Group = KitLibTabGroup.Utility,
-            Kind = KitLibTabKind.Developer,
-            OwningModuleId = KitLibModuleIds.User,
-            OnActivate = _ => KitLibUserOps.OpenManual?.Invoke(),
-        });
     }
 }

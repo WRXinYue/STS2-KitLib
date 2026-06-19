@@ -1,5 +1,16 @@
-# LAN 主机代打 + 客机 AFK（MpAiTeammate）
+---
+title:
+  en: LAN host-drive & AFK co-op
+  zh-CN: LAN host-drive 与 AFK 联机
+top: 9800
+cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
+---
 
+## Overview{lang="en"}
+
+## 概述{lang="zh-CN"}
+
+::: en
 DevMode 在 **LAN 双开** 场景下，让主机玩家手动操作本地角色（netId=1），由规则 AI 通过动作队列代打真实 ENet 客机（netId=1000）；客机开启 AFK 后不向本地队列提交战斗输入，地图投票由主机镜像。
 
 ---
@@ -277,3 +288,8 @@ make deploy   # build + 复制到游戏 mods/KitLib
 ```
 
 修改 Harmony patch 或 MpAiTeammate 后必须 recompile，双实例均需重启。
+:::
+
+::: zh-CN
+（维护者向长文；用户向说明见 README.zh-CN.md 与 [文档站](/guide/panels/)。）
+:::

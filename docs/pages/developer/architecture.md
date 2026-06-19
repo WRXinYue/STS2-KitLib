@@ -1,5 +1,16 @@
-# KitLib modular architecture
+---
+title:
+  en: Architecture
+  zh-CN: 架构
+top: 9700
+cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
+---
 
+## Overview{lang="en"}
+
+## 概述{lang="zh-CN"}
+
+::: en
 KitLib ships as **one game mod** (`mods/KitLib/`) with a Core DLL and optional satellite DLLs under `modules/`. Each satellite is a **separate compile target**; deleting a module DLL disables that feature at runtime.
 
 ## Repository layout (enterprise)
@@ -9,7 +20,7 @@ KitLib.sln
 KitLib.json                    # Core mod manifest (runtime: mod_manifest.json)
 eng/                           # MSBuild props/targets (build infra)
 scripts/
-manual/                        # User module embedded docs (repo root)
+docs/pages/                    # Valaxy documentation site
 src/
   KitLib.Abstractions/         # NuGet contracts
   KitLib.Core/                 # KitLib.dll — Host, Settings, Harmony entry
@@ -71,3 +82,8 @@ make zip-full     # package build/KitLib-vX.X.X.zip
 ## Content-mod authors
 
 NuGet **`STS2.KitLib.Abstractions`** for compile-time contracts. Runtime needs `KitLib.dll` and any satellite DLLs you depend on under `modules/`.
+:::
+
+::: zh-CN
+（维护者向长文；用户向说明见 README.zh-CN.md 与 [文档站](/guide/panels/)。）
+:::

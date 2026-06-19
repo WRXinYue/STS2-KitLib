@@ -1,5 +1,16 @@
-# Solo AI 算法（StrongStrategy）
+---
+title:
+  en: AI algorithm
+  zh-CN: AI 算法
+top: 9750
+cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
+---
 
+## Overview{lang="en"}
+
+## 概述{lang="zh-CN"}
+
+::: en
 DevMode **AI Host → AutoPlay** 默认使用 `StrongStrategy`（设置项 `AutoPlayStrategy: Strong`）。这是一套纯规则、无 LLM 的单机自动化决策管线，目标是在 A10 左右具备可玩的宏观路线与战斗表现。
 
 相关代码：`src/AI/` · 回归脚本：`tools/ai-bench/` · Mod 扩展说明：[README.md § Mod AI integration](../README.md#mod-ai-integration)
@@ -50,7 +61,7 @@ flowchart TD
 4. `IDecisionMaker.DecideAsync` 返回 `GameAction`（含 `Type`、`TargetIndex`、`Reason`）。
 5. `Sts2ActionExecutor` 执行动作；`Reason` 写入日志，便于复盘。
 
-多人 hand-play 时 AutoPlay **自动关闭**；LAN / Pseudo Co-op 走独立队列，见 [lan-host-drive-afk.md](./lan-host-drive-afk.md)。
+多人 hand-play 时 AutoPlay **自动关闭**；LAN / Pseudo Co-op 走独立队列，见 [LAN host-drive & AFK co-op](/developer/lan-host-drive-afk)。
 
 ---
 
@@ -928,3 +939,8 @@ Run 结束时 `ResetDedupeState()` 清空状态。
 | `src/AI/Sts2/Snapshots/` | 快照捕获 |
 | `src/AI/Sts2/Helpers/Sts2CombatPlayHelper.cs` | 等待手动出牌 action queue 完成 |
 | `src/AI/Sts2/Sts2ActionExecutor.cs` | UI 执行 |
+:::
+
+::: zh-CN
+（维护者向长文；用户向说明见 README.zh-CN.md 与 [文档站](/guide/panels/)。）
+:::

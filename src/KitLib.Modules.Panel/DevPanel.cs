@@ -240,14 +240,6 @@ internal static class DevPanel {
         FeedbackReportUI.Show(_globalUi);
     }
 
-    internal static void OpenManual() {
-        if (_globalUi == null) return;
-        TryDismissCurrent();
-        KitLibState.ActivePanel = ActivePanel.Manual;
-
-        ManualUI.Show(_globalUi);
-    }
-
     internal static void StartNewTest() {
         try {
             var game = NGame.Instance;
@@ -295,7 +287,6 @@ internal static class DevPanel {
             case ActivePanel.HarmonyAnalysis: OpenHarmonyAnalysis(); break;
             case ActivePanel.Frameworks: OpenFrameworks(); break;
             case ActivePanel.Feedback: OpenFeedback(); break;
-            case ActivePanel.Manual: OpenManual(); break;
             case ActivePanel.CardEdit: break;
         }
     }

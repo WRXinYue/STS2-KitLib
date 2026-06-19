@@ -11,23 +11,97 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 说明{lang="zh-CN"}
 
 ::: en
-DevMode attaches a **vertical rail** to the main menu and in-run UI. Each icon opens a **panel** (browser-style content area). Built-in tabs are registered in fixed order: **primary** (cards, relics, combat content, console, presets, hooks, scripts, logs) then **utility** (save/load, settings).
+**KitLib.Panel** attaches a **vertical rail** to the title screen and in-run UI. Hover the left-edge **peek tab** to expand it; each icon opens a panel. Built-in tabs group into **primary** (gameplay / automation / debug) and **utility** (save/load, settings).
 
-Use the **sidebar on this site** for one page per panel, in the same order as the in-game rail. Other mods can add tabs via `DevPanelRegistry`; see **Developer → Dev panel**.
+Other mods add tabs via **`DevPanelRegistry`** — see **[Dev panel registry](/developer/extending/panel-registry/)**.
+
+Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview also on the **[docs site](/guide/panels/)**.
 :::
 
 ::: zh-CN
-DevMode 会在**主菜单**与**对局内界面**旁挂上一条**竖向轨道**，每个图标对应一个**面板** (浏览器式内容区)。内置标签按固定顺序注册：先 **主分区** (卡牌、遗物、战斗向内容、控制台、预设、钩子、脚本、日志)，再 **工具分区** (存档 / 读档、设置)。
+**KitLib.Panel** 在标题画面与局内提供**竖向轨道**。鼠标移到左侧 **peek 标签** 展开；每个图标打开一个面板。内置标签分为 **主分区**（玩法 / 自动化 / 调试）与 **工具分区**（存读档、设置）。
 
-本站**左侧边栏**下列出与游戏内轨道**一致顺序**的各面板文档。其他 mod 可通过 `DevPanelRegistry` 增加标签；见 **开发者 → 开发者面板**。
+其他 mod 通过 **`DevPanelRegistry`** 添加标签 — 见 **[开发者面板注册](/developer/extending/panel-registry/)**。
+
+标题入口：**[标题开发模式](/guide/title-dev-mode/)**。面板概览见 **[文档站](/guide/panels/)**。
 :::
 
-## Order{lang="en"}
+## Gameplay & content{lang="en"}
 
-## 顺序{lang="zh-CN"}
+## 玩法与内容{lang="zh-CN"}
 
 ::: en
-Tabs are sorted by `order` within each group. Built-in values:
+
+- **Cheats** — God mode, energy/block/stars, damage multipliers, enemy freeze, map overrides; some options limited in **multiplayer**
+- **Cards** — Full library; filters (type, rarity, mod source, hidden cards); edit stats; add to piles
+- **Relics / Powers / Potions** — Browse, spawn, auto-apply hooks; mod-source filters
+- **Enemies / Events / Rooms** — Replace encounters, trigger events, jump room types
+- **Presets** — Save/load combat and run snapshots
+
+:::
+
+::: zh-CN
+
+- **作弊** — 无敌、能量/格挡/星星、伤害倍率、冻结敌人、地图覆盖；**联机**下部分受限
+- **卡牌** — 全库浏览；筛选（类型、稀有度、Mod 来源、隐藏卡）；改数值；加入牌堆
+- **遗物 / 能力 / 药水** — 浏览、生成、一键自动施加钩子；Mod 来源筛选
+- **敌人 / 事件 / 房间** — 替换遭遇、触发事件、跳转房间
+- **预设** — 战斗与 run 快照存读
+
+:::
+
+## Automation & AI{lang="en"}
+
+## 自动化与 AI{lang="zh-CN"}
+
+::: en
+
+- **Hooks** — Trigger → Condition → Action rules
+- **Scripts** — SpireScratch (Blockly); WebSocket hot reload
+- **AI Host** — Solo autoplay (**StrongStrategy** default); disabled during multiplayer hand-play
+- **MCP** — See **[MCP](/guide/mcp/)**
+- **KitLog CLI** — See **[tools/KitLog.Cli/README.md](https://github.com/WRXinYue/STS2-KitLib/blob/main/tools/KitLog.Cli/README.md)**
+
+:::
+
+::: zh-CN
+
+- **钩子** — 触发器 → 条件 → 动作
+- **脚本** — SpireScratch（Blockly）；WebSocket 热重载
+- **AI 托管** — 单人自动（默认 **StrongStrategy**）；联机手打时禁用
+- **MCP** — 见 **[MCP](/guide/mcp/)**
+- **KitLog CLI** — 见仓库 `tools/KitLog.Cli/README.md`
+
+:::
+
+## Developer & debug{lang="en"}
+
+## 开发者与调试{lang="zh-CN"}
+
+::: en
+
+- **Logs** — Live + file history, filters, alerts — **[Mod feedback](/guide/mod-feedback/)** for ZIP export
+- **Combat stats / Enemy intents** — Overlays and rails (optional, under **Settings → Game**)
+- **Console** — Native + KitLib command reference
+- **Harmony analysis / Frameworks** — Patch inspection, loaded mod snapshot (hidden by default in **Settings → Sidebar**)
+
+:::
+
+::: zh-CN
+
+- **日志** — 实时 + 文件历史、筛选、提醒 — ZIP 导出见 **[Mod 反馈](/guide/mod-feedback/)**
+- **战斗统计 / 敌人意图** — Overlay 与 rail（**设置 → 游戏** 中可选）
+- **控制台** — 原版与 KitLib 命令参考
+- **Harmony 分析 / 框架** — 补丁检视、mod 快照（默认在 **设置 → 侧栏** 隐藏）
+
+:::
+
+## Built-in tab order{lang="en"}
+
+## 内置标签顺序{lang="zh-CN"}
+
+::: en
+Tabs sort by `order` within each group. Third-party tabs pick an `order` in the gaps.
 
 | ID | Panel | Group | Order |
 | --- | --- | --- | --- |
@@ -46,11 +120,10 @@ Tabs are sorted by `order` within each group. Built-in values:
 | `devmode.save` | Save / Load | Utility | 100 |
 | `devmode.settings` | Settings | Utility | 200 |
 
-Third-party tabs insert between built-in ones by choosing an `order` value in the appropriate gap.
 :::
 
 ::: zh-CN
-标签在各分组内按 `order` 值升序排列。内置面板默认值如下：
+标签在各分组内按 `order` 排序。第三方标签在间隙中选择 `order`。
 
 | ID | 面板 | 分组 | Order |
 | --- | --- | --- | --- |
@@ -69,5 +142,4 @@ Third-party tabs insert between built-in ones by choosing an `order` value in th
 | `devmode.save` | 存档 / 读档 | Utility | 100 |
 | `devmode.settings` | 设置 | Utility | 200 |
 
-第三方标签可通过选择合适的 `order` 值插入到内置面板之间。
 :::

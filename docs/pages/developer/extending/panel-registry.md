@@ -10,7 +10,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-`DevPanelRegistry` lets other mods add tabs to the DevMode vertical rail. Each tab gets an icon, a display name, an order value, and two callbacks — one when the tab is opened (`onActivate`) and one when it is closed (`onDeactivate`).
+`DevPanelRegistry` lets other mods add tabs to the **KitLib dev rail**. Each tab gets an icon, a display name, an order value, and two callbacks — one when the tab is opened (`onActivate`) and one when it is closed (`onDeactivate`).
 
 The full flow is:
 
@@ -23,7 +23,7 @@ The full flow is:
 :::
 
 ::: zh-CN
-`DevPanelRegistry` 允许其他 mod 向 DevMode 竖向轨道添加标签页。每个标签页有图标、显示名称、排序值，以及两个回调——标签被打开时（`onActivate`）和关闭时（`onDeactivate`）各触发一次。
+`DevPanelRegistry` 允许其他 mod 向 **KitLib 开发轨道**添加标签页。每个标签页有图标、显示名称、排序值，以及两个回调——标签被打开时（`onActivate`）和关闭时（`onDeactivate`）各触发一次。
 
 完整流程如下：
 

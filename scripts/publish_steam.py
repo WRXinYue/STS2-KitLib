@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Sync KitLib into a Steam Workshop workspace and upload via ModUploader.exe.
 
-Environment (.env):
-    STS2_MOD_UPLOADER  Path to ModUploader.exe (see .env.example)
+Environment:
+    release.env  STS2_WORKSHOP_ID (committed)
+    .env         STS2_MOD_UPLOADER path (see .env.example)
 
 Usage:
     python scripts/publish_steam.py sync [--skip-build] [--change-note TEXT] [--unreleased]
     python scripts/publish_steam.py upload [--dry-run]
 
-Change notes default to bilingual Steam BBCode from CHANGELOG.md + CHANGELOG.zh-CN.md
-(same layout as FoxHimeMod: version header, EN / 中文 separators, markdown → BBCode).
+Workshop description is generated from README.md + README.zh-CN.md (Steam BBCode).
+Change notes are generated from CHANGELOG.md + CHANGELOG.zh-CN.md at sync time.
 """
 
 from __future__ import annotations
@@ -24,16 +25,19 @@ from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _REPO = _SCRIPT_DIR.parent
-_WORKSPACE = _REPO / "steam" / "workshop"
+_WORKSPACE = _REPO / "build" / "steam-workshop"
+_WORKSHOP_TEMPLATE = _REPO / "workshop.json"
 _CONTENT = _WORKSPACE / "content"
 _STAGING = _REPO / "build" / "steam-stage"
 _PREVIEW = _REPO / "assets" / "devmode.png"
+_MOD_ID_FILE = _WORKSPACE / "mod_id.txt"
 
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
-from lib.dotenv import load_dotenv  # noqa: E402
+from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
 from lib.steam_changelog import get_change_note  # noqa: E402
+from lib.steam_readme import get_workshop_description  # noqa: E402
 
 
 def _read_kitlib_manifest() -> dict:
@@ -83,15 +87,21 @@ def _stage_bundle(skip_build: bool) -> Path:
     return bundle
 
 
+def _sync_mod_id_file() -> None:
+    workshop_id = os.environ.get("STS2_WORKSHOP_ID", "").strip()
+    if workshop_id:
+        _MOD_ID_FILE.write_text(workshop_id + "\n", encoding="utf-8")
+
+
 def _patch_workshop_json(change_note: str | None, *, prefer_unreleased: bool = False) -> None:
-    path = _WORKSPACE / "workshop.json"
-    if not path.is_file():
-        raise RuntimeError(f"Missing {_WORKSPACE.relative_to(_REPO)}/workshop.json")
+    if not _WORKSHOP_TEMPLATE.is_file():
+        raise RuntimeError(f"Missing {_WORKSHOP_TEMPLATE.relative_to(_REPO)}")
 
     manifest = _read_kitlib_manifest()
-    data = json.loads(path.read_text(encoding="utf-8-sig"))
-    data["title"] = manifest.get("name") or data.get("title") or "KitLib"
-    data["description"] = manifest.get("description") or data.get("description") or ""
+    data = json.loads(_WORKSHOP_TEMPLATE.read_text(encoding="utf-8-sig"))
+    if not str(data.get("title") or "").strip():
+        data["title"] = manifest.get("name") or "KitLib"
+    data["description"] = get_workshop_description(_REPO)
 
     if change_note and change_note.strip():
         note = change_note.strip()
@@ -104,10 +114,33 @@ def _patch_workshop_json(change_note: str | None, *, prefer_unreleased: bool = F
             )
 
     data["changeNote"] = note
+    path = _WORKSPACE / "workshop.json"
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     preview = _WORKSPACE / "changeNote.preview.txt"
     preview.write_text(note + "\n", encoding="utf-8")
+
+    desc_preview = _WORKSPACE / "description.preview.txt"
+    desc_preview.write_text(data["description"] + "\n", encoding="utf-8")
+
+
+def _persist_workshop_id(mod_id: str) -> None:
+    mod_id = mod_id.strip()
+    if not mod_id:
+        return
+
+    current = os.environ.get("STS2_WORKSHOP_ID", "").strip()
+    if current == mod_id:
+        return
+
+    os.environ["STS2_WORKSHOP_ID"] = mod_id
+    release_path = _REPO / "release.env"
+    dotenv_path = _REPO / ".env"
+
+    if upsert_env_key(release_path, "STS2_WORKSHOP_ID", mod_id):
+        print(f"Updated {release_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
+    if dotenv_path.is_file() and upsert_env_key(dotenv_path, "STS2_WORKSHOP_ID", mod_id):
+        print(f"Updated {dotenv_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
 
 
 def sync_workspace(skip_build: bool, change_note: str | None, *, prefer_unreleased: bool = False) -> None:
@@ -123,6 +156,7 @@ def sync_workspace(skip_build: bool, change_note: str | None, *, prefer_unreleas
     shutil.copy2(_PREVIEW, _WORKSPACE / "image.png")
 
     _patch_workshop_json(change_note, prefer_unreleased=prefer_unreleased)
+    _sync_mod_id_file()
     file_count = sum(1 for p in _CONTENT.rglob("*") if p.is_file())
     print(f"Workshop content synced -> {_CONTENT.relative_to(_REPO)} ({file_count} files)")
 
@@ -130,10 +164,16 @@ def sync_workspace(skip_build: bool, change_note: str | None, *, prefer_unreleas
 def upload_workspace(dry_run: bool, *, optional: bool = False) -> int:
     for name in ("workshop.json", "image.png"):
         if not (_WORKSPACE / name).is_file():
-            print(f"ERROR: missing {_WORKSPACE.relative_to(_REPO)}/{name}. Run: make steam-workspace", file=sys.stderr)
+            print(
+                f"ERROR: missing {_WORKSPACE.relative_to(_REPO)}/{name}. Run: make steam-workspace",
+                file=sys.stderr,
+            )
             return 1
     if not _CONTENT.is_dir() or not any(_CONTENT.iterdir()):
-        print(f"ERROR: {_CONTENT.relative_to(_REPO)} is empty. Run: make steam-workspace", file=sys.stderr)
+        print(
+            f"ERROR: {_CONTENT.relative_to(_REPO)} is empty. Run: make steam-workspace",
+            file=sys.stderr,
+        )
         return 1
 
     err = _uploader_setup_error()
@@ -151,16 +191,22 @@ def upload_workspace(dry_run: bool, *, optional: bool = False) -> int:
         return 0
 
     subprocess.run(cmd, cwd=_WORKSPACE, check=True)
+
+    if _MOD_ID_FILE.is_file():
+        mod_id = _MOD_ID_FILE.read_text(encoding="utf-8").strip()
+        if mod_id:
+            _persist_workshop_id(mod_id)
+
     return 0
 
 
 def main() -> int:
-    load_dotenv(_REPO / ".env")
+    load_release_config(_REPO)
 
     ap = argparse.ArgumentParser(description="Sync or upload KitLib Steam Workshop workspace.")
     sub = ap.add_subparsers(dest="command", required=True)
 
-    sync_ap = sub.add_parser("sync", help="Build/stage mod files into steam/workshop/content/")
+    sync_ap = sub.add_parser("sync", help="Build/stage mod files into build/steam-workshop/content/")
     sync_ap.add_argument("--skip-build", action="store_true", help="Use existing build/ artifacts")
     sync_ap.add_argument(
         "--change-note",
@@ -173,7 +219,7 @@ def main() -> int:
         help="Use ## [Unreleased] instead of the latest released version section",
     )
 
-    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe upload -w steam/workshop")
+    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe upload -w build/steam-workshop")
     upload_ap.add_argument("--dry-run", action="store_true", help="Print command only")
     upload_ap.add_argument(
         "--optional",

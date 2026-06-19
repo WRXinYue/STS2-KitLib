@@ -1,8 +1,0 @@
-{
-  "title": "KitLib",
-  "description": "Modular in-game toolkit for StS2 — cheats, AI host, save tools, and extensible modules for players and mod authors.",
-  "visibility": "private",
-  "changeNote": "",
-  "tags": [],
-  "dependencies": []
-}

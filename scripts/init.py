@@ -12,7 +12,7 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
-from lib.dotenv import load_dotenv  # noqa: E402
+from lib.dotenv import load_release_config  # noqa: E402
 from lib.ensure_iconify_mdi import ensure_mdi_icons  # noqa: E402
 from lib.godot import resolve_godot_path  # noqa: E402
 from lib.steam import resolve_sts2_dir  # noqa: E402
@@ -40,7 +40,7 @@ def main() -> int:
     args = ap.parse_args()
 
     root = (args.repo_root or _SCRIPT_DIR.parent).resolve()
-    load_dotenv(root / ".env")
+    load_release_config(root)
 
     sts2_dir = resolve_sts2_dir()
     if not sts2_dir:

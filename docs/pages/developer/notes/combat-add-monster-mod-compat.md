@@ -1,7 +1,16 @@
-# KitLib 战斗中加怪 — 与其他 mod 的兼容性
+---
+title:
+  en: Combat add-monster mod compat
+  zh-CN: 战斗中加怪 mod 兼容
+top: 9600
+cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
+---
 
-## 现象
+## Overview{lang="en"}
 
+## 概述{lang="zh-CN"}
+
+::: en
 狐妖 mod（**LustTravel2**）+ DevMode 同时启用时，Dev 面板 **加怪物** 可能卡住；日志停在 `CreatureCmd.Add starting`。单独使用 DevMode 或移除其他 mod 后正常。
 
 ## 原因（摘要）
@@ -28,3 +37,8 @@ DevMode 调用原版 `CreatureCmd.Add`，与地图跳转无关。
 
 - 狐妖局加怪卡住：更新 **LustTravel2** 至含方案 A 的版本后再试。
 - 仍顿挫：多为冷加载场景，属顿挫非死锁；可多等或预先加过同种怪以命中缓存。
+:::
+
+::: zh-CN
+（维护者向长文；用户向说明见 README.zh-CN.md 与 [文档站](/guide/panels/)。）
+:::

@@ -2,10 +2,10 @@
 """Upload the mod zip to Nexus Mods using the v3 multipart upload API.
 
 Environment variables (required):
-    NEXUS_API_KEY              - Your personal API key from nexusmods.com/settings/api-keys
-    NEXUS_FILE_GROUP_ID        - Main file group ID (Files tab → API Info)
-    NEXUS_FILE_GROUP_ID_MCP    - Optional file group ID for KitLib.Mcp stdio proxy (separate line)
-    NEXUS_FILE_GROUP_ID_KITLOG - Optional file group ID for KitLog CLI (separate line)
+    NEXUS_API_KEY              - Your personal API key (.env)
+    NEXUS_FILE_GROUP_ID        - Main file group ID (release.env)
+    NEXUS_FILE_GROUP_ID_MCP    - Optional MCP proxy file group (release.env)
+    NEXUS_FILE_GROUP_ID_KITLOG - Optional KitLog CLI file group (release.env)
 
 Usage:
     python scripts/publish_nexus.py [--version X.Y.Z] [--mcp | --kitlog] [--dry-run]
@@ -137,26 +137,11 @@ def _tool_env_hint(tool: str) -> tuple[str, str]:
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
+
+from lib.dotenv import load_release_config  # noqa: E402
+
+load_release_config(_REPO_ROOT)
 _API_BASE = os.environ.get("NEXUSMODS_API_BASE", "https://api.nexusmods.com/v3").rstrip("/")
-
-
-def _load_dotenv() -> None:
-    """Load key=value pairs from .env in the repo root into os.environ (no-op if missing)."""
-    env_file = _REPO_ROOT / ".env"
-    if not env_file.is_file():
-        return
-    for line in env_file.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        key = key.strip()
-        value = value.strip()
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
-_load_dotenv()
 _USER_AGENT = "STS2-KitLib/publish_nexus.py"
 
 # Multipart upload: retry each part up to this many times on transient errors.

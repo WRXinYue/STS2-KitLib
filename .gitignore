@@ -33,12 +33,5 @@ local.props
 # Generated tree-shaken icon set (rebuilt on each build)
 src/KitLib.Modules.Panel/Icons/mdi-used.json
 
-# Steam Workshop workspace (generated / local)
-steam/workshop/content/
-steam/workshop/mod_id.txt
-steam/workshop/mod-uploader.log
-steam/workshop/changeNote.preview.txt
-steam/workshop/image.png
-
 # Other
 .DS_Store

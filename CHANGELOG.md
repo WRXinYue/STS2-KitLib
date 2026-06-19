@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **In-game Manual rail panel** — Embedded `manual/` help and the **Manual** utility tab are removed. Use the [docs site](docs/pages/index.md) (`make docs`) or repo README instead.
+
 ## [0.22.0] - 2026-06-19
 
 ### Changed

@@ -6,11 +6,11 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
 ::: en
-This page mirrors the repository note for KitLib maintainers. Mod authors who only need dual-profile **build conventions** should start with **[STS2 version compatibility](/developer/extending/sts2-compat)**.
+Dual-profile API refs, LFS capture, and CI checks for KitLib maintainers. Mod authors who only need build conventions should start with **[STS2 version compatibility](/developer/extending/sts2-compat)**.
 :::
 
 ::: zh-CN
-本文与仓库内维护者笔记一致。仅需双 profile **构建约定** 的 mod 作者请先看 **[STS2 版本兼容](/developer/extending/sts2-compat)**。
+KitLib 维护者用的双 profile API 引用、LFS 捕获与 CI 检查。仅需构建约定的 mod 作者请先看 **[STS2 版本兼容](/developer/extending/sts2-compat)**。
 :::
 
 ## Dual-profile API checks{lang="en"}

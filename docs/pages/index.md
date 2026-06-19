@@ -51,14 +51,14 @@ features:
           `KitLib.Cheat` 负责运行时调节；`KitLib.AI` 负责单人托管与 companion；`KitLib.Dev` 提供钩子、
           SpireScratch 脚本、Harmony 与 MCP。按需在 `modules/` 中启用。
     - title:
-        en: Logs, manual & mod panel
-        zh-CN: 日志、手册与 Mod 面板
+        en: Logs & mod panel
+        zh-CN: 日志与 Mod 面板
       details:
         en: >-
-          `KitLib.User` covers session logs, progress guard, crash recovery, and the in-game Manual rail tab.
+          `KitLib.User` covers session logs and progress guard.
           `KitLib.ModPanel` adds the main-menu Mods settings UI and compatibility banners for other mods.
         zh-CN: >-
-          `KitLib.User` 提供会话日志、进度保护、崩溃恢复与游戏内 Manual 轨道。
+          `KitLib.User` 提供会话日志与进度保护。
           `KitLib.ModPanel` 提供主菜单 Mod 设置与对其他 mod 的兼容提示。
     - title:
         en: Extension API

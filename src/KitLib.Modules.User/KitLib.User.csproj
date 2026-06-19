@@ -19,8 +19,4 @@
       <_Parameter1>KitLib.Panel</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="$(RepoRoot)manual\eng\**\*" LogicalName="KitLib.Manual.eng.%(RecursiveDir)%(Filename)%(Extension)" />
-    <EmbeddedResource Include="$(RepoRoot)manual\zhs\**\*" LogicalName="KitLib.Manual.zhs.%(RecursiveDir)%(Filename)%(Extension)" />
-  </ItemGroup>
 </Project>

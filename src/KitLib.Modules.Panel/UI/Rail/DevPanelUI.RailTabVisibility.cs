@@ -26,7 +26,6 @@ internal static partial class DevPanelUI {
         ["devmode.frameworks"] = "KitLibFrameworkBridge",
         ["devmode.feedback"] = "KitLibFeedbackReport",
         ["devmode.save"] = "KitLibSaveLoad",
-        ["devmode.manual"] = "KitLibManual",
         ["devmode.settings"] = "KitLibSettings",
     };
 

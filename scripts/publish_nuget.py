@@ -27,10 +27,10 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from lib.dotenv import load_dotenv  # noqa: E402
+from lib.dotenv import load_release_config  # noqa: E402
 from lib import nuget as nuget_ops  # noqa: E402
 
-load_dotenv(_REPO_ROOT / ".env")
+load_release_config(_REPO_ROOT)
 
 
 def main() -> int:

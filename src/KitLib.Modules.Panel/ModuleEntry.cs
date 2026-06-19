@@ -84,7 +84,6 @@ public static class ModuleEntry {
         KitLibDevOps.OpenFeedback = DevPanel.OpenFeedback;
 
         KitLibUserOps.OpenLogs = DevPanel.OpenLogs;
-        KitLibUserOps.OpenManual = DevPanel.OpenManual;
 
         KitLibPanelUiOps.ShowCheatsOverlay = ui => DevPanelUI.ShowCheatsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
         KitLibPanelUiOps.ShowSaveLoadOverlay = ui => DevPanelUI.ShowSaveLoadOverlay((NGlobalUi)ui, DevPanelSession.Actions!);

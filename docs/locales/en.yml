@@ -13,20 +13,6 @@ nav:
   intro: Introduction
   install: Install
   panels_overview: Rail panels
-  panel_cards: Cards
-  panel_relics: Relics
-  panel_enemies: Enemies
-  panel_powers: Powers
-  panel_potions: Potions
-  panel_events: Events
-  panel_rooms: Rooms
-  panel_console: Console
-  panel_presets: Presets
-  panel_hooks: Hooks
-  panel_scripts: Scripts
-  panel_logs: Logs
-  panel_save_load: Save / Load
-  panel_settings: Settings
   changelog: Changelog
   dev_panel: Dev panel
   mod_runtime: Mod runtime

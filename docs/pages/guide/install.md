@@ -13,7 +13,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: en
 **Prerequisites:** Slay the Spire 2 on Steam.
 
-1. Go to the [GitHub releases page](https://github.com/WRXinYue/STS2-DevMode/releases) and download the latest `DevMode-*.zip`.
+1. Download the latest **`KitLib-vX.X.X.zip`** from [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or subscribe on Steam Workshop.
 
 2. Locate your STS2 `mods` folder. On Windows the default path is:
 
@@ -21,43 +21,44 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
    C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\mods
    ```
 
-3. Extract the zip so that `DevMode\` is a direct subfolder of `mods\`:
+3. Extract the zip so that **`KitLib\`** is a direct subfolder of `mods\`:
 
    ```text
    mods\
-   └── DevMode\
-       ├── DevMode.dll
-       ├── DevMode.json
-       ├── editor\
-       └── scripts\
+   └── KitLib\
+       ├── mod_manifest.json
+       ├── KitLib.dll
+       ├── KitLib.Abstractions.dll
+       └── modules\
+           ├── KitLib.User.dll
+           ├── KitLib.ModPanel.dll
+           ├── KitLib.Panel.dll
+           ├── KitLib.Cheat.dll
+           ├── KitLib.Dev.dll
+           └── KitLib.AI.dll
    ```
 
-4. Launch the game — DevMode loads automatically with the mod loader.
+4. Launch the game. Configure satellites under **Main menu → Mods → KitLib** (load profiles, hotkeys, progress protection).
+
+**Optional modules** — delete DLLs under `modules/` to disable features, or use **Mods → KitLib → Modules** load profiles (**restart required**). Keep **`KitLib.User.dll`** and **`KitLib.ModPanel.dll`** for logs and mod settings.
 :::
 
 ::: zh-CN
 **前置条件：** Steam 版《杀戮尖塔 2》。
 
-1. 前往 [GitHub Releases 页面](https://github.com/WRXinYue/STS2-DevMode/releases)，下载最新的 `DevMode-*.zip`。
+1. 从 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) 下载最新 **`KitLib-vX.X.X.zip`**，或在 Steam 创意工坊订阅。
 
-2. 找到 STS2 的 `mods` 目录，Windows 默认路径为：
+2. 找到 STS2 的 `mods` 目录，Windows 默认路径：
 
    ```text
    C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\mods
    ```
 
-3. 将压缩包解压，使 `DevMode\` 成为 `mods\` 的直接子目录：
+3. 解压后 **`KitLib\`** 应为 `mods\` 的直接子目录（结构见英文节）。
 
-   ```text
-   mods\
-   └── DevMode\
-       ├── DevMode.dll
-       ├── DevMode.json
-       ├── editor\
-       └── scripts\
-   ```
+4. 启动游戏，在 **主菜单 → Mods → KitLib** 配置卫星模块、快捷键与进度保护。
 
-4. 启动游戏，DevMode 会随模组加载器自动载入。
+**可选模块** — 删除 `modules/` 下 DLL 或在 **Mods → KitLib → 模块** 选择档位（**需重启**）。请保留 **`KitLib.User.dll`** 与 **`KitLib.ModPanel.dll`**。
 :::
 
 ## Build from source{lang="en"}
@@ -65,31 +66,31 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 从源码构建{lang="zh-CN"}
 
 ::: en
-**Additional prerequisites:** **.NET 9 SDK**; **Python 3** (optional, for `make init` and icon scripts).
+**Additional prerequisites:** **.NET 9 SDK**; **Python 3** (for `make init` and release scripts).
 
 ```bash
-git clone https://github.com/WRXinYue/STS2-DevMode.git
-cd DevMode
+git clone https://github.com/WRXinYue/STS2-KitLib.git
+cd STS2-KitLib
 make init    # detect STS2 path, write local.props
-make sync    # build + deploy to game mods folder
+make sync-full    # build + deploy to game mods/KitLib/
 ```
 
-`make init` only needs to run once. After that, `make sync` (or `make build` + `make deploy` separately) covers the usual iteration loop.
+`make init` only needs to run once. One release zip supports **stable and beta** STS2 builds; a startup banner appears when the mod build mismatches your game.
 
-For the full list of Makefile targets and collaboration norms, see **[Contributing](/developer/dev/)**.
+See **[Contributing](/developer/dev/)** for Makefile targets and collaboration norms.
 :::
 
 ::: zh-CN
-**额外前置条件：** **.NET 9 SDK**；**Python 3**（可选，用于 `make init` 和图标脚本）。
+**额外前置：** **.NET 9 SDK**；**Python 3**（`make init` 与发布脚本）。
 
 ```bash
-git clone https://github.com/WRXinYue/STS2-DevMode.git
-cd DevMode
-make init    # 检测 STS2 路径，生成 local.props
-make sync    # 构建 + 部署到游戏 mods 目录
+git clone https://github.com/WRXinYue/STS2-KitLib.git
+cd STS2-KitLib
+make init
+make sync-full
 ```
 
-`make init` 只需执行一次。此后日常迭代使用 `make sync`（或分步执行 `make build` + `make deploy`）即可。
+`make init` 只需运行一次。同一安装包支持 **stable 与 beta**；版本不匹配时启动会显示横幅。
 
-完整 Makefile 目标与协作约定见 **[参与贡献](/developer/dev/)**。
+Makefile 与协作规范见 **[参与贡献](/developer/dev/)**。
 :::
