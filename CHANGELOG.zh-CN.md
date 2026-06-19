@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-06-19
+
 ### Removed
 
-- **游戏内 Manual 轨道** — 移除内嵌 `manual/` 帮助与 **Manual** 工具标签；请使用 [文档站](docs/pages/index.md)（`make docs`）或仓库 README。
+- **游戏内 Manual 轨道** — 移除内嵌 `manual/` 帮助与 **Manual** 工具标签；请使用 [文档站](https://wrxinyue.github.io/STS2-KitLib/) 或仓库 README。
 
 ## [0.22.0] - 2026-06-19
 
