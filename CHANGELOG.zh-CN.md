@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-06-19
+
 ### Changed
 
 - **STS2 v0.107.1** — KitLib 需要当前游戏版本（**v0.107.1**），不再支持更旧版本（含 **0.103.3**）。
