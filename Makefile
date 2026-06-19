@@ -94,8 +94,8 @@ help:
 	@echo "  hooks-run    pre-commit run --all-files"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build Core to build/KitLib/, then copy into game mods/KitLib/ only"
-	@echo "  sync-full    build-all + deploy mods/KitLib/ + deploy tools/ (kitlog + MCP)"
+	@echo "  sync         build-all + deploy full mods/KitLib/ bundle (Core + modules/)"
+	@echo "  sync-full    sync + deploy tools/ (kitlog + MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build-all    dotnet build solution (Core + satellites)"
 	@echo "  build-stable dotnet build KitLib.sln against stable ref (eng/sts2-refs/)"
@@ -208,12 +208,11 @@ endif
 	$(PYTHON) scripts/capture_sts2_ref.py $(PROFILE)
 
 deploy:
-	$(DEPLOY_COPY)
-
-sync: build deploy
-
-sync-full: build-all
 	$(PYTHON) scripts/deploy_modules.py
+
+sync: build-all deploy
+
+sync-full: sync
 	$(DEPLOY_TOOLS_BUILD)
 
 sync-full-launch: sync-full launch

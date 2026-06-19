@@ -31,8 +31,7 @@ public static class ModMainMenuPatch {
             I18N.T("menu.modPanel", "Mods"),
             OnModPanelButtonPressed);
 
-        var quitBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/QuitButton");
-        int insertAt = quitBtn != null ? quitBtn.GetIndex() : container.GetChildCount();
+        int insertAt = settingsBtn.GetIndex() + 1;
         container.MoveChild(_modPanelButton, insertAt);
 
         MainFile.Logger.Info("KitLib ModPanel: Main menu Mods button added.");

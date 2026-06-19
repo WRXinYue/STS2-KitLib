@@ -34,8 +34,8 @@ public static class MainMenuPatch {
             I18N.T("menu.developerMode", "Dev Mode"),
             OnDevModeButtonPressed);
 
-        var quitBtn = __instance.GetNodeOrNull<NMainMenuTextButton>("MainMenuTextButtons/QuitButton");
-        int insertAt = quitBtn != null ? quitBtn.GetIndex() : container.GetChildCount();
+        var modBtn = container.GetNodeOrNull<NMainMenuTextButton>("ModPanelButton");
+        int insertAt = modBtn != null ? modBtn.GetIndex() + 1 : settingsBtn.GetIndex() + 1;
         container.MoveChild(_devModeButton, insertAt);
     }
 
