@@ -180,11 +180,14 @@ public static class KitLibState {
     public static class EnemyCheats {
         public static bool FreezeEnemies { get; set; }
         public static bool OneHitKill { get; set; }
+        /// <summary>When true, kill all enemies on enable and at each combat start.</summary>
+        public static bool AutoKillAllEnemies { get; set; }
         public static float DamageMultiplier { get; set; } = 1.0f;
 
         public static void Reset() {
             FreezeEnemies = false;
             OneHitKill = false;
+            AutoKillAllEnemies = false;
             DamageMultiplier = 1.0f;
         }
     }

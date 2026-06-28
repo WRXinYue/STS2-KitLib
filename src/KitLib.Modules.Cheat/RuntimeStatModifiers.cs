@@ -15,14 +15,13 @@ namespace KitLib;
 
 /// <summary>
 /// Frame-level runtime stat modifiers. Called from _Process each frame.
-/// Provides: God Mode, Kill All, Infinite Energy, Always Player Turn,
+/// Provides: God Mode, Infinite Energy, Always Player Turn,
 /// Draw to Hand Limit, Extra Draw Each Turn, Auto-Act Friendly Monsters,
 /// Negate Debuffs, and 7 Stat Locks.
 /// </summary>
 public sealed class RuntimeStatModifiers {
     private const BindingFlags ReflFlags = BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-    private double _killCooldown;
     private double _godModeCooldown;
     private double _debuffCooldown;
     private double _drawToLimitCooldown;
@@ -42,7 +41,6 @@ public sealed class RuntimeStatModifiers {
 
     // ── Public toggles ──
 
-    public bool KillAllEnemies { get; set; }
     public bool GodMode { get; set; }
     public bool InfiniteEnergy { get; set; }
     public bool AlwaysPlayerTurn { get; set; }
@@ -74,7 +72,7 @@ public sealed class RuntimeStatModifiers {
         LockGold || LockCurrentHp || LockMaxHp || LockCurrentEnergy || LockMaxEnergy || LockStars || LockOrbSlots;
 
     public bool HasActiveEffects =>
-        KillAllEnemies || GodMode || InfiniteEnergy || AlwaysPlayerTurn || DrawToHandLimit
+        GodMode || InfiniteEnergy || AlwaysPlayerTurn || DrawToHandLimit
         || (ExtraDrawEachTurn && ExtraDrawEachTurnAmount > 0) || NegateDebuffs || AutoActFriendlyMonsters
         || HasStatLocks;
 
@@ -118,9 +116,6 @@ public sealed class RuntimeStatModifiers {
 
         if (NegateDebuffs)
             TryRemoveDebuffs(player);
-
-        if (KillAllEnemies)
-            TryKillAllEnemies();
     }
 
     public void NotifyFriendlyMonsterAdded() {
@@ -151,7 +146,6 @@ public sealed class RuntimeStatModifiers {
     // ── Private helpers ──
 
     private void TickCooldowns(double delta) {
-        _killCooldown = Math.Max(0, _killCooldown - delta);
         _godModeCooldown = Math.Max(0, _godModeCooldown - delta);
         _debuffCooldown = Math.Max(0, _debuffCooldown - delta);
         _drawToLimitCooldown = Math.Max(0, _drawToLimitCooldown - delta);
@@ -174,19 +168,6 @@ public sealed class RuntimeStatModifiers {
         _extraDrawInProgress = false;
         _statLockInProgress = false;
         _friendlyAutoTurnSkipLogKeys.Clear();
-    }
-
-    private void TryKillAllEnemies() {
-        if (_killCooldown > 0) return;
-        var combatState = CombatManager.Instance.DebugOnlyGetState();
-        if (combatState == null) return;
-
-        var alive = combatState.Enemies.Where(e => e.IsAlive).ToArray();
-        if (alive.Length == 0) return;
-
-        _killCooldown = 0.25;
-        foreach (var enemy in alive)
-            CreatureCmd.Kill(enemy, true);
     }
 
     private void TryRemoveDebuffs(Player player) {

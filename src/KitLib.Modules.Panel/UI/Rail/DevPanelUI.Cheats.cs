@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Godot;
 using KitLib;
 using KitLib.Cheat;
+using KitLib.Host;
 using KitLib.Icons;
 using KitLib.Map;
 using KitLib.Multiplayer.Cheat;
@@ -15,6 +16,7 @@ namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowCheatsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
+        KitLibCheatOps.EnsureRuntimeStatModifiers?.Invoke();
         var existing = ((Node)globalUi).GetNodeOrNull<Control>(CheatsRootName);
         if (existing != null) {
             ((Node)globalUi).RemoveChild(existing);
@@ -123,7 +125,11 @@ internal static partial class DevPanelUI {
             secEnemy.AddChild(killBtn);
         }
         else {
-            secEnemy.AddChild(CreateCheatToggle(I18N.T("cheat.killAll", "Kill All Enemies"), I18N.T("cheat.killAll.desc", "Continuously kill all enemies"), () => CheatRunState.StatModifiers?.KillAllEnemies ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.KillAllEnemies = v; }));
+            secEnemy.AddChild(CreateCheatToggle(
+                I18N.T("cheat.killAll", "Kill All Enemies"),
+                I18N.T("cheat.killAll.desc", "Kill all enemies when enabled and at each combat start"),
+                () => KillAllEnemiesCheat.IsEnabled,
+                MpCheatUi.WrapBoolSetter(KillAllEnemiesCheat.SetEnabled)));
         }
         if (MpCheatUi.IsFrameCheatAllowed)
             secEnemy.AddChild(CreateCheatToggle(I18N.T("cheat.autoAlly", "Auto-Act Friendly Monsters"), I18N.T("cheat.autoAlly.desc", "Auto-execute friendly monster turns"), () => CheatRunState.StatModifiers?.AutoActFriendlyMonsters ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.AutoActFriendlyMonsters = v; }));

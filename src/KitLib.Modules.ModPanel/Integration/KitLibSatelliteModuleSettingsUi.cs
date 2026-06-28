@@ -60,6 +60,7 @@ internal static class KitLibSatelliteModuleSettingsUi {
         };
         label.AddThemeFontSizeOverride("normal_font_size", 13);
         label.AddThemeColorOverride("default_color", KitLibTheme.Subtle);
+        ModPanelUI.ApplyMegaRichTextFontOverrides(label);
         return label;
     }
 

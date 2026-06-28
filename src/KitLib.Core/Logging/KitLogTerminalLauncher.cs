@@ -22,7 +22,7 @@ public static class KitLogTerminalLauncher {
         if (TryLaunchKitLog(tailArgsTemplate, out var launchError))
             return true;
 
-        error = launchError ?? BuildFallbackMessage(tailArgsTemplate);
+        error = launchError ?? BuildFallbackMessage();
         return false;
     }
 
@@ -131,21 +131,18 @@ public static class KitLogTerminalLauncher {
         return null;
     }
 
-    static string BuildFallbackMessage(string tailArgsTemplate) {
+    static string BuildFallbackMessage() {
         var sessionPath = KitLibUserOps.CurrentSessionLogPath?.Invoke();
-        var command = $"kitlog {string.Format(tailArgsTemplate, KitLibInstance.ProcessId)}";
 
         if (string.IsNullOrEmpty(sessionPath)) {
             return I18N.T(
                 "ai.terminal.kitlogMissingNoLog",
-                "kitlog not found. Install KitLog.Cli from the optional tools zip, then run: {0}",
-                command);
+                "kitlog not found. Install KitLog.Cli from the optional tools zip.");
         }
 
         return I18N.T(
             "ai.terminal.kitlogMissing",
-            "kitlog not found. Install KitLog.Cli from the optional tools zip.\nRun: {0}\nLog: {1}",
-            command,
+            "kitlog not found. Install KitLog.Cli from the optional tools zip.\nLog: {0}",
             sessionPath);
     }
 }

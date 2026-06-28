@@ -18,9 +18,7 @@ public static class ModuleEntry {
     }
 
     static void WireCheatDelegates() {
-        KitLibCheatOps.EnsureRuntimeStatModifiers = () => {
-            CheatRunState.StatModifiers ??= new RuntimeStatModifiers();
-        };
+        KitLibCheatOps.EnsureRuntimeStatModifiers = () => CheatRunState.Ensure();
         KitLibCheatOps.ClearRunState = CheatRunState.ClearRunState;
         KitLibCheatOps.SetMultiplayerCheatOptIn = MpCheatSession.SetLocalOptIn;
         KitLibCheatOps.CanUseMultiplayerCheats = () => MpCheatSession.CanUseMultiplayerCheats;

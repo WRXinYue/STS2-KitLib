@@ -22,10 +22,7 @@ internal static class DevCheatMcpHelper {
         return true;
     }
 
-    public static RuntimeStatModifiers EnsureStatModifiers() {
-        CheatRunState.StatModifiers ??= new RuntimeStatModifiers();
-        return CheatRunState.StatModifiers;
-    }
+    public static RuntimeStatModifiers EnsureStatModifiers() => CheatRunState.Ensure();
 
     public static bool? ParseOptionalBool(JsonObject args, out string? error) {
         error = null;
@@ -158,9 +155,8 @@ internal static class DevCheatMcpHelper {
                     return Ok(cheat, v);
                 }
             case "kill_all": {
-                    var m = EnsureStatModifiers();
-                    var v = enabled ?? !m.KillAllEnemies;
-                    m.KillAllEnemies = v;
+                    var v = enabled ?? !KillAllEnemiesCheat.IsEnabled;
+                    KillAllEnemiesCheat.SetEnabled(v);
                     return Ok(cheat, v);
                 }
             case "runtime_infinite_energy": {

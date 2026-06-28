@@ -117,6 +117,7 @@ internal static class KitLibNativeModSettingsBootstrap {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         label.AddThemeFontSizeOverride("normal_font_size", 14);
+        ModPanelUI.ApplyMegaRichTextFontOverrides(label);
         return label;
     }
 

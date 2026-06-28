@@ -209,7 +209,7 @@ public static partial class ModPanelUI {
         return label;
     }
     /// <summary>MegaRichTextLabel asserts font overrides at ready; shell is not under a themed menu root.</summary>
-    private static void ApplyMegaRichTextFontOverrides(MegaRichTextLabel label) {
+    internal static void ApplyMegaRichTextFontOverrides(MegaRichTextLabel label) {
         var f = ThemeDB.FallbackFont;
         label.AddThemeFontOverride("normal_font", f);
         label.AddThemeFontOverride("bold_font", f);

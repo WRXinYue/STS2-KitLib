@@ -28,10 +28,7 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
 
     private static readonly string[] AllSubs = Toggles.Concat(Locks).Append("status").ToArray();
 
-    private static RuntimeStatModifiers EnsureMods() {
-        CheatRunState.StatModifiers ??= new RuntimeStatModifiers();
-        return CheatRunState.StatModifiers;
-    }
+    private static RuntimeStatModifiers EnsureMods() => CheatRunState.Ensure();
 
     public override CmdResult Process(Player? issuingPlayer, string[] args) {
         if (args.Length < 1)
@@ -47,8 +44,9 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
                     return new CmdResult(true, $"God Mode: {OnOff(m.GodMode)}");
                 }
             case "killall": {
-                    m.KillAllEnemies = flag ?? !m.KillAllEnemies;
-                    return new CmdResult(true, $"Kill All Enemies: {OnOff(m.KillAllEnemies)}");
+                    var v = flag ?? !KillAllEnemiesCheat.IsEnabled;
+                    KillAllEnemiesCheat.SetEnabled(v);
+                    return new CmdResult(true, $"Kill All Enemies: {OnOff(v)}");
                 }
             case "energy": {
                     m.InfiniteEnergy = flag ?? !m.InfiniteEnergy;
@@ -132,7 +130,7 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
         var lines = new[]
         {
             $"God Mode: {OnOff(m.GodMode)}",
-            $"Kill All: {OnOff(m.KillAllEnemies)}",
+            $"Kill All: {OnOff(KillAllEnemiesCheat.IsEnabled)}",
             $"Infinite Energy: {OnOff(m.InfiniteEnergy)}",
             $"Always Player Turn: {OnOff(m.AlwaysPlayerTurn)}",
             $"Draw to Limit: {OnOff(m.DrawToHandLimit)}",

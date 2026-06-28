@@ -1,5 +1,6 @@
 using Godot;
 using KitLib.UI;
+using MegaCrit.Sts2.addons.mega_text;
 
 namespace KitLib.Integration;
 /// <summary>
@@ -44,6 +45,9 @@ internal static class ModSettingsRitsuFormDevTheme {
                 break;
             case Button b:
                 StylePushButton(b);
+                break;
+            case MegaRichTextLabel rtl:
+                ModPanelUI.ApplyMegaRichTextFontOverrides(rtl);
                 break;
         }
         foreach (var child in node.GetChildren())

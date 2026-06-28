@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using HarmonyLib;
+using KitLib.Cheat;
 using KitLib.Combat;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Rooms;
@@ -33,6 +34,8 @@ internal static class CombatCheckpointPatch {
 
         __instance.TurnStarted += _turnStartHandler;
         __instance.CombatEnded += _combatEndHandler;
+
+        Callable.From(() => Callable.From(() => KillAllEnemiesCheat.TryApply()).CallDeferred()).CallDeferred();
     }
 
     private static void OnPlayerTurnStarted() {
