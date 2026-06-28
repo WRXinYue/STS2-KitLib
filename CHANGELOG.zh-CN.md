@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.2] - 2026-06-28
+
 ### Fixed
 
 - **联机** — 开启开发作弊同步后，主持或加入普通 Steam 联机对局不再在开局时黑屏卡死。

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.2] - 2026-06-28
+
 ### Fixed
 
 - **Multiplayer** — Hosting or joining a regular Steam multiplayer run no longer freezes on a black screen at run start when dev cheat sync is opted in.
