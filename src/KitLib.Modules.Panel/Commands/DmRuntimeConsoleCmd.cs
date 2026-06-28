@@ -4,6 +4,7 @@ using KitLib.Cheat;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Helpers;
 
 namespace KitLib.Commands;
 
@@ -79,18 +80,36 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
                 }
 
             // Stat locks
-            case "lockgold":
-                return HandleLock(args, "Lock Gold", () => m.LockGold, v => m.LockGold = v, () => m.LockedGoldValue, v => m.LockedGoldValue = v);
-            case "lockhp":
-                return HandleLock(args, "Lock Current HP", () => m.LockCurrentHp, v => m.LockCurrentHp = v, () => m.LockedCurrentHpValue, v => m.LockedCurrentHpValue = v);
-            case "lockmaxhp":
-                return HandleLock(args, "Lock Max HP", () => m.LockMaxHp, v => m.LockMaxHp = v, () => m.LockedMaxHpValue, v => m.LockedMaxHpValue = v);
-            case "lockenergy":
-                return HandleLock(args, "Lock Current Energy", () => m.LockCurrentEnergy, v => m.LockCurrentEnergy = v, () => m.LockedCurrentEnergyValue, v => m.LockedCurrentEnergyValue = v);
-            case "lockmaxenergy":
-                return HandleLock(args, "Lock Max Energy", () => m.LockMaxEnergy, v => m.LockMaxEnergy = v, () => m.LockedMaxEnergyValue, v => m.LockedMaxEnergyValue = v);
-            case "lockstars":
-                return HandleLock(args, "Lock Stars", () => m.LockStars, v => m.LockStars = v, () => m.LockedStarsValue, v => m.LockedStarsValue = v);
+            case "lockgold": {
+                    var result = HandleLock(args, "Lock Gold", () => m.LockGold, v => m.LockGold = v, () => m.LockedGoldValue, v => m.LockedGoldValue = v);
+                    SyncStatLock(m, "gold");
+                    return result;
+                }
+            case "lockhp": {
+                    var result = HandleLock(args, "Lock Current HP", () => m.LockCurrentHp, v => m.LockCurrentHp = v, () => m.LockedCurrentHpValue, v => m.LockedCurrentHpValue = v);
+                    SyncStatLock(m, "hp");
+                    return result;
+                }
+            case "lockmaxhp": {
+                    var result = HandleLock(args, "Lock Max HP", () => m.LockMaxHp, v => m.LockMaxHp = v, () => m.LockedMaxHpValue, v => m.LockedMaxHpValue = v);
+                    SyncStatLock(m, "maxhp");
+                    return result;
+                }
+            case "lockenergy": {
+                    var result = HandleLock(args, "Lock Current Energy", () => m.LockCurrentEnergy, v => m.LockCurrentEnergy = v, () => m.LockedCurrentEnergyValue, v => m.LockedCurrentEnergyValue = v);
+                    SyncStatLock(m, "energy");
+                    return result;
+                }
+            case "lockmaxenergy": {
+                    var result = HandleLock(args, "Lock Max Energy", () => m.LockMaxEnergy, v => m.LockMaxEnergy = v, () => m.LockedMaxEnergyValue, v => m.LockedMaxEnergyValue = v);
+                    SyncStatLock(m, "maxenergy");
+                    return result;
+                }
+            case "lockstars": {
+                    var result = HandleLock(args, "Lock Stars", () => m.LockStars, v => m.LockStars = v, () => m.LockedStarsValue, v => m.LockedStarsValue = v);
+                    SyncStatLock(m, "stars");
+                    return result;
+                }
             case "lockorbslots":
                 return HandleLock(args, "Lock Orb Slots", () => m.LockOrbSlots, v => m.LockOrbSlots = v, () => m.LockedOrbSlotsValue, v => m.LockedOrbSlotsValue = v);
 
@@ -155,4 +174,32 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
         "off" or "false" or "0" or "no" => false,
         _ => null
     };
+
+    static void SyncStatLock(RuntimeStatModifiers m, string kind) {
+        if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return;
+        switch (kind) {
+            case "gold":
+                if (m.LockGold) p.Gold = m.LockedGoldValue;
+                break;
+            case "hp":
+                if (m.LockCurrentHp)
+                    TaskHelper.RunSafely(Sts2ApiCompat.SetCurrentHpAsync(p.Creature, Math.Max(1, m.LockedCurrentHpValue)));
+                break;
+            case "maxhp":
+                if (m.LockMaxHp)
+                    TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(p.Creature, Math.Max(1, m.LockedMaxHpValue)));
+                break;
+            case "energy":
+                if (m.LockCurrentEnergy && p.PlayerCombatState != null)
+                    p.PlayerCombatState.Energy = m.LockedCurrentEnergyValue;
+                break;
+            case "maxenergy":
+                if (m.LockMaxEnergy) p.MaxEnergy = Math.Max(1, m.LockedMaxEnergyValue);
+                break;
+            case "stars":
+                if (m.LockStars && p.PlayerCombatState != null)
+                    p.PlayerCombatState.Stars = Math.Max(0, m.LockedStarsValue);
+                break;
+        }
+    }
 }

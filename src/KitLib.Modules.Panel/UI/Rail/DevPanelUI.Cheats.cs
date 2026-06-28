@@ -224,12 +224,104 @@ internal static partial class DevPanelUI {
             MpCheatUi.ApplyMultiplayerUnsupported(row, "mpcheat.unsupported.mp", "Not synced in multiplayer.");
             secLocks.AddChild(row);
         }
-        AddLockRow(CreateStatLockRow(I18N.T("statLock.gold", "Lock Gold"), 0, 99999, () => CheatRunState.StatModifiers?.LockGold ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockGold = v; }, () => CheatRunState.StatModifiers?.LockedGoldValue ?? 0, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedGoldValue = (int)v; }, () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 0; return p.Gold; }));
-        AddLockRow(CreateStatLockRow(I18N.T("statLock.currentHp", "Lock Current HP"), 1, 9999, () => CheatRunState.StatModifiers?.LockCurrentHp ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockCurrentHp = v; }, () => CheatRunState.StatModifiers?.LockedCurrentHpValue ?? 1, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedCurrentHpValue = (int)v; }, () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 1; return p.Creature.CurrentHp; }));
-        AddLockRow(CreateStatLockRow(I18N.T("statLock.maxHp", "Lock Max HP"), 1, 9999, () => CheatRunState.StatModifiers?.LockMaxHp ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockMaxHp = v; }, () => CheatRunState.StatModifiers?.LockedMaxHpValue ?? 1, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedMaxHpValue = (int)v; }, () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 1; return p.Creature.MaxHp; }));
-        AddLockRow(CreateStatLockRow(I18N.T("statLock.currentEnergy", "Lock Current Energy"), 0, 99, () => CheatRunState.StatModifiers?.LockCurrentEnergy ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockCurrentEnergy = v; }, () => CheatRunState.StatModifiers?.LockedCurrentEnergyValue ?? 0, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedCurrentEnergyValue = (int)v; }, () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 0; return p.PlayerCombatState?.Energy ?? 0; }));
-        AddLockRow(CreateStatLockRow(I18N.T("statLock.maxEnergy", "Lock Max Energy"), 1, 99, () => CheatRunState.StatModifiers?.LockMaxEnergy ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockMaxEnergy = v; }, () => CheatRunState.StatModifiers?.LockedMaxEnergyValue ?? 1, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedMaxEnergyValue = (int)v; }, () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 1; return p.MaxEnergy; }));
-        AddLockRow(CreateStatLockRow(I18N.T("statLock.stars", "Lock Stars"), 0, 999, () => CheatRunState.StatModifiers?.LockStars ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockStars = v; }, () => CheatRunState.StatModifiers?.LockedStarsValue ?? 0, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedStarsValue = (int)v; }, () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 0; return p.PlayerCombatState?.Stars ?? 0; }));
+        void SyncLockedGold(int v) {
+            if (CheatRunState.StatModifiers?.LockGold == true
+                && RunContext.TryGetRunAndPlayer(out _, out var p))
+                p.Gold = v;
+        }
+        void SyncLockedCurrentHp(int v) {
+            if (CheatRunState.StatModifiers?.LockCurrentHp == true
+                && RunContext.TryGetRunAndPlayer(out _, out var p))
+                TaskHelper.RunSafely(Sts2ApiCompat.SetCurrentHpAsync(p.Creature, Math.Max(1, v)));
+        }
+        void SyncLockedMaxHp(int v) {
+            if (CheatRunState.StatModifiers?.LockMaxHp == true
+                && RunContext.TryGetRunAndPlayer(out _, out var p))
+                TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(p.Creature, Math.Max(1, v)));
+        }
+        void SyncLockedEnergy(int v) {
+            if (CheatRunState.StatModifiers?.LockCurrentEnergy == true
+                && RunContext.TryGetRunAndPlayer(out _, out var p)
+                && p.PlayerCombatState != null)
+                p.PlayerCombatState.Energy = v;
+        }
+        void SyncLockedMaxEnergy(int v) {
+            if (CheatRunState.StatModifiers?.LockMaxEnergy == true
+                && RunContext.TryGetRunAndPlayer(out _, out var p))
+                p.MaxEnergy = Math.Max(1, v);
+        }
+        void SyncLockedStars(int v) {
+            if (CheatRunState.StatModifiers?.LockStars == true
+                && RunContext.TryGetRunAndPlayer(out _, out var p)
+                && p.PlayerCombatState != null)
+                p.PlayerCombatState.Stars = Math.Max(0, v);
+        }
+        AddLockRow(CreateStatLockRow(
+            I18N.T("statLock.gold", "Lock Gold"), 0, 99999,
+            () => CheatRunState.StatModifiers?.LockGold ?? false,
+            v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockGold = v; },
+            () => CheatRunState.StatModifiers?.LockedGoldValue ?? 0,
+            v => {
+                if (CheatRunState.StatModifiers == null) return;
+                CheatRunState.StatModifiers.LockedGoldValue = (int)v;
+                SyncLockedGold((int)v);
+            },
+            () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 0; return p.Gold; }));
+        AddLockRow(CreateStatLockRow(
+            I18N.T("statLock.currentHp", "Lock Current HP"), 1, 9999,
+            () => CheatRunState.StatModifiers?.LockCurrentHp ?? false,
+            v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockCurrentHp = v; },
+            () => CheatRunState.StatModifiers?.LockedCurrentHpValue ?? 1,
+            v => {
+                if (CheatRunState.StatModifiers == null) return;
+                CheatRunState.StatModifiers.LockedCurrentHpValue = (int)v;
+                SyncLockedCurrentHp((int)v);
+            },
+            () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 1; return p.Creature.CurrentHp; }));
+        AddLockRow(CreateStatLockRow(
+            I18N.T("statLock.maxHp", "Lock Max HP"), 1, 9999,
+            () => CheatRunState.StatModifiers?.LockMaxHp ?? false,
+            v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockMaxHp = v; },
+            () => CheatRunState.StatModifiers?.LockedMaxHpValue ?? 1,
+            v => {
+                if (CheatRunState.StatModifiers == null) return;
+                CheatRunState.StatModifiers.LockedMaxHpValue = (int)v;
+                SyncLockedMaxHp((int)v);
+            },
+            () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 1; return p.Creature.MaxHp; }));
+        AddLockRow(CreateStatLockRow(
+            I18N.T("statLock.currentEnergy", "Lock Current Energy"), 0, 99,
+            () => CheatRunState.StatModifiers?.LockCurrentEnergy ?? false,
+            v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockCurrentEnergy = v; },
+            () => CheatRunState.StatModifiers?.LockedCurrentEnergyValue ?? 0,
+            v => {
+                if (CheatRunState.StatModifiers == null) return;
+                CheatRunState.StatModifiers.LockedCurrentEnergyValue = (int)v;
+                SyncLockedEnergy((int)v);
+            },
+            () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 0; return p.PlayerCombatState?.Energy ?? 0; }));
+        AddLockRow(CreateStatLockRow(
+            I18N.T("statLock.maxEnergy", "Lock Max Energy"), 1, 99,
+            () => CheatRunState.StatModifiers?.LockMaxEnergy ?? false,
+            v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockMaxEnergy = v; },
+            () => CheatRunState.StatModifiers?.LockedMaxEnergyValue ?? 1,
+            v => {
+                if (CheatRunState.StatModifiers == null) return;
+                CheatRunState.StatModifiers.LockedMaxEnergyValue = (int)v;
+                SyncLockedMaxEnergy((int)v);
+            },
+            () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 1; return p.MaxEnergy; }));
+        AddLockRow(CreateStatLockRow(
+            I18N.T("statLock.stars", "Lock Stars"), 0, 999,
+            () => CheatRunState.StatModifiers?.LockStars ?? false,
+            v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockStars = v; },
+            () => CheatRunState.StatModifiers?.LockedStarsValue ?? 0,
+            v => {
+                if (CheatRunState.StatModifiers == null) return;
+                CheatRunState.StatModifiers.LockedStarsValue = (int)v;
+                SyncLockedStars((int)v);
+            },
+            () => { if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return 0; return p.PlayerCombatState?.Stars ?? 0; }));
         AddLockRow(CreateStatLockRow(I18N.T("statLock.orbSlots", "Lock Orb Slots"), 0, 10, () => CheatRunState.StatModifiers?.LockOrbSlots ?? false, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockOrbSlots = v; }, () => CheatRunState.StatModifiers?.LockedOrbSlotsValue ?? 0, v => { if (CheatRunState.StatModifiers != null) CheatRunState.StatModifiers.LockedOrbSlotsValue = (int)v; }));
 
         // ── Responsive column distribution ────────────────────────────────

@@ -68,8 +68,7 @@ public sealed class RuntimeStatModifiers {
     public int LockedStarsValue { get; set; }
     public int LockedOrbSlotsValue { get; set; }
 
-    private bool HasStatLocks =>
-        LockGold || LockCurrentHp || LockMaxHp || LockCurrentEnergy || LockMaxEnergy || LockStars || LockOrbSlots;
+    private bool HasStatLocks => LockOrbSlots;
 
     public bool HasActiveEffects =>
         GodMode || InfiniteEnergy || AlwaysPlayerTurn || DrawToHandLimit
@@ -331,35 +330,6 @@ public sealed class RuntimeStatModifiers {
 
     private async void ApplyStatLocksAsync(Player player) {
         try {
-            int safeMaxHp = Math.Max(1, LockedMaxHpValue);
-            int maxHpCap = LockMaxHp ? safeMaxHp : Math.Max(1, player.Creature.MaxHp);
-            int targetCurrentHp = Math.Clamp(LockedCurrentHpValue, 1, maxHpCap);
-
-            if (LockMaxHp && player.Creature.MaxHp != safeMaxHp)
-                await Sts2ApiCompat.SetMaxHpAsync(player.Creature, safeMaxHp);
-            if (LockCurrentHp && player.Creature.CurrentHp != targetCurrentHp)
-                await Sts2ApiCompat.SetCurrentHpAsync(player.Creature, targetCurrentHp);
-
-            if (LockGold && player.Gold != Math.Max(0, LockedGoldValue))
-                await PlayerCmd.SetGold((decimal)Math.Max(0, LockedGoldValue), player);
-
-            if (LockMaxEnergy) {
-                int safeMaxE = Math.Max(1, LockedMaxEnergyValue);
-                if (player.MaxEnergy != safeMaxE) player.MaxEnergy = safeMaxE;
-            }
-
-            int maxECap = LockMaxEnergy ? Math.Max(1, LockedMaxEnergyValue) : Math.Max(1, player.MaxEnergy);
-            int targetE = Math.Clamp(LockedCurrentEnergyValue, 0, maxECap);
-            if (LockCurrentEnergy && player.PlayerCombatState != null && player.PlayerCombatState.Energy != targetE) {
-                try { await PlayerCmd.SetEnergy((decimal)targetE, player); }
-                catch { player.PlayerCombatState.Energy = targetE; }
-            }
-
-            if (LockStars && player.PlayerCombatState != null) {
-                int s = Math.Max(0, LockedStarsValue);
-                if (player.PlayerCombatState.Stars != s) player.PlayerCombatState.Stars = s;
-            }
-
             if (LockOrbSlots)
                 await ApplyOrbSlotsAsync(player, LockedOrbSlotsValue);
         }

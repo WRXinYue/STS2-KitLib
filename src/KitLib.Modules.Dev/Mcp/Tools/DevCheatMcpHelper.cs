@@ -232,7 +232,8 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockGold = true;
                     m.LockedGoldValue = Math.Max(0, value);
-                    return StatResult(stat, value, locked: true);
+                    player.Gold = m.LockedGoldValue;
+                    return StatResult(stat, player.Gold, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockGold = false;
@@ -243,7 +244,8 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockCurrentHp = true;
                     m.LockedCurrentHpValue = Math.Clamp(value, 1, 9999);
-                    return StatResult(stat, m.LockedCurrentHpValue, locked: true);
+                    TaskHelper.RunSafely(Sts2ApiCompat.SetCurrentHpAsync(player.Creature, m.LockedCurrentHpValue));
+                    return StatResult(stat, player.Creature.CurrentHp, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockCurrentHp = false;
@@ -254,7 +256,8 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockMaxHp = true;
                     m.LockedMaxHpValue = Math.Clamp(value, 1, 9999);
-                    return StatResult(stat, m.LockedMaxHpValue, locked: true);
+                    TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(player.Creature, m.LockedMaxHpValue));
+                    return StatResult(stat, player.Creature.MaxHp, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockMaxHp = false;
@@ -265,7 +268,9 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockCurrentEnergy = true;
                     m.LockedCurrentEnergyValue = Math.Clamp(value, 0, 99);
-                    return StatResult(stat, m.LockedCurrentEnergyValue, locked: true);
+                    if (player.PlayerCombatState != null)
+                        player.PlayerCombatState.Energy = m.LockedCurrentEnergyValue;
+                    return StatResult(stat, player.PlayerCombatState?.Energy ?? m.LockedCurrentEnergyValue, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockCurrentEnergy = false;
@@ -277,7 +282,8 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockMaxEnergy = true;
                     m.LockedMaxEnergyValue = Math.Clamp(value, 1, 99);
-                    return StatResult(stat, m.LockedMaxEnergyValue, locked: true);
+                    player.MaxEnergy = m.LockedMaxEnergyValue;
+                    return StatResult(stat, player.MaxEnergy, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockMaxEnergy = false;
@@ -288,7 +294,9 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockStars = true;
                     m.LockedStarsValue = Math.Max(0, value);
-                    return StatResult(stat, m.LockedStarsValue, locked: true);
+                    if (player.PlayerCombatState != null)
+                        player.PlayerCombatState.Stars = m.LockedStarsValue;
+                    return StatResult(stat, player.PlayerCombatState?.Stars ?? m.LockedStarsValue, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockStars = false;

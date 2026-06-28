@@ -5,6 +5,7 @@ using Godot;
 using HarmonyLib;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Merchant;
@@ -75,6 +76,7 @@ public static class InfiniteBlockClearPatch {
 public static class InfiniteEnergyPatch {
     public static void Postfix(PlayerCombatState __instance) {
         if (!MpCheatApplier.InfiniteEnergy(__instance)) return;
+        if (CombatStatLock.IsCurrentEnergyLocked(__instance)) return;
         __instance.Energy = 999;
     }
 }
@@ -84,6 +86,7 @@ public static class InfiniteEnergyPatch {
 public static class InfiniteStarsPatch {
     public static void Postfix(PlayerCombatState __instance) {
         if (!MpCheatApplier.InfiniteStars(__instance)) return;
+        if (CombatStatLock.IsStarsLocked(__instance)) return;
         __instance.Stars = 999;
     }
 }
@@ -128,7 +131,7 @@ public static class DefenseMultiplierPatch {
 }
 
 /// <summary>Gold multiplier — multiply gold gained.</summary>
-[HarmonyPatch(typeof(MegaCrit.Sts2.Core.Commands.PlayerCmd), nameof(MegaCrit.Sts2.Core.Commands.PlayerCmd.GainGold))]
+[HarmonyPatch(typeof(PlayerCmd), nameof(PlayerCmd.GainGold))]
 public static class GoldMultiplierPatch {
     public static void Prefix(ref decimal amount) {
         var mult = MpCheatApplier.GoldMultiplier;

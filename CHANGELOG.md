@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Quick save / load** — Saving at a rest site, shop, treasure room, or on the map no longer crashes on load with `ArgumentOutOfRangeException`. Snapshots now follow the same `PreFinishedRoom` rules as the game's Continue save; older snapshots with an invalid room type are repaired on load.
+- **Kill All Enemies (cheats)** — The cheat toggle in the dev panel works again when enabled.
+- **Lock Gold (cheats)** — With gold locked in the dev cheats panel, spending or earning gold no longer changes your total.
+- **Lock Current HP (cheats)** — Current HP stays at the locked value during combat.
+- **Lock Max HP (cheats)** — Max HP stays at the locked value.
+- **Lock Current Energy (cheats)** — Energy stays at the locked value when playing cards.
+- **Lock Max Energy (cheats)** — Max energy stays at the locked value.
+- **Lock Stars (cheats)** — Stars stay at the locked value in combat.
 
 ## [0.22.1] - 2026-06-19
 
