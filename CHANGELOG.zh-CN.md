@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **联机** — 开启开发作弊同步后，主持或加入普通 Steam 联机对局不再在开局时黑屏卡死。
 - **快速存读** — 在篝火、商店、宝箱或地图界面 Quick Save 后再读档不再因 `ArgumentOutOfRangeException` 崩溃；快照 `PreFinishedRoom` 与官方 Continue 一致，旧快照中非法房间类型在读档时自动忽略。
 - **击杀全部敌人（作弊）** — 开发作弊面板中开启后再次正常生效。
 - **锁定金币（作弊）** — 在开发作弊面板锁定金币后，消费或获得金币不再改变总数。

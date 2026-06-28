@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Multiplayer** — Hosting or joining a regular Steam multiplayer run no longer freezes on a black screen at run start when dev cheat sync is opted in.
 - **Quick save / load** — Saving at a rest site, shop, treasure room, or on the map no longer crashes on load with `ArgumentOutOfRangeException`. Snapshots now follow the same `PreFinishedRoom` rules as the game's Continue save; older snapshots with an invalid room type are repaired on load.
 - **Kill All Enemies (cheats)** — The cheat toggle in the dev panel works again when enabled.
 - **Lock Gold (cheats)** — With gold locked in the dev cheats panel, spending or earning gold no longer changes your total.
