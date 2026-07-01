@@ -337,7 +337,7 @@ public sealed class RuntimeStatModifiers {
         finally { _statLockInProgress = false; _statLockCooldown = 0.12; }
     }
 
-    private static async Task ApplyOrbSlotsAsync(Player player, int targetSlots) {
+    internal static async Task ApplyOrbSlotsAsync(Player player, int targetSlots) {
         int safe = Math.Clamp(targetSlots, 0, 10);
         player.BaseOrbSlotCount = safe;
         if (player.PlayerCombatState != null && CombatManager.Instance.IsInProgress && !CombatManager.Instance.IsOverOrEnding) {

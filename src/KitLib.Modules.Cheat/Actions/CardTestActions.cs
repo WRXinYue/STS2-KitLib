@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using KitLib.Multiplayer.Cheat;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -10,6 +11,10 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Encounters;
+using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Vfx;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -27,6 +32,15 @@ internal sealed class CardTestEntry {
 }
 
 internal static class CardTestActions {
+    internal static bool IsAtRestSite(RunState state) =>
+        state.CurrentRoom?.RoomType == RoomType.RestSite;
+
+    internal static bool CanRunCardTest(RunState state, Player player) {
+        if (MpCheatSession.InMultiplayerRun)
+            return false;
+        return player.PlayerCombatState != null || IsAtRestSite(state);
+    }
+
     /// <summary>
     /// Teleports the run into a combat room containing the training dummy (BattleFriendV3, Setting3).
     /// HP is patched to "infinite" via <see cref="BattleFriendV3InfiniteHpPatch"/> and the time limit
@@ -67,13 +81,61 @@ internal static class CardTestActions {
 
         CardTestState.TestingActive = true;
         try {
-            for (var i = 0; i < queue.Count; i++)
-                await TestEntry(queue[i], i, queue.Count, target, state, player);
-            MainFile.Logger.Info($"CardTestActions: Finished testing {queue.Count} card(s).");
+            if (IsAtRestSite(state)) {
+                for (var i = 0; i < queue.Count; i++)
+                    await TestEntryAtRestSite(queue[i], i, queue.Count, state, player);
+                MainFile.Logger.Info($"CardTestActions: Finished smith-previewing {queue.Count} card(s).");
+            }
+            else {
+                for (var i = 0; i < queue.Count; i++)
+                    await TestEntry(queue[i], i, queue.Count, target, state, player);
+                MainFile.Logger.Info($"CardTestActions: Finished testing {queue.Count} card(s).");
+            }
         }
         finally {
             CardTestState.TestingActive = false;
         }
+    }
+
+    /// <summary>
+    /// Rest-site pass: smith-style card preview for base and upgraded copies (no combat play).
+    /// </summary>
+    static async Task TestEntryAtRestSite(
+        CardTestEntry template,
+        int index,
+        int total,
+        RunState state,
+        Player player) {
+        var id = ((AbstractModel)template.Card).Id.Entry;
+        MainFile.Logger.Info($"CardTestActions: [{index + 1}/{total}] Smith preview {id}");
+
+        var upgLevels = Math.Max(template.UpgradeLevels, 1);
+
+        await SmithPreviewAsync(state, player, template.Card, 0);
+        await SmithPreviewAsync(state, player, template.Card, upgLevels);
+    }
+
+    static async Task SmithPreviewAsync(RunState state, Player player, CardModel template, int upgradeLevels) {
+        var id = ((AbstractModel)template).Id.Entry;
+        var card = state.CreateCard(template.CanonicalInstance, player);
+        for (var i = 0; i < upgradeLevels; i++)
+            CardCmd.Upgrade(card, CardPreviewStyle.None);
+
+        var container = NRun.Instance?.GlobalUi?.CardPreviewContainer;
+        if (container == null) {
+            MainFile.Logger.Warn("CardTestActions: No CardPreviewContainer for smith preview.");
+            return;
+        }
+
+        var vfx = NCardSmithVfx.Create(new[] { card });
+        if (vfx == null) {
+            MainFile.Logger.Warn($"CardTestActions: Smith preview failed for {id} +{upgradeLevels}.");
+            return;
+        }
+
+        container.AddChildSafely(vfx);
+        MainFile.Logger.Info($"CardTestActions: Smith preview {id} +{upgradeLevels}.");
+        await Cmd.CustomScaledWait(1f, 2f, ignoreCombatEnd: true);
     }
 
     /// <summary>

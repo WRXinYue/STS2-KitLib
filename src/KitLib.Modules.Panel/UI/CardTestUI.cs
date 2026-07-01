@@ -94,29 +94,12 @@ internal static class CardTestUI {
         statusLabel.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         container.AddChild(statusLabel);
 
-        // Free Play toggle — suppresses energy cost and the training dummy's escape timer.
-        container.AddChild(new HSeparator());
-
-        var freePlayBtn = new Button {
-            Text = I18N.T("cardtest.freePlay", "Free Play"),
-            ToggleMode = true,
-            ButtonPressed = CardTestState.FreePlayActive,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            CustomMinimumSize = new Vector2(0, 30),
-            TooltipText = I18N.T("cardtest.freePlayHint", "Cards cost no energy or stars when played"),
-        };
-        freePlayBtn.AddThemeFontSizeOverride("font_size", 12);
-        ApplyFreePlayToggleStyle(freePlayBtn, CardTestState.FreePlayActive);
-
-        freePlayBtn.Toggled += on => {
-            CardTestState.FreePlayActive = on;
-            ApplyFreePlayToggleStyle(freePlayBtn, on);
-        };
-
-        container.AddChild(freePlayBtn);
-
         testBtn.Pressed += () => {
             if (!RunContext.TryGetRunAndPlayer(out var st, out var pl) || pl == null) {
+                SetStatus(statusLabel, I18N.T("cardtest.notInCombat", "Enter combat to enable inject / play."));
+                return;
+            }
+            if (!CardTestActions.CanRunCardTest(st, pl)) {
                 SetStatus(statusLabel, I18N.T("cardtest.notInCombat", "Enter combat to enable inject / play."));
                 return;
             }
@@ -197,9 +180,9 @@ internal static class CardTestUI {
             }
 
             var inMp = MpCheatSession.InMultiplayerRun;
-            var inRun = RunContext.TryGetRunAndPlayer(out _, out var currentPlayer);
-            var inCombat = inRun && currentPlayer?.PlayerCombatState != null;
-            testBtn.Disabled = _queue.Count == 0 || !inCombat || inMp;
+            var inRun = RunContext.TryGetRunAndPlayer(out var runState, out var currentPlayer);
+            var canTest = inRun && currentPlayer != null && CardTestActions.CanRunCardTest(runState, currentPlayer);
+            testBtn.Disabled = _queue.Count == 0 || !canTest || inMp;
         };
 
         refreshHandle.Refresh();
@@ -221,13 +204,6 @@ internal static class CardTestUI {
         };
         btn.AddThemeFontSizeOverride("font_size", 14);
         return btn;
-    }
-
-    private static void ApplyFreePlayToggleStyle(Button btn, bool on) {
-        var col = on ? KitLibTheme.Accent : KitLibTheme.Subtle;
-        btn.AddThemeColorOverride("font_color", col);
-        btn.AddThemeColorOverride("font_hover_color", col);
-        btn.AddThemeColorOverride("font_pressed_color", col);
     }
 
     private static void ApplyAccentBtnStyle(Button btn) {

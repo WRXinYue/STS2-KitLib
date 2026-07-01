@@ -9,8 +9,8 @@ using MegaCrit.Sts2.Core.Models.Monsters;
 namespace KitLib.Patches;
 
 /// <summary>
-/// Harmony patches for card testing: when <see cref="CardTestState.BypassResourceCosts"/> is true,
-/// plays skip energy/star spend and always pass resource affordability checks.
+/// Harmony patches for card testing: when <see cref="CardTestState.BypassResourceCosts"/> is true
+/// (automated Test queue), plays skip energy/star spend.
 /// </summary>
 
 [HarmonyPatch(typeof(PlayerCombatState), nameof(PlayerCombatState.LoseEnergy))]
