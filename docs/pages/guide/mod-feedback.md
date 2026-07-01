@@ -29,5 +29,19 @@ Reports are written under `user://devmode-reports/` (account-scoped user data, s
 :::
 
 ::: zh-CN
-（维护者向长文；用户向说明见 README.zh-CN.md 与 [文档站](/guide/panels/)。）
+从局内侧栏或标题画面 **开发模式 → 诊断 → Mod 反馈** 打开。
+
+填写标题和说明，可选附带游戏日志尾部，导出给 Mod 作者的 **ZIP 报告包**。**隐私模式**会把用户数据路径替换成 `<user-data>`。
+
+ZIP 通常包含：
+
+- `report.txt` — 你的描述和环境摘要
+- `mods.txt` — 已加载 mod 列表
+- `logs-filtered.txt` — KitLib 过滤后的日志摘录
+- `harmony-patches.txt` — Harmony 补丁快照
+- `framework-bridge.txt` — 框架桥接信息
+- `combat-stats.json` — 当前战斗统计（若在战斗中）
+- `game-logs/` — 可选附带的原版日志尾部
+
+报告写在 `user://devmode-reports/`（与 `mod_data/KitLib/` 同账号目录树）。
 :::

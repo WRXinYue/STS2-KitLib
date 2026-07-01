@@ -1,6 +1,6 @@
 # KitLib MCP (stdio proxy)
 
-Documentation lives in the repo root:
+Full documentation on the docs site:
 
-- English: **[README.md](../../README.md#mcp)**
-- 中文: **[README.zh-CN.md](../../README.zh-CN.md#mcp)**
+- English: **[MCP guide](https://sts2-devmod.wrxinyue.org/guide/mcp)**
+- 中文: **[MCP 指南](https://sts2-devmod.wrxinyue.org/guide/mcp)**（站点语言切到中文）

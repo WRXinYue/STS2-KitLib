@@ -1,49 +1,30 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { resolve } from 'node:path'
 import type { ThemeConfig } from 'valaxy-theme-nova'
 import { defineValaxyConfig } from 'valaxy'
 import modManifest from '../KitLib.json'
+import { syncChangelog } from './scripts/sync-changelog.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
-/** Vite plugin: sync root CHANGELOG files into docs/pages/ with frontmatter. */
-function changelogSync() {
+// Generate gitignored pages before Valaxy scans docs/pages/ (remote builds need full repo checkout).
+syncChangelog()
+
+/** Vite plugin: re-sync on dev watch when root CHANGELOG files change. */
+function changelogWatch() {
   const rootDir = resolve(__dirname, '..')
-  const pagesDir = resolve(__dirname, 'pages')
-
-  const entries = [
-    { src: resolve(rootDir, 'CHANGELOG.md'), dest: resolve(pagesDir, 'changelog.md') },
-    { src: resolve(rootDir, 'CHANGELOG.zh-CN.md'), dest: resolve(pagesDir, 'changelog-zh-cn.md') },
-  ]
-
-  const frontmatter = [
-    '---',
-    'title:',
-    '  en: Changelog',
-    '  zh-CN: 更新日志',
-    'top: 9000',
-    'cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp',
-    '---',
-    '',
-    '',
-  ].join('\n')
-
-  function sync() {
-    for (const { src, dest } of entries) {
-      if (!existsSync(src)) continue
-      writeFileSync(dest, frontmatter + readFileSync(src, 'utf-8'))
-    }
-  }
+  const watched = [
+    resolve(rootDir, 'CHANGELOG.md'),
+    resolve(rootDir, 'CHANGELOG.zh-CN.md'),
+  ].filter(existsSync)
 
   return {
-    name: 'changelog-sync',
-    buildStart() { sync() },
+    name: 'changelog-watch',
     configureServer(server: any) {
-      const watched = entries.map(e => e.src).filter(existsSync)
       server.watcher.add(watched)
       server.watcher.on('change', (path: string) => {
-        if (watched.includes(path)) sync()
+        if (watched.includes(path)) syncChangelog({ failOnMissing: false })
       })
     },
   }
@@ -53,7 +34,7 @@ export default defineValaxyConfig<ThemeConfig>({
   theme: 'nova',
 
   vite: {
-    plugins: [changelogSync()],
+    plugins: [changelogWatch()],
   },
 
   siteConfig: {
@@ -135,7 +116,7 @@ export default defineValaxyConfig<ThemeConfig>({
         en: 'Modular in-game toolkit & extension APIs for Slay the Spire 2',
         'zh-CN': '《杀戮尖塔 2》模块化游戏内工具库与扩展接口',
       },
-      img: 'https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp',
+      img: 'https://raw.githubusercontent.com/WRXinYue/STS2-KitLib/refs/heads/main/assets/devmode.png',
     },
 
     footer: {

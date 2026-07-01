@@ -33,7 +33,9 @@ Use `ModRuntime` when you need mod metadata or a safe post-init timing point, re
 需要 mod 元数据或安全的初始化后时机时，使用 `ModRuntime`，与是否同时注册面板无关。
 :::
 
-## `DevMode.Modding.ModRuntime`
+## `DevMode.Modding.ModRuntime`{lang="en"}
+
+## `DevMode.Modding.ModRuntime`{lang="zh-CN"}
 
 ::: en
 Public hooks for other mods:

@@ -6,8 +6,8 @@
   "scripts": {
     "build": "pnpm run build:ssg",
     "build:spa": "valaxy build",
-    "build:ssg": "valaxy build --ssg",
-    "dev": "valaxy",
+    "build:ssg": "node scripts/sync-changelog.mjs && valaxy build --ssg",
+    "dev": "node scripts/sync-changelog.mjs && valaxy",
     "serve": "vite preview"
   },
   "dependencies": {
