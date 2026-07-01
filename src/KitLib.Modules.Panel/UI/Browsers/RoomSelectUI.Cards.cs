@@ -2,6 +2,7 @@ using System;
 using Godot;
 using KitLib.Actions;
 using KitLib.Icons;
+using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Rooms;
 
 namespace KitLib.UI;
@@ -45,6 +46,55 @@ internal static partial class RoomSelectUI {
             bool ok = RoomActions.TryEnterRoom(capturedEntry.Type);
             statusLabel.Text = ok
                 ? I18N.T("room.entered", "Entering: {0}", I18N.T(capturedEntry.NameKey, capturedEntry.NameFallback))
+                : I18N.T("room.error", "Failed to enter room.");
+        };
+
+        return card;
+    }
+
+    private static readonly Color TestRoomAccent = new(0.45f, 0.80f, 0.70f);
+
+    private static Control BuildTestRoomCard(Label warnLabel, Label statusLabel) {
+        var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var cardStyle = new StyleBoxFlat {
+            BgColor = KitLibTheme.ButtonBgNormal,
+            CornerRadiusTopLeft = 8,
+            CornerRadiusTopRight = 8,
+            CornerRadiusBottomLeft = 8,
+            CornerRadiusBottomRight = 8,
+            BorderWidthLeft = 3,
+            BorderColor = TestRoomAccent with { A = 0.6f },
+        };
+        card.AddThemeStyleboxOverride("panel", cardStyle);
+        card.MouseFilter = Control.MouseFilterEnum.Stop;
+        card.AddChild(BuildCardBody(
+            MdiIcon.FlaskOutline,
+            TestRoomAccent,
+            I18N.T("room.type.testRoom", "Test Room"),
+            I18N.T("room.desc.testRoom", "Enter a combat with a training dummy (very high HP) for card testing.")));
+
+        WireCardHover(card, cardStyle, TestRoomAccent);
+
+        card.GuiInput += evt => {
+            if (evt is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
+                return;
+
+            if (!RoomActions.IsRunInProgress) {
+                warnLabel.Visible = true;
+                statusLabel.Text = "";
+                return;
+            }
+
+            if (MpCheatSession.InMultiplayerRun) {
+                warnLabel.Visible = false;
+                statusLabel.Text = I18N.T("cardtest.mpWarning", "⚠ Not available in multiplayer.");
+                return;
+            }
+
+            warnLabel.Visible = false;
+            bool ok = CardTestActions.TryEnterTestRoom();
+            statusLabel.Text = ok
+                ? I18N.T("room.entered", "Entering: {0}", I18N.T("room.type.testRoom", "Test Room"))
                 : I18N.T("room.error", "Failed to enter room.");
         };
 

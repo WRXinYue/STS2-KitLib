@@ -38,7 +38,8 @@ public enum ActivePanel {
     Frameworks,
     Feedback,
     CombatStats,
-    EnemyIntent
+    EnemyIntent,
+    CardTest
 }
 
 public enum PowerTarget {

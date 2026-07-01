@@ -195,6 +195,14 @@ internal static partial class CardBrowserUI {
             if (evt is not InputEventMouseButton mb || !mb.Pressed ||
                 mb.ButtonIndex != MouseButton.Left)
                 return;
+
+            // In picker mode, double-click adds directly to queue without rebuilding the right panel.
+            if (mb.DoubleClick && _pickerCallback != null) {
+                _pickerCallback(capturedCard.CanonicalInstance);
+                host.AcceptEvent();
+                return;
+            }
+
             if (s.SelectedPickHost != null)
                 s.SelectedPickHost.Modulate = ColCardPickNormal;
             s.SelectedPickHost = host;

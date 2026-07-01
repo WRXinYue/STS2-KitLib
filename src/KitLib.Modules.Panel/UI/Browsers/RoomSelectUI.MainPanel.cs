@@ -1,4 +1,5 @@
 using Godot;
+using KitLib.Actions;
 using KitLib.Icons;
 using MegaCrit.Sts2.Core.Rooms;
 
@@ -74,6 +75,8 @@ internal static partial class RoomSelectUI {
 
         foreach (var entry in Rooms)
             list.AddChild(BuildRoomCard(entry, warnLabel, statusLabel));
+
+        list.AddChild(BuildTestRoomCard(warnLabel, statusLabel));
 
         return new MainPanelHandle(list, warnLabel, statusLabel);
     }

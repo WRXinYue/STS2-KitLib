@@ -171,6 +171,14 @@ internal static class DevPanel {
         PresetUI.Show(_globalUi);
     }
 
+    internal static void OpenCardTest() {
+        if (_globalUi == null) return;
+        TryDismissCurrent();
+        KitLibState.ActivePanel = ActivePanel.CardTest;
+
+        CardTestUI.Show(_globalUi);
+    }
+
     internal static void OpenHooks() {
         if (_globalUi == null) return;
         if (MpCheatUi.IsHooksDisabledInMultiplayer) return;
@@ -279,6 +287,7 @@ internal static class DevPanel {
             case ActivePanel.Rooms: OpenRooms(); break;
             case ActivePanel.Console: OpenConsole(); break;
             case ActivePanel.Presets: OpenPresets(); break;
+            case ActivePanel.CardTest: OpenCardTest(); break;
             case ActivePanel.Hooks: OpenHooks(); break;
             case ActivePanel.Scripts: OpenScripts(); break;
             case ActivePanel.Logs: OpenLogs(); break;

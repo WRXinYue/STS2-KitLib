@@ -11,6 +11,7 @@ public static class KitLibCheatOps {
     public static Action? OpenRooms { get; set; }
     public static Action? OpenConsole { get; set; }
     public static Action? OpenPresets { get; set; }
+    public static Action? OpenCardTest { get; set; }
     public static Action<double>? ProcessFrame { get; set; }
     public static Action? EnsureRuntimeStatModifiers { get; set; }
     public static Action? ClearRunState { get; set; }

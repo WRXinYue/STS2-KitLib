@@ -65,6 +65,7 @@ public static class ModuleEntry {
         KitLibCheatOps.OpenRooms = DevPanel.OpenRooms;
         KitLibCheatOps.OpenConsole = DevPanel.OpenConsole;
         KitLibCheatOps.OpenPresets = DevPanel.OpenPresets;
+        KitLibCheatOps.OpenCardTest = DevPanel.OpenCardTest;
         KitLibCheatOps.ResetSkipAnim = SkipAnimControl.Reset;
         KitLibCheatOps.IsSkipAnimSkipping = () => SkipAnimControl.IsSkipping;
         KitLibCheatOps.IsMpHooksDisabledInMultiplayer = () => MpCheatUi.IsHooksDisabledInMultiplayer;

@@ -93,10 +93,11 @@ internal static class CardBrowserRightPanel {
 
     internal static void Build(VBoxContainer container, Label statusLabel,
         CardModel card, RunState state, Player player, NGlobalUi globalUi, Action onCardEdited,
-        Action onCardListChanged, bool isLibrary, CardTarget? browseTarget, bool libraryUpgradeDetailPreview = false) {
+        Action onCardListChanged, bool isLibrary, CardTarget? browseTarget, bool libraryUpgradeDetailPreview = false,
+        Action<CardModel>? onCardPicked = null, Action<VBoxContainer>? buildPersistentContent = null) {
         var displayCard = ResolveLibraryDisplayCard(card, isLibrary, libraryUpgradeDetailPreview);
         LibraryAddStaging? libraryAddStaging = null;
-        if (isLibrary) {
+        if (isLibrary && onCardPicked == null) {
             libraryAddStaging = new LibraryAddStaging();
             var initialCost = CardEditActions.GetBaseCost(card);
             if (initialCost.HasValue)
@@ -149,6 +150,12 @@ internal static class CardBrowserRightPanel {
 
         container.AddChild(new HSeparator());
 
+        // Picker mode: show "Add to Queue" button instead of the normal add/owned-card actions.
+        if (onCardPicked != null) {
+            BuildPickerSection(container, statusLabel, card, onCardPicked, buildPersistentContent);
+            return;
+        }
+
         LibraryAddUiState? libraryUi = null;
         if (isLibrary) {
             libraryUi = new LibraryAddUiState { Card = card, Staging = libraryAddStaging! };
@@ -163,6 +170,57 @@ internal static class CardBrowserRightPanel {
         // Inline editors apply to the pile instance, or stage values for Add when browsing the library.
         BuildEditSection(container, statusLabel, card, state, player, onCardEdited, libraryAddStaging,
             isLibrary ? null : browseTarget, libraryUi);
+    }
+
+    private static void BuildPickerSection(VBoxContainer container, Label statusLabel,
+        CardModel card, Action<CardModel> onCardPicked, Action<VBoxContainer>? buildPersistentContent) {
+        var addBtn = new Button {
+            Text = I18N.T("cardtest.addToQueue", "Add to Queue"),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            CustomMinimumSize = new Vector2(0, 36),
+        };
+        var accent = KitLibTheme.Accent;
+        var style = new StyleBoxFlat {
+            BgColor = new Color(accent.R, accent.G, accent.B, 0.20f),
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6,
+            ContentMarginLeft = 10,
+            ContentMarginRight = 10,
+            ContentMarginTop = 4,
+            ContentMarginBottom = 4,
+        };
+        var hoverStyle = new StyleBoxFlat {
+            BgColor = new Color(accent.R, accent.G, accent.B, 0.35f),
+            CornerRadiusTopLeft = 6,
+            CornerRadiusTopRight = 6,
+            CornerRadiusBottomLeft = 6,
+            CornerRadiusBottomRight = 6,
+            ContentMarginLeft = 10,
+            ContentMarginRight = 10,
+            ContentMarginTop = 4,
+            ContentMarginBottom = 4,
+        };
+        addBtn.AddThemeStyleboxOverride("normal", style);
+        addBtn.AddThemeStyleboxOverride("hover", hoverStyle);
+        addBtn.AddThemeStyleboxOverride("pressed", hoverStyle);
+        addBtn.AddThemeColorOverride("font_color", accent);
+        addBtn.AddThemeColorOverride("font_hover_color", accent);
+        addBtn.AddThemeColorOverride("font_pressed_color", accent);
+        addBtn.AddThemeFontSizeOverride("font_size", 14);
+
+        addBtn.Pressed += () => {
+            onCardPicked(card.CanonicalInstance);
+            statusLabel.Text = I18N.T("cardtest.addToQueue", "Add to Queue") + $": {card.Title}";
+        };
+
+        container.AddChild(addBtn);
+
+        if (buildPersistentContent != null) {
+            container.AddChild(new HSeparator());
+            buildPersistentContent(container);
+        }
     }
 
     /// <summary>When browsing the card library with "view upgrades" on, match grid + NCard: clone and UpgradeInternal for read-only UI.</summary>

@@ -100,12 +100,38 @@ internal static partial class CardBrowserUI {
         }
     }
 
+    // ──────── Picker state (set by ShowPicker / Show, cleared on Remove) ────────
+
+    private static Action<CardModel>? _pickerCallback;
+    private static Action<VBoxContainer>? _pickerPersistentBuilder;
+    // Always points at the current state's FilteredCards so callers can read the live filtered list.
+    private static Func<List<CardModel>>? _pickerGetFilteredCards;
+
+    /// <summary>Returns the card list currently visible in the browser after all active filters.</summary>
+    internal static IReadOnlyList<CardModel> GetPickerFilteredCards() =>
+        _pickerGetFilteredCards?.Invoke() ?? new List<CardModel>();
+
     // ──────── Public API ────────
+
+    /// <summary>
+    /// Opens the card browser in picker mode. Clicking a card in the right panel shows an
+    /// "Add to Queue" button that invokes <paramref name="onCardPicked"/> without closing the browser.
+    /// <paramref name="buildPersistentContent"/> is appended below the per-card section each time
+    /// the right panel is rebuilt; use it to embed persistent queue/action controls.
+    /// </summary>
+    internal static void ShowPicker(NGlobalUi globalUi, RunState runState, Player player,
+        Action<CardModel> onCardPicked, Action<VBoxContainer>? buildPersistentContent = null) {
+        // Show calls Remove internally which would clear the callbacks, so set them after.
+        Show(globalUi, runState, player);
+        _pickerCallback = onCardPicked;
+        _pickerPersistentBuilder = buildPersistentContent;
+    }
 
     public static void Show(NGlobalUi globalUi, RunState runState, Player player) {
         Remove(globalUi);
 
         var s = new State(globalUi, runState, player);
+        _pickerGetFilteredCards = () => s.FilteredCards;
 
         var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
             GlobalUi = globalUi,
@@ -575,6 +601,9 @@ internal static partial class CardBrowserUI {
     }
 
     public static void Remove(NGlobalUi globalUi) {
+        _pickerCallback = null;
+        _pickerPersistentBuilder = null;
+        _pickerGetFilteredCards = null;
         var parent = (Node)globalUi;
         var node = parent.GetNodeOrNull<Control>(RootName);
         if (node != null) {
@@ -604,7 +633,8 @@ internal static partial class CardBrowserUI {
             () => RebuildGrid(s, search(), GridRebuildOptions.ForCardEdit(card)),
             () => RebuildGridAndSyncRightPanel(s, GridRebuildOptions.ForCardListChangeWith(card)),
             IsLibrarySource, BrowseSourceToTarget(_browseSource),
-            IsLibrarySource && s.LibraryShowUpgradePreview);
+            IsLibrarySource && s.LibraryShowUpgradePreview,
+            _pickerCallback, _pickerPersistentBuilder);
         s.Dual.OpenExtension();
     }
 
