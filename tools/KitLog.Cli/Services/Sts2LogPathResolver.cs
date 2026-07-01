@@ -107,11 +107,18 @@ internal static class Sts2LogPathResolver {
         if (!string.IsNullOrWhiteSpace(explicitFile))
             return File.Exists(explicitFile) ? Path.GetFullPath(explicitFile) : null;
 
-        var session = ResolveSessionLogPath(pid);
-        if (session != null)
-            return session;
+        if (pid is int id) {
+            var session = ResolveSessionLogPath(id);
+            if (session != null)
+                return session;
+            return ResolveGodotLogPath();
+        }
 
-        return ResolveGodotLogPath();
+        var godot = ResolveGodotLogPath();
+        if (godot != null)
+            return godot;
+
+        return ResolveSessionLogPath(null);
     }
 
     public static string? ResolveFilterProfilePath(int? pid, string? logPath = null) {

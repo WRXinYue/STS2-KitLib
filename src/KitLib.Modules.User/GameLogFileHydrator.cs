@@ -10,7 +10,8 @@ using MegaCrit.Sts2.Core.Logging;
 namespace KitLib;
 
 /// <summary>
-/// Reads and parses this process's mirrored session log, with fallback to shared <c>user://logs/</c>.
+/// Reads and parses on-disk game logs for the in-game viewer.
+/// Single-instance: <c>user://logs/godot.log</c>. Dual-instance: per-process <c>session.log</c>.
 /// </summary>
 internal static class GameLogFileHydrator {
     private const int MaxReadBytes = 2 * 1024 * 1024;
@@ -27,6 +28,13 @@ internal static class GameLogFileHydrator {
     private static string? _cachedSessionLogPath;
 
     internal static string LogsDirectory => Path.Combine(OS.GetUserDataDir(), "logs");
+
+    internal static string? GodotLogPath {
+        get {
+            var path = Path.Combine(LogsDirectory, "godot.log");
+            return File.Exists(path) ? path : null;
+        }
+    }
 
     internal static string? CurrentSessionLogPath => FindSessionLogPath();
 
@@ -63,15 +71,25 @@ internal static class GameLogFileHydrator {
         if (_cachedSessionLogPath != null && File.Exists(_cachedSessionLogPath))
             return _cachedSessionLogPath;
 
-        if (InstanceLogWriter.IsActive && File.Exists(InstanceLogWriter.SessionLogPath)) {
-            _cachedSessionLogPath = InstanceLogWriter.SessionLogPath;
-            return _cachedSessionLogPath;
+        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+            if (InstanceLogWriter.IsActive && File.Exists(InstanceLogWriter.SessionLogPath)) {
+                _cachedSessionLogPath = InstanceLogWriter.SessionLogPath;
+                return _cachedSessionLogPath;
+            }
+
+            var dualResolved = ScanForSessionLogPath();
+            if (dualResolved != null)
+                _cachedSessionLogPath = dualResolved;
+            return dualResolved;
         }
 
-        var resolved = ScanForSessionLogPath();
-        if (resolved != null)
-            _cachedSessionLogPath = resolved;
-        return resolved;
+        var godot = GodotLogPath;
+        if (godot != null) {
+            _cachedSessionLogPath = godot;
+            return godot;
+        }
+
+        return ScanForSessionLogPath();
     }
 
     internal static void InvalidateSessionLogPathCache() => _cachedSessionLogPath = null;
@@ -79,19 +97,22 @@ internal static class GameLogFileHydrator {
     /// <summary>All log files newest-first; marks the file bound to this process.</summary>
     internal static IReadOnlyList<(string DisplayName, string AbsPath, bool IsCurrentSession)> ScanLogFiles() {
         try {
+            var dual = KitLibInstanceRegistry.IsDualInstanceActive();
             var current = FindSessionLogPath();
             var currentTag = I18N.T("log.instance.currentFileTag", "(this window)");
             var rows = new List<(string Name, string Path, bool IsCurrent, DateTime WriteTime)>();
 
-            if (InstanceLogWriter.IsActive && File.Exists(InstanceLogWriter.SessionLogPath)) {
-                var path = InstanceLogWriter.SessionLogPath;
-                bool isCurrent = current != null
-                    && string.Equals(path, current, StringComparison.OrdinalIgnoreCase);
-                var name = InstanceLogWriter.DisplayName + (isCurrent ? " " + currentTag : "");
-                rows.Add((name, path, isCurrent, File.GetLastWriteTime(path)));
-            }
+            if (dual) {
+                if (InstanceLogWriter.IsActive && File.Exists(InstanceLogWriter.SessionLogPath)) {
+                    var path = InstanceLogWriter.SessionLogPath;
+                    bool isCurrent = current != null
+                        && string.Equals(path, current, StringComparison.OrdinalIgnoreCase);
+                    var name = InstanceLogWriter.DisplayName + (isCurrent ? " " + currentTag : "");
+                    rows.Add((name, path, isCurrent, File.GetLastWriteTime(path)));
+                }
 
-            TryAddOtherInstanceSessionLogs(rows, current, currentTag);
+                TryAddOtherInstanceSessionLogs(rows, current, currentTag);
+            }
 
             var logsDir = LogsDirectory;
             if (Directory.Exists(logsDir)) {

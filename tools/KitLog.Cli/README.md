@@ -52,7 +52,7 @@ KitLog scans STS2 user data:
 - Linux: `~/.local/share/SlayTheSpire2/...` (and common Flatpak paths)
 - macOS: `~/Library/Application Support/SlayTheSpire2/...`
 
-Falls back to `logs/godot.log` when no instance log exists.
+Falls back to `logs/godot.log` when no per-instance session log exists (normal single-instance play).
 
 ## In-game integration
 
@@ -60,7 +60,7 @@ The in-game log viewer **kitlog** button launches `kitlog attach --follow --sync
 
 The AI panel **Open kitlog tail** button uses `--filter ai` instead. Both launch `kitlog` from `PATH` or `mods/KitLib/tools/`.
 
-`session.log` remains a plain-text mirror for grep and offline inspection; it does not contain ANSI codes or JSON frames.
+`session.log` is written only while two game instances are running (dual-instance debugging). It remains a plain-text mirror for grep and offline inspection; it does not contain ANSI codes or JSON frames.
 
 ## Content mods
 

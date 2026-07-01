@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 开发作弊「数值锁定」改为「数值修改」。
 - 数值修改：改数字立即生效，无需先勾选锁定。
+- 日志：单开不再写入 `session.log`；日志查看器与反馈导出使用官方 `godot.log`，启动时会清空旧的双开日志目录。仅双开运行期间为每个窗口实时生成 `session.log`。
 
 ### Fixed
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib.Host;
 using KitLib.Logging;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Logging;
@@ -11,8 +12,8 @@ namespace KitLib;
 /// <summary>
 /// Captures log entries emitted by the game's logging system into an in-memory ring buffer.
 /// Subscribe via <see cref="Log.LogCallback"/> so every Logger instance is covered.
-/// Opening the log viewer also hydrates from this process's mirrored log at
-/// <c>mod_data/KitLib/instances/{pid}/session.log</c>, falling back to <c>user://logs/</c>.
+/// Opening the log viewer hydrates from <c>user://logs/godot.log</c> in single-instance play,
+/// or from <c>mod_data/KitLib/instances/{pid}/session.log</c> when dual-instance is active.
 /// </summary>
 internal static class LogCollector {
     public const int MaxLiveEntries = 2000;
@@ -55,7 +56,9 @@ internal static class LogCollector {
            || entry.Text.Contains(LegacySessionBoundaryMarker, StringComparison.Ordinal);
 
     public static void Initialize() {
-        InstanceLogWriter.Initialize();
+        KitLibInstanceRegistry.Register();
+        KitLibHost.IsDualInstanceActive = KitLibInstanceRegistry.IsDualInstanceActive;
+        InstanceLogWriter.SyncDualInstanceMode();
         LogStreamPipeServer.Start();
         Log.LogCallback += OnLogReceived;
         MainFile.Logger.Info(KitLibInstance.SessionBoundaryMarker);

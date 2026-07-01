@@ -1,23 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 
-using KitLib.Dev;
-
 namespace KitLib;
 
 /// <summary>
-/// Tracks live DevMode processes on this machine via heartbeat lock files under
+/// Tracks live KitLib processes on this machine via heartbeat lock files under
 /// <c>mod_data/KitLib/instances/</c>.
 /// </summary>
 internal static class KitLibInstanceRegistry {
     private static readonly TimeSpan StaleAfter = TimeSpan.FromSeconds(45);
-    private static readonly TimeSpan MaxInstanceLogAge = TimeSpan.FromDays(14);
-    private const int MaxRetainedInstanceLogs = 30;
 
-    private static string InstancesDir => DevModDataPaths.InstancesDir;
+    private static string InstancesDir => Path.Combine(DataPaths.BaseDir, "instances");
     private static string LockPath => Path.Combine(InstancesDir, $"{KitLibInstance.ProcessId}.lock");
 
     public static void Register() {
@@ -25,16 +20,16 @@ internal static class KitLibInstanceRegistry {
             Directory.CreateDirectory(InstancesDir);
             WriteLock();
             CleanupStaleLocks();
-            // Defer heavy folder deletes; synchronous IO during scene-ready bootstrap is unsafe on stable.
-            ThreadPool.QueueUserWorkItem(_ => SafeCleanupStaleInstanceLogs());
+            // Defer folder deletes; synchronous IO during scene-ready bootstrap is unsafe on stable.
+            ThreadPool.QueueUserWorkItem(_ => SafeCleanupInstanceLogDirs());
         }
         catch (Exception) {
         }
     }
 
-    static void SafeCleanupStaleInstanceLogs() {
+    static void SafeCleanupInstanceLogDirs() {
         try {
-            CleanupStaleInstanceLogs();
+            CleanupInstanceLogDirs();
         }
         catch (Exception) {
         }
@@ -62,7 +57,7 @@ internal static class KitLibInstanceRegistry {
         }
     }
 
-    /// <summary>True when another live DevMode process is on this machine.</summary>
+    /// <summary>True when another live KitLib process is on this machine.</summary>
     public static bool IsDualInstanceActive() => ActiveInstanceCount() > 1;
 
     public static int ActiveInstanceCount() {
@@ -75,6 +70,34 @@ internal static class KitLibInstanceRegistry {
         catch {
             return 1;
         }
+    }
+
+    /// <summary>
+    /// Single-instance: remove all <c>instances/{pid}/</c> folders on startup.
+    /// Dual-instance: remove only folders for processes that are no longer live.
+    /// </summary>
+    internal static void CleanupInstanceLogDirs() {
+        if (!Directory.Exists(InstancesDir))
+            return;
+
+        if (!IsDualInstanceActive()) {
+            PurgeAllInstanceDirs();
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        foreach (var dir in Directory.EnumerateDirectories(InstancesDir).ToArray()) {
+            if (!int.TryParse(Path.GetFileName(dir), out var pid))
+                continue;
+            if (IsLockFresh(pid, now))
+                continue;
+            TryDeleteInstanceDir(dir);
+        }
+    }
+
+    static void PurgeAllInstanceDirs() {
+        foreach (var dir in Directory.EnumerateDirectories(InstancesDir).ToArray())
+            TryDeleteInstanceDir(dir);
     }
 
     private static void WriteLock() {
@@ -100,50 +123,6 @@ internal static class KitLibInstanceRegistry {
         }
     }
 
-    /// <summary>
-    /// Drops old <c>instances/{pid}/session.log</c> folders. Keeps the current process,
-    /// any live peer (fresh lock), the newest <see cref="MaxRetainedInstanceLogs"/>, and
-    /// anything touched within <see cref="MaxInstanceLogAge"/>.
-    /// </summary>
-    private static void CleanupStaleInstanceLogs() {
-        if (!Directory.Exists(InstancesDir))
-            return;
-
-        var now = DateTime.UtcNow;
-        var ageCutoff = now - MaxInstanceLogAge;
-        var currentPid = KitLibInstance.ProcessId;
-        var candidates = new List<(string Path, DateTime LastWriteUtc)>();
-
-        foreach (var dir in Directory.EnumerateDirectories(InstancesDir)) {
-            var name = Path.GetFileName(dir);
-            if (!int.TryParse(name, out var pid) || pid == currentPid)
-                continue;
-            if (IsLockFresh(pid, now))
-                continue;
-
-            candidates.Add((dir, GetInstanceLastWriteUtc(dir)));
-        }
-
-        var removed = 0;
-        foreach (var (path, lastWriteUtc) in candidates.ToArray()) {
-            if (lastWriteUtc >= ageCutoff)
-                continue;
-            if (TryDeleteInstanceDir(path))
-                removed++;
-        }
-
-        candidates.RemoveAll(c => !Directory.Exists(c.Path));
-        foreach (var (path, _) in candidates
-                     .OrderBy(c => c.LastWriteUtc)
-                     .Take(Math.Max(0, candidates.Count - MaxRetainedInstanceLogs))) {
-            if (TryDeleteInstanceDir(path))
-                removed++;
-        }
-
-        if (removed > 0) {
-        }
-    }
-
     private static bool IsLockFresh(int pid, DateTime now) {
         var lockPath = Path.Combine(InstancesDir, $"{pid}.lock");
         if (!File.Exists(lockPath))
@@ -159,18 +138,6 @@ internal static class KitLibInstanceRegistry {
         }
     }
 
-    private static DateTime GetInstanceLastWriteUtc(string dir) {
-        try {
-            var sessionLog = Path.Combine(dir, "session.log");
-            if (File.Exists(sessionLog))
-                return File.GetLastWriteTimeUtc(sessionLog);
-            return Directory.GetLastWriteTimeUtc(dir);
-        }
-        catch {
-            return DateTime.MinValue;
-        }
-    }
-
     private static bool TryDeleteInstanceDir(string path) {
         try {
             Directory.Delete(path, recursive: true);
@@ -179,7 +146,7 @@ internal static class KitLibInstanceRegistry {
                 File.Delete(lockPath);
             return true;
         }
-        catch (Exception ex) {
+        catch {
             return false;
         }
     }

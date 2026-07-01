@@ -7,9 +7,9 @@ using MegaCrit.Sts2.Core.Logging;
 namespace KitLib;
 
 /// <summary>
-/// Mirrors this process's <see cref="Log.LogCallback"/> stream to
-/// <c>mod_data/KitLib/instances/{pid}/session.log</c> so dual-instance runs
-/// do not share a single on-disk log file with Godot's rotated <c>godot.log</c>.
+/// When dual-instance is active, mirrors <see cref="Log.LogCallback"/> to
+/// <c>mod_data/KitLib/instances/{pid}/session.log</c> so each window has its own file
+/// instead of sharing Godot's <c>user://logs/godot.log</c>.
 /// Callback enqueues only; <see cref="TryFlush"/> drains on a timer or at shutdown.
 /// </summary>
 internal static class InstanceLogWriter {
@@ -28,7 +28,31 @@ internal static class InstanceLogWriter {
     public static string DisplayName
         => IsActive ? $"instances/{KitLibInstance.ProcessId}/session.log" : "";
 
-    public static void Initialize() {
+    static bool _sessionLogWasActive;
+
+    public static void SyncDualInstanceMode() {
+        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+            if (!IsActive)
+                Initialize();
+            _sessionLogWasActive = IsActive;
+            return;
+        }
+
+        if (IsActive)
+            Shutdown();
+
+        if (_sessionLogWasActive) {
+            KitLibInstanceRegistry.CleanupInstanceLogDirs();
+            _sessionLogWasActive = false;
+        }
+
+        GameLogFileHydrator.InvalidateSessionLogPathCache();
+    }
+
+    static void Initialize() {
+        if (IsActive)
+            return;
+
         try {
             InstanceDirectory = Path.Combine(
                 DataPaths.BaseDir, "instances", KitLibInstance.ProcessId.ToString());
@@ -40,6 +64,7 @@ internal static class InstanceLogWriter {
                 new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)) {
                 AutoFlush = false
             };
+            GameLogFileHydrator.InvalidateSessionLogPathCache();
         }
         catch (Exception ex) {
             KitLog.Warn($"Instance log writer failed: {ex.Message}");

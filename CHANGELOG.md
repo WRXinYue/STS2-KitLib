@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dev cheats: renamed Stat Locks to Stat Edit.
 - Stat edit: changing a value applies immediately without enabling the lock checkbox first.
+- Logs: single-instance play no longer writes `session.log`; the log viewer and feedback export use the official `godot.log`, and old dual-instance log folders are cleared on startup. Per-window `session.log` files are created only while two game instances are running.
 
 ### Fixed
 

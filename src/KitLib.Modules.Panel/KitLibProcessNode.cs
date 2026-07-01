@@ -29,6 +29,7 @@ internal partial class KitLibProcessNode : Node {
         if (_heartbeatAccum >= 2.0) {
             _heartbeatAccum = 0;
             KitLibInstanceRegistry.Heartbeat();
+            InstanceLogWriter.SyncDualInstanceMode();
         }
 
         _logFlushAccum += delta;
