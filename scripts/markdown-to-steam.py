@@ -6,7 +6,8 @@ def convert_inline(text):
     text = re.sub(r"~~(.*?)~~", r"[strike]\1[/strike]", text)
     text = re.sub(r"\*\*(.+?)\*\*", r"[b]\1[/b]", text)
     text = re.sub(r"__(.+?)__", r"[b]\1[/b]", text)
-    text = re.sub(r"`([^`]+)`", r"[code]\1[/code]", text)
+    # Steam has no good inline code style; unwrap backticks to plain text (menu paths, filenames).
+    text = re.sub(r"`([^`]+)`", r"\1", text)
     text = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", r"[i]\1[/i]", text)
     text = re.sub(r"(?<!_)_(?!_)(.+?)(?<!_)_(?!_)", r"[i]\1[/i]", text)
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"[url=\2]\1[/url]", text)

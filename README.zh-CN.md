@@ -17,7 +17,7 @@ KitLib 是《杀戮尖塔 2》的游戏内开发工具箱。
 
 ## 3 分钟上手
 
-1. 安装后进主菜单：`Mods -> KitLib`。
+1. 安装后进主菜单：Mods -> KitLib。
 2. 在 KitLib 设置里先做三件事：
    - 选模块档位（Minimal / Standard / Full / Custom）
    - 看看快捷键（默认有快速存读等）
