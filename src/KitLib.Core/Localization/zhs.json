@@ -1347,7 +1347,7 @@
   "cardtest.enterRoom": "进入测试房",
   "cardtest.enterRoomHint": "进入含有 BigDummy（9999 HP）的战斗房间，用于测试卡牌",
   "cardtest.freePlay": "自由模式",
-  "cardtest.freePlayHint": "打出卡牌时不消耗能量",
+  "cardtest.freePlayHint": "打出卡牌时不消耗能量或星星",
   "cardtest.target": "目标：",
   "cardtest.hand": "手牌",
   "cardtest.draw": "抽牌堆",

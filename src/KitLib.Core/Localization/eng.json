@@ -1315,7 +1315,7 @@
   "cardtest.enterRoom": "Enter Test Room",
   "cardtest.enterRoomHint": "Enter a combat with BigDummy (9999 HP) for card testing",
   "cardtest.freePlay": "Free Play",
-  "cardtest.freePlayHint": "Cards cost no energy when played",
+  "cardtest.freePlayHint": "Cards cost no energy or stars when played",
   "cardtest.target": "Target:",
   "cardtest.hand": "Hand",
   "cardtest.draw": "Draw Pile",

@@ -103,7 +103,7 @@ internal static class CardTestUI {
             ButtonPressed = CardTestState.FreePlayActive,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             CustomMinimumSize = new Vector2(0, 30),
-            TooltipText = I18N.T("cardtest.freePlayHint", "Cards cost no energy when played"),
+            TooltipText = I18N.T("cardtest.freePlayHint", "Cards cost no energy or stars when played"),
         };
         freePlayBtn.AddThemeFontSizeOverride("font_size", 12);
         ApplyFreePlayToggleStyle(freePlayBtn, CardTestState.FreePlayActive);

@@ -5,10 +5,13 @@ namespace KitLib.Actions;
 /// <summary>Shared runtime flags for the Card Test panel.</summary>
 internal static class CardTestState {
     /// <summary>
-    /// When true, playing cards does not consume energy and all cards are treated as having
-    /// sufficient resources. Controlled by the Free Play toggle in the Card Test panel.
+    /// When true, playing cards does not consume energy or stars and resource checks always pass.
+    /// Defaults on; the Card Test panel toggle can turn it off for manual play.
     /// </summary>
-    internal static bool FreePlayActive { get; set; }
+    internal static bool FreePlayActive { get; set; } = true;
+
+    /// <summary>True while card test should ignore energy / star costs.</summary>
+    internal static bool BypassResourceCosts => FreePlayActive || TestingActive;
 
     /// <summary>True while the Card Test panel is running a queued test pass.</summary>
     internal static bool TestingActive { get; set; }

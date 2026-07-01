@@ -9,21 +9,24 @@ using MegaCrit.Sts2.Core.Models.Monsters;
 namespace KitLib.Patches;
 
 /// <summary>
-/// Harmony patches that power the Card Test panel's "Free Play" mode.
-/// When <see cref="CardTestState.FreePlayActive"/> is true:
-///   - Playing a card does not consume any energy.
-///   - All cards report sufficient resources so they can be played regardless of current energy.
+/// Harmony patches for card testing: when <see cref="CardTestState.BypassResourceCosts"/> is true,
+/// plays skip energy/star spend and always pass resource affordability checks.
 /// </summary>
 
 [HarmonyPatch(typeof(PlayerCombatState), nameof(PlayerCombatState.LoseEnergy))]
 internal static class FreePlayLoseEnergyPatch {
-    static bool Prefix() => !CardTestState.FreePlayActive;
+    static bool Prefix() => !CardTestState.BypassResourceCosts;
+}
+
+[HarmonyPatch(typeof(PlayerCombatState), nameof(PlayerCombatState.LoseStars))]
+internal static class FreePlayLoseStarsPatch {
+    static bool Prefix() => !CardTestState.BypassResourceCosts;
 }
 
 [HarmonyPatch(typeof(PlayerCombatState), nameof(PlayerCombatState.HasEnoughResourcesFor))]
 internal static class FreePlayHasEnoughPatch {
     static void Postfix(ref bool __result) {
-        if (CardTestState.FreePlayActive)
+        if (CardTestState.BypassResourceCosts)
             __result = true;
     }
 }
