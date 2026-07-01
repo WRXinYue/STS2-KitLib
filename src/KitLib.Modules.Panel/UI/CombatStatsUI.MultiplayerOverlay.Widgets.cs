@@ -87,7 +87,7 @@ internal static partial class CombatStatsUI {
 
         internal void RefreshTheme() {
             ApplyLeaderStyle();
-            _barTrack.QueueRedraw();
+            _barTrack.RebuildLayout();
         }
 
         private void ApplyTooltip(string name, int total, CombatScoreBreakdown bd) {
@@ -140,18 +140,39 @@ internal static partial class CombatStatsUI {
         }
     }
 
-    /// <summary>Rounded track with animated proportional fill and stacked segments.</summary>
+    /// <summary>Node-based track (same approach as pie/turn charts — avoids missed <c>_Draw</c> on overlays).</summary>
     private sealed partial class MpOverlayBarTrack : Control {
+        private readonly PanelContainer _track;
+        private readonly HBoxContainer _segmentsBox;
         private readonly List<(string Key, float Amount, Color Color)> _segments = new();
         private readonly List<(string Key, int Amount, Color Color)> _targetSegments = new();
         private float _displayFillWidth;
         private float _targetFillWidth;
-        private float _displayTotal = 1f;
         private int _targetTotal = 1;
+        private int _maxScore = 1;
         private bool _initialized;
         private Tween? _animTween;
 
-        public MpOverlayBarTrack() => MouseFilter = MouseFilterEnum.Ignore;
+        public MpOverlayBarTrack() {
+            MouseFilter = MouseFilterEnum.Ignore;
+            ClipContents = false;
+
+            _track = new PanelContainer {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _track.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+            _track.AddThemeStyleboxOverride("panel", MpOverlayBarStyles.Track());
+            AddChild(_track);
+
+            _segmentsBox = new HBoxContainer {
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _segmentsBox.AddThemeConstantOverride("separation", (int)MpOverlayLayout.SegmentGap);
+            AddChild(_segmentsBox);
+
+            Resized += RebuildLayout;
+            TreeEntered += RebuildLayout;
+        }
 
         public void SetData(
             IReadOnlyList<(string Key, int Amount, Color Color)> segments,
@@ -159,9 +180,8 @@ internal static partial class CombatStatsUI {
             int maxScore,
             bool animate) {
             _targetTotal = Math.Max(total, 1);
-            _targetFillWidth = Math.Max(
-                6f,
-                (Size.X > 1f ? Size.X : MpOverlayLayout.BarTrackWidth) * total / (float)Math.Max(maxScore, 1));
+            _maxScore = Math.Max(maxScore, 1);
+            _targetFillWidth = ComputeFillWidth(total, _maxScore);
 
             _targetSegments.Clear();
             foreach (var seg in segments)
@@ -177,9 +197,20 @@ internal static partial class CombatStatsUI {
             _initialized = true;
         }
 
+        internal void RebuildLayout() {
+            _targetFillWidth = ComputeFillWidth(_targetTotal, _maxScore);
+            SnapToTarget();
+        }
+
+        private float ComputeFillWidth(int total, int maxScore) {
+            float trackW = Size.X > 1f ? Size.X : MpOverlayLayout.BarTrackWidth;
+            return Math.Max(
+                6f,
+                trackW * total / (float)Math.Max(maxScore, 1));
+        }
+
         private void RunFillAnimation() {
             float startFill = _displayFillWidth;
-            float startTotal = _displayTotal;
             var startMap = new Dictionary<string, float>(_segments.Count);
             foreach (var (key, amount, _) in _segments)
                 startMap[key] = amount;
@@ -189,9 +220,8 @@ internal static partial class CombatStatsUI {
             _animTween.SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
             _animTween.TweenMethod(Callable.From((float t) => {
                 _displayFillWidth = Mathf.Lerp(startFill, _targetFillWidth, t);
-                _displayTotal = Mathf.Lerp(startTotal, _targetTotal, t);
                 LerpSegmentsIntoDisplay(startMap, t);
-                QueueRedraw();
+                ApplySegmentLayout();
             }), 0f, 1f, BarAnimDuration);
             _animTween.Finished += SnapToTarget;
         }
@@ -208,65 +238,53 @@ internal static partial class CombatStatsUI {
         private void SnapToTarget() {
             _animTween?.Kill();
             _displayFillWidth = _targetFillWidth;
-            _displayTotal = Math.Max(_targetTotal, 1);
             _segments.Clear();
             foreach (var (key, amount, color) in _targetSegments) {
                 if (amount > 0)
                     _segments.Add((key, amount, color));
             }
-            QueueRedraw();
+            ApplySegmentLayout();
         }
 
-        public override void _Draw() {
+        private void ApplySegmentLayout() {
             float trackW = Size.X > 1f ? Size.X : MpOverlayLayout.BarTrackWidth;
             float barH = MpOverlayLayout.BarHeight;
             float y = Math.Max(0f, (Size.Y - barH) * 0.5f);
-            var trackRect = new Rect2(0f, y, trackW, barH);
+            float fillW = Math.Min(_displayFillWidth, trackW);
 
-            DrawStyleBox(MpOverlayBarStyles.Track(), trackRect);
+            _segmentsBox.Position = new Vector2(0f, y);
+            _segmentsBox.CustomMinimumSize = new Vector2(fillW, barH);
+            _segmentsBox.Size = new Vector2(fillW, barH);
 
-            if (_displayFillWidth < 4f || _segments.Count == 0)
+            while (_segmentsBox.GetChildCount() > 0) {
+                var child = _segmentsBox.GetChild(0);
+                _segmentsBox.RemoveChild(child);
+                child.QueueFree();
+            }
+
+            if (fillW < 4f || _segments.Count == 0)
                 return;
 
-            var fillRect = new Rect2(0f, y, Math.Min(_displayFillWidth, trackW), barH);
-            DrawSegments(fillRect);
-        }
-
-        private void DrawSegments(Rect2 fillRect) {
-            float total = Math.Max(_displayTotal, 0.01f);
-            float gap = MpOverlayLayout.SegmentGap;
-            int count = _segments.Count;
-            float usableW = fillRect.Size.X - gap * Math.Max(0, count - 1);
-            if (usableW <= 1f)
-                return;
-
-            float x = fillRect.Position.X;
-            float y = fillRect.Position.Y;
-            float barH = fillRect.Size.Y;
-
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < _segments.Count; i++) {
                 var (_, amount, color) = _segments[i];
-                float segW = usableW * amount / total;
-                if (segW <= 0.5f)
+                if (amount <= 0f)
                     continue;
 
                 bool first = i == 0;
-                bool last = i == count - 1;
-                DrawStyleBox(
+                bool last = i == _segments.Count - 1;
+                var segment = new PanelContainer {
+                    SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                    SizeFlagsStretchRatio = amount,
+                    SizeFlagsVertical = SizeFlags.ExpandFill,
+                    MouseFilter = MouseFilterEnum.Ignore,
+                };
+                segment.AddThemeStyleboxOverride(
+                    "panel",
                     MpOverlayBarStyles.Segment(
                         color,
                         first ? MpOverlayLayout.BarCornerRadius : 0f,
-                        last ? MpOverlayLayout.BarCornerRadius : 0f),
-                    new Rect2(x, y, segW, barH));
-
-                var highlight = color.Lerp(Colors.White, 0.18f);
-                DrawLine(
-                    new Vector2(x + (first ? MpOverlayLayout.BarCornerRadius * 0.35f : 0f), y + 0.5f),
-                    new Vector2(x + segW - (last ? MpOverlayLayout.BarCornerRadius * 0.35f : 0f), y + 0.5f),
-                    new Color(highlight, 0.55f),
-                    1f);
-
-                x += segW + gap;
+                        last ? MpOverlayLayout.BarCornerRadius : 0f));
+                _segmentsBox.AddChild(segment);
             }
         }
 

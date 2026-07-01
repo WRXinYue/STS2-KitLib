@@ -81,11 +81,15 @@ internal static partial class CombatStatsUI {
 
             TreeEntered += OnTreeEntered;
             ThemeManager.OnThemeChanged += OnThemeChanged;
+            CombatStatsTracker.Changed += OnTrackerChanged;
             TreeExiting += () => {
                 TreeEntered -= OnTreeEntered;
                 ThemeManager.OnThemeChanged -= OnThemeChanged;
+                CombatStatsTracker.Changed -= OnTrackerChanged;
             };
         }
+
+        private void OnTrackerChanged() => Refresh();
 
         private void OnTreeEntered() {
             if (_usingFreePosition)
@@ -106,7 +110,7 @@ internal static partial class CombatStatsUI {
                 return;
             }
 
-            int maxScore = Math.Max(1, players.Max(CombatScoreCalculator.TotalScore));
+            int maxScore = Math.Max(1, players.Max(CombatScoreCalculator.DisplayScore));
             SyncPlayerRows(players, maxScore);
 
             _panel.Visible = true;
@@ -133,7 +137,7 @@ internal static partial class CombatStatsUI {
 
         private void SyncPlayerRows(List<PlayerCombatStats> players, int maxScore) {
             var ordered = players
-                .OrderByDescending(CombatScoreCalculator.TotalScore)
+                .OrderByDescending(CombatScoreCalculator.DisplayScore)
                 .ThenBy(p => p.DisplayName)
                 .ToList();
 
@@ -155,7 +159,7 @@ internal static partial class CombatStatsUI {
 
                 row.Bind(
                     player,
-                    CombatScoreCalculator.TotalScore(player),
+                    CombatScoreCalculator.DisplayScore(player),
                     maxScore,
                     isLeader: i == 0);
                 if (row.GetIndex() != i) {

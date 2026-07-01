@@ -53,6 +53,12 @@ internal static class CombatScoreCalculator {
     public static int TotalScore(PlayerCombatStats player) =>
         player.Events.Sum(e => e.ScorePoints);
 
+    /// <summary>Score for UI bars: event total plus aggregate fallbacks from <see cref="BreakdownForDisplay"/>.</summary>
+    public static int DisplayScore(PlayerCombatStats player) {
+        var bd = BreakdownForDisplay(player);
+        return Math.Max(TotalScore(player), bd.Total);
+    }
+
     /// <summary>Per-card combat contribution (damage, block, utility plays).</summary>
     public static Dictionary<string, int> CardContributionByKey(PlayerCombatStats player) {
         var map = new Dictionary<string, int>();
