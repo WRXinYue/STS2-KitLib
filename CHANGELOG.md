@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-07-01
+
 ### Added
 
 - Card test: queue mod cards for automated base and upgraded testing in the training dummy room.

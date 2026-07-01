@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-07-01
+
 ### Added
 
 - 卡牌测试：队列 mod 卡牌可在训练假人房间自动测试基础版与升级版。
