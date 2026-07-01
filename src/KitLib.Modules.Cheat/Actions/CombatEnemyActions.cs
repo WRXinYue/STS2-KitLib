@@ -391,12 +391,12 @@ internal static class CombatEnemyActions {
 
     /// <summary>Set a monster's current HP.</summary>
     public static async Task SetMonsterHp(Creature creature, int hp) {
-        await Sts2ApiCompat.SetCurrentHpAsync(creature, hp);
+        await CreatureCmd.SetCurrentHp(creature, hp);
     }
 
     /// <summary>Set a monster's max HP.</summary>
     public static async Task SetMonsterMaxHp(Creature creature, int maxHp) {
-        await Sts2ApiCompat.SetMaxHpAsync(creature, maxHp);
+        await CreatureCmd.SetMaxHp(creature, maxHp);
     }
 
     /// <summary>Clear all powers from a monster.</summary>

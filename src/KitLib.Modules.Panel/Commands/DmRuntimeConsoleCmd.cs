@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using KitLib.Cheat;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.DevConsole;
 using MegaCrit.Sts2.Core.DevConsole.ConsoleCommands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -183,11 +184,11 @@ public class DmRuntimeConsoleCmd : AbstractConsoleCmd {
                 break;
             case "hp":
                 if (m.LockCurrentHp)
-                    TaskHelper.RunSafely(Sts2ApiCompat.SetCurrentHpAsync(p.Creature, Math.Max(1, m.LockedCurrentHpValue)));
+                    TaskHelper.RunSafely(CreatureCmd.SetCurrentHp(p.Creature, Math.Max(1, m.LockedCurrentHpValue)));
                 break;
             case "maxhp":
                 if (m.LockMaxHp)
-                    TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(p.Creature, Math.Max(1, m.LockedMaxHpValue)));
+                    TaskHelper.RunSafely(CreatureCmd.SetMaxHp(p.Creature, Math.Max(1, m.LockedMaxHpValue)));
                 break;
             case "energy":
                 if (m.LockCurrentEnergy && p.PlayerCombatState != null)

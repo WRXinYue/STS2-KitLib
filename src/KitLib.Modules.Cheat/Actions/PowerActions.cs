@@ -161,7 +161,13 @@ internal static class PowerActions {
     private static async Task ApplyPower(PowerModel power, int amount, Creature target, Creature source) {
         try {
             var mutable = power.ToMutable(0);
-            await Sts2PowerCompat.ApplyAsync(mutable, target, amount, source);
+            await PowerCmd.Apply(
+                new BlockingPlayerChoiceContext(),
+                mutable,
+                target,
+                amount,
+                source,
+                cardSource: null);
         }
         catch (Exception ex) {
             KitLog.Warn($"ApplyPower failed ({((AbstractModel)power).Id.Entry}): {ex.Message}");

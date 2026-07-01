@@ -563,7 +563,7 @@ internal static class CardActions {
             var combatCard = combatState.CreateCard(canonicalCard.CanonicalInstance, player);
             ApplyUpgradeSteps(combatCard, upgradeLevelsToApply, upgradePreviewStyle);
             ApplyStagedTemplateIfAny(combatCard, request);
-            await Sts2CardPileCompat.AddGeneratedCardToCombatAsync(combatCard, pileType, player);
+            await CardPileCmd.AddGeneratedCardToCombat(combatCard, pileType, player);
 
             // AddGeneratedCardToCombat silently calls AddInternal() for brand-new cards added to
             // Draw/Discard without creating any VFX. The pile-count UI (NCombatCardPile) only

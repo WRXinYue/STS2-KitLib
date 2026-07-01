@@ -91,7 +91,7 @@ public sealed class RuntimeStatModifiers {
             int maxHp = Math.Max(1, player.Creature.MaxHp);
             if (player.Creature.CurrentHp < maxHp && _godModeCooldown <= 0) {
                 _godModeCooldown = 0.2;
-                Sts2ApiCompat.SetCurrentHpAsync(player.Creature, maxHp);
+                CreatureCmd.SetCurrentHp(player.Creature, maxHp);
             }
         }
 

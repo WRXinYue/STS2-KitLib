@@ -10,20 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Card Test** — Queue mod cards and run automated inject-and-play tests at base and upgraded levels in the training dummy room.
-- **Card Test (rest site)** — Smith-style upgrade previews for queued cards at campfires instead of playing them.
+- Card test: queue mod cards for automated base and upgraded testing in the training dummy room.
+- Card test: smith-style upgrade preview for queued cards at campfires (cards are not played).
 
 ### Changed
 
-- **Stat edit (cheats)** — Stat Locks changed to **Stat Edit**.
-- **Stat edit (cheats)** — Changing a value applies immediately without enabling the lock checkbox first.
+- Dev cheats: renamed Stat Locks to Stat Edit.
+- Stat edit: changing a value applies immediately without enabling the lock checkbox first.
 
 ### Fixed
 
-- **Multiplayer combat stats overlay** — Player contribution bars are visible again during co-op fights.
-- **Multiplayer combat stats overlay** — The panel updates as combat progresses.
-- **Multiplayer combat stats overlay** — You can drag it to reposition.
-- **Card browser** — The detail panel refreshes after you upgrade or remove a card from a pile tab.
+- Fixed co-op combat stats overlay contribution bars not showing.
+- Fixed combat stats overlay not updating during fights.
+- Fixed combat stats overlay not being draggable.
+- Fixed card browser detail panel not refreshing after upgrade or remove in pile tabs.
+- Fixed dev cheats panel power adds failing during combat.
 
 ## [0.22.2] - 2026-06-28
 

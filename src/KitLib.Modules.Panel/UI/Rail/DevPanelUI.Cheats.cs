@@ -10,6 +10,7 @@ using KitLib.Map;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 using KitLib.Presets;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -242,13 +243,13 @@ internal static partial class DevPanelUI {
                 if (mods is { LockMaxHp: true })
                     v = Math.Min(v, Math.Max(1, mods.LockedMaxHpValue));
                 else
-                    await Sts2ApiCompat.SetMaxHpAsync(creature, v);
+                    await CreatureCmd.SetMaxHp(creature, v);
             }
-            await Sts2ApiCompat.SetCurrentHpAsync(creature, Math.Min(v, Math.Max(1, creature.MaxHp)));
+            await CreatureCmd.SetCurrentHp(creature, Math.Min(v, Math.Max(1, creature.MaxHp)));
         }
         void ApplyMaxHp(int v) {
             if (!RunContext.TryGetRunAndPlayer(out _, out var p)) return;
-            TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(p.Creature, Math.Max(1, v)));
+            TaskHelper.RunSafely(CreatureCmd.SetMaxHp(p.Creature, Math.Max(1, v)));
         }
         void ApplyEnergy(int v) {
             if (!RunContext.TryGetRunAndPlayer(out _, out var p) || p.PlayerCombatState == null) return;

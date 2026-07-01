@@ -3,13 +3,14 @@ using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Combat.History;
 using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib;
 
 /// <summary>
-/// Combat API shims for STS2 v0.107.1+.
+/// Combat helpers. Play-phase checks use public API; history and ready-set use reflection on private game members.
 /// </summary>
 internal static class Sts2CombatCompat {
     private const BindingFlags EntryPropFlags =
@@ -25,7 +26,8 @@ internal static class Sts2CombatCompat {
         if (cm is not { IsInProgress: true })
             return false;
 
-        return IsActionSynchronizerPlayPhase();
+        return RunManager.Instance?.ActionQueueSynchronizer?.CombatState
+            == ActionSynchronizerCombatState.PlayPhase;
     }
 
     public static bool IsCombatPlayPhaseActive() =>
@@ -50,36 +52,9 @@ internal static class Sts2CombatCompat {
     public static CombatState? GetCreatureCombatState(Creature creature) =>
         creature.CombatState as CombatState;
 
-    public static void ForcePlayPhase() => SetActionSynchronizerPlayPhase();
-
-    static bool IsActionSynchronizerPlayPhase() {
-        var sync = GetActionQueueSynchronizer();
-        if (sync == null)
-            return false;
-        var prop = sync.GetType().GetProperty("CombatState", EntryPropFlags);
-        var value = prop?.GetValue(sync);
-        return value != null && string.Equals(value.ToString(), "PlayPhase", StringComparison.Ordinal);
-    }
-
-    static void SetActionSynchronizerPlayPhase() {
-        var sync = GetActionQueueSynchronizer();
-        if (sync == null)
-            return;
-        var method = sync.GetType().GetMethod("SetCombatState", EntryPropFlags);
-        if (method == null)
-            return;
-        var enumType = method.GetParameters()[0].ParameterType;
-        var playPhase = Enum.Parse(enumType, "PlayPhase");
-        method.Invoke(sync, [playPhase]);
-    }
-
-    static object? GetActionQueueSynchronizer() {
-        var run = RunManager.Instance;
-        if (run == null)
-            return null;
-        var prop = run.GetType().GetProperty("ActionQueueSynchronizer", EntryPropFlags);
-        return prop?.GetValue(run);
-    }
+    public static void ForcePlayPhase() =>
+        RunManager.Instance?.ActionQueueSynchronizer?
+            .SetCombatState(ActionSynchronizerCombatState.PlayPhase);
 
     static T ReadEntryProperty<T>(CombatHistoryEntry entry, string name) {
         object? raw = typeof(CombatHistoryEntry)

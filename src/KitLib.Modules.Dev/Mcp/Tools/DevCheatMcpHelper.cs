@@ -2,6 +2,7 @@ using System;
 using System.Text.Json.Nodes;
 using KitLib.Cheat;
 using KitLib.Multiplayer.Cheat;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -244,24 +245,24 @@ internal static class DevCheatMcpHelper {
                 if (lockEnabled == true) {
                     m.LockCurrentHp = true;
                     m.LockedCurrentHpValue = Math.Clamp(value, 1, 9999);
-                    TaskHelper.RunSafely(Sts2ApiCompat.SetCurrentHpAsync(player.Creature, m.LockedCurrentHpValue));
+                    TaskHelper.RunSafely(CreatureCmd.SetCurrentHp(player.Creature, m.LockedCurrentHpValue));
                     return StatResult(stat, player.Creature.CurrentHp, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockCurrentHp = false;
-                TaskHelper.RunSafely(Sts2ApiCompat.SetCurrentHpAsync(player.Creature, Math.Max(1, value)));
+                TaskHelper.RunSafely(CreatureCmd.SetCurrentHp(player.Creature, Math.Max(1, value)));
                 return StatResult(stat, value, locked: m.LockCurrentHp);
 
             case "max_hp":
                 if (lockEnabled == true) {
                     m.LockMaxHp = true;
                     m.LockedMaxHpValue = Math.Clamp(value, 1, 9999);
-                    TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(player.Creature, m.LockedMaxHpValue));
+                    TaskHelper.RunSafely(CreatureCmd.SetMaxHp(player.Creature, m.LockedMaxHpValue));
                     return StatResult(stat, player.Creature.MaxHp, locked: true);
                 }
                 if (lockEnabled == false)
                     m.LockMaxHp = false;
-                TaskHelper.RunSafely(Sts2ApiCompat.SetMaxHpAsync(player.Creature, Math.Max(1, value)));
+                TaskHelper.RunSafely(CreatureCmd.SetMaxHp(player.Creature, Math.Max(1, value)));
                 return StatResult(stat, value, locked: m.LockMaxHp);
 
             case "current_energy":

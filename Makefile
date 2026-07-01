@@ -142,7 +142,7 @@ help:
 	@echo "  docs           Valaxy docs dev server (docs/)"
 	@echo "  docs-build     static site → docs/dist/"
 	@echo ""
-	@echo "  clean        remove build/ + dotnet clean"
+	@echo "  clean        remove build/, src/**/*.uid|.import, dotnet clean"
 
 init:
 	$(PYTHON) scripts/init.py
@@ -314,6 +314,7 @@ zip-kitlog: build-kitlog
 
 clean:
 	@if exist build rmdir /s /q build
+	powershell -NoProfile -Command "Get-ChildItem -Path src -Recurse -Include '*.uid','*.import' -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue"
 	$(DOTNET) clean KitLib.sln
 else
 zip-mcp: build-tools

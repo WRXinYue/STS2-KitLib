@@ -86,8 +86,8 @@ internal static class PresetManager {
         if (effective.HasFlag(PresetContents.Stats)) {
             try {
                 await PlayerCmd.SetGold((decimal)preset.Gold, player);
-                await Sts2ApiCompat.SetMaxHpAsync(player.Creature, preset.MaxHp);
-                await Sts2ApiCompat.SetCurrentHpAsync(player.Creature, preset.CurrentHp);
+                await CreatureCmd.SetMaxHp(player.Creature, preset.MaxHp);
+                await CreatureCmd.SetCurrentHp(player.Creature, preset.CurrentHp);
                 player.MaxEnergy = preset.MaxEnergy;
                 player.BaseOrbSlotCount = preset.OrbSlots;
                 applied++;
@@ -165,7 +165,7 @@ internal static class PresetManager {
                                 var combatCard = combatState.CreateCard(model.CanonicalInstance, player);
                                 for (int u = 0; u < entry.UpgradeLevel; u++)
                                     CardCmd.Upgrade(combatCard);
-                                await Sts2CardPileCompat.AddGeneratedCardToCombatAsync(
+                                await CardPileCmd.AddGeneratedCardToCombat(
                                     combatCard, PileType.Draw, player);
                                 combatCard.Pile?.InvokeCardAddFinished();
                             }
@@ -251,7 +251,7 @@ internal static class PresetManager {
                 var combatCard = combatState.CreateCard(model.CanonicalInstance, player);
                 for (int u = 0; u < entry.UpgradeLevel; u++)
                     CardCmd.Upgrade(combatCard);
-                await Sts2CardPileCompat.AddGeneratedCardToCombatAsync(combatCard, pileType, player);
+                await CardPileCmd.AddGeneratedCardToCombat(combatCard, pileType, player);
                 if (pileType is PileType.Draw or PileType.Discard)
                     combatCard.Pile?.InvokeCardAddFinished();
             }
