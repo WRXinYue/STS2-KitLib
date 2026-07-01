@@ -52,8 +52,5 @@ def get_workshop_description(
     if not text.strip():
         raise RuntimeError("Steam workshop description is empty after README conversion.")
     if len(text) > STEAM_DESCRIPTION_MAX:
-        raise RuntimeError(
-            f"Steam workshop description is {len(text)} chars (limit {STEAM_DESCRIPTION_MAX}). "
-            "Shorten README.md / README.zh-CN.md or move detail into docs/."
-        )
+        raise RuntimeError(f"Steam workshop description is {len(text)} chars (limit {STEAM_DESCRIPTION_MAX}). " "Shorten README.md / README.zh-CN.md or move detail into docs/.")
     return text

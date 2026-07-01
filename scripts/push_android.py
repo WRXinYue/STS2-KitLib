@@ -94,20 +94,11 @@ def _resolve_adb() -> Path:
                 return candidate
 
     if sys.platform == "win32":
-        local = (
-            Path(os.environ.get("LOCALAPPDATA", ""))
-            / "Android"
-            / "Sdk"
-            / "platform-tools"
-            / "adb.exe"
-        )
+        local = Path(os.environ.get("LOCALAPPDATA", "")) / "Android" / "Sdk" / "platform-tools" / "adb.exe"
         if local.is_file():
             return local
 
-    _fail(
-        "adb not found. Install Android SDK Platform-Tools or set ADB / ANDROID_HOME.\n"
-        "  Example: %LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe"
-    )
+    _fail("adb not found. Install Android SDK Platform-Tools or set ADB / ANDROID_HOME.\n" "  Example: %LOCALAPPDATA%\\Android\\Sdk\\platform-tools\\adb.exe")
 
 
 class Adb:
@@ -245,19 +236,11 @@ def _push_mod_dir(
     adb.run("push", str(local_dir).replace("\\", "/"), tmp, check=True)
 
     if target.use_run_as:
-        script = (
-            f"rm -rf {remote_dest} && "
-            f"mkdir -p files/mods && "
-            f"cp -r {tmp} {remote_dest}"
-        )
+        script = f"rm -rf {remote_dest} && " f"mkdir -p files/mods && " f"cp -r {tmp} {remote_dest}"
         result = adb.shell(f"run-as {game_package} sh -c '{script}'", check=False)
         if result.returncode != 0:
             err = (result.stderr or result.stdout or "").strip()
-            _fail(
-                f"Failed to copy {remote_mod_id} into app sandbox.\n"
-                f"  Is USB debugging authorized? Is {game_package} installed?\n"
-                f"  adb: {err}"
-            )
+            _fail(f"Failed to copy {remote_mod_id} into app sandbox.\n" f"  Is USB debugging authorized? Is {game_package} installed?\n" f"  adb: {err}")
         listing = adb.shell(
             f"run-as {game_package} ls -la {remote_dest}/",
             check=False,
@@ -287,19 +270,13 @@ def _restart_app(adb: Adb, package: str) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description=(
-            "Push build/KitLib to Android. Default target is StS2 Launcher "
-            f"({LAUNCHER_MODS_ROOT}/)."
-        ),
+        description=("Push build/KitLib to Android. Default target is StS2 Launcher " f"({LAUNCHER_MODS_ROOT}/)."),
     )
     ap.add_argument(
         "--target",
         choices=tuple(PUSH_TARGETS),
         default=os.environ.get("ANDROID_PUSH_TARGET", "launcher").strip() or "launcher",
-        help=(
-            "launcher = StS2LauncherMM/Mods + restart launcher (default); "
-            "game = com.megacrit.sts2 files/mods sandbox + restart game directly"
-        ),
+        help=("launcher = StS2LauncherMM/Mods + restart launcher (default); " "game = com.megacrit.sts2 files/mods sandbox + restart game directly"),
     )
     ap.add_argument(
         "--package",
@@ -365,8 +342,7 @@ def main() -> int:
             ritsu = _stage_ritsulib(repo_root)
             if ritsu is None:
                 print(
-                    "Warning: STS2-RitsuLib not found in NuGet cache; skipping.\n"
-                    "  Tip: run `dotnet restore KitLib.sln` first.",
+                    "Warning: STS2-RitsuLib not found in NuGet cache; skipping.\n" "  Tip: run `dotnet restore KitLib.sln` first.",
                     file=sys.stderr,
                 )
             else:

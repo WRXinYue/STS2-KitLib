@@ -124,13 +124,11 @@ def _tool_env_hint(tool: str) -> tuple[str, str]:
     if tool == "mcp":
         return (
             "NEXUS_FILE_GROUP_ID_MCP",
-            "Create an Optional file for KitLib.Mcp on your mod page first, "
-            "then copy its group ID from API Info.",
+            "Create an Optional file for KitLib.Mcp on your mod page first, " "then copy its group ID from API Info.",
         )
     return (
         "NEXUS_FILE_GROUP_ID_KITLOG",
-        "Create an Optional file for KitLog on your mod page first, "
-        "then copy its group ID from API Info.",
+        "Create an Optional file for KitLog on your mod page first, " "then copy its group ID from API Info.",
     )
 
 
@@ -255,9 +253,7 @@ def step2_upload_parts(zip_path: Path, upload_info: dict) -> list[dict]:
                     )
                 except RequestException as ex:
                     if attempt == _PART_MAX_RETRIES:
-                        raise RuntimeError(
-                            f"Part {part_number} upload failed after {_PART_MAX_RETRIES} attempts: {ex}"
-                        ) from ex
+                        raise RuntimeError(f"Part {part_number} upload failed after {_PART_MAX_RETRIES} attempts: {ex}") from ex
                     print("  network error, retrying...")
                     time.sleep(2**attempt)
                     continue

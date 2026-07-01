@@ -47,11 +47,7 @@ def _read_kitlib_manifest() -> dict:
 def _uploader_setup_error() -> str | None:
     raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
     if not raw:
-        return (
-            "STS2_MOD_UPLOADER is not set.\n"
-            "  Add it to .env (copy from .env.example), e.g.:\n"
-            "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
-        )
+        return "STS2_MOD_UPLOADER is not set.\n" "  Add it to .env (copy from .env.example), e.g.:\n" "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
     path = Path(os.path.expandvars(raw)).expanduser()
     if not path.is_file():
         return (
@@ -108,10 +104,7 @@ def _patch_workshop_json(change_note: str | None, *, prefer_unreleased: bool = F
     else:
         note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
         if not note:
-            raise RuntimeError(
-                "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
-                "## [X.Y.Z] section, or pass --change-note."
-            )
+            raise RuntimeError("ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released " "## [X.Y.Z] section, or pass --change-note.")
 
     data["changeNote"] = note
     path = _WORKSPACE / "workshop.json"
