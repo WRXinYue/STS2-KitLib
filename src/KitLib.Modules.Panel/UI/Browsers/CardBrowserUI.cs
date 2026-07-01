@@ -587,13 +587,22 @@ internal static partial class CardBrowserUI {
 
     // ──────── Navigation / selection helpers ────────
 
+    private static void RebuildGridAndSyncRightPanel(State s, GridRebuildOptions gridOptions) {
+        var selected = s.SelectedCard;
+        RebuildGrid(s, s.SearchInput.Text ?? "", gridOptions);
+        if (selected != null && s.CachedAllCards.Contains(selected))
+            ShowRightPanel(s, selected);
+        else
+            ClearRightPanel(s);
+    }
+
     private static void ShowRightPanel(State s, CardModel card) {
         s.SelectedCard = card;
         foreach (var child in s.RightContent.GetChildren()) ((Node)child).QueueFree();
         var search = () => s.SearchInput.Text ?? "";
         CardBrowserRightPanel.Build(s.RightContent, s.StatusLabel, card, s.RunState, s.Player, s.GlobalUi,
             () => RebuildGrid(s, search(), GridRebuildOptions.ForCardEdit(card)),
-            () => RebuildGrid(s, search(), GridRebuildOptions.ForCardListChange),
+            () => RebuildGridAndSyncRightPanel(s, GridRebuildOptions.ForCardListChangeWith(card)),
             IsLibrarySource, BrowseSourceToTarget(_browseSource),
             IsLibrarySource && s.LibraryShowUpgradePreview);
         s.Dual.OpenExtension();

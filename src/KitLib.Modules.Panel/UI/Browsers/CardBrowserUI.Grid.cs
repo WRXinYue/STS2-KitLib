@@ -136,6 +136,10 @@ internal static partial class CardBrowserUI {
         public static GridRebuildOptions LayoutOnly => default;
         public static GridRebuildOptions ForCardEdit(CardModel card) => new() { InvalidateCard = card };
         public static GridRebuildOptions ForCardListChange => new() { RefreshCardList = true };
+        public static GridRebuildOptions ForCardListChangeWith(CardModel? card) => new() {
+            RefreshCardList = true,
+            InvalidateCard = card,
+        };
     }
 
     private static void ClearHostVisuals(Control host) {

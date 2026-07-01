@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **联机战斗统计浮层** — 联机战斗中玩家贡献条重新可见，面板会随战斗实时更新，并可拖动调整位置。
+- **卡牌浏览器** — 在牌堆标签页升级或移除卡牌后，右侧详情面板会同步刷新。
+
 ## [0.22.2] - 2026-06-28
 
 ### Fixed
