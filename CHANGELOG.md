@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed combat stats overlay not being draggable.
 - Fixed card browser detail panel not refreshing after upgrade or remove in pile tabs.
 - Fixed dev cheats panel power adds failing during combat.
+- Fixed dev save slots ignoring custom names entered in the save picker.
 
 ## [0.22.2] - 2026-06-28
 

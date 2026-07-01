@@ -11,7 +11,7 @@ internal sealed partial class SaveSlotFullscreenShell : Control, ISaveSlotDialog
 
     internal SaveSlotFullscreenShell(
         bool saveMode,
-        Action<int> onConfirm,
+        Action<int, string> onConfirm,
         Action? onEmbeddedCancel,
         Action? onEmbeddedAfterLoadClose) {
         // Match DevMainMenuOverlay (2000); z=200 was drawn under the title screen.

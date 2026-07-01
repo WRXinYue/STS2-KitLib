@@ -12,7 +12,7 @@ namespace KitLib.UI;
 internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
 
     private HBoxContainer? _center;
-    private readonly Action<int> _onConfirm;
+    private readonly Action<int, string> _onConfirm;
     private readonly bool _isSaveMode;
     private readonly bool _embedded;
     private int _selectedSlot = -1;
@@ -43,7 +43,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
 
     internal SaveSlotPanel(
         bool saveMode,
-        Action<int> onConfirm,
+        Action<int, string> onConfirm,
         bool embedded,
         Action? onEmbeddedCancel,
         Action? onEmbeddedAfterLoadClose) {
@@ -803,9 +803,9 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         AnimateConfirmButton();
 
         if (_isSaveMode)
-            SaveSlotManager.RenameSlot(_selectedSlot, _nameInput?.Text ?? "");
-
-        _onConfirm.Invoke(_selectedSlot);
+            _onConfirm.Invoke(_selectedSlot, _nameInput?.Text ?? "");
+        else
+            _onConfirm.Invoke(_selectedSlot, "");
 
         if (_isSaveMode) {
             // Refresh both the card and detail after saving

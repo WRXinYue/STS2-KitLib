@@ -88,7 +88,7 @@ internal static class DevMainMenuUI {
         bool anySlot = SaveSlotManager.GetAllSlotIds().Count > 0;
 
         var loadBtn = AddButton(container, template, I18N.T("devmenu.loadSnapshot", "Load Save"), () => {
-            SaveSlotUI.Show(mainMenu.GetTree().Root, saveMode: false, onConfirm: slot => {
+            SaveSlotUI.Show(mainMenu.GetTree().Root, saveMode: false, onConfirm: (slot, _) => {
                 SaveSlotUI.Hide();
                 Hide();
                 SaveSlotManager.LoadFromSlot(slot);

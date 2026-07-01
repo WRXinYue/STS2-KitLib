@@ -76,7 +76,13 @@ internal static class SaveSlotManager {
             var json = SaveManager.ToJson(save);
             AtomicWrite(savePath, json);
 
+            var existing = LoadMetaFromFile(metaPath);
             var meta = CaptureMetaFromState(state, name);
+            if (string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(existing?.Name))
+                meta.Name = existing.Name;
+            if (!string.IsNullOrWhiteSpace(existing?.DebugNotes))
+                meta.DebugNotes = existing.DebugNotes;
+
             AtomicWrite(metaPath, JsonSerializer.Serialize(meta));
             return true;
         }

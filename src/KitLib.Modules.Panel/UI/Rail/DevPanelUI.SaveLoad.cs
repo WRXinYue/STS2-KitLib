@@ -84,9 +84,9 @@ internal static partial class DevPanelUI {
                 SaveSlotUI.Show(
                     slotHost,
                     saveMode: saveMode,
-                    onConfirm: slot => {
+                    onConfirm: (slot, name) => {
                         if (saveMode)
-                            SaveSlotManager.SaveToSlot(slot);
+                            SaveSlotManager.SaveToSlot(slot, name);
                         else
                             SaveSlotManager.LoadFromSlot(slot);
                     },

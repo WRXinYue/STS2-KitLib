@@ -23,7 +23,7 @@ internal static class SaveSlotUI {
     public static void Show(
         Node parent,
         bool saveMode,
-        Action<int> onConfirm,
+        Action<int, string> onConfirm,
         SaveSlotUiHost host = SaveSlotUiHost.FullscreenOverlay,
         Action? onEmbeddedCancel = null,
         Action? onEmbeddedAfterLoadClose = null) {
