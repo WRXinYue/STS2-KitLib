@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-07-04
+
 ### Added
 
 - **ModVariantLoader** NuGet 包：内容 mod 可在同一 mod 目录下同时发行 stable 与 beta 实现 DLL。

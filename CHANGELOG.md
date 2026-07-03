@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-07-04
+
 ### Added
 
 - **ModVariantLoader** NuGet package for content mods that ship stable and beta implementation DLLs in one mod folder.
