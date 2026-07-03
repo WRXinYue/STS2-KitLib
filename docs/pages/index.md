@@ -66,11 +66,11 @@ features:
       details:
         en: >-
           Register dev-rail tabs (`DevPanelRegistry`), read mod catalogs (`ModRuntime`), declare constraints
-          (`kitlib.compat.toml`), and target dual STS2 API profiles (`STS2_BETA106PLUS` / `Sts2ProfileMap`).
+          (`kitlib.compat.toml`), and target dual STS2 API profiles (`STS2_BETA_PROFILE` / `Sts2ProfileMap`).
           NuGet: `STS2.KitLib.Abstractions`.
         zh-CN: >-
           注册 dev 轨道标签（`DevPanelRegistry`）、读取 mod 目录（`ModRuntime`）、声明约束（`kitlib.compat.toml`）、
-          对接双 STS2 API profile（`STS2_BETA106PLUS` / `Sts2ProfileMap`）。NuGet：`STS2.KitLib.Abstractions`。
+          对接双 STS2 API profile（`STS2_BETA_PROFILE` / `Sts2ProfileMap`）。NuGet：`STS2.KitLib.Abstractions`。
     - title:
         en: Stable & beta STS2
         zh-CN: Stable 与 beta 游戏版本

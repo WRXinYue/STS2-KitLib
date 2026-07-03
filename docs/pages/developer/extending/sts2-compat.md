@@ -14,7 +14,7 @@ KitLib and other STS2 mods often need to support more than one game build (for e
 
 | Layer | When | Typical tools | One DLL or two? |
 | --- | --- | --- | --- |
-| **Compile-time profile** | Build | `Sts2Profile`, `STS2_BETA106PLUS`, `#if` | **One build = one profile branch** |
+| **Compile-time profile** | Build | `Sts2Profile`, `STS2_BETA_PROFILE`, `#if` | **One build = one profile branch** |
 | **Runtime profile** | Player launch | `Sts2ProfileMap`, `kitlib.compat.toml` | Same DLL checks facts at runtime |
 
 Opening a runtime API does **not** replace `#if`. Conditional compilation exists because **stable and beta reference different `sts2.dll` surfaces** — a member renamed or removed on one line cannot be compiled against the other reference in a single pass.
@@ -25,7 +25,7 @@ KitLib 与其它 STS2 mod 常需同时支持多个游戏版本（例如 **stable
 
 | 层级 | 时机 | 典型手段 | 一个 DLL 还是两个？ |
 | --- | --- | --- | --- |
-| **编译期 profile** | 构建 | `Sts2Profile`、`STS2_BETA106PLUS`、`#if` | **一次编译只保留一个 profile 分支** |
+| **编译期 profile** | 构建 | `Sts2Profile`、`STS2_BETA_PROFILE`、`#if` | **一次编译只保留一个 profile 分支** |
 | **运行时 profile** | 玩家启动 | `Sts2ProfileMap`、`kitlib.compat.toml` | 同一 DLL 在运行时读事实 |
 
 开放运行时 API **不能替代** `#if`。条件编译存在的原因是 **stable 与 beta 引用的 `sts2.dll` 接口不同** —— 某成员在一侧改名或删除时，无法在同一次编译、同一引用下同时通过编译。
@@ -40,10 +40,10 @@ KitLib pins two PC profiles (see `KitLib.Abstractions.Compat.Sts2ProfileMap`):
 
 | Profile | Pinned game version | MSBuild |
 | --- | --- | --- |
-| `StablePre106` | 0.103.3 | `-p:Sts2Profile=stable` |
-| `Beta106Plus` | 0.107.0 | `-p:Sts2Profile=beta` |
+| `stable` | 0.107.1 | `-p:Sts2Profile=stable` |
+| `beta` | 0.108.0 | `-p:Sts2Profile=beta` |
 
-When `Sts2Profile=beta`, MSBuild defines **`STS2_BETA106PLUS`**. KitLib imports this from the repo root `Directory.Build.props`.
+When `Sts2Profile=beta`, MSBuild defines **`STS2_BETA_PROFILE`**. KitLib imports this from the repo root `Directory.Build.props`.
 :::
 
 ::: zh-CN
@@ -51,10 +51,10 @@ KitLib 固定两个 PC profile（见 `KitLib.Abstractions.Compat.Sts2ProfileMap`
 
 | Profile | 固定游戏版本 | MSBuild |
 | --- | --- | --- |
-| `StablePre106` | 0.103.3 | `-p:Sts2Profile=stable` |
-| `Beta106Plus` | 0.107.0 | `-p:Sts2Profile=beta` |
+| `stable` | 0.107.1 | `-p:Sts2Profile=stable` |
+| `beta` | 0.108.0 | `-p:Sts2Profile=beta` |
 
-当 `Sts2Profile=beta` 时，MSBuild 会定义 **`STS2_BETA106PLUS`**。KitLib 在仓库根目录的 `Directory.Build.props` 中注入该常量。
+当 `Sts2Profile=beta` 时，MSBuild 会定义 **`STS2_BETA_PROFILE`**。KitLib 在仓库根目录的 `Directory.Build.props` 中注入该常量。
 :::
 
 ## Conditional compilation example{lang="en"}
@@ -65,7 +65,7 @@ KitLib 固定两个 PC profile（见 `KitLib.Abstractions.Compat.Sts2ProfileMap`
 When Megacrit renames or replaces a member between profiles, use `#if` and **build once per profile**:
 
 ```csharp
-#if STS2_BETA106PLUS
+#if STS2_BETA_PROFILE
         var inventory = merchantRoom.GetLocalInventory();
 #else
         var inventory = merchantRoom.Inventory;
@@ -82,7 +82,7 @@ You cannot ship **one** compiled DLL that contains both branches unless you swit
 当 Megacrit 在不同 profile 间改名或替换成员时，用 `#if` 且 **每个 profile 各编一次**：
 
 ```csharp
-#if STS2_BETA106PLUS
+#if STS2_BETA_PROFILE
         var inventory = merchantRoom.GetLocalInventory();
 #else
         var inventory = merchantRoom.Inventory;
@@ -104,7 +104,7 @@ You cannot ship **one** compiled DLL that contains both branches unless you swit
 
 1. Pin **`sts2.dll`** per profile — KitLib stores refs under `eng/sts2-refs/` (Git LFS). You may vendor the same layout or point `HintPath` at your game install when building locally.
 2. Set **`Sts2Profile=stable|beta`** on `dotnet build` / `msbuild`.
-3. Define **`STS2_BETA106PLUS`** when profile is beta (same symbol name keeps examples portable).
+3. Define **`STS2_BETA_PROFILE`** when profile is beta (same symbol name keeps examples portable).
 4. **Publish** the artifact that matches the player’s game line — either two release zips, or one package with profile-specific DLL names and a loader/manifest note.
 
 KitLib daily flow: `make init` → `make sync-full` auto-detects profile from `release_info.json` or ref hash. See [STS2 API profiles](/developer/sts2-api-profiles) for LFS refs and CI.
@@ -117,7 +117,7 @@ KitLib daily flow: `make init` → `make sync-full` auto-detects profile from `r
 
 1. 每个 profile 固定 **`sts2.dll`** — KitLib 存在 `eng/sts2-refs/`（Git LFS）。你可复用同一目录结构，或在本地构建时让 `HintPath` 指向当前游戏安装。
 2. 在 `dotnet build` / `msbuild` 上传 **`Sts2Profile=stable|beta`**。
-3. profile 为 beta 时定义 **`STS2_BETA106PLUS`**（统一符号名便于照搬示例）。
+3. profile 为 beta 时定义 **`STS2_BETA_PROFILE`**（统一符号名便于照搬示例）。
 4. **发布**与玩家游戏线一致的产物 —— 两个 zip，或一个包内按 profile 放不同 DLL 并在 manifest 中说明。
 
 KitLib 日常流程：`make init` → `make sync-full` 会根据 `release_info.json` 或 ref 哈希自动检测 profile。LFS ref 与 CI 见 [STS2 API profiles](/developer/sts2-api-profiles)。
@@ -135,7 +135,7 @@ These types live in **`KitLib.Abstractions`** and are safe for other mods to ref
 | API | Purpose |
 | --- | --- |
 | `Sts2ProfileMap.Resolve(version, platform)` | Map raw game version → `Sts2GameProfile` |
-| `Sts2GameProfile` | `Unknown`, `StablePre106`, `Beta106Plus` |
+| `Sts2GameProfile` | `Unknown`, `Supported` |
 | `Sts2SupportedGameVersions.All` | Pinned version strings |
 | `KitLibCompatDocument` / `KitLibCompatTomlReader` | Parse `kitlib.compat.toml` |
 | `KitLibCompatEvaluator` | Evaluate constraints at load time |
@@ -152,7 +152,7 @@ A thin **`Sts2Compat` runtime facade** (single entry for “current profile at l
 | API | 用途 |
 | --- | --- |
 | `Sts2ProfileMap.Resolve(version, platform)` | 原始游戏版本 → `Sts2GameProfile` |
-| `Sts2GameProfile` | `Unknown`、`StablePre106`、`Beta106Plus` |
+| `Sts2GameProfile` | `Unknown`、`Supported` |
 | `Sts2SupportedGameVersions.All` | 固定版本字符串列表 |
 | `KitLibCompatDocument` / `KitLibCompatTomlReader` | 解析 `kitlib.compat.toml` |
 | `KitLibCompatEvaluator` | 加载时评估约束 |

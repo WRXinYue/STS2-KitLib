@@ -57,8 +57,12 @@ internal static class CardTestActions {
                 MainFile.Logger.Warn("CardTestActions: Test room not available in multiplayer.");
                 return false;
             }
+#if STS2_BETA_PROFILE
+            var encounter = ModelDb.Encounter<BattlewornDummyEventV3Encounter>().ToMutable();
+#else
             var encounter = (BattlewornDummyEventEncounter)ModelDb.Encounter<BattlewornDummyEventEncounter>().ToMutable();
             encounter.Setting = BattlewornDummyEventEncounter.DummySetting.Setting3;
+#endif
             TaskHelper.RunSafely(rm.EnterRoomDebug(RoomType.Monster, MapPointType.Monster, encounter));
             return true;
         }

@@ -14,10 +14,10 @@ from lib.steam import _sts2_game_root_valid, read_sts2_dir_from_local_props, res
 
 ProfileName = str  # "stable" | "beta"
 
-# Public (stable) and Steam beta currently ship the same v0.107.1 API; pins may diverge later.
+# stable (public) and Steam beta diverged at v0.108.0; pins may move independently later.
 _PINNED_VERSIONS: dict[str, str] = {
     "stable": "0.107.1",
-    "beta": "0.107.1",
+    "beta": "0.108.0",
 }
 
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
@@ -140,9 +140,10 @@ def resolve_compile_profile(
     if allow_game_inference:
         game_root = sts2_dir or read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
         if game_root is not None:
-            game_inferred = compile_profile_from_game_version(read_release_version(game_root))
-            if not game_inferred:
-                game_inferred = infer_profile_from_ref_hash(game_root, repo_root=root)
+            hash_inferred = infer_profile_from_ref_hash(game_root, repo_root=root)
+            version_inferred = compile_profile_from_game_version(read_release_version(game_root))
+            # Prefer ref hash when stable/beta DLLs diverge (e.g. beta 0.108 vs stable 0.107).
+            game_inferred = hash_inferred or version_inferred
 
     props_profile = read_local_props_profile(root)
     if game_inferred:

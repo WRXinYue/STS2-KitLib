@@ -10,6 +10,8 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <!-- Mods load inside the game host; .deps.json in mods/ is parsed as a mod manifest. -->
     <GenerateDependencyFile>false</GenerateDependencyFile>
+    <Sts2Profile Condition="'$(Sts2Profile)' == ''">stable</Sts2Profile>
+    <DefineConstants Condition="'$(Sts2Profile)' == 'beta'">$(DefineConstants);STS2_BETA_PROFILE</DefineConstants>
   </PropertyGroup>
   <!-- Must run before Sts2DataDir is derived (CI has no local.props). -->
   <Import Project="$(RepoRoot)eng/Sts2Refs.props" Condition="Exists('$(RepoRoot)eng/Sts2Refs.props')" />
