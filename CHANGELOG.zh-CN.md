@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-07-03
+
 ### Changed
 
 - AI 托管、主机代打队友、SyncBot、幻影玩家与客机 AFK 开关改为仅本局有效：一局结束后自动关闭，不再写入 `settings.json`，避免下次单人或联机时莫名自动代打。

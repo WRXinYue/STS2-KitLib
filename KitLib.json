@@ -3,7 +3,7 @@
   "name": "KitLib",
   "author": "WRXinYue",
   "description": "Modular in-game toolkit for StS2 — cheats, AI host, save tools, and extensible modules for players and mod authors.",
-  "version": "0.23.0",
+  "version": "0.23.1",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [],

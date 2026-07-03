@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-07-03
+
 ### Changed
 
 - AI Host, host teammate, SyncBot, phantom player, and client AFK toggles are session-only: they reset when a run ends and are no longer written to `settings.json`, so solo or co-op runs should not unexpectedly start AI play on the next launch.
