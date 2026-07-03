@@ -127,10 +127,7 @@ internal static partial class DevPanelUI {
         var mpRun = MpCheatSession.InMultiplayerRun;
         if (clientMp || (mpRun && MpCheatSession.IsHost)) {
             AiPlayModule.Instance.StopLoop();
-            if (SettingsStore.Current.AutoPlayEnabled) {
-                SettingsStore.Current.AutoPlayEnabled = false;
-                SettingsStore.Save();
-            }
+            AiSessionSettings.AutoPlayEnabled = false;
             var blocked = new Label {
                 Text = clientMp
                     ? I18N.T("autoplay.mpClientBlocked", "联机客户端不可用 AI 托管；请由主机开启「托管队友」代打战斗。")
@@ -146,10 +143,9 @@ internal static partial class DevPanelUI {
             inner.AddChild(CreateCheatToggle(
                 I18N.T("autoplay.enabled", "AI Host"),
                 I18N.T("autoplay.enabled.desc", "Rule-based bot drives your character (map, combat, rewards)."),
-                () => SettingsStore.Current.AutoPlayEnabled,
+                () => AiSessionSettings.AutoPlayEnabled,
                 v => {
-                    SettingsStore.Current.AutoPlayEnabled = v;
-                    SettingsStore.Save();
+                    AiSessionSettings.AutoPlayEnabled = v;
                     if (v && RunManager.Instance?.IsInProgress == true)
                         AiPlayModule.Instance.StartLoop();
                     else
@@ -213,11 +209,10 @@ internal static partial class DevPanelUI {
             inner.AddChild(CreateCheatToggle(
                 I18N.T("pseudocoop.teammate", "Host AI Teammate"),
                 I18N.T("pseudocoop.teammate.desc", "SimpleStrategy plays combat for host-driven peers via action queue."),
-                () => SettingsStore.Current.MpAiTeammateEnabled,
+                () => AiSessionSettings.MpAiTeammateEnabled,
                 v => {
                     if (!v) MpAiTeammateHost.OnSessionDisabled();
-                    SettingsStore.Current.MpAiTeammateEnabled = v;
-                    SettingsStore.Save();
+                    AiSessionSettings.MpAiTeammateEnabled = v;
                     SimulatedPeerRegistry.Refresh();
                     MpCheatSyncBot.RefreshSimulatedPeers();
                 }));
@@ -225,14 +220,13 @@ internal static partial class DevPanelUI {
                 inner.AddChild(CreateCheatToggle(
                     I18N.T("pseudocoop.driveLiveEnet", "AI Drives Live ENet Teammates"),
                     I18N.T("pseudocoop.driveLiveEnet.desc", "Host enqueues combat for connected clients (requires client AFK mode)."),
-                    () => SettingsStore.Current.MpAiTeammateDriveLiveEnet,
+                    () => AiSessionSettings.MpAiTeammateDriveLiveEnet,
                     v => {
-                        SettingsStore.Current.MpAiTeammateDriveLiveEnet = v;
+                        AiSessionSettings.MpAiTeammateDriveLiveEnet = v;
                         if (v) {
-                            SettingsStore.Current.SyncBotEnabled = false;
-                            SettingsStore.Current.SyncBotSpawnPhantomPlayer = false;
+                            AiSessionSettings.SyncBotEnabled = false;
+                            AiSessionSettings.SyncBotSpawnPhantomPlayer = false;
                         }
-                        SettingsStore.Save();
                         SimulatedPeerRegistry.Refresh();
                         MpCheatSyncBot.RefreshSimulatedPeers();
                     }));
@@ -241,11 +235,8 @@ internal static partial class DevPanelUI {
                 inner.AddChild(CreateCheatToggle(
                     I18N.T("pseudocoop.autoPreset", "Auto Preset on Host Launch"),
                     I18N.T("pseudocoop.autoPreset.desc", "Apply preset when a host run starts."),
-                    () => SettingsStore.Current.PseudoCoopAutoPresetOnLaunch,
-                    v => {
-                        SettingsStore.Current.PseudoCoopAutoPresetOnLaunch = v;
-                        SettingsStore.Save();
-                    }));
+                    () => AiSessionSettings.PseudoCoopAutoPresetOnLaunch,
+                    v => AiSessionSettings.PseudoCoopAutoPresetOnLaunch = v));
             }
             var pseudoHint = new Label {
                 Text = liveEnet
@@ -267,10 +258,9 @@ internal static partial class DevPanelUI {
                 inner.AddChild(CreateCheatToggle(
                     I18N.T("syncbot.enabled", "Simulate Remote Peers"),
                     I18N.T("syncbot.enabled.desc", "Inject MpCheat ACKs and default remote choices on this machine (not real clients)."),
-                    () => SettingsStore.Current.SyncBotEnabled,
+                    () => AiSessionSettings.SyncBotEnabled,
                     v => {
-                        SettingsStore.Current.SyncBotEnabled = v;
-                        SettingsStore.Save();
+                        AiSessionSettings.SyncBotEnabled = v;
                         MpCheatSyncBot.RefreshSimulatedPeers();
                     }));
                 inner.AddChild(CreateCheatToggle(
@@ -284,11 +274,8 @@ internal static partial class DevPanelUI {
                 inner.AddChild(CreateCheatToggle(
                     I18N.T("syncbot.phantom", "Spawn Phantom Player"),
                     I18N.T("syncbot.phantom.desc", "Experimental: add NetId 1001 on next host launch (1-player run only)"),
-                    () => SettingsStore.Current.SyncBotSpawnPhantomPlayer,
-                    v => {
-                        SettingsStore.Current.SyncBotSpawnPhantomPlayer = v;
-                        SettingsStore.Save();
-                    }));
+                    () => AiSessionSettings.SyncBotSpawnPhantomPlayer,
+                    v => AiSessionSettings.SyncBotSpawnPhantomPlayer = v));
                 var syncHint = new Label {
                     Text = I18N.T("syncbot.hint", "Does not replace ENet dual-instance tests or StateDivergence checks."),
                     AutowrapMode = TextServer.AutowrapMode.WordSmart,

@@ -24,7 +24,7 @@ internal static class MpAiTeammateHost {
 
     const int MaxPlayEnqueueStreak = 3;
     public static bool IsEnabled =>
-        SettingsStore.Current.MpAiTeammateEnabled
+        AiSessionSettings.MpAiTeammateEnabled
         && MpCheatSession.IsHost
         && MpCheatSession.InMultiplayerRun;
 

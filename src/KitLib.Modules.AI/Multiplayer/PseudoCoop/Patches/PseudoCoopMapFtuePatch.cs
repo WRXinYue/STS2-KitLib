@@ -9,7 +9,7 @@ namespace KitLib.Multiplayer.PseudoCoop.Patches;
 internal static class PseudoCoopMapFtuePatch {
     static bool Prefix() {
         if (!KitLibState.IsActive) return true;
-        if (!SettingsStore.Current.SyncBotSpawnPhantomPlayer) return true;
+        if (!AiSessionSettings.SyncBotSpawnPhantomPlayer) return true;
         KitLog.Debug("PseudoCoop", $"Skipping map_select_ftue during pseudo-coop.");
         return false;
     }

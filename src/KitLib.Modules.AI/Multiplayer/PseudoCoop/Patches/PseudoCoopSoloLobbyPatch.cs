@@ -13,7 +13,7 @@ internal static class PseudoCoopSoloLobbyPatch {
     [HarmonyPostfix]
     static void Postfix(StartRunLobby __instance, ref bool __result) {
         if (__result) return;
-        if (!SettingsStore.Current.SyncBotSpawnPhantomPlayer) return;
+        if (!AiSessionSettings.SyncBotSpawnPhantomPlayer) return;
         if (__instance.NetService.Type != NetGameType.Host) return;
         if (__instance.Players.Count != 1) return;
         if (!__instance.Players.All(p => p.isReady)) return;

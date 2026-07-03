@@ -7,14 +7,12 @@ namespace KitLib.Multiplayer.PseudoCoop;
 /// <summary>One-click preset: host hand-plays, phantom + SyncBot + AI teammate.</summary>
 internal static class PseudoCoopBootstrap {
     public static void ApplyPreset() {
-        var s = SettingsStore.Current;
-        s.AutoPlayEnabled = false;
-        s.SyncBotEnabled = true;
-        s.SyncBotSpawnPhantomPlayer = true;
-        s.SyncBotAutoEndTurn = true;
-        s.MpAiTeammateEnabled = true;
-        s.MpAiTeammateDriveLiveEnet = false;
-        SettingsStore.Save();
+        AiSessionSettings.AutoPlayEnabled = false;
+        AiSessionSettings.SyncBotEnabled = true;
+        AiSessionSettings.SyncBotSpawnPhantomPlayer = true;
+        SettingsStore.Current.SyncBotAutoEndTurn = true;
+        AiSessionSettings.MpAiTeammateEnabled = true;
+        AiSessionSettings.MpAiTeammateDriveLiveEnet = false;
         SimulatedPeerRegistry.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
         AiPlayModule.Instance.StopLoop();
@@ -23,14 +21,12 @@ internal static class PseudoCoopBootstrap {
 
     /// <summary>LAN dual-instance: host drives live ENet teammates via action queue; no phantom/SyncBot ACK.</summary>
     public static void ApplyLanHostPreset() {
-        var s = SettingsStore.Current;
-        s.AutoPlayEnabled = false;
-        s.SyncBotEnabled = false;
-        s.SyncBotSpawnPhantomPlayer = false;
-        s.SyncBotAutoEndTurn = true;
-        s.MpAiTeammateEnabled = true;
-        s.MpAiTeammateDriveLiveEnet = true;
-        SettingsStore.Save();
+        AiSessionSettings.AutoPlayEnabled = false;
+        AiSessionSettings.SyncBotEnabled = false;
+        AiSessionSettings.SyncBotSpawnPhantomPlayer = false;
+        SettingsStore.Current.SyncBotAutoEndTurn = true;
+        AiSessionSettings.MpAiTeammateEnabled = true;
+        AiSessionSettings.MpAiTeammateDriveLiveEnet = true;
         SimulatedPeerRegistry.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
         AiPlayModule.Instance.StopLoop();
@@ -38,7 +34,7 @@ internal static class PseudoCoopBootstrap {
     }
 
     public static void TryAutoPresetOnLaunch() {
-        if (!SettingsStore.Current.PseudoCoopAutoPresetOnLaunch) return;
+        if (!AiSessionSettings.PseudoCoopAutoPresetOnLaunch) return;
         ApplyPreset();
     }
 

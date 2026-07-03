@@ -10,7 +10,7 @@ namespace KitLib.Multiplayer.SyncBot;
 internal static class PhantomPlayerSpawner {
     public static bool TrySpawn(RunState? state) {
         if (state == null) return false;
-        if (!SettingsStore.Current.SyncBotSpawnPhantomPlayer) return false;
+        if (!AiSessionSettings.SyncBotSpawnPhantomPlayer) return false;
         if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return false;
         if (state.Players.Count != 1) return false;
         if (state.Players.Any(p => p.NetId == MpCheatSyncBot.PhantomPlayerNetId)) return false;

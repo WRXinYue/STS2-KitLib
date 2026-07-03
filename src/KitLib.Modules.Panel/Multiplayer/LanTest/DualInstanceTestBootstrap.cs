@@ -45,8 +45,8 @@ internal static class DualInstanceTestBootstrap {
 
         var netType = RunManager.Instance?.NetService?.Type;
         if (netType == NetGameType.Host) {
-            if (SettingsStore.Current.MpAiTeammateEnabled
-                && SettingsStore.Current.MpAiTeammateDriveLiveEnet) {
+            if (AiSessionSettings.MpAiTeammateEnabled
+                && AiSessionSettings.MpAiTeammateDriveLiveEnet) {
                 KitLog.Info("DualInstance", $"LAN host preset already active.");
                 return;
             }

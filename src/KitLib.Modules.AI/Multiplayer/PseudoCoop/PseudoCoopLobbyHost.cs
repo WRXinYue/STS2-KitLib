@@ -89,14 +89,12 @@ internal static class PseudoCoopLobbyHost {
         if (options.EnableMpCheatOptIn && !SettingsStore.Current.MultiplayerCheatOptIn)
             SettingsStore.SetMultiplayerCheatOptIn(true);
 
-        var s = SettingsStore.Current;
-        s.AutoPlayEnabled = false;
-        s.SyncBotEnabled = options.SyncBotEnabled;
-        s.SyncBotSpawnPhantomPlayer = options.SpawnPhantomPlayer;
-        s.SyncBotAutoEndTurn = options.SyncBotAutoEndTurn;
-        s.MpAiTeammateEnabled = options.MpAiTeammateEnabled;
-        s.PseudoCoopAutoPresetOnLaunch = options.AutoPresetOnLaunch;
-        SettingsStore.Save();
+        AiSessionSettings.AutoPlayEnabled = false;
+        AiSessionSettings.SyncBotEnabled = options.SyncBotEnabled;
+        AiSessionSettings.SyncBotSpawnPhantomPlayer = options.SpawnPhantomPlayer;
+        SettingsStore.Current.SyncBotAutoEndTurn = options.SyncBotAutoEndTurn;
+        AiSessionSettings.MpAiTeammateEnabled = options.MpAiTeammateEnabled;
+        AiSessionSettings.PseudoCoopAutoPresetOnLaunch = options.AutoPresetOnLaunch;
         PseudoCoopBootstrap.TryAutoPresetOnLaunch();
         SimulatedPeerRegistry.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();

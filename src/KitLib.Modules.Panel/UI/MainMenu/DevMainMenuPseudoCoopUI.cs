@@ -93,7 +93,7 @@ internal static class DevMainMenuPseudoCoopUI {
             SettingsStore.Current.SyncBotAutoEndTurn);
         var chkAutoPresetLaunch = CreateCheckBox(
             I18N.T("pseudocoop.autoPreset", "Auto preset on host launch"),
-            SettingsStore.Current.PseudoCoopAutoPresetOnLaunch);
+            false);
 
         vbox.AddChild(chkMpCheat);
         vbox.AddChild(chkSyncBot);

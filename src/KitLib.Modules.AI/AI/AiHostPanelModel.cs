@@ -51,7 +51,7 @@ internal static class AiHostPanelModel {
             lines.Add(I18N.T(
                 "ai.status.teammate",
                 "Host AI Teammate: {0}",
-                SettingsStore.Current.MpAiTeammateEnabled
+                AiSessionSettings.MpAiTeammateEnabled
                     ? I18N.T("ai.status.on", "on")
                     : I18N.T("ai.status.off", "off")));
             var targets = SimulatedPeerRegistry.GetMpAiTeammateTargets().Count();
@@ -114,13 +114,13 @@ internal static class AiHostPanelModel {
             tips.Add(I18N.T("ai.rec.deferUi", "Finish Neow and open the map once — the sidebar attaches after deferred init."));
 
         if (MultiplayerRunProbe.InMultiplayerRun && MultiplayerRunProbe.IsHost) {
-            if (SettingsStore.Current.AutoPlayEnabled)
+            if (AiSessionSettings.AutoPlayEnabled)
                 tips.Add(I18N.T("ai.rec.noAutoplayMp", "Turn off Solo AI Host in multiplayer; hand-play locally and use Host AI Teammate for remotes."));
-            if (!SettingsStore.Current.MpAiTeammateEnabled)
+            if (!AiSessionSettings.MpAiTeammateEnabled)
                 tips.Add(I18N.T("ai.rec.enableTeammate", "Enable Host AI Teammate for phantom or connected peers."));
-            if (SimulatedPeerRegistry.HasLiveEnetTeammate() && !SettingsStore.Current.MpAiTeammateDriveLiveEnet)
+            if (SimulatedPeerRegistry.HasLiveEnetTeammate() && !AiSessionSettings.MpAiTeammateDriveLiveEnet)
                 tips.Add(I18N.T("ai.rec.driveEnet", "Real client connected: enable AI Drives Live ENet Teammates + LAN preset."));
-            if (!SimulatedPeerRegistry.HasLiveEnetTeammate() && !SettingsStore.Current.SyncBotEnabled
+            if (!SimulatedPeerRegistry.HasLiveEnetTeammate() && !AiSessionSettings.SyncBotEnabled
                 && CompanionBridge.ListCompanions().Count == 0)
                 tips.Add(I18N.T("ai.rec.syncbot", "Solo host testing: enable SyncBot or spawn a phantom player."));
         }
@@ -129,7 +129,7 @@ internal static class AiHostPanelModel {
             tips.Add(I18N.T("ai.rec.clientAfk", "Client: enable AFK so the host can enqueue your combat actions."));
 
         if (!MultiplayerRunProbe.InMultiplayerRun && RunManager.Instance?.IsInProgress == true
-            && !SettingsStore.Current.AutoPlayEnabled)
+            && !AiSessionSettings.AutoPlayEnabled)
             tips.Add(I18N.T("ai.rec.soloAutoplay", "Solo run: enable AI Host below to automate map, combat, and rewards."));
 
         foreach (var companion in CompanionBridge.ListCompanions()) {

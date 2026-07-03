@@ -31,19 +31,20 @@ internal sealed class AiPlayModule {
             DisableMultiplayerAutoPlay();
             return;
         }
-        if (!SettingsStore.Current.AutoPlayEnabled) return;
+        if (!AiSessionSettings.AutoPlayEnabled) return;
         // LoadRun replaces NGlobalUi; defer until the new scene tree is ready.
         Callable.From(StartLoopIfEnabled).CallDeferred();
     }
 
     void StartLoopIfEnabled() {
-        if (!IsAutoPlayAllowed || !SettingsStore.Current.AutoPlayEnabled)
+        if (!IsAutoPlayAllowed || !AiSessionSettings.AutoPlayEnabled)
             return;
         StartLoop();
     }
 
     public void OnRunEnded() {
         StopLoop();
+        AiSessionSettings.ResetRunSession();
         AiDecisionLog.Clear();
         AiHudState.Clear();
         NextFightDeckEvaluator.ClearCache();
@@ -94,15 +95,13 @@ internal sealed class AiPlayModule {
     }
 
     public void OnDecisionPoint(GamePhase phase) {
-        if (!IsAutoPlayAllowed || _loop == null || !SettingsStore.Current.AutoPlayEnabled) return;
+        if (!IsAutoPlayAllowed || _loop == null || !AiSessionSettings.AutoPlayEnabled) return;
         TaskHelper.RunSafely(_loop.OnDecisionPointAsync(phase));
     }
 
     static void DisableMultiplayerAutoPlay() {
-        if (SettingsStore.Current.AutoPlayEnabled) {
-            SettingsStore.Current.AutoPlayEnabled = false;
-            SettingsStore.Save();
-        }
+        if (AiSessionSettings.AutoPlayEnabled)
+            AiSessionSettings.AutoPlayEnabled = false;
         Instance.StopLoop();
         KitLog.Info("AiHost", $"AutoPlay disabled in multiplayer (use Host AI Teammate for phantom peers only).");
     }

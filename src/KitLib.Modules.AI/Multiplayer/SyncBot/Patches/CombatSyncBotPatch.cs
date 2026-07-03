@@ -1,5 +1,6 @@
 using System.Linq;
 using HarmonyLib;
+using KitLib;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
@@ -18,7 +19,7 @@ internal static class CombatSyncBotPatch {
     [HarmonyPostfix]
     static void Postfix(double delta) {
         if (!SettingsStore.Current.SyncBotAutoEndTurn || !MpCheatSession.IsHost) return;
-        if (!SettingsStore.Current.SyncBotEnabled && !SettingsStore.Current.MpAiTeammateEnabled)
+        if (!AiSessionSettings.SyncBotEnabled && !AiSessionSettings.MpAiTeammateEnabled)
             return;
 
         _accum += delta;
@@ -37,7 +38,7 @@ internal static class CombatSyncBotPatch {
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
             if (player.PlayerCombatState == null || player.Creature.IsDead) continue;
 
-            if (SettingsStore.Current.MpAiTeammateEnabled
+            if (AiSessionSettings.MpAiTeammateEnabled
                 && player.PlayerCombatState.Hand?.Cards.Any(c => c.CanPlay(out _, out _)) == true)
                 continue;
 

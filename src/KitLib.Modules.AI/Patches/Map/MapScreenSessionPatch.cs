@@ -30,7 +30,7 @@ public static class MapScreenClosePatch {
 
 static class MapAiPathOverlayHelper {
     internal static void TryApplyAiPathOverlay(NMapScreen screen) {
-        if (!AiPlayModule.Instance.IsRunning || !SettingsStore.Current.AutoPlayEnabled)
+        if (!AiPlayModule.Instance.IsRunning || !AiSessionSettings.AutoPlayEnabled)
             return;
 
         var rm = RunManager.Instance;

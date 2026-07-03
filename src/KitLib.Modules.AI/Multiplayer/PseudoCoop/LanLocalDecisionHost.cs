@@ -33,8 +33,8 @@ internal static class LanLocalDecisionHost {
         MpCheatSession.InMultiplayerRun
         && (MpAiTeammateAfkClient.IsEnabled
             || (MpCheatSession.IsHost
-                && SettingsStore.Current.MpAiTeammateEnabled
-                && SettingsStore.Current.MpAiTeammateDriveLiveEnet));
+                && AiSessionSettings.MpAiTeammateEnabled
+                && AiSessionSettings.MpAiTeammateDriveLiveEnet));
 
     public static void OnRunEnded() {
         _tickRunning = false;

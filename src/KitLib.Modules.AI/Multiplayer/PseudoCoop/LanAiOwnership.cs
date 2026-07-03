@@ -14,12 +14,12 @@ internal static class LanAiOwnership {
     public static bool IsLiveLanHost =>
         MpCheatSession.IsHost
         && MpCheatSession.InMultiplayerRun
-        && SettingsStore.Current.MpAiTeammateDriveLiveEnet
+        && AiSessionSettings.MpAiTeammateDriveLiveEnet
         && SimulatedPeerRegistry.HasLiveEnetTeammate();
 
     /// <summary>Companion targets phantom peers; live LAN uses per-instance LanLocal instead.</summary>
     public static bool ShouldRunCompanionHost =>
-        SettingsStore.Current.MpAiTeammateEnabled
+        AiSessionSettings.MpAiTeammateEnabled
         && MpCheatSession.IsHost
         && MpCheatSession.InMultiplayerRun
         && !IsLiveLanHost;

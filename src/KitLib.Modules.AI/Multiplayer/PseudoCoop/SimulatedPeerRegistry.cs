@@ -19,7 +19,7 @@ internal static class SimulatedPeerRegistry {
 
     public static bool IsRegistryActive =>
         IsHostMultiplayer
-        && (SettingsStore.Current.SyncBotEnabled || SettingsStore.Current.MpAiTeammateEnabled);
+        && (AiSessionSettings.SyncBotEnabled || AiSessionSettings.MpAiTeammateEnabled);
 
     /// <summary>True when <paramref name="netId"/> is a real ENet lobby peer (not phantom/debug).</summary>
     public static bool IsLiveEnetPeer(ulong netId) {
@@ -53,7 +53,7 @@ internal static class SimulatedPeerRegistry {
 
     /// <summary>All remote run peers — used for MpCheat prepare ACK injection when SyncBot is on.</summary>
     public static HashSet<ulong> GetAckPeerNetIds() {
-        if (!SettingsStore.Current.SyncBotEnabled
+        if (!AiSessionSettings.SyncBotEnabled
             || !IsHostMultiplayer
             || !MpCheatSession.CanUseMultiplayerCheats)
             return [];
@@ -74,7 +74,7 @@ internal static class SimulatedPeerRegistry {
         IsRegistryActive && _simulatedPeerNetIds.Contains(netId);
 
     public static bool DriveLiveEnetEnabled =>
-        SettingsStore.Current.MpAiTeammateDriveLiveEnet;
+        AiSessionSettings.MpAiTeammateDriveLiveEnet;
 
     /// <summary>Phantom/offline simulated peers, or live ENet when LAN host-drive is on.</summary>
     public static bool IsHostDrivenPeer(ulong netId) {
@@ -85,7 +85,7 @@ internal static class SimulatedPeerRegistry {
         if (IsSimulatedPeer(netId)) return true;
         return DriveLiveEnetEnabled
             && MpCheatSession.IsHost
-            && SettingsStore.Current.MpAiTeammateEnabled
+            && AiSessionSettings.MpAiTeammateEnabled
             && IsLiveEnetPeer(netId);
     }
 
@@ -94,7 +94,7 @@ internal static class SimulatedPeerRegistry {
         var state = RunManager.Instance?.DebugOnlyGetState();
         var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         if (state == null || hostNetId == 0) return [];
-        if (!SettingsStore.Current.MpAiTeammateEnabled || !IsHostMultiplayer) return [];
+        if (!AiSessionSettings.MpAiTeammateEnabled || !IsHostMultiplayer) return [];
 
         return state.Players.Where(p => p.NetId != hostNetId && IsHostDrivenPeer(p.NetId));
     }
@@ -142,7 +142,7 @@ internal static class SimulatedPeerRegistry {
 
     public static IEnumerable<Player> GetRemoteCombatAssistTargets() {
         Refresh();
-        if (SettingsStore.Current.MpAiTeammateEnabled && IsHostMultiplayer)
+        if (AiSessionSettings.MpAiTeammateEnabled && IsHostMultiplayer)
             return GetMpAiTeammateTargets().ToList();
         return GetPeersNeedingSimulation().ToList();
     }
@@ -150,7 +150,7 @@ internal static class SimulatedPeerRegistry {
     /// <summary>Peers that receive mirrored host map / act-ready votes.</summary>
     public static IEnumerable<Player> GetMapMirrorTargets() {
         if (!IsRegistryActive) return [];
-        if (DriveLiveEnetEnabled && SettingsStore.Current.MpAiTeammateEnabled && IsHostMultiplayer)
+        if (DriveLiveEnetEnabled && AiSessionSettings.MpAiTeammateEnabled && IsHostMultiplayer)
             return GetMpAiTeammateTargets().ToList();
         return GetPeersNeedingSimulation().ToList();
     }

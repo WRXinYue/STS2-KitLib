@@ -33,9 +33,6 @@ public sealed partial class KitLibSettings {
     /// <summary>Opt in to synchronized multiplayer cheat sessions (requires DevMode on all peers).</summary>
     public bool MultiplayerCheatOptIn { get; set; }
 
-    /// <summary>AI托管：规则策略代打（STS2-AI SimpleStrategy）。</summary>
-    public bool AutoPlayEnabled { get; set; }
-
     /// <summary>Solo AutoPlay strategy: <c>Strong</c> (default) or <c>Simple</c>.</summary>
     public string AutoPlayStrategy { get; set; } = "Strong";
 
@@ -51,29 +48,11 @@ public sealed partial class KitLibSettings {
     /// <summary>Weight for Spire Codex community priors (0 = off, 1 = default).</summary>
     public float CodexPriorWeight { get; set; } = 1f;
 
-    /// <summary>Host-only: simulate remote MpCheat ACKs without a second game instance.</summary>
-    public bool SyncBotEnabled { get; set; }
-
-    /// <summary>Experimental: spawn a second run player on host launch (NetId 1001).</summary>
-    public bool SyncBotSpawnPhantomPlayer { get; set; }
-
     /// <summary>Auto ready-to-end-turn for non-local players when SyncBot is on.</summary>
     public bool SyncBotAutoEndTurn { get; set; } = true;
 
-    /// <summary>Host-only: SimpleStrategy drives simulated remote players in co-op combat.</summary>
-    public bool MpAiTeammateEnabled { get; set; }
-
-    /// <summary>Host-only: also drive connected ENet teammates via action queue (client must enable AFK).</summary>
-    public bool MpAiTeammateDriveLiveEnet { get; set; }
-
-    /// <summary>Client-only: block local combat input; host AI enqueues actions for this player.</summary>
-    public bool MpAiTeammateAfkClient { get; set; }
-
     /// <summary>Include cards hidden from the official library (<c>ShouldShowInCardLibrary</c> false) in DevMode browsers.</summary>
     public bool ShowHiddenCards { get; set; }
-
-    /// <summary>Apply pseudo-coop preset automatically on host RunManager.Launch.</summary>
-    public bool PseudoCoopAutoPresetOnLaunch { get; set; }
 
     /// <summary>Whether the draggable top-right multiplayer combat score panel is shown.</summary>
     public bool CombatStatsMpOverlayEnabled { get; set; } = true;

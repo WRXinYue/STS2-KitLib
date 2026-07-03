@@ -8,7 +8,7 @@ namespace KitLib.Multiplayer.PseudoCoop.Patches;
 internal static class PseudoCoopMapFinishPatch {
     static void Postfix() {
         var state = RunManager.Instance?.DebugOnlyGetState();
-        if (state != null && SettingsStore.Current.SyncBotSpawnPhantomPlayer)
+        if (state != null && AiSessionSettings.SyncBotSpawnPhantomPlayer)
             PseudoCoopMultiplayerUiRefresh.TryRefreshAfterPlayerJoined(state);
 
         if (!KitLibState.PseudoCoopAwaitingMapFinish) return;

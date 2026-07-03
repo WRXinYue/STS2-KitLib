@@ -16,7 +16,7 @@ internal static class PlayerChoiceSyncBotPatch {
         var sync = RunManager.Instance?.PlayerChoiceSynchronizer;
         if (sync == null) return;
 
-        var choice = SettingsStore.Current.MpAiTeammateEnabled
+        var choice = AiSessionSettings.MpAiTeammateEnabled
             ? MpChoiceBot.Decide(player)
             : MpCheatSyncBot.DefaultIndexChoice();
 

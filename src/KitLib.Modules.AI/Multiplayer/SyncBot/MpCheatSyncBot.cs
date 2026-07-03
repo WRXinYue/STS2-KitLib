@@ -15,7 +15,7 @@ internal static class MpCheatSyncBot {
     internal const ulong PhantomPlayerNetId = 1001;
 
     public static bool IsEnabled =>
-        SettingsStore.Current.SyncBotEnabled
+        AiSessionSettings.SyncBotEnabled
         && MpCheatSession.IsHost
         && MpCheatSession.CanUseMultiplayerCheats;
 

@@ -28,9 +28,8 @@ internal static class PseudoCoopMapVoteMirror {
 
     internal static bool ShouldMirror {
         get {
-            var s = SettingsStore.Current;
-            if (s.MpAiTeammateEnabled || s.SyncBotEnabled) return true;
-            return s.SyncBotSpawnPhantomPlayer
+            if (AiSessionSettings.MpAiTeammateEnabled || AiSessionSettings.SyncBotEnabled) return true;
+            return AiSessionSettings.SyncBotSpawnPhantomPlayer
                 && RunManager.Instance?.NetService?.Type == NetGameType.Host;
         }
     }

@@ -79,21 +79,11 @@ internal static class CompanionSpawnService {
     }
 
     static void ApplyRuntimeSettings(CompanionSpawnRequest request) {
-        var s = SettingsStore.Current;
-        var changed = false;
+        if (request.EnableAiTeammate)
+            AiSessionSettings.MpAiTeammateEnabled = true;
 
-        if (request.EnableAiTeammate && !s.MpAiTeammateEnabled) {
-            s.MpAiTeammateEnabled = true;
-            changed = true;
-        }
-
-        if (request.MirrorMapVotes && !s.SyncBotEnabled) {
-            s.SyncBotEnabled = true;
-            changed = true;
-        }
-
-        if (changed)
-            SettingsStore.Save();
+        if (request.MirrorMapVotes)
+            AiSessionSettings.SyncBotEnabled = true;
 
         MpCheatSession.TryArmSession("companion_spawn", allowWhileDeferredUi: true);
         SimulatedPeerRegistry.Refresh();

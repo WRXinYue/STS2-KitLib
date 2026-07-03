@@ -27,7 +27,7 @@ internal static partial class AiHudOverlayUI {
             return false;
         if (MpCheatSession.InMultiplayerRun)
             return false;
-        if (!SettingsStore.Current.AutoPlayEnabled)
+        if (!AiSessionSettings.AutoPlayEnabled)
             return false;
         return AiPlayModule.Instance.IsRunning;
     }
