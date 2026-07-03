@@ -10,7 +10,7 @@ using KitLib.Host;
 namespace KitLib.Settings;
 
 /// <summary>
-/// Loads and saves <see cref="KitLibSettings"/> to <c>settings.json</c> in the DevMode user-data directory.
+/// Loads and saves <see cref="KitLibSettings"/> to <c>settings.json</c> in the KitLib user-data directory.
 /// </summary>
 public static class SettingsStore {
     private static readonly JsonSerializerOptions JsonOpts = new() {
@@ -27,18 +27,15 @@ public static class SettingsStore {
             try {
                 if (!File.Exists(FilePath)) {
                     Current = new KitLibSettings { RailIntroDismissed = false };
-                    ApplySatelliteModuleDefaults(isFreshInstall: true);
+                    EnsureSatelliteModuleToggles();
                     ApplyNormalRunModeFromSettings();
                     Save();
                     return;
                 }
                 var json = ReadSharedText(FilePath);
                 Current = JsonSerializer.Deserialize<KitLibSettings>(json, JsonOpts) ?? new();
-                ApplyRailLayoutDefaults();
-                ApplyProgressGuardDefaults();
                 ApplyHotkeyDefaults();
-                ApplyHotkeySettingsMigration();
-                ApplySatelliteModuleDefaults(isFreshInstall: false);
+                EnsureSatelliteModuleToggles();
                 ApplyNormalRunModeFromSettings();
                 return;
             }
@@ -202,36 +199,10 @@ public static class SettingsStore {
         return NormalRunMode.DevPanel;
     }
 
-    private static void ApplyRailLayoutDefaults() {
-        if (Current.RailLayoutDefaultsVersion >= 1)
+    private static void EnsureSatelliteModuleToggles() {
+        if (Current.SatelliteModulesEnabled.Count > 0)
             return;
-        foreach (var id in KitLibSettings.DefaultHiddenRailTabIds)
-            Current.RailHiddenTabIds.Add(id);
-        Current.RailLayoutDefaultsVersion = 1;
-        Save();
-    }
-
-    private static void ApplyProgressGuardDefaults() {
-        if (Current.ProgressGuardSettingsVersion >= 1)
-            return;
-        Current.PromptOnModCharacterProgressLoss = true;
-        Current.ProgressGuardSettingsVersion = 1;
-        Save();
-    }
-
-    private static void ApplySatelliteModuleDefaults(bool isFreshInstall) {
-        if (Current.SatelliteModuleSettingsVersion >= 1)
-            return;
-
-        if (isFreshInstall) {
-            ApplySatelliteLoadProfileInMemory(SatelliteModuleLoadProfileNames.Standard);
-        }
-        else {
-            ApplySatelliteLoadProfileInMemory(SatelliteModuleLoadProfileNames.Full);
-        }
-
-        Current.SatelliteModuleSettingsVersion = 1;
-        Save();
+        ApplySatelliteLoadProfileInMemory(Current.SatelliteLoadProfile);
     }
 
     static void ApplySatelliteLoadProfileInMemory(string profile) {
@@ -272,122 +243,6 @@ public static class SettingsStore {
             Current.HotkeyQuickReplayTurn = HotkeyDefaults.QuickReplayTurn.Clone();
         if (Current.HotkeyTogglePerfHud.KeyCode == 0)
             Current.HotkeyTogglePerfHud = HotkeyDefaults.TogglePerfHud.Clone();
-    }
-
-    private static void ApplyHotkeySettingsMigration() {
-        if (Current.HotkeySettingsVersion < 1) {
-            var legacyToggle = new HotkeyBinding { KeyCode = (int)Godot.Key.D, Ctrl = true, Shift = true };
-            if (Current.HotkeyToggleRail.EqualsBinding(legacyToggle))
-                Current.HotkeyToggleRail = HotkeyDefaults.ToggleRail.Clone();
-
-            foreach (var actionId in HotkeyActionId.All) {
-                var binding = Current.GetHotkey(actionId);
-                if (actionId == HotkeyActionId.ClosePanel && binding.KeyCode == (int)Godot.Key.Escape)
-                    continue;
-                if (!OfficialGameInput.UsesPlayerKeyboardShortcut(binding.Keycode))
-                    continue;
-                Current.SetHotkey(actionId, HotkeyDefaults.For(actionId));
-            }
-
-            Current.HotkeySettingsVersion = 1;
-            Save();
-        }
-
-        if (Current.HotkeySettingsVersion < 2) {
-            if (Current.HotkeyQuickSave.KeyCode == 0)
-                Current.HotkeyQuickSave = HotkeyDefaults.QuickSave.Clone();
-            if (Current.HotkeyQuickLoad.KeyCode == 0)
-                Current.HotkeyQuickLoad = HotkeyDefaults.QuickLoad.Clone();
-            Current.HotkeySettingsVersion = 2;
-            Save();
-        }
-
-        if (Current.HotkeySettingsVersion < 3) {
-            if (Current.HotkeyQuickRestartTurn.KeyCode == 0)
-                Current.HotkeyQuickRestartTurn = HotkeyDefaults.QuickReplayCombat.Clone();
-            Current.HotkeySettingsVersion = 3;
-            Save();
-        }
-
-        if (Current.HotkeySettingsVersion < 4) {
-            if (Current.HotkeyQuickReplayCombat.KeyCode == 0) {
-                Current.HotkeyQuickReplayCombat = Current.HotkeyQuickRestartTurn.KeyCode != 0
-                    ? Current.HotkeyQuickRestartTurn.Clone()
-                    : HotkeyDefaults.QuickReplayCombat.Clone();
-            }
-            if (Current.HotkeyQuickReplayTurn.KeyCode == 0)
-                Current.HotkeyQuickReplayTurn = HotkeyDefaults.QuickReplayTurn.Clone();
-            Current.HotkeySettingsVersion = 4;
-            Save();
-        }
-
-        if (Current.HotkeySettingsVersion < 5) {
-            MigrateLegacyFunctionKeyBinding(
-                HotkeyActionId.TogglePerfHud,
-                Current.HotkeyTogglePerfHud,
-                HotkeyDefaults.TogglePerfHud,
-                Godot.Key.F3);
-            MigrateLegacyFunctionKeyBinding(
-                HotkeyActionId.QuickSave,
-                Current.HotkeyQuickSave,
-                HotkeyDefaults.QuickSave,
-                Godot.Key.F5);
-            MigrateLegacyFunctionKeyBinding(
-                HotkeyActionId.QuickReplayTurn,
-                Current.HotkeyQuickReplayTurn,
-                HotkeyDefaults.QuickReplayTurn,
-                Godot.Key.F6);
-            MigrateLegacyFunctionKeyBinding(
-                HotkeyActionId.QuickReplayCombat,
-                Current.HotkeyQuickReplayCombat,
-                HotkeyDefaults.QuickReplayCombat,
-                Godot.Key.F8);
-            MigrateLegacyFunctionKeyBinding(
-                HotkeyActionId.QuickLoad,
-                Current.HotkeyQuickLoad,
-                HotkeyDefaults.QuickLoad,
-                Godot.Key.F9);
-            Current.HotkeySettingsVersion = 5;
-            Save();
-        }
-
-        if (Current.HotkeySettingsVersion < 6) {
-            MigrateLegacyLetterCombo(HotkeyActionId.TogglePerfHud, Godot.Key.P);
-            MigrateLegacyLetterCombo(HotkeyActionId.LockRail, Godot.Key.L);
-            MigrateLegacyLetterCombo(HotkeyActionId.QuickSave, Godot.Key.U);
-            MigrateLegacyLetterCombo(HotkeyActionId.QuickLoad, Godot.Key.O);
-            MigrateLegacyLetterCombo(HotkeyActionId.QuickReplayCombat, Godot.Key.C);
-            MigrateLegacyLetterCombo(HotkeyActionId.QuickReplayTurn, Godot.Key.Y);
-
-            foreach (var actionId in HotkeyActionId.All) {
-                var binding = Current.GetHotkey(actionId);
-                if (!binding.Ctrl && !binding.Shift && !binding.Alt)
-                    continue;
-                if (!OfficialGameInput.UsesPlayerKeyboardShortcut(binding.Keycode))
-                    continue;
-                Current.SetHotkey(actionId, HotkeyDefaults.For(actionId));
-            }
-
-            Current.HotkeySettingsVersion = 6;
-            Save();
-        }
-    }
-
-    static void MigrateLegacyLetterCombo(string actionId, Godot.Key legacyKey) {
-        var current = Current.GetHotkey(actionId);
-        if (current.Keycode != legacyKey || !current.Ctrl || !current.Shift || current.Alt)
-            return;
-        Current.SetHotkey(actionId, HotkeyDefaults.For(actionId));
-    }
-
-    static void MigrateLegacyFunctionKeyBinding(
-        string actionId,
-        HotkeyBinding current,
-        HotkeyBinding replacement,
-        Godot.Key legacyKey) {
-        if (current.Keycode != legacyKey || current.Ctrl || current.Shift || current.Alt)
-            return;
-        Current.SetHotkey(actionId, replacement.Clone());
     }
 
     public static void SetShowHiddenCards(bool enabled) {

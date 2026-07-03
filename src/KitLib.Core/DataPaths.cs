@@ -9,10 +9,8 @@ namespace KitLib;
 /// <summary>
 /// Resolves writable user-data paths under
 /// <c>user://steam/{userId}/mod_data/KitLib/</c>.
-/// Migrates legacy <c>mod_data/DevMode/</c> on first access.
 /// </summary>
 public static class DataPaths {
-    private const string LegacyModDataSubdir = "mod_data/DevMode";
     private const string ModDataSubdir = "mod_data/KitLib";
 
     private static string? _baseDir;
@@ -66,32 +64,12 @@ public static class DataPaths {
 
         var kitLibPath = UserDataPathProvider.GetAccountScopedBasePath(ModDataSubdir);
         var kitLibDir = ProjectSettings.GlobalizePath(kitLibPath);
-        var legacyPath = UserDataPathProvider.GetAccountScopedBasePath(LegacyModDataSubdir);
-        var legacyDir = ProjectSettings.GlobalizePath(legacyPath);
         try {
             Directory.CreateDirectory(kitLibDir);
         }
         catch (Exception) {
         }
-        TryMigrateLegacyDataDir(kitLibDir, legacyDir);
         KitLibHost.PinModDataDir(kitLibDir);
         return kitLibDir;
-    }
-
-    private static void TryMigrateLegacyDataDir(string kitLibDir, string legacyDir) {
-        if (Directory.Exists(kitLibDir) && Directory.EnumerateFileSystemEntries(kitLibDir).GetEnumerator().MoveNext())
-            return;
-
-        if (!Directory.Exists(legacyDir))
-            return;
-
-        try {
-            Directory.CreateDirectory(Path.GetDirectoryName(kitLibDir)!);
-            if (Directory.Exists(kitLibDir))
-                Directory.Delete(kitLibDir, recursive: true);
-            Directory.Move(legacyDir, kitLibDir);
-        }
-        catch (Exception) {
-        }
     }
 }

@@ -75,7 +75,7 @@ Changing the loaded mod set can cause vanilla save filtering to strip or zero mo
 ### 文件位置{lang="zh-CN"}
 
 ::: en
-**KitLib user data root** (settings, snapshots, backups). Legacy `mod_data/DevMode` migrates here on first launch:
+**KitLib user data root** (settings, snapshots, backups):
 
 ```text
 %AppData%\SlayTheSpire2\steam\{SteamId}\mod_data\KitLib\
@@ -102,7 +102,7 @@ On macOS/Linux, `%AppData%` is the game’s account-scoped user data directory (
 :::
 
 ::: zh-CN
-**KitLib 用户数据根目录**（设置、快照、备份）。旧路径 `mod_data/DevMode` 会在首次启动时迁移到这里：
+**KitLib 用户数据根目录**（设置、快照、备份）：
 
 ```text
 %AppData%\SlayTheSpire2\steam\{SteamId}\mod_data\KitLib\

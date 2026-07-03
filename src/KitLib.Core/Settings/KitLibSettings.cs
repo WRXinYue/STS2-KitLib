@@ -25,9 +25,6 @@ public sealed partial class KitLibSettings {
     public HashSet<string> RailHiddenTabIds { get; set; } =
         new(DefaultHiddenRailTabIds, StringComparer.Ordinal);
 
-    /// <summary>Whether <see cref="DefaultHiddenRailTabIds"/> have been merged into saved settings.</summary>
-    public int RailLayoutDefaultsVersion { get; set; } = 1;
-
     /// <summary>
     /// Dev overlay level for normal (non-test) runs: Disabled, DevPanel, or Cheat.
     /// </summary>
@@ -100,9 +97,6 @@ public sealed partial class KitLibSettings {
     /// </summary>
     public bool? RailIntroDismissed { get; set; }
 
-    /// <summary>Whether progress-guard defaults have been applied to saved settings.</summary>
-    public int ProgressGuardSettingsVersion { get; set; }
-
     /// <summary>Back up active profile progress when the loaded mod set fingerprint changes.</summary>
     public bool AutoBackupProgressOnModChange { get; set; } = true;
 
@@ -127,9 +121,6 @@ public sealed partial class KitLibSettings {
     /// <summary>Launch optional kitlog CLI in a system terminal when KitLib.User starts (session tail, --sync-viewer).</summary>
     public bool LaunchKitlogOnStartup { get; set; }
 
-    /// <summary>Migration version for satellite module load settings.</summary>
-    public int SatelliteModuleSettingsVersion { get; set; }
-
     /// <summary>Minimal | Standard | Full | Custom — see <see cref="SatelliteModulesEnabled"/>.</summary>
     public string SatelliteLoadProfile { get; set; } = SatelliteModuleLoadProfileNames.Standard;
 
@@ -138,9 +129,6 @@ public sealed partial class KitLibSettings {
 
     /// <summary>Enable in-game keyboard shortcuts for the DevMode sidebar shell.</summary>
     public bool HotkeysEnabled { get; set; } = true;
-
-    /// <summary>Migrates legacy toggle binding and game-conflicting key assignments.</summary>
-    public int HotkeySettingsVersion { get; set; }
 
     public static readonly string[] DefaultHiddenRailTabIds = {
         "devmode.harmonyAnalysis",

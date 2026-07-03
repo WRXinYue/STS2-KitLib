@@ -12,9 +12,6 @@ public sealed partial class KitLibSettings {
     public HotkeyBinding HotkeyQuickReplayTurn { get; set; } = HotkeyDefaults.QuickReplayTurn.Clone();
     public HotkeyBinding HotkeyTogglePerfHud { get; set; } = HotkeyDefaults.TogglePerfHud.Clone();
 
-    /// <summary>Legacy v3 binding; migrated to <see cref="HotkeyQuickReplayCombat"/> on load.</summary>
-    public HotkeyBinding HotkeyQuickRestartTurn { get; set; } = new();
-
     internal HotkeyBinding GetHotkey(string actionId) => actionId switch {
         HotkeyActionId.ToggleRail => HotkeyToggleRail,
         HotkeyActionId.ClosePanel => HotkeyClosePanel,
