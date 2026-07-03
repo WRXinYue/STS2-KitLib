@@ -8,7 +8,7 @@
     <Authors>WRXinYue</Authors>
     <Description>Compile-time contracts for KitLib and content-mod AI bridges.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>0.14.0</Version>
+    <Version>0.25.0</Version>
     <PackageOutputPath>$(RepoRoot)build\nuget\</PackageOutputPath>
   </PropertyGroup>
   <ItemGroup>

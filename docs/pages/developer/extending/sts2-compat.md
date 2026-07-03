@@ -136,7 +136,8 @@ These types live in **`KitLib.Abstractions`** and are safe for other mods to ref
 | --- | --- |
 | `Sts2ProfileMap.Resolve(version, platform)` | Map raw game version → `Sts2GameProfile` |
 | `Sts2GameProfile` | `Unknown`, `Supported` |
-| `Sts2SupportedGameVersions.All` | Pinned version strings |
+| `ModVariantLayout` / `ModVariantManifestIO` | Dual API variant bundle layout and manifest read/write |
+| `Sts2GameVersion.TryParseCore` | Parse `release_info.json` version labels for variant selection |
 | `KitLibCompatDocument` / `KitLibCompatTomlReader` | Parse `kitlib.compat.toml` |
 | `KitLibCompatEvaluator` | Evaluate constraints at load time |
 | `KitLibCompatRuntime` | Facts you supply (game version, KitLib version, loaded modules) |
@@ -144,6 +145,8 @@ These types live in **`KitLib.Abstractions`** and are safe for other mods to ref
 Use **runtime profile** when behavior differs but **both APIs exist in the DLL you compiled against**, or for feature flags. Use **`#if`** when the **member graph** differs between stable and beta.
 
 A thin **`Sts2Compat` runtime facade** (single entry for “current profile at launch”) is planned; until then call `Sts2ProfileMap` with the game’s release version string.
+
+For **dual API variant bundles** (stable + beta implementation DLLs as flat `lib/<modId>_<version>.dll`), use **`STS2.KitLib.ModVariantLoader`**: ship a thin mod-root loader DLL that calls `ModVariantBootstrap.Initialize()`, build each API line into `lib/<modId>_<pinned-game-version>.dll`, then run MSBuild target **`ComposeModVariantBundle`** to write the slim variant manifest with SHA256 hashes.
 :::
 
 ::: zh-CN
@@ -153,7 +156,9 @@ A thin **`Sts2Compat` runtime facade** (single entry for “current profile at l
 | --- | --- |
 | `Sts2ProfileMap.Resolve(version, platform)` | 原始游戏版本 → `Sts2GameProfile` |
 | `Sts2GameProfile` | `Unknown`、`Supported` |
-| `Sts2SupportedGameVersions.All` | 固定版本字符串列表 |
+| `Sts2SupportedGameVersions.All` | Pinned version strings |
+| `ModVariantLayout` / `ModVariantManifestIO` | 双 API 变体包布局与 manifest 读写 |
+| `Sts2GameVersion.TryParseCore` | 解析 `release_info.json` 版本标签以供变体选择 |
 | `KitLibCompatDocument` / `KitLibCompatTomlReader` | 解析 `kitlib.compat.toml` |
 | `KitLibCompatEvaluator` | 加载时评估约束 |
 | `KitLibCompatRuntime` | 由你提供的运行时事实（游戏版本、KitLib 版本、已加载模块） |
@@ -161,6 +166,8 @@ A thin **`Sts2Compat` runtime facade** (single entry for “current profile at l
 在 **所编译的 DLL 两侧 API 都存在**、仅行为不同时，用 **运行时 profile** 或功能开关；当 stable/beta **成员签名/名称不同** 时用 **`#if`**。
 
 统一的 **`Sts2Compat` 运行时门面**（启动时当前 profile 单入口）在规划中；在此之前可用游戏 release 版本字符串调用 `Sts2ProfileMap`。
+
+**双 API 变体包**（扁平 `lib/<modId>_<version>.dll`）请用 **`STS2.KitLib.ModVariantLoader`**：根目录薄 Loader 调用 `ModVariantBootstrap.Initialize()`，各 API 线编译为 `lib/<modId>_<固定游戏版本>.dll`，再用 **`ComposeModVariantBundle`** 生成带 SHA256 的瘦 manifest。
 :::
 
 ## `kitlib.compat.toml`{lang="en"}

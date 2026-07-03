@@ -3,7 +3,7 @@
 
 Publishes:
     STS2.KitLib              — mod content under Content/KitLib/
-    STS2.KitLib.Abstractions — compile-time contracts for content mods
+    STS2.KitLib.ModVariantLoader — runtime loader for dual API variant content mods
 
 Environment variables:
     NUGET_API_KEY  - API key for the target feed (required unless --dry-run)
@@ -75,12 +75,14 @@ def main() -> int:
     try:
         kitlib = nuget_ops.run_pack(_REPO_ROOT, package_version=version)
         abstractions = nuget_ops.run_pack_abstractions(_REPO_ROOT, package_version=version)
+        mod_variant_loader = nuget_ops.run_pack_mod_variant_loader(_REPO_ROOT, package_version=version)
     except RuntimeError as ex:
         print(str(ex), file=sys.stderr)
         return 1
 
     print(f"Packed: {kitlib.name}")
     print(f"Packed: {abstractions.name}")
+    print(f"Packed: {mod_variant_loader.name}")
 
     if args.dry_run:
         print("Dry run — skipping NuGet push.")
@@ -94,7 +96,7 @@ def main() -> int:
         return 1
 
     print(f"Pushing to {source} ...")
-    for package in (kitlib, abstractions):
+    for package in (kitlib, abstractions, mod_variant_loader):
         print(f"  {package.name}")
         try:
             nuget_ops.run_push(package, source=source, api_key=api_key)
@@ -102,7 +104,7 @@ def main() -> int:
             print(f"dotnet nuget push failed for {package.name}", file=sys.stderr)
             return 1
 
-    print(f"Done! Published {kitlib.name} and {abstractions.name} to {source}.")
+    print(f"Done! Published {kitlib.name}, {abstractions.name}, and {mod_variant_loader.name} to {source}.")
     return 0
 
 

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ModVariantLoader** NuGet package for content mods that ship stable and beta implementation DLLs in one mod folder.
+- **ComposeModVariantBundle** MSBuild target and CLI to write variant manifests with SHA256 verification.
+- Flat variant layout `lib/<ModId>_<pinned-game-version>.dll` with schema 2 manifests.
+
 ## [0.23.1] - 2026-07-03
 
 ### Changed

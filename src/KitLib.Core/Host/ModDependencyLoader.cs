@@ -13,6 +13,9 @@ internal static class ModDependencyLoader {
         AbstractionsFileName,
     ];
 
+    /// <summary>Shared runtime for content mods using dual API variant loaders.</summary>
+    internal const string ModVariantLoaderFileName = "KitLib.ModVariantLoader.dll";
+
     /// <summary>Registers resolve hooks and preloads Abstractions when present.</summary>
     internal static bool TryBootstrapFromDirectory(string modDir, bool log) {
         if (string.IsNullOrEmpty(modDir))
@@ -38,6 +41,14 @@ internal static class ModDependencyLoader {
             if (log && fileName == AbstractionsFileName)
                 MainFile.Logger.Info("Loaded mod dependency: KitLib.Abstractions");
         }
+
+        var variantLoader = Path.Combine(modDir, ModVariantLoaderFileName);
+        if (File.Exists(variantLoader)) {
+            ModAssemblyLoader.LoadFromModPath(variantLoader);
+            if (log)
+                MainFile.Logger.Info("Loaded mod dependency: KitLib.ModVariantLoader");
+        }
+
         return true;
     }
 

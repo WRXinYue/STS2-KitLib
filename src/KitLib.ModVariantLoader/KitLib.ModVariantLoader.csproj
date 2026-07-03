@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>KitLib.ModVariantLoader</AssemblyName>
+    <RootNamespace>KitLib.ModVariantLoader</RootNamespace>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>STS2.KitLib.ModVariantLoader</PackageId>
+    <Title>KitLib STS2 mod variant loader for Slay the Spire 2</Title>
+    <Authors>WRXinYue</Authors>
+    <Description>Runtime loader for content mods that ship stable/beta implementation DLLs as flat lib/&lt;modId&gt;_&lt;version&gt;.dll files.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Version>0.26.0</Version>
+    <PackageOutputPath>$(RepoRoot)build\nuget\</PackageOutputPath>
+    <ModVariantBundleComposeProject>$(RepoRoot)tools\ModVariantBundleCompose\ModVariantBundleCompose.csproj</ModVariantBundleComposeProject>
+    <ModVariantBundleComposeDll>$(RepoRoot)tools\ModVariantBundleCompose\bin\$(Configuration)\net9.0\ModVariantBundleCompose.dll</ModVariantBundleComposeDll>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+  </PropertyGroup>
+
+  <Target Name="BuildModVariantBundleComposeBeforePack" BeforeTargets="GenerateNuspec" Condition="'$(IsPackable)' == 'true'">
+    <MSBuild Projects="$(ModVariantBundleComposeProject)" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <Error Condition="!Exists('$(ModVariantBundleComposeDll)')" Text="ModVariantBundleCompose build did not produce $(ModVariantBundleComposeDll)." />
+  </Target>
+
+  <ItemGroup>
+    <None Include="$(RepoRoot)eng\STS2.KitLib.ModVariantLoader.targets" Pack="true" PackagePath="build\" />
+    <None Include="$(ModVariantBundleComposeDll)" Pack="true" PackagePath="tools\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KitLib.Abstractions\KitLib.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Sts2Dir)' != ''">
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(Sts2DataDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

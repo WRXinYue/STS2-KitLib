@@ -38,6 +38,7 @@ _SKIP_DEPLOY_NAMES: set[str] = set()
 
 CORE_DLL = "KitLib.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
+MOD_VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
     "Semver.dll",
     "Microsoft.Extensions.Primitives.dll",
@@ -103,8 +104,29 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
     raise FileNotFoundError(f"Missing {dll_name}. Run dotnet restore (repo packages/ or global NuGet cache).")
 
 
+def _resolve_mod_variant_loader_dll() -> Path | None:
+    candidate = _REPO / "build" / BUNDLE_ID / MOD_VARIANT_LOADER_DLL
+    if candidate.is_file():
+        return candidate
+    built = (
+        _REPO
+        / "src"
+        / "KitLib.ModVariantLoader"
+        / "bin"
+        / "Debug"
+        / "net9.0"
+        / MOD_VARIANT_LOADER_DLL
+    )
+    if built.is_file():
+        return built
+    release = built.parent.parent.parent / "Release" / "net9.0" / MOD_VARIANT_LOADER_DLL
+    if release.is_file():
+        return release
+    return None
+
+
 def _assert_core_bundle(bundle_dir: Path) -> None:
-    required = [CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+    required = [CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS, MOD_VARIANT_LOADER_DLL]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
@@ -243,6 +265,13 @@ def _deploy_bundle(mods_root: Path) -> list[Path]:
         target = dst / runtime_dll
         if not _copy_file_safe(_resolve_abstractions_runtime_dll(runtime_dll), target):
             failed.append(target)
+    variant_loader = _resolve_mod_variant_loader_dll()
+    if variant_loader is None:
+        raise FileNotFoundError(
+            f"Missing {MOD_VARIANT_LOADER_DLL}. Build KitLib.sln (includes KitLib.ModVariantLoader)."
+        )
+    if not _copy_file_safe(variant_loader, dst / MOD_VARIANT_LOADER_DLL):
+        failed.append(dst / MOD_VARIANT_LOADER_DLL)
     _assert_core_bundle(dst)
 
     copied = 0

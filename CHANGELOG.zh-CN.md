@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **ModVariantLoader** NuGet 包：内容 mod 可在同一 mod 目录下同时发行 stable 与 beta 实现 DLL。
+- **ComposeModVariantBundle** MSBuild 目标与 CLI：生成带 SHA256 校验的变体 manifest。
+- 扁平变体布局 `lib/<ModId>_<固定游戏版本>.dll`，manifest 为 schema 2。
+
 ## [0.23.1] - 2026-07-03
 
 ### Changed

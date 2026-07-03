@@ -8,6 +8,7 @@ from pathlib import Path
 
 KITLIB_PACKAGE_ID = "STS2.KitLib"
 ABSTRACTIONS_PACKAGE_ID = "STS2.KitLib.Abstractions"
+MOD_VARIANT_LOADER_PACKAGE_ID = "STS2.KitLib.ModVariantLoader"
 
 
 def resolve_api_key(explicit: str | None = None) -> str:
@@ -56,6 +57,43 @@ def run_pack(
     subprocess.run(cmd, cwd=repo_root, check=True)
 
     package = nupkg_path(out_dir, KITLIB_PACKAGE_ID, package_version)
+    if not package.is_file():
+        raise RuntimeError(f"dotnet pack produced no package: {package}")
+    return package
+
+
+def run_pack_mod_variant_loader(
+    repo_root: Path,
+    *,
+    package_version: str,
+    configuration: str = "Release",
+) -> Path:
+    compose_project = (
+        repo_root / "tools" / "ModVariantBundleCompose" / "ModVariantBundleCompose.csproj"
+    )
+    subprocess.run(
+        ["dotnet", "build", str(compose_project), "-c", configuration],
+        cwd=repo_root,
+        check=True,
+    )
+
+    out_dir = repo_root / "build" / "nuget"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            "dotnet",
+            "pack",
+            str(repo_root / "src" / "KitLib.ModVariantLoader" / "KitLib.ModVariantLoader.csproj"),
+            "-c",
+            configuration,
+            "-o",
+            str(out_dir),
+            f"-p:Version={package_version}",
+        ],
+        cwd=repo_root,
+        check=True,
+    )
+    package = nupkg_path(out_dir, MOD_VARIANT_LOADER_PACKAGE_ID, package_version)
     if not package.is_file():
         raise RuntimeError(f"dotnet pack produced no package: {package}")
     return package

@@ -1,0 +1,61 @@
+<Project>
+  <PropertyGroup>
+    <ModVariantModId Condition="'$(ModVariantModId)' == ''">$(ModId)</ModVariantModId>
+    <ModVariantBundleDir Condition="'$(ModVariantBundleDir)' == ''">$(RepoBuildDir)</ModVariantBundleDir>
+    <ModVariantLoaderProject Condition="'$(ModVariantLoaderProject)' == ''">$(LustTravelLoaderProject)</ModVariantLoaderProject>
+    <ModVariantLoaderProjectDir>$([System.IO.Path]::GetDirectoryName('$(ModVariantLoaderProject)'))</ModVariantLoaderProjectDir>
+    <ModVariantLoaderAssemblyName Condition="'$(ModVariantLoaderAssemblyName)' == ''">$([System.IO.Path]::GetFileNameWithoutExtension('$(ModVariantLoaderProject)')).dll</ModVariantLoaderAssemblyName>
+    <ModVariantLoaderOutputDll Condition="'$(ModVariantLoaderOutputDll)' == ''">$(ModVariantLoaderProjectDir)\bin\$(Configuration)\net9.0\$(ModVariantLoaderAssemblyName)</ModVariantLoaderOutputDll>
+    <ModVariantStableCompatTarget Condition="'$(ModVariantStableCompatTarget)' == ''">$(LustTravelStableCompatTarget)</ModVariantStableCompatTarget>
+    <ModVariantBetaCompatTarget Condition="'$(ModVariantBetaCompatTarget)' == ''">$(LustTravelBetaCompatTarget)</ModVariantBetaCompatTarget>
+    <ModVariantBundleComposeProject Condition="'$(ModVariantBundleComposeProject)' == '' and '$(KitLibRepoRoot)' != ''">$(KitLibRepoRoot)tools\ModVariantBundleCompose\ModVariantBundleCompose.csproj</ModVariantBundleComposeProject>
+    <_ModVariantComposeToolPacked>$([MSBuild]::NormalizePath($(MSBuildThisFileDirectory)..\tools\ModVariantBundleCompose.dll))</_ModVariantComposeToolPacked>
+    <_ModVariantComposeToolDev>$([MSBuild]::NormalizePath($(MSBuildThisFileDirectory)..\tools\ModVariantBundleCompose\bin\$(Configuration)\net9.0\ModVariantBundleCompose.dll))</_ModVariantComposeToolDev>
+    <ModVariantComposeToolDll Condition="'$(ModVariantComposeToolDll)' == '' and Exists('$(_ModVariantComposeToolPacked)')">$(_ModVariantComposeToolPacked)</ModVariantComposeToolDll>
+    <ModVariantComposeToolDll Condition="'$(ModVariantComposeToolDll)' == ''">$(_ModVariantComposeToolDev)</ModVariantComposeToolDll>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+  </PropertyGroup>
+
+  <Target Name="ComposeModVariantBundle">
+    <Error Condition="'$(ModVariantModId)' == ''" Text="ComposeModVariantBundle requires ModId or ModVariantModId on the project." />
+    <Error Condition="'$(ModVariantLoaderProject)' == ''" Text="ComposeModVariantBundle requires ModVariantLoaderProject (thin loader .csproj)." />
+    <Error Condition="'$(ModVariantBundleDir)' == ''" Text="ComposeModVariantBundle requires ModVariantBundleDir or RepoBuildDir." />
+
+    <MakeDir Directories="$(ModVariantBundleDir)" />
+    <MakeDir Directories="$(ModVariantBundleDir)\lib" />
+
+    <MSBuild
+      Projects="$(ModVariantBundleComposeProject)"
+      Targets="Restore;Build"
+      Properties="Configuration=$(Configuration)"
+      BuildInParallel="false"
+      Condition="'$(ModVariantBundleComposeProject)' != '' and !Exists('$(ModVariantComposeToolDll)')" />
+    <Error Condition="!Exists('$(ModVariantComposeToolDll)')" Text="Missing ModVariantBundleCompose tool at $(ModVariantComposeToolDll). Install STS2.KitLib.ModVariantLoader or set KitLibRepoRoot." />
+
+    <MSBuild
+      Projects="$(ModVariantLoaderProject)"
+      Targets="Build"
+      Properties="Configuration=$(Configuration)"
+      BuildInParallel="false" />
+    <Error Condition="!Exists('$(ModVariantLoaderOutputDll)')" Text="Loader build did not produce $(ModVariantLoaderOutputDll)." />
+
+    <Copy SourceFiles="$(ModVariantLoaderOutputDll)" DestinationFiles="$(ModVariantBundleDir)\$(ModVariantModId).dll" SkipUnchangedFiles="false" />
+
+    <PropertyGroup>
+      <_ModVariantManifestRequireArgs Condition="'$(RequireAllVariants)' == 'true'">--require $(ModVariantStableCompatTarget) --require $(ModVariantBetaCompatTarget)</_ModVariantManifestRequireArgs>
+    </PropertyGroup>
+    <Exec
+      Command="dotnet exec &quot;$(ModVariantComposeToolDll)&quot; --bundle-root &quot;$(ModVariantBundleDir)&quot; --mod-id $(ModVariantModId) $(_ModVariantManifestRequireArgs)"
+      WorkingDirectory="$(MSBuildProjectDirectory)" />
+
+    <Copy
+      SourceFiles="$(MSBuildProjectDirectory)\$(ModVariantModId).json"
+      DestinationFiles="$(ModVariantBundleDir)\mod_manifest.json"
+      SkipUnchangedFiles="true"
+      Condition="!Exists('$(ModVariantBundleDir)\mod_manifest.json')" />
+
+    <Message Text="Composed mod variant bundle at $(ModVariantBundleDir)" Importance="high" />
+  </Target>
+
+  <Target Name="ComposeVariantBundle" DependsOnTargets="ComposeModVariantBundle" />
+</Project>
