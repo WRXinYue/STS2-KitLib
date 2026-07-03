@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- AI Host, host teammate, SyncBot, phantom player, and client AFK toggles are session-only: they reset when a run ends and are no longer written to `settings.json`, so solo or co-op runs should not unexpectedly start AI play on the next launch.
+- KitLib user data is read only from `mod_data/KitLib/`. The old `mod_data/DevMode` folder is no longer moved automatically on first launch — copy or rename it manually if you still have settings or snapshots there.
+
 ## [0.23.0] - 2026-07-01
 
 ### Added

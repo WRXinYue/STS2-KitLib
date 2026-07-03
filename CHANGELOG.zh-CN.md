@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- AI 托管、主机代打队友、SyncBot、幻影玩家与客机 AFK 开关改为仅本局有效：一局结束后自动关闭，不再写入 `settings.json`，避免下次单人或联机时莫名自动代打。
+- KitLib 用户数据仅从 `mod_data/KitLib/` 读取；不再在首次启动时自动搬迁旧版 `mod_data/DevMode` 目录 — 若仍有旧设置或快照，请手动复制或重命名。
+
 ## [0.23.0] - 2026-07-01
 
 ### Added
