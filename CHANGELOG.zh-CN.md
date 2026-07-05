@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **RegisterCharacterProfile** — 内容 mod 可通过 `CompanionBridge` 仅注册角色 AI 配置（例如非战斗自动出牌），无需引用 `KitLib.AI.dll` 或提供自定义决策策略；在 AI 模块已加载时，KitLib 会使用内置默认策略。
+
 ## [0.24.0] - 2026-07-04
 
 ### Added

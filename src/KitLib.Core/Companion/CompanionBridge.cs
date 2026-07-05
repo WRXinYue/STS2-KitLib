@@ -42,6 +42,10 @@ public static class CompanionBridge {
         object? profile = null) =>
         KitLibHost.RegisterCharacterStrategy(characterId, strategy, profile);
 
+    /// <summary>Profile only; <see cref="IDecisionMaker"/> resolves via KitLib.AI fallback when no per-character strategy is registered.</summary>
+    public static void RegisterCharacterProfile(string characterId, object profile) =>
+        KitLibHost.RegisterCharacterProfile(characterId, profile);
+
     public static void RegisterSnapshotContributor(object contributor) =>
         KitLibHost.RegisterSnapshotContributor(contributor);
 

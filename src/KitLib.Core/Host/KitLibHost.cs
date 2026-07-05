@@ -144,6 +144,11 @@ public static class KitLibHost {
         KitLog.Info("Host", $"Character strategy registered id={characterId}.");
     }
 
+    public static void RegisterCharacterProfile(string characterId, object profile) {
+        CharacterProfiles[characterId] = profile;
+        KitLog.Info("Host", $"Character AI profile registered id={characterId}.");
+    }
+
     public static void UnregisterCharacterStrategy(string characterId) {
         CharacterStrategies.Remove(characterId);
         CharacterProfiles.Remove(characterId);

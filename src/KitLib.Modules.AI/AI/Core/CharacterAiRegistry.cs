@@ -4,6 +4,9 @@ public static class CharacterAiRegistry {
     public static void Register(string characterId, IDecisionMaker strategy, CharacterAiProfile? profile = null) =>
         KitLib.Host.KitLibHost.RegisterCharacterStrategy(characterId, strategy, profile);
 
+    public static void RegisterProfile(string characterId, CharacterAiProfile profile) =>
+        KitLib.Host.KitLibHost.RegisterCharacterProfile(characterId, profile);
+
     public static void Unregister(string characterId) =>
         KitLib.Host.KitLibHost.UnregisterCharacterStrategy(characterId);
 
