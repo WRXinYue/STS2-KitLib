@@ -93,11 +93,6 @@ KitLib is modular: `KitLib` Core handles loading; satellite modules are optional
 - At runtime, depend on KitLib core and the satellite modules your mod actually uses.
 - Extension API, logging, AI integration, etc.: [docs site](https://sts2-devmod.wrxinyue.org/) → Developer.
 
-## Docs
-
-- Docs: [sts2-devmod.wrxinyue.org](https://sts2-devmod.wrxinyue.org/)
-- Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
-
 ## Acknowledgments
 
 - [STS2-KaylaMod](https://github.com/mugongzi520/STS2-KaylaMod)
