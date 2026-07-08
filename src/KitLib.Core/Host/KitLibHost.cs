@@ -44,6 +44,9 @@ public static class KitLibHost {
 
     public static bool IsModuleLoaded(string moduleId) => ModuleCatalog.IsLoaded(moduleId);
 
+    /// <summary>Whether a bundled satellite DLL exists under <c>mods/KitLib/modules/</c>.</summary>
+    public static bool IsSatelliteDllPresent(string moduleId) => SatelliteModuleLoader.IsSatelliteDllPresent(moduleId);
+
     /// <summary>Read-only loaded-mod catalog (cast to <c>KitLib.Abstractions.Modding.IModCatalog</c>).</summary>
     public static object ModCatalog =>
         CatalogAccessor?.Invoke() ?? throw new InvalidOperationException("KitLib.User is not loaded.");

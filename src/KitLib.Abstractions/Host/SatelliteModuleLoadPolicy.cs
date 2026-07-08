@@ -15,6 +15,8 @@ public static class SatelliteModuleLoadPolicy {
 
     public sealed record ModuleInfo(string Id, bool AlwaysOn, string[] Requires);
 
+    public const string ModulesSubdir = "modules";
+
     public static readonly ModuleInfo[] Modules = [
         new(KitLibModuleIds.User, AlwaysOn: true, Requires: []),
         new(KitLibModuleIds.ModPanel, AlwaysOn: true, Requires: []),
@@ -97,6 +99,30 @@ public static class SatelliteModuleLoadPolicy {
     }
 
     public static bool IsToggleable(string moduleId) => ToggleableModuleIds.Contains(moduleId);
+
+    public static bool TryGetModule(string moduleId, out ModuleInfo module) {
+        foreach (var candidate in Modules) {
+            if (!string.Equals(candidate.Id, moduleId, StringComparison.OrdinalIgnoreCase))
+                continue;
+            module = candidate;
+            return true;
+        }
+
+        module = default!;
+        return false;
+    }
+
+    public static string GetRelativeDllPath(string moduleId) => $"{ModulesSubdir}/{moduleId}.dll";
+
+    public static IReadOnlyList<string> GetDependents(string moduleId) {
+        var dependents = new List<string>();
+        foreach (var module in Modules) {
+            if (module.Requires.Any(required =>
+                    string.Equals(required, moduleId, StringComparison.OrdinalIgnoreCase)))
+                dependents.Add(module.Id);
+        }
+        return dependents;
+    }
 
     static void ApplyDependencies(Dictionary<string, bool> resolved) {
         foreach (var module in Modules.Where(m => m.Requires.Length > 0)) {

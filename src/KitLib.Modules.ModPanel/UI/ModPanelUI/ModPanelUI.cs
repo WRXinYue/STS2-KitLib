@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Godot;
+using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
+using KitLib.Host;
 using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.ModPanel.Diagnostics;
@@ -192,6 +194,10 @@ public static partial class ModPanelUI {
     }
     private static Control BuildSidebarPanel(ModPanelSubmenu shell, HBoxContainer hintsRow,
         VBoxContainer ritsuContentList, ModPanelPageTabChrome pageTabChrome) {
+        if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.User)) {
+            return BuildMissingUserModulePanel();
+        }
+
         var showcaseModId = ResolveShowcaseModId();
         var panel = new Panel {
             Name = "ModPanelSidebarPanel",
@@ -996,6 +1002,41 @@ public static partial class ModPanelUI {
         FinishSettingsBodyPresentation(body);
         ModPanelContentMotion.Present(list, generation, body);
     }
+
+    static Control BuildMissingUserModulePanel() {
+        var panel = new Panel {
+            Name = "ModPanelMissingUserModule",
+            CustomMinimumSize = new Vector2(ModPanelUiMetrics.SidebarPanelMinWidth, 0f),
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        panel.AddThemeStyleboxOverride("panel", CreateTransparentPanelStyle());
+        var label = new MegaRichTextLabel {
+            BbcodeEnabled = false,
+            FitContent = true,
+            ScrollActive = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            Text = I18N.T(
+                "modpanel.missingUserModule",
+                "KitLib could not load a required component (User module). " +
+                "Your KitLib installation may be incomplete—reinstall KitLib from the same source you originally used, " +
+                "then fully restart the game."),
+        };
+        label.AddThemeFontSizeOverride("normal_font_size", 14);
+        ModPanelUI.ApplyMegaRichTextFontOverrides(label);
+        var margin = new MarginContainer {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        margin.AddThemeConstantOverride("margin_left", ModPanelUiMetrics.SidebarContentMarginH);
+        margin.AddThemeConstantOverride("margin_right", ModPanelUiMetrics.SidebarContentMarginH);
+        margin.AddThemeConstantOverride("margin_top", 24);
+        margin.AddChild(label);
+        panel.AddChild(margin);
+        MainFile.Logger.Error("KitLib ModPanel: KitLib.User module is not loaded; mod list sidebar disabled.");
+        return panel;
+    }
+
     private sealed class ModPanelContentState {
         public string PageId = "";
     }

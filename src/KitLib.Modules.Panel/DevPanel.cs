@@ -65,7 +65,7 @@ internal static class DevPanel {
             DevPanelSession.Actions = actions;
             KitLibPanelOps.CurrentGlobalUi = globalUi;
             KitLibPanelOps.TryDismissCurrent = _ => TryDismissCurrent();
-            KitLibPanelOps.OnPanelAttach?.Invoke(globalUi);
+            TryInvokeOptionalPanelHook(globalUi, KitLibPanelOps.OnPanelAttach, "attach");
 
             DevPanelUI.Attach(globalUi, actions);
             ((Node)globalUi).TreeExiting += () => Detach(globalUi);
@@ -79,7 +79,7 @@ internal static class DevPanel {
 
     public static void Detach(NGlobalUi globalUi) {
         try {
-            KitLibPanelOps.OnPanelDetach?.Invoke(globalUi);
+            TryInvokeOptionalPanelHook(globalUi, KitLibPanelOps.OnPanelDetach, "detach");
             DevPanelRegistry.DeactivateAll(globalUi);
             DevPanelUI.Detach(globalUi);
             ClearState();
@@ -367,5 +367,27 @@ internal static class DevPanel {
 
     private static void ClearState() {
         RunContext.Clear();
+    }
+
+    internal static void TryInvokeOptionalPanelHooks(
+        NGlobalUi globalUi,
+        bool attach = false,
+        bool sync = false) {
+        if (attach)
+            TryInvokeOptionalPanelHook(globalUi, KitLibPanelOps.OnPanelAttach, "attach");
+        if (sync)
+            TryInvokeOptionalPanelHook(globalUi, KitLibPanelOps.OnPanelSync, "sync");
+    }
+
+    static void TryInvokeOptionalPanelHook(NGlobalUi globalUi, Action<NGlobalUi>? hook, string phase) {
+        if (hook is null)
+            return;
+
+        try {
+            hook(globalUi);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"DevPanel: Optional panel hook ({phase}) skipped: {ex.Message}");
+        }
     }
 }

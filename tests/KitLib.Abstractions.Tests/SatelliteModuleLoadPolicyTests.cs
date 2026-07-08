@@ -76,4 +76,17 @@ public sealed class SatelliteModuleLoadPolicyTests {
         };
         Assert.Equal(SatelliteModuleLoadPolicy.ProfileCustom, SatelliteModuleLoadPolicy.DetectMatchingProfile(toggles));
     }
+
+    [Fact]
+    public void GetDependents_lists_modules_that_require_panel() {
+        var dependents = SatelliteModuleLoadPolicy.GetDependents(KitLibModuleIds.Panel);
+        Assert.Contains(KitLibModuleIds.Cheat, dependents);
+        Assert.Contains(KitLibModuleIds.Dev, dependents);
+        Assert.DoesNotContain(KitLibModuleIds.Ai, dependents);
+    }
+
+    [Fact]
+    public void GetRelativeDllPath_uses_modules_subdir() {
+        Assert.Equal("modules/KitLib.Panel.dll", SatelliteModuleLoadPolicy.GetRelativeDllPath(KitLibModuleIds.Panel));
+    }
 }

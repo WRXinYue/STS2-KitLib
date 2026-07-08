@@ -1,4 +1,6 @@
 using Godot;
+using KitLib.Abstractions.Host;
+using KitLib.Host;
 using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.ModPanel.Diagnostics;
@@ -84,7 +86,8 @@ public partial class ModPanelSubmenu : NSubmenu {
         DisableTabHotkeys();
         ThemeManager.OnThemeChanged -= OnKitLibThemeChanged;
         KitLibHotkeySettingsUi.CancelCapture();
-        ModRuntime.LoadSettings.Persist();
+        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.User))
+            ModRuntime.LoadSettings.Persist();
         RitsuModSettingsEmbedHost.FlushDirtyBindings();
         ModPanelUI.OnSubmenuPopped(this);
         base.OnSubmenuClosed();

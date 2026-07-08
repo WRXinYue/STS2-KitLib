@@ -20,11 +20,6 @@ internal static class SatelliteModuleLoader {
         string? EntryTypeName,
         string[] Requires);
 
-    static readonly (string AssemblyName, string[] BeforeModuleIds)[] PreloadBeforeInit = [
-        ("KitLib.Cheat", [ModuleIds.Ai, ModuleIds.Panel]),
-        ("KitLib.Dev", [ModuleIds.Panel]),
-    ];
-
     static readonly ModuleSpec[] LoadOrder = [
         new(ModuleIds.User, "KitLib.User", "KitLib.User.ModuleEntry", []),
         new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", []),
@@ -44,11 +39,12 @@ internal static class SatelliteModuleLoader {
         ModAssemblyLoader.EnsureResolveHook(modDir);
         MainFile.Logger.Info($"Satellite loader: modDir={modDir}");
 
+        PreloadBundledAssemblies(modDir);
+
         var resolvedToggles = SettingsStore.GetResolvedSatelliteModulesEnabled();
         var loaded = new List<string>();
         foreach (var spec in LoadOrder) {
             MainFile.Logger.Info($"Satellite loader: trying {spec.ModuleId} ({spec.AssemblyName}.dll).");
-            PreloadSatelliteDependencies(modDir, spec.ModuleId);
             if (TryLoadModule(modDir, spec, resolvedToggles))
                 loaded.Add(spec.ModuleId);
         }
@@ -65,12 +61,9 @@ internal static class SatelliteModuleLoader {
             MainFile.Logger.Info($"Satellite loader done: loaded {loaded.Count} — {string.Join(", ", loaded)}.");
     }
 
-    static void PreloadSatelliteDependencies(string modDir, string moduleId) {
-        foreach (var (assemblyName, beforeModuleIds) in PreloadBeforeInit) {
-            if (!Array.Exists(beforeModuleIds, id => string.Equals(id, moduleId, StringComparison.OrdinalIgnoreCase)))
-                continue;
-            TryPreloadAssembly(modDir, assemblyName);
-        }
+    static void PreloadBundledAssemblies(string modDir) {
+        foreach (var spec in LoadOrder)
+            TryPreloadAssembly(modDir, spec.AssemblyName);
     }
 
     static void TryPreloadAssembly(string modDir, string assemblyName) {
@@ -96,6 +89,15 @@ internal static class SatelliteModuleLoader {
         ModuleIds.Dev,
     ];
 
+    static bool IsAlwaysOnModule(string moduleId) {
+        foreach (var module in SatelliteModuleLoadPolicy.Modules) {
+            if (string.Equals(module.Id, moduleId, StringComparison.OrdinalIgnoreCase))
+                return module.AlwaysOn;
+        }
+
+        return false;
+    }
+
     static bool TryLoadModule(string modDir, ModuleSpec spec, IReadOnlyDictionary<string, bool> resolvedToggles) {
         if (Sts2RuntimeProfile.Platform == Sts2Platform.Android
             && Array.Exists(AndroidUnsupportedModules, id => id == spec.ModuleId)) {
@@ -120,9 +122,24 @@ internal static class SatelliteModuleLoader {
         }
 
         var dllExists = ModuleAssemblyExists(modDir, spec.AssemblyName);
+        if (!dllExists) {
+            if (IsAlwaysOnModule(spec.ModuleId)) {
+                MainFile.Logger.Error(
+                    $"Required KitLib module {spec.ModuleId} is missing ({spec.AssemblyName}.dll under {ModulesSubdir}/). " +
+                    "Reinstall or repair KitLib, then restart the game.");
+            }
+            else if (SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists: true)) {
+                KitLog.Warn(
+                    $"Module {spec.ModuleId} is enabled but {spec.AssemblyName}.dll is missing from {ModulesSubdir}/.");
+            }
+            else {
+                KitLog.Info($"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll).");
+            }
+            return false;
+        }
+
         if (!SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists)) {
-            if (dllExists)
-                KitLog.Info($"Module {spec.ModuleId} skipped — disabled in settings (restart required).");
+            KitLog.Info($"Module {spec.ModuleId} skipped — disabled in settings (restart required).");
             return false;
         }
 
@@ -244,13 +261,19 @@ internal static class SatelliteModuleLoader {
         }
     }
 
+    internal static bool IsSatelliteDllPresent(string moduleId) {
+        if (!SatelliteModuleLoadPolicy.TryGetModule(moduleId, out _))
+            return false;
+        var modDir = ModPaths.ResolveModRoot(typeof(MainFile).Assembly);
+        return !string.IsNullOrEmpty(modDir) && ModuleAssemblyExists(modDir, moduleId);
+    }
+
     static bool ModuleAssemblyExists(string modDir, string assemblyName) =>
         ResolveSatelliteAssemblyPath(modDir, assemblyName) is not null;
 
     static Assembly? LoadAssembly(string modDir, string assemblyName, string moduleId) {
         var path = ResolveSatelliteAssemblyPath(modDir, assemblyName);
         if (path is null) {
-            KitLog.Info($"Module {moduleId} not present ({assemblyName}.dll).");
             return null;
         }
 

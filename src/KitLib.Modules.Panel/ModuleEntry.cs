@@ -1,3 +1,4 @@
+using System;
 using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.DevPerf;
@@ -17,7 +18,7 @@ namespace KitLib.PanelMod;
 public static class ModuleEntry {
     public static void Initialize() {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Panel)) return;
-        KitLibHost.AnnounceModule(KitLibModuleIds.Panel);
+
         SettingsStore.Load();
         WirePanelDelegates();
         WirePseudoCoopDelegates();
@@ -26,20 +27,52 @@ public static class ModuleEntry {
             PseudoCoopBootstrap.ApplyPreset();
             return true;
         };
-        KitLibPanelOps.OnPanelAttach = ui => AiHudOverlayUI.Attach(ui);
-        KitLibPanelOps.OnPanelSync = ui => AiHudOverlayUI.SyncState(ui);
-        KitLibPanelOps.OnPanelDetach = ui => AiHudOverlayUI.Detach(ui);
-        KitLibHost.SyncAiHudOverlay = () => AiHudOverlayUI.SyncState();
+        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
+            WireAiHudDelegates();
         KitLibHost.SyncPerfHudOverlay = () => {
             KitLibRootServices.EnsureRootServicesNode();
             DevPerfOverlayUI.SyncVisibility();
         };
-        KitLibHost.NotifyHotkeySettingsChanged = DevPanelUI.RefreshPeekTabHotkeyHint;
+        TryWireDevPanelHotkeys();
 
         DevPerfBuiltinProviders.RegisterAll();
 
-        KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.Panel);
+        KitLibHarmony.Apply(
+            typeof(ModuleEntry).Assembly,
+            KitLibModuleIds.Panel,
+            typeof(MainMenuPatch),
+            typeof(GlobalUiReadyPatch));
+
+        KitLibHost.AnnounceModule(KitLibModuleIds.Panel);
         MainFile.Logger.Info("KitLib.Panel module initialized.");
+    }
+
+    static void TryWireDevPanelHotkeys() {
+        try {
+            KitLibHost.NotifyHotkeySettingsChanged = DevPanelUI.RefreshPeekTabHotkeyHint;
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"KitLib.Panel: Dev panel hotkeys unavailable ({ex.Message}).");
+        }
+    }
+
+    static bool IsCheatAssemblyAvailable() {
+        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat))
+            return true;
+
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+            if (string.Equals(assembly.GetName().Name, "KitLib.Cheat", StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    static void WireAiHudDelegates() {
+        KitLibPanelOps.OnPanelAttach = ui => AiHudOverlayUI.Attach(ui);
+        KitLibPanelOps.OnPanelSync = ui => AiHudOverlayUI.SyncState(ui);
+        KitLibPanelOps.OnPanelDetach = ui => AiHudOverlayUI.Detach(ui);
+        KitLibHost.SyncAiHudOverlay = () => AiHudOverlayUI.SyncState();
     }
 
     static void WirePseudoCoopDelegates() {
@@ -49,26 +82,34 @@ public static class ModuleEntry {
             GlobalUiReadyPatch.TryAttachDeferred(NRun.Instance?.GlobalUi, skipWarmup: true);
         KitLibPseudoCoopOps.AttachDualInstanceMinimalDevPanel = () =>
             GlobalUiReadyPatch.TryAttachDualInstanceMinimal(NRun.Instance?.GlobalUi);
-        KitLibPseudoCoopOps.IsDevPanelRailAttached = () => DevPanelUI.IsRailAttached;
+        try {
+            KitLibPseudoCoopOps.IsDevPanelRailAttached = () => DevPanelUI.IsRailAttached;
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"KitLib.Panel: pseudo-coop rail probe unavailable ({ex.Message}).");
+        }
         KitLibPseudoCoopOps.RunDualInstanceLanPresets = DualInstanceTestBootstrap.TryAutoLanPresetsOnLaunch;
         KitLibPseudoCoopOps.EnsureMultiplayerDevActive = DualInstanceTestBootstrap.EnsureMultiplayerDevActive;
     }
 
     static void WirePanelDelegates() {
         KitLibPanelOps.TryDismissCurrent = ui => DevPanel.TryDismissCurrent();
-        KitLibCheatOps.OpenCards = DevPanel.OpenCards;
-        KitLibCheatOps.OpenRelics = DevPanel.OpenRelics;
-        KitLibCheatOps.OpenEnemies = DevPanel.OpenEnemies;
-        KitLibCheatOps.OpenPowers = DevPanel.OpenPowers;
-        KitLibCheatOps.OpenPotions = DevPanel.OpenPotions;
-        KitLibCheatOps.OpenEvents = DevPanel.OpenEvents;
-        KitLibCheatOps.OpenRooms = DevPanel.OpenRooms;
-        KitLibCheatOps.OpenConsole = DevPanel.OpenConsole;
-        KitLibCheatOps.OpenPresets = DevPanel.OpenPresets;
-        KitLibCheatOps.OpenCardTest = DevPanel.OpenCardTest;
-        KitLibCheatOps.ResetSkipAnim = SkipAnimControl.Reset;
-        KitLibCheatOps.IsSkipAnimSkipping = () => SkipAnimControl.IsSkipping;
-        KitLibCheatOps.IsMpHooksDisabledInMultiplayer = () => MpCheatUi.IsHooksDisabledInMultiplayer;
+
+        if (IsCheatAssemblyAvailable()) {
+            KitLibCheatOps.OpenCards = DevPanel.OpenCards;
+            KitLibCheatOps.OpenRelics = DevPanel.OpenRelics;
+            KitLibCheatOps.OpenEnemies = DevPanel.OpenEnemies;
+            KitLibCheatOps.OpenPowers = DevPanel.OpenPowers;
+            KitLibCheatOps.OpenPotions = DevPanel.OpenPotions;
+            KitLibCheatOps.OpenEvents = DevPanel.OpenEvents;
+            KitLibCheatOps.OpenRooms = DevPanel.OpenRooms;
+            KitLibCheatOps.OpenConsole = DevPanel.OpenConsole;
+            KitLibCheatOps.OpenPresets = DevPanel.OpenPresets;
+            KitLibCheatOps.OpenCardTest = DevPanel.OpenCardTest;
+            KitLibCheatOps.ResetSkipAnim = SkipAnimControl.Reset;
+            KitLibCheatOps.IsSkipAnimSkipping = () => SkipAnimControl.IsSkipping;
+            KitLibCheatOps.IsMpHooksDisabledInMultiplayer = () => MpCheatUi.IsHooksDisabledInMultiplayer;
+        }
 
         KitLibPanelOps.IsProgressLossPromptVisible = () => ProgressLossPromptUI.IsVisible;
         KitLibPanelOps.HideDevMainMenuIfVisible = () => {
@@ -86,10 +127,27 @@ public static class ModuleEntry {
 
         KitLibUserOps.OpenLogs = DevPanel.OpenLogs;
 
-        KitLibPanelUiOps.ShowCheatsOverlay = ui => DevPanelUI.ShowCheatsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
-        KitLibPanelUiOps.ShowSaveLoadOverlay = ui => DevPanelUI.ShowSaveLoadOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
-        KitLibPanelUiOps.ShowSettingsOverlay = ui => DevPanelUI.ShowSettingsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
-        KitLibPanelUiOps.ShowAiOverlay = ui => DevPanelUI.ShowAiOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
+        TryWireDevPanelUiDelegates();
         KitLibPanelUiOps.BuildProgressGuardModSettingsPage = () => ProgressGuardModSettingsPage.Build();
+    }
+
+    static void TryWireDevPanelUiDelegates() {
+        try {
+            if (IsCheatAssemblyAvailable()) {
+                KitLibPanelUiOps.ShowCheatsOverlay = ui =>
+                    DevPanelUI.ShowCheatsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
+                KitLibPanelUiOps.ShowSaveLoadOverlay = ui =>
+                    DevPanelUI.ShowSaveLoadOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
+            }
+
+            KitLibPanelUiOps.ShowSettingsOverlay = ui =>
+                DevPanelUI.ShowSettingsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
+            if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
+                KitLibPanelUiOps.ShowAiOverlay = ui =>
+                    DevPanelUI.ShowAiOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"KitLib.Panel: dev panel UI delegates unavailable ({ex.Message}).");
+        }
     }
 }

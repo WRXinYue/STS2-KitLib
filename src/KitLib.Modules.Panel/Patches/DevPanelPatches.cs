@@ -45,8 +45,7 @@ public static class GlobalUiReadyPatch {
             if (!railInTree)
                 DevPanel.Attach(__instance);
 
-            KitLibPanelOps.OnPanelAttach?.Invoke(__instance);
-            KitLibPanelOps.OnPanelSync?.Invoke(__instance);
+            DevPanel.TryInvokeOptionalPanelHooks(__instance, attach: true, sync: true);
             return;
         }
 
@@ -74,7 +73,7 @@ public static class GlobalUiReadyPatch {
         if (_attached == globalUi) return;
         _attached = globalUi;
         DevPanel.Attach(globalUi);
-        KitLibPanelOps.OnPanelSync?.Invoke(globalUi);
+        DevPanel.TryInvokeOptionalPanelHooks(globalUi, attach: false, sync: true);
         KitLibCheatOps.EnsureRuntimeStatModifiers?.Invoke();
 
         if (!skipWarmup) {
