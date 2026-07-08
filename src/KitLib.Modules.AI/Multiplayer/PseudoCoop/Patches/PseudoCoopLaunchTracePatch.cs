@@ -5,48 +5,48 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.PseudoCoop.Patches;
 
-/// <summary>Milestone logs to pinpoint embark crashes.</summary>
-[HarmonyPatch(typeof(NSceneContainer), nameof(NSceneContainer.SetCurrentScene))]
-internal static class PseudoCoopSetSceneTracePatch {
-    [HarmonyPrefix]
-    static void Prefix() => KitLog.Info("PseudoCoop", $"SetCurrentScene(NRun) starting…");
-
-    [HarmonyPostfix]
-    static void Postfix() => KitLog.Info("PseudoCoop", $"SetCurrentScene(NRun) complete.");
-}
-
+/// <summary>Pseudo-coop embark milestones and dual-instance preset hooks.</summary>
 [HarmonyPatch(typeof(RunManager), nameof(RunManager.Launch))]
 internal static class PseudoCoopLaunchTracePatch {
     [HarmonyPostfix]
     [HarmonyPriority(Priority.Last)]
     static void Postfix() {
         KitLibPseudoCoopOps.RunDualInstanceLanPresets?.Invoke();
-        KitLog.Info("PseudoCoop", $"RunManager.Launch postfixes done.");
+        if (KitLibState.IsPseudoCoopSession)
+            KitLog.Info("PseudoCoop", "RunManager.Launch postfixes done.");
     }
 }
 
 [HarmonyPatch(typeof(NRun), "_Ready")]
 internal static class PseudoCoopNRunReadyTracePatch {
     [HarmonyPrefix]
-    static void Prefix() => KitLog.Info("PseudoCoop", $"NRun._Ready starting…");
+    static void Prefix() {
+        if (KitLibState.IsPseudoCoopSession)
+            KitLog.Info("PseudoCoop", "NRun._Ready starting…");
+    }
 
     [HarmonyPostfix]
     static void Postfix() {
         KitLibPseudoCoopOps.RunDualInstanceLanPresets?.Invoke();
-        KitLog.Info("PseudoCoop", $"NRun._Ready complete.");
+        if (KitLibState.IsPseudoCoopSession)
+            KitLog.Info("PseudoCoop", "NRun._Ready complete.");
     }
 }
 
 [HarmonyPatch(typeof(RunManager), nameof(RunManager.EnterAct))]
 internal static class PseudoCoopEnterActTracePatch {
     [HarmonyPrefix]
-    static void Prefix(int currentActIndex) =>
-        KitLog.Info("PseudoCoop", $"EnterAct({currentActIndex}) starting…");
+    static void Prefix(int currentActIndex) {
+        if (KitLibState.IsPseudoCoopSession)
+            KitLog.Info("PseudoCoop", $"EnterAct({currentActIndex}) starting…");
+    }
 
     [HarmonyPostfix]
     static void Postfix(int currentActIndex) {
-        KitLog.Info("PseudoCoop", $"EnterAct({currentActIndex}) complete.");
         if (currentActIndex == 0)
             PseudoCoopDeferredInit.TryScheduleAfterEnterAct0();
+
+        if (KitLibState.IsPseudoCoopSession)
+            KitLog.Info("PseudoCoop", $"EnterAct({currentActIndex}) complete.");
     }
 }

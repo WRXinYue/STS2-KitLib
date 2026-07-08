@@ -124,6 +124,13 @@ public static class KitLibState {
     /// <summary>Pseudo-coop: DevPanel + config publish run when <see cref="NMapScreen"/> opens.</summary>
     public static bool PseudoCoopAwaitingMapFinish { get; set; }
 
+    /// <summary>True while pseudo-coop launch or deferred-init hooks are active.</summary>
+    public static bool IsPseudoCoopSession =>
+        PseudoCoopLaunchPending
+        || PseudoCoopDeferHeavyUi
+        || PseudoCoopDeferMpCheatPublish
+        || PseudoCoopAwaitingMapFinish;
+
     /// <summary>Dual-instance LAN: rail shows only AI Host; skips context pane and asset warmup.</summary>
     public static bool DualInstanceMinimalRail { get; set; }
 

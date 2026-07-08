@@ -78,6 +78,22 @@ public static class RunStartPatch {
     }
 }
 
+/// <summary>
+/// Dev and pseudo-coop runs may include mod epochs that fail combat replay serialization on exit.
+/// </summary>
+[HarmonyPatch(typeof(RunManager), nameof(RunManager.WriteReplay))]
+internal static class DevCombatReplaySkipPatch {
+    public static bool Prefix(RunManager __instance, bool stopRecording) {
+        if (!KitLibState.InDevRun && !KitLibState.IsPseudoCoopSession)
+            return true;
+
+        if (stopRecording && __instance.CombatReplayWriter.IsRecordingReplay)
+            __instance.CombatReplayWriter.StopRecording();
+
+        return false;
+    }
+}
+
 [HarmonyPatch(typeof(SaveManager), nameof(SaveManager.SaveProgressFile))]
 public static class SaveProgressPatch {
     public static bool Prefix() {
