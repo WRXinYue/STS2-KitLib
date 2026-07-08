@@ -147,7 +147,7 @@ help:
 	@echo "  zip          build-all + package build/KitLib-vX.X.X.zip (alias: zip-full)"
 	@echo ""
 	@echo "  [upload]"
-	@echo "  upload-github  stable+beta zips + kitlog + MCP → GitHub Release (alias: publish)"
+	@echo "  upload-github  stable + beta mod zips + MCP/kitlog exes → GitHub Release (alias: publish)"
 	@echo "  upload-nexus   stable main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
 	@echo "  upload-nexus-beta  beta main zip → Nexus (NEXUS_FILE_GROUP_ID_BETA; alias: nexus-beta)"
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
