@@ -2,34 +2,101 @@
 
 **English** | [中文](./README.zh-CN.md)
 
-Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference `eng/KitLib.ContentMod.props` and ship `kitlib.compat.toml` for version checks.
+KitLib serves both mod authors and players. Authors can start test runs, use the left-edge dev panel in-game to edit cards, stats, and enemy state, read logs and combat info, and debug multiplayer (pseudo co-op, dual-instance LAN)—with hooks, scripts, and automation to validate mods with fewer restarts. Players get a better Mod panel, progress protection, feedback export, and optional assist features.
 
-## Getting started
+KitLib is modular: `KitLib` Core handles loading; satellite modules are optional. If an optional module fails to load, it should not take down the core or block other mods that depend on KitLib.
 
-- **Main menu → Mods → KitLib** — Satellite load profiles (Minimal / Standard / Full / Custom), hotkeys, accent theme, compat warnings, progress protection, optional live log terminal on startup.
-- **During a run** — Hover the left-edge **peek tab** to expand the dev rail, then click a panel icon.
-- **Title screen** — **Dev Mode** for test runs, snapshots, diagnostics, and multiplayer dev tools.
-- **Settings → Sidebar / Game** — Reorder rail tabs, hide panels, combat overlays, game speed, skip animations.
-- **Normal runs** — Title **Dev Mode → Normal run** cycles Disabled / Toolkit / Cheat Mode.
+## Features
 
-Install from [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or build from source (python scripts/init.py, then make sync-full). One package supports pinned stable and beta STS2 builds; a startup banner appears when the mod build mismatches your game.
+### Dev Mode (title screen)
 
-## Features at a glance
+- New test run / with seed
+- Load save, pseudo co-op quick start
+- Unlock all progress
+- Log viewer, mod feedback
 
-- **Gameplay** — Cheats, cards, relics, powers, potions, enemies, events, rooms, presets
-- **Automation** — Hooks, SpireScratch scripts, AI Host (solo), MCP, KitLog CLI
-- **Debug** — Logs, combat stats, enemy intents, console, Harmony analysis, mod feedback
-- **Utility** — Save/load slots, themes & overlays
+### In-run dev rail
 
-Panel-by-panel help: **[docs site](docs/pages/index.md)** (make docs) — [Rail panels](docs/pages/guide/panels/index.md).
+- Card / relic / enemy / power / potion / event browsers
+- Room teleport, command reference
+- Cheats, presets, card test
+- Enemy intents, combat stats
+- AI Host, hooks, scripts
+- Harmony analysis, framework bridge
+- Save / load, settings, logs, mod feedback
+- Rail expand/collapse, tab reorder/hide, hotkeys
 
-## Contributing
+### Browsers (in-run editing)
 
-See **[CONTRIBUTING.md](CONTRIBUTING.md)** or open an issue / PR on [GitHub](https://github.com/WRXinYue/STS2-KitLib).
+- Cards: browse, add/remove/upgrade, edit stats and enchantments
+- Relics, potions, powers, events
+- Enemies: encounter picker and map overrides
+- Rooms: shop, rest, treasure, test room, etc.
 
-## Changelog
+### Cheats
 
-See [CHANGELOG.md](https://github.com/WRXinYue/STS2-KitLib/blob/main/CHANGELOG.md).
+- Player combat (invincibility, energy/block/stars, turns, draw, etc.)
+- Enemies (freeze, damage, kill, etc.)
+- Economy and shop (gold, multipliers, free purchases)
+- Status and rewards (energy cap, potion slots, score, card rewards)
+- Map (debug jump, map rewrite)
+- Stat lock (gold, HP, energy, stars, orb slots, etc.)
+
+### Saves and presets
+
+- Multi-slot and quick save/load, combat/turn checkpoints
+- Preset save, apply, import/export
+
+### Logs
+
+- In-run / main-menu log viewer with filters
+- Optional kitlog live tail
+
+### AI and multiplayer
+
+- Solo AI autoplay and HUD
+- Pseudo co-op, dual-instance LAN, teammate hosting, SyncBot
+
+### Automation
+
+- Hook rules, SpireScratch scripts
+- MCP bridge (external agents and tools)
+
+### Debug
+
+- Combat stats, enemy intents, performance overlay and trace
+- Harmony and framework (RitsuLib) summaries
+
+### Main-menu mod settings (Mods → KitLib)
+
+- Module load profiles and optional module toggles
+- Theme, hotkeys, in-run DevMode level
+- Progress guard, multiplayer cheat opt-in
+
+### Mod panel
+
+- Mod list (source, load status), enable / disable
+- Embedded per-mod settings pages
+
+### Mod feedback
+
+- Reproduction steps and ZIP export (logs, mod list, diagnostics)
+
+## Install
+
+- **KitLib mod** — Steam Workshop or Nexus.
+- **Auxiliary tools** (`kitlog` CLI, `KitLib.Mcp`) — [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or Nexus.
+
+## For mod developers
+
+- Add `eng/KitLib.ContentMod.props` to your csproj (`KitLib.Abstractions.dll` at compile time).
+- At runtime, depend on KitLib core and the satellite modules your mod actually uses.
+- Extension API, logging, AI integration, etc.: [docs site](https://sts2-devmod.wrxinyue.org/) → Developer.
+
+## Docs
+
+- Docs: [sts2-devmod.wrxinyue.org](https://sts2-devmod.wrxinyue.org/)
+- Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ## Acknowledgments
 

@@ -12,6 +12,10 @@ Usage:
     python scripts/publish_steam.py upload [stable|beta|all] [--dry-run] [--optional]
 
 Workspaces: build/dist/workshop-stable/, build/dist/workshop-beta/
+
+workshop.json omits description on first sync; later syncs preserve a local copy only.
+Steam listing text is not updated by sync/upload — edit it on the Workshop page.
+Optional draft: assets/readme.steam.txt (not read by publish_steam.py).
 """
 
 from __future__ import annotations
@@ -43,7 +47,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
 from lib.steam_changelog import get_change_note, read_kitlib_version  # noqa: E402
 from lib.bundle_build import build_bundle  # noqa: E402
-from lib.steam_readme import get_workshop_description  # noqa: E402
+from lib.steam_readme import STEAM_DESCRIPTION_MAX  # noqa: E402
 
 
 def _profiles(selection: str) -> list[str]:
@@ -126,9 +130,8 @@ def _write_workshop_json(
         prefer_unreleased=prefer_unreleased,
     )
     resolved_note = base_note
-    workshop = {
+    workshop: dict[str, object] = {
         "title": "KitLib",
-        "description": get_workshop_description(_REPO),
         "visibility": "public",
         "changeNote": resolved_note,
         "tags": ["Tools & APIs"],
@@ -144,7 +147,21 @@ def _write_workshop_json(
         encoding="utf-8",
     )
     (workspace / "changeNote.preview.txt").write_text(resolved_note + "\n", encoding="utf-8")
-    (workspace / "description.preview.txt").write_text(workshop["description"] + "\n", encoding="utf-8")
+    draft = _REPO / "assets" / "readme.steam.txt"
+    if draft.is_file() and draft.read_text(encoding="utf-8").strip():
+        description_preview = draft.read_text(encoding="utf-8").strip()
+        if len(description_preview) > STEAM_DESCRIPTION_MAX:
+            print(
+                f"WARN: {draft.relative_to(_REPO)} is {len(description_preview)} chars "
+                f"(Steam limit {STEAM_DESCRIPTION_MAX}).",
+                file=sys.stderr,
+            )
+    else:
+        description_preview = (
+            "(omitted from upload — edit listing on Steam Workshop; "
+            "optional local draft: assets/readme.steam.txt)"
+        )
+    (workspace / "description.preview.txt").write_text(description_preview + "\n", encoding="utf-8")
 
 
 def _workshop_id() -> str:

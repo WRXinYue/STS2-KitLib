@@ -20,5 +20,3 @@ Remote/static builds must run **`make docs-build` from the repo root** (not `doc
 ## Writing
 
 Valaxy Markdown (containers, frontmatter, i18n): [Markdown writing guide](https://oceanus.wrxinyue.org/guide/writing/markdown).
-
-Maintainer-only notes: `pages/developer/notes/`.

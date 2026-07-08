@@ -115,8 +115,7 @@ export default defineValaxyConfig<ThemeConfig>({
       motto: {
         en: 'Modular in-game toolkit & extension APIs for Slay the Spire 2',
         'zh-CN': '《杀戮尖塔 2》模块化游戏内工具库与扩展接口',
-      },
-      img: 'https://raw.githubusercontent.com/WRXinYue/STS2-KitLib/refs/heads/main/assets/devmode.png',
+      }
     },
 
     footer: {

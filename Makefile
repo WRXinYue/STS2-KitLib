@@ -85,7 +85,7 @@ LAUNCH_MP_CLIENT_ID ?= 1001
         build-stable build-beta build-profiles build-flat workshop workshop-stable workshop-beta extract-touchpoints check-api verify-profiles capture-sts2-ref \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
-        upload-github upload-nexus upload-nexus-beta workshop upload-steam upload-steam-stable upload-steam-beta
+        upload-github upload-nexus upload-nexus-beta workshop upload-steam upload-steam-stable upload-steam-beta readme-nexus readme-assets
 
 help:
 	@echo "KitLib — targets"
@@ -157,6 +157,7 @@ help:
 	@echo "  upload-steam-stable  workshop-stable + upload public branch"
 	@echo "  upload-steam-beta    workshop-beta + upload public-beta branch"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
+	@echo "  readme-assets  same as readme-nexus (Nexus); Steam listing is manual on Workshop"
 	@echo ""
 	@echo "  docs           Valaxy docs dev server (docs/)"
 	@echo "  docs-build     static site → docs/dist/"
@@ -344,6 +345,8 @@ upload-steam-beta: workshop-beta
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py
+
+readme-assets: readme-nexus
 
 docs:
 	cd docs && pnpm install && pnpm dev

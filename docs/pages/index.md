@@ -8,76 +8,50 @@ features:
     en: Overview
     zh-CN: 概览
   subtitle:
-    en: Modular toolkit for Slay the Spire 2
-    zh-CN: 《杀戮尖塔 2》模块化工具库
+    en: In-game toolkit for Slay the Spire 2
+    zh-CN: 《杀戮尖塔 2》游戏内工具库
   text:
     en: >-
-      KitLib is a single in-game mod with a Core host and optional satellite modules — dev rail, cheats,
-      AI autoplay, mod settings, logging, and more. Pick the DLLs you need under `modules/`, or ship content
-      mods against `KitLib.Abstractions` with version-compat sidecars and panel APIs.
+      KitLib serves mod authors and players: test runs, in-run editing, logs, and multiplayer debugging
+      without leaving the game — plus a better Mod panel, progress protection, and feedback export.
+      Core loads optional satellite modules; a failed optional module should not break KitLib or mods that depend on it.
     zh-CN: >-
-      KitLib 是游戏内的单一 mod：Core 宿主 + 可选卫星模块 —— 开发侧栏、作弊、AI 托管、Mod 设置、日志等。
-      可在 `modules/` 按需保留 DLL；内容 mod 也可引用 `KitLib.Abstractions`，使用版本兼容 sidecar 与面板 API。
+      KitLib 面向 mod 开发者与玩家：局内测试、改内容、看日志、联机调试，以及更好用的 Mod 面板、
+      进度保护与问题反馈。Core 加载可选卫星模块；单个模块异常不应拖垮核心与依赖 KitLib 的其他 mod。
 
   cards:
     - title:
-        en: Modular install
-        zh-CN: 模块化安装
+        en: Install & modules
+        zh-CN: 安装与模块
       details:
         en: >-
-          One `mods/KitLib/` folder: Core hot-loads `KitLib.User`, `KitLib.Panel`, `KitLib.Cheat`, `KitLib.Dev`,
-          `KitLib.AI`, `KitLib.ModPanel`, and more. Remove satellite DLLs to disable features without uninstalling KitLib.
+          Install from Steam Workshop or Nexus. In Mods → KitLib → Modules, pick a load profile
+          or toggle satellite modules (restart required). See /guide/install/
         zh-CN: >-
-          仅一个 `mods/KitLib/` 目录：Core 热加载 `KitLib.User`、`KitLib.Panel`、`KitLib.Cheat`、`KitLib.Dev`、
-          `KitLib.AI`、`KitLib.ModPanel` 等。删除卫星 DLL 即可关闭功能，无需卸载整个 KitLib。
+          从 Steam 创意工坊或 Nexus 安装。在 Mods → KitLib → 模块 选择加载方案，或单独开关卫星模块（需重启）。
+          详见 /guide/install/
     - title:
         en: Dev rail & Dev Mode
-        zh-CN: 开发侧栏与开发模式
+        zh-CN: 开发侧栏与 Dev Mode
       details:
         en: >-
-          `KitLib.Panel` adds the left-edge rail (cards, cheats, logs, presets, …) and title-screen Dev Mode for test runs,
-          snapshots, and diagnostics — the original DevMode-style workflow, now one module among many.
+          In-run rail: browsers, cheats, saves, presets, logs, AI, hooks, scripts.
+          Title Dev Mode: test runs, pseudo co-op, diagnostics.
+          Also: kitlog CLI, mod feedback ZIP, progress guard, MCP.
+          See /guide/panels/ and /guide/title-dev-mode/
         zh-CN: >-
-          `KitLib.Panel` 提供左侧轨道（卡牌、作弊、日志、预设等）与标题画面开发模式（测试局、快照、诊断）——
-          即原 DevMode 式工作流，现为众多模块之一。
+          局内侧栏：浏览器、作弊、存档、预设、日志、AI、钩子、脚本等。
+          标题 Dev Mode：测试局、伪联机、诊断。
+          另含 kitlog、Mod 反馈、进度保护、MCP。详见 /guide/panels/ 与 /guide/title-dev-mode/
     - title:
-        en: Cheats, AI & automation
-        zh-CN: 作弊、AI 与自动化
+        en: For mod developers
+        zh-CN: Mod 开发者
       details:
         en: >-
-          `KitLib.Cheat` for runtime tweaks; `KitLib.AI` for solo autoplay and companions; `KitLib.Dev` for hooks,
-          SpireScratch scripts, Harmony tools, and MCP. Enable only what your run needs.
+          Add eng/KitLib.ContentMod.props to your csproj; depend on KitLib modules at runtime as needed.
+          Register rail tabs, logging, and AI hooks.
+          See /developer/extending/panel-registry/ and /developer/dev/
         zh-CN: >-
-          `KitLib.Cheat` 负责运行时调节；`KitLib.AI` 负责单人托管与 companion；`KitLib.Dev` 提供钩子、
-          SpireScratch 脚本、Harmony 与 MCP。按需在 `modules/` 中启用。
-    - title:
-        en: Logs & mod panel
-        zh-CN: 日志与 Mod 面板
-      details:
-        en: >-
-          `KitLib.User` covers session logs and progress guard.
-          `KitLib.ModPanel` adds the main-menu Mods settings UI and compatibility banners for other mods.
-        zh-CN: >-
-          `KitLib.User` 提供会话日志与进度保护。
-          `KitLib.ModPanel` 提供主菜单 Mod 设置与对其他 mod 的兼容提示。
-    - title:
-        en: Extension API
-        zh-CN: 扩展 API
-      details:
-        en: >-
-          Register dev-rail tabs (`DevPanelRegistry`), read mod catalogs (`ModRuntime`), declare constraints
-          (`kitlib.compat.toml`), and target dual STS2 API profiles (`STS2_BETA_PROFILE` / `Sts2ProfileMap`).
-          NuGet: `STS2.KitLib.Abstractions`.
-        zh-CN: >-
-          注册 dev 轨道标签（`DevPanelRegistry`）、读取 mod 目录（`ModRuntime`）、声明约束（`kitlib.compat.toml`）、
-          对接双 STS2 API profile（`STS2_BETA_PROFILE` / `Sts2ProfileMap`）。NuGet：`STS2.KitLib.Abstractions`。
-    - title:
-        en: Stable & beta STS2
-        zh-CN: Stable 与 beta 游戏版本
-      details:
-        en: >-
-          One release zip supports pinned stable and beta game builds via runtime profile detection and optional
-          dual-profile compile refs for mod authors.
-        zh-CN: >-
-          同一发布包通过运行时 profile 识别支持钉死的 stable / beta 游戏版本；mod 作者可选用双 profile 编译 ref。
+          csproj 引用 eng/KitLib.ContentMod.props；运行时按需依赖卫星模块。
+          可注册侧栏、日志、AI 等扩展。详见 /developer/extending/panel-registry/ 与 /developer/dev/
 ---
