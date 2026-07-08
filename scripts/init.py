@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detect STS2 + Godot, generate local.props and .vscode."""
+"""Detect STS2 + Godot, generate local.props."""
 
 from __future__ import annotations
 
@@ -16,10 +16,6 @@ from lib.dotenv import load_release_config  # noqa: E402
 from lib.ensure_iconify_mdi import ensure_mdi_icons  # noqa: E402
 from lib.godot import resolve_godot_path  # noqa: E402
 from lib.steam import resolve_sts2_dir  # noqa: E402
-from lib.vscode import (  # noqa: E402
-    setup_debug_launch,
-    write_vscode_files,
-)
 
 
 def _prop_line(name: str, value: str | None) -> str:
@@ -76,9 +72,6 @@ def main() -> int:
     print(f"  Sts2Profile = {profile}")
     if godot_path:
         print(f"  GodotPath = {godot_path}")
-
-    setup_debug_launch(sts2_dir)
-    write_vscode_files(root, sts2_dir)
 
     ensure_mdi_icons(root)
 

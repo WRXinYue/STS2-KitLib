@@ -78,17 +78,19 @@ STEAM_SYNC_STABLE := $(PYTHON) scripts/publish_steam.py sync stable $(STEAM_SYNC
 STEAM_SYNC_BETA := $(PYTHON) scripts/publish_steam.py sync beta $(STEAM_SYNC_FLAGS)
 STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload all --optional $(STEAM_UPLOAD_FLAGS)
 STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload all $(STEAM_UPLOAD_FLAGS)
+LAUNCH := $(PYTHON) scripts/launch_sts2.py
+LAUNCH_MP_CLIENT_ID ?= 1001
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles build-flat workshop workshop-stable workshop-beta extract-touchpoints check-api verify-profiles capture-sts2-ref \
-        launch sync-launch sync-full-launch dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
+        launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
         upload-github upload-nexus upload-nuget workshop upload-steam upload-steam-stable upload-steam-beta
 
 help:
 	@echo "KitLib — targets"
 	@echo ""
-	@echo "  init         detect STS2 + Godot, generate local.props + .vscode + pre-commit hooks"
+	@echo "  init         detect STS2 + Godot, generate local.props + pre-commit hooks"
 	@echo "  icons        tree-shake MDI (mdi-used.json + MdiIcon.Generated.cs)"
 	@echo "  format       dotnet format KitLib.sln + black scripts/ (EditorConfig / pre-commit)"
 	@echo "  format-check dotnet format --verify-no-changes (uses eng/sts2-refs when Sts2Dir unset)"
@@ -118,9 +120,13 @@ help:
 	@echo "  capture-sts2-ref PROFILE=stable|beta  copy sts2.dll into eng/sts2-refs/ (validates release_info)"
 	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip"
 	@echo "  sync-launch  sync + launch game"
+	@echo "  launch       launch STS2 (Vulkan + --log on Windows; Steam on macOS/Linux)"
+	@echo "  launch-mp-host  fastmp host instance (Vulkan + --log)"
+	@echo "  launch-mp-join  fastmp join client (default clientId=1001)"
+	@echo "  launch-mp    dual-launch host + join for LAN multiplayer test"
+	@echo "  sync-launch-mp  sync + launch-mp"
 	@echo "  dev-session  sync + launch + wait for MCP bridge (agent bootstrap)"
 	@echo "  sync-framework-mods  copy DevMode NuGet STS2-RitsuLib into game (overwrites other RitsuLib builds)"
-	@echo "  launch       launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)"
 	@echo "  push-android build then adb push to Android mods dir (default: StS2LauncherMM/Mods)"
 	@echo "  push-android-wsdx233  push to game sandbox (run-as) + restart game"
 	@echo "  build        publish to build/KitLib/ only (no game)"
@@ -262,9 +268,20 @@ compile: deps
 	$(DEPLOY_COPY)
 
 launch:
-	$(PYTHON) scripts/launch_sts2.py
+	$(LAUNCH)
+
+launch-mp-host:
+	$(LAUNCH) --fastmp host
+
+launch-mp-join:
+	$(LAUNCH) --fastmp join --client-id $(LAUNCH_MP_CLIENT_ID)
+
+launch-mp:
+	$(LAUNCH) --fastmp dual --client-id $(LAUNCH_MP_CLIENT_ID)
 
 sync-launch: sync launch
+
+sync-launch-mp: sync launch-mp
 
 dev-session:
 	$(PYTHON) scripts/dev_session.py --sync --launch --wait-bridge 120
