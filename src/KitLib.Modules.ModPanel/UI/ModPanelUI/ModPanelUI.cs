@@ -425,16 +425,7 @@ public static partial class ModPanelUI {
                 descLabel);
             var tex0 = ModPanelModBanner.TryLoadModIcon(fallback, showcaseModId);
             ApplyPreviewState(tex0, fallback == null, modIcon, previewPlaceholder, previewCaption);
-            var pagesShowcase = KitLibModSettingsRegistry.HasPages(showcaseModId)
-                ? KitLibModSettingsRegistry.GetPages(showcaseModId)
-                : null;
-            if (pagesShowcase is { Count: > 0 }) {
-                contentState.PageId = pagesShowcase[0].PageId;
-            }
-            else {
-                var ritsuPages = RitsuModSettingsBridge.GetAllPageObjects(showcaseModId);
-                contentState.PageId = ritsuPages.Count > 0 ? RitsuModSettingsBridge.GetPageId(ritsuPages[0]) : "";
-            }
+            contentState.PageId = ResolveInitialPageId(showcaseModId);
             Callable.From(RebuildRitsuRightPane).CallDeferred();
         }
         else {
@@ -848,12 +839,26 @@ public static partial class ModPanelUI {
             _pendingInitialPageModId = null;
             return pendingPage;
         }
+        if (PrefersRitsuSettingsContent(modId)) {
+            var ritsuPages = RitsuModSettingsBridge.GetAllPageObjects(modId);
+            return RitsuModSettingsBridge.GetPageId(ritsuPages[0]);
+        }
         if (KitLibModSettingsRegistry.HasPages(modId)) {
             var pages = KitLibModSettingsRegistry.GetPages(modId);
             return pages.Count > 0 ? pages[0].PageId : "";
         }
-        var ritsuPages = RitsuModSettingsBridge.GetAllPageObjects(modId);
-        return ritsuPages.Count > 0 ? RitsuModSettingsBridge.GetPageId(ritsuPages[0]) : "";
+        var fallbackRitsuPages = RitsuModSettingsBridge.GetAllPageObjects(modId);
+        return fallbackRitsuPages.Count > 0 ? RitsuModSettingsBridge.GetPageId(fallbackRitsuPages[0]) : "";
+    }
+
+    /// <summary>
+    /// Ritsu-registered pages are the full settings surface for content mods; a lone KitLib-native page
+    /// (e.g. log level) must not shadow them in ModPanel.
+    /// </summary>
+    private static bool PrefersRitsuSettingsContent(string modId) {
+        if (!RitsuModSettingsBridge.IsAvailable)
+            return false;
+        return RitsuModSettingsBridge.GetAllPageObjects(modId).Count > 0;
     }
 
     private static bool PageExistsForMod(string modId, string pageId) {
@@ -880,6 +885,11 @@ public static partial class ModPanelUI {
                     I18N.T("modpanel.content.modNotLoaded",
                         "This mod is disabled or failed to load. Enable it in the list and restart the game to edit settings here.")));
             ModPanelPerf.Log("refresh.modNotLoaded", perf, $"modId={modId}");
+            return;
+        }
+        if (PrefersRitsuSettingsContent(modId)) {
+            RefreshRitsuSettingsContent(list, pageTabChrome, modId, state, perf, generation);
+            ModPanelPerf.Log("refresh.total", perf, $"modId={modId} pageId={state.PageId} path=ritsu");
             return;
         }
         if (TryRefreshNativeSettingsContent(list, pageTabChrome, modId, state, perf, generation))

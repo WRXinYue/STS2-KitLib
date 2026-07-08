@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mod panel — Ritsu-backed mod settings** — Fixed mods with RitsuLib-registered settings showing only a single entry instead of the full settings page in the Mod panel.
+
 ## [0.25.1] - 2026-07-09
 
 ### Fixed

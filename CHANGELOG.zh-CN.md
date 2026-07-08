@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mod 面板 — RitsuLib mod 设置** — 修复已通过 RitsuLib 注册设置页的 mod 在 Mod 面板中无法显示完整设置页的问题。
+
 ## [0.25.1] - 2026-07-09
 
 ### Fixed
