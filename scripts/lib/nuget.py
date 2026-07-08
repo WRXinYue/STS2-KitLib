@@ -35,9 +35,12 @@ def run_pack(
     package_version: str,
     configuration: str = "Release",
 ) -> Path:
-    dist_dll = repo_root / "build" / "dist" / "KitLib" / "KitLib.dll"
-    if not dist_dll.is_file():
-        raise RuntimeError(f"Mod dist not found: {dist_dll}\nRun make zip first.")
+    dist_entry = repo_root / "build" / "dist" / "KitLib" / "KitLib.dll"
+    dist_core = repo_root / "build" / "dist" / "KitLib" / "KitLib.Core.dll"
+    if not dist_entry.is_file() or not dist_core.is_file():
+        raise RuntimeError(
+            f"Mod dist not found: {dist_entry} and {dist_core}\nRun make zip first."
+        )
 
     out_dir = repo_root / "build" / "nuget"
     out_dir.mkdir(parents=True, exist_ok=True)

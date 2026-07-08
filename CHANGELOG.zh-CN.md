@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **RegisterCharacterProfile** — 内容 mod 可通过 `CompanionBridge` 仅注册角色 AI 配置（例如非战斗自动出牌），无需引用 `KitLib.AI.dll` 或提供自定义决策策略；在 AI 模块已加载时，KitLib 会使用内置默认策略。
 
+### Changed
+
+- **Mod 安装布局** — KitLib 以薄入口 `KitLib.dll` + 根目录 `KitLib.Core.dll` 发布，卫星模块在 `modules/`（不再从 `lib/` 按版本挑选 DLL）。若本地仍是旧目录结构，请从 Steam 创意工坊或 Nexus 重新订阅/下载。
+- **Steam 创意工坊** — 同一创意工坊条目可分别发布稳定版游戏分支（`public`）与 beta 分支（`public-beta`）的构建；订阅一次后，游戏会按你所在分支提供对应版本。
+
 ## [0.24.0] - 2026-07-04
 
 ### Added

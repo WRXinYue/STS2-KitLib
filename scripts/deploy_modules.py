@@ -33,7 +33,8 @@ _SKIP_DEPLOY_SUFFIXES = {".pdb"}
 _SKIP_DEPLOY_NAME_SUFFIXES = (".deps.json", ".runtimeconfig.json")
 _SKIP_DEPLOY_NAMES: set[str] = {"GodotSharp.dll"}
 
-CORE_DLL = "KitLib.dll"
+ENTRY_DLL = "KitLib.dll"
+CORE_DLL = "KitLib.Core.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
 MOD_VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
@@ -123,7 +124,7 @@ def _resolve_mod_variant_loader_dll() -> Path | None:
 
 
 def _assert_core_bundle(bundle_dir: Path) -> None:
-    required = [CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS, MOD_VARIANT_LOADER_DLL]
+    required = [ENTRY_DLL, CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS, MOD_VARIANT_LOADER_DLL]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
@@ -186,6 +187,22 @@ def _copy_tree_safe(src_dir: Path, dst: Path) -> list[Path]:
     return failed
 
 
+def _remove_stale_legacy_artifacts(bundle_dir: Path) -> None:
+    legacy_manifest = bundle_dir / "kitlib-variants.manifest"
+    if legacy_manifest.is_file():
+        try:
+            legacy_manifest.unlink()
+        except OSError:
+            print(f"Warning: could not remove stale {legacy_manifest.name}", file=sys.stderr)
+
+    legacy_lib = bundle_dir / "lib"
+    if legacy_lib.is_dir():
+        try:
+            shutil.rmtree(legacy_lib)
+        except OSError:
+            print("Warning: could not remove stale lib/ directory", file=sys.stderr)
+
+
 def _try_reset_bundle_dir(dst: Path) -> bool:
     if not dst.exists():
         dst.mkdir(parents=True)
@@ -243,6 +260,7 @@ def _deploy_bundle(mods_root: Path) -> list[Path]:
     if not _copy_file_safe(variant_loader, dst / MOD_VARIANT_LOADER_DLL):
         failed.append(dst / MOD_VARIANT_LOADER_DLL)
     _assert_core_bundle(dst)
+    _remove_stale_legacy_artifacts(dst)
 
     copied = 0
     for mod_id in BUNDLE_DLLS:

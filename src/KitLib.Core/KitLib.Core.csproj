@@ -15,7 +15,7 @@
     <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64</Sts2DataDir>
     <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64') and !Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_x86_64</Sts2DataDir>
     <ModId>KitLib</ModId>
-    <AssemblyName>$(ModId)</AssemblyName>
+    <AssemblyName>KitLib.Core</AssemblyName>
     <Sts2ModsRoot>$(Sts2Dir)/mods</Sts2ModsRoot>
     <Sts2ModsRoot Condition="'$(OS)' != 'Windows_NT'">$(Sts2Dir)/SlayTheSpire2.app/Contents/MacOS/mods</Sts2ModsRoot>
     <ModsDir>$(Sts2ModsRoot)/$(ModId)</ModsDir>
@@ -62,6 +62,8 @@
 
   <Target Name="ValidatePackDist" BeforeTargets="GenerateNuspec" Condition="'$(PackKitLib)' == 'true'">
     <Error Condition="!Exists('$(RepoRoot)build\dist\KitLib\KitLib.dll')"
+           Text="Run make zip before dotnet pack -p:PackKitLib=true." />
+    <Error Condition="!Exists('$(RepoRoot)build\dist\KitLib\KitLib.Core.dll')"
            Text="Run make zip before dotnet pack -p:PackKitLib=true." />
   </Target>
 
@@ -170,7 +172,8 @@
       Condition="'$(ModsDir)' == '$(Sts2ModsRoot)' or '$(ModsDir)' == '$(Sts2ModsRoot)/' or '$(ModsDir)' == '$(Sts2ModsRoot)\'"
       Text="ModsDir must be mods/$(ModId), not the entire mods folder ($(ModsDir))." />
     <MakeDir Directories="$(ModsDir)\" />
-    <Copy SourceFiles="$(RepoBuildDir)\$(ModId).dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\$(ModId).dll')" />
+    <Copy SourceFiles="$(RepoBuildDir)\KitLib.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.dll')" />
+    <Copy SourceFiles="$(RepoBuildDir)\KitLib.Core.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.Core.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\KitLib.Abstractions.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.Abstractions.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\Semver.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Semver.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll')" />

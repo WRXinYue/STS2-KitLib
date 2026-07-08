@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.Loader;
+using KitLib.Abstractions.Modding;
 
 namespace KitLib.Host;
 
@@ -97,8 +98,13 @@ internal static class ModAssemblyLoader {
         if (string.IsNullOrEmpty(simple))
             return null;
 
-        if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase)) {
-            var flat = Path.Combine(modDir, simple + ".dll");
+        if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(simple, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
+            var core = Path.Combine(modDir, ModVariantLayout.KitLibHostCoreFileName);
+            if (File.Exists(core))
+                return Path.GetFullPath(core);
+
+            var flat = Path.Combine(modDir, "KitLib.dll");
             if (File.Exists(flat))
                 return Path.GetFullPath(flat);
         }

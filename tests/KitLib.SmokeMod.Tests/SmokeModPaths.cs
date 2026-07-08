@@ -17,7 +17,7 @@ internal static class SmokeModPaths {
     public static string KitLibDll =>
         Environment.GetEnvironmentVariable("KITLIB_DLL") is { Length: > 0 } fromEnv
             ? Path.GetFullPath(fromEnv)
-            : Path.Combine(RepoRoot, "build", "KitLib", "KitLib.dll");
+            : Path.Combine(RepoRoot, "build", "KitLib", "KitLib.Core.dll");
 
     public static string AbstractionsDll {
         get {

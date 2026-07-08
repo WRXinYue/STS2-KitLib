@@ -42,7 +42,8 @@ internal static class SmokeModTestHost {
             && File.Exists(SmokeModPaths.AbstractionsDll))
             return Alc.LoadFromAssemblyPath(SmokeModPaths.AbstractionsDll);
 
-        if (string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase)
+        if ((string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(simpleName, "KitLib.Core", StringComparison.OrdinalIgnoreCase))
             && File.Exists(SmokeModPaths.KitLibDll))
             return Alc.LoadFromAssemblyPath(SmokeModPaths.KitLibDll);
 

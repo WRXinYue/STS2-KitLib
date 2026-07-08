@@ -11,6 +11,9 @@ public static class ModVariantLayout {
 
     public const string LibDirectoryName = "lib";
 
+    /// <summary>KitLib host implementation DLL (thin <c>KitLib.dll</c> loader at mod root).</summary>
+    public const string KitLibHostCoreFileName = "KitLib.Core.dll";
+
     public static string ManifestFileName(string modId) =>
         $"{modId.ToLowerInvariant()}-variants.manifest";
 

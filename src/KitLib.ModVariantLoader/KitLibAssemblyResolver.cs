@@ -67,8 +67,13 @@ internal static class KitLibAssemblyResolver {
     }
 
     static string? FindDependencyPath(string simpleName) {
-        if (string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase)) {
-            var flat = Path.Combine(_kitLibModDir!, simpleName + ".dll");
+        if (string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(simpleName, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
+            var core = Path.Combine(_kitLibModDir!, ModVariantLayout.KitLibHostCoreFileName);
+            if (File.Exists(core))
+                return Path.GetFullPath(core);
+
+            var flat = Path.Combine(_kitLibModDir!, "KitLib.dll");
             if (File.Exists(flat))
                 return Path.GetFullPath(flat);
         }

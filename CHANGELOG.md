@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **RegisterCharacterProfile** — Content mods can register a per-character AI profile (e.g. non-combat auto-play) through `CompanionBridge` without referencing `KitLib.AI.dll` or supplying a custom decision strategy; when the AI module is loaded, KitLib uses its built-in default strategy.
 
+### Changed
+
+- **Mod install layout** — KitLib ships a thin `KitLib.dll` entry loader plus `KitLib.Core.dll` at the mod root, with satellite modules in `modules/` (no `lib/` variant picker). Re-subscribe or re-download from Steam Workshop or Nexus if your folder still uses the old layout.
+- **Steam Workshop** — One workshop listing publishes separate builds for the stable game branch (`public`) and the beta branch (`public-beta`); subscribe once and the game serves the build that matches your branch.
+
 ## [0.24.0] - 2026-07-04
 
 ### Added

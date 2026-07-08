@@ -15,8 +15,9 @@ public static class ModVariantBootstrap {
     private static readonly MethodInfo? AssociateAssemblyWithModMethod = CreateAssociateAssemblyWithModMethod();
     private static bool _reflectionBridgePatched;
 
-    const string ModVariantLoaderAssemblyName = "KitLib.ModVariantLoader";
-    const string KitLibModFolderName = "KitLib";
+    public const string ModVariantLoaderAssemblyName = "KitLib.ModVariantLoader";
+    public const string KitLibCoreFileName = ModVariantLayout.KitLibHostCoreFileName;
+    public const string KitLibModFolderName = "KitLib";
     const string ModManifestFileName = "mod_manifest.json";
 
     static readonly string[] KitLibHostDeps = [
@@ -42,7 +43,6 @@ public static class ModVariantBootstrap {
         if (modId is null)
             return;
 
-        var manifestName = options.VariantManifestFileName ?? ModVariantLayout.ManifestFileName(modId);
         var logPrefix = options.LogPrefix ?? $"{modId}.Loader";
         var harmonyId = options.HarmonyId ?? $"KitLib.ModVariantLoader.{modId}";
 
@@ -50,6 +50,14 @@ public static class ModVariantBootstrap {
             message => LogInfo(logPrefix, message),
             message => LogWarn(logPrefix, message));
 
+        var implementationFile = options.ImplementationAssemblyFileName?.Trim();
+        if (!string.IsNullOrEmpty(implementationFile)) {
+            var flatPath = Path.Combine(loaderDir, implementationFile);
+            LoadAndInitializeImplementation(hostAssembly, modId, flatPath, logPrefix, harmonyId);
+            return;
+        }
+
+        var manifestName = options.VariantManifestFileName ?? ModVariantLayout.ManifestFileName(modId);
         var libRoot = Path.Combine(loaderDir, ModVariantLayout.LibDirectoryName);
         if (!Directory.Exists(libRoot)) {
             LogError(logPrefix, $"Missing lib directory: {libRoot}");
@@ -70,29 +78,30 @@ public static class ModVariantBootstrap {
             logPrefix,
             $"Host version label={hostLabel ?? "<none>"} numeric={hostNumeric?.ToString() ?? "<none>"}; picked variant {picked.CompatTarget}.");
 
-        if (!File.Exists(picked.DllPath)) {
-            LogError(logPrefix, $"Variant file missing: {picked.DllPath}");
+        LoadAndInitializeImplementation(hostAssembly, modId, picked.DllPath, logPrefix, harmonyId);
+    }
+
+    static void LoadAndInitializeImplementation(
+        Assembly hostAssembly,
+        string modId,
+        string dllPath,
+        string logPrefix,
+        string harmonyId) {
+        if (!File.Exists(dllPath)) {
+            LogError(logPrefix, $"Implementation file missing: {dllPath}");
             return;
         }
 
         var alc = AssemblyLoadContext.GetLoadContext(hostAssembly) ?? AssemblyLoadContext.Default;
-        Assembly realAsm;
         try {
-            realAsm = alc.LoadFromAssemblyPath(picked.DllPath);
+            var realAsm = alc.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
             ModVariantRegistry.Register(realAsm);
             EnsureReflectionBridgePatch(harmonyId);
             AssociateVariantAssemblyWithGame(modId, realAsm, logPrefix);
-        }
-        catch (Exception ex) {
-            LogError(logPrefix, $"Failed to load {picked.DllPath}: {ex}");
-            return;
-        }
-
-        try {
             InvokeRealInitializer(realAsm, logPrefix);
         }
         catch (Exception ex) {
-            LogError(logPrefix, $"Failed to initialize {modId} variant: {ex}");
+            LogError(logPrefix, $"Failed to load {dllPath}: {ex}");
         }
     }
 
@@ -159,23 +168,20 @@ public static class ModVariantBootstrap {
         if (string.IsNullOrEmpty(hostDir))
             throw new InvalidOperationException("Mod variant loader: cannot resolve host mod directory.");
 
+        var hostIsKitLibLoader = string.Equals(hostAssembly.GetName().Name, KitLibModFolderName, StringComparison.OrdinalIgnoreCase);
         var hostIsModVariantLoader = string.Equals(
             hostAssembly.GetName().Name,
             ModVariantLoaderAssemblyName,
             StringComparison.OrdinalIgnoreCase);
 
-        var kitLibDir = hostIsModVariantLoader
+        var kitLibDir = hostIsKitLibLoader
             ? hostDir
             : Path.GetFullPath(Path.Combine(hostDir, "..", KitLibModFolderName));
         if (!Directory.Exists(kitLibDir))
             throw new DirectoryNotFoundException(
                 $"KitLib mod folder not found at {kitLibDir}. Install KitLib 0.24+.");
 
-        var kitLibCorePath = !hostIsModVariantLoader
-            ? Path.Combine(kitLibDir, "KitLib.dll")
-            : null;
-        if (kitLibCorePath != null && File.Exists(kitLibCorePath) && FindLoaded(alc, "KitLib") is null)
-            alc.LoadFromAssemblyPath(Path.GetFullPath(kitLibCorePath));
+        PreloadKitLibImplementation(alc, kitLibDir, hostIsKitLibLoader);
 
         foreach (var fileName in KitLibHostDeps) {
             var simpleName = Path.GetFileNameWithoutExtension(fileName);
@@ -196,6 +202,22 @@ public static class ModVariantBootstrap {
 
         if (FindLoaded(alc, ModVariantLoaderAssemblyName) is null)
             throw new FileNotFoundException("KitLib.ModVariantLoader failed to load from mods/KitLib/.");
+    }
+
+    static void PreloadKitLibImplementation(AssemblyLoadContext alc, string kitLibDir, bool hostIsKitLibLoader) {
+        if (hostIsKitLibLoader)
+            return;
+
+        var corePath = Path.Combine(kitLibDir, KitLibCoreFileName);
+        if (File.Exists(corePath)) {
+            if (FindLoaded(alc, "KitLib.Core") is null)
+                alc.LoadFromAssemblyPath(Path.GetFullPath(corePath));
+            return;
+        }
+
+        var legacyPath = Path.Combine(kitLibDir, "KitLib.dll");
+        if (File.Exists(legacyPath) && FindLoaded(alc, KitLibModFolderName) is null)
+            alc.LoadFromAssemblyPath(Path.GetFullPath(legacyPath));
     }
 
     private static Assembly? FindLoaded(AssemblyLoadContext alc, string simpleName) {

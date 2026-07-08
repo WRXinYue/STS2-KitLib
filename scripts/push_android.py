@@ -179,6 +179,8 @@ def _validate_kitlib_build(repo_root: Path) -> Path:
         _fail(f"Build folder missing: {bundle}\nRun `make build` first.")
     if not (bundle / "KitLib.dll").is_file():
         _fail(f"Missing KitLib.dll in {bundle}\nRun `make build` first.")
+    if not (bundle / "KitLib.Core.dll").is_file():
+        _fail(f"Missing KitLib.Core.dll in {bundle}\nRun `make build` first.")
     if not (bundle / "mod_manifest.json").is_file():
         _fail(f"Missing mod_manifest.json in {bundle}\nRun `make build` first.")
     return bundle

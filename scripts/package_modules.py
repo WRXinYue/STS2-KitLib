@@ -26,7 +26,8 @@ BUNDLE_DLLS = [
     "KitLib.AI",
 ]
 
-CORE_DLL = "KitLib.dll"
+ENTRY_DLL = "KitLib.dll"
+CORE_DLL = "KitLib.Core.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
 MOD_VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
@@ -99,7 +100,7 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
 
 
 def _assert_core_bundle(bundle_dir: Path) -> None:
-    required = [CORE_DLL, ABSTRACTIONS_DLL, MOD_VARIANT_LOADER_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+    required = [ENTRY_DLL, CORE_DLL, ABSTRACTIONS_DLL, MOD_VARIANT_LOADER_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")

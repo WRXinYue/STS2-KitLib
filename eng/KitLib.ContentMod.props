@@ -4,8 +4,8 @@
     <KitLibBundleDir>$(RepoRoot)build/KitLib/</KitLibBundleDir>
     <KitLibAbstractionsDllPath>$(KitLibBundleDir)KitLib.Abstractions.dll</KitLibAbstractionsDllPath>
     <KitLibAbstractionsDllPath Condition="!Exists('$(KitLibAbstractionsDllPath)')">$(RepoRoot)src/KitLib.Abstractions/bin/$(Configuration)/net9.0/KitLib.Abstractions.dll</KitLibAbstractionsDllPath>
-    <KitLibDllPath>$(KitLibBundleDir)KitLib.dll</KitLibDllPath>
-    <KitLibDllPath Condition="!Exists('$(KitLibDllPath)')">$(RepoRoot)src/KitLib.Core/bin/$(Configuration)/net9.0/KitLib.dll</KitLibDllPath>
+    <KitLibCoreDllPath>$(KitLibBundleDir)KitLib.Core.dll</KitLibCoreDllPath>
+    <KitLibCoreDllPath Condition="!Exists('$(KitLibCoreDllPath)')">$(RepoRoot)src/KitLib.Core/bin/$(Configuration)/net9.0/KitLib.Core.dll</KitLibCoreDllPath>
   </PropertyGroup>
 
   <Target Name="EnsureKitLibCoreForContentMod" BeforeTargets="ResolveAssemblyReferences">
@@ -17,15 +17,15 @@
       Projects="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj"
       Targets="Build"
       Properties="Configuration=$(Configuration);Sts2Profile=$(_CoreBuildProfile);Sts2Dir=$(Sts2Dir)"
-      Condition="!Exists('$(KitLibDllPath)') and '$(Sts2Dir)' != ''" />
+      Condition="!Exists('$(KitLibCoreDllPath)')" />
     <Error
-      Condition="!Exists('$(KitLibDllPath)')"
-      Text="KitLib core not found at $(KitLibDllPath). Run make build." />
+      Condition="!Exists('$(KitLibCoreDllPath)')"
+      Text="KitLib.Core.dll not found at $(KitLibCoreDllPath). Run make build." />
   </Target>
 
   <Target Name="CheckContentModKitLibRefs" BeforeTargets="BeforeBuild;BeforePublish" DependsOnTargets="EnsureKitLibCoreForContentMod">
     <Error Condition="!Exists('$(KitLibAbstractionsDllPath)')" Text="KitLib.Abstractions.dll not found at $(KitLibAbstractionsDllPath). Run make build." />
-    <Error Condition="!Exists('$(KitLibDllPath)')" Text="KitLib.dll not found at $(KitLibDllPath). Run make build." />
+    <Error Condition="!Exists('$(KitLibCoreDllPath)')" Text="KitLib.Core.dll not found at $(KitLibCoreDllPath). Run make build." />
   </Target>
 
   <ItemGroup>
@@ -33,8 +33,8 @@
       <HintPath>$(KitLibAbstractionsDllPath)</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="KitLib" Aliases="KitLibCore">
-      <HintPath>$(KitLibDllPath)</HintPath>
+    <Reference Include="KitLib.Core" Aliases="KitLibCore">
+      <HintPath>$(KitLibCoreDllPath)</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
