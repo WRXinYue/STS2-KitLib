@@ -36,16 +36,13 @@ PROFILE_BRANCH = {
     "stable": ("public", "public"),
     "beta": ("public-beta", "public-beta"),
 }
-PROFILE_TITLE = {
-    "stable": "Stable",
-    "beta": "Beta",
-}
 
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
 from lib.steam_changelog import get_change_note  # noqa: E402
+from lib.bundle_build import build_bundle  # noqa: E402
 from lib.steam_readme import get_workshop_description  # noqa: E402
 
 
@@ -59,26 +56,12 @@ def _workspace_dir(profile: str) -> Path:
     return _DIST / f"workshop-{profile}"
 
 
-def _read_kitlib_manifest() -> dict:
-    return json.loads((_REPO / "KitLib.json").read_text(encoding="utf-8"))
-
-
 def _run_profile_build(profile: str) -> None:
     sts2_dir = subprocess.check_output(
         [sys.executable, str(_SCRIPT_DIR / "resolve_sts2_profile_dir.py"), profile],
         text=True,
     ).strip()
-    cmd = [
-        "dotnet",
-        "build",
-        "KitLib.sln",
-        f"-p:Sts2Profile={profile}",
-        f"-p:Sts2Dir={sts2_dir}",
-        "-c",
-        "Release",
-    ]
-    print(" ".join(cmd))
-    subprocess.check_call(cmd, cwd=_REPO)
+    build_bundle(configuration="Release", sts2_profile=profile, sts2_dir=sts2_dir)
 
 
 def _stage_bundle(skip_build: bool) -> Path:
@@ -107,9 +90,17 @@ def _resolve_preview_image() -> Path:
     )
 
 
-def _resolve_change_note(change_note: str | None, *, prefer_unreleased: bool) -> str:
+def _resolve_change_note(
+    change_note: str | None,
+    *,
+    profile: str,
+    prefer_unreleased: bool,
+) -> str:
     if change_note and change_note.strip():
         return change_note.strip()
+    # One workshop item: stable upload carries the version changelog; beta only updates content.
+    if profile == "beta":
+        return ""
     note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
     if not note:
         raise RuntimeError(
@@ -119,34 +110,57 @@ def _resolve_change_note(change_note: str | None, *, prefer_unreleased: bool) ->
     return note
 
 
+def _format_workshop_change_note(
+    profile: str,
+    base_note: str,
+    *,
+    branch_targeting: bool,
+) -> str:
+    if profile == "beta" and not base_note:
+        return ""
+    if branch_targeting and profile == "stable":
+        min_branch, _max_branch = PROFILE_BRANCH[profile]
+        suffix = f"\n\n({min_branch})"
+        return f"{base_note}{suffix}"
+    return base_note
+
+
 def _write_workshop_json(
     workspace: Path,
     profile: str,
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
+    branch_targeting: bool = True,
 ) -> None:
-    min_branch, max_branch = PROFILE_BRANCH[profile]
-    manifest = _read_kitlib_manifest()
-    version = manifest.get("version", "0.0.0")
-    title_suffix = PROFILE_TITLE[profile]
-    base_note = _resolve_change_note(change_note, prefer_unreleased=prefer_unreleased)
+    base_note = _resolve_change_note(
+        change_note,
+        profile=profile,
+        prefer_unreleased=prefer_unreleased,
+    )
+    resolved_note = _format_workshop_change_note(
+        profile,
+        base_note,
+        branch_targeting=branch_targeting,
+    )
     workshop = {
-        "title": f"KitLib {version} ({title_suffix})",
+        "title": "KitLib",
         "description": get_workshop_description(_REPO),
         "visibility": "public",
-        "changeNote": f"{base_note}\n\n({title_suffix} / {min_branch})",
+        "changeNote": resolved_note,
         "tags": ["Tools & APIs"],
         "dependencies": [],
         "contentDescriptors": [],
-        "minBranch": min_branch,
-        "maxBranch": max_branch,
     }
+    if branch_targeting:
+        min_branch, max_branch = PROFILE_BRANCH[profile]
+        workshop["minBranch"] = min_branch
+        workshop["maxBranch"] = max_branch
     (workspace / "workshop.json").write_text(
         json.dumps(workshop, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    (workspace / "changeNote.preview.txt").write_text(workshop["changeNote"] + "\n", encoding="utf-8")
+    (workspace / "changeNote.preview.txt").write_text(resolved_note + "\n", encoding="utf-8")
     (workspace / "description.preview.txt").write_text(workshop["description"] + "\n", encoding="utf-8")
 
 
@@ -162,12 +176,24 @@ def _sync_mod_id_file(workspace: Path) -> None:
     (workspace / "mod_id.txt").write_text(workshop_id + "\n", encoding="utf-8")
 
 
+def _clear_branch_targeting(workspace: Path) -> None:
+    path = workspace / "workshop.json"
+    if not path.is_file():
+        return
+    workshop = json.loads(path.read_text(encoding="utf-8"))
+    workshop.pop("minBranch", None)
+    workshop.pop("maxBranch", None)
+    path.write_text(json.dumps(workshop, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Cleared minBranch/maxBranch in {path.relative_to(_REPO)}")
+
+
 def sync_profile(
     profile: str,
     skip_build: bool,
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
+    branch_targeting: bool = True,
 ) -> Path:
     workspace = _workspace_dir(profile)
     content = workspace / "content"
@@ -180,7 +206,13 @@ def sync_profile(
     shutil.copytree(bundle, content)
 
     shutil.copy2(_resolve_preview_image(), workspace / "image.png")
-    _write_workshop_json(workspace, profile, change_note, prefer_unreleased=prefer_unreleased)
+    _write_workshop_json(
+        workspace,
+        profile,
+        change_note,
+        prefer_unreleased=prefer_unreleased,
+        branch_targeting=branch_targeting,
+    )
     _sync_mod_id_file(workspace)
 
     file_count = sum(1 for p in content.rglob("*") if p.is_file())
@@ -194,9 +226,16 @@ def sync_workspaces(
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
+    branch_targeting: bool = True,
 ) -> None:
     for profile in _profiles(selection):
-        sync_profile(profile, skip_build, change_note, prefer_unreleased=prefer_unreleased)
+        sync_profile(
+            profile,
+            skip_build,
+            change_note,
+            prefer_unreleased=prefer_unreleased,
+            branch_targeting=branch_targeting,
+        )
 
 
 def _uploader_setup_error() -> str | None:
@@ -245,7 +284,7 @@ def _persist_workshop_id(mod_id: str) -> None:
         print(f"Updated {dotenv_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
 
 
-def upload_profile(profile: str, dry_run: bool) -> int:
+def upload_profile(profile: str, dry_run: bool, *, branch_targeting: bool = True) -> int:
     workspace = _workspace_dir(profile)
     for name in ("workshop.json", "image.png"):
         if not (workspace / name).is_file():
@@ -255,6 +294,8 @@ def upload_profile(profile: str, dry_run: bool) -> int:
                 file=sys.stderr,
             )
             return 1
+    if not branch_targeting:
+        _clear_branch_targeting(workspace)
     content = workspace / "content"
     if not content.is_dir() or not any(content.iterdir()):
         print(
@@ -281,7 +322,7 @@ def upload_profile(profile: str, dry_run: bool) -> int:
     return 0
 
 
-def upload_workspaces(selection: str, dry_run: bool, *, optional: bool = False) -> int:
+def upload_workspaces(selection: str, dry_run: bool, *, optional: bool = False, branch_targeting: bool = True) -> int:
     err = _uploader_setup_error()
     if err:
         if optional:
@@ -291,7 +332,7 @@ def upload_workspaces(selection: str, dry_run: bool, *, optional: bool = False) 
 
     exit_code = 0
     for profile in _profiles(selection):
-        code = upload_profile(profile, dry_run)
+        code = upload_profile(profile, dry_run, branch_targeting=branch_targeting)
         if code != 0:
             exit_code = code
     return exit_code
@@ -322,6 +363,11 @@ def main() -> int:
         action="store_true",
         help="Use ## [Unreleased] instead of the latest released version section",
     )
+    sync_ap.add_argument(
+        "--no-branch-targeting",
+        action="store_true",
+        help="Omit minBranch/maxBranch from workshop.json (upload test / legacy items)",
+    )
 
     upload_ap = sub.add_parser("upload", help="Run ModUploader.exe for workshop workspace(s)")
     upload_ap.add_argument(
@@ -337,6 +383,11 @@ def main() -> int:
         action="store_true",
         help="Exit 0 with a warning if STS2_MOD_UPLOADER is missing (for upload-all)",
     )
+    upload_ap.add_argument(
+        "--no-branch-targeting",
+        action="store_true",
+        help="Strip minBranch/maxBranch from workshop.json before upload",
+    )
 
     args = ap.parse_args()
     if args.command == "sync":
@@ -345,9 +396,15 @@ def main() -> int:
             args.skip_build,
             args.change_note or None,
             prefer_unreleased=args.unreleased,
+            branch_targeting=not args.no_branch_targeting,
         )
         return 0
-    return upload_workspaces(args.profile, args.dry_run, optional=args.optional)
+    return upload_workspaces(
+        args.profile,
+        args.dry_run,
+        optional=args.optional,
+        branch_targeting=not args.no_branch_targeting,
+    )
 
 
 if __name__ == "__main__":

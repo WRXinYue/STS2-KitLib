@@ -71,12 +71,13 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Dev/KitLib.Dev.csproj src/KitLib.Modules.AI/KitLib.AI.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
-STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,)
+STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
+STEAM_UPLOAD_FLAGS := $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
 STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync all $(STEAM_SYNC_FLAGS)
 STEAM_SYNC_STABLE := $(PYTHON) scripts/publish_steam.py sync stable $(STEAM_SYNC_FLAGS)
 STEAM_SYNC_BETA := $(PYTHON) scripts/publish_steam.py sync beta $(STEAM_SYNC_FLAGS)
-STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload all --optional
-STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload all
+STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload all --optional $(STEAM_UPLOAD_FLAGS)
+STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload all $(STEAM_UPLOAD_FLAGS)
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
         build-stable build-beta build-profiles build-flat workshop workshop-stable workshop-beta extract-touchpoints check-api verify-profiles capture-sts2-ref \
@@ -196,7 +197,7 @@ build: build-flat
 	@echo "KitLib flat bundle for profile $(STS2_COMPILE_PROFILE)"
 
 build-flat:
-	$(DOTNET) build KitLib.sln $(STS2_MSBUILD_PROFILE) -c Debug
+	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile $(STS2_COMPILE_PROFILE)
 
 build-all: build-flat
 
@@ -319,10 +320,10 @@ upload-steam: workshop
 	$(STEAM_UPLOAD_STRICT)
 
 upload-steam-stable: workshop-stable
-	$(PYTHON) scripts/publish_steam.py upload stable
+	$(PYTHON) scripts/publish_steam.py upload stable $(STEAM_UPLOAD_FLAGS)
 
 upload-steam-beta: workshop-beta
-	$(PYTHON) scripts/publish_steam.py upload beta
+	$(PYTHON) scripts/publish_steam.py upload beta $(STEAM_UPLOAD_FLAGS)
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py

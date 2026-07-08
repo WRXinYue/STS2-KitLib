@@ -7,12 +7,15 @@ import argparse
 import json
 import os
 import shutil
-import subprocess
 import sys
 import zipfile
 from pathlib import Path
 
 _REPO = Path(__file__).resolve().parent.parent
+if str(_REPO / "scripts") not in sys.path:
+    sys.path.insert(0, str(_REPO / "scripts"))
+
+from lib.bundle_build import build_bundle  # noqa: E402
 
 BUNDLE_ID = "KitLib"
 MODULES_SUBDIR = "modules"
@@ -36,6 +39,11 @@ ABSTRACTIONS_RUNTIME_DLLS = [
 ]
 
 _SKIP_PACKAGE_NAMES = {"GodotSharp.dll"}
+_SKIP_PACKAGE_ROOT_NAMES = {
+    "kitlib-variants.manifest",
+    "lib",
+    MODULES_SUBDIR,
+}
 _SKIP_PACKAGE_SUFFIXES = {".pdb"}
 _SKIP_PACKAGE_NAME_SUFFIXES = (".deps.json", ".runtimeconfig.json")
 
@@ -112,17 +120,15 @@ def _read_version() -> str:
 
 
 def _dotnet_build() -> None:
-    subprocess.run(
-        ["dotnet", "build", str(_REPO / "KitLib.sln")],
-        cwd=_REPO,
-        check=True,
-    )
+    build_bundle()
 
 
 def _should_package_root_item(item: Path) -> bool:
     if item.name in _SKIP_PACKAGE_NAMES:
         return False
-    if item.name in (MODULES_SUBDIR, "lib"):
+    if item.name in _SKIP_PACKAGE_ROOT_NAMES:
+        return False
+    if item.name.endswith("-variants.manifest"):
         return False
     lower = item.name.lower()
     if any(lower.endswith(suffix) for suffix in _SKIP_PACKAGE_NAME_SUFFIXES):
