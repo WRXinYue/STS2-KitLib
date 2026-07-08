@@ -433,12 +433,19 @@ public static partial class ModPanelUI {
         }
         else {
             foreach (var info in ordered) {
-                var tipParts = new List<string> { info.DisplayName, info.Id, info.LoadStatus.ToString() };
+                var tipParts = new List<string> {
+                    info.DisplayName,
+                    info.Id,
+                    ModPanelInstallSource.FormatLoadStatus(info.LoadStatus),
+                    ModPanelInstallSource.FormatSourceLabel(info.Source),
+                };
                 if (!string.IsNullOrWhiteSpace(info.Version))
                     tipParts.Add(info.Version);
                 tipParts.Add(info.IsEnabledInSettings
                     ? I18N.T("modpanel.sidebar.enabled", "enabled")
                     : I18N.T("modpanel.sidebar.disabled", "disabled"));
+                if (!string.IsNullOrWhiteSpace(info.InstallPath))
+                    tipParts.Add(info.InstallPath);
                 if (!string.IsNullOrWhiteSpace(gameBuild))
                     tipParts.Add(string.Format(
                         I18N.T("modpanel.sidebar.gameBuild.short", "build {0}"), gameBuild));
@@ -516,6 +523,7 @@ public static partial class ModPanelUI {
                 var versionChip = CreateSidebarModListVersionChip(captured.Version);
                 if (versionChip != null)
                     rowContent.AddChild(versionChip);
+                rowContent.AddChild(CreateSidebarModListSourceChip(captured.Source));
                 rowHost.AddChild(rowContent);
                 var vm = new SidebarModRowVm {
                     Entry = captured,
@@ -660,9 +668,22 @@ public static partial class ModPanelUI {
             versionBadgePanel.Visible = true;
             versionLabel.Text = ModPanelModBanner.FormatVersionBadgeText(entry.Version);
         }
-        metaLabel.SetTextAutoSize($"{entry.Id} · {entry.LoadStatus}");
-        descLabel.Visible = false;
-        descLabel.SetTextAutoSize("");
+        metaLabel.SetTextAutoSize(string.Join(" · ", new[] {
+            entry.Id,
+            ModPanelInstallSource.FormatSourceLabel(entry.Source),
+            ModPanelInstallSource.FormatLoadStatus(entry.LoadStatus),
+        }));
+        var shortPath = ModPanelInstallSource.FormatShortPath(entry.InstallPath, entry.Source);
+        if (string.IsNullOrWhiteSpace(shortPath)) {
+            descLabel.Visible = false;
+            descLabel.SetTextAutoSize("");
+            descLabel.TooltipText = "";
+        }
+        else {
+            descLabel.Visible = true;
+            descLabel.SetTextAutoSize(shortPath);
+            descLabel.TooltipText = entry.InstallPath ?? "";
+        }
     }
     private static void ApplySidebarTexts(Mod? mod, string modId, MegaRichTextLabel titleLabel,
         PanelContainer versionBadgePanel, Label versionLabel, MegaRichTextLabel metaLabel,
@@ -686,23 +707,32 @@ public static partial class ModPanelUI {
             versionBadgePanel.Visible = true;
             versionLabel.Text = ModPanelModBanner.FormatVersionBadgeText(ver);
         }
-        var author = ModPanelModBanner.ResolveAuthor(mod);
-        var metaParts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(author))
-            metaParts.Add(author);
-        metaParts.Add(modId);
-        metaLabel.SetTextAutoSize(string.Join(" · ", metaParts));
+        var source = ModPanelInstallSource.FromStsSource(mod.modSource);
+        var loadStatus = ModPanelInstallSource.FromStsLoadState(mod.state);
+        metaLabel.SetTextAutoSize(string.Join(" · ", new[] {
+            modId,
+            ModPanelInstallSource.FormatSourceLabel(source),
+            ModPanelInstallSource.FormatLoadStatus(loadStatus),
+        }));
         var descParts = new List<string>();
+        var author = ModPanelModBanner.ResolveAuthor(mod);
+        if (!string.IsNullOrWhiteSpace(author))
+            descParts.Add(author);
         var desc = ModPanelModBanner.ResolveDescription(mod);
         if (!string.IsNullOrWhiteSpace(desc))
             descParts.Add(desc);
+        var shortPath = ModPanelInstallSource.FormatShortPath(mod.path, source);
+        if (!string.IsNullOrWhiteSpace(shortPath))
+            descParts.Add(shortPath);
         if (descParts.Count == 0) {
             descLabel.Visible = false;
             descLabel.SetTextAutoSize("");
+            descLabel.TooltipText = "";
         }
         else {
             descLabel.Visible = true;
             descLabel.SetTextAutoSize(string.Join("\n\n", descParts));
+            descLabel.TooltipText = string.IsNullOrWhiteSpace(mod.path) ? "" : mod.path;
         }
     }
     private static void ApplyPreviewState(Texture2D? tex, bool noModSelected, TextureRect modIcon,

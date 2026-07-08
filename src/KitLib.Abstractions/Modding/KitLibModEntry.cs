@@ -8,7 +8,8 @@ public readonly record struct KitLibModEntry(
     IReadOnlyList<string> Dependencies,
     ModEntryLoadStatus LoadStatus,
     ModEntrySource Source,
-    bool IsEnabledInSettings) {
+    bool IsEnabledInSettings,
+    string? InstallPath = null) {
     public bool IsLoaded => LoadStatus == ModEntryLoadStatus.Loaded;
 
     public KitLibModInfo ToModInfo() => new(Id, DisplayName, Version, Dependencies);

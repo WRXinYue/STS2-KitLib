@@ -10,7 +10,7 @@ public sealed class ModPanelSidebarPlannerTests {
 
     static KitLibModEntry Entry(string id, string name, ModEntryLoadStatus status = ModEntryLoadStatus.Loaded,
         bool enabled = true)
-        => new(id, name, "1.0", [], status, ModEntrySource.ModsDirectory, enabled);
+        => new(id, name, "1.0", [], status, ModEntrySource.ModsDirectory, enabled, null);
 
     static bool IsRitsuFramework(string? id) =>
         string.Equals(id, "STS2-RitsuLib", StringComparison.OrdinalIgnoreCase)

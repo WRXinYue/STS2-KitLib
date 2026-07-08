@@ -54,7 +54,8 @@ public sealed class Sts2ModRegistry : IModRegistry {
             Sts2ModCatalogDeps.CopyDependencies(man),
             MapLoadStatus(mod.state),
             MapSource(mod.modSource),
-            enabled);
+            enabled,
+            mod.path);
     }
 
     internal static ModEntryLoadStatus MapLoadStatus(ModLoadState state) => state switch {
@@ -62,6 +63,7 @@ public sealed class Sts2ModRegistry : IModRegistry {
         ModLoadState.Loaded => ModEntryLoadStatus.Loaded,
         ModLoadState.Failed => ModEntryLoadStatus.Failed,
         ModLoadState.Disabled => ModEntryLoadStatus.Disabled,
+        ModLoadState.DisabledDuplicate => ModEntryLoadStatus.DisabledDuplicate,
         ModLoadState.AddedAtRuntime => ModEntryLoadStatus.AddedAtRuntime,
         _ => ModEntryLoadStatus.None,
     };

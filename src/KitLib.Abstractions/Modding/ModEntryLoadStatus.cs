@@ -6,5 +6,6 @@ public enum ModEntryLoadStatus {
     Loaded,
     Failed,
     Disabled,
+    DisabledDuplicate,
     AddedAtRuntime,
 }

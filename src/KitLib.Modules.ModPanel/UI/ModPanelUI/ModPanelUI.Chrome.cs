@@ -19,6 +19,7 @@ public static partial class ModPanelUI {
         ModEntryLoadStatus.Loaded => ModPanelUiPalette.LabelPrimary,
         ModEntryLoadStatus.Failed => ModPanelUiPalette.CompatWarning,
         ModEntryLoadStatus.Disabled => new Color(0.55f, 0.52f, 0.48f, 0.95f),
+        ModEntryLoadStatus.DisabledDuplicate => new Color(0.55f, 0.52f, 0.48f, 0.95f),
         ModEntryLoadStatus.AddedAtRuntime => new Color(0.55f, 0.52f, 0.48f, 0.95f),
         _ => new Color(0.62f, 0.52f, 0.72f, 0.95f),
     };
@@ -136,6 +137,27 @@ public static partial class ModPanelUI {
             LabelSettings = new LabelSettings {
                 FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
                 FontColor = ModPanelUiPalette.SidebarModActiveAccent,
+            },
+        });
+        return chip;
+    }
+    internal static PanelContainer CreateSidebarModListSourceChip(ModEntrySource source) {
+        var chip = new PanelContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
+        chip.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle(compact: true));
+        chip.AddChild(new Label {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Text = ModPanelInstallSource.FormatSourceLabel(source),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            LabelSettings = new LabelSettings {
+                FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
+                FontColor = source == ModEntrySource.SteamWorkshop
+                    ? new Color(0.45f, 0.72f, 0.95f, 0.95f)
+                    : ModPanelUiPalette.RichTextSecondary,
             },
         });
         return chip;
