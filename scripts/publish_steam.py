@@ -15,7 +15,9 @@ Workspaces: build/dist/workshop-stable/, build/dist/workshop-beta/
 
 workshop.json omits description on first sync; later syncs preserve a local copy only.
 Steam listing text is not updated by sync/upload — edit it on the Workshop page.
-Optional draft: assets/readme.steam.txt (not read by publish_steam.py).
+Optional local drafts (manual paste on Steam Workshop):
+  assets/readme.steam.en.txt
+  assets/readme.steam.zh-CN.txt
 """
 
 from __future__ import annotations
@@ -147,19 +149,25 @@ def _write_workshop_json(
         encoding="utf-8",
     )
     (workspace / "changeNote.preview.txt").write_text(resolved_note + "\n", encoding="utf-8")
-    draft = _REPO / "assets" / "readme.steam.txt"
-    if draft.is_file() and draft.read_text(encoding="utf-8").strip():
-        description_preview = draft.read_text(encoding="utf-8").strip()
-        if len(description_preview) > STEAM_DESCRIPTION_MAX:
-            print(
-                f"WARN: {draft.relative_to(_REPO)} is {len(description_preview)} chars "
-                f"(Steam limit {STEAM_DESCRIPTION_MAX}).",
-                file=sys.stderr,
-            )
+    draft_en = _REPO / "assets" / "readme.steam.en.txt"
+    draft_zh = _REPO / "assets" / "readme.steam.zh-CN.txt"
+    preview_parts: list[str] = []
+    for path in (draft_en, draft_zh):
+        if path.is_file() and path.read_text(encoding="utf-8").strip():
+            text = path.read_text(encoding="utf-8").strip()
+            if len(text) > STEAM_DESCRIPTION_MAX:
+                print(
+                    f"WARN: {path.relative_to(_REPO)} is {len(text)} chars "
+                    f"(Steam limit {STEAM_DESCRIPTION_MAX}).",
+                    file=sys.stderr,
+                )
+            preview_parts.append(f"--- {path.name} ---\n{text}")
+    if preview_parts:
+        description_preview = "\n\n".join(preview_parts)
     else:
         description_preview = (
             "(omitted from upload — edit listing on Steam Workshop; "
-            "optional local draft: assets/readme.steam.txt)"
+            "optional drafts: assets/readme.steam.en.txt, assets/readme.steam.zh-CN.txt)"
         )
     (workspace / "description.preview.txt").write_text(description_preview + "\n", encoding="utf-8")
 
