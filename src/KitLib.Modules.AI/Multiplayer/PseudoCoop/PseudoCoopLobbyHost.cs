@@ -25,7 +25,6 @@ internal static class PseudoCoopLobbyHost {
     public sealed class LaunchOptions {
         public CharacterModel Character { get; init; } = null!;
         public string? Seed { get; init; }
-        public bool EnableMpCheatOptIn { get; init; } = true;
         public bool SyncBotEnabled { get; init; } = true;
         public bool SpawnPhantomPlayer { get; init; } = true;
         public bool SyncBotAutoEndTurn { get; init; } = true;
@@ -86,9 +85,6 @@ internal static class PseudoCoopLobbyHost {
     }
 
     static void ApplySettings(LaunchOptions options) {
-        if (options.EnableMpCheatOptIn && !SettingsStore.Current.MultiplayerCheatOptIn)
-            SettingsStore.SetMultiplayerCheatOptIn(true);
-
         AiSessionSettings.AutoPlayEnabled = false;
         AiSessionSettings.SyncBotEnabled = options.SyncBotEnabled;
         AiSessionSettings.SyncBotSpawnPhantomPlayer = options.SpawnPhantomPlayer;

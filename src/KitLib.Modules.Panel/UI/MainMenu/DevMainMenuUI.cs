@@ -5,12 +5,9 @@ using Godot;
 using HarmonyLib;
 using KitLib;
 using KitLib.Actions;
-using KitLib.Multiplayer.LanTest;
-using KitLib.Settings;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
-using MegaCrit.Sts2.Core.Nodes.Debug.Multiplayer;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
@@ -36,7 +33,6 @@ internal static class DevMainMenuUI {
     private enum DevMenuLevel {
         Root,
         Diagnostics,
-        Multiplayer,
     }
 
     // Runtime rows miss NMainMenu._Ready wiring; forward focus to the same handlers as stock buttons.
@@ -97,7 +93,9 @@ internal static class DevMainMenuUI {
         if (!anySlot)
             loadBtn.SetEnabled(false);
 
-        AddButton(container, template, I18N.T("devmenu.multiplayer", "Multiplayer"), ShowMultiplayerMenu);
+        AddButton(container, template, I18N.T("devmenu.pseudocoop", "Pseudo Co-op Test (Host)"), () => {
+            DevMainMenuPseudoCoopUI.Show(mainMenu, Hide);
+        });
 
         AddButton(container, template, I18N.T("devmenu.unlockAll", "Unlock All Progress"), () => {
             ShowUnlockAllConfirm(mainMenu);
@@ -128,50 +126,6 @@ internal static class DevMainMenuUI {
 
         AddButton(container, template, I18N.T("devmenu.back", "Back"), ShowRootMenu);
         FinishMenuBuild(DevMenuLevel.Diagnostics);
-    }
-
-    static void ShowMultiplayerMenu() {
-        if (_mainMenu == null || _buttonsContainer == null || _buttonTemplate == null)
-            return;
-
-        ClearAddedButtons();
-        var mainMenu = _mainMenu;
-        var container = _buttonsContainer;
-        var template = _buttonTemplate;
-
-        NMainMenuTextButton? mpCheatBtn = null;
-        mpCheatBtn = AddButton(container, template, GetMultiplayerCheatOptInLabel(), () => {
-            SettingsStore.SetMultiplayerCheatOptIn(!SettingsStore.Current.MultiplayerCheatOptIn);
-            if (mpCheatBtn?.label != null)
-                mpCheatBtn.label.Text = GetMultiplayerCheatOptInLabel();
-        });
-
-        AddButton(container, template, I18N.T("devmenu.pseudocoop", "Pseudo Co-op Test (Host)"), () => {
-            DevMainMenuPseudoCoopUI.Show(mainMenu, Hide);
-        });
-
-        AddButton(container, template, I18N.T("devmenu.lanMultiplayer", "LAN Multiplayer"), () => {
-            OpenLanMultiplayer(mainMenu);
-        });
-
-        AddButton(container, template, I18N.T("devmenu.back", "Back"), ShowRootMenu);
-        FinishMenuBuild(DevMenuLevel.Multiplayer);
-    }
-
-    static void OpenLanMultiplayer(NMainMenu mainMenu) {
-        DualInstanceTestBootstrap.EnsureMultiplayerDevActive("lan_multiplayer_open");
-        Hide();
-        var game = mainMenu.GetTree().Root.GetNodeOrNull<NGame>("Game")
-            ?? NGame.Instance;
-        if (game == null) {
-            MainFile.Logger.Warn("KitLib: NGame not found; cannot open LAN multiplayer test scene.");
-            return;
-        }
-
-        var testScene = SceneHelper.Instantiate<NMultiplayerTest>("debug/multiplayer_test");
-        game.RootSceneContainer.SetCurrentScene(testScene);
-        _ = TaskHelper.RunSafely(game.Transition.FadeIn());
-        MainFile.Logger.Info("KitLib: Opened LAN multiplayer test scene (debug/multiplayer_test).");
     }
 
     static void ClearAddedButtons() {
@@ -415,7 +369,6 @@ internal static class DevMainMenuUI {
     private static void HandleCancelInput() {
         switch (_currentLevel) {
             case DevMenuLevel.Diagnostics:
-            case DevMenuLevel.Multiplayer:
                 ShowRootMenu();
                 break;
             default:
@@ -658,11 +611,6 @@ internal static class DevMainMenuUI {
         root.AddChild(overlay);
         seedInput.GrabFocus();
     }
-
-    private static string GetMultiplayerCheatOptInLabel() =>
-        SettingsStore.Current.MultiplayerCheatOptIn
-            ? I18N.T("devmenu.mpCheat.on", "Multiplayer cheat: ON")
-            : I18N.T("devmenu.mpCheat.off", "Multiplayer cheat: OFF");
 
     private static NMainMenuTextButton AddButton(Control container, NMainMenuTextButton template, string text, Action action) {
         var btn = MainMenuTextButtonFactory.CreateFrom(

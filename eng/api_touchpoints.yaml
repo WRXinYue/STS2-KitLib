@@ -405,27 +405,6 @@ touchpoints:
     sources:
       - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
 
-  - id: NMultiplayerTest.BeginRun
-    type: NMultiplayerTest
-    member: BeginRun
-    kind: method
-    sources:
-      - src/KitLib.Modules.Panel/Multiplayer/LanTest/LanMultiplayerTestPatch.cs
-
-  - id: NMultiplayerTest.LocalPlayerDisconnected
-    type: NMultiplayerTest
-    member: LocalPlayerDisconnected
-    kind: method
-    sources:
-      - src/KitLib.Modules.Panel/Multiplayer/LanTest/LanMultiplayerTestPatch.cs
-
-  - id: NMultiplayerTest.RemotePlayerDisconnected
-    type: NMultiplayerTest
-    member: RemotePlayerDisconnected
-    kind: method
-    sources:
-      - src/KitLib.Modules.Panel/Multiplayer/LanTest/LanMultiplayerTestPatch.cs
-
   - id: NMultiplayerVoteContainer._allPlayers
     type: NMultiplayerVoteContainer
     member: _allPlayers

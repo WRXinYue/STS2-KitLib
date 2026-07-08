@@ -70,6 +70,12 @@ internal static class KitLibNativeModSettingsBootstrap {
                 "When KitLib loads, open a system terminal that streams this session's game log in real time. Requires the optional KitLog.Cli tool (kitlog) from the tools zip."),
             () => SettingsStore.Current.LaunchKitlogOnStartup,
             SettingsStore.SetLaunchKitlogOnStartup));
+        stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
+            I18N.T("modpanel.kitlib.multiplayerCheatOptIn", "Multiplayer cheat opt-in"),
+            I18N.T("modpanel.kitlib.multiplayerCheatOptIn.desc",
+                "Allow KitLib cheat tools during multiplayer runs. Required for pseudo co-op and dual-instance LAN testing."),
+            () => SettingsStore.Current.MultiplayerCheatOptIn,
+            SettingsStore.SetMultiplayerCheatOptIn));
         return stack;
     }
 

@@ -76,9 +76,6 @@ internal static class DevMainMenuPseudoCoopUI {
 
         vbox.AddChild(Separator());
 
-        var chkMpCheat = CreateCheckBox(
-            I18N.T("devmenu.pseudocoop.mpCheat", "Enable multiplayer cheat opt-in"),
-            SettingsStore.Current.MultiplayerCheatOptIn);
         var chkSyncBot = CreateCheckBox(
             I18N.T("devmenu.pseudocoop.syncBot", "SyncBot (simulate remote ACKs)"),
             true);
@@ -95,7 +92,6 @@ internal static class DevMainMenuPseudoCoopUI {
             I18N.T("pseudocoop.autoPreset", "Auto preset on host launch"),
             false);
 
-        vbox.AddChild(chkMpCheat);
         vbox.AddChild(chkSyncBot);
         vbox.AddChild(chkPhantom);
         vbox.AddChild(chkTeammate);
@@ -156,7 +152,6 @@ internal static class DevMainMenuPseudoCoopUI {
             var options = new PseudoCoopLobbyHost.LaunchOptions {
                 Character = Characters[idx],
                 Seed = string.IsNullOrWhiteSpace(seedEdit.Text) ? null : seedEdit.Text.Trim(),
-                EnableMpCheatOptIn = chkMpCheat.ButtonPressed,
                 SyncBotEnabled = chkSyncBot.ButtonPressed,
                 SpawnPhantomPlayer = chkPhantom.ButtonPressed,
                 SyncBotAutoEndTurn = chkAutoEndTurn.ButtonPressed,
