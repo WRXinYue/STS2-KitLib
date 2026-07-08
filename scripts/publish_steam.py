@@ -41,7 +41,7 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
-from lib.steam_changelog import get_change_note  # noqa: E402
+from lib.steam_changelog import get_change_note, read_kitlib_version  # noqa: E402
 from lib.bundle_build import build_bundle  # noqa: E402
 from lib.steam_readme import get_workshop_description  # noqa: E402
 
@@ -98,9 +98,11 @@ def _resolve_change_note(
 ) -> str:
     if change_note and change_note.strip():
         return change_note.strip()
-    # One workshop item: stable upload carries the version changelog; beta only updates content.
     if profile == "beta":
-        return ""
+        version = read_kitlib_version(_REPO)
+        if not version:
+            raise RuntimeError("KitLib.json version is missing; cannot build beta changeNote.")
+        return f"[b] v{version} [/b]"
     note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
     if not note:
         raise RuntimeError(
@@ -108,21 +110,6 @@ def _resolve_change_note(
             "## [X.Y.Z] section, or pass --change-note."
         )
     return note
-
-
-def _format_workshop_change_note(
-    profile: str,
-    base_note: str,
-    *,
-    branch_targeting: bool,
-) -> str:
-    if profile == "beta" and not base_note:
-        return ""
-    if branch_targeting and profile == "stable":
-        min_branch, _max_branch = PROFILE_BRANCH[profile]
-        suffix = f"\n\n({min_branch})"
-        return f"{base_note}{suffix}"
-    return base_note
 
 
 def _write_workshop_json(
@@ -138,11 +125,7 @@ def _write_workshop_json(
         profile=profile,
         prefer_unreleased=prefer_unreleased,
     )
-    resolved_note = _format_workshop_change_note(
-        profile,
-        base_note,
-        branch_targeting=branch_targeting,
-    )
+    resolved_note = base_note
     workshop = {
         "title": "KitLib",
         "description": get_workshop_description(_REPO),
