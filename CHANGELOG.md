@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-07-08
+
 ### Added
 
 - **RegisterCharacterProfile** — Content mods can register a per-character AI profile (e.g. non-combat auto-play) through `CompanionBridge` without referencing `KitLib.AI.dll` or supplying a custom decision strategy; when the AI module is loaded, KitLib uses its built-in default strategy.
