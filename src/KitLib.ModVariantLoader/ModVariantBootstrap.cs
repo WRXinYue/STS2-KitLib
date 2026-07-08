@@ -174,12 +174,7 @@ public static class ModVariantBootstrap {
             ModVariantLoaderAssemblyName,
             StringComparison.OrdinalIgnoreCase);
 
-        var kitLibDir = hostIsKitLibLoader
-            ? hostDir
-            : Path.GetFullPath(Path.Combine(hostDir, "..", KitLibModFolderName));
-        if (!Directory.Exists(kitLibDir))
-            throw new DirectoryNotFoundException(
-                $"KitLib mod folder not found at {kitLibDir}. Install KitLib 0.24+.");
+        var kitLibDir = ResolveKitLibInstallDirectory(hostDir, hostIsKitLibLoader);
 
         PreloadKitLibImplementation(alc, kitLibDir, hostIsKitLibLoader);
 
@@ -194,14 +189,99 @@ public static class ModVariantBootstrap {
             var path = Path.Combine(kitLibDir, fileName);
             if (!File.Exists(path))
                 throw new FileNotFoundException(
-                    $"Missing {fileName} under mods/KitLib/. Update KitLib to 0.24+.",
+                    $"Missing {fileName} under KitLib install folder ({kitLibDir}). Update KitLib to 0.24+.",
                     path);
 
             alc.LoadFromAssemblyPath(path);
         }
 
         if (FindLoaded(alc, ModVariantLoaderAssemblyName) is null)
-            throw new FileNotFoundException("KitLib.ModVariantLoader failed to load from mods/KitLib/.");
+            throw new FileNotFoundException(
+                $"KitLib.ModVariantLoader failed to load from KitLib install folder ({kitLibDir}).");
+    }
+
+    private static string ResolveKitLibInstallDirectory(string hostDir, bool hostIsKitLibLoader) {
+        if (hostIsKitLibLoader)
+            return hostDir;
+
+        if (TryResolveKitLibDirectoryFromGame(out var fromGame))
+            return fromGame;
+
+        var legacySibling = Path.GetFullPath(Path.Combine(hostDir, "..", KitLibModFolderName));
+        if (Directory.Exists(legacySibling))
+            return legacySibling;
+
+        throw new DirectoryNotFoundException(
+            $"KitLib install folder not found. Enable KitLib in mod settings (Steam Workshop or mods/{KitLibModFolderName}/).");
+    }
+
+    private static bool TryResolveKitLibDirectoryFromGame(out string kitLibDir) {
+        kitLibDir = "";
+
+        foreach (var mod in ModManager.GetLoadedMods()) {
+            if (!string.Equals(mod.manifest?.id, KitLibModFolderName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (TryNormalizeExistingDirectory(mod.path, out kitLibDir))
+                return true;
+
+            if (TryNormalizeExistingDirectory(TryReadFirstAssemblyLocation(mod), out kitLibDir))
+                return true;
+        }
+
+        foreach (var mod in ModManager.Mods) {
+            if (!string.Equals(ReadManifestId(mod), KitLibModFolderName, StringComparison.Ordinal))
+                continue;
+
+            if (TryNormalizeExistingDirectory(mod.path, out kitLibDir))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string? TryReadFirstAssemblyLocation(Mod mod) {
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        var modType = mod.GetType();
+
+        foreach (var memberName in new[] { "assembly", "assemblies" }) {
+            object? value = modType.GetField(memberName, flags)?.GetValue(mod)
+                ?? modType.GetProperty(memberName, flags)?.GetValue(mod);
+            if (value is Assembly assembly) {
+                if (!string.IsNullOrWhiteSpace(assembly.Location))
+                    return assembly.Location;
+                continue;
+            }
+
+            if (value is not IEnumerable assemblies)
+                continue;
+
+            foreach (var item in assemblies) {
+                if (item is not Assembly loaded || string.IsNullOrWhiteSpace(loaded.Location))
+                    continue;
+
+                return loaded.Location;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool TryNormalizeExistingDirectory(string? path, out string directory) {
+        directory = "";
+        if (string.IsNullOrWhiteSpace(path))
+            return false;
+
+        var resolved = File.Exists(path) ? Path.GetDirectoryName(path) : path;
+        if (string.IsNullOrEmpty(resolved))
+            return false;
+
+        resolved = Path.GetFullPath(resolved);
+        if (!Directory.Exists(resolved))
+            return false;
+
+        directory = resolved;
+        return true;
     }
 
     static void PreloadKitLibImplementation(AssemblyLoadContext alc, string kitLibDir, bool hostIsKitLibLoader) {

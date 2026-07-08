@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.1] - 2026-07-09
+
+### Fixed
+
+- **ModVariantLoader** — 解析 KitLib 依赖时优先使用游戏已加载的 KitLib 安装路径（Steam 创意工坊或本地 `mods/KitLib/`），不再仅依赖硬编码的兄弟目录。
+
 ## [0.25.0] - 2026-07-09
 
 ### Added
