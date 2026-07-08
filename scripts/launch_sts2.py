@@ -36,7 +36,6 @@ def _launch_windows(
     *,
     fastmp: str | None,
     client_id: int,
-    log: bool,
     extra: list[str],
 ) -> int:
     exe = resolve_sts2_executable(game_root)
@@ -45,8 +44,8 @@ def _launch_windows(
         return 1
     ensure_steam_appid_file(game_root)
     if fastmp == "dual":
-        host_argv = build_launch_argv(exe, log=log, fastmp="host", extra=extra)
-        join_argv = build_launch_argv(exe, log=log, fastmp="join", client_id=client_id, extra=extra)
+        host_argv = build_launch_argv(exe, fastmp="host", extra=extra)
+        join_argv = build_launch_argv(exe, fastmp="join", client_id=client_id, extra=extra)
         launch_detached(exe, game_root, host_argv)
         print("Waiting 8s before launching join client (host ENet bind on :33771)...")
         time.sleep(8)
@@ -55,7 +54,6 @@ def _launch_windows(
 
     argv = build_launch_argv(
         exe,
-        log=log,
         fastmp=fastmp,
         client_id=client_id,
         extra=extra,
@@ -85,9 +83,9 @@ def main() -> int:
         help=f"Join client id for --fastmp join/dual (default: {DEFAULT_JOIN_CLIENT_ID})",
     )
     ap.add_argument(
-        "--no-log",
+        "--log",
         action="store_true",
-        help="Omit --log (default: enabled for dev launches)",
+        help="Pass Godot --log (opens a console on Windows; logs still go to godot.log without it)",
     )
     ap.add_argument(
         "extra",
@@ -112,12 +110,12 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
+        extra = ["--log", *args.extra] if args.log else list(args.extra)
         return _launch_windows(
             game_root,
             fastmp=args.fastmp,
             client_id=args.client_id,
-            log=not args.no_log,
-            extra=args.extra,
+            extra=extra,
         )
 
     if args.fastmp:

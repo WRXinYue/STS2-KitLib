@@ -14,14 +14,11 @@ FASTMP_HOST_MODE = "host_standard"
 def build_launch_argv(
     exe: Path,
     *,
-    log: bool = True,
     fastmp: str | None = None,
     client_id: int = DEFAULT_JOIN_CLIENT_ID,
     extra: list[str] | None = None,
 ) -> list[str]:
     cmd = [str(exe), "--rendering-driver", RENDERING_DRIVER]
-    if log:
-        cmd.append("--log")
     if extra:
         cmd.extend(extra)
     if fastmp == "host":
