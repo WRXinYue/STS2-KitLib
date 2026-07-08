@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-07-09
+
+### Added
+
+- **KitLib 模块设置**（主菜单 **Mods** → KitLib → **Modules**）— 可选择加载方案（精简 / 标准 / 完整）并开关可选模块；每项显示模块 ID、功能说明、依赖关系与当前状态。
+- **Mod 面板侧栏** — 每个 mod 显示安装来源（Steam 创意工坊或本地）与安装目录路径。
+
+### Changed
+
+- **Dev Mode 主菜单** — 布局更扁平：伪联机相关选项提到顶层；已移除 LAN 调试子菜单。
+- **联机作弊 opt-in** — 从 Dev Mode 设置移至 **Mods** 面板中的 KitLib 设置。
+
+### Fixed
+
+- **开发工具包** — 在模块设置中关闭可选 KitLib 模块（Cheat、AI、Dev）后，只要 `modules/` 内文件齐全，开发工具包仍可正常加载。
+- **离开开发局或伪联机局** — 修复退出时因战斗回放序列化导致卡住、无法回到主菜单的问题。
+- **伪联机诊断** — 跟踪日志仅在伪联机会话进行中输出。
+
 ## [0.24.1] - 2026-07-08
 
 ### Added

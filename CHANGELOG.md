@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-07-09
+
+### Added
+
+- **KitLib module settings** (main menu **Mods** → KitLib → **Modules**) — choose a load profile (Minimal / Standard / Full) and toggle optional modules; each entry shows its module ID, what it does, dependencies, and current status.
+- **Mod panel sidebar** — each mod lists its install source (Steam Workshop or local) and install folder path.
+
+### Changed
+
+- **Dev Mode main menu** — flatter layout: pseudo co-op options sit at the top level; the LAN debug submenu is removed.
+- **Multiplayer cheat opt-in** — moved from Dev Mode settings to KitLib mod settings in the **Mods** panel.
+
+### Fixed
+
+- **Dev toolkit** — turning off optional KitLib modules (Cheat, AI, Dev) in module settings no longer prevents the dev toolkit from loading when all module files are installed.
+- **Leaving a dev or pseudo co-op run** — fixed main-menu hangs caused by combat replay serialization on exit.
+- **Pseudo co-op diagnostics** — trace logging runs only during an active pseudo co-op session.
+
 ## [0.24.1] - 2026-07-08
 
 ### Added
