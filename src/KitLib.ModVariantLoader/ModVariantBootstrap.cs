@@ -31,6 +31,7 @@ public static class ModVariantBootstrap {
     public static void Initialize(ModVariantBootstrapOptions? options) {
         var hostAssembly = Assembly.GetCallingAssembly();
         EnsureHostDependencies(hostAssembly);
+        KitLibAssemblyResolver.EnsureHooked(hostAssembly);
 
         options ??= new ModVariantBootstrapOptions();
         var loaderDir = ResolveLoaderModDirectory(options, hostAssembly, out var earlyLogPrefix);
@@ -74,7 +75,7 @@ public static class ModVariantBootstrap {
             return;
         }
 
-        var alc = AssemblyLoadContext.GetLoadContext(typeof(ModVariantBootstrap).Assembly) ?? AssemblyLoadContext.Default;
+        var alc = AssemblyLoadContext.GetLoadContext(hostAssembly) ?? AssemblyLoadContext.Default;
         Assembly realAsm;
         try {
             realAsm = alc.LoadFromAssemblyPath(picked.DllPath);
@@ -153,21 +154,35 @@ public static class ModVariantBootstrap {
 
     private static void EnsureHostDependencies(Assembly hostAssembly) {
         var alc = AssemblyLoadContext.GetLoadContext(hostAssembly) ?? AssemblyLoadContext.Default;
-        if (FindLoaded(alc, ModVariantLoaderAssemblyName) != null)
-            return;
 
         var hostDir = Path.GetDirectoryName(hostAssembly.Location);
         if (string.IsNullOrEmpty(hostDir))
             throw new InvalidOperationException("Mod variant loader: cannot resolve host mod directory.");
 
-        var kitLibDir = Path.GetFullPath(Path.Combine(hostDir, "..", KitLibModFolderName));
+        var hostIsModVariantLoader = string.Equals(
+            hostAssembly.GetName().Name,
+            ModVariantLoaderAssemblyName,
+            StringComparison.OrdinalIgnoreCase);
+
+        var kitLibDir = hostIsModVariantLoader
+            ? hostDir
+            : Path.GetFullPath(Path.Combine(hostDir, "..", KitLibModFolderName));
         if (!Directory.Exists(kitLibDir))
             throw new DirectoryNotFoundException(
                 $"KitLib mod folder not found at {kitLibDir}. Install KitLib 0.24+.");
 
+        var kitLibCorePath = !hostIsModVariantLoader
+            ? Path.Combine(kitLibDir, "KitLib.dll")
+            : null;
+        if (kitLibCorePath != null && File.Exists(kitLibCorePath) && FindLoaded(alc, "KitLib") is null)
+            alc.LoadFromAssemblyPath(Path.GetFullPath(kitLibCorePath));
+
         foreach (var fileName in KitLibHostDeps) {
             var simpleName = Path.GetFileNameWithoutExtension(fileName);
             if (FindLoaded(alc, simpleName) != null)
+                continue;
+            if (hostIsModVariantLoader &&
+                string.Equals(simpleName, ModVariantLoaderAssemblyName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var path = Path.Combine(kitLibDir, fileName);

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Reflection;
 using KitLib.Logging;
 using KitLib.Modding;
-using AbstractionsKitLogLevel = KitLib.Logging.KitLogLevel;
+using KitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib;
 
@@ -19,7 +19,7 @@ internal static class ModKitLibLogBridge {
 
     internal static void Initialize() => KitLibLog.Bind(Write);
 
-    static void Write(AbstractionsKitLogLevel level, string? scope, string message) {
+    static void Write(KitLogLevel level, string? scope, string message) {
         var caller = ResolveCallerAssembly();
         var asmName = caller?.GetName().Name;
 
@@ -35,15 +35,8 @@ internal static class ModKitLibLogBridge {
             modId = string.IsNullOrEmpty(asmName) ? "Unknown" : asmName!;
 
         var effectiveScope = NormalizeScope(scope) ?? autoScope;
-        KitLog.WriteMod(MapLevel(level), modId, effectiveScope, message);
+        KitLog.WriteMod(level, modId, effectiveScope, message);
     }
-
-    static KitLogLevel MapLevel(AbstractionsKitLogLevel level) => level switch {
-        AbstractionsKitLogLevel.Error => KitLogLevel.Error,
-        AbstractionsKitLogLevel.Warn => KitLogLevel.Warn,
-        AbstractionsKitLogLevel.Debug => KitLogLevel.Debug,
-        _ => KitLogLevel.Info,
-    };
 
     static string? NormalizeScope(string? scope) {
         if (string.IsNullOrWhiteSpace(scope))

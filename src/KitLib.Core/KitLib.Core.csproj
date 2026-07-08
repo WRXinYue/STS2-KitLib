@@ -74,7 +74,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KitLib.Abstractions\KitLib.Abstractions.csproj" />
-    <PackageReference Include="ILRepack" Version="2.0.41" GeneratePathProperty="true" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -177,5 +176,10 @@
     <Copy SourceFiles="$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\KitLib.ModVariantLoader.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.ModVariantLoader.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
+    <ItemGroup>
+      <_KitLibModuleDlls Include="$(RepoBuildDir)\modules\*.dll" />
+    </ItemGroup>
+    <MakeDir Directories="$(ModsDir)\modules\" Condition="'@(_KitLibModuleDlls)' != ''" />
+    <Copy SourceFiles="@(_KitLibModuleDlls)" DestinationFolder="$(ModsDir)\modules\" SkipUnchangedFiles="true" Condition="'@(_KitLibModuleDlls)' != ''" />
   </Target>
 </Project>

@@ -6,6 +6,7 @@
     <OutputPath>$(RepoBuildDir)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
+
   <Target Name="ForceModOutputPath" BeforeTargets="CoreCompile">
     <PropertyGroup>
       <RepoBuildDir>$(RepoRoot)build\$(ModId)</RepoBuildDir>
@@ -16,6 +17,19 @@
     </PropertyGroup>
     <MakeDir Directories="$(RepoBuildDir);$(RepoBuildDir)\obj" />
   </Target>
+
+  <Target Name="StageSatelliteToBundle" AfterTargets="Build">
+    <PropertyGroup>
+      <_KitLibBundleModules>$(RepoRoot)build\KitLib\modules</_KitLibBundleModules>
+    </PropertyGroup>
+    <MakeDir Directories="$(_KitLibBundleModules)" />
+    <Copy
+      SourceFiles="$(TargetPath)"
+      DestinationFiles="$(_KitLibBundleModules)\$(AssemblyName).dll"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(TargetPath)')" />
+  </Target>
+
   <Target Name="StripGodotSdkArtifacts" BeforeTargets="CoreCompile">
     <ItemGroup>
       <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Identity)').Contains('Godot'))" />

@@ -28,12 +28,13 @@ BUNDLE_DLLS = [
 
 CORE_DLL = "KitLib.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
+MOD_VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
     "Semver.dll",
     "Microsoft.Extensions.Primitives.dll",
 ]
 
-# Build artifacts that must not ship in mods/KitLib/ (STS2 treats some JSON as mod manifests).
+_SKIP_PACKAGE_NAMES = {"GodotSharp.dll"}
 _SKIP_PACKAGE_SUFFIXES = {".pdb"}
 _SKIP_PACKAGE_NAME_SUFFIXES = (".deps.json", ".runtimeconfig.json")
 
@@ -98,7 +99,7 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
 
 
 def _assert_core_bundle(bundle_dir: Path) -> None:
-    required = [CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+    required = [CORE_DLL, ABSTRACTIONS_DLL, MOD_VARIANT_LOADER_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
@@ -118,7 +119,9 @@ def _dotnet_build() -> None:
 
 
 def _should_package_root_item(item: Path) -> bool:
-    if item.name == MODULES_SUBDIR and item.is_dir():
+    if item.name in _SKIP_PACKAGE_NAMES:
+        return False
+    if item.name in (MODULES_SUBDIR, "lib"):
         return False
     lower = item.name.lower()
     if any(lower.endswith(suffix) for suffix in _SKIP_PACKAGE_NAME_SUFFIXES):
@@ -128,16 +131,6 @@ def _should_package_root_item(item: Path) -> bool:
     if item.suffix.lower() == ".dll" and item.stem in BUNDLE_DLLS:
         return False
     return True
-
-
-def _resolve_dll(mod_id: str) -> Path | None:
-    bundled = _REPO / "build" / BUNDLE_ID / MODULES_SUBDIR / f"{mod_id}.dll"
-    subdir = _REPO / "build" / mod_id / f"{mod_id}.dll"
-    if bundled.is_file():
-        return bundled
-    if subdir.is_file():
-        return subdir
-    return None
 
 
 def _stage_bundle(dist_root: Path) -> Path:
@@ -153,7 +146,7 @@ def _stage_bundle(dist_root: Path) -> Path:
         for item in core_src.iterdir():
             if item.name == MODULES_SUBDIR and item.is_dir():
                 for module_file in item.iterdir():
-                    if module_file.is_file():
+                    if module_file.is_file() and module_file.suffix.lower() == ".dll":
                         shutil.copy2(module_file, modules_dst / module_file.name)
                 continue
             if not _should_package_root_item(item):
@@ -164,21 +157,16 @@ def _stage_bundle(dist_root: Path) -> Path:
             else:
                 shutil.copy2(item, target)
     else:
-        core_dll = _resolve_dll(BUNDLE_ID)
-        if core_dll is None:
-            raise FileNotFoundError("Missing Core build output")
-        shutil.copy2(core_dll, dst / "KitLib.dll")
-        shutil.copy2(_REPO / "KitLib.json", dst / "mod_manifest.json")
+        raise FileNotFoundError("Missing Core build output under build/KitLib/. Run make build first.")
 
     shutil.copy2(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL)
+    variant_loader = _REPO / "build" / BUNDLE_ID / MOD_VARIANT_LOADER_DLL
+    if not variant_loader.is_file():
+        raise FileNotFoundError(f"Missing {MOD_VARIANT_LOADER_DLL}. Run make build first.")
+    shutil.copy2(variant_loader, dst / MOD_VARIANT_LOADER_DLL)
     for runtime_dll in ABSTRACTIONS_RUNTIME_DLLS:
         shutil.copy2(_resolve_abstractions_runtime_dll(runtime_dll), dst / runtime_dll)
     _assert_core_bundle(dst)
-
-    for mod_id in BUNDLE_DLLS:
-        dll = _resolve_dll(mod_id)
-        if dll is not None:
-            shutil.copy2(dll, modules_dst / f"{mod_id}.dll")
 
     manifest = _REPO / "KitLib.json"
     if manifest.is_file():

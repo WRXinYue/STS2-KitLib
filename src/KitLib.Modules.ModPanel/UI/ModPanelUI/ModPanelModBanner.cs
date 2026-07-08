@@ -137,7 +137,7 @@ internal static class ModPanelModBanner {
         }
     }
     private static string? GetManifestMemberString(object? manifest, params string[] names) {
-        if (manifest == null)
+        if (manifest is null)
             return null;
         var t = manifest.GetType();
         foreach (var name in names) {

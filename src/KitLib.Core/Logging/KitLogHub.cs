@@ -1,4 +1,5 @@
 using KitLib.Host;
+using KitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib;
 

@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Sync KitLib into a Steam Workshop workspace and upload via ModUploader.exe.
+"""Package and upload KitLib Steam Workshop workspaces (stable + beta branches).
+
+One Workshop item (STS2_WORKSHOP_ID) can target multiple game branches via minBranch/maxBranch.
 
 Environment:
-    release.env  STS2_WORKSHOP_ID (committed)
+    release.env  STS2_WORKSHOP_ID
     .env         STS2_MOD_UPLOADER path (see .env.example)
 
 Usage:
-    python scripts/publish_steam.py sync [--skip-build] [--change-note TEXT] [--unreleased]
-    python scripts/publish_steam.py upload [--dry-run]
+    python scripts/publish_steam.py sync [stable|beta|all] [--skip-build] [--change-note TEXT] [--unreleased]
+    python scripts/publish_steam.py upload [stable|beta|all] [--dry-run] [--optional]
 
-Workshop description is generated from README.md + README.zh-CN.md (Steam BBCode).
-Change notes are generated from CHANGELOG.md + CHANGELOG.zh-CN.md at sync time.
+Workspaces: build/dist/workshop-stable/, build/dist/workshop-beta/
 """
 
 from __future__ import annotations
@@ -25,12 +26,20 @@ from pathlib import Path
 
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _REPO = _SCRIPT_DIR.parent
-_WORKSPACE = _REPO / "build" / "steam-workshop"
-_WORKSHOP_TEMPLATE = _REPO / "workshop.json"
-_CONTENT = _WORKSPACE / "content"
-_STAGING = _REPO / "build" / "steam-stage"
-_PREVIEW = _REPO / "assets" / "devmode.png"
-_MOD_ID_FILE = _WORKSPACE / "mod_id.txt"
+_DIST = _REPO / "build" / "dist"
+_PREVIEW_CANDIDATES = (
+    _REPO / "assets" / "devmode.png",
+    _REPO / "assets" / "workshop-image.png",
+)
+
+PROFILE_BRANCH = {
+    "stable": ("public", "public"),
+    "beta": ("public-beta", "public-beta"),
+}
+PROFILE_TITLE = {
+    "stable": "Stable",
+    "beta": "Beta",
+}
 
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
@@ -40,14 +49,164 @@ from lib.steam_changelog import get_change_note  # noqa: E402
 from lib.steam_readme import get_workshop_description  # noqa: E402
 
 
+def _profiles(selection: str) -> list[str]:
+    if selection == "all":
+        return ["stable", "beta"]
+    return [selection]
+
+
+def _workspace_dir(profile: str) -> Path:
+    return _DIST / f"workshop-{profile}"
+
+
 def _read_kitlib_manifest() -> dict:
     return json.loads((_REPO / "KitLib.json").read_text(encoding="utf-8"))
+
+
+def _run_profile_build(profile: str) -> None:
+    sts2_dir = subprocess.check_output(
+        [sys.executable, str(_SCRIPT_DIR / "resolve_sts2_profile_dir.py"), profile],
+        text=True,
+    ).strip()
+    cmd = [
+        "dotnet",
+        "build",
+        "KitLib.sln",
+        f"-p:Sts2Profile={profile}",
+        f"-p:Sts2Dir={sts2_dir}",
+        "-c",
+        "Release",
+    ]
+    print(" ".join(cmd))
+    subprocess.check_call(cmd, cwd=_REPO)
+
+
+def _stage_bundle(skip_build: bool) -> Path:
+    staging = _REPO / "build" / "steam-stage"
+    cmd = [
+        sys.executable,
+        str(_SCRIPT_DIR / "package_modules.py"),
+        "--stage-dir",
+        str(staging),
+    ]
+    if skip_build:
+        cmd.append("--skip-build")
+    subprocess.run(cmd, cwd=_REPO, check=True)
+    bundle = staging / "KitLib"
+    if not bundle.is_dir():
+        raise RuntimeError(f"Expected staged bundle at {bundle}")
+    return bundle
+
+
+def _resolve_preview_image() -> Path:
+    for candidate in _PREVIEW_CANDIDATES:
+        if candidate.is_file():
+            return candidate
+    raise RuntimeError(
+        "Missing workshop preview image. Add assets/devmode.png or assets/workshop-image.png."
+    )
+
+
+def _resolve_change_note(change_note: str | None, *, prefer_unreleased: bool) -> str:
+    if change_note and change_note.strip():
+        return change_note.strip()
+    note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
+    if not note:
+        raise RuntimeError(
+            "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
+            "## [X.Y.Z] section, or pass --change-note."
+        )
+    return note
+
+
+def _write_workshop_json(
+    workspace: Path,
+    profile: str,
+    change_note: str | None,
+    *,
+    prefer_unreleased: bool = False,
+) -> None:
+    min_branch, max_branch = PROFILE_BRANCH[profile]
+    manifest = _read_kitlib_manifest()
+    version = manifest.get("version", "0.0.0")
+    title_suffix = PROFILE_TITLE[profile]
+    base_note = _resolve_change_note(change_note, prefer_unreleased=prefer_unreleased)
+    workshop = {
+        "title": f"KitLib {version} ({title_suffix})",
+        "description": get_workshop_description(_REPO),
+        "visibility": "public",
+        "changeNote": f"{base_note}\n\n({title_suffix} / {min_branch})",
+        "tags": ["Tools & APIs"],
+        "dependencies": [],
+        "contentDescriptors": [],
+        "minBranch": min_branch,
+        "maxBranch": max_branch,
+    }
+    (workspace / "workshop.json").write_text(
+        json.dumps(workshop, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    (workspace / "changeNote.preview.txt").write_text(workshop["changeNote"] + "\n", encoding="utf-8")
+    (workspace / "description.preview.txt").write_text(workshop["description"] + "\n", encoding="utf-8")
+
+
+def _workshop_id() -> str:
+    value = os.environ.get("STS2_WORKSHOP_ID", "").strip()
+    if value:
+        return value
+    raise RuntimeError("STS2_WORKSHOP_ID is not set in release.env / .env.")
+
+
+def _sync_mod_id_file(workspace: Path) -> None:
+    workshop_id = _workshop_id()
+    (workspace / "mod_id.txt").write_text(workshop_id + "\n", encoding="utf-8")
+
+
+def sync_profile(
+    profile: str,
+    skip_build: bool,
+    change_note: str | None,
+    *,
+    prefer_unreleased: bool = False,
+) -> Path:
+    workspace = _workspace_dir(profile)
+    content = workspace / "content"
+    if not skip_build:
+        _run_profile_build(profile)
+    bundle = _stage_bundle(skip_build=True)
+
+    if content.exists():
+        shutil.rmtree(content)
+    shutil.copytree(bundle, content)
+
+    shutil.copy2(_resolve_preview_image(), workspace / "image.png")
+    _write_workshop_json(workspace, profile, change_note, prefer_unreleased=prefer_unreleased)
+    _sync_mod_id_file(workspace)
+
+    file_count = sum(1 for p in content.rglob("*") if p.is_file())
+    print(f"Workshop-{profile} synced -> {workspace.relative_to(_REPO)} ({file_count} files)")
+    return workspace
+
+
+def sync_workspaces(
+    selection: str,
+    skip_build: bool,
+    change_note: str | None,
+    *,
+    prefer_unreleased: bool = False,
+) -> None:
+    for profile in _profiles(selection):
+        sync_profile(profile, skip_build, change_note, prefer_unreleased=prefer_unreleased)
 
 
 def _uploader_setup_error() -> str | None:
     raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
     if not raw:
-        return "STS2_MOD_UPLOADER is not set.\n" "  Add it to .env (copy from .env.example), e.g.:\n" "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
+        return (
+            "STS2_MOD_UPLOADER is not set.\n"
+            "  Add it to .env (copy from .env.example), e.g.:\n"
+            "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
+        )
     path = Path(os.path.expandvars(raw)).expanduser()
     if not path.is_file():
         return (
@@ -67,56 +226,6 @@ def _resolve_uploader() -> Path:
     return Path(os.path.expandvars(raw)).expanduser().resolve()
 
 
-def _stage_bundle(skip_build: bool) -> Path:
-    cmd = [
-        sys.executable,
-        str(_SCRIPT_DIR / "package_modules.py"),
-        "--stage-dir",
-        str(_STAGING),
-    ]
-    if skip_build:
-        cmd.append("--skip-build")
-    subprocess.run(cmd, cwd=_REPO, check=True)
-    bundle = _STAGING / "KitLib"
-    if not bundle.is_dir():
-        raise RuntimeError(f"Expected staged bundle at {bundle}")
-    return bundle
-
-
-def _sync_mod_id_file() -> None:
-    workshop_id = os.environ.get("STS2_WORKSHOP_ID", "").strip()
-    if workshop_id:
-        _MOD_ID_FILE.write_text(workshop_id + "\n", encoding="utf-8")
-
-
-def _patch_workshop_json(change_note: str | None, *, prefer_unreleased: bool = False) -> None:
-    if not _WORKSHOP_TEMPLATE.is_file():
-        raise RuntimeError(f"Missing {_WORKSHOP_TEMPLATE.relative_to(_REPO)}")
-
-    manifest = _read_kitlib_manifest()
-    data = json.loads(_WORKSHOP_TEMPLATE.read_text(encoding="utf-8-sig"))
-    if not str(data.get("title") or "").strip():
-        data["title"] = manifest.get("name") or "KitLib"
-    data["description"] = get_workshop_description(_REPO)
-
-    if change_note and change_note.strip():
-        note = change_note.strip()
-    else:
-        note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
-        if not note:
-            raise RuntimeError("ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released " "## [X.Y.Z] section, or pass --change-note.")
-
-    data["changeNote"] = note
-    path = _WORKSPACE / "workshop.json"
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-    preview = _WORKSPACE / "changeNote.preview.txt"
-    preview.write_text(note + "\n", encoding="utf-8")
-
-    desc_preview = _WORKSPACE / "description.preview.txt"
-    desc_preview.write_text(data["description"] + "\n", encoding="utf-8")
-
-
 def _persist_workshop_id(mod_id: str) -> None:
     mod_id = mod_id.strip()
     if not mod_id:
@@ -127,48 +236,52 @@ def _persist_workshop_id(mod_id: str) -> None:
         return
 
     os.environ["STS2_WORKSHOP_ID"] = mod_id
+
     release_path = _REPO / "release.env"
     dotenv_path = _REPO / ".env"
-
     if upsert_env_key(release_path, "STS2_WORKSHOP_ID", mod_id):
         print(f"Updated {release_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
     if dotenv_path.is_file() and upsert_env_key(dotenv_path, "STS2_WORKSHOP_ID", mod_id):
         print(f"Updated {dotenv_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
 
 
-def sync_workspace(skip_build: bool, change_note: str | None, *, prefer_unreleased: bool = False) -> None:
-    _WORKSPACE.mkdir(parents=True, exist_ok=True)
-    bundle = _stage_bundle(skip_build)
-
-    if _CONTENT.exists():
-        shutil.rmtree(_CONTENT)
-    shutil.copytree(bundle, _CONTENT)
-
-    if not _PREVIEW.is_file():
-        raise RuntimeError(f"Missing workshop preview source: {_PREVIEW.relative_to(_REPO)}")
-    shutil.copy2(_PREVIEW, _WORKSPACE / "image.png")
-
-    _patch_workshop_json(change_note, prefer_unreleased=prefer_unreleased)
-    _sync_mod_id_file()
-    file_count = sum(1 for p in _CONTENT.rglob("*") if p.is_file())
-    print(f"Workshop content synced -> {_CONTENT.relative_to(_REPO)} ({file_count} files)")
-
-
-def upload_workspace(dry_run: bool, *, optional: bool = False) -> int:
+def upload_profile(profile: str, dry_run: bool) -> int:
+    workspace = _workspace_dir(profile)
     for name in ("workshop.json", "image.png"):
-        if not (_WORKSPACE / name).is_file():
+        if not (workspace / name).is_file():
             print(
-                f"ERROR: missing {_WORKSPACE.relative_to(_REPO)}/{name}. Run: make steam-workspace",
+                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. "
+                f"Run: make workshop-{profile}",
                 file=sys.stderr,
             )
             return 1
-    if not _CONTENT.is_dir() or not any(_CONTENT.iterdir()):
+    content = workspace / "content"
+    if not content.is_dir() or not any(content.iterdir()):
         print(
-            f"ERROR: {_CONTENT.relative_to(_REPO)} is empty. Run: make steam-workspace",
+            f"ERROR: {content.relative_to(_REPO)} is empty. Run: make workshop-{profile}",
             file=sys.stderr,
         )
         return 1
 
+    uploader = _resolve_uploader()
+    cmd = [str(uploader), "upload", "-w", str(workspace.resolve())]
+    print(f"Upload workshop-{profile}:", " ".join(f'"{part}"' if " " in part else part for part in cmd))
+    if dry_run:
+        print("(dry-run — not invoking ModUploader)")
+        return 0
+
+    subprocess.run(cmd, cwd=workspace, check=True)
+
+    mod_id_file = workspace / "mod_id.txt"
+    if mod_id_file.is_file():
+        mod_id = mod_id_file.read_text(encoding="utf-8").strip()
+        if mod_id:
+            _persist_workshop_id(mod_id)
+
+    return 0
+
+
+def upload_workspaces(selection: str, dry_run: bool, *, optional: bool = False) -> int:
     err = _uploader_setup_error()
     if err:
         if optional:
@@ -176,35 +289,33 @@ def upload_workspace(dry_run: bool, *, optional: bool = False) -> int:
             return 0
         raise RuntimeError(err)
 
-    uploader = _resolve_uploader()
-    cmd = [str(uploader), "upload", "-w", str(_WORKSPACE.resolve())]
-    print("Upload command:", " ".join(f'"{part}"' if " " in part else part for part in cmd))
-    if dry_run:
-        print("(dry-run — not invoking ModUploader)")
-        return 0
-
-    subprocess.run(cmd, cwd=_WORKSPACE, check=True)
-
-    if _MOD_ID_FILE.is_file():
-        mod_id = _MOD_ID_FILE.read_text(encoding="utf-8").strip()
-        if mod_id:
-            _persist_workshop_id(mod_id)
-
-    return 0
+    exit_code = 0
+    for profile in _profiles(selection):
+        code = upload_profile(profile, dry_run)
+        if code != 0:
+            exit_code = code
+    return exit_code
 
 
 def main() -> int:
     load_release_config(_REPO)
 
-    ap = argparse.ArgumentParser(description="Sync or upload KitLib Steam Workshop workspace.")
+    ap = argparse.ArgumentParser(description="Sync or upload KitLib Steam Workshop workspaces.")
     sub = ap.add_subparsers(dest="command", required=True)
 
-    sync_ap = sub.add_parser("sync", help="Build/stage mod files into build/steam-workshop/content/")
+    sync_ap = sub.add_parser("sync", help="Build and stage build/dist/workshop-{profile}/")
+    sync_ap.add_argument(
+        "profile",
+        nargs="?",
+        default="all",
+        choices=["stable", "beta", "all"],
+        help="STS2 API profile / Steam branch (default: all)",
+    )
     sync_ap.add_argument("--skip-build", action="store_true", help="Use existing build/ artifacts")
     sync_ap.add_argument(
         "--change-note",
         default="",
-        help="Override workshop.json changeNote (default: CHANGELOG.md + CHANGELOG.zh-CN.md, FoxHime format)",
+        help="Override workshop.json changeNote (default: CHANGELOG.md + CHANGELOG.zh-CN.md)",
     )
     sync_ap.add_argument(
         "--unreleased",
@@ -212,7 +323,14 @@ def main() -> int:
         help="Use ## [Unreleased] instead of the latest released version section",
     )
 
-    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe upload -w build/steam-workshop")
+    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe for workshop workspace(s)")
+    upload_ap.add_argument(
+        "profile",
+        nargs="?",
+        default="all",
+        choices=["stable", "beta", "all"],
+        help="Which workspace to upload (default: all)",
+    )
     upload_ap.add_argument("--dry-run", action="store_true", help="Print command only")
     upload_ap.add_argument(
         "--optional",
@@ -222,9 +340,14 @@ def main() -> int:
 
     args = ap.parse_args()
     if args.command == "sync":
-        sync_workspace(args.skip_build, args.change_note or None, prefer_unreleased=args.unreleased)
+        sync_workspaces(
+            args.profile,
+            args.skip_build,
+            args.change_note or None,
+            prefer_unreleased=args.unreleased,
+        )
         return 0
-    return upload_workspace(args.dry_run, optional=args.optional)
+    return upload_workspaces(args.profile, args.dry_run, optional=args.optional)
 
 
 if __name__ == "__main__":

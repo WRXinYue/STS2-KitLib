@@ -42,7 +42,7 @@ public sealed class Sts2ModRegistry : IModRegistry {
 
     internal static KitLibModEntry? Map(Mod mod, ModSettings? settings) {
         var man = mod.manifest;
-        if (man == null || string.IsNullOrEmpty(man.id))
+        if (man is null || string.IsNullOrEmpty(man.id))
             return null;
         var name = string.IsNullOrEmpty(man.name) ? man.id : man.name;
         var ver = man.version ?? "";

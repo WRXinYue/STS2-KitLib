@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ModId>KitLibSmokeMod</ModId>
+    <AssemblyName>$(ModId)</AssemblyName>
+    <RootNamespace>KitLibSmokeMod</RootNamespace>
+    <OutputPath>$(RepoRoot)build/samples/KitLibSmokeMod/</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+  </PropertyGroup>
+
+  <Import Project="$(RepoRoot)eng/KitLib.ContentMod.props" />
+
+  <!-- Build order only: smoke mod must not reference Core types in its output assembly. -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="sts2">
+      <HintPath>$(Sts2DataDir)/sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(ModId).json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>mod_manifest.json</TargetPath>
+    </None>
+  </ItemGroup>
+
+  <Target Name="DeploySmokeMod" AfterTargets="Build" Condition="'$(DeploySmokeMod)' == 'true'">
+    <PropertyGroup>
+      <SmokeModsDir>$(Sts2ModsRoot)/$(ModId)</SmokeModsDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(SmokeModsDir)" />
+    <Copy SourceFiles="$(OutputPath)$(ModId).dll;$(OutputPath)mod_manifest.json" DestinationFolder="$(SmokeModsDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

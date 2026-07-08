@@ -36,7 +36,7 @@ internal static class ModAssemblyLookup {
             //     MainFile.Logger.Warn($"Skipping mod with invalid manifest: {mod.GetType().Name}");
             //     continue;
             // }
-            if (man == null || string.IsNullOrEmpty(man.id))
+            if (man is null || string.IsNullOrEmpty(man.id))
                 continue;
 
             var display = string.IsNullOrEmpty(man.name) ? man.id : man.name;
@@ -62,7 +62,7 @@ internal static class ModAssemblyLookup {
     //         var map = new Dictionary<string, ModAssemblyInfo>(StringComparer.Ordinal);
     //         foreach (var mod in ModManagerLoadedMods.Enumerate()) {
     //             var man = mod.manifest;
-    //             if (man == null || string.IsNullOrEmpty(man.id))
+    //             if (man is null || string.IsNullOrEmpty(man.id))
     //                 continue;
 
     //             var display = string.IsNullOrEmpty(man.name) ? man.id : man.name;

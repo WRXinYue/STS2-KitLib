@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json.Nodes;
+using KitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib.Host;
 

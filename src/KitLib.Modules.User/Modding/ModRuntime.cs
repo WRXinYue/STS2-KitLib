@@ -20,7 +20,7 @@ public sealed class ModCatalog : IModCatalog {
         var list = new List<KitLibModInfo>(mods.Count);
         foreach (var m in mods) {
             var man = m.manifest;
-            if (man == null) continue;
+            if (man is null) continue;
             var id = man.id;
             if (string.IsNullOrEmpty(id)) continue;
             var name = string.IsNullOrEmpty(man.name) ? id : man.name;

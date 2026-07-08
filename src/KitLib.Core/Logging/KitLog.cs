@@ -1,14 +1,7 @@
 using MegaCrit.Sts2.Core.Logging;
+using KitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib;
-
-/// <summary>Log levels aligned with <c>KitLib.Abstractions.Logging.KitLogLevel</c> ordinals.</summary>
-public enum KitLogLevel {
-    Debug,
-    Info,
-    Warn,
-    Error,
-}
 
 /// <summary>Unified logging for KitLib: internal lines use <c>[KitLib]</c> or <c>[KitLib][scope]</c>.</summary>
 public static class KitLog {
@@ -32,21 +25,13 @@ public static class KitLog {
 
     /// <summary>Content-mod line format: <c>[modId]</c> or <c>[modId][scope]</c>.</summary>
     public static void WriteMod(KitLogLevel level, string modId, string? scope, string message) {
-        var absLevel = MapAbsLevel(level);
-        var entry = KitLib.Logging.LogStreamEntry.FromKitLog(absLevel, modId, scope, message, MainFile.ModID);
+        var entry = KitLib.Logging.LogStreamEntry.FromKitLog(level, modId, scope, message, MainFile.ModID);
         KitLib.Logging.LogStreamHub.Publish(entry);
         KitLib.Logging.StructuredLogDedupe.Mark(entry.Fingerprint);
 
         var line = KitLib.Logging.KitLibLogFormat.FormatGameLoggerText(modId, scope, message, MainFile.ModID);
         WriteRaw(level, line);
     }
-
-    static KitLib.Logging.KitLogLevel MapAbsLevel(KitLogLevel level) => level switch {
-        KitLogLevel.Error => KitLib.Logging.KitLogLevel.Error,
-        KitLogLevel.Warn => KitLib.Logging.KitLogLevel.Warn,
-        KitLogLevel.Debug => KitLib.Logging.KitLogLevel.Debug,
-        _ => KitLib.Logging.KitLogLevel.Info,
-    };
 
     static void WriteRaw(KitLogLevel level, string text) {
         switch (level) {

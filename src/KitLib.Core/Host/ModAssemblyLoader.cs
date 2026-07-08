@@ -53,6 +53,7 @@ internal static class ModAssemblyLoader {
     }
 
     static Assembly? OnModContextResolving(AssemblyLoadContext context, AssemblyName name) {
+        HookContext(context);
         var path = FindDependencyPath(name, context);
         if (path == null)
             return null;
@@ -96,6 +97,12 @@ internal static class ModAssemblyLoader {
         if (string.IsNullOrEmpty(simple))
             return null;
 
+        if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase)) {
+            var flat = Path.Combine(modDir, simple + ".dll");
+            if (File.Exists(flat))
+                return Path.GetFullPath(flat);
+        }
+
         foreach (var dir in new[] { Path.Combine(modDir, SatelliteModuleLoader.ModulesSubdir), modDir }) {
             var path = Path.Combine(dir, simple + ".dll");
             if (File.Exists(path))
@@ -124,11 +131,6 @@ internal static class ModAssemblyLoader {
         }
 
         return null;
-    }
-
-    internal static bool IsAbstractionsMergedIntoCore(Assembly? core = null) {
-        core ??= FindLoaded("KitLib");
-        return core?.GetType("KitLib.Abstractions.Compat.Sts2ProfileMap", throwOnError: false) != null;
     }
 
     static Assembly PreloadIntoContext(AssemblyLoadContext context, string path) {

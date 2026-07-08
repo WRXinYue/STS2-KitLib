@@ -16,6 +16,8 @@ UV ?= uv
 VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('KitLib.json',encoding='utf-8'))['version'])")
 
 MOD_MAIN := src/KitLib.Core/KitLib.Core.csproj
+SMOKE_MOD_PROJECT := samples/KitLibSmokeMod/KitLibSmokeMod.csproj
+SMOKE_MOD_TESTS := tests/KitLib.SmokeMod.Tests/KitLib.SmokeMod.Tests.csproj
 MCP_PROJECT := tools/KitLib.Mcp/KitLib.Mcp.csproj
 KITLOG_PROJECT := tools/KitLog.Cli/KitLog.Cli.csproj
 
@@ -70,15 +72,17 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,)
-STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync $(STEAM_SYNC_FLAGS)
-STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload --optional
-STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload
+STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync all $(STEAM_SYNC_FLAGS)
+STEAM_SYNC_STABLE := $(PYTHON) scripts/publish_steam.py sync stable $(STEAM_SYNC_FLAGS)
+STEAM_SYNC_BETA := $(PYTHON) scripts/publish_steam.py sync beta $(STEAM_SYNC_FLAGS)
+STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload all --optional
+STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload all
 
-.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
-        build-stable build-beta build-profiles extract-touchpoints check-api verify-profiles capture-sts2-ref \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
+        build-stable build-beta build-profiles build-flat workshop workshop-stable workshop-beta extract-touchpoints check-api verify-profiles capture-sts2-ref \
         launch sync-launch sync-full-launch dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
-        upload-github upload-nexus upload-nuget steam-workspace upload-steam
+        upload-github upload-nexus upload-nuget workshop upload-steam upload-steam-stable upload-steam-beta
 
 help:
 	@echo "KitLib — targets"
@@ -94,16 +98,22 @@ help:
 	@echo "  hooks-run    pre-commit run --all-files"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build-all + deploy full mods/KitLib/ bundle (Core + modules/)"
+	@echo "  sync         build-flat + deploy full mods/KitLib/ bundle (Core + modules/)"
 	@echo "  sync-full    sync + deploy tools/ (kitlog + MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
-	@echo "  build-all    dotnet build solution (Core + satellites)"
-	@echo "  build-stable dotnet build KitLib.sln against stable ref (eng/sts2-refs/)"
-	@echo "  build-beta   dotnet build KitLib.sln against beta ref"
-	@echo "  build-profiles build-stable then build-beta"
+	@echo "  build-all    same as build-flat (current Sts2Profile)"
+	@echo "  build-flat   dotnet build for local.props Sts2Profile (flat KitLib.dll)"
+	@echo "  workshop-stable  stage build/dist/workshop-stable/ (public branch, same workshop item)"
+	@echo "  workshop-beta    stage build/dist/workshop-beta/ (public-beta branch, same workshop item)"
+	@echo "  workshop         workshop-stable + workshop-beta"
+	@echo "  build-stable dotnet build KitLib.sln against stable sts2 ref (API compile check)"
+	@echo "  build-beta   dotnet build KitLib.sln against beta sts2 ref"
+	@echo "  build-profiles build-stable then build-beta (CI / pre-release)"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against both sts2.dll"
 	@echo "  verify-profiles  build-profiles + check-api (pre-release)"
+	@echo "  check-smoke-mod  build + content-mod smoke fixture + Cecil/ref/load tests"
+	@echo "  deploy-smoke-mod copy smoke mod into game mods/KitLibSmokeMod/ (manual in-game check)"
 	@echo "  capture-sts2-ref PROFILE=stable|beta  copy sts2.dll into eng/sts2-refs/ (validates release_info)"
 	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip"
 	@echo "  sync-launch  sync + launch game"
@@ -135,8 +145,9 @@ help:
 	@echo "  upload-nexus-kitlog  zip-kitlog + Nexus Optional KitLog CLI (NEXUS_FILE_GROUP_ID_KITLOG; alias: nexus-kitlog)"
 	@echo "  upload-nuget   zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE; alias: nuget)"
 	@echo "  upload-all     upload-github + upload-nexus + upload-nuget + upload-steam (one zip build)"
-	@echo "  steam-workspace  build-all + fill build/steam-workshop/ (content, image, bilingual changeNote)"
-	@echo "  upload-steam   steam-workspace + ModUploader (STS2_MOD_UPLOADER in .env; STS2_WORKSHOP_ID in release.env)"
+	@echo "  upload-steam       workshop + upload stable and beta branch payloads (one STS2_WORKSHOP_ID)"
+	@echo "  upload-steam-stable  workshop-stable + upload public branch"
+	@echo "  upload-steam-beta    workshop-beta + upload public-beta branch"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo ""
 	@echo "  docs           Valaxy docs dev server (docs/)"
@@ -165,7 +176,11 @@ lint-scripts:
 check: format-check lint-scripts
 
 test:
+ifeq ($(OS),Windows_NT)
+	@set DOTNET_ROLL_FORWARD=Major&& $(DOTNET) test tests/KitLib.ModPanel.Tests/KitLib.ModPanel.Tests.csproj -c Debug
+else
 	DOTNET_ROLL_FORWARD=Major $(DOTNET) test tests/KitLib.ModPanel.Tests/KitLib.ModPanel.Tests.csproj -c Debug
+endif
 
 hooks-install:
 	$(UV) sync
@@ -177,19 +192,40 @@ hooks-run:
 deps:
 	$(DOTNET) restore $(MOD_MAIN)
 
-build:
-	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile or auto from install)"
-	$(DOTNET) publish $(MOD_MAIN) $(STS2_MSBUILD_PROFILE)
+build: build-flat
+	@echo "KitLib flat bundle for profile $(STS2_COMPILE_PROFILE)"
 
-build-all:
-	@echo "STS2 compile profile: $(STS2_COMPILE_PROFILE) (local.props Sts2Profile or auto from install)"
-	$(DOTNET) build KitLib.sln $(STS2_MSBUILD_PROFILE)
+build-flat:
+	$(DOTNET) build KitLib.sln $(STS2_MSBUILD_PROFILE) -c Debug
+
+build-all: build-flat
+
+workshop-stable:
+	$(STEAM_SYNC_STABLE)
+
+workshop-beta:
+	$(STEAM_SYNC_BETA)
+
+workshop: workshop-stable workshop-beta
+
+build-smoke-mod: build
+	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE)
+
+check-smoke-mod: build-smoke-mod
+ifeq ($(OS),Windows_NT)
+	@set DOTNET_ROLL_FORWARD=Major&& $(DOTNET) test $(SMOKE_MOD_TESTS) -c Debug
+else
+	DOTNET_ROLL_FORWARD=Major $(DOTNET) test $(SMOKE_MOD_TESTS) -c Debug
+endif
+
+deploy-smoke-mod: build-smoke-mod
+	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE) -p:DeploySmokeMod=true
 
 build-stable:
-	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py stable)" -p:Sts2Profile=stable -p:KitLibProfileBuild=true
+	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py stable)" -p:Sts2Profile=stable -c Debug
 
 build-beta:
-	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py beta)" -p:Sts2Profile=beta -p:KitLibProfileBuild=true
+	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py beta)" -p:Sts2Profile=beta -c Debug
 
 build-profiles: build-stable build-beta
 
@@ -210,7 +246,7 @@ endif
 deploy:
 	$(PYTHON) scripts/deploy_modules.py
 
-sync: build-all deploy
+sync: build deploy
 
 sync-full: sync
 	$(DEPLOY_TOOLS_BUILD)
@@ -221,7 +257,8 @@ sync-framework-mods:
 	$(DOTNET) msbuild $(MOD_MAIN) -t:SyncFrameworkModsToGame -p:DisableFrameworkModsAfterRestore=false
 
 compile: deps
-	$(DOTNET) build $(DEPLOY_TO_GAME) $(STS2_MSBUILD_PROFILE) $(MOD_MAIN)
+	$(DOTNET) build KitLib.sln $(STS2_MSBUILD_PROFILE)
+	$(DEPLOY_COPY)
 
 launch:
 	$(PYTHON) scripts/launch_sts2.py
@@ -275,14 +312,17 @@ nuget upload-nuget:
 
 upload-all: publish nexus nuget
 	$(PYTHON) scripts/publish_nuget.py --skip-build $(if $(VERSION),--version $(VERSION),)
-	$(STEAM_SYNC) --skip-build
+	$(STEAM_SYNC)
 	$(STEAM_UPLOAD)
 
-steam-workspace: build-all
-	$(STEAM_SYNC) --skip-build
-
-upload-steam: steam-workspace
+upload-steam: workshop
 	$(STEAM_UPLOAD_STRICT)
+
+upload-steam-stable: workshop-stable
+	$(PYTHON) scripts/publish_steam.py upload stable
+
+upload-steam-beta: workshop-beta
+	$(PYTHON) scripts/publish_steam.py upload beta
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py

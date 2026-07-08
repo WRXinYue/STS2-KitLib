@@ -5,6 +5,7 @@
   -->
   <PropertyGroup>
     <KitLibSts2RefsStableVersion>0.107.1</KitLibSts2RefsStableVersion>
+    <KitLibSts2RefsBetaVersion>0.108.0</KitLibSts2RefsBetaVersion>
     <KitLibSts2RefsStableRoot>$(RepoRoot)eng/sts2-refs/stable/$(KitLibSts2RefsStableVersion)</KitLibSts2RefsStableRoot>
     <KitLibSts2RefsStableDataDir>$(KitLibSts2RefsStableRoot)/data_sts2_windows_x86_64</KitLibSts2RefsStableDataDir>
   </PropertyGroup>

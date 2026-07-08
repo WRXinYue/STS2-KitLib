@@ -80,3 +80,14 @@ jobs:
 
       - name: API touchpoint check
         run: make check-api
+
+      - name: Content mod smoke fixture
+        run: |
+          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py stable)"
+          printf '%s\n' \
+            '<Project>' \
+            '  <PropertyGroup>' \
+            "    <Sts2Dir>${STS2_DIR}</Sts2Dir>" \
+            '  </PropertyGroup>' \
+            '</Project>' > local.props
+          make check-smoke-mod

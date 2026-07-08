@@ -53,7 +53,7 @@ internal static class ModDependencyLoader {
     }
 
     internal static void EnsureLoaded() {
-        var modDir = Path.GetDirectoryName(typeof(MainFile).Assembly.Location);
+        var modDir = ModPaths.ResolveModRoot(typeof(MainFile).Assembly);
         if (string.IsNullOrEmpty(modDir)) {
             MainFile.Logger.Warn("Cannot resolve mod directory for dependency loading.");
             return;

@@ -1,0 +1,13 @@
+{
+  "id": "KitLibSmokeMod",
+  "name": "KitLib Smoke Mod",
+  "author": "KitLib",
+  "description": "Minimal KitLib content-mod fixture for CI and local integration checks.",
+  "version": "0.0.1",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [
+    { "id": "KitLib", "min_version": "0.24.0" }
+  ],
+  "affects_gameplay": false
+}

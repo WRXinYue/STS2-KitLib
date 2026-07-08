@@ -1,0 +1,41 @@
+<Project>
+  <!-- Compile-time refs for content mods: Abstractions contracts + KitLib host (CompanionBridge). -->
+  <PropertyGroup>
+    <KitLibBundleDir>$(RepoRoot)build/KitLib/</KitLibBundleDir>
+    <KitLibAbstractionsDllPath>$(KitLibBundleDir)KitLib.Abstractions.dll</KitLibAbstractionsDllPath>
+    <KitLibAbstractionsDllPath Condition="!Exists('$(KitLibAbstractionsDllPath)')">$(RepoRoot)src/KitLib.Abstractions/bin/$(Configuration)/net9.0/KitLib.Abstractions.dll</KitLibAbstractionsDllPath>
+    <KitLibDllPath>$(KitLibBundleDir)KitLib.dll</KitLibDllPath>
+    <KitLibDllPath Condition="!Exists('$(KitLibDllPath)')">$(RepoRoot)src/KitLib.Core/bin/$(Configuration)/net9.0/KitLib.dll</KitLibDllPath>
+  </PropertyGroup>
+
+  <Target Name="EnsureKitLibCoreForContentMod" BeforeTargets="ResolveAssemblyReferences">
+    <PropertyGroup>
+      <_CoreBuildProfile Condition="'$(Sts2Profile)' == ''">stable</_CoreBuildProfile>
+      <_CoreBuildProfile Condition="'$(Sts2Profile)' != ''">$(Sts2Profile)</_CoreBuildProfile>
+    </PropertyGroup>
+    <MSBuild
+      Projects="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);Sts2Profile=$(_CoreBuildProfile);Sts2Dir=$(Sts2Dir)"
+      Condition="!Exists('$(KitLibDllPath)') and '$(Sts2Dir)' != ''" />
+    <Error
+      Condition="!Exists('$(KitLibDllPath)')"
+      Text="KitLib core not found at $(KitLibDllPath). Run make build." />
+  </Target>
+
+  <Target Name="CheckContentModKitLibRefs" BeforeTargets="BeforeBuild;BeforePublish" DependsOnTargets="EnsureKitLibCoreForContentMod">
+    <Error Condition="!Exists('$(KitLibAbstractionsDllPath)')" Text="KitLib.Abstractions.dll not found at $(KitLibAbstractionsDllPath). Run make build." />
+    <Error Condition="!Exists('$(KitLibDllPath)')" Text="KitLib.dll not found at $(KitLibDllPath). Run make build." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="KitLib.Abstractions">
+      <HintPath>$(KitLibAbstractionsDllPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="KitLib" Aliases="KitLibCore">
+      <HintPath>$(KitLibDllPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

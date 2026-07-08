@@ -5,6 +5,7 @@
     <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' == 'Windows_NT'">python</KitLibPython>
     <KitLibPython Condition="'$(KitLibPython)' == '' and '$(OS)' != 'Windows_NT'">python3</KitLibPython>
   </PropertyGroup>
+
   <ItemGroup>
     <Reference Include="sts2">
       <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
@@ -15,10 +16,12 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src\KitLib.Abstractions\KitLib.Abstractions.csproj" />
     <ProjectReference Include="$(RepoRoot)src\KitLib.Core\KitLib.Core.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="GodotSharp" Version="4.5.1">
       <PrivateAssets>all</PrivateAssets>

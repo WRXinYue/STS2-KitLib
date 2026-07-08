@@ -1,26 +1,16 @@
 <Project>
-  <!-- KitLib.Abstractions NuGet runtime deps staged next to KitLib.dll; merged into KitLib.dll for STS2 mod ALC load. -->
+  <!-- Stage Abstractions + Semver/Primitives next to KitLib.dll. Abstractions stays a sibling DLL (no ILRepack). -->
   <PropertyGroup>
     <_KitLibRepoRoot Condition="'$(RepoRoot)' != ''">$(RepoRoot)</_KitLibRepoRoot>
     <_KitLibRepoRoot Condition="'$(_KitLibRepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</_KitLibRepoRoot>
     <_SemverDll>$(_KitLibRepoRoot)packages\semver\3.0.0\lib\net5.0\Semver.dll</_SemverDll>
     <_PrimitivesDll>$(_KitLibRepoRoot)packages\microsoft.extensions.primitives\5.0.1\lib\netcoreapp3.0\Microsoft.Extensions.Primitives.dll</_PrimitivesDll>
     <_AbstractionsDll>$(MSBuildProjectDirectory)\..\KitLib.Abstractions\bin\$(Configuration)\net9.0\KitLib.Abstractions.dll</_AbstractionsDll>
-    <_IlRepackExe>$(PkgILRepack)\tools\ILRepack.exe</_IlRepackExe>
     <_KitLibBundleDir>$(_KitLibRepoRoot)build\KitLib\</_KitLibBundleDir>
-    <_KitLibUnmergedDll>$(_KitLibBundleDir)KitLib.unmerged.dll</_KitLibUnmergedDll>
   </PropertyGroup>
   <Target Name="CopyKitLibAbstractionsRuntimeDeps" AfterTargets="Build">
     <Copy SourceFiles="$(_SemverDll)" DestinationFolder="$(_KitLibBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_SemverDll)')" />
     <Copy SourceFiles="$(_PrimitivesDll)" DestinationFolder="$(_KitLibBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_PrimitivesDll)')" />
     <Copy SourceFiles="$(_AbstractionsDll)" DestinationFolder="$(_KitLibBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_AbstractionsDll)')" />
-  </Target>
-  <Target Name="MergeKitLibCoreDependencies" AfterTargets="CopyKitLibAbstractionsRuntimeDeps" Condition="Exists('$(_IlRepackExe)') and '$(KitLibProfileBuild)' != 'true'">
-    <Error Condition="!Exists('$(_KitLibBundleDir)KitLib.dll')" Text="Missing $(_KitLibBundleDir)KitLib.dll before ILRepack merge." />
-    <Error Condition="!Exists('$(_KitLibBundleDir)KitLib.Abstractions.dll')" Text="Missing $(_KitLibBundleDir)KitLib.Abstractions.dll before ILRepack merge." />
-    <Move SourceFiles="$(_KitLibBundleDir)KitLib.dll" DestinationFiles="$(_KitLibUnmergedDll)" />
-    <Exec
-      Command="&quot;$(_IlRepackExe)&quot; /ndebug /lib:&quot;$(Sts2DataDir)&quot; /out:&quot;$(_KitLibBundleDir)KitLib.dll&quot; &quot;$(_KitLibUnmergedDll)&quot; &quot;$(_KitLibBundleDir)KitLib.Abstractions.dll&quot; &quot;$(_KitLibBundleDir)Semver.dll&quot; &quot;$(_KitLibBundleDir)Microsoft.Extensions.Primitives.dll&quot;" />
-    <Delete Files="$(_KitLibUnmergedDll)" />
   </Target>
 </Project>

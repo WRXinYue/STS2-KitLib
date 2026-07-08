@@ -35,7 +35,7 @@ internal static class SatelliteModuleLoader {
     ];
 
     internal static void LoadBundledModules() {
-        var modDir = Path.GetDirectoryName(typeof(MainFile).Assembly.Location);
+        var modDir = ModPaths.ResolveModRoot(typeof(MainFile).Assembly);
         if (string.IsNullOrEmpty(modDir)) {
             MainFile.Logger.Warn("Satellite loader: cannot resolve mod directory.");
             return;
@@ -74,13 +74,9 @@ internal static class SatelliteModuleLoader {
     }
 
     static void TryPreloadAssembly(string modDir, string assemblyName) {
-        var modulesDir = Path.Combine(modDir, ModulesSubdir);
-        var path = Path.Combine(modulesDir, assemblyName + ".dll");
-        if (!File.Exists(path)) {
-            path = Path.Combine(modDir, assemblyName + ".dll");
-            if (!File.Exists(path))
-                return;
-        }
+        var path = ResolveSatelliteAssemblyPath(modDir, assemblyName);
+        if (path is null)
+            return;
 
         try {
             ModAssemblyLoader.LoadFromModPath(path);
@@ -248,25 +244,14 @@ internal static class SatelliteModuleLoader {
         }
     }
 
-    static bool ModuleAssemblyExists(string modDir, string assemblyName) {
-        var modulesDir = Path.Combine(modDir, ModulesSubdir);
-        if (File.Exists(Path.Combine(modulesDir, assemblyName + ".dll")))
-            return true;
-        return File.Exists(Path.Combine(modDir, assemblyName + ".dll"));
-    }
+    static bool ModuleAssemblyExists(string modDir, string assemblyName) =>
+        ResolveSatelliteAssemblyPath(modDir, assemblyName) is not null;
 
     static Assembly? LoadAssembly(string modDir, string assemblyName, string moduleId) {
-        var modulesDir = Path.Combine(modDir, ModulesSubdir);
-        var path = Path.Combine(modulesDir, assemblyName + ".dll");
-        if (!File.Exists(path)) {
-            var legacyPath = Path.Combine(modDir, assemblyName + ".dll");
-            if (!File.Exists(legacyPath)) {
-                KitLog.Info($"Module {moduleId} not present ({assemblyName}.dll).");
-                return null;
-            }
-
-            path = legacyPath;
-            KitLog.Info($"Loading {assemblyName} from mod root (legacy layout). Run make sync-full to move it under {ModulesSubdir}/.");
+        var path = ResolveSatelliteAssemblyPath(modDir, assemblyName);
+        if (path is null) {
+            KitLog.Info($"Module {moduleId} not present ({assemblyName}.dll).");
+            return null;
         }
 
         try {
@@ -303,6 +288,11 @@ internal static class SatelliteModuleLoader {
         if (method == null)
             return [];
         return (IEnumerable<Mod>)method.Invoke(null, null)!;
+    }
+
+    static string? ResolveSatelliteAssemblyPath(string modDir, string assemblyName) {
+        var path = Path.Combine(modDir, ModulesSubdir, assemblyName + ".dll");
+        return File.Exists(path) ? path : null;
     }
 
 }

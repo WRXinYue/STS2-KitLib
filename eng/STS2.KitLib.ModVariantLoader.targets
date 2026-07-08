@@ -2,12 +2,12 @@
   <PropertyGroup>
     <ModVariantModId Condition="'$(ModVariantModId)' == ''">$(ModId)</ModVariantModId>
     <ModVariantBundleDir Condition="'$(ModVariantBundleDir)' == ''">$(RepoBuildDir)</ModVariantBundleDir>
-    <ModVariantLoaderProject Condition="'$(ModVariantLoaderProject)' == ''">$(LustTravelLoaderProject)</ModVariantLoaderProject>
+    <ModVariantLoaderProject Condition="'$(ModVariantLoaderProject)' == '' and '$(RepoRoot)' != ''">$(RepoRoot)src\KitLib.ModVariantLoader\KitLib.ModVariantLoader.csproj</ModVariantLoaderProject>
     <ModVariantLoaderProjectDir>$([System.IO.Path]::GetDirectoryName('$(ModVariantLoaderProject)'))</ModVariantLoaderProjectDir>
-    <ModVariantLoaderAssemblyName Condition="'$(ModVariantLoaderAssemblyName)' == ''">$([System.IO.Path]::GetFileNameWithoutExtension('$(ModVariantLoaderProject)')).dll</ModVariantLoaderAssemblyName>
+    <ModVariantLoaderAssemblyName Condition="'$(ModVariantLoaderAssemblyName)' == ''">KitLib.ModVariantLoader.dll</ModVariantLoaderAssemblyName>
     <ModVariantLoaderOutputDll Condition="'$(ModVariantLoaderOutputDll)' == ''">$(ModVariantLoaderProjectDir)\bin\$(Configuration)\net9.0\$(ModVariantLoaderAssemblyName)</ModVariantLoaderOutputDll>
-    <ModVariantStableCompatTarget Condition="'$(ModVariantStableCompatTarget)' == ''">$(LustTravelStableCompatTarget)</ModVariantStableCompatTarget>
-    <ModVariantBetaCompatTarget Condition="'$(ModVariantBetaCompatTarget)' == ''">$(LustTravelBetaCompatTarget)</ModVariantBetaCompatTarget>
+    <ModVariantStableCompatTarget Condition="'$(ModVariantStableCompatTarget)' == ''">$(KitLibSts2RefsStableVersion)</ModVariantStableCompatTarget>
+    <ModVariantBetaCompatTarget Condition="'$(ModVariantBetaCompatTarget)' == ''">$(KitLibSts2RefsBetaVersion)</ModVariantBetaCompatTarget>
     <ModVariantBundleComposeProject Condition="'$(ModVariantBundleComposeProject)' == '' and '$(KitLibRepoRoot)' != ''">$(KitLibRepoRoot)tools\ModVariantBundleCompose\ModVariantBundleCompose.csproj</ModVariantBundleComposeProject>
     <_ModVariantComposeToolPacked>$([MSBuild]::NormalizePath($(MSBuildThisFileDirectory)..\tools\ModVariantBundleCompose.dll))</_ModVariantComposeToolPacked>
     <_ModVariantComposeToolDev>$([MSBuild]::NormalizePath($(MSBuildThisFileDirectory)..\tools\ModVariantBundleCompose\bin\$(Configuration)\net9.0\ModVariantBundleCompose.dll))</_ModVariantComposeToolDev>
@@ -15,6 +15,21 @@
     <ModVariantComposeToolDll Condition="'$(ModVariantComposeToolDll)' == ''">$(_ModVariantComposeToolDev)</ModVariantComposeToolDll>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
   </PropertyGroup>
+
+  <Target Name="StageKitLibSharedBundleDeps" BeforeTargets="ComposeModVariantBundle">
+    <PropertyGroup>
+      <_KitLibAbstractionsDll>$(RepoRoot)src\KitLib.Abstractions\bin\$(Configuration)\net9.0\KitLib.Abstractions.dll</_KitLibAbstractionsDll>
+      <_KitLibModVariantLoaderDll>$(RepoRoot)src\KitLib.ModVariantLoader\bin\$(Configuration)\net9.0\KitLib.ModVariantLoader.dll</_KitLibModVariantLoaderDll>
+    </PropertyGroup>
+    <MSBuild
+      Projects="$(RepoRoot)src\KitLib.Abstractions\KitLib.Abstractions.csproj;$(RepoRoot)src\KitLib.ModVariantLoader\KitLib.ModVariantLoader.csproj"
+      Targets="Build"
+      Properties="Configuration=$(Configuration)"
+      BuildInParallel="true" />
+    <MakeDir Directories="$(ModVariantBundleDir)" />
+    <Copy SourceFiles="$(_KitLibAbstractionsDll)" DestinationFolder="$(ModVariantBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_KitLibAbstractionsDll)')" />
+    <Copy SourceFiles="$(_KitLibModVariantLoaderDll)" DestinationFolder="$(ModVariantBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_KitLibModVariantLoaderDll)')" />
+  </Target>
 
   <Target Name="ComposeModVariantBundle">
     <Error Condition="'$(ModVariantModId)' == ''" Text="ComposeModVariantBundle requires ModId or ModVariantModId on the project." />
