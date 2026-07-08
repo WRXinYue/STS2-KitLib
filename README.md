@@ -2,7 +2,7 @@
 
 **English** | [中文](./README.zh-CN.md)
 
-Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference NuGet STS2.KitLib.Abstractions and ship kitlib.compat.toml for version checks.
+Modular in-game toolkit for Slay the Spire 2. KitLib ships as a thin Core host with optional satellite modules for the dev rail, cheats, AI, logging, and main-menu mod settings. Use it for test runs, cheats, scripting, and mod debugging without leaving the game. Content mods can reference `eng/KitLib.ContentMod.props` and ship `kitlib.compat.toml` for version checks.
 
 ## Getting started
 

@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import shutil
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -16,6 +17,7 @@ if str(_REPO / "scripts") not in sys.path:
     sys.path.insert(0, str(_REPO / "scripts"))
 
 from lib.bundle_build import build_bundle  # noqa: E402
+from lib.release_assets import RELEASE_PROFILES, mod_zip_path  # noqa: E402
 
 BUNDLE_ID = "KitLib"
 MODULES_SUBDIR = "modules"
@@ -119,8 +121,44 @@ def _read_version() -> str:
     return str(data["version"])
 
 
-def _dotnet_build() -> None:
-    build_bundle()
+def _dotnet_build(*, configuration: str, sts2_profile: str) -> None:
+    sts2_dir = subprocess.check_output(
+        [sys.executable, str(_REPO / "scripts" / "resolve_sts2_profile_dir.py"), sts2_profile],
+        text=True,
+    ).strip()
+    build_bundle(configuration=configuration, sts2_profile=sts2_profile, sts2_dir=sts2_dir)
+
+
+def _package_profile(
+    version: str,
+    profile: str,
+    *,
+    configuration: str,
+    skip_build: bool,
+) -> Path:
+    dist = _REPO / "build" / "dist"
+    if dist.exists():
+        shutil.rmtree(dist)
+    dist.mkdir(parents=True)
+
+    if not skip_build:
+        _dotnet_build(configuration=configuration, sts2_profile=profile)
+
+    bundle_dir = _stage_bundle(dist)
+    zip_path = mod_zip_path(_REPO, version, profile)
+    _zip_dir(bundle_dir, zip_path)
+    print(f"Packaged release zip: {zip_path.name} ({profile})")
+    return zip_path
+
+
+def _restage_dist_for_profile(profile: str, *, configuration: str) -> None:
+    """Leave build/dist/KitLib staged (stable profile) for downstream packaging."""
+    dist = _REPO / "build" / "dist"
+    if dist.exists():
+        shutil.rmtree(dist)
+    dist.mkdir(parents=True)
+    _dotnet_build(configuration=configuration, sts2_profile=profile)
+    _stage_bundle(dist)
 
 
 def _should_package_root_item(item: Path) -> bool:
@@ -199,6 +237,23 @@ def main() -> int:
     ap.add_argument("--version", default="", help="Override version (default: KitLib.json)")
     ap.add_argument("--skip-build", action="store_true", help="Use existing build/ artifacts")
     ap.add_argument(
+        "-c",
+        "--configuration",
+        default="Debug",
+        help="dotnet build configuration (use Release for publish zips)",
+    )
+    ap.add_argument(
+        "--sts2-profile",
+        choices=RELEASE_PROFILES,
+        default="",
+        help="STS2 API profile (default: resolve_sts2_compile_profile.py)",
+    )
+    ap.add_argument(
+        "--all-profiles",
+        action="store_true",
+        help="Build and zip stable + beta (KitLib-vX.zip and KitLib-vX-beta.zip)",
+    )
+    ap.add_argument(
         "--stage-dir",
         type=Path,
         default=None,
@@ -206,8 +261,21 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    if not args.skip_build:
-        _dotnet_build()
+    if args.all_profiles and args.sts2_profile:
+        print("ERROR: use --all-profiles or --sts2-profile, not both.", file=sys.stderr)
+        return 1
+
+    if not args.skip_build and args.stage_dir is None:
+        if args.all_profiles:
+            pass
+        elif args.sts2_profile:
+            _dotnet_build(configuration=args.configuration, sts2_profile=args.sts2_profile)
+        else:
+            profile = subprocess.check_output(
+                [sys.executable, str(_REPO / "scripts" / "resolve_sts2_compile_profile.py")],
+                text=True,
+            ).strip()
+            _dotnet_build(configuration=args.configuration, sts2_profile=profile)
 
     if args.stage_dir is not None:
         stage_root = args.stage_dir.resolve()
@@ -219,17 +287,28 @@ def main() -> int:
         return 0
 
     version = args.version.strip() or _read_version()
-    dist = _REPO / "build" / "dist"
-    if dist.exists():
-        shutil.rmtree(dist)
-    dist.mkdir(parents=True)
 
-    bundle_dir = _stage_bundle(dist)
+    if args.all_profiles:
+        for profile in RELEASE_PROFILES:
+            _package_profile(
+                version,
+                profile,
+                configuration=args.configuration,
+                skip_build=False,
+            )
+        _restage_dist_for_profile("stable", configuration=args.configuration)
+        return 0
 
-    main_zip = _REPO / "build" / f"KitLib-v{version}.zip"
-    _zip_dir(bundle_dir, main_zip)
-
-    print(f"Packaged release zip: {main_zip.name}")
+    profile = args.sts2_profile or subprocess.check_output(
+        [sys.executable, str(_REPO / "scripts" / "resolve_sts2_compile_profile.py")],
+        text=True,
+    ).strip()
+    _package_profile(
+        version,
+        profile,
+        configuration=args.configuration,
+        skip_build=args.skip_build,
+    )
     return 0
 
 

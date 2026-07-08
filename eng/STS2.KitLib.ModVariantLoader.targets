@@ -49,7 +49,7 @@
       Properties="Configuration=$(Configuration)"
       BuildInParallel="false"
       Condition="'$(ModVariantBundleComposeProject)' != '' and !Exists('$(ModVariantComposeToolDll)')" />
-    <Error Condition="!Exists('$(ModVariantComposeToolDll)')" Text="Missing ModVariantBundleCompose tool at $(ModVariantComposeToolDll). Install STS2.KitLib.ModVariantLoader or set KitLibRepoRoot." />
+    <Error Condition="!Exists('$(ModVariantComposeToolDll)')" Text="Missing ModVariantBundleCompose tool at $(ModVariantComposeToolDll). Set KitLibRepoRoot to the KitLib repo." />
 
     <MSBuild
       Projects="$(ModVariantLoaderProject)"

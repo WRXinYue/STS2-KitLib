@@ -2,14 +2,6 @@
   <PropertyGroup>
     <AssemblyName>KitLib.Abstractions</AssemblyName>
     <RootNamespace>KitLib</RootNamespace>
-    <IsPackable>true</IsPackable>
-    <PackageId>STS2.KitLib.Abstractions</PackageId>
-    <Title>KitLib Abstractions for Slay the Spire 2</Title>
-    <Authors>WRXinYue</Authors>
-    <Description>Compile-time contracts for KitLib and content-mod AI bridges.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>0.25.0</Version>
-    <PackageOutputPath>$(RepoRoot)build\nuget\</PackageOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Semver" Version="3.0.0" />

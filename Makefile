@@ -81,11 +81,11 @@ STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload all $(STEAM_UPL
 LAUNCH := $(PYTHON) scripts/launch_sts2.py
 LAUNCH_MP_CLIENT_ID ?= 1001
 
-.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus nuget upload-all readme-nexus zip zip-full clean docs docs-build \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus nexus-beta upload-all readme-nexus zip zip-full zip-profiles clean docs docs-build \
         build-stable build-beta build-profiles build-flat workshop workshop-stable workshop-beta extract-touchpoints check-api verify-profiles capture-sts2-ref \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
-        upload-github upload-nexus upload-nuget workshop upload-steam upload-steam-stable upload-steam-beta
+        upload-github upload-nexus upload-nexus-beta workshop upload-steam upload-steam-stable upload-steam-beta
 
 help:
 	@echo "KitLib — targets"
@@ -118,7 +118,8 @@ help:
 	@echo "  check-smoke-mod  build + content-mod smoke fixture + Cecil/ref/load tests"
 	@echo "  deploy-smoke-mod copy smoke mod into game mods/KitLibSmokeMod/ (manual in-game check)"
 	@echo "  capture-sts2-ref PROFILE=stable|beta  copy sts2.dll into eng/sts2-refs/ (validates release_info)"
-	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip"
+	@echo "  zip-profiles build stable + beta release zips (KitLib-vX.zip + KitLib-vX-beta.zip)"
+	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip (local profile only)"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  launch       launch STS2 (Vulkan on Windows; Steam on macOS/Linux)"
 	@echo "  launch-mp-host  fastmp host instance (Vulkan)"
@@ -146,12 +147,12 @@ help:
 	@echo "  zip          build-all + package build/KitLib-vX.X.X.zip (alias: zip-full)"
 	@echo ""
 	@echo "  [upload]"
-	@echo "  upload-github  zip + GitHub Release (requires gh CLI; alias: publish)"
-	@echo "  upload-nexus   zip + upload to Nexus Main file (NEXUS_FILE_GROUP_ID; alias: nexus)"
+	@echo "  upload-github  stable+beta zips + kitlog + MCP → GitHub Release (alias: publish)"
+	@echo "  upload-nexus   stable main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
+	@echo "  upload-nexus-beta  beta main zip → Nexus (NEXUS_FILE_GROUP_ID_BETA; alias: nexus-beta)"
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
 	@echo "  upload-nexus-kitlog  zip-kitlog + Nexus Optional KitLog CLI (NEXUS_FILE_GROUP_ID_KITLOG; alias: nexus-kitlog)"
-	@echo "  upload-nuget   zip + pack + push to NuGet (NUGET_API_KEY; optional NUGET_SOURCE; alias: nuget)"
-	@echo "  upload-all     upload-github + upload-nexus + upload-nuget + upload-steam (one zip build)"
+	@echo "  upload-all     GitHub + Nexus stable/beta/tools + Steam"
 	@echo "  upload-steam       workshop + upload stable and beta branch payloads (one STS2_WORKSHOP_ID)"
 	@echo "  upload-steam-stable  workshop-stable + upload public branch"
 	@echo "  upload-steam-beta    workshop-beta + upload public-beta branch"
@@ -319,17 +320,16 @@ publish upload-github:
 nexus upload-nexus:
 	$(PYTHON) scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
 
+nexus-beta upload-nexus-beta:
+	$(PYTHON) scripts/publish_nexus.py --beta $(if $(VERSION),--version $(VERSION),)
+
 nexus-mcp upload-nexus-mcp:
 	$(PYTHON) scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
 nexus-kitlog upload-nexus-kitlog:
 	$(PYTHON) scripts/publish_nexus.py --kitlog $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
-nuget upload-nuget:
-	$(PYTHON) scripts/publish_nuget.py $(if $(VERSION),--version $(VERSION),)
-
-upload-all: publish nexus nuget
-	$(PYTHON) scripts/publish_nuget.py --skip-build $(if $(VERSION),--version $(VERSION),)
+upload-all: publish nexus nexus-beta nexus-kitlog nexus-mcp
 	$(STEAM_SYNC)
 	$(STEAM_UPLOAD)
 
@@ -352,6 +352,9 @@ docs-build:
 	cd docs && pnpm install && pnpm run build:ssg
 
 # ── zip: modular release (Core + satellites under modules/) ──
+zip-profiles:
+	$(PYTHON) scripts/package_modules.py --all-profiles --configuration Release
+
 zip-full: build-all
 	$(PACKAGE_MODULES) --skip-build
 

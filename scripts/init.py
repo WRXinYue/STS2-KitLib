@@ -106,9 +106,8 @@ def main() -> int:
     print("  make launch            -- launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)")
     print("  make deploy    -- deploy from build/KitLib/ (after make build)")
     print("  make build     -- artifacts under build/KitLib/ only (no game copy)")
-    print("  make upload-nuget  -- zip + NuGet pack/push (NUGET_API_KEY in .env)")
     print("  make upload-steam  -- Workshop upload (STS2_MOD_UPLOADER in .env)")
-    print("  make upload-all    -- upload-github + upload-nexus + upload-nuget + upload-steam (one zip build)")
+    print("  make upload-all    -- GitHub + Nexus stable/beta/tools + Steam")
     return 0
 
 

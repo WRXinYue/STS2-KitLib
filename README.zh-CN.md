@@ -70,7 +70,7 @@ KitLib 是《杀戮尖塔 2》的游戏内开发工具箱。
 
 ## 给内容 Mod 作者
 
-- 编译期可引用 NuGet：`STS2.KitLib.Abstractions`。
+- 内容 mod 编译期引用 `eng/KitLib.ContentMod.props`（本地 `KitLib.Abstractions.dll`）。
 - 运行时按需依赖 KitLib 主体与对应卫星模块。
 - 如果你需要更细的接入说明，优先看文档站中的开发者页面。
 

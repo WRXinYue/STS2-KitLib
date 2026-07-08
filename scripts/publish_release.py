@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -13,10 +14,14 @@ import tempfile
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
 
-
-def _zip_name(version: str) -> str:
-    return f"KitLib-v{version}.zip"
+from lib.release_assets import (  # noqa: E402
+    github_release_assets,
+    tools_rid,
+)
 
 
 def _release_tag(version: str) -> str:
@@ -46,14 +51,41 @@ def _changelog_section(path: Path, version: str) -> str:
     return "\n".join(out)
 
 
+def _ensure_release_assets(version: str, rid: str) -> list[Path]:
+    assets = github_release_assets(_REPO_ROOT, version, rid)
+    missing = [path for path in assets if not path.is_file()]
+    if not missing:
+        return assets
+
+    print("Building release assets (zip-profiles zip-mcp zip-kitlog)...")
+    env = {**os.environ, "TOOLS_RID": rid}
+    subprocess.run(
+        ["make", "zip-profiles", "zip-mcp", "zip-kitlog"],
+        cwd=_REPO_ROOT,
+        env=env,
+        check=True,
+    )
+
+    still_missing = [path for path in assets if not path.is_file()]
+    if still_missing:
+        missing_names = ", ".join(path.name for path in still_missing)
+        raise FileNotFoundError(f"Release assets missing after build: {missing_names}")
+    return assets
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Publish GitHub Release for DevMode.",
+        description="Publish GitHub Release for KitLib.",
     )
     ap.add_argument(
         "--version",
         default="",
         help="Semver, e.g. 0.2.0 (default: KitLib.json)",
+    )
+    ap.add_argument(
+        "--tools-rid",
+        default="",
+        help="Runtime ID for tool zips (default: TOOLS_RID env or host default).",
     )
     args = ap.parse_args()
 
@@ -77,13 +109,11 @@ def main() -> int:
         )
         return 1
 
-    print("Building and packaging (make zip)...")
-    subprocess.run(["make", "zip"], cwd=_REPO_ROOT, check=True)
-
-    zip_name = _zip_name(version)
-    zip_path = _REPO_ROOT / "build" / zip_name
-    if not zip_path.is_file():
-        print(f"Zip not found: {zip_path}", file=sys.stderr)
+    rid = tools_rid(args.tools_rid)
+    try:
+        assets = _ensure_release_assets(version, rid)
+    except FileNotFoundError as ex:
+        print(str(ex), file=sys.stderr)
         return 1
 
     notes_en = _changelog_section(_REPO_ROOT / "CHANGELOG.md", version)
@@ -100,7 +130,8 @@ def main() -> int:
 
     tag = _release_tag(version)
     print(f"Creating GitHub Release {tag}...")
-    print(f"  Assets: {zip_path}")
+    for asset in assets:
+        print(f"  Asset: {asset.name}")
 
     subprocess.run(
         ["gh", "release", "delete", tag, "--yes"],
@@ -116,27 +147,25 @@ def main() -> int:
         tf.write(notes)
         notes_file = tf.name
     try:
-        r = subprocess.run(
-            [
-                "gh",
-                "release",
-                "create",
-                tag,
-                str(zip_path),
-                "--title",
-                tag,
-                "--notes-file",
-                notes_file,
-            ],
-            cwd=_REPO_ROOT,
-        )
+        cmd = [
+            "gh",
+            "release",
+            "create",
+            tag,
+            *[str(path) for path in assets],
+            "--title",
+            tag,
+            "--notes-file",
+            notes_file,
+        ]
+        r = subprocess.run(cmd, cwd=_REPO_ROOT)
     finally:
         Path(notes_file).unlink(missing_ok=True)
 
     if r.returncode != 0:
         print("gh release create failed", file=sys.stderr)
         return 1
-    print(f"Done! GitHub Release {tag} published.")
+    print(f"Done! GitHub Release {tag} published with {len(assets)} assets.")
     return 0
 
 

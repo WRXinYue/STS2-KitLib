@@ -42,7 +42,7 @@ make init   # detect STS2 + Godot paths, write local.props
 | `make sync-full` | Build + deploy to game `mods/KitLib/` |
 | `make format` | `dotnet format KitLib.sln` |
 | `make docs` | Valaxy dev server (`docs/`) |
-| `make upload-all` | Release zip + GitHub / Nexus / NuGet / Steam |
+| `make upload-all` | Release zip + GitHub / Nexus / Steam |
 
 :::
 
