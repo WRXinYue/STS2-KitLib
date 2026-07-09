@@ -22,6 +22,7 @@ public static class ModPanelUiMetrics {
     public const int SidebarContentMarginH = 16;
     public const float SidebarModAccentBarWidth = 6f;
     public const int SidebarModAccentTextGutter = 6;
+    public const float SidebarModRowMinHeight = 62f;
     public const float SidebarModEnableToggleHitSize = 22f;
     public const float SidebarModEnableToggleRadius = 4f;
     public const float SidebarModListSubtleAlpha = 0.04f;

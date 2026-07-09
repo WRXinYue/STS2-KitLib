@@ -97,39 +97,90 @@ public static partial class ModPanelUI {
             Color = new Color(1f, 1f, 1f, alpha),
         };
     }
-    private static StyleBoxFlat CreateSidebarModVersionBadgeStyle(bool compact = false) {
-        var accent = ModPanelUiPalette.SidebarModActiveAccent;
+    private static StyleBoxFlat CreateGithubShieldStyle(Color borderTint) {
         return new StyleBoxFlat {
-            BgColor = new Color(0.058f, 0.052f, 0.045f, 0.96f),
-            BorderColor = new Color(accent.R, accent.G, accent.B, 0.55f),
+            BgColor = new Color(0.07f, 0.065f, 0.058f, 0.94f),
+            BorderColor = new Color(borderTint.R, borderTint.G, borderTint.B, 0.5f),
             BorderWidthLeft = 1,
             BorderWidthTop = 1,
             BorderWidthRight = 1,
             BorderWidthBottom = 1,
-            CornerRadiusTopLeft = compact ? 4 : 6,
-            CornerRadiusTopRight = compact ? 4 : 6,
-            CornerRadiusBottomRight = compact ? 4 : 6,
-            CornerRadiusBottomLeft = compact ? 4 : 6,
-            ContentMarginLeft = compact ? 6 : 10,
-            ContentMarginTop = compact ? 2 : 4,
-            ContentMarginRight = compact ? 6 : 10,
-            ContentMarginBottom = compact ? 2 : 4,
+            CornerRadiusTopLeft = 4,
+            CornerRadiusTopRight = 4,
+            CornerRadiusBottomRight = 4,
+            CornerRadiusBottomLeft = 4,
+            ContentMarginLeft = 0,
+            ContentMarginTop = 0,
+            ContentMarginRight = 0,
+            ContentMarginBottom = 0,
             ShadowSize = 0,
         };
     }
+
+    private static PanelContainer WrapGithubShield(Control content, Color borderTint, string? tooltip = null) {
+        var chip = new PanelContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            TooltipText = tooltip ?? "",
+        };
+        chip.AddThemeStyleboxOverride("panel", CreateGithubShieldStyle(borderTint));
+        var pad = new MarginContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
+        pad.AddThemeConstantOverride("margin_left", 5);
+        pad.AddThemeConstantOverride("margin_right", 5);
+        pad.AddThemeConstantOverride("margin_top", 2);
+        pad.AddThemeConstantOverride("margin_bottom", 2);
+        pad.AddChild(content);
+        chip.AddChild(pad);
+        return chip;
+    }
+
+    private static (Color Tint, Color Text, ImageTexture? Icon) ResolveModSourceVisual(ModEntrySource source) {
+        if (source == ModEntrySource.SteamWorkshop) {
+            var tint = new Color(0.45f, 0.72f, 0.95f, 0.95f);
+            return (tint, tint, MdiIcon.Steam.Texture(12, tint));
+        }
+        var local = ModPanelUiPalette.RichTextSecondary;
+        return (local, local, MdiIcon.FolderOpen.Texture(12, local));
+    }
+
+    internal static PanelContainer CreateModSourceChip(ModEntrySource source) {
+        var (tint, textColor, icon) = ResolveModSourceVisual(source);
+        var label = ModPanelInstallSource.FormatSourceLabel(source);
+        var row = new HBoxContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Alignment = BoxContainer.AlignmentMode.Center,
+        };
+        row.AddThemeConstantOverride("separation", 4);
+        if (icon != null) {
+            row.AddChild(new TextureRect {
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                Texture = icon,
+                StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                CustomMinimumSize = new Vector2(12f, 12f),
+            });
+        }
+        row.AddChild(new Label {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Text = label,
+            VerticalAlignment = VerticalAlignment.Center,
+            LabelSettings = new LabelSettings {
+                FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
+                FontColor = textColor,
+            },
+        });
+        return WrapGithubShield(row, tint, label);
+    }
+
     internal static PanelContainer? CreateSidebarModListVersionChip(string? version) {
         if (string.IsNullOrWhiteSpace(version))
             return null;
         var badge = ModPanelModBanner.FormatVersionBadgeText(version);
         if (badge.Length == 0)
             return null;
-        var chip = new PanelContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-        };
-        chip.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle(compact: true));
-        chip.AddChild(new Label {
+        var label = new Label {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Text = badge,
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -138,64 +189,59 @@ public static partial class ModPanelUI {
                 FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
                 FontColor = ModPanelUiPalette.SidebarModActiveAccent,
             },
-        });
-        return chip;
-    }
-    internal static PanelContainer CreateSidebarModListSourceChip(ModEntrySource source) {
-        var chip = new PanelContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
         };
-        chip.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle(compact: true));
-        chip.AddChild(new Label {
+        return WrapGithubShield(label, ModPanelUiPalette.SidebarModActiveAccent, badge);
+    }
+
+    internal static PanelContainer? CreateDetailInstallSizeChip(string? installPath) {
+        var label = ModInstallSizeHelper.FormatDetailLabel(installPath);
+        if (string.IsNullOrWhiteSpace(label))
+            return null;
+        var text = new Label {
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            Text = ModPanelInstallSource.FormatSourceLabel(source),
+            Text = label,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             LabelSettings = new LabelSettings {
                 FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
-                FontColor = source == ModEntrySource.SteamWorkshop
-                    ? new Color(0.45f, 0.72f, 0.95f, 0.95f)
-                    : ModPanelUiPalette.RichTextSecondary,
+                FontColor = ModPanelUiPalette.RichTextSecondary,
             },
-        });
-        return chip;
+        };
+        return WrapGithubShield(text, ModPanelUiPalette.RichTextSecondary, label);
     }
 
     internal static PanelContainer? CreateSidebarModListLoadStatusChip(ModEntryLoadStatus status) {
         if (status is ModEntryLoadStatus.Loaded or ModEntryLoadStatus.None)
             return null;
-        var chip = new PanelContainer {
+        var statusText = ModPanelInstallSource.FormatLoadStatus(status);
+        var statusColor = ResolveSidebarModTitleColor(status);
+        var label = new Label {
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-        };
-        chip.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle(compact: true));
-        chip.AddChild(new Label {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            Text = ModPanelInstallSource.FormatLoadStatus(status),
+            Text = statusText,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             LabelSettings = new LabelSettings {
                 FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
-                FontColor = ResolveSidebarModTitleColor(status),
+                FontColor = statusColor,
             },
-        });
-        return chip;
+        };
+        return WrapGithubShield(label, statusColor, statusText);
     }
 
     internal static void UpdateDetailBannerMetaChips(HBoxContainer row, string? version, ModEntrySource source,
-        ModEntryLoadStatus loadStatus) {
+        ModEntryLoadStatus loadStatus, string? installPath) {
         foreach (Node child in row.GetChildren())
             child.QueueFree();
         var versionChip = CreateSidebarModListVersionChip(version);
         if (versionChip != null)
             row.AddChild(versionChip);
-        row.AddChild(CreateSidebarModListSourceChip(source));
+        row.AddChild(CreateModSourceChip(source));
         var loadChip = CreateSidebarModListLoadStatusChip(loadStatus);
         if (loadChip != null)
             row.AddChild(loadChip);
+        var sizeChip = CreateDetailInstallSizeChip(installPath);
+        if (sizeChip != null)
+            row.AddChild(sizeChip);
     }
 
     internal static void ClearDetailBannerMetaChips(HBoxContainer row) {

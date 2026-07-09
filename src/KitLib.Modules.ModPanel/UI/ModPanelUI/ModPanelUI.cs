@@ -394,7 +394,7 @@ public static partial class ModPanelUI {
                     SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                     MouseFilter = Control.MouseFilterEnum.Stop,
                     MouseDefaultCursorShape = Control.CursorShape.Arrow,
-                    CustomMinimumSize = new Vector2(0f, 62f),
+                    CustomMinimumSize = new Vector2(0f, ModPanelUiMetrics.SidebarModRowMinHeight),
                     FocusMode = Control.FocusModeEnum.All,
                 };
                 rowHost.TooltipText = tip;
@@ -408,15 +408,15 @@ public static partial class ModPanelUI {
                 rowHost.AddChild(bgPanel);
                 var rowContent = new HBoxContainer {
                     MouseFilter = Control.MouseFilterEnum.Ignore,
+                    Alignment = BoxContainer.AlignmentMode.Center,
                 };
                 rowContent.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
                 rowContent.AddThemeConstantOverride("separation", 8);
-                var labelLeft = 8 + (int)ModPanelUiMetrics.SidebarModAccentBarWidth +
-                                ModPanelUiMetrics.SidebarModAccentTextGutter;
-                rowContent.OffsetLeft = labelLeft;
+                rowContent.OffsetLeft = 8 + (int)ModPanelUiMetrics.SidebarModAccentBarWidth
+                    + ModPanelUiMetrics.SidebarModAccentTextGutter;
                 rowContent.OffsetRight = -12;
-                rowContent.OffsetTop = 10;
-                rowContent.OffsetBottom = -10;
+                rowContent.OffsetTop = 8;
+                rowContent.OffsetBottom = -8;
                 var enableTickbox = ModPanelEnableTickbox.Create(captured.IsEnabledInSettings);
                 enableTickbox.Toggled += tick => {
                     ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, tick.IsTicked);
@@ -440,7 +440,7 @@ public static partial class ModPanelUI {
                 var versionChip = CreateSidebarModListVersionChip(captured.Version);
                 if (versionChip != null)
                     rowContent.AddChild(versionChip);
-                rowContent.AddChild(CreateSidebarModListSourceChip(captured.Source));
+                rowContent.AddChild(CreateModSourceChip(captured.Source));
                 rowHost.AddChild(rowContent);
                 var vm = new SidebarModRowVm {
                     Entry = captured,
@@ -577,7 +577,7 @@ public static partial class ModPanelUI {
     private static void ApplySidebarTextsFromEntry(KitLibModEntry entry, ModPanelDetailTitleEditor titleEditor,
         HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
         titleEditor.Bind(entry.Id, entry.Source, entry.DisplayName);
-        UpdateDetailBannerMetaChips(metaChipRow, entry.Version, entry.Source, entry.LoadStatus);
+        UpdateDetailBannerMetaChips(metaChipRow, entry.Version, entry.Source, entry.LoadStatus, entry.InstallPath);
         modIdLabel.SetTextAutoSize(entry.Id);
         var shortPath = ModPanelInstallSource.FormatShortPath(entry.InstallPath, entry.Source);
         if (string.IsNullOrWhiteSpace(shortPath)) {
@@ -605,7 +605,7 @@ public static partial class ModPanelUI {
         var source = ModPanelInstallSource.FromStsSource(mod.modSource);
         titleEditor.Bind(modId, source, ModPanelModBanner.ResolveTitle(mod, modId));
         var loadStatus = ModPanelInstallSource.FromStsLoadState(mod.state);
-        UpdateDetailBannerMetaChips(metaChipRow, ModPanelModBanner.ResolveVersion(mod), source, loadStatus);
+        UpdateDetailBannerMetaChips(metaChipRow, ModPanelModBanner.ResolveVersion(mod), source, loadStatus, mod.path);
         modIdLabel.SetTextAutoSize(modId);
         var descParts = new List<string>();
         var author = ModPanelModBanner.ResolveAuthor(mod);

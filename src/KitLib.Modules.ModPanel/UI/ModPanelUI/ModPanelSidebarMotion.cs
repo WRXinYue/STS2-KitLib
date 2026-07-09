@@ -32,7 +32,8 @@ internal static class ModPanelSidebarMotion {
 
         var wasSelected = box.HasMeta(SelectedMeta) && box.GetMeta(SelectedMeta).AsBool();
         box.SetMeta(SelectedMeta, selected);
-        if (wasSelected == selected && from.BorderWidthLeft == to.BorderWidthLeft) {
+        if (wasSelected == selected && from.BorderWidthLeft == to.BorderWidthLeft
+            && from.BorderWidthBottom == to.BorderWidthBottom) {
             box.BgColor = to.BgColor;
             box.BorderColor = to.BorderColor;
             box.BorderWidthLeft = (int)to.BorderWidthLeft;

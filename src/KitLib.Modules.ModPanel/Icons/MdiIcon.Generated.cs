@@ -4,6 +4,8 @@ namespace KitLib.ModPanel.Icons;
 internal readonly partial struct MdiIcon
 {
     public static readonly MdiIcon ChevronRight = new("chevron-right");
+    public static readonly MdiIcon FolderOpen = new("folder-open");
     public static readonly MdiIcon Minus = new("minus");
     public static readonly MdiIcon Pencil = new("pencil");
+    public static readonly MdiIcon Steam = new("steam");
 }
