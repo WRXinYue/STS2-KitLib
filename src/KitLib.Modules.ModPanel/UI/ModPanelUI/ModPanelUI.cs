@@ -148,8 +148,8 @@ public static partial class ModPanelUI {
         };
         body.AddThemeConstantOverride("separation", 20);
         outer.AddChild(body);
-        var (contentPanel, ritsuContentList, pageTabChrome) = BuildContentPanel();
-        body.AddChild(BuildSidebarPanel(root, hintsRow, ritsuContentList, pageTabChrome));
+        var (contentPanel, ritsuContentList, pageTabChrome, modBanner) = BuildContentPanel();
+        body.AddChild(BuildSidebarPanel(root, hintsRow, ritsuContentList, pageTabChrome, modBanner));
         body.AddChild(contentPanel);
         // Same control as NSubmenu: NBackButton starts off-screen until Enable() (see NSubmenu.OnScreenVisibilityChange).
         var backButton = PreloadManager.Cache.GetScene(SceneHelper.GetScenePath("ui/back_button"))
@@ -193,7 +193,7 @@ public static partial class ModPanelUI {
         };
     }
     private static Control BuildSidebarPanel(ModPanelSubmenu shell, HBoxContainer hintsRow,
-        VBoxContainer ritsuContentList, ModPanelPageTabChrome pageTabChrome) {
+        VBoxContainer ritsuContentList, ModPanelPageTabChrome pageTabChrome, ModDetailBannerControls modBanner) {
         if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.User)) {
             return BuildMissingUserModulePanel();
         }
@@ -215,83 +215,14 @@ public static partial class ModPanelUI {
         };
         mainVBox.AddThemeConstantOverride("separation", 0);
         panel.AddChild(mainVBox);
-        var modHeaderOuter = new MarginContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-        };
-        modHeaderOuter.AddThemeConstantOverride("margin_left", ModPanelUiMetrics.SidebarContentMarginH);
-        modHeaderOuter.AddThemeConstantOverride("margin_right", ModPanelUiMetrics.SidebarContentMarginH);
-        modHeaderOuter.AddThemeConstantOverride("margin_top", 0);
-        modHeaderOuter.AddThemeConstantOverride("margin_bottom", 0);
-        var headerRoot = new PanelContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        headerRoot.AddThemeStyleboxOverride("panel", CreateModSidebarPreviewFrameStyle());
-        var headerRow = new HBoxContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
-            Alignment = BoxContainer.AlignmentMode.Begin,
-        };
-        headerRow.AddThemeConstantOverride("separation", 12);
-        headerRoot.AddChild(headerRow);
-        var (previewFrame, modIcon, previewPlaceholder, previewCaption) = CreateSidebarModPreviewParts();
-        headerRow.AddChild(previewFrame);
-        var textCol = new VBoxContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
-        };
-        textCol.AddThemeConstantOverride("separation", 6);
-        headerRow.AddChild(textCol);
-        var titleRow = new HBoxContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        titleRow.AddThemeConstantOverride("separation", 10);
-        var modTitleLabel = CreateSidebarWrapLabel(22, HorizontalAlignment.Left);
-        modTitleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        modTitleLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
-        titleRow.AddChild(modTitleLabel);
-        var versionBadgePanel = new PanelContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            Visible = false,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-        };
-        versionBadgePanel.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle());
-        var vs = ModPanelUiMetrics.SidebarModVersionBadgeFontSize;
-        var versionLabel = new Label {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            FocusMode = Control.FocusModeEnum.None,
-            Text = "",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            LabelSettings = new LabelSettings {
-                FontSize = vs,
-                FontColor = ModPanelUiPalette.SidebarModActiveAccent,
-            },
-        };
-        versionBadgePanel.AddChild(versionLabel);
-        titleRow.AddChild(versionBadgePanel);
-        textCol.AddChild(titleRow);
-        var metaLabel = CreateSidebarWrapLabel(14, HorizontalAlignment.Left);
-        metaLabel.Modulate = new Color(0.75f, 0.72f, 0.65f, 0.95f);
-        metaLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        textCol.AddChild(metaLabel);
-        var descLabel = CreateSidebarWrapLabel(13, HorizontalAlignment.Left);
-        descLabel.Modulate = new Color(0.65f, 0.62f, 0.58f, 0.9f);
-        descLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        descLabel.Visible = false;
-        textCol.AddChild(descLabel);
-        modHeaderOuter.AddChild(headerRoot);
-        var headerClip = new SidebarBannerClip(ModPanelUiMetrics.SidebarModBannerFixedHeight);
-        headerClip.AddChild(modHeaderOuter);
-        modHeaderOuter.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        mainVBox.AddChild(headerClip);
+        var modTitleLabel = modBanner.ModTitleLabel;
+        var versionBadgePanel = modBanner.VersionBadgePanel;
+        var versionLabel = modBanner.VersionLabel;
+        var metaLabel = modBanner.MetaLabel;
+        var descLabel = modBanner.DescLabel;
+        var modIcon = modBanner.ModIcon;
+        var previewPlaceholder = modBanner.PreviewPlaceholder;
+        var previewCaption = modBanner.PreviewCaption;
         var listFrame = new MarginContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -309,19 +240,6 @@ public static partial class ModPanelUI {
         listHeader.AddThemeConstantOverride("separation", 0);
         listFrame.AddChild(listHeader);
         var gameBuild = ModPanelModBanner.TryResolveGameBuildVersion();
-        if (!string.IsNullOrWhiteSpace(gameBuild)) {
-            var buildLabel = new Label {
-                MouseFilter = Control.MouseFilterEnum.Ignore,
-                Text = string.Format(
-                    I18N.T("modpanel.sidebar.gameBuild", "Game build: {0}"), gameBuild),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                LabelSettings = new LabelSettings {
-                    FontSize = 12,
-                    FontColor = new Color(0.62f, 0.58f, 0.52f, 0.92f),
-                },
-            };
-            listHeader.AddChild(buildLabel);
-        }
         var pendingRestartBanner = new Label {
             Name = "ModPanelPendingRestartBanner",
             Visible = false,
@@ -750,7 +668,8 @@ public static partial class ModPanelUI {
             : I18N.T("modpanel.sidebar.modPreview.noImage", "No resources");
         previewCaption.SetTextAutoSize(caption);
     }
-    private static (Control Panel, VBoxContainer ContentList, ModPanelPageTabChrome PageTabChrome) BuildContentPanel() {
+    private static (Control Panel, VBoxContainer ContentList, ModPanelPageTabChrome PageTabChrome,
+        ModDetailBannerControls Banner) BuildContentPanel() {
         var panel = new Panel {
             Name = "ModPanelContentPanel",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -777,6 +696,8 @@ public static partial class ModPanelUI {
         };
         root.AddThemeConstantOverride("separation", 10);
         frame.AddChild(root);
+        var (modBannerClip, modBanner) = CreateModDetailBanner();
+        root.AddChild(modBannerClip);
         var pageTabChrome = new ModPanelPageTabChrome {
             Visible = false,
         };
@@ -812,7 +733,94 @@ public static partial class ModPanelUI {
         contentList.AddThemeConstantOverride("separation", 8);
         contentScrollFrame.AddChild(contentList);
         scroll.SetMeta("modpanel_content_scroll", true);
-        return (panel, contentList, pageTabChrome);
+        return (panel, contentList, pageTabChrome, modBanner);
+    }
+
+    private static (Control Clip, ModDetailBannerControls Controls) CreateModDetailBanner() {
+        var modHeaderOuter = new MarginContainer {
+            Name = "ModPanelDetailBanner",
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+        };
+        var headerRoot = new PanelContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        headerRoot.AddThemeStyleboxOverride("panel", CreateModSidebarPreviewFrameStyle());
+        var headerRow = new HBoxContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
+            Alignment = BoxContainer.AlignmentMode.Begin,
+        };
+        headerRow.AddThemeConstantOverride("separation", 12);
+        headerRoot.AddChild(headerRow);
+        var (previewFrame, modIcon, previewPlaceholder, previewCaption) = CreateSidebarModPreviewParts();
+        headerRow.AddChild(previewFrame);
+        var textCol = new VBoxContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
+        };
+        textCol.AddThemeConstantOverride("separation", 6);
+        headerRow.AddChild(textCol);
+        var titleRow = new HBoxContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        titleRow.AddThemeConstantOverride("separation", 10);
+        var modTitleLabel = CreateSidebarWrapLabel(22, HorizontalAlignment.Left);
+        modTitleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        modTitleLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
+        titleRow.AddChild(modTitleLabel);
+        var versionBadgePanel = new PanelContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Visible = false,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
+        versionBadgePanel.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle());
+        var vs = ModPanelUiMetrics.SidebarModVersionBadgeFontSize;
+        var versionLabel = new Label {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            FocusMode = Control.FocusModeEnum.None,
+            Text = "",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            LabelSettings = new LabelSettings {
+                FontSize = vs,
+                FontColor = ModPanelUiPalette.SidebarModActiveAccent,
+            },
+        };
+        versionBadgePanel.AddChild(versionLabel);
+        titleRow.AddChild(versionBadgePanel);
+        textCol.AddChild(titleRow);
+        var metaLabel = CreateSidebarWrapLabel(14, HorizontalAlignment.Left);
+        metaLabel.Modulate = new Color(0.75f, 0.72f, 0.65f, 0.95f);
+        metaLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        textCol.AddChild(metaLabel);
+        var descLabel = CreateSidebarWrapLabel(13, HorizontalAlignment.Left);
+        descLabel.Modulate = new Color(0.65f, 0.62f, 0.58f, 0.9f);
+        descLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        descLabel.Visible = false;
+        textCol.AddChild(descLabel);
+        modHeaderOuter.AddChild(headerRoot);
+        var headerClip = new SidebarBannerClip(ModPanelUiMetrics.SidebarModBannerFixedHeight);
+        headerClip.AddChild(modHeaderOuter);
+        modHeaderOuter.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        var controls = new ModDetailBannerControls {
+            ModTitleLabel = modTitleLabel,
+            VersionBadgePanel = versionBadgePanel,
+            VersionLabel = versionLabel,
+            MetaLabel = metaLabel,
+            DescLabel = descLabel,
+            ModIcon = modIcon,
+            PreviewPlaceholder = previewPlaceholder,
+            PreviewCaption = previewCaption,
+        };
+        return (headerClip, controls);
     }
 
     private static void FinishSettingsBodyPresentation(Control body) {
@@ -1049,6 +1057,17 @@ public static partial class ModPanelUI {
 
     private sealed class ModPanelContentState {
         public string PageId = "";
+    }
+
+    private sealed class ModDetailBannerControls {
+        public required MegaRichTextLabel ModTitleLabel { get; init; }
+        public required PanelContainer VersionBadgePanel { get; init; }
+        public required Label VersionLabel { get; init; }
+        public required MegaRichTextLabel MetaLabel { get; init; }
+        public required MegaRichTextLabel DescLabel { get; init; }
+        public required TextureRect ModIcon { get; init; }
+        public required Control PreviewPlaceholder { get; init; }
+        public required MegaRichTextLabel PreviewCaption { get; init; }
     }
     /// <summary>Caps the selected-mod banner to a fixed height; content is clipped instead of stretching the sidebar.</summary>
     private sealed partial class SidebarBannerClip : Control {
