@@ -216,8 +216,6 @@ public static partial class ModPanelUI {
         mainVBox.AddThemeConstantOverride("separation", 0);
         panel.AddChild(mainVBox);
         var modTitleLabel = modBanner.ModTitleLabel;
-        var versionBadgePanel = modBanner.VersionBadgePanel;
-        var versionLabel = modBanner.VersionLabel;
         var metaChipRow = modBanner.MetaChipRow;
         var modIdLabel = modBanner.ModIdLabel;
         var descLabel = modBanner.DescLabel;
@@ -313,19 +311,16 @@ public static partial class ModPanelUI {
             var rowEntry = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase))?.Entry;
             var m = ModPanelModBanner.TryFindMod(id);
             if (m != null) {
-                ApplySidebarTexts(m, id, modTitleLabel, versionBadgePanel, versionLabel, metaChipRow, modIdLabel,
-                    descLabel);
+                ApplySidebarTexts(m, id, modTitleLabel, metaChipRow, modIdLabel, descLabel);
                 var tex = ModPanelModBanner.TryLoadModIcon(m, id);
                 ApplyPreviewState(tex, false, modIcon, previewPlaceholder, previewCaption);
             }
             else if (rowEntry != null) {
-                ApplySidebarTextsFromEntry(rowEntry.Value, modTitleLabel, versionBadgePanel, versionLabel,
-                    metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTextsFromEntry(rowEntry.Value, modTitleLabel, metaChipRow, modIdLabel, descLabel);
                 ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
             }
             else {
-                ApplySidebarTexts(null, id, modTitleLabel, versionBadgePanel, versionLabel, metaChipRow, modIdLabel,
-                    descLabel);
+                ApplySidebarTexts(null, id, modTitleLabel, metaChipRow, modIdLabel, descLabel);
                 ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
             }
             var pagesForMod = rowEntry?.IsLoaded == true
@@ -342,8 +337,7 @@ public static partial class ModPanelUI {
         }
         if (ordered.Count == 0) {
             var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
-            ApplySidebarTexts(fallback, showcaseModId, modTitleLabel, versionBadgePanel, versionLabel, metaChipRow,
-                modIdLabel, descLabel);
+            ApplySidebarTexts(fallback, showcaseModId, modTitleLabel, metaChipRow, modIdLabel, descLabel);
             var tex0 = ModPanelModBanner.TryLoadModIcon(fallback, showcaseModId);
             ApplyPreviewState(tex0, fallback == null, modIcon, previewPlaceholder, previewCaption);
             contentState.PageId = ResolveInitialPageId(showcaseModId);
@@ -575,18 +569,9 @@ public static partial class ModPanelUI {
         return (previewFrame, modIcon, previewPlaceholder, previewCaption);
     }
     private static void ApplySidebarTextsFromEntry(KitLibModEntry entry, MegaRichTextLabel titleLabel,
-        PanelContainer versionBadgePanel, Label versionLabel, HBoxContainer metaChipRow,
-        MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
+        HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
         titleLabel.SetTextAutoSize(entry.DisplayName);
-        if (string.IsNullOrWhiteSpace(entry.Version)) {
-            versionBadgePanel.Visible = false;
-            versionLabel.Text = "";
-        }
-        else {
-            versionBadgePanel.Visible = true;
-            versionLabel.Text = ModPanelModBanner.FormatVersionBadgeText(entry.Version);
-        }
-        UpdateDetailBannerMetaChips(metaChipRow, entry.Source, entry.LoadStatus);
+        UpdateDetailBannerMetaChips(metaChipRow, entry.Version, entry.Source, entry.LoadStatus);
         modIdLabel.SetTextAutoSize(entry.Id);
         var shortPath = ModPanelInstallSource.FormatShortPath(entry.InstallPath, entry.Source);
         if (string.IsNullOrWhiteSpace(shortPath)) {
@@ -601,12 +586,9 @@ public static partial class ModPanelUI {
         }
     }
     private static void ApplySidebarTexts(Mod? mod, string modId, MegaRichTextLabel titleLabel,
-        PanelContainer versionBadgePanel, Label versionLabel, HBoxContainer metaChipRow,
-        MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
+        HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
         if (mod == null) {
             titleLabel.SetTextAutoSize(I18N.T("modpanel.sidebar.modHeader.none", "No mod selected"));
-            versionBadgePanel.Visible = false;
-            versionLabel.Text = "";
             ClearDetailBannerMetaChips(metaChipRow);
             modIdLabel.SetTextAutoSize("");
             descLabel.SetTextAutoSize("");
@@ -614,18 +596,9 @@ public static partial class ModPanelUI {
             return;
         }
         titleLabel.SetTextAutoSize(ModPanelModBanner.ResolveTitle(mod, modId));
-        var ver = ModPanelModBanner.ResolveVersion(mod);
-        if (string.IsNullOrWhiteSpace(ver)) {
-            versionBadgePanel.Visible = false;
-            versionLabel.Text = "";
-        }
-        else {
-            versionBadgePanel.Visible = true;
-            versionLabel.Text = ModPanelModBanner.FormatVersionBadgeText(ver);
-        }
         var source = ModPanelInstallSource.FromStsSource(mod.modSource);
         var loadStatus = ModPanelInstallSource.FromStsLoadState(mod.state);
-        UpdateDetailBannerMetaChips(metaChipRow, source, loadStatus);
+        UpdateDetailBannerMetaChips(metaChipRow, ModPanelModBanner.ResolveVersion(mod), source, loadStatus);
         modIdLabel.SetTextAutoSize(modId);
         var descParts = new List<string>();
         var author = ModPanelModBanner.ResolveAuthor(mod);
@@ -771,29 +744,6 @@ public static partial class ModPanelUI {
         modTitleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         modTitleLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
         titleRow.AddChild(modTitleLabel);
-        var versionBadgePanel = new PanelContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            Visible = false,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-        };
-        versionBadgePanel.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle());
-        var vs = ModPanelUiMetrics.SidebarModVersionBadgeFontSize;
-        var versionLabel = new Label {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            FocusMode = Control.FocusModeEnum.None,
-            Text = "",
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-            LabelSettings = new LabelSettings {
-                FontSize = vs,
-                FontColor = ModPanelUiPalette.SidebarModActiveAccent,
-            },
-        };
-        versionBadgePanel.AddChild(versionLabel);
-        titleRow.AddChild(versionBadgePanel);
         textCol.AddChild(titleRow);
         var metaChipRow = new HBoxContainer {
             Name = "ModPanelDetailMetaChips",
@@ -818,8 +768,6 @@ public static partial class ModPanelUI {
         modHeaderOuter.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         var controls = new ModDetailBannerControls {
             ModTitleLabel = modTitleLabel,
-            VersionBadgePanel = versionBadgePanel,
-            VersionLabel = versionLabel,
             MetaChipRow = metaChipRow,
             ModIdLabel = modIdLabel,
             DescLabel = descLabel,
@@ -1068,8 +1016,6 @@ public static partial class ModPanelUI {
 
     private sealed class ModDetailBannerControls {
         public required MegaRichTextLabel ModTitleLabel { get; init; }
-        public required PanelContainer VersionBadgePanel { get; init; }
-        public required Label VersionLabel { get; init; }
         public required HBoxContainer MetaChipRow { get; init; }
         public required MegaRichTextLabel ModIdLabel { get; init; }
         public required MegaRichTextLabel DescLabel { get; init; }

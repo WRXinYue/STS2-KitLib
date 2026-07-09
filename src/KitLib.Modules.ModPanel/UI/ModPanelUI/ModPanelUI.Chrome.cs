@@ -185,10 +185,13 @@ public static partial class ModPanelUI {
         return chip;
     }
 
-    internal static void UpdateDetailBannerMetaChips(HBoxContainer row, ModEntrySource source,
+    internal static void UpdateDetailBannerMetaChips(HBoxContainer row, string? version, ModEntrySource source,
         ModEntryLoadStatus loadStatus) {
         foreach (Node child in row.GetChildren())
             child.QueueFree();
+        var versionChip = CreateSidebarModListVersionChip(version);
+        if (versionChip != null)
+            row.AddChild(versionChip);
         row.AddChild(CreateSidebarModListSourceChip(source));
         var loadChip = CreateSidebarModListLoadStatusChip(loadStatus);
         if (loadChip != null)
