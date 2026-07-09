@@ -162,6 +162,43 @@ public static partial class ModPanelUI {
         });
         return chip;
     }
+
+    internal static PanelContainer? CreateSidebarModListLoadStatusChip(ModEntryLoadStatus status) {
+        if (status is ModEntryLoadStatus.Loaded or ModEntryLoadStatus.None)
+            return null;
+        var chip = new PanelContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+        };
+        chip.AddThemeStyleboxOverride("panel", CreateSidebarModVersionBadgeStyle(compact: true));
+        chip.AddChild(new Label {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Text = ModPanelInstallSource.FormatLoadStatus(status),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            LabelSettings = new LabelSettings {
+                FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
+                FontColor = ResolveSidebarModTitleColor(status),
+            },
+        });
+        return chip;
+    }
+
+    internal static void UpdateDetailBannerMetaChips(HBoxContainer row, ModEntrySource source,
+        ModEntryLoadStatus loadStatus) {
+        foreach (Node child in row.GetChildren())
+            child.QueueFree();
+        row.AddChild(CreateSidebarModListSourceChip(source));
+        var loadChip = CreateSidebarModListLoadStatusChip(loadStatus);
+        if (loadChip != null)
+            row.AddChild(loadChip);
+    }
+
+    internal static void ClearDetailBannerMetaChips(HBoxContainer row) {
+        foreach (Node child in row.GetChildren())
+            child.QueueFree();
+    }
     private static StyleBoxFlat CreateModSidebarPreviewFrameStyle() {
         return new StyleBoxFlat {
             BgColor = Colors.Transparent,
