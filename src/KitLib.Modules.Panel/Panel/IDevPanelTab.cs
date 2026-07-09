@@ -49,7 +49,7 @@ public enum DevPanelTabGroup {
 /// (logs, Harmony, settings, combat stats, …).
 /// </summary>
 public enum DevPanelTabKind {
-    /// <summary>Inspection and tooling that do not change run or save data (logs, Harmony report, framework bridge).</summary>
+    /// <summary>Inspection and tooling that do not change run or save data (logs, Harmony report, …).</summary>
     Developer,
 
     /// <summary>May alter run state, saves, or combat (browsers with grant modes, console, cheats overlay, …).</summary>

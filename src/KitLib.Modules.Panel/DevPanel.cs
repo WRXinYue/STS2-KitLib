@@ -232,14 +232,6 @@ internal static class DevPanel {
         HarmonyAnalysisUI.Show(_globalUi);
     }
 
-    internal static void OpenFrameworks() {
-        if (_globalUi == null) return;
-        TryDismissCurrent();
-        KitLibState.ActivePanel = ActivePanel.Frameworks;
-
-        FrameworkBridgeUI.Show(_globalUi);
-    }
-
     internal static void OpenFeedback() {
         if (_globalUi == null) return;
         TryDismissCurrent();
@@ -294,7 +286,6 @@ internal static class DevPanel {
             case ActivePanel.CombatStats: OpenCombatStats(); break;
             case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;
             case ActivePanel.HarmonyAnalysis: OpenHarmonyAnalysis(); break;
-            case ActivePanel.Frameworks: OpenFrameworks(); break;
             case ActivePanel.Feedback: OpenFeedback(); break;
             case ActivePanel.CardEdit: break;
         }

@@ -122,7 +122,6 @@ public static class ModuleEntry {
         KitLibDevOps.OpenCombatStats = DevPanel.OpenCombatStats;
         KitLibDevOps.OpenEnemyIntent = DevPanel.OpenEnemyIntent;
         KitLibDevOps.OpenHarmonyAnalysis = DevPanel.OpenHarmonyAnalysis;
-        KitLibDevOps.OpenFrameworks = DevPanel.OpenFrameworks;
         KitLibDevOps.OpenFeedback = DevPanel.OpenFeedback;
 
         KitLibUserOps.OpenLogs = DevPanel.OpenLogs;

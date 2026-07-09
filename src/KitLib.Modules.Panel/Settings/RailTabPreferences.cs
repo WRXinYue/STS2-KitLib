@@ -19,7 +19,6 @@ internal static class RailTabPreferences {
 
     public const string HarmonyAnalysisTabId = "devmode.harmonyAnalysis";
     public const string ScriptsTabId = "devmode.scripts";
-    public const string FrameworksTabId = "devmode.frameworks";
 
     public static readonly string[] DefaultHiddenTabIds = KitLibSettings.DefaultHiddenRailTabIds;
 

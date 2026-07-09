@@ -23,7 +23,6 @@ internal static partial class DevPanelUI {
         ["devmode.scripts"] = "KitLibScripts",
         ["devmode.logs"] = LogCollector.LogViewerRootName,
         ["devmode.harmonyAnalysis"] = HarmonyAnalysisUI.RootName,
-        ["devmode.frameworks"] = "KitLibFrameworkBridge",
         ["devmode.feedback"] = "KitLibFeedbackReport",
         ["devmode.save"] = "KitLibSaveLoad",
         ["devmode.settings"] = "KitLibSettings",

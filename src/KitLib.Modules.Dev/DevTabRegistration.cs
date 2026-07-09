@@ -11,7 +11,6 @@ internal static class DevTabRegistration {
         RegisterActionTab("devmode.hooks", "lightning-bolt", I18N.T("panel.hooks", "Hooks"), 900, () => KitLibDevOps.OpenHooks?.Invoke());
         RegisterActionTab("devmode.scripts", "puzzle-outline", I18N.T("panel.scripts", "Scripts"), 950, () => KitLibDevOps.OpenScripts?.Invoke());
         RegisterActionTab("devmode.harmonyAnalysis", "magnify", I18N.T("panel.harmonyAnalysis", "Harmony analysis"), 962, () => KitLibDevOps.OpenHarmonyAnalysis?.Invoke(), KitLibTabKind.Developer);
-        RegisterActionTab("devmode.frameworks", "filter-variant", I18N.T("panel.frameworks", "Frameworks"), 965, () => KitLibDevOps.OpenFrameworks?.Invoke(), KitLibTabKind.Developer);
         RegisterActionTab("devmode.feedback", "bug-outline", I18N.T("panel.feedback", "Mod Feedback"), 970, () => KitLibDevOps.OpenFeedback?.Invoke(), KitLibTabKind.Developer);
         KitLibHost.RegisterTab(new KitLibTabDescriptor {
             Id = "devmode.settings",

@@ -54,10 +54,12 @@ public static class FrameworkBridge {
         // Harmony (process-wide)
         HarmonyPatchSummary.Stats HarmonyStats);
 
-    /// <summary>Subscribe once to RitsuLib lifecycle (replayable) and log a one-line snapshot.</summary>
+    /// <summary>Subscribe once to RitsuLib lifecycle (replayable) and log a snapshot when ready.</summary>
     public static void Initialize() {
-        if (!IsAvailable)
+        if (!IsAvailable) {
+            KitLog.Info("FrameworkBridge", "RitsuLib not installed.");
             return;
+        }
 
         try {
             // RitsuLibFramework.SubscribeLifecycle<FrameworkInitializedEvent>(handler)
@@ -79,6 +81,29 @@ public static class FrameworkBridge {
         catch (Exception) {
         }
 
+        if (GetStaticBool(FrameworkType!, "IsInitialized"))
+            LogSnapshot("bootstrap");
+    }
+
+    public static void LogSnapshot(string reason) {
+        try {
+            var s = CaptureSnapshot();
+            var h = s.HarmonyStats;
+            KitLog.Info("FrameworkBridge",
+                $"[{reason}] RitsuLib {s.RitsuDisplayName} v{s.RitsuManifestVersion} " +
+                $"(asm {s.RitsuLibAssemblyVersion}, modId {s.RitsuLibFrameworkModId}) " +
+                $"init={s.RitsuLibInitialized} active={s.RitsuLibActive} " +
+                $"pages={s.RitsuLibModSettingsPageCount} mods={s.RitsuLibDistinctOwningModCount} " +
+                $"sections={s.RitsuLibTotalSectionCount} " +
+                $"harmony.methods={h.PatchedMethodCount} ops={h.TotalPatchOperations}");
+            if (s.RitsuLibPagesInventoryLines is not "—") {
+                foreach (var line in s.RitsuLibPagesInventoryLines.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                    KitLog.Info("FrameworkBridge", $"  {line}");
+            }
+        }
+        catch (Exception ex) {
+            KitLog.Warn("FrameworkBridge", $"Snapshot failed: {ex.Message}");
+        }
     }
 
     public static FrameworkBridgeSnapshot CaptureSnapshot() {
@@ -223,7 +248,5 @@ public static class FrameworkBridge {
         catch { return null; }
     }
 
-    private static void LogFrameworkEvent<T>(T evt) {
-        // Snapshot on demand via CaptureSnapshot(); avoid MainFile.Logger on event path.
-    }
+    private static void LogFrameworkEvent<T>(T evt) => LogSnapshot("ritsu-lifecycle");
 }

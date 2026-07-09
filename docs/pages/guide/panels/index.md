@@ -83,7 +83,7 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 - **Logs** — Live + file history, filters, alerts — **[Mod feedback](/guide/mod-feedback/)** for ZIP export
 - **Combat stats / Enemy intents** — Overlays and rails (optional, under **Settings → Game**)
 - **Console** — Native + KitLib command reference
-- **Harmony analysis / Frameworks** — Patch inspection, loaded mod snapshot (hidden by default in **Settings → Sidebar**)
+- **Harmony analysis** — Patch inspection (hidden by default in **Settings → Sidebar**)
 
 :::
 

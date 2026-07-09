@@ -35,7 +35,6 @@ public enum ActivePanel {
     Scripts,
     Logs,
     HarmonyAnalysis,
-    Frameworks,
     Feedback,
     CombatStats,
     EnemyIntent,

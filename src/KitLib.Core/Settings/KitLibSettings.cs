@@ -112,7 +112,6 @@ public sealed partial class KitLibSettings {
     public static readonly string[] DefaultHiddenRailTabIds = {
         "devmode.harmonyAnalysis",
         "devmode.scripts",
-        "devmode.frameworks",
     };
 }
 
