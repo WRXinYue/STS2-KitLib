@@ -29,10 +29,16 @@ public static partial class ModPanelUI {
     private static string? _pendingInitialPageId;
     private static string? _pendingInitialPageModId;
     private static Action? _themeRefresh;
+    private static ModPanelDetailTitleEditor? _detailTitleEditor;
 
     internal static void RegisterThemeRefresh(Action refresh) => _themeRefresh = refresh;
 
     internal static void ClearThemeRefresh() => _themeRefresh = null;
+
+    internal static void FlushPendingTitleEdit() {
+        if (_detailTitleEditor != null && GodotObject.IsInstanceValid(_detailTitleEditor))
+            _detailTitleEditor.CommitEdit();
+    }
 
     internal static void HandleThemeChanged() => _themeRefresh?.Invoke();
 
@@ -76,6 +82,7 @@ public static partial class ModPanelUI {
         if (_root == submenu)
             _root = null;
         _hostMainMenu = null;
+        _detailTitleEditor = null;
     }
     public static bool IsVisible =>
         _root != null && GodotObject.IsInstanceValid(_root) && _root.Visible;
@@ -149,6 +156,7 @@ public static partial class ModPanelUI {
         body.AddThemeConstantOverride("separation", 20);
         outer.AddChild(body);
         var (contentPanel, ritsuContentList, pageTabChrome, modBanner) = BuildContentPanel();
+        _detailTitleEditor = modBanner.TitleEditor;
         body.AddChild(BuildSidebarPanel(root, hintsRow, ritsuContentList, pageTabChrome, modBanner));
         body.AddChild(contentPanel);
         // Same control as NSubmenu: NBackButton starts off-screen until Enable() (see NSubmenu.OnScreenVisibilityChange).
@@ -215,7 +223,7 @@ public static partial class ModPanelUI {
         };
         mainVBox.AddThemeConstantOverride("separation", 0);
         panel.AddChild(mainVBox);
-        var modTitleLabel = modBanner.ModTitleLabel;
+        var titleEditor = modBanner.TitleEditor;
         var metaChipRow = modBanner.MetaChipRow;
         var modIdLabel = modBanner.ModIdLabel;
         var descLabel = modBanner.DescLabel;
@@ -305,22 +313,34 @@ public static partial class ModPanelUI {
                     ModPanelSidebarMotion.ApplyRowStyle(row.InnerStyle, row.BgPanel, sel, row.Pressing, focused);
             }
         }
+        void RefreshSidebarRowTitle(string modId, ModEntrySource source) {
+            foreach (var row in modRows) {
+                if (!string.Equals(row.Id, modId, StringComparison.OrdinalIgnoreCase)
+                    || row.Entry.Source != source)
+                    continue;
+                var displayName = ResolveSidebarListTitle(row.Entry);
+                row.TitleLabel.Text = displayName;
+                row.Host.TooltipText = BuildSidebarModRowTooltip(row.Entry, displayName, gameBuild);
+                break;
+            }
+        }
+        titleEditor.TitleCommitted += RefreshSidebarRowTitle;
         void SelectMod(string id) {
             selectedModId = id;
             RefreshModRowChrome();
             var rowEntry = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase))?.Entry;
             var m = ModPanelModBanner.TryFindMod(id);
             if (m != null) {
-                ApplySidebarTexts(m, id, modTitleLabel, metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTexts(m, id, titleEditor, metaChipRow, modIdLabel, descLabel);
                 var tex = ModPanelModBanner.TryLoadModIcon(m, id);
                 ApplyPreviewState(tex, false, modIcon, previewPlaceholder, previewCaption);
             }
             else if (rowEntry != null) {
-                ApplySidebarTextsFromEntry(rowEntry.Value, modTitleLabel, metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTextsFromEntry(rowEntry.Value, titleEditor, metaChipRow, modIdLabel, descLabel);
                 ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
             }
             else {
-                ApplySidebarTexts(null, id, modTitleLabel, metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTexts(null, id, titleEditor, metaChipRow, modIdLabel, descLabel);
                 ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
             }
             var pagesForMod = rowEntry?.IsLoaded == true
@@ -337,7 +357,7 @@ public static partial class ModPanelUI {
         }
         if (ordered.Count == 0) {
             var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
-            ApplySidebarTexts(fallback, showcaseModId, modTitleLabel, metaChipRow, modIdLabel, descLabel);
+            ApplySidebarTexts(fallback, showcaseModId, titleEditor, metaChipRow, modIdLabel, descLabel);
             var tex0 = ModPanelModBanner.TryLoadModIcon(fallback, showcaseModId);
             ApplyPreviewState(tex0, fallback == null, modIcon, previewPlaceholder, previewCaption);
             contentState.PageId = ResolveInitialPageId(showcaseModId);
@@ -345,23 +365,8 @@ public static partial class ModPanelUI {
         }
         else {
             foreach (var info in ordered) {
-                var tipParts = new List<string> {
-                    info.DisplayName,
-                    info.Id,
-                    ModPanelInstallSource.FormatLoadStatus(info.LoadStatus),
-                    ModPanelInstallSource.FormatSourceLabel(info.Source),
-                };
-                if (!string.IsNullOrWhiteSpace(info.Version))
-                    tipParts.Add(info.Version);
-                tipParts.Add(info.IsEnabledInSettings
-                    ? I18N.T("modpanel.sidebar.enabled", "enabled")
-                    : I18N.T("modpanel.sidebar.disabled", "disabled"));
-                if (!string.IsNullOrWhiteSpace(info.InstallPath))
-                    tipParts.Add(info.InstallPath);
-                if (!string.IsNullOrWhiteSpace(gameBuild))
-                    tipParts.Add(string.Format(
-                        I18N.T("modpanel.sidebar.gameBuild.short", "build {0}"), gameBuild));
-                var tip = string.Join(" · ", tipParts);
+                var displayName = ResolveSidebarListTitle(info);
+                var tip = BuildSidebarModRowTooltip(info, displayName, gameBuild);
                 var isSel = string.Equals(info.Id, initialSelectedId, StringComparison.OrdinalIgnoreCase);
                 var captured = info;
                 var section = new VBoxContainer {
@@ -420,7 +425,7 @@ public static partial class ModPanelUI {
                 rowContent.AddChild(enableTickbox);
                 var titleLbl = new Label {
                     MouseFilter = Control.MouseFilterEnum.Ignore,
-                    Text = captured.DisplayName,
+                    Text = displayName,
                     TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
                     HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -439,6 +444,7 @@ public static partial class ModPanelUI {
                 rowHost.AddChild(rowContent);
                 var vm = new SidebarModRowVm {
                     Entry = captured,
+                    TitleLabel = titleLbl,
                     InnerStyle = innerStyle,
                     BgPanel = bgPanel,
                     Host = rowHost,
@@ -568,9 +574,9 @@ public static partial class ModPanelUI {
         captionMargin.AddChild(previewCaption);
         return (previewFrame, modIcon, previewPlaceholder, previewCaption);
     }
-    private static void ApplySidebarTextsFromEntry(KitLibModEntry entry, MegaRichTextLabel titleLabel,
+    private static void ApplySidebarTextsFromEntry(KitLibModEntry entry, ModPanelDetailTitleEditor titleEditor,
         HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
-        titleLabel.SetTextAutoSize(entry.DisplayName);
+        titleEditor.Bind(entry.Id, entry.Source, entry.DisplayName);
         UpdateDetailBannerMetaChips(metaChipRow, entry.Version, entry.Source, entry.LoadStatus);
         modIdLabel.SetTextAutoSize(entry.Id);
         var shortPath = ModPanelInstallSource.FormatShortPath(entry.InstallPath, entry.Source);
@@ -585,18 +591,19 @@ public static partial class ModPanelUI {
             descLabel.TooltipText = entry.InstallPath ?? "";
         }
     }
-    private static void ApplySidebarTexts(Mod? mod, string modId, MegaRichTextLabel titleLabel,
+    private static void ApplySidebarTexts(Mod? mod, string modId, ModPanelDetailTitleEditor titleEditor,
         HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
         if (mod == null) {
-            titleLabel.SetTextAutoSize(I18N.T("modpanel.sidebar.modHeader.none", "No mod selected"));
+            titleEditor.Bind("", ModEntrySource.ModsDirectory,
+                I18N.T("modpanel.sidebar.modHeader.none", "No mod selected"));
             ClearDetailBannerMetaChips(metaChipRow);
             modIdLabel.SetTextAutoSize("");
             descLabel.SetTextAutoSize("");
             descLabel.Visible = false;
             return;
         }
-        titleLabel.SetTextAutoSize(ModPanelModBanner.ResolveTitle(mod, modId));
         var source = ModPanelInstallSource.FromStsSource(mod.modSource);
+        titleEditor.Bind(modId, source, ModPanelModBanner.ResolveTitle(mod, modId));
         var loadStatus = ModPanelInstallSource.FromStsLoadState(mod.state);
         UpdateDetailBannerMetaChips(metaChipRow, ModPanelModBanner.ResolveVersion(mod), source, loadStatus);
         modIdLabel.SetTextAutoSize(modId);
@@ -639,6 +646,30 @@ public static partial class ModPanelUI {
             : I18N.T("modpanel.sidebar.modPreview.noImage", "No resources");
         previewCaption.SetTextAutoSize(caption);
     }
+
+    private static string ResolveSidebarListTitle(KitLibModEntry entry)
+        => ModTitleStore.Resolve(entry.Id, entry.Source, entry.DisplayName);
+
+    private static string BuildSidebarModRowTooltip(KitLibModEntry info, string displayName, string? gameBuild) {
+        var tipParts = new List<string> {
+            displayName,
+            info.Id,
+            ModPanelInstallSource.FormatLoadStatus(info.LoadStatus),
+            ModPanelInstallSource.FormatSourceLabel(info.Source),
+        };
+        if (!string.IsNullOrWhiteSpace(info.Version))
+            tipParts.Add(info.Version);
+        tipParts.Add(info.IsEnabledInSettings
+            ? I18N.T("modpanel.sidebar.enabled", "enabled")
+            : I18N.T("modpanel.sidebar.disabled", "disabled"));
+        if (!string.IsNullOrWhiteSpace(info.InstallPath))
+            tipParts.Add(info.InstallPath);
+        if (!string.IsNullOrWhiteSpace(gameBuild))
+            tipParts.Add(string.Format(
+                I18N.T("modpanel.sidebar.gameBuild.short", "build {0}"), gameBuild));
+        return string.Join(" · ", tipParts);
+    }
+
     private static (Control Panel, VBoxContainer ContentList, ModPanelPageTabChrome PageTabChrome,
         ModDetailBannerControls Banner) BuildContentPanel() {
         var panel = new Panel {
@@ -735,16 +766,8 @@ public static partial class ModPanelUI {
         };
         textCol.AddThemeConstantOverride("separation", 6);
         headerRow.AddChild(textCol);
-        var titleRow = new HBoxContainer {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        titleRow.AddThemeConstantOverride("separation", 10);
-        var modTitleLabel = CreateSidebarWrapLabel(22, HorizontalAlignment.Left);
-        modTitleLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        modTitleLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
-        titleRow.AddChild(modTitleLabel);
-        textCol.AddChild(titleRow);
+        var titleEditor = new ModPanelDetailTitleEditor();
+        textCol.AddChild(titleEditor);
         var metaChipRow = new HBoxContainer {
             Name = "ModPanelDetailMetaChips",
             MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -767,7 +790,7 @@ public static partial class ModPanelUI {
         headerClip.AddChild(modHeaderOuter);
         modHeaderOuter.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         var controls = new ModDetailBannerControls {
-            ModTitleLabel = modTitleLabel,
+            TitleEditor = titleEditor,
             MetaChipRow = metaChipRow,
             ModIdLabel = modIdLabel,
             DescLabel = descLabel,
@@ -1015,7 +1038,7 @@ public static partial class ModPanelUI {
     }
 
     private sealed class ModDetailBannerControls {
-        public required MegaRichTextLabel ModTitleLabel { get; init; }
+        public required ModPanelDetailTitleEditor TitleEditor { get; init; }
         public required HBoxContainer MetaChipRow { get; init; }
         public required MegaRichTextLabel ModIdLabel { get; init; }
         public required MegaRichTextLabel DescLabel { get; init; }

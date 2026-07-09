@@ -1,6 +1,7 @@
 using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
+using KitLib.Modding;
 using KitLib.Settings;
 
 namespace KitLib.User;
@@ -13,6 +14,7 @@ public static class ModuleEntry {
         KitLibUserOps.CurrentSessionLogFileName = () => GameLogFileHydrator.CurrentSessionLogFileName;
         KitLibUserOps.CurrentSessionLogPath = () => GameLogFileHydrator.CurrentSessionLogPath;
         SettingsStore.Load();
+        ModTitleStore.Load();
         LogCollector.Initialize();
         KitLogHub.RegisterSink(new KitLogUserSink());
         UserTabRegistration.Register();

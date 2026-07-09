@@ -220,7 +220,7 @@ public static partial class ModPanelUI {
             ContentMarginBottom = 0,
         };
     }
-    private static MegaRichTextLabel CreateSidebarWrapLabel(int fontSize, HorizontalAlignment alignment,
+    internal static MegaRichTextLabel CreateSidebarWrapLabel(int fontSize, HorizontalAlignment alignment,
         VerticalAlignment verticalAlignment = VerticalAlignment.Top) {
         var label = new MegaRichTextLabel {
             BbcodeEnabled = true,
@@ -540,6 +540,8 @@ public static partial class ModPanelUI {
         chrome.BorderColor = new Color(accent.R, accent.G, accent.B, ba);
         chrome.BgColor = new Color(Mathf.Lerp(0.045f, 0.055f, u), Mathf.Lerp(0.042f, 0.052f, u), Mathf.Lerp(0.038f, 0.048f, u), 0.98f);
     }
+    internal static void ApplyDetailTitleEditButton(Button btn) => ApplyScopeStripIconButton(btn);
+
     private static void ApplyScopeStripIconButton(Button btn) {
         btn.Flat = true;
         var normal = new StyleBoxFlat {

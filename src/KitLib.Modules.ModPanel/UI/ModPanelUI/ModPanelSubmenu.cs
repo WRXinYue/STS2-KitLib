@@ -86,8 +86,10 @@ public partial class ModPanelSubmenu : NSubmenu {
         DisableTabHotkeys();
         ThemeManager.OnThemeChanged -= OnKitLibThemeChanged;
         KitLibHotkeySettingsUi.CancelCapture();
-        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.User))
+        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.User)) {
+            ModPanelUI.FlushPendingTitleEdit();
             ModRuntime.LoadSettings.Persist();
+        }
         RitsuModSettingsEmbedHost.FlushDirtyBindings();
         ModPanelUI.OnSubmenuPopped(this);
         base.OnSubmenuClosed();

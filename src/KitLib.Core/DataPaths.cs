@@ -50,6 +50,7 @@ public static class DataPaths {
     public static string PresetsDir => Path.Combine(ResolvedBaseDir(), "presets");
     public static string ScriptsDir => Path.Combine(ResolvedBaseDir(), "scripts");
     public static string FingerprintFile => Path.Combine(ResolvedBaseDir(), "last_mod_fingerprint.json");
+    public static string ModTitleOverridesFile => Path.Combine(ResolvedBaseDir(), "mod-title-overrides.json");
     public static string ProfileBackupsDir => Path.Combine(ResolvedBaseDir(), "profile_backups");
 
     private static string ResolvedBaseDir() {

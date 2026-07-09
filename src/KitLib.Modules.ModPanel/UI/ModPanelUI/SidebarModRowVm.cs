@@ -6,6 +6,7 @@ namespace KitLib.UI;
 
 internal sealed class SidebarModRowVm {
     public required KitLibModEntry Entry { get; init; }
+    public required Label TitleLabel { get; init; }
     public required StyleBoxFlat InnerStyle { get; init; }
     public required Panel BgPanel { get; init; }
     public required Control Host { get; init; }
