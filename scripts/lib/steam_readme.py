@@ -30,7 +30,4 @@ def build_steam_readme(path: Path) -> str:
 
 def validate_steam_readme(text: str, *, label: str) -> None:
     if len(text) > STEAM_DESCRIPTION_MAX:
-        raise ValueError(
-            f"{label} is {len(text)} chars (Steam limit {STEAM_DESCRIPTION_MAX}). "
-            "Shorten the README or move detail into docs/."
-        )
+        raise ValueError(f"{label} is {len(text)} chars (Steam limit {STEAM_DESCRIPTION_MAX}). " "Shorten the README or move detail into docs/.")

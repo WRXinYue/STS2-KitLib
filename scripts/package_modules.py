@@ -299,10 +299,13 @@ def main() -> int:
         _restage_dist_for_profile("stable", configuration=args.configuration)
         return 0
 
-    profile = args.sts2_profile or subprocess.check_output(
-        [sys.executable, str(_REPO / "scripts" / "resolve_sts2_compile_profile.py")],
-        text=True,
-    ).strip()
+    profile = (
+        args.sts2_profile
+        or subprocess.check_output(
+            [sys.executable, str(_REPO / "scripts" / "resolve_sts2_compile_profile.py")],
+            text=True,
+        ).strip()
+    )
     _package_profile(
         version,
         profile,

@@ -91,9 +91,7 @@ def _resolve_preview_image() -> Path:
     for candidate in _PREVIEW_CANDIDATES:
         if candidate.is_file():
             return candidate
-    raise RuntimeError(
-        "Missing workshop preview image. Add assets/devmode.png or assets/workshop-image.png."
-    )
+    raise RuntimeError("Missing workshop preview image. Add assets/devmode.png or assets/workshop-image.png.")
 
 
 def _resolve_change_note(
@@ -111,10 +109,7 @@ def _resolve_change_note(
         return f"[b] v{version} [/b]"
     note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
     if not note:
-        raise RuntimeError(
-            "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
-            "## [X.Y.Z] section, or pass --change-note."
-        )
+        raise RuntimeError("ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released " "## [X.Y.Z] section, or pass --change-note.")
     return note
 
 
@@ -157,18 +152,14 @@ def _write_workshop_json(
             text = path.read_text(encoding="utf-8").strip()
             if len(text) > STEAM_DESCRIPTION_MAX:
                 print(
-                    f"WARN: {path.relative_to(_REPO)} is {len(text)} chars "
-                    f"(Steam limit {STEAM_DESCRIPTION_MAX}).",
+                    f"WARN: {path.relative_to(_REPO)} is {len(text)} chars " f"(Steam limit {STEAM_DESCRIPTION_MAX}).",
                     file=sys.stderr,
                 )
             preview_parts.append(f"--- {path.name} ---\n{text}")
     if preview_parts:
         description_preview = "\n\n".join(preview_parts)
     else:
-        description_preview = (
-            "(omitted from upload — edit listing on Steam Workshop; "
-            "optional drafts: assets/readme.steam.en.txt, assets/readme.steam.zh-CN.txt)"
-        )
+        description_preview = "(omitted from upload — edit listing on Steam Workshop; " "optional drafts: assets/readme.steam.en.txt, assets/readme.steam.zh-CN.txt)"
     (workspace / "description.preview.txt").write_text(description_preview + "\n", encoding="utf-8")
 
 
@@ -249,11 +240,7 @@ def sync_workspaces(
 def _uploader_setup_error() -> str | None:
     raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
     if not raw:
-        return (
-            "STS2_MOD_UPLOADER is not set.\n"
-            "  Add it to .env (copy from .env.example), e.g.:\n"
-            "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
-        )
+        return "STS2_MOD_UPLOADER is not set.\n" "  Add it to .env (copy from .env.example), e.g.:\n" "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
     path = Path(os.path.expandvars(raw)).expanduser()
     if not path.is_file():
         return (
@@ -297,8 +284,7 @@ def upload_profile(profile: str, dry_run: bool, *, branch_targeting: bool = True
     for name in ("workshop.json", "image.png"):
         if not (workspace / name).is_file():
             print(
-                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. "
-                f"Run: make workshop-{profile}",
+                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. " f"Run: make workshop-{profile}",
                 file=sys.stderr,
             )
             return 1

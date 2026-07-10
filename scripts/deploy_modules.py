@@ -106,15 +106,7 @@ def _resolve_mod_variant_loader_dll() -> Path | None:
     candidate = _REPO / "build" / BUNDLE_ID / MOD_VARIANT_LOADER_DLL
     if candidate.is_file():
         return candidate
-    built = (
-        _REPO
-        / "src"
-        / "KitLib.ModVariantLoader"
-        / "bin"
-        / "Debug"
-        / "net9.0"
-        / MOD_VARIANT_LOADER_DLL
-    )
+    built = _REPO / "src" / "KitLib.ModVariantLoader" / "bin" / "Debug" / "net9.0" / MOD_VARIANT_LOADER_DLL
     if built.is_file():
         return built
     release = built.parent.parent.parent / "Release" / "net9.0" / MOD_VARIANT_LOADER_DLL
@@ -254,9 +246,7 @@ def _deploy_bundle(mods_root: Path) -> list[Path]:
             failed.append(target)
     variant_loader = _resolve_mod_variant_loader_dll()
     if variant_loader is None:
-        raise FileNotFoundError(
-            f"Missing {MOD_VARIANT_LOADER_DLL}. Build KitLib.sln (includes KitLib.ModVariantLoader)."
-        )
+        raise FileNotFoundError(f"Missing {MOD_VARIANT_LOADER_DLL}. Build KitLib.sln (includes KitLib.ModVariantLoader).")
     if not _copy_file_safe(variant_loader, dst / MOD_VARIANT_LOADER_DLL):
         failed.append(dst / MOD_VARIANT_LOADER_DLL)
     _assert_core_bundle(dst)
