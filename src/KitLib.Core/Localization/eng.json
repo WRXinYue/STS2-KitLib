@@ -688,7 +688,6 @@
   "panel.console": "Commands",
   "panel.presets": "Presets",
   "panel.cardtest": "Card Test",
-  "panel.cardEdit": "Card Editor",
   "panel.section.runtime": "Runtime Stats",
   "panel.section.mapRewrite": "Map Rewrite",
 

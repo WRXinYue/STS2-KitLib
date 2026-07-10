@@ -268,7 +268,6 @@ internal static class DevPanel {
             case ActivePanel.CombatStats: OpenCombatStats(); break;
             case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;
             case ActivePanel.Feedback: OpenFeedback(); break;
-            case ActivePanel.CardEdit: break;
         }
     }
 

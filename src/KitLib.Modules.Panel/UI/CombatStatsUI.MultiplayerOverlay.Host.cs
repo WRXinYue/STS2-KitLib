@@ -28,7 +28,7 @@ internal static partial class CombatStatsUI {
             - ScoreWidth
             - ScoreRightPadding
             - RowSeparation * 2f;
-        /// <summary>Above browser overlays (1250), below card edit overlays (1400).</summary>
+        /// <summary>Above browser overlays (1250).</summary>
         public const int ZIndex = 1310;
     }
 

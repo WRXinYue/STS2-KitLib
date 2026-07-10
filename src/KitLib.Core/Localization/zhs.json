@@ -688,7 +688,6 @@
   "panel.console": "命令手册",
   "panel.presets": "预设",
   "panel.cardtest": "卡牌测试",
-  "panel.cardEdit": "卡牌编辑",
   "panel.section.runtime": "运行时状态",
   "panel.section.mapRewrite": "地图改写",
 

@@ -57,7 +57,6 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 ::: en
 
 - **Hooks** — Trigger → Condition → Action rules
-- **Scripts** — SpireScratch (Blockly); WebSocket hot reload
 - **AI Host** — Solo autoplay (**StrongStrategy** default); disabled during multiplayer hand-play
 - **MCP** — See **[MCP](/guide/mcp/)**
 - **KitLog CLI** — See **[tools/KitLog.Cli/README.md](https://github.com/WRXinYue/STS2-KitLib/blob/main/tools/KitLog.Cli/README.md)**
@@ -67,7 +66,6 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 ::: zh-CN
 
 - **钩子** — 触发器 → 条件 → 动作
-- **脚本** — SpireScratch（Blockly）；WebSocket 热重载
 - **AI 托管** — 单人自动（默认 **StrongStrategy**）；联机手打时禁用
 - **MCP** — 见 **[MCP](/guide/mcp/)**
 - **KitLog CLI** — 见仓库 `tools/KitLog.Cli/README.md`
@@ -114,7 +112,6 @@ Tabs sort by `order` within each group. Third-party tabs pick an `order` in the 
 | `devmode.console` | Console | Primary | 700 |
 | `devmode.presets` | Presets | Primary | 800 |
 | `devmode.hooks` | Hooks | Primary | 900 |
-| `devmode.scripts` | Scripts | Primary | 950 |
 | `devmode.logs` | Logs | Primary | 960 |
 | `devmode.save` | Save / Load | Utility | 100 |
 | `devmode.settings` | Settings | Utility | 200 |
@@ -136,7 +133,6 @@ Tabs sort by `order` within each group. Third-party tabs pick an `order` in the 
 | `devmode.console` | 控制台 | Primary | 700 |
 | `devmode.presets` | 预设 | Primary | 800 |
 | `devmode.hooks` | 钩子 | Primary | 900 |
-| `devmode.scripts` | 脚本 | Primary | 950 |
 | `devmode.logs` | 日志 | Primary | 960 |
 | `devmode.save` | 存档 / 读档 | Utility | 100 |
 | `devmode.settings` | 设置 | Utility | 200 |

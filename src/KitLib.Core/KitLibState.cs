@@ -30,13 +30,12 @@ public enum ActivePanel {
     Rooms,
     Console,
     Presets,
-    CardEdit,
+    CardTest,
     Hooks,
     Logs,
     Feedback,
     CombatStats,
     EnemyIntent,
-    CardTest
 }
 
 public enum PowerTarget {

@@ -1,4 +1,4 @@
-KitLib serves both mod authors and players. Authors can start test runs, use the left-edge dev panel in-game to edit cards, stats, and enemy state, read logs and combat info, and debug multiplayer (pseudo co-op, dual-instance LAN)—with hooks, scripts, and automation to validate mods with fewer restarts. Players get a better Mod panel, progress protection, feedback export, and optional assist features.
+KitLib serves both mod authors and players. Authors can start test runs, use the left-edge dev panel in-game to edit cards, stats, and enemy state, read logs and combat info, and debug multiplayer (pseudo co-op, dual-instance LAN)—with hooks and automation to validate mods with fewer restarts. Players get a better Mod panel, progress protection, feedback export, and optional assist features.
 
 KitLib is modular: KitLib Core handles loading; satellite modules are optional. If an optional module fails to load, it should not take down the core or block other mods that depend on KitLib.
 
@@ -20,7 +20,7 @@ KitLib is modular: KitLib Core handles loading; satellite modules are optional. 
 [*]Room teleport, command reference
 [*]Cheats, presets, card test
 [*]Enemy intents, combat stats
-[*]AI Host, hooks, scripts
+[*]AI Host, hooks
 [*]Harmony analysis, framework bridge
 [*]Save / load, settings, logs, mod feedback
 [*]Rail expand/collapse, tab reorder/hide, hotkeys
@@ -70,7 +70,7 @@ KitLib is modular: KitLib Core handles loading; satellite modules are optional. 
 [h3]Automation[/h3]
 
 [list]
-[*]Hook rules, SpireScratch scripts
+[*]Hook rules
 [*]MCP bridge (external agents and tools)
 [/list]
 
