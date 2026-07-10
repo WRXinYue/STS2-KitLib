@@ -226,6 +226,7 @@ public static partial class ModPanelUI {
         var titleEditor = modBanner.TitleEditor;
         var metaChipRow = modBanner.MetaChipRow;
         var modIdLabel = modBanner.ModIdLabel;
+        var descScroll = modBanner.DescScroll;
         var descLabel = modBanner.DescLabel;
         var modIcon = modBanner.ModIcon;
         var previewPlaceholder = modBanner.PreviewPlaceholder;
@@ -331,16 +332,16 @@ public static partial class ModPanelUI {
             var rowEntry = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase))?.Entry;
             var m = ModPanelModBanner.TryFindMod(id);
             if (m != null) {
-                ApplySidebarTexts(m, id, titleEditor, metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTexts(m, id, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
                 var tex = ModPanelModBanner.TryLoadModIcon(m, id);
                 ApplyPreviewState(tex, false, modIcon, previewPlaceholder, previewCaption);
             }
             else if (rowEntry != null) {
-                ApplySidebarTextsFromEntry(rowEntry.Value, titleEditor, metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTextsFromEntry(rowEntry.Value, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
                 ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
             }
             else {
-                ApplySidebarTexts(null, id, titleEditor, metaChipRow, modIdLabel, descLabel);
+                ApplySidebarTexts(null, id, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
                 ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
             }
             var pagesForMod = rowEntry?.IsLoaded == true
@@ -357,7 +358,7 @@ public static partial class ModPanelUI {
         }
         if (ordered.Count == 0) {
             var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
-            ApplySidebarTexts(fallback, showcaseModId, titleEditor, metaChipRow, modIdLabel, descLabel);
+            ApplySidebarTexts(fallback, showcaseModId, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
             var tex0 = ModPanelModBanner.TryLoadModIcon(fallback, showcaseModId);
             ApplyPreviewState(tex0, fallback == null, modIcon, previewPlaceholder, previewCaption);
             contentState.PageId = ResolveInitialPageId(showcaseModId);
@@ -517,8 +518,7 @@ public static partial class ModPanelUI {
         }).CallDeferred();
         return panel;
     }
-    private static (Panel Frame, TextureRect Icon, Control Placeholder, MegaRichTextLabel Caption)
-        CreateSidebarModPreviewParts() {
+    private static (Panel Frame, TextureRect Icon, Control Placeholder, MegaRichTextLabel Caption) CreateSidebarModPreviewParts() {
         var outer = ModPanelUiMetrics.ModSidebarPreviewOuterSize;
         var previewFrame = new Panel {
             Name = "ModPreviewFrame",
@@ -575,29 +575,38 @@ public static partial class ModPanelUI {
         return (previewFrame, modIcon, previewPlaceholder, previewCaption);
     }
     private static void ApplySidebarTextsFromEntry(KitLibModEntry entry, ModPanelDetailTitleEditor titleEditor,
-        HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
+        HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, ScrollContainer descScroll,
+        MegaRichTextLabel descLabel) {
         titleEditor.Bind(entry.Id, entry.Source, entry.DisplayName);
-        UpdateDetailBannerMetaChips(metaChipRow, entry.Version, entry.Source, entry.LoadStatus, entry.InstallPath);
+        UpdateDetailBannerMetaChips(metaChipRow, entry.Version, entry.Source, entry.LoadStatus, entry.InstallPath,
+            entry.Id, _root, entry.DisplayName);
         modIdLabel.SetTextAutoSize(entry.Id);
         var shortPath = ModPanelInstallSource.FormatShortPath(entry.InstallPath, entry.Source);
         if (string.IsNullOrWhiteSpace(shortPath)) {
+            descScroll.Visible = false;
             descLabel.Visible = false;
             descLabel.SetTextAutoSize("");
             descLabel.TooltipText = "";
         }
         else {
+            descScroll.Visible = true;
             descLabel.Visible = true;
             descLabel.SetTextAutoSize(shortPath);
             descLabel.TooltipText = entry.InstallPath ?? "";
         }
     }
     private static void ApplySidebarTexts(Mod? mod, string modId, ModPanelDetailTitleEditor titleEditor,
-        HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, MegaRichTextLabel descLabel) {
+        HBoxContainer metaChipRow, MegaRichTextLabel modIdLabel, ScrollContainer descScroll,
+        MegaRichTextLabel descLabel) {
         if (mod == null) {
             titleEditor.Bind("", ModEntrySource.ModsDirectory,
                 I18N.T("modpanel.sidebar.modHeader.none", "No mod selected"));
-            ClearDetailBannerMetaChips(metaChipRow);
+
+            foreach (Node child in metaChipRow.GetChildren())
+                child.QueueFree();
+
             modIdLabel.SetTextAutoSize("");
+            descScroll.Visible = false;
             descLabel.SetTextAutoSize("");
             descLabel.Visible = false;
             return;
@@ -605,7 +614,8 @@ public static partial class ModPanelUI {
         var source = ModPanelInstallSource.FromStsSource(mod.modSource);
         titleEditor.Bind(modId, source, ModPanelModBanner.ResolveTitle(mod, modId));
         var loadStatus = ModPanelInstallSource.FromStsLoadState(mod.state);
-        UpdateDetailBannerMetaChips(metaChipRow, ModPanelModBanner.ResolveVersion(mod), source, loadStatus, mod.path);
+        UpdateDetailBannerMetaChips(metaChipRow, ModPanelModBanner.ResolveVersion(mod), source, loadStatus, mod.path,
+            modId, _root, ModPanelModBanner.ResolveTitle(mod, modId));
         modIdLabel.SetTextAutoSize(modId);
         var descParts = new List<string>();
         var author = ModPanelModBanner.ResolveAuthor(mod);
@@ -618,14 +628,17 @@ public static partial class ModPanelUI {
         if (!string.IsNullOrWhiteSpace(shortPath))
             descParts.Add(shortPath);
         if (descParts.Count == 0) {
+            descScroll.Visible = false;
             descLabel.Visible = false;
             descLabel.SetTextAutoSize("");
             descLabel.TooltipText = "";
         }
         else {
+            descScroll.Visible = true;
             descLabel.Visible = true;
             descLabel.SetTextAutoSize(string.Join("\n\n", descParts));
             descLabel.TooltipText = string.IsNullOrWhiteSpace(mod.path) ? "" : mod.path;
+            descScroll.ScrollVertical = 0;
         }
     }
     private static void ApplyPreviewState(Texture2D? tex, bool noModSelected, TextureRect modIcon,
@@ -748,26 +761,31 @@ public static partial class ModPanelUI {
         var headerRoot = new PanelContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         headerRoot.AddThemeStyleboxOverride("panel", CreateModSidebarPreviewFrameStyle());
         var headerRow = new HBoxContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             Alignment = BoxContainer.AlignmentMode.Begin,
         };
         headerRow.AddThemeConstantOverride("separation", 12);
         headerRoot.AddChild(headerRow);
         var (previewFrame, modIcon, previewPlaceholder, previewCaption) = CreateSidebarModPreviewParts();
         headerRow.AddChild(previewFrame);
+
         var textCol = new VBoxContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ShrinkBegin,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
         textCol.AddThemeConstantOverride("separation", 6);
         headerRow.AddChild(textCol);
+
         var titleEditor = new ModPanelDetailTitleEditor();
         textCol.AddChild(titleEditor);
+
         var metaChipRow = new HBoxContainer {
             Name = "ModPanelDetailMetaChips",
             MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -776,16 +794,32 @@ public static partial class ModPanelUI {
         };
         metaChipRow.AddThemeConstantOverride("separation", 8);
         textCol.AddChild(metaChipRow);
+
         var modIdLabel = CreateSidebarWrapLabel(14, HorizontalAlignment.Left);
         modIdLabel.Modulate = new Color(0.75f, 0.72f, 0.65f, 0.95f);
         modIdLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         textCol.AddChild(modIdLabel);
+
+        var descScroll = new ScrollContainer {
+            Name = "ModPanelDetailDescScroll",
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            Visible = false,
+        };
+        textCol.AddChild(descScroll);
+
         var descLabel = CreateSidebarWrapLabel(13, HorizontalAlignment.Left);
         descLabel.Modulate = new Color(0.65f, 0.62f, 0.58f, 0.9f);
         descLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        descLabel.SizeFlagsVertical = Control.SizeFlags.ShrinkBegin;
         descLabel.Visible = false;
-        textCol.AddChild(descLabel);
+        descScroll.AddChild(descLabel);
+
         modHeaderOuter.AddChild(headerRoot);
+
         var headerClip = new SidebarBannerClip(ModPanelUiMetrics.SidebarModBannerFixedHeight);
         headerClip.AddChild(modHeaderOuter);
         modHeaderOuter.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
@@ -793,6 +827,7 @@ public static partial class ModPanelUI {
             TitleEditor = titleEditor,
             MetaChipRow = metaChipRow,
             ModIdLabel = modIdLabel,
+            DescScroll = descScroll,
             DescLabel = descLabel,
             ModIcon = modIcon,
             PreviewPlaceholder = previewPlaceholder,
@@ -1041,12 +1076,13 @@ public static partial class ModPanelUI {
         public required ModPanelDetailTitleEditor TitleEditor { get; init; }
         public required HBoxContainer MetaChipRow { get; init; }
         public required MegaRichTextLabel ModIdLabel { get; init; }
+        public required ScrollContainer DescScroll { get; init; }
         public required MegaRichTextLabel DescLabel { get; init; }
         public required TextureRect ModIcon { get; init; }
         public required Control PreviewPlaceholder { get; init; }
         public required MegaRichTextLabel PreviewCaption { get; init; }
     }
-    /// <summary>Caps the selected-mod banner to a fixed height; content is clipped instead of stretching the sidebar.</summary>
+    /// <summary>Caps the selected-mod banner to a fixed height; long description scrolls inside the text column.</summary>
     private sealed partial class SidebarBannerClip : Control {
         private readonly float _height;
         public SidebarBannerClip(float height) {

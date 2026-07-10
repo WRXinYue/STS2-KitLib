@@ -3,6 +3,7 @@ using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.DevPerf;
 using KitLib.Host;
+using KitLib.Interop;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.LanTest;
 using KitLib.Multiplayer.PseudoCoop;
@@ -121,13 +122,14 @@ public static class ModuleEntry {
         KitLibDevOps.OpenScripts = DevPanel.OpenScripts;
         KitLibDevOps.OpenCombatStats = DevPanel.OpenCombatStats;
         KitLibDevOps.OpenEnemyIntent = DevPanel.OpenEnemyIntent;
-        KitLibDevOps.OpenHarmonyAnalysis = DevPanel.OpenHarmonyAnalysis;
         KitLibDevOps.OpenFeedback = DevPanel.OpenFeedback;
 
         KitLibUserOps.OpenLogs = DevPanel.OpenLogs;
 
         TryWireDevPanelUiDelegates();
         KitLibPanelUiOps.BuildProgressGuardModSettingsPage = () => ProgressGuardModSettingsPage.Build();
+        KitLibPanelUiOps.QueryModHarmonyPatchStats = ModHarmonyOwnerMatcher.TryGetStats;
+        KitLibPanelUiOps.BuildModHarmonyDetailReport = ModHarmonyOwnerMatcher.BuildDetailReport;
     }
 
     static void TryWireDevPanelUiDelegates() {

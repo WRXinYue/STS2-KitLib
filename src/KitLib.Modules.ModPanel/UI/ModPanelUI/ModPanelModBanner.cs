@@ -88,7 +88,7 @@ internal static class ModPanelModBanner {
             return mm.author;
         return mod == null ? null : GetManifestMemberString(mod.manifest, "author", "Author");
     }
-    internal static string? ResolveDescription(Mod? mod, int maxLen = 220) {
+    internal static string? ResolveDescription(Mod? mod) {
         string? d;
         if (mod?.manifest is ModManifest mm && !string.IsNullOrWhiteSpace(mm.description))
             d = mm.description;
@@ -96,8 +96,7 @@ internal static class ModPanelModBanner {
             d = mod == null ? null : GetManifestMemberString(mod.manifest, "description", "Description");
         if (string.IsNullOrWhiteSpace(d))
             return null;
-        d = d.Trim().Replace("\r\n", "\n");
-        return d.Length <= maxLen ? d : d[..maxLen].TrimEnd() + "…";
+        return d.Trim().Replace("\r\n", "\n");
     }
     internal static Texture2D? TryLoadModIcon(Mod? mod, string modId) {
         var id = mod?.manifest is ModManifest mm ? mm.id : null;

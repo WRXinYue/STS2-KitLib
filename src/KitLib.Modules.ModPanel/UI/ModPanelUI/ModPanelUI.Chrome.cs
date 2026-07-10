@@ -1,9 +1,11 @@
 using System;
 using Godot;
 using KitLib.Abstractions.Modding;
+using KitLib.Host;
 using KitLib.ModPanel.Icons;
 using KitLib.Settings;
 using MegaCrit.Sts2.addons.mega_text;
+using MegaCrit.Sts2.Core.Helpers;
 namespace KitLib.UI;
 
 public static partial class ModPanelUI {
@@ -228,25 +230,97 @@ public static partial class ModPanelUI {
         return WrapGithubShield(label, statusColor, statusText);
     }
 
-    internal static void UpdateDetailBannerMetaChips(HBoxContainer row, string? version, ModEntrySource source,
-        ModEntryLoadStatus loadStatus, string? installPath) {
-        foreach (Node child in row.GetChildren())
-            child.QueueFree();
-        var versionChip = CreateSidebarModListVersionChip(version);
-        if (versionChip != null)
-            row.AddChild(versionChip);
-        row.AddChild(CreateModSourceChip(source));
-        var loadChip = CreateSidebarModListLoadStatusChip(loadStatus);
-        if (loadChip != null)
-            row.AddChild(loadChip);
-        var sizeChip = CreateDetailInstallSizeChip(installPath);
-        if (sizeChip != null)
-            row.AddChild(sizeChip);
+    internal static ModHarmonyPatchStats? QueryHarmonyStats(string modId, string? installPath) {
+        if (KitLibPanelUiOps.QueryModHarmonyPatchStats == null || string.IsNullOrWhiteSpace(modId))
+            return null;
+        return KitLibPanelUiOps.QueryModHarmonyPatchStats(modId, installPath);
     }
 
-    internal static void ClearDetailBannerMetaChips(HBoxContainer row) {
+    internal static PanelContainer? CreateHarmonyPatchChip(ModHarmonyPatchStats stats) {
+        var text = string.Format(I18N.T("modpanel.harmony.patches", "{0} patches"), stats.PatchOperations);
+        return CreateHarmonyStatChip(text);
+    }
+
+    internal static PanelContainer? CreateHarmonyMethodsChip(ModHarmonyPatchStats stats) {
+        var text = string.Format(I18N.T("modpanel.harmony.methods", "{0} methods"), stats.PatchedMethods);
+        return CreateHarmonyStatChip(text);
+    }
+
+    internal static PanelContainer? CreateHarmonyOwnersChip(ModHarmonyPatchStats stats) {
+        if (stats.HarmonyOwnerCount <= 0)
+            return null;
+        var text = string.Format(I18N.T("modpanel.harmony.owners", "{0} owners"), stats.HarmonyOwnerCount);
+        var tooltip = stats.OwnerIds.Count > 0 ? string.Join("\n", stats.OwnerIds) : text;
+        return CreateHarmonyStatChip(text, tooltip);
+    }
+
+    private static PanelContainer CreateHarmonyStatChip(string text, string? tooltip = null) {
+        var label = new Label {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Text = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            LabelSettings = new LabelSettings {
+                FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
+                FontColor = ModPanelUiPalette.RichTextSecondary,
+            },
+        };
+        return WrapGithubShield(label, ModPanelUiPalette.RichTextSecondary, tooltip ?? text);
+    }
+
+    internal static Button CreateHarmonyInspectButton(Control popupHost, string modId, string? installPath, string displayName) {
+        var normalColor = ModPanelUiPalette.RichTextSecondary;
+        var focusedColor = Colors.White;
+        var duration = 0.25f;
+
+        var btn = new Button {
+            Flat = true,
+            FocusMode = Control.FocusModeEnum.All,
+            CustomMinimumSize = new Vector2(28f, 28f),
+            TooltipText = I18N.T("modpanel.harmony.inspect", "View Harmony patch report"),
+            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
+            Icon = MdiIcon.Magnify.Texture(16, Colors.White),
+            SelfModulate = normalColor
+        };
+        btn.AddThemeConstantOverride("h_separation", 0);
+        btn.AddThemeStyleboxOverride("focus", new StyleBoxEmpty());
+
+        void TweenTo(Color target) => btn.CreateTween()
+            .TweenProperty(btn, "self_modulate", target, duration)
+            .SetTrans(Tween.TransitionType.Expo)
+            .SetEase(Tween.EaseType.Out);
+
+        btn.MouseEntered += () => TweenTo(focusedColor);
+        btn.MouseExited += () => TweenTo(normalColor);
+        btn.FocusEntered += () => TweenTo(focusedColor);
+        btn.FocusExited += () => { if (!btn.IsHovered()) TweenTo(normalColor); };
+        btn.Pressed += () => ModHarmonyDetailPopup.Show(popupHost, modId, installPath, displayName);
+        return btn;
+    }
+
+    internal static void UpdateDetailBannerMetaChips(HBoxContainer row, string? version, ModEntrySource source,
+        ModEntryLoadStatus loadStatus, string? installPath, string? modId = null, Control? popupHost = null, string? displayName = null) {
+        ArgumentNullException.ThrowIfNull(row);
+
         foreach (Node child in row.GetChildren())
             child.QueueFree();
+
+        var versionChip = CreateSidebarModListVersionChip(version);
+        row.AddChildSafely(versionChip);
+        row.AddChild(CreateModSourceChip(source));
+        row.AddChildSafely(CreateSidebarModListLoadStatusChip(loadStatus));
+        row.AddChildSafely(CreateDetailInstallSizeChip(installPath));
+
+        if (!string.IsNullOrWhiteSpace(modId) && popupHost != null && loadStatus == ModEntryLoadStatus.Loaded) {
+            var stats = QueryHarmonyStats(modId, installPath);
+            if (stats == null)
+                return;
+
+            row.AddChild(CreateHarmonyPatchChip(stats.Value));
+            row.AddChild(CreateHarmonyMethodsChip(stats.Value));
+            row.AddChildSafely(CreateHarmonyOwnersChip(stats.Value));
+            row.AddChild(CreateHarmonyInspectButton(popupHost, modId, installPath, displayName ?? modId));
+        }
     }
     private static StyleBoxFlat CreateModSidebarPreviewFrameStyle() {
         return new StyleBoxFlat {

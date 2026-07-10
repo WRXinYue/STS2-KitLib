@@ -266,10 +266,17 @@ internal static class DevModeFormChrome {
         WireRoundedFieldFocusMotion(ob);
     }
     public static void ApplyLineEdit(LineEdit le) {
-        var n = RoundedField(false);
-        le.AddThemeStyleboxOverride("normal", n);
-        le.AddThemeStyleboxOverride("read_only", n);
-        le.AddThemeStyleboxOverride("focus", RoundedField(true));
+        var underlineStyle = new StyleBoxFlat {
+            BgColor = new Color(0, 0, 0, 0),
+            BorderWidthLeft = 0,
+            BorderWidthRight = 0,
+            BorderWidthTop = 0,
+            BorderWidthBottom = 1,
+            BorderColor = KitLibTheme.Accent,
+        };
+        le.AddThemeStyleboxOverride("normal", underlineStyle);
+        le.AddThemeStyleboxOverride("read_only", underlineStyle);
+        le.AddThemeStyleboxOverride("focus", underlineStyle);
         le.AddThemeFontSizeOverride("font_size", 14);
         le.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         le.AddThemeColorOverride("caret_color", FieldCaretColor());

@@ -7,11 +7,11 @@ using MegaCrit.Sts2.addons.mega_text;
 
 namespace KitLib.UI;
 
-/// <summary>Detail banner title with optional per-mod display name override.</summary>
 internal sealed partial class ModPanelDetailTitleEditor : HBoxContainer {
     private readonly MegaRichTextLabel _titleLabel;
     private readonly Button _editButton;
     private readonly LineEdit _lineEdit;
+
     private string _modId = "";
     private ModEntrySource _source;
     private string _defaultTitle = "";
@@ -26,11 +26,13 @@ internal sealed partial class ModPanelDetailTitleEditor : HBoxContainer {
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
         SizeFlagsVertical = SizeFlags.ShrinkCenter;
         AddThemeConstantOverride("separation", 4);
+
         _titleLabel = ModPanelUI.CreateSidebarWrapLabel(22, HorizontalAlignment.Left);
         _titleLabel.SizeFlagsHorizontal = SizeFlags.ShrinkBegin;
         _titleLabel.IsHorizontallyBound = false;
         _titleLabel.AutowrapMode = TextServer.AutowrapMode.Off;
         AddChild(_titleLabel);
+
         _editButton = new Button {
             Name = "ModPanelTitleEditButton",
             FocusMode = FocusModeEnum.All,
@@ -45,6 +47,7 @@ internal sealed partial class ModPanelDetailTitleEditor : HBoxContainer {
         _editButton.Icon = MdiIcon.Pencil.Texture(16, ModPanelUiPalette.RichTextMuted);
         _editButton.Pressed += EnterEditMode;
         AddChild(_editButton);
+
         _lineEdit = new LineEdit {
             Name = "ModPanelTitleLineEdit",
             Visible = false,

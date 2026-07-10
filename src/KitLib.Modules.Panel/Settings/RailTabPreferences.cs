@@ -17,7 +17,6 @@ internal static class RailTabPreferences {
     public const string AiHostTabId = "devmode.ai";
     public const string LogsTabId = "devmode.logs";
 
-    public const string HarmonyAnalysisTabId = "devmode.harmonyAnalysis";
     public const string ScriptsTabId = "devmode.scripts";
 
     public static readonly string[] DefaultHiddenTabIds = KitLibSettings.DefaultHiddenRailTabIds;

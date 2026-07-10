@@ -110,7 +110,6 @@ public sealed partial class KitLibSettings {
     public bool HotkeysEnabled { get; set; } = true;
 
     public static readonly string[] DefaultHiddenRailTabIds = {
-        "devmode.harmonyAnalysis",
         "devmode.scripts",
     };
 }
