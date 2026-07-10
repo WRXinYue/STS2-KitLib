@@ -6,6 +6,8 @@ KitLib serves both mod authors and players. Authors can start test runs, use the
 
 KitLib is modular: `KitLib` Core handles loading; satellite modules are optional. If an optional module fails to load, it should not take down the core or block other mods that depend on KitLib.
 
+> The plan is to keep polishing what already exists. Unnecessary features get cut to limit maintenance load and cognitive overhead—code quality over feature count.
+
 ## Features
 
 ### Dev Mode (title screen)

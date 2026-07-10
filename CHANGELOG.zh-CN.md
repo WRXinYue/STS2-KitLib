@@ -8,8 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Mod 面板** — 可在详情横幅中为每个 mod 编辑自定义显示名称。
+- **Mod 面板** — 选中 mod 的详情横幅中可查看 Harmony 补丁摘要与详情。
+
+### Changed
+
+- **Mod 面板** — 打开时默认选中 KitLib（若已加载）；版本、来源、安装大小以标签形式显示在详情横幅；点击来源标签可在文件管理器中打开安装目录。
+- **KitLib 模块设置** — 改为逐项开关可选模块。
+
+### Removed
+
+- **KitLib 模块设置** — 加载方案（精简 / 标准 / 完整）。
+- **Dev Mode** — SpireScratch 脚本与一击必杀作弊。
+
 ### Fixed
 
+- **日志查看器** — 打开时自动滚动到最新日志。
 - **Mod 面板 — RitsuLib mod 设置** — 修复已通过 RitsuLib 注册设置页的 mod 在 Mod 面板中无法显示完整设置页的问题。
 
 ## [0.25.1] - 2026-07-09

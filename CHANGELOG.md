@@ -8,8 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Mod panel** — Edit a custom display name for each mod from the detail banner.
+- **Mod panel** — Harmony patch summary and details on the selected mod’s detail banner.
+
+### Changed
+
+- **Mod panel** — Opens with KitLib selected when available; mod metadata (version, source, install size) appears as chips on the detail banner; click the source chip to open the install folder in your file manager.
+- **KitLib module settings** — Optional modules are toggled individually.
+
+### Removed
+
+- **KitLib module settings** — Load presets (Minimal / Standard / Full).
+- **Dev Mode** — SpireScratch scripting and the one-hit kill cheat.
+
 ### Fixed
 
+- **Log viewer** — Opening the viewer now scrolls to the newest log lines.
 - **Mod panel — Ritsu-backed mod settings** — Fixed mods with RitsuLib-registered settings showing only a single entry instead of the full settings page in the Mod panel.
 
 ## [0.25.1] - 2026-07-09

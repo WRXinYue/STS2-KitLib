@@ -2,6 +2,10 @@ KitLib serves both mod authors and players. Authors can start test runs, use the
 
 KitLib is modular: KitLib Core handles loading; satellite modules are optional. If an optional module fails to load, it should not take down the core or block other mods that depend on KitLib.
 
+[quote]
+The plan is to keep polishing what already exists. Unnecessary features get cut to limit maintenance load and cognitive overhead—code quality over feature count.
+[/quote]
+
 [h3]Features[/h3]
 
 [h3]Dev Mode (title screen)[/h3]
@@ -115,13 +119,6 @@ KitLib is modular: KitLib Core handles loading; satellite modules are optional. 
 [*]Add eng/KitLib.ContentMod.props to your csproj (KitLib.Abstractions.dll at compile time).
 [*]At runtime, depend on KitLib core and the satellite modules your mod actually uses.
 [*]Extension API, logging, AI integration, etc.: [url=https://sts2-devmod.wrxinyue.org/]docs site[/url] → Developer.
-[/list]
-
-[h3]Docs[/h3]
-
-[list]
-[*]Docs: [url=https://sts2-devmod.wrxinyue.org/]sts2-devmod.wrxinyue.org[/url]
-[*]Contributing: [url=CONTRIBUTING.md]CONTRIBUTING.md[/url]
 [/list]
 
 [h3]Acknowledgments[/h3]
