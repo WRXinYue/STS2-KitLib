@@ -20,7 +20,6 @@ internal static partial class DevPanelUI {
         ["devmode.combatStats"] = "KitLibCombatStats",
         ["devmode.presets"] = "KitLibPresets",
         ["devmode.hooks"] = "KitLibHookConfig",
-        ["devmode.scripts"] = "KitLibScripts",
         ["devmode.logs"] = LogCollector.LogViewerRootName,
         ["devmode.feedback"] = "KitLibFeedbackReport",
         ["devmode.save"] = "KitLibSaveLoad",

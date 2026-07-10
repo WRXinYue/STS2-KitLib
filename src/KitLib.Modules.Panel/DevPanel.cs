@@ -188,15 +188,6 @@ internal static class DevPanel {
         HookConfigUI.Show(_globalUi);
     }
 
-    internal static void OpenScripts() {
-        if (_globalUi == null) return;
-        ModuleBootstrap.EnsureBridgesStarted();
-        TryDismissCurrent();
-        KitLibState.ActivePanel = ActivePanel.Scripts;
-
-        ScriptUI.Show(_globalUi);
-    }
-
     internal static void OpenLogs() {
         if (_globalUi == null) return;
         TryDismissCurrent();
@@ -273,7 +264,6 @@ internal static class DevPanel {
             case ActivePanel.Presets: OpenPresets(); break;
             case ActivePanel.CardTest: OpenCardTest(); break;
             case ActivePanel.Hooks: OpenHooks(); break;
-            case ActivePanel.Scripts: OpenScripts(); break;
             case ActivePanel.Logs: OpenLogs(); break;
             case ActivePanel.CombatStats: OpenCombatStats(); break;
             case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;

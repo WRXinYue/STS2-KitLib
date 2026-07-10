@@ -160,17 +160,6 @@ public static class FreezeEnemiesPatch {
     }
 }
 
-/// <summary>One-hit kill — enemies take massive damage.</summary>
-[HarmonyPatch(typeof(Creature), nameof(Creature.LoseHpInternal))]
-[HarmonyPriority(Priority.High)]
-public static class OneHitKillPatch {
-    public static void Prefix(Creature __instance, ref decimal amount) {
-        if (!MpCheatApplier.OneHitKill) return;
-        if (__instance.Player != null) return;
-        amount = 999999m;
-    }
-}
-
 /// <summary>Damage multiplier — multiply damage dealt to enemies.</summary>
 [HarmonyPatch(typeof(Creature), nameof(Creature.DamageBlockInternal))]
 public static class DamageMultiplierPatch {

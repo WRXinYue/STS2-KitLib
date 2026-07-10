@@ -23,7 +23,7 @@ public sealed partial class KitLibSettings {
 
     /// <summary>Tab ids hidden from the in-game rail (settings tab cannot be hidden).</summary>
     public HashSet<string> RailHiddenTabIds { get; set; } =
-        new(DefaultHiddenRailTabIds, StringComparer.Ordinal);
+        new(StringComparer.Ordinal);
 
     /// <summary>
     /// Dev overlay level for normal (non-test) runs: Disabled, DevPanel, or Cheat.
@@ -108,10 +108,6 @@ public sealed partial class KitLibSettings {
 
     /// <summary>Enable in-game keyboard shortcuts for the DevMode sidebar shell.</summary>
     public bool HotkeysEnabled { get; set; } = true;
-
-    public static readonly string[] DefaultHiddenRailTabIds = {
-        "devmode.scripts",
-    };
 }
 
 public static class ThemeNames {

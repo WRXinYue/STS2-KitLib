@@ -121,7 +121,6 @@ internal static partial class DevPanelUI {
         // Enemy
         var secEnemy = NewSection("panel.section.enemy", "Enemy");
         secEnemy.AddChild(CreateCheatToggle(I18N.T("cheat.freezeEnemies", "Freeze Enemies"), I18N.T("cheat.freezeEnemies.desc", "Enemies skip their turns"), () => KitLibState.EnemyCheats.FreezeEnemies, MpCheatUi.WrapBoolSetter(v => KitLibState.EnemyCheats.FreezeEnemies = v)));
-        secEnemy.AddChild(CreateCheatToggle(I18N.T("cheat.oneHitKill", "One-Hit Kill"), I18N.T("cheat.oneHitKill.desc", "Deal massive damage to enemies"), () => KitLibState.EnemyCheats.OneHitKill, MpCheatUi.WrapBoolSetter(v => KitLibState.EnemyCheats.OneHitKill = v)));
         if (MpCheatSession.InMultiplayerRun) {
             var killBtn = CreatePlainButton(I18N.T("cheat.killAllOnce", "Kill All (sync)"), MdiIcon.Skull);
             killBtn.Pressed += () => TaskHelper.RunSafely(MpCheatCombatEnemyCoordinator.TryHostKillAllAsync());

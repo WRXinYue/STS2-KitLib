@@ -234,7 +234,7 @@ internal static class KitLibSatelliteModuleSettingsUi {
                 "Cheat tab and runtime cheat hooks.");
         if (string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase))
             return ("modpanel.kitlib.modules.dev.desc",
-                "Hooks, SpireScratch scripts, Harmony tools, and MCP bridges.");
+                "Hooks, Harmony tools, and MCP bridges.");
         if (string.Equals(moduleId, KitLibModuleIds.User, StringComparison.OrdinalIgnoreCase))
             return ("modpanel.kitlib.modules.user.desc",
                 "Session logging, crash recovery, and progress helpers.");

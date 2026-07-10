@@ -175,24 +175,20 @@ public sealed class MpCheatPlayerFlags {
 
 public sealed class MpCheatEnemyFlags {
     public bool FreezeEnemies { get; set; }
-    public bool OneHitKill { get; set; }
     public float DamageMultiplier { get; set; } = 1f;
 
     public MpCheatEnemyFlags Clone() => new() {
         FreezeEnemies = FreezeEnemies,
-        OneHitKill = OneHitKill,
         DamageMultiplier = DamageMultiplier,
     };
 
     public static MpCheatEnemyFlags FromKitLibState() => new() {
         FreezeEnemies = KitLibState.EnemyCheats.FreezeEnemies,
-        OneHitKill = KitLibState.EnemyCheats.OneHitKill,
         DamageMultiplier = KitLibState.EnemyCheats.DamageMultiplier,
     };
 
     public void ApplyToKitLibState() {
         KitLibState.EnemyCheats.FreezeEnemies = FreezeEnemies;
-        KitLibState.EnemyCheats.OneHitKill = OneHitKill;
         KitLibState.EnemyCheats.DamageMultiplier = DamageMultiplier;
     }
 }

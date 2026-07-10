@@ -17,9 +17,7 @@ internal static class RailTabPreferences {
     public const string AiHostTabId = "devmode.ai";
     public const string LogsTabId = "devmode.logs";
 
-    public const string ScriptsTabId = "devmode.scripts";
-
-    public static readonly string[] DefaultHiddenTabIds = KitLibSettings.DefaultHiddenRailTabIds;
+    public static readonly string[] DefaultHiddenTabIds = [];
 
     private static string GroupKey(DevPanelTabGroup group) =>
         group == DevPanelTabGroup.Primary ? PrimaryKey : UtilityKey;

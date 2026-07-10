@@ -4,7 +4,6 @@ using KitLib;
 using KitLib.CombatStats;
 using KitLib.EnemyIntent;
 using KitLib.Hooks;
-using KitLib.Scripts;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -41,27 +40,22 @@ public static class HookCombatSetupPatch {
         bool firstTurn = true;
 
         _turnStartHandler = combatState => {
-            ScriptManager.ProcessPendingReload();
             RunContext.TryGetRunAndPlayer(out var runState, out var p);
             if (firstTurn) {
                 firstTurn = false;
                 HookManager.Fire(TriggerType.CombatStart, p);
-                ScriptManager.Fire(TriggerType.CombatStart, p);
             }
             HookManager.Fire(TriggerType.TurnStart, p);
-            ScriptManager.Fire(TriggerType.TurnStart, p);
         };
 
         _turnEndHandler = combatState => {
             RunContext.TryGetRunAndPlayer(out var runState, out var p);
             HookManager.Fire(TriggerType.TurnEnd, p);
-            ScriptManager.Fire(TriggerType.TurnEnd, p);
         };
 
         _combatEndHandler = room => {
             RunContext.TryGetRunAndPlayer(out var runState, out var p);
             HookManager.Fire(TriggerType.CombatEnd, p);
-            ScriptManager.Fire(TriggerType.CombatEnd, p);
         };
 
         __instance.TurnStarted += _turnStartHandler;
@@ -77,7 +71,6 @@ public static class HookDrawPatch {
     public static void Postfix(Player player) {
         if (!KitLibState.IsActive) return;
         HookManager.Fire(TriggerType.OnDraw, player);
-        ScriptManager.Fire(TriggerType.OnDraw, player);
     }
 }
 
@@ -94,11 +87,9 @@ public static class HookDamagePatch {
 
         if (__instance.Player != null) {
             HookManager.Fire(TriggerType.OnDamageTaken, player);
-            ScriptManager.Fire(TriggerType.OnDamageTaken, player);
         }
         else {
             HookManager.Fire(TriggerType.OnDamageDealt, player);
-            ScriptManager.Fire(TriggerType.OnDamageDealt, player);
         }
     }
 }
@@ -112,7 +103,6 @@ public static class HookPotionUsedPatch {
         Player? player = null;
         RunContext.TryGetRunAndPlayer(out _, out player);
         HookManager.Fire(TriggerType.OnPotionUsed, player);
-        ScriptManager.Fire(TriggerType.OnPotionUsed, player);
     }
 }
 
@@ -145,7 +135,6 @@ public static class ScriptCardPlayedPatch {
         Player? player = null;
         RunContext.TryGetRunAndPlayer(out _, out player);
         HookManager.Fire(TriggerType.OnCardPlayed, player);
-        ScriptManager.Fire(TriggerType.OnCardPlayed, player);
     }
 }
 
@@ -170,6 +159,5 @@ public static class ScriptShufflePatch {
     public static void Postfix(Player player) {
         if (!KitLibState.IsActive) return;
         HookManager.Fire(TriggerType.OnShuffle, player);
-        ScriptManager.Fire(TriggerType.OnShuffle, player);
     }
 }

@@ -11,7 +11,6 @@ using KitLib.Host;
 using KitLib.Interop;
 using KitLib.Mcp;
 using KitLib.Patches;
-using KitLib.Scripts;
 
 namespace KitLib.Dev;
 
@@ -22,15 +21,6 @@ internal static class ModuleBootstrap {
     private static bool _harmonyApplied;
 
     internal static bool IsBootstrapComplete => _completed;
-    private static bool _bridgesStarted;
-
-    /// <summary>Starts HTTP bridges on demand when the Scripts panel is opened.</summary>
-    internal static void EnsureBridgesStarted() {
-        if (_bridgesStarted || !KitLibBootstrapGate.CanStartHttpListener)
-            return;
-        _bridgesStarted = true;
-        Callable.From(StartDeferredBridges).CallDeferred();
-    }
 
     /// <summary>Receives Core-pinned mod_data path; Dev cannot read Core static fields across KitLib copies.</summary>
     internal static void AdoptPinnedModDataDir(string path) {
@@ -78,7 +68,6 @@ internal static class ModuleBootstrap {
 
             KitLibInstanceRegistry.Register();
 
-            SafeStep("ScriptManager", () => ScriptManager.Initialize());
             SafeStep("FrameworkBridge", () => FrameworkBridge.Initialize());
             SafeStep("CombatStatsTracker", () => CombatStatsTracker.Initialize());
             SafeStep("MonsterIntentOverlayTracker", () => MonsterIntentOverlayTracker.Initialize());
@@ -89,6 +78,8 @@ internal static class ModuleBootstrap {
 
             SafeStep("DevTabRegistration", () => DevTabRegistration.Register());
 
+            Callable.From(StartDeferredMcpBridge).CallDeferred();
+
             _completed = true;
             KitLibBootstrapGate.EnterInteractive();
             KitLibStartupAudit.LogReport("initialization");
@@ -98,10 +89,9 @@ internal static class ModuleBootstrap {
         }
     }
 
-    static void StartDeferredBridges() {
+    static void StartDeferredMcpBridge() {
         if (!KitLibBootstrapGate.CanStartHttpListener)
             return;
-        SafeStep("ScriptBridge", () => ScriptBridge.StartCore());
         SafeStep("McpBridge", () => McpBridge.StartCore());
     }
 

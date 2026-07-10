@@ -9,14 +9,14 @@ namespace KitLib.Commands;
 public class DmCheatConsoleCmd : AbstractConsoleCmd {
     public override string CmdName => "dmcheat";
     public override string Args => "<toggle> [on|off|value]";
-    public override string Description => "[KitLib] Toggle cheat flags (godmode, infinitehp, onehitkill, ...)";
+    public override string Description => "[KitLib] Toggle cheat flags (godmode, infinitehp, ...)";
     public override bool IsNetworked => false;
     public override bool DebugOnly => false;
 
     private static readonly string[] Toggles =
     {
         "godmode", "infinitehp", "infiniteblock", "infiniteenergy", "infinitestars",
-        "freezeenemies", "onehitkill", "freeshop", "alwayspotion", "alwaysupgrade",
+        "freezeenemies", "freeshop", "alwayspotion", "alwaysupgrade",
         "maxrarity", "unknowntreasure", "maxscore"
     };
 
@@ -62,11 +62,6 @@ public class DmCheatConsoleCmd : AbstractConsoleCmd {
                     var v = flag ?? !KitLibState.EnemyCheats.FreezeEnemies;
                     KitLibState.EnemyCheats.FreezeEnemies = v;
                     return new CmdResult(true, $"Freeze Enemies: {OnOff(v)}");
-                }
-            case "onehitkill": {
-                    var v = flag ?? !KitLibState.EnemyCheats.OneHitKill;
-                    KitLibState.EnemyCheats.OneHitKill = v;
-                    return new CmdResult(true, $"One-Hit Kill: {OnOff(v)}");
                 }
             case "freeshop": {
                     var v = flag ?? !KitLibState.GameplayModifiers.FreeShop;

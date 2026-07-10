@@ -3,13 +3,12 @@ using KitLib.Dev;
 using KitLib.Host;
 using KitLib.Mcp;
 using KitLib.Patches;
-using KitLib.Scripts;
 
 namespace KitLib;
 
 /// <summary>
 /// Lightweight Godot Node that hooks into the scene tree's _Process loop.
-/// Drives RuntimeStatModifiers, AssetWarmupService, and script hot-reload each frame.
+/// Drives RuntimeStatModifiers and AssetWarmupService each frame.
 /// </summary>
 internal partial class KitLibProcessNode : Node {
     internal static KitLibProcessNode? Instance { get; private set; }
@@ -39,7 +38,6 @@ internal partial class KitLibProcessNode : Node {
         }
 
         GlobalUiReadyPatch.Process(delta);
-        ScriptManager.ProcessPendingReload();
     }
 
     public override void _ExitTree() {

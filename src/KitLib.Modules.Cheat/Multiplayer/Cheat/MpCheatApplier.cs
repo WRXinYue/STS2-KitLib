@@ -51,8 +51,6 @@ public static class MpCheatApplier {
 
     public static bool FreezeEnemies => CheatsActive && MpCheatState.Config.GlobalEnemy.FreezeEnemies;
 
-    public static bool OneHitKill => CheatsActive && MpCheatState.Config.GlobalEnemy.OneHitKill;
-
     public static float EnemyDamageMultiplier => CheatsActive ? MpCheatState.Config.GlobalEnemy.DamageMultiplier : 1f;
 
     public static bool UnknownMapAlwaysTreasure =>

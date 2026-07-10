@@ -95,11 +95,6 @@ internal static class DevCheatMcpHelper {
                     KitLibState.EnemyCheats.FreezeEnemies = v;
                     return Ok(cheat, v);
                 }
-            case "one_hit_kill": {
-                    var v = enabled ?? !KitLibState.EnemyCheats.OneHitKill;
-                    KitLibState.EnemyCheats.OneHitKill = v;
-                    return Ok(cheat, v);
-                }
             case "free_shop": {
                     var v = enabled ?? !KitLibState.GameplayModifiers.FreeShop;
                     KitLibState.GameplayModifiers.FreeShop = v;
