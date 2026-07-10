@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-07-11
+
 ### Added
 
 - **Mod 面板** — 可在详情横幅中为每个 mod 编辑自定义显示名称。

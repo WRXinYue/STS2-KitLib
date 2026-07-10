@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-07-11
+
 ### Added
 
 - **Mod panel** — Edit a custom display name for each mod from the detail banner.
