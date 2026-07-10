@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Godot;
+using KitLib;
 using KitLib.Icons;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Logging;
@@ -41,13 +42,13 @@ internal static class LogViewerUI {
         var parent = (Node)globalUi;
         Remove(parent);
         void Close() => DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(parent));
+        LogCollector.RefreshFileSnapshot();
         var dual = DevPanelUI.CreateMainOnlyDualOverlay(
             globalUi, RootName, PanelW, Close, contentSeparation: 8);
         var vbox = dual.MainContent;
         LogSourcePieChart? pieChart = null;
         BuildPanel(vbox, dual.Root, Close, chart => pieChart = chart);
         dual.AttachToScene();
-        LogCollector.RefreshFileSnapshot();
         pieChart?.RefreshAfterOverlayOpen();
     }
 
@@ -55,10 +56,10 @@ internal static class LogViewerUI {
         var parent = mainMenu.GetTree().Root;
         HideAnywhere();
         Action close = HideAnywhere;
-        var (root, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 8);
         LogCollector.AcknowledgeAlerts();
-        BuildPanel(vbox, root, close);
         LogCollector.RefreshFileSnapshot();
+        var (root, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 8);
+        BuildPanel(vbox, root, close);
     }
 
     private static void BuildPanel(VBoxContainer vbox, Control root, Action onClose, Action<LogSourcePieChart>? capturePieChart = null) {
@@ -381,8 +382,11 @@ internal static class LogViewerUI {
         }
 
         const double ScrollFollowThreshold = 12.0;
+        // User intent: keep pinned to latest lines (not inferred from scrollbar position on open).
+        bool stickToBottom = true;
+        bool programmaticScroll = false;
 
-        bool IsFollowingTail() {
+        bool IsAtScrollBottom() {
             var bar = richText.GetVScrollBar();
             if (bar == null || bar.MaxValue <= 0)
                 return true;
@@ -390,12 +394,18 @@ internal static class LogViewerUI {
         }
 
         void ScrollToBottom() {
-            int lines = richText.GetLineCount();
-            if (lines > 0)
-                richText.ScrollToLine(lines - 1);
-            var bar = richText.GetVScrollBar();
-            if (bar != null)
-                bar.Value = bar.MaxValue;
+            programmaticScroll = true;
+            try {
+                int lines = richText.GetLineCount();
+                if (lines > 0)
+                    richText.ScrollToLine(lines - 1);
+                var bar = richText.GetVScrollBar();
+                if (bar != null)
+                    bar.Value = bar.MaxValue;
+            }
+            finally {
+                programmaticScroll = false;
+            }
         }
 
         void RestoreScrollAfterRepopulate(bool followTail, double prevScroll, double prevMax) {
@@ -408,7 +418,16 @@ internal static class LogViewerUI {
             if (bar == null || prevMax <= 0)
                 return;
 
-            bar.Value = Math.Clamp(prevMax > 0 ? prevScroll / prevMax * bar.MaxValue : prevScroll, 0, bar.MaxValue);
+            bar.Value = Math.Clamp(prevScroll / prevMax * bar.MaxValue, 0, bar.MaxValue);
+        }
+
+        var tailScrollBar = richText.GetVScrollBar();
+        if (tailScrollBar != null) {
+            tailScrollBar.ValueChanged += _ => {
+                if (programmaticScroll)
+                    return;
+                stickToBottom = IsAtScrollBottom();
+            };
         }
 
         string BuildBbCode(
@@ -471,7 +490,7 @@ internal static class LogViewerUI {
 
         void Repopulate() {
             var scrollBar = richText.GetVScrollBar();
-            bool followTail = IsFollowingTail();
+            bool followTail = stickToBottom;
             double prevScroll = scrollBar?.Value ?? 0;
             double prevMax = scrollBar?.MaxValue ?? 0;
 
@@ -540,7 +559,22 @@ internal static class LogViewerUI {
         var timer = new Godot.Timer { WaitTime = 1.0, Autostart = true };
         timer.Timeout += () => { if (LogCollector.IsDirty) Repopulate(); };
         root.AddChild(timer);
-        Repopulate();
+
+        void ScheduleInitialRepopulate() {
+            if (root.IsInsideTree()) {
+                Callable.From(Repopulate).CallDeferred();
+                return;
+            }
+
+            void OnTreeEntered() {
+                root.TreeEntered -= OnTreeEntered;
+                Callable.From(Repopulate).CallDeferred();
+            }
+
+            root.TreeEntered += OnTreeEntered;
+        }
+
+        ScheduleInitialRepopulate();
     }
 
     public static void Remove(NGlobalUi globalUi) => Remove((Node)globalUi);
