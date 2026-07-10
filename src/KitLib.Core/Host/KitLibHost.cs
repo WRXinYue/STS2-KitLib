@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using KitLib.Diagnostics;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -225,12 +226,14 @@ public static class KitLibHost {
 
     public static void TryRunDevBootstrap() {
         KitLibBootstrapGate.EnterSceneReadyBootstrap();
-        try {
-            RequestDevBootstrap?.Invoke();
-        }
-        catch (Exception ex) {
-            BootstrapDiagnostics.RecordFailure("TryRunDevBootstrap", ex);
-        }
+        KitLibStartupAudit.Measure("dev.bootstrap", () => {
+            try {
+                RequestDevBootstrap?.Invoke();
+            }
+            catch (Exception ex) {
+                BootstrapDiagnostics.RecordFailure("TryRunDevBootstrap", ex);
+            }
+        });
     }
 
     public static void RegisterDeckPlanContributor(object contributor) =>

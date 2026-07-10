@@ -1,6 +1,7 @@
 using System.Reflection;
 using KitLib.Abstractions.Compat;
 using KitLib.Abstractions.Host;
+using KitLib.Diagnostics;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
 
@@ -39,7 +40,7 @@ internal static class SatelliteModuleLoader {
         ModAssemblyLoader.EnsureResolveHook(modDir);
         MainFile.Logger.Info($"Satellite loader: modDir={modDir}");
 
-        PreloadBundledAssemblies(modDir);
+        KitLibStartupAudit.Measure("satellite.preload", () => PreloadBundledAssemblies(modDir));
 
         var resolvedToggles = SettingsStore.GetResolvedSatelliteModulesEnabled();
         var loaded = new List<string>();
@@ -51,8 +52,8 @@ internal static class SatelliteModuleLoader {
 
         if (ModuleCatalog.IsLoaded(ModuleIds.Dev)) {
             var devAssembly = _devAssembly ?? ModAssemblyLoader.GetLoadedAssembly("KitLib.Dev");
-            WireDevModuleDelegates(devAssembly);
-            ApplyDevHarmony(devAssembly);
+            KitLibStartupAudit.Measure("satellite.devWire", () => WireDevModuleDelegates(devAssembly));
+            KitLibStartupAudit.Measure("satellite.devHarmony", () => ApplyDevHarmony(devAssembly));
         }
 
         if (loaded.Count == 0)
@@ -150,6 +151,20 @@ internal static class SatelliteModuleLoader {
             }
         }
 
+        try {
+            return KitLibStartupAudit.Measure($"satellite.{spec.ModuleId}", () => LoadModuleCore(modDir, spec));
+        }
+        catch (TargetInvocationException ex) {
+            KitLog.Warn($"Module {spec.ModuleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            return false;
+        }
+        catch (Exception ex) {
+            KitLog.Warn($"Module {spec.ModuleId} load conflict — skipped ({ex.Message}).");
+            return false;
+        }
+    }
+
+    static bool LoadModuleCore(string modDir, ModuleSpec spec) {
         try {
             KitLog.Info($"Satellite loader: loading {spec.AssemblyName}.dll assembly file.");
             var assembly = LoadAssembly(modDir, spec.AssemblyName, spec.ModuleId);

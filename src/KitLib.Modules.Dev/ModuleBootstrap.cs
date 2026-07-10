@@ -4,6 +4,7 @@ using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.AI.Combat.Simulation;
 using KitLib.CombatStats;
+using KitLib.Diagnostics;
 using KitLib.EnemyIntent;
 using KitLib.Feedback;
 using KitLib.Host;
@@ -90,6 +91,7 @@ internal static class ModuleBootstrap {
 
             _completed = true;
             KitLibBootstrapGate.EnterInteractive();
+            KitLibStartupAudit.LogReport("initialization");
         }
         finally {
             _completing = false;
@@ -107,7 +109,7 @@ internal static class ModuleBootstrap {
 
     static void SafeStep(string name, Action action) {
         try {
-            action();
+            KitLibStartupAudit.Measure($"dev.{name}", action);
         }
         catch (Exception ex) {
             BootstrapDiagnostics.RecordFailure(name, ex);

@@ -1,3 +1,4 @@
+using KitLib.Diagnostics;
 using KitLib.Host;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
@@ -13,14 +14,15 @@ public class MainFile {
 
     public static void Initialize() {
         Logger.Info("KitLib Core initializing...");
-        ModDependencyLoader.EnsureLoaded();
-        Sts2RuntimeProfile.Initialize();
-        ModKitLibLogBridge.Initialize();
-        DataPaths.EnsurePinnedOnMainThread();
-        SettingsStore.Load();
-        KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID);
-        KitLibHost.Bootstrap();
-        I18N.Initialize();
+        KitLibStartupAudit.Measure("dependencies", ModDependencyLoader.EnsureLoaded);
+        KitLibStartupAudit.Measure("runtimeProfile", Sts2RuntimeProfile.Initialize);
+        KitLibStartupAudit.Measure("logBridge", ModKitLibLogBridge.Initialize);
+        KitLibStartupAudit.Measure("dataPaths", DataPaths.EnsurePinnedOnMainThread);
+        KitLibStartupAudit.Measure("settings", SettingsStore.Load);
+        KitLibStartupAudit.Measure("coreHarmony", () => KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID));
+        KitLibStartupAudit.Measure("hostBootstrap", KitLibHost.Bootstrap);
+        KitLibStartupAudit.Measure("i18n", I18N.Initialize);
         Logger.Info("KitLib Core initialized.");
+        KitLibStartupAudit.LogCoreOnlyReportIfNeeded();
     }
 }
