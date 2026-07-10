@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Godot;
 using KitLib.Abstractions.Modding;
 using MegaCrit.Sts2.Core.Modding;
 
@@ -59,4 +60,18 @@ internal static class ModPanelInstallSource {
         ModLoadState.AddedAtRuntime => ModEntryLoadStatus.AddedAtRuntime,
         _ => ModEntryLoadStatus.None,
     };
+
+    internal static bool TryOpenInstallFolder(string? installPath) {
+        if (string.IsNullOrWhiteSpace(installPath))
+            return false;
+        try {
+            if (!Directory.Exists(installPath))
+                return false;
+            OS.ShellOpen(installPath);
+            return true;
+        }
+        catch {
+            return false;
+        }
+    }
 }

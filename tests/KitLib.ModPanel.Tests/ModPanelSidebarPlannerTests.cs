@@ -57,6 +57,17 @@ public sealed class ModPanelSidebarPlannerTests {
     }
 
     [Fact]
+    public void Plan_prefers_kitlib_when_present() {
+        var kitlib = Entry("KitLib", "KitLib");
+        var plan = ModPanelSidebarPlanner.Plan(
+            [ModB, kitlib, ModA],
+            "KitLib",
+            IsRitsuFramework,
+            IsLoaded);
+        Assert.Equal("KitLib", plan.InitialSelectedModId);
+    }
+
+    [Fact]
     public void Plan_falls_back_to_first_mod_when_showcase_missing() {
         var plan = ModPanelSidebarPlanner.Plan(
             [ModB, ModA],

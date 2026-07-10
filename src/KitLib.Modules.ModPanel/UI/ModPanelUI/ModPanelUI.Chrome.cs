@@ -148,7 +148,7 @@ public static partial class ModPanelUI {
         return (local, local, MdiIcon.FolderOpen.Texture(12, local));
     }
 
-    internal static PanelContainer CreateModSourceChip(ModEntrySource source) {
+    internal static PanelContainer CreateModSourceChip(ModEntrySource source, string? installPath = null) {
         var (tint, textColor, icon) = ResolveModSourceVisual(source);
         var label = ModPanelInstallSource.FormatSourceLabel(source);
         var row = new HBoxContainer {
@@ -173,7 +173,22 @@ public static partial class ModPanelUI {
                 FontColor = textColor,
             },
         });
-        return WrapGithubShield(row, tint, label);
+        var canOpen = !string.IsNullOrWhiteSpace(installPath) && System.IO.Directory.Exists(installPath);
+        var chip = WrapGithubShield(row, tint, canOpen ? installPath : label);
+        if (!canOpen)
+            return chip;
+
+        chip.MouseFilter = Control.MouseFilterEnum.Stop;
+        chip.FocusMode = Control.FocusModeEnum.None;
+        chip.MouseDefaultCursorShape = Control.CursorShape.PointingHand;
+        chip.GuiInput += ev => {
+            if (ev is not InputEventMouseButton mb || !mb.Pressed || mb.ButtonIndex != MouseButton.Left)
+                return;
+            if (!ModPanelInstallSource.TryOpenInstallFolder(installPath))
+                return;
+            chip.GetViewport()?.SetInputAsHandled();
+        };
+        return chip;
     }
 
     internal static PanelContainer? CreateSidebarModListVersionChip(string? version) {
@@ -307,7 +322,7 @@ public static partial class ModPanelUI {
 
         var versionChip = CreateSidebarModListVersionChip(version);
         row.AddChildSafely(versionChip);
-        row.AddChild(CreateModSourceChip(source));
+        row.AddChild(CreateModSourceChip(source, installPath));
         row.AddChildSafely(CreateSidebarModListLoadStatusChip(loadStatus));
         row.AddChildSafely(CreateDetailInstallSizeChip(installPath));
 
