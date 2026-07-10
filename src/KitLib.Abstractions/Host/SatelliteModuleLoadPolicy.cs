@@ -6,13 +6,6 @@ namespace KitLib.Abstractions.Host;
 
 /// <summary>Pure load policy for bundled KitLib satellite modules (settings + dependency rules).</summary>
 public static class SatelliteModuleLoadPolicy {
-    public const string ProfileMinimal = "Minimal";
-    public const string ProfileStandard = "Standard";
-    public const string ProfileFull = "Full";
-    public const string ProfileCustom = "Custom";
-
-    public static readonly string[] KnownProfiles = [ProfileMinimal, ProfileStandard, ProfileFull, ProfileCustom];
-
     public sealed record ModuleInfo(string Id, bool AlwaysOn, string[] Requires);
 
     public const string ModulesSubdir = "modules";
@@ -30,34 +23,27 @@ public static class SatelliteModuleLoadPolicy {
         Modules.Where(m => !m.AlwaysOn).Select(m => m.Id),
         StringComparer.OrdinalIgnoreCase);
 
-    public static IReadOnlyDictionary<string, bool> GetPreset(string profile) {
-        var normalized = NormalizeProfile(profile);
+    /// <summary>Fresh-install defaults: in-run dev panel on; AI, cheat, and dev satellites off.</summary>
+    public static IReadOnlyDictionary<string, bool> GetDefaultToggles() {
         var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         foreach (var module in Modules.Where(m => !m.AlwaysOn))
-            toggles[module.Id] = normalized switch {
-                ProfileMinimal => false,
-                ProfileStandard => module.Id == KitLibModuleIds.Panel,
-                ProfileFull => true,
-                _ => module.Id == KitLibModuleIds.Panel,
-            };
+            toggles[module.Id] = string.Equals(module.Id, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase);
         return toggles;
     }
 
-    public static IReadOnlyDictionary<string, bool> ResolveEnabled(
-        string profile,
-        IReadOnlyDictionary<string, bool>? userToggles) {
-        var resolved = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        var preset = NormalizeProfile(profile) == ProfileCustom && userToggles != null && userToggles.Count > 0
+    public static IReadOnlyDictionary<string, bool> ResolveEnabled(IReadOnlyDictionary<string, bool>? userToggles) {
+        var source = userToggles is { Count: > 0 }
             ? userToggles
-            : GetPreset(profile);
+            : GetDefaultToggles();
 
+        var resolved = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         foreach (var module in Modules) {
             if (module.AlwaysOn) {
                 resolved[module.Id] = true;
                 continue;
             }
 
-            resolved[module.Id] = preset.TryGetValue(module.Id, out var enabled) && enabled;
+            resolved[module.Id] = source.TryGetValue(module.Id, out var enabled) && enabled;
         }
 
         ApplyDependencies(resolved);
@@ -87,15 +73,6 @@ public static class SatelliteModuleLoadPolicy {
         if (enabled && (string.Equals(moduleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase)
                         || string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase)))
             toggles[KitLibModuleIds.Panel] = true;
-    }
-
-    public static string DetectMatchingProfile(IReadOnlyDictionary<string, bool> toggles) {
-        foreach (var profile in new[] { ProfileMinimal, ProfileStandard, ProfileFull }) {
-            if (TogglesMatchPreset(toggles, GetPreset(profile)))
-                return profile;
-        }
-
-        return ProfileCustom;
     }
 
     public static bool IsToggleable(string moduleId) => ToggleableModuleIds.Contains(moduleId);
@@ -135,27 +112,5 @@ public static class SatelliteModuleLoadPolicy {
                 break;
             }
         }
-    }
-
-    static bool TogglesMatchPreset(IReadOnlyDictionary<string, bool> toggles, IReadOnlyDictionary<string, bool> preset) {
-        foreach (var module in Modules.Where(m => !m.AlwaysOn)) {
-            var a = toggles.TryGetValue(module.Id, out var ta) && ta;
-            var b = preset.TryGetValue(module.Id, out var tb) && tb;
-            if (a != b)
-                return false;
-        }
-
-        return true;
-    }
-
-    static string NormalizeProfile(string? profile) {
-        if (string.IsNullOrWhiteSpace(profile))
-            return ProfileStandard;
-        foreach (var known in KnownProfiles) {
-            if (string.Equals(known, profile, StringComparison.OrdinalIgnoreCase))
-                return known;
-        }
-
-        return ProfileStandard;
     }
 }

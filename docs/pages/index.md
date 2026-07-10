@@ -25,10 +25,10 @@ features:
         zh-CN: 安装与模块
       details:
         en: >-
-          Install from Steam Workshop or Nexus. In Mods → KitLib → Modules, pick a load profile
+          Install from Steam Workshop or Nexus. In Mods → KitLib → Modules, toggle optional satellites
           or toggle satellite modules (restart required). See /guide/install/
         zh-CN: >-
-          从 Steam 创意工坊或 Nexus 安装。在 Mods → KitLib → 模块 选择加载方案，或单独开关卫星模块（需重启）。
+          从 Steam 创意工坊或 Nexus 安装。在 Mods → KitLib → 模块 单独开关卫星模块（需重启）。
           详见 /guide/install/
     - title:
         en: Dev rail & Dev Mode

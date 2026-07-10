@@ -29,13 +29,11 @@ internal static class KitLibSatelliteModuleSettingsUi {
         var toggleBindings = new List<ModuleRowBinding>();
 
         stack.AddChild(CreateRestartNotice());
-        var presetRow = CreatePresetRow(toggleBindings);
-        stack.AddChild(presetRow.Row);
 
         stack.AddChild(CreateSectionHeader(
             I18N.T("modpanel.kitlib.modules.section.core", "Core modules")));
         foreach (var module in SatelliteModuleLoadPolicy.Modules.Where(m => m.AlwaysOn)) {
-            var binding = CreateModuleRow(module.Id, toggleBindings, presetRow.PresetButton, alwaysOn: true);
+            var binding = CreateModuleRow(module.Id, toggleBindings, alwaysOn: true);
             toggleBindings.Add(binding);
             stack.AddChild(binding.Row);
         }
@@ -43,13 +41,12 @@ internal static class KitLibSatelliteModuleSettingsUi {
         stack.AddChild(CreateSectionHeader(
             I18N.T("modpanel.kitlib.modules.section.optional", "Optional modules")));
         foreach (var module in SatelliteModuleLoadPolicy.Modules.Where(m => !m.AlwaysOn)) {
-            var binding = CreateModuleRow(module.Id, toggleBindings, presetRow.PresetButton, alwaysOn: false);
+            var binding = CreateModuleRow(module.Id, toggleBindings, alwaysOn: false);
             toggleBindings.Add(binding);
             stack.AddChild(binding.Row);
         }
 
         RefreshModuleRows(toggleBindings);
-        SyncPresetSelection(presetRow.PresetButton);
         return stack;
     }
 
@@ -78,52 +75,9 @@ internal static class KitLibSatelliteModuleSettingsUi {
         return label;
     }
 
-    sealed class PresetRowBinding {
-        internal required Control Row { get; init; }
-        internal required OptionButton PresetButton { get; init; }
-    }
-
-    static PresetRowBinding CreatePresetRow(List<ModuleRowBinding> toggleBindings) {
-        var presetButton = new OptionButton {
-            FocusMode = Control.FocusModeEnum.All,
-            CustomMinimumSize = new Vector2(DevModeFormChrome.Metrics.ChoiceRowMinWidth,
-                DevModeFormChrome.Metrics.ValueColumnMinHeight),
-        };
-        DevModeFormChrome.ApplyOptionButton(presetButton);
-
-        presetButton.AddItem(I18N.T("modpanel.kitlib.modules.profile.minimal", "Minimal"), 0);
-        presetButton.AddItem(I18N.T("modpanel.kitlib.modules.profile.standard", "Standard"), 1);
-        presetButton.AddItem(I18N.T("modpanel.kitlib.modules.profile.full", "Full"), 2);
-        presetButton.AddItem(I18N.T("modpanel.kitlib.modules.profile.custom", "Custom"), 3);
-
-        presetButton.ItemSelected += idx => {
-            var profile = idx switch {
-                0 => SatelliteModuleLoadProfileNames.Minimal,
-                1 => SatelliteModuleLoadProfileNames.Standard,
-                2 => SatelliteModuleLoadProfileNames.Full,
-                _ => SatelliteModuleLoadProfileNames.Custom,
-            };
-            if (profile == SatelliteModuleLoadProfileNames.Custom)
-                return;
-            SettingsStore.ApplySatelliteLoadProfile(profile);
-            RefreshModuleRows(toggleBindings);
-            SyncPresetSelection(presetButton);
-        };
-
-        return new PresetRowBinding {
-            Row = DevModeFormChrome.CreateLabeledValueRow(
-                I18N.T("modpanel.kitlib.modules.profile.title", "Load profile"),
-                I18N.T("modpanel.kitlib.modules.profile.desc",
-                    "Quick presets for which KitLib feature modules load on startup. Custom appears when you change individual modules."),
-                presetButton),
-            PresetButton = presetButton,
-        };
-    }
-
     static ModuleRowBinding CreateModuleRow(
         string moduleId,
         List<ModuleRowBinding> toggleBindings,
-        OptionButton presetButton,
         bool alwaysOn) {
         var description = BuildDescription(moduleId, GetModuleDescription(moduleId));
 
@@ -160,7 +114,6 @@ internal static class KitLibSatelliteModuleSettingsUi {
             toggle.Toggled += on => {
                 SettingsStore.SetSatelliteModuleEnabled(moduleId, on);
                 RefreshModuleRows(toggleBindings);
-                SyncPresetSelection(presetButton);
             };
             value = toggle;
         }
@@ -281,18 +234,6 @@ internal static class KitLibSatelliteModuleSettingsUi {
         }
 
         return I18N.T("modpanel.kitlib.modules.runtime.pending", "Enabled");
-    }
-
-    static void SyncPresetSelection(OptionButton presetButton) {
-        var profile = SettingsStore.Current.SatelliteLoadProfile;
-        var idx = profile switch {
-            SatelliteModuleLoadProfileNames.Minimal => 0,
-            SatelliteModuleLoadProfileNames.Standard => 1,
-            SatelliteModuleLoadProfileNames.Full => 2,
-            _ => 3,
-        };
-        if (presetButton.Selected != idx)
-            presetButton.Select(idx);
     }
 
     static bool IsModuleEnabledInSettings(string moduleId) {

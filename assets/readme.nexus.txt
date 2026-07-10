@@ -84,7 +84,7 @@ KitLib is modular: [i]KitLib[/i] Core handles loading; satellite modules are opt
 [b]Main-menu mod settings (Mods → KitLib)[/b]
 
 [list]
-[*]Module load profiles and optional module toggles
+[*]Optional module toggles
 [*]Theme, hotkeys, in-run DevMode level
 [*]Progress guard, multiplayer cheat opt-in
 [/list]
@@ -222,7 +222,7 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 [b]主菜单 Mod 设置（Mods → KitLib）[/b]
 
 [list]
-[*]模块档位与可选模块开关
+[*]可选模块开关
 [*]主题、快捷键、局内 DevMode 级别
 [*]进度保护、联机作弊 opt-in
 [/list]

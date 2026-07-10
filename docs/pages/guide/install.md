@@ -38,9 +38,9 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
            └── KitLib.AI.dll
    ```
 
-4. Launch the game. Configure satellites under **Main menu → Mods → KitLib** (load profiles, hotkeys, progress protection).
+4. Launch the game. Configure satellites under **Main menu → Mods → KitLib** (module toggles, hotkeys, progress protection).
 
-**Optional modules** — delete DLLs under `modules/` to disable features, or use **Mods → KitLib → Modules** load profiles (**restart required**). Keep **`KitLib.User.dll`** and **`KitLib.ModPanel.dll`** for logs and mod settings.
+**Optional modules** — delete DLLs under `modules/` to disable features, or use **Mods → KitLib → Modules** toggles (**restart required**). Keep **`KitLib.User.dll`** and **`KitLib.ModPanel.dll`** for logs and mod settings.
 :::
 
 ::: zh-CN

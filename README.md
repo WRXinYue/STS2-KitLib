@@ -69,7 +69,7 @@ KitLib is modular: `KitLib` Core handles loading; satellite modules are optional
 
 ### Main-menu mod settings (Mods → KitLib)
 
-- Module load profiles and optional module toggles
+- Optional module toggles
 - Theme, hotkeys, in-run DevMode level
 - Progress guard, multiplayer cheat opt-in
 

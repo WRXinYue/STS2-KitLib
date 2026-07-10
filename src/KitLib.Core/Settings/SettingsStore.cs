@@ -91,16 +91,7 @@ public static class SettingsStore {
     }
 
     public static IReadOnlyDictionary<string, bool> GetResolvedSatelliteModulesEnabled() =>
-        SatelliteModuleLoadPolicy.ResolveEnabled(Current.SatelliteLoadProfile, Current.SatelliteModulesEnabled);
-
-    public static void ApplySatelliteLoadProfile(string profile) {
-        var normalized = NormalizeSatelliteProfile(profile);
-        Current.SatelliteLoadProfile = normalized;
-        Current.SatelliteModulesEnabled = new Dictionary<string, bool>(
-            SatelliteModuleLoadPolicy.GetPreset(normalized),
-            StringComparer.OrdinalIgnoreCase);
-        Save();
-    }
+        SatelliteModuleLoadPolicy.ResolveEnabled(Current.SatelliteModulesEnabled);
 
     public static void SetSatelliteModuleEnabled(string moduleId, bool enabled) {
         if (!SatelliteModuleLoadPolicy.IsToggleable(moduleId))
@@ -113,7 +104,6 @@ public static class SettingsStore {
 
         SatelliteModuleLoadPolicy.ApplyDependencyRulesToToggles(toggles, moduleId, enabled);
         Current.SatelliteModulesEnabled = toggles;
-        Current.SatelliteLoadProfile = SatelliteModuleLoadPolicy.DetectMatchingProfile(toggles);
         Save();
     }
 
@@ -200,26 +190,16 @@ public static class SettingsStore {
     }
 
     private static void EnsureSatelliteModuleToggles() {
-        if (Current.SatelliteModulesEnabled.Count > 0)
+        var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles();
+        if (Current.SatelliteModulesEnabled.Count == 0) {
+            Current.SatelliteModulesEnabled = new Dictionary<string, bool>(defaults, StringComparer.OrdinalIgnoreCase);
             return;
-        ApplySatelliteLoadProfileInMemory(Current.SatelliteLoadProfile);
-    }
-
-    static void ApplySatelliteLoadProfileInMemory(string profile) {
-        var normalized = NormalizeSatelliteProfile(profile);
-        Current.SatelliteLoadProfile = normalized;
-        Current.SatelliteModulesEnabled = new Dictionary<string, bool>(
-            SatelliteModuleLoadPolicy.GetPreset(normalized),
-            StringComparer.OrdinalIgnoreCase);
-    }
-
-    static string NormalizeSatelliteProfile(string profile) {
-        foreach (var known in SatelliteModuleLoadPolicy.KnownProfiles) {
-            if (string.Equals(known, profile, StringComparison.OrdinalIgnoreCase))
-                return known;
         }
 
-        return SatelliteModuleLoadProfileNames.Standard;
+        foreach (var (moduleId, enabled) in defaults) {
+            if (!Current.SatelliteModulesEnabled.ContainsKey(moduleId))
+                Current.SatelliteModulesEnabled[moduleId] = enabled;
+        }
     }
 
     private static void ApplyHotkeyDefaults() {
