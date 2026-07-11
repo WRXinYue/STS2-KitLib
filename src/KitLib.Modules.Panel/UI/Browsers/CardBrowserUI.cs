@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Godot;
 using KitLib;
@@ -7,11 +8,13 @@ using KitLib.Actions;
 using KitLib.Icons;
 using KitLib.Modding;
 using KitLib.Settings;
+using KitLib.UI.Diagnostics;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.CardPools;
 using MegaCrit.Sts2.Core.Nodes.Cards;
+using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -40,7 +43,8 @@ internal static partial class CardBrowserUI {
         // UI nodes
         public LineEdit SearchInput = null!;
         public ScrollContainer GridScroll = null!;
-        public GridContainer CardGrid = null!;
+        public Control GridContent = null!;
+        public VBoxContainer ModFilterSlot = null!;
         public VBoxContainer RightContent = null!;
         public Label StatusLabel = null!;
 
@@ -86,12 +90,21 @@ internal static partial class CardBrowserUI {
 
         // Card data
         public List<CardModel> CachedAllCards = new();
-        public Dictionary<CardModel, (Control host, NCard? nCard, bool visualsReady)> HostCache = new();
         public List<CardModel> FilteredCards = new();
+        public readonly List<List<NGridCardHolder>> CardRows = new();
+        public int GridColumns = 1;
+        public int DisplayedRows;
+        public int SlidingWindowStart;
+        public int LastSlidingWindowStart = -1;
+        public int GridPopulateGeneration;
+        public int GridPopulateCardIdx;
+        public bool GridPopulateScheduled;
+        public bool GridPopulateResetScroll;
+        public bool GridAllocateScheduled;
 
         // Selection
         public CardModel? SelectedCard;
-        public Control? SelectedPickHost;
+        public NGridCardHolder? SelectedHolder;
 
         public State(NGlobalUi globalUi, RunState runState, Player player) {
             GlobalUi = globalUi;
@@ -128,11 +141,18 @@ internal static partial class CardBrowserUI {
     }
 
     public static void Show(NGlobalUi globalUi, RunState runState, Player player) {
-        Remove(globalUi);
+        var openTotal = CardBrowserPerf.Start();
 
+        var phase = CardBrowserPerf.Start();
+        Remove(globalUi);
+        CardBrowserPerf.Log("open.remove", phase);
+
+        phase = CardBrowserPerf.Start();
         var s = new State(globalUi, runState, player);
         _pickerGetFilteredCards = () => s.FilteredCards;
+        CardBrowserPerf.Log("open.createState", phase);
 
+        phase = CardBrowserPerf.Start();
         var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
             GlobalUi = globalUi,
             RootName = RootName,
@@ -143,6 +163,9 @@ internal static partial class CardBrowserUI {
             FallbackClose = () => Remove(globalUi),
         });
         s.Dual = dual;
+        CardBrowserPerf.Log("open.createOverlay", phase);
+
+        phase = CardBrowserPerf.Start();
         dual.MainContent.AddThemeConstantOverride("separation", 8);
         var content = dual.MainContent;
 
@@ -377,15 +400,11 @@ internal static partial class CardBrowserUI {
         });
         content.AddChild(chipRow);
 
-        var modSourceRow = BrowserDetailHelpers.TryCreateModSourceFilterRow(
-            ContentModResolver.BuildFilterEntries(
-                CardLibraryVisibility.GetLibraryCards().Cast<AbstractModel>()),
-            s.ActiveModSourceFilters,
-            s.ExcludedModSourceFilters,
-            () => RebuildGrid(s, s.SearchInput.Text ?? ""));
-        if (modSourceRow != null)
-            content.AddChild(modSourceRow);
+        s.ModFilterSlot = new VBoxContainer();
+        content.AddChild(s.ModFilterSlot);
+        CardBrowserPerf.Log("open.buildChrome", phase);
 
+        phase = CardBrowserPerf.Start();
         // ── Pool / character filter chips (AllCards tab only) ──
         s.PoolFilterSection = new VBoxContainer();
         s.PoolFilterSection.AddThemeConstantOverride("separation", 4);
@@ -533,6 +552,7 @@ internal static partial class CardBrowserUI {
         Action<bool> applyShowHidden = pressed => {
             if (CardLibraryVisibility.ShowHiddenCards == pressed) return;
             SettingsStore.SetShowHiddenCards(pressed);
+            CardLibraryVisibility.InvalidateCache();
             var keepSelection = s.SelectedCard;
             InvalidateCardCache(s);
             RebuildGrid(s, s.SearchInput.Text ?? "");
@@ -547,19 +567,18 @@ internal static partial class CardBrowserUI {
         s.LibraryUpgradeRow.AddChild(showHiddenChip);
         s.LibraryUpgradeRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         content.AddChild(s.LibraryUpgradeRow);
+        CardBrowserPerf.Log("open.buildPoolFilters", phase);
 
+        phase = CardBrowserPerf.Start();
         // ── Body: card grid ──
         s.GridScroll = new ScrollContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
         };
-        s.CardGrid = new GridContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            Columns = 1
+        s.GridContent = new Control {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         };
-        s.CardGrid.AddThemeConstantOverride("h_separation", CardGridSeparation);
-        s.CardGrid.AddThemeConstantOverride("v_separation", CardGridSeparation);
 
         var gridOuterPad = new MarginContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -569,19 +588,20 @@ internal static partial class CardBrowserUI {
         gridOuterPad.AddThemeConstantOverride("margin_right", CardBrowserGridPadH);
         gridOuterPad.AddThemeConstantOverride("margin_top", CardBrowserGridPadV);
         gridOuterPad.AddThemeConstantOverride("margin_bottom", CardBrowserGridPadV);
-        gridOuterPad.AddChild(s.CardGrid);
+        gridOuterPad.AddChild(s.GridContent);
         s.GridScroll.AddChild(gridOuterPad);
         content.AddChild(s.GridScroll);
 
-        s.GridScroll.Resized += () => UpdateCardGridColumns(s);
-        s.GridScroll.ItemRectChanged += () => UpdateCardGridColumns(s);
-        s.GridScroll.GetVScrollBar().ValueChanged += _ => PopulateVisibleHosts(s);
+        s.GridScroll.Resized += () => OnGridViewportChanged(s);
+        s.GridScroll.ItemRectChanged += () => OnGridViewportChanged(s);
+        s.GridScroll.GetVScrollBar().ValueChanged += _ => ScheduleAllocateCardHolders(s);
 
         // ── Status bar ──
         s.StatusLabel = new Label { Text = "" };
         s.StatusLabel.AddThemeFontSizeOverride("font_size", 12);
         s.StatusLabel.AddThemeColorOverride("font_color", ColSubtle);
         content.AddChild(s.StatusLabel);
+        CardBrowserPerf.Log("open.buildGridShell", phase);
 
         // ── Wire up ──
         s.SearchInput.TextChanged += text => {
@@ -589,15 +609,42 @@ internal static partial class CardBrowserUI {
             RebuildGrid(s, text ?? "");
         };
 
+        phase = CardBrowserPerf.Start();
         dual.AttachToScene();
+        CardBrowserPerf.Log("open.attach", phase);
+
+        Callable.From(() => AppendModSourceFilterRow(s)).CallDeferred();
 
         var initialPileTarget = BrowseSourceToTarget(_browseSource);
         if (initialPileTarget.HasValue)
             KitLibState.CardTarget = initialPileTarget.Value;
 
+        phase = CardBrowserPerf.Start();
         InvalidateCardCache(s);
+        CardBrowserPerf.Log("open.invalidateCache", phase, $"cached={s.CachedAllCards.Count}");
+
+        phase = CardBrowserPerf.Start();
         RebuildGrid(s, s.SearchInput.Text ?? "");
-        Callable.From(() => UpdateCardGridColumns(s)).CallDeferred();
+        CardBrowserPerf.Log("open.rebuildGrid", phase,
+            $"filtered={s.FilteredCards.Count}");
+
+        CardBrowserPerf.Log("open.total", openTotal);
+    }
+
+    static void AppendModSourceFilterRow(State s) {
+        var phase = CardBrowserPerf.Start();
+        foreach (var child in s.ModFilterSlot.GetChildren())
+            ((Node)child).QueueFree();
+
+        var modSourceRow = BrowserDetailHelpers.TryCreateModSourceFilterRow(
+            CardLibraryVisibility.GetModFilterEntries(),
+            s.ActiveModSourceFilters,
+            s.ExcludedModSourceFilters,
+            () => RebuildGrid(s, s.SearchInput.Text ?? ""));
+        if (modSourceRow != null)
+            s.ModFilterSlot.AddChild(modSourceRow);
+        CardBrowserPerf.Log("open.modSourceFilter", phase,
+            $"libraryCards={CardLibraryVisibility.GetLibraryCards().Count}");
     }
 
     public static void Remove(NGlobalUi globalUi) {
@@ -644,7 +691,7 @@ internal static partial class CardBrowserUI {
         foreach (var child in s.RightContent.GetChildren()) ((Node)child).QueueFree();
         AddPlaceholder(s.RightContent);
         s.SelectedCard = null;
-        s.SelectedPickHost = null;
+        s.SelectedHolder = null;
     }
 
     private static Button BuildExtensionBackHeader(VBoxContainer extVbox) {
