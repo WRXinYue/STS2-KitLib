@@ -403,6 +403,7 @@
   "hotkeys.quickReplayCombat": "Replay combat",
   "hotkeys.quickReplayTurn": "Replay turn",
   "hotkeys.togglePerfHud": "Performance overlay",
+  "hotkeys.section.panels": "Open panel",
   "hotkeys.listening": "Listening…",
   "hotkeys.reset": "Reset shortcuts to defaults",
   "hotkeys.openInRunPanel": "Keyboard shortcuts…",

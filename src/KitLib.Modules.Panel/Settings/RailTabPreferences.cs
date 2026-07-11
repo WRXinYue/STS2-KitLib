@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using KitLib.Host;
 using KitLib.Icons;
+using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 
 namespace KitLib.Settings;
@@ -103,6 +104,12 @@ internal static class RailTabPreferences {
             return true;
         int visible = GetRailTabs(group).Count;
         return visible > 1;
+    }
+
+    internal static bool IsTabActivatable(IDevPanelTab tab) {
+        if (tab.Id == MpCheatUi.HooksTabId && MpCheatUi.IsHooksDisabledInMultiplayer)
+            return false;
+        return IsAvailableInCurrentMode(tab);
     }
 
     private static List<string> ResolveOrder(DevPanelTabGroup group, IEnumerable<string> knownIds) {

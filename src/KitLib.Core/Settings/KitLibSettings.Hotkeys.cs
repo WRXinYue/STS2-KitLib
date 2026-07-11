@@ -12,7 +12,13 @@ public sealed partial class KitLibSettings {
     public HotkeyBinding HotkeyQuickReplayTurn { get; set; } = HotkeyDefaults.QuickReplayTurn.Clone();
     public HotkeyBinding HotkeyTogglePerfHud { get; set; } = HotkeyDefaults.TogglePerfHud.Clone();
 
-    internal HotkeyBinding GetHotkey(string actionId) => actionId switch {
+    internal HotkeyBinding GetHotkey(string actionId) {
+        if (RailTabHotkeyActionId.TryParseTabId(actionId, out var tabId))
+            return GetRailTabHotkey(tabId);
+        return GetShellHotkey(actionId);
+    }
+
+    internal HotkeyBinding GetShellHotkey(string actionId) => actionId switch {
         HotkeyActionId.ToggleRail => HotkeyToggleRail,
         HotkeyActionId.ClosePanel => HotkeyClosePanel,
         HotkeyActionId.NextTab => HotkeyNextTab,
@@ -27,6 +33,14 @@ public sealed partial class KitLibSettings {
     };
 
     internal void SetHotkey(string actionId, HotkeyBinding binding) {
+        if (RailTabHotkeyActionId.TryParseTabId(actionId, out var tabId)) {
+            SetRailTabHotkey(tabId, binding);
+            return;
+        }
+        SetShellHotkey(actionId, binding);
+    }
+
+    internal void SetShellHotkey(string actionId, HotkeyBinding binding) {
         var copy = binding.Clone();
         switch (actionId) {
             case HotkeyActionId.ToggleRail: HotkeyToggleRail = copy; break;

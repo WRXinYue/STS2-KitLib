@@ -10,6 +10,7 @@ namespace KitLib.UI;
 internal static partial class DevPanelUI {
     private static bool _railShown;
     private static bool _keyboardRailPinned;
+    private static bool _hotkeySessionPinnedRail;
     private static Action<bool, bool>? _slideRail;
 
     internal static bool IsRailAttached => _railGlobalUi != null;
@@ -49,6 +50,7 @@ internal static partial class DevPanelUI {
         if (_slideRail == null || _railShown)
             return;
         _keyboardRailPinned = true;
+        _hotkeySessionPinnedRail = true;
         _slideRail(true, true);
     }
 
@@ -56,6 +58,33 @@ internal static partial class DevPanelUI {
         if (_railGlobalUi == null)
             return;
         _controller.CloseAll();
+        OnRailPanelDismissed();
+    }
+
+    internal static void OnRailPanelDismissed() {
+        ResetRailChromeAfterPanelClose();
+        Callable.From(TryFinalizeHotkeyRailDismiss).CallDeferred();
+    }
+
+    private static void ResetRailChromeAfterPanelClose() {
+        _activeRailBtnIdx = -1;
+        if (_railIndicator != null)
+            _railIndicator.Visible = false;
+        RefreshRailIconTints();
+    }
+
+    private static void TryFinalizeHotkeyRailDismiss() {
+        if (!_hotkeySessionPinnedRail)
+            return;
+        if (_controller.ActiveTabId != null || _activeOverlayId != null)
+            return;
+        if (_pinRailCount > 0 || _browserOverlayCount > 0 || _browserRailHoldCount > 0)
+            return;
+        _hotkeySessionPinnedRail = false;
+        if (_slideRail == null)
+            return;
+        _keyboardRailPinned = false;
+        _slideRail(false, false);
     }
 
     internal static void CycleRailTab(int direction) {
@@ -93,35 +122,54 @@ internal static partial class DevPanelUI {
         if (_railGlobalUi == null)
             return;
 
+        var tab = FindRegisteredRailTab(tabId);
+        if (tab == null || !RailTabPreferences.IsTabActivatable(tab))
+            return;
+
         int idx = IndexOfRailButton(tabId);
-        if (idx < 0 || idx >= _railButtons.Count)
-            return;
-
-        var btn = _railButtons[idx];
-        if (btn.Disabled)
-            return;
-
-        IDevPanelTab? tab = null;
-        foreach (var group in new[] { DevPanelTabGroup.Primary, DevPanelTabGroup.Utility }) {
-            foreach (var candidate in RailTabPreferences.GetRailTabs(group)) {
-                if (candidate.Id == tabId) {
-                    tab = candidate;
-                    break;
-                }
-            }
-            if (tab != null)
-                break;
-        }
-        if (tab == null)
+        if (idx >= 0 && _railButtons[idx].Disabled)
             return;
 
         var globalUi = _railGlobalUi;
         var captured = tab;
         _controller.SwitchTo(tabId, () => {
-            _moveRailIndicator?.Invoke(idx, true);
+            if (idx >= 0)
+                _moveRailIndicator?.Invoke(idx, true);
+            else {
+                _activeRailBtnIdx = -1;
+                if (_railIndicator != null)
+                    _railIndicator.Visible = false;
+            }
             captured.OnActivate(globalUi);
             ((Node)globalUi).GetViewport()?.GuiReleaseFocus();
         }, () => IsRailTabPanelVisible(globalUi, tabId));
+    }
+
+    internal static bool TryActivateRailTabByHotkey(string tabId) {
+        if (_railGlobalUi == null)
+            return false;
+
+        var tab = FindRegisteredRailTab(tabId);
+        if (tab == null || !RailTabPreferences.IsTabActivatable(tab))
+            return false;
+
+        if (_controller.ActiveTabId == tabId
+            && IsRailTabPanelVisible(_railGlobalUi, tabId)) {
+            CloseActivePanel();
+            return true;
+        }
+
+        EnsureRailExpanded();
+        ActivateRailTab(tabId);
+        return true;
+    }
+
+    private static IDevPanelTab? FindRegisteredRailTab(string tabId) {
+        foreach (var tab in DevPanelRegistry.GetAllTabs()) {
+            if (tab.Id == tabId)
+                return tab;
+        }
+        return null;
     }
 
     internal static IReadOnlyList<IDevPanelTab> GetOrderedVisibleRailTabs() {
@@ -145,6 +193,7 @@ internal static partial class DevPanelUI {
     internal static void ResetRailHotkeyState() {
         _railShown = false;
         _keyboardRailPinned = false;
+        _hotkeySessionPinnedRail = false;
         _slideRail = null;
     }
 }

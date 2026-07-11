@@ -48,6 +48,21 @@ internal static class DevPanelHotkeys {
             return true;
         }
 
+        if (TryHandleRailTabHotkey(key, viewport))
+            return true;
+
+        return false;
+    }
+
+    private static bool TryHandleRailTabHotkey(InputEventKey key, Viewport viewport) {
+        foreach (var (tabId, binding) in SettingsStore.Current.EnumerateRailTabHotkeys()) {
+            if (!binding.Matches(key))
+                continue;
+            if (!DevPanelUI.TryActivateRailTabByHotkey(tabId))
+                return false;
+            viewport.SetInputAsHandled();
+            return true;
+        }
         return false;
     }
 }

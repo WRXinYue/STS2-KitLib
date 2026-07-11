@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using KitLib;
+using KitLib.Abstractions.Host;
 using KitLib.Host;
 using KitLib.Settings;
 using KitLib.UI;
@@ -71,6 +73,13 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         foreach (var (actionId, labelKey, labelFallback) in Rows)
             AddChild(CreateBindingRow(actionId, labelKey, labelFallback));
 
+        AddChild(CreateSectionLabel(
+            I18N.T("hotkeys.section.panels", "Open panel"),
+            compact: _compact));
+
+        foreach (var (actionId, labelKey, labelFallback) in GetRailTabHotkeyRows())
+            AddChild(CreateBindingRow(actionId, labelKey, labelFallback));
+
         var resetBtn = new Button {
             Text = I18N.T("hotkeys.reset", "Reset shortcuts to defaults"),
             FocusMode = FocusModeEnum.All,
@@ -90,6 +99,32 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
             RefreshAllBindingButtons();
         };
         AddChild(resetBtn);
+    }
+
+    private static IEnumerable<(string ActionId, string LabelKey, string LabelFallback)> GetRailTabHotkeyRows() {
+        var rows = new List<(string ActionId, string LabelKey, string LabelFallback)>();
+        foreach (var tabObj in KitLibHost.GetAllTabs()) {
+            if (tabObj is not KitLibTabDescriptor tab)
+                continue;
+            if (!tab.Id.StartsWith("devmode.", StringComparison.Ordinal))
+                continue;
+            if (!RailTabHotkeyDefaults.ByTabId.ContainsKey(tab.Id))
+                continue;
+            var labelKey = "panel." + tab.Id["devmode.".Length..];
+            rows.Add((RailTabHotkeyActionId.ForTab(tab.Id), labelKey, tab.DisplayName));
+        }
+        rows.Sort((a, b) => string.Compare(a.LabelFallback, b.LabelFallback, StringComparison.OrdinalIgnoreCase));
+        return rows;
+    }
+
+    private static Control CreateSectionLabel(string text, bool compact) {
+        var label = new Label {
+            Text = text,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        label.AddThemeFontSizeOverride("font_size", compact ? 11 : 13);
+        label.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        return label;
     }
 
     internal static void CancelCapture() => Active?.CancelListening();

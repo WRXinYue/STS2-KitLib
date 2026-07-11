@@ -126,6 +126,7 @@ public static class SettingsStore {
 
     public static void ResetHotkeys() {
         HotkeyDefaults.ApplyTo(Current);
+        RailTabHotkeyDefaults.ResetAll(Current);
         Save();
     }
 
@@ -223,6 +224,7 @@ public static class SettingsStore {
             Current.HotkeyQuickReplayTurn = HotkeyDefaults.QuickReplayTurn.Clone();
         if (Current.HotkeyTogglePerfHud.KeyCode == 0)
             Current.HotkeyTogglePerfHud = HotkeyDefaults.TogglePerfHud.Clone();
+        RailTabHotkeyDefaults.ApplyMissingTo(Current);
     }
 
     public static void SetShowHiddenCards(bool enabled) {

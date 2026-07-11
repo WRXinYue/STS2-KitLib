@@ -115,6 +115,14 @@ public sealed class HotkeyBinding {
                 return "hotkeys.conflict.duplicate";
         }
 
+        foreach (var (tabId, binding) in settings.EnumerateRailTabHotkeys()) {
+            var otherActionId = RailTabHotkeyActionId.ForTab(tabId);
+            if (otherActionId == actionId)
+                continue;
+            if (candidate.EqualsBinding(binding))
+                return "hotkeys.conflict.duplicate";
+        }
+
         return null;
     }
 

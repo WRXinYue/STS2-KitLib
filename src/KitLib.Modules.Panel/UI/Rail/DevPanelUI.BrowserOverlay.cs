@@ -35,6 +35,7 @@ internal static partial class DevPanelUI {
                     RefreshRailHintPresentation();
                 }).CallDeferred();
             }
+            Callable.From(TryFinalizeHotkeyRailDismiss).CallDeferred();
         };
     }
 
@@ -57,6 +58,7 @@ internal static partial class DevPanelUI {
 
     internal static void RequestCloseBrowserOverlay(NGlobalUi globalUi, string rootName, Action fallbackClose) {
         _controller.Deactivate();
+        OnRailPanelDismissed();
 
         var parent = (Node)globalUi;
         var root = parent.GetNodeOrNull<Control>(rootName);

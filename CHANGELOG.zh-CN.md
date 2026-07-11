@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Dev Mode 侧栏** — 为每个面板提供默认快捷键，可直接打开（例如 **Ctrl+Shift+C** 打开卡牌）；可在 KitLib **快捷键** → **打开面板** 中改绑。
+
+### Changed
+
+- **Dev Mode 面板快捷键** — 再次按下同一快捷键可关闭已打开的面板；若侧栏仅因该快捷键而展开，关闭面板后侧栏会一并收起。
+
 ## [0.26.0] - 2026-07-11
 
 ### Added
