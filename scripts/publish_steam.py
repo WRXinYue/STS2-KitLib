@@ -131,7 +131,7 @@ def _write_workshop_json(
         "title": "KitLib",
         "visibility": "public",
         "changeNote": resolved_note,
-        "tags": ["Tools & APIs"],
+        "tags": ["Tools & APIs", "Utility", "QoL"],
         "dependencies": [],
         "contentDescriptors": [],
     }
