@@ -10,14 +10,25 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
+using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace KitLib.UI;
 
 internal static partial class CardBrowserUI {
-    private const float CardDisplayScale = 0.65f;
+    internal const string GridHolderMetaKey = "kitlib_card_browser_holder";
+    internal const float GridHolderDisplayScale = 0.73f;
+    internal static readonly Vector2 GridHolderDisplayScaleVector = Vector2.One * GridHolderDisplayScale;
+    // Official grid: HoverScale 1.0, SmallScale 0.8 — preserve that ratio for our custom small scale.
+    internal static readonly Vector2 GridHolderHoverScaleVector =
+        GridHolderDisplayScaleVector * (Vector2.One / NCardHolder.smallScale);
+
+    internal static bool IsBrowserGridHolder(NCardHolder holder) =>
+        holder is NGridCardHolder && holder.HasMeta(GridHolderMetaKey);
     private const int CardGridSeparation = 6;
+    private static readonly Vector2 BaseCardPixelSize = new(300f, 422f);
     private const int CardBrowserGridPadH = 14;
     private const int CardBrowserGridPadV = 12;
     private const int GridScrollBufferRows = 3;
@@ -26,7 +37,32 @@ internal static partial class CardBrowserUI {
 
     private static bool _gridLayoutInProgress;
 
-    private static Vector2 CardSize() => NCard.defaultSize * CardDisplayScale;
+    private static Vector2 CardSize() => BaseCardPixelSize * GridHolderDisplayScale;
+
+    private static float MeasureGridViewportWidth(State s) {
+        if (!GodotObject.IsInstanceValid(s.GridScroll))
+            return 0f;
+
+        float w = s.GridScroll.GetRect().Size.X;
+        if (w < 1f)
+            return 0f;
+
+        // Pre-layout scroll rects can report the full expanded content width; clamp to ancestors.
+        var node = s.GridScroll.GetParent() as Control;
+        while (node != null) {
+            var pw = node.GetRect().Size.X;
+            if (pw > 1f)
+                w = Math.Min(w, pw);
+            node = node.GetParent() as Control;
+        }
+
+        return w - 2f * CardBrowserGridPadH;
+    }
+
+    private static float ContentViewportWidth(State s) {
+        var w = MeasureGridViewportWidth(s);
+        return w < 2f ? 0f : w;
+    }
 
     private static float GridWidth(State s) {
         var cols = Math.Max(1, s.GridColumns);
@@ -34,13 +70,18 @@ internal static partial class CardBrowserUI {
         return cols * cardSize.X + Math.Max(0, cols - 1) * CardGridSeparation;
     }
 
-    private static float ContentViewportWidth(State s) {
-        var w = s.GridScroll.GetRect().Size.X - 2f * CardBrowserGridPadH;
-        return w < 2f ? 400f : w;
+    private static float GridContentWidth(State s) {
+        var gridWidth = GridWidth(s);
+        var viewport = ContentViewportWidth(s);
+        return viewport < 2f ? gridWidth : Math.Max(gridWidth, viewport);
     }
 
     private static Vector2 GridOrigin(State s) {
-        var x = Math.Max(0f, (ContentViewportWidth(s) - GridWidth(s)) * 0.5f);
+        var viewport = ContentViewportWidth(s);
+        if (viewport < 2f)
+            return Vector2.Zero;
+        // Match NCardGrid: center grid within the scroll viewport, not expanded content width.
+        var x = Math.Max(0f, (viewport - GridWidth(s)) * 0.5f);
         return new Vector2(x, 0f);
     }
 
@@ -90,7 +131,7 @@ internal static partial class CardBrowserUI {
         var totalRows = GetTotalRows(s);
         var cardSize = CardSize();
         var gridWidth = cols * cardSize.X + Math.Max(0, cols - 1) * CardGridSeparation;
-        var width = gridWidth;
+        var width = GridContentWidth(s);
         var height = totalRows == 0
             ? 0
             : totalRows * cardSize.Y + Math.Max(0, totalRows - 1) * CardGridSeparation;
@@ -102,7 +143,8 @@ internal static partial class CardBrowserUI {
         var cardSize = CardSize();
         var col = cardIndex % cols;
         var row = cardIndex / cols;
-        return GridOrigin(s) + new Vector2(
+        // NGridCardHolder positions are card-center anchored (see official NCardGrid.UpdateGridPositions).
+        return GridOrigin(s) + cardSize * 0.5f + new Vector2(
             col * (cardSize.X + CardGridSeparation),
             row * (cardSize.Y + CardGridSeparation));
     }
@@ -172,7 +214,8 @@ internal static partial class CardBrowserUI {
             return null;
         }
 
-        holder.Scale = Vector2.One * CardDisplayScale;
+        holder.SetMeta(GridHolderMetaKey, true);
+        holder.Scale = holder.SmallScale;
         holder.MouseFilter = Control.MouseFilterEnum.Pass;
         holder.Modulate = ColCardPickNormal;
         holder.Pressed += h => OnHolderPressed(s, (NGridCardHolder)h);
@@ -181,6 +224,34 @@ internal static partial class CardBrowserUI {
         nCard.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
         ApplyUpgradePreview(s, holder);
         return holder;
+    }
+
+    private static int _hoverTipsRestoreZ;
+    private static bool _hoverTipsLayerRaised;
+
+    private static void RaiseHoverTipsLayer() {
+        if (_hoverTipsLayerRaised)
+            return;
+
+        var container = NGame.Instance?.HoverTipsContainer as Control;
+        if (container == null)
+            return;
+
+        _hoverTipsRestoreZ = container.ZIndex;
+        container.ZAsRelative = false;
+        container.ZIndex = DevPanelUI.BrowserOverlayZIndex + 50;
+        _hoverTipsLayerRaised = true;
+    }
+
+    private static void RestoreHoverTipsLayer() {
+        if (!_hoverTipsLayerRaised)
+            return;
+
+        var container = NGame.Instance?.HoverTipsContainer as Control;
+        if (container != null)
+            container.ZIndex = _hoverTipsRestoreZ;
+
+        _hoverTipsLayerRaised = false;
     }
 
     private static void ApplyUpgradePreview(State s, NGridCardHolder holder) {
@@ -271,8 +342,10 @@ internal static partial class CardBrowserUI {
         var index = startIndex;
         foreach (var row in s.CardRows) {
             foreach (var holder in row) {
-                if (index < s.FilteredCards.Count)
-                    holder.Position = PositionForCardIndex(s, index);
+                if (index < s.FilteredCards.Count) {
+                    var pos = PositionForCardIndex(s, index);
+                    holder.Position = pos;
+                }
                 index++;
             }
         }
@@ -352,6 +425,10 @@ internal static partial class CardBrowserUI {
 
         if (s.GridPopulateResetScroll)
             s.GridScroll.ScrollVertical = 0;
+
+        s.LastSlidingWindowStart = -1;
+        s.SlidingWindowStart = 0;
+        AllocateCardHoldersCore(s, force: true);
 
         if (initTimer != null) {
             CardBrowserPerf.Log("initGrid", initTimer,
@@ -608,13 +685,13 @@ internal static partial class CardBrowserUI {
         if (!s.GridContent.IsNodeReady())
             return false;
 
-        float w = s.GridScroll.GetRect().Size.X - 2f * CardBrowserGridPadH;
-        if (w < 2f)
+        float w = MeasureGridViewportWidth(s);
+        var cardSize = CardSize();
+        if (w < cardSize.X)
             return false;
 
-        var cardSize = CardSize();
-        float slotW = cardSize.X + CardGridSeparation;
-        int cols = Math.Max(1, (int)Math.Floor((w - 4f) / slotW));
+        float cellW = cardSize.X + CardGridSeparation;
+        int cols = Math.Max(1, (int)((w + CardGridSeparation) / cellW));
         if (s.GridColumns == cols)
             return false;
 

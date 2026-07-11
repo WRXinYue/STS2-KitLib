@@ -577,7 +577,7 @@ internal static partial class CardBrowserUI {
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
         };
         s.GridContent = new Control {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
+            ClipContents = true,
         };
 
         var gridOuterPad = new MarginContainer {
@@ -611,6 +611,7 @@ internal static partial class CardBrowserUI {
 
         phase = CardBrowserPerf.Start();
         dual.AttachToScene();
+        RaiseHoverTipsLayer();
         CardBrowserPerf.Log("open.attach", phase);
 
         Callable.From(() => AppendModSourceFilterRow(s)).CallDeferred();
@@ -651,6 +652,7 @@ internal static partial class CardBrowserUI {
         _pickerCallback = null;
         _pickerPersistentBuilder = null;
         _pickerGetFilteredCards = null;
+        RestoreHoverTipsLayer();
         var parent = (Node)globalUi;
         var node = parent.GetNodeOrNull<Control>(RootName);
         if (node != null) {
