@@ -72,11 +72,9 @@ internal static partial class CardBrowserUI {
         public HashSet<string> ExcludedPoolFilters => CardBrowserFilterPersistence.ExcludedPoolFilters;
         public readonly Dictionary<string, Func<CardModel, bool>> PoolFilterPredicates = new();
 
-        // UI refs for conditional visibility
-        public VBoxContainer PoolFilterSection = null!;
-        public HBoxContainer PoolCharacterChipRow = null!;
-        public HBoxContainer PoolSpecialChipRow = null!;
-        public HBoxContainer LibraryUpgradeRow = null!;
+        // UI refs for conditional visibility (library tab: rows 2–3)
+        public HBoxContainer LibraryCharacterRow = null!;
+        public HBoxContainer LibraryPoolRow = null!;
 
         /// <summary>When true and source is All Cards, thumbnails use the same upgrade preview as official NCardLibrary (MutableClone + UpgradeInternal + ShowUpgradePreview).</summary>
         public bool LibraryShowUpgradePreview {
@@ -278,8 +276,6 @@ internal static partial class CardBrowserUI {
         }
         RefreshSortButtons(s);
 
-        sortRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-
         s.SearchInput = new LineEdit {
             PlaceholderText = I18N.T("cardBrowser.search", "Search..."),
             ClearButtonEnabled = true,
@@ -289,23 +285,31 @@ internal static partial class CardBrowserUI {
         sortRow.AddChild(s.SearchInput);
         content.AddChild(sortRow);
 
-        // ── Filter chips ──
+        // ── Filter chips: row 2 (type / rarity / cost / character) + row 3 (special / mod / library) ──
         var chipRow = new HBoxContainer();
         chipRow.AddThemeConstantOverride("separation", 4);
 
-        void AddChipGroup(
-            string groupLabel,
-            (string text, Action<bool> onInclude, Action<bool> onExclude, bool startInclude, bool startExclude)[] chips) {
-            if (chipRow.GetChildCount() > 0) {
-                var sep = new VSeparator { CustomMinimumSize = new Vector2(1, 0) };
-                sep.AddThemeColorOverride("separator", KitLibTheme.Separator);
-                chipRow.AddChild(sep);
-            }
+        void AddChipRowSeparator(HBoxContainer row) {
+            var sep = new VSeparator { CustomMinimumSize = new Vector2(1, 0) };
+            sep.AddThemeColorOverride("separator", KitLibTheme.Separator);
+            row.AddChild(sep);
+        }
+
+        void AddChipGroupLabel(HBoxContainer row, string groupLabel) {
             var groupLbl = new Label { Text = groupLabel };
             groupLbl.AddThemeFontSizeOverride("font_size", 11);
             groupLbl.AddThemeColorOverride("font_color", ColSubtle);
             groupLbl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
-            chipRow.AddChild(groupLbl);
+            row.AddChild(groupLbl);
+        }
+
+        void AddChipGroup(
+            HBoxContainer row,
+            string groupLabel,
+            (string text, Action<bool> onInclude, Action<bool> onExclude, bool startInclude, bool startExclude)[] chips) {
+            if (row.GetChildCount() > 0)
+                AddChipRowSeparator(row);
+            AddChipGroupLabel(row, groupLabel);
 
             foreach (var (text, onInclude, onExclude, startInclude, startExclude) in chips) {
                 var initialMode = ResolveFilterChipMode(startInclude, startExclude);
@@ -316,11 +320,10 @@ internal static partial class CardBrowserUI {
                     onExclude,
                     initialMode,
                     () => RebuildGrid(s, s.SearchInput.Text ?? ""));
-                chipRow.AddChild(chip);
+                row.AddChild(chip);
             }
         }
-
-        AddChipGroup(I18N.T("cardBrowser.chipType", "Type"), new (string, Action<bool>, Action<bool>, bool, bool)[]
+        AddChipGroup(chipRow, I18N.T("cardBrowser.chipType", "Type"), new (string, Action<bool>, Action<bool>, bool, bool)[]
         {
             (I18N.T("cardBrowser.filterAttack", "Attack"),
                 on => ToggleSet(s.ActiveTypeFilters, CardType.Attack, on),
@@ -343,7 +346,7 @@ internal static partial class CardBrowserUI {
                 s.ActiveTypeFilters.Contains(CardType.None),
                 s.ExcludedTypeFilters.Contains(CardType.None))
         });
-        AddChipGroup(I18N.T("cardBrowser.chipRarity", "Rarity"), new (string, Action<bool>, Action<bool>, bool, bool)[]
+        AddChipGroup(chipRow, I18N.T("cardBrowser.chipRarity", "Rarity"), new (string, Action<bool>, Action<bool>, bool, bool)[]
         {
             (I18N.T("cardBrowser.filterCommon", "Common"),
                 on => ToggleSet(s.ActiveRarityFilters, CardRarity.Common, on),
@@ -366,7 +369,7 @@ internal static partial class CardBrowserUI {
                 s.ActiveRarityFilters.Contains(CardRarity.None),
                 s.ExcludedRarityFilters.Contains(CardRarity.None))
         });
-        AddChipGroup(I18N.T("cardBrowser.chipCost", "Cost"), new (string, Action<bool>, Action<bool>, bool, bool)[]
+        AddChipGroup(chipRow, I18N.T("cardBrowser.chipCost", "Cost"), new (string, Action<bool>, Action<bool>, bool, bool)[]
         {
             ("0",
                 on => ToggleSet(s.ActiveCostFilters, 0, on),
@@ -394,24 +397,16 @@ internal static partial class CardBrowserUI {
                 s.ActiveCostFilters.Contains(CostFilterX),
                 s.ExcludedCostFilters.Contains(CostFilterX))
         });
-        content.AddChild(chipRow);
-        CardBrowserPerf.Log("open.buildChrome", phase);
 
-        phase = CardBrowserPerf.Start();
-        // ── Pool / character filter chips (AllCards tab only) ──
-        s.PoolFilterSection = new VBoxContainer();
-        s.PoolFilterSection.AddThemeConstantOverride("separation", 4);
-        s.PoolFilterSection.Visible = IsLibrarySource;
+        s.LibraryCharacterRow = new HBoxContainer();
+        s.LibraryCharacterRow.AddThemeConstantOverride("separation", 4);
+        s.LibraryCharacterRow.Visible = IsLibrarySource;
+        chipRow.AddChild(s.LibraryCharacterRow);
 
-        s.PoolCharacterChipRow = new HBoxContainer();
-        s.PoolCharacterChipRow.AddThemeConstantOverride("separation", 4);
-        s.PoolFilterSection.AddChild(s.PoolCharacterChipRow);
+        s.LibraryPoolRow = new HBoxContainer();
+        s.LibraryPoolRow.AddThemeConstantOverride("separation", 4);
+        s.LibraryPoolRow.Visible = IsLibrarySource;
 
-        s.PoolSpecialChipRow = new HBoxContainer();
-        s.PoolSpecialChipRow.AddThemeConstantOverride("separation", 4);
-        s.PoolFilterSection.AddChild(s.PoolSpecialChipRow);
-
-        // Register predicates for built-in pools
         s.PoolFilterPredicates["ironclad"] = c => c.Pool is IroncladCardPool;
         s.PoolFilterPredicates["silent"] = c => c.Pool is SilentCardPool;
         s.PoolFilterPredicates["defect"] = c => c.Pool is DefectCardPool;
@@ -426,6 +421,8 @@ internal static partial class CardBrowserUI {
         s.PoolFilterPredicates["token"] = c => c.Rarity == CardRarity.Token;
 
         var defaultPoolKey = GetDefaultPoolFilterKeyForPlayer(player);
+        var charRow = s.LibraryCharacterRow;
+        var poolRow = s.LibraryPoolRow;
 
         void AddPoolChip(HBoxContainer row, string key, string text) {
             var pf = s.ActivePoolFilters;
@@ -447,23 +444,14 @@ internal static partial class CardBrowserUI {
             row.AddChild(chip);
         }
 
-        void AddPoolChipGroupLabel(HBoxContainer row, string label) {
-            var lbl = new Label { Text = label };
-            lbl.AddThemeFontSizeOverride("font_size", 11);
-            lbl.AddThemeColorOverride("font_color", ColSubtle);
-            lbl.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
-            row.AddChild(lbl);
-        }
+        AddChipRowSeparator(charRow);
+        AddChipGroupLabel(charRow, I18N.T("cardBrowser.chipCharacter", "Character"));
+        AddPoolChip(charRow, "ironclad", I18N.T("cardBrowser.poolIronclad", "Ironclad"));
+        AddPoolChip(charRow, "silent", I18N.T("cardBrowser.poolSilent", "Silent"));
+        AddPoolChip(charRow, "defect", I18N.T("cardBrowser.poolDefect", "Defect"));
+        AddPoolChip(charRow, "regent", I18N.T("cardBrowser.poolRegent", "Regent"));
+        AddPoolChip(charRow, "necrobinder", I18N.T("cardBrowser.poolNecrobinder", "Necrobinder"));
 
-        // Character row (playable characters only)
-        AddPoolChipGroupLabel(s.PoolCharacterChipRow, I18N.T("cardBrowser.chipCharacter", "Character"));
-        AddPoolChip(s.PoolCharacterChipRow, "ironclad", I18N.T("cardBrowser.poolIronclad", "Ironclad"));
-        AddPoolChip(s.PoolCharacterChipRow, "silent", I18N.T("cardBrowser.poolSilent", "Silent"));
-        AddPoolChip(s.PoolCharacterChipRow, "defect", I18N.T("cardBrowser.poolDefect", "Defect"));
-        AddPoolChip(s.PoolCharacterChipRow, "regent", I18N.T("cardBrowser.poolRegent", "Regent"));
-        AddPoolChip(s.PoolCharacterChipRow, "necrobinder", I18N.T("cardBrowser.poolNecrobinder", "Necrobinder"));
-
-        // Mod characters: any character whose pool type isn't one of the 5 built-ins
         var builtInPoolTypes = new HashSet<Type>
         {
             typeof(IroncladCardPool), typeof(SilentCardPool), typeof(DefectCardPool),
@@ -488,39 +476,24 @@ internal static partial class CardBrowserUI {
                 if (pf.Contains(key) || (pf.Count == 0 && ef.Count == 0 && defaultPoolKey == key))
                     pf.Add(key);
             }
-            s.PoolCharacterChipRow.AddChild(new ModPoolFilterDropdown(
+            charRow.AddChild(new ModPoolFilterDropdown(
                 modEntries,
                 s.ActivePoolFilters,
                 s.ExcludedPoolFilters,
                 () => RebuildGrid(s, s.SearchInput.Text ?? "")));
         }
 
-        s.PoolCharacterChipRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        AddChipGroupLabel(poolRow, I18N.T("cardBrowser.chipSpecial", "Special"));
+        AddPoolChip(poolRow, "colorless", I18N.T("cardBrowser.poolColorless", "Colorless"));
+        AddPoolChip(poolRow, "ancients", I18N.T("cardBrowser.poolAncients", "Ancients"));
+        AddPoolChip(poolRow, "status", I18N.T("cardBrowser.poolStatus", "Status"));
+        AddPoolChip(poolRow, "curse", I18N.T("cardBrowser.poolCurse", "Curse"));
+        AddPoolChip(poolRow, "event", I18N.T("cardBrowser.poolEvent", "Event"));
+        AddPoolChip(poolRow, "quest", I18N.T("cardBrowser.poolQuest", "Quest"));
+        AddPoolChip(poolRow, "token", I18N.T("cardBrowser.poolToken", "Token"));
 
-        // Special / non-character pools (Colorless, Ancients, Status, …)
-        AddPoolChipGroupLabel(s.PoolSpecialChipRow, I18N.T("cardBrowser.chipSpecial", "Special"));
-        AddPoolChip(s.PoolSpecialChipRow, "colorless", I18N.T("cardBrowser.poolColorless", "Colorless"));
-        AddPoolChip(s.PoolSpecialChipRow, "ancients", I18N.T("cardBrowser.poolAncients", "Ancients"));
-        AddPoolChip(s.PoolSpecialChipRow, "status", I18N.T("cardBrowser.poolStatus", "Status"));
-        AddPoolChip(s.PoolSpecialChipRow, "curse", I18N.T("cardBrowser.poolCurse", "Curse"));
-        AddPoolChip(s.PoolSpecialChipRow, "event", I18N.T("cardBrowser.poolEvent", "Event"));
-        AddPoolChip(s.PoolSpecialChipRow, "quest", I18N.T("cardBrowser.poolQuest", "Quest"));
-        AddPoolChip(s.PoolSpecialChipRow, "token", I18N.T("cardBrowser.poolToken", "Token"));
-        s.PoolSpecialChipRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-
-        content.AddChild(s.PoolFilterSection);
-
-        // ── Card library only: upgrade preview toggle (same chip style as pool filters) ──
-        s.LibraryUpgradeRow = new HBoxContainer();
-        s.LibraryUpgradeRow.AddThemeConstantOverride("separation", 6);
-        s.LibraryUpgradeRow.Visible = IsLibrarySource;
-        var libRowLbl = new Label {
-            Text = I18N.T("cardBrowser.chipLibrary", "Library"),
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter
-        };
-        libRowLbl.AddThemeFontSizeOverride("font_size", 11);
-        libRowLbl.AddThemeColorOverride("font_color", ColSubtle);
-        s.LibraryUpgradeRow.AddChild(libRowLbl);
+        AddChipRowSeparator(poolRow);
+        AddChipGroupLabel(poolRow, I18N.T("cardBrowser.chipLibrary", "Library"));
         var viewUpgradeChip = CreateFilterChip(
             I18N.T("cardBrowser.viewUpgrades", "Upgrades"),
             CardBrowserFilterPersistence.LibraryShowUpgradePreview);
@@ -538,7 +511,7 @@ internal static partial class CardBrowserUI {
                 ClearRightPanel(s);
         };
         viewUpgradeChip.Toggled += pressed => applyViewUpgrades(pressed);
-        s.LibraryUpgradeRow.AddChild(viewUpgradeChip);
+        poolRow.AddChild(viewUpgradeChip);
         var showHiddenChip = CreateFilterChip(
             I18N.T("cardBrowser.showHidden", "Hidden"),
             CardLibraryVisibility.ShowHiddenCards);
@@ -557,10 +530,11 @@ internal static partial class CardBrowserUI {
                 ClearRightPanel(s);
         };
         showHiddenChip.Toggled += pressed => applyShowHidden(pressed);
-        s.LibraryUpgradeRow.AddChild(showHiddenChip);
-        s.LibraryUpgradeRow.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-        content.AddChild(s.LibraryUpgradeRow);
-        CardBrowserPerf.Log("open.buildPoolFilters", phase);
+        poolRow.AddChild(showHiddenChip);
+
+        content.AddChild(chipRow);
+        content.AddChild(s.LibraryPoolRow);
+        CardBrowserPerf.Log("open.buildChrome", phase);
 
         phase = CardBrowserPerf.Start();
         // ── Body: card grid ──
@@ -733,8 +707,8 @@ internal static partial class CardBrowserUI {
         }
 
         MoveIndicator(s, tabIdx, true);
-        s.PoolFilterSection.Visible = IsLibrarySource;
-        s.LibraryUpgradeRow.Visible = IsLibrarySource;
+        s.LibraryCharacterRow.Visible = IsLibrarySource;
+        s.LibraryPoolRow.Visible = IsLibrarySource;
         var pileTarget = BrowseSourceToTarget(_browseSource);
         if (pileTarget.HasValue)
             KitLibState.CardTarget = pileTarget.Value;
