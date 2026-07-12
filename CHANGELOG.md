@@ -10,11 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Mod panel** — Open from **Pause → Settings → General → Mods (KitLib)** during a run.
+- **Mod panel** — **Ctrl+Shift+M** opens or closes the panel from the main menu or during a run; rebind under KitLib **Hotkeys**.
 - **Dev Mode sidebar** — Default keyboard shortcuts open each panel directly (e.g. **Ctrl+Shift+C** for Cards); rebind under KitLib **Hotkeys** → **Open panel**.
 
 ### Changed
 
+- **Card browser** — Filter controls are arranged in three rows; the mod-source filter is removed and library chips use shorter labels.
+- **Card browser** — Improved scroll performance.
 - **Dev Mode panel shortcuts** — Press the same shortcut again to close the open panel; the sidebar hides afterward when it was shown only for that shortcut.
+
+### Fixed
+
+- **Card browser** — Fixed card descriptions not showing on hover.
 
 ## [0.26.0] - 2026-07-11
 
