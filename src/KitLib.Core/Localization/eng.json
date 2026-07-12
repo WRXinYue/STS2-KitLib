@@ -904,8 +904,8 @@
   "ancient.entered": "Entering {0} ({1})",
 
   "cardBrowser.chipLibrary": "Library",
-  "cardBrowser.viewUpgrades": "View upgrades",
-  "cardBrowser.showHidden": "Show hidden",
+  "cardBrowser.viewUpgrades": "Upgrades",
+  "cardBrowser.showHidden": "Hidden",
   "cardBrowser.maxUpgrade": "Already at max upgrade level.",
   "cardBrowser.sortType": "Type",
   "cardBrowser.sortRarity": "Rarity",

@@ -6,7 +6,6 @@ using Godot;
 using KitLib;
 using KitLib.Actions;
 using KitLib.Icons;
-using KitLib.Modding;
 using KitLib.Settings;
 using KitLib.UI.Diagnostics;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -44,7 +43,6 @@ internal static partial class CardBrowserUI {
         public LineEdit SearchInput = null!;
         public ScrollContainer GridScroll = null!;
         public Control GridContent = null!;
-        public VBoxContainer ModFilterSlot = null!;
         public VBoxContainer RightContent = null!;
         public Label StatusLabel = null!;
 
@@ -72,8 +70,6 @@ internal static partial class CardBrowserUI {
         public HashSet<CardRarity> ExcludedRarityFilters => CardBrowserFilterPersistence.ExcludedRarityFilters;
         public HashSet<int> ExcludedCostFilters => CardBrowserFilterPersistence.ExcludedCostFilters;
         public HashSet<string> ExcludedPoolFilters => CardBrowserFilterPersistence.ExcludedPoolFilters;
-        public HashSet<string> ActiveModSourceFilters => CardBrowserFilterPersistence.ActiveModSourceFilters;
-        public HashSet<string> ExcludedModSourceFilters => CardBrowserFilterPersistence.ExcludedModSourceFilters;
         public readonly Dictionary<string, Func<CardModel, bool>> PoolFilterPredicates = new();
 
         // UI refs for conditional visibility
@@ -399,9 +395,6 @@ internal static partial class CardBrowserUI {
                 s.ExcludedCostFilters.Contains(CostFilterX))
         });
         content.AddChild(chipRow);
-
-        s.ModFilterSlot = new VBoxContainer();
-        content.AddChild(s.ModFilterSlot);
         CardBrowserPerf.Log("open.buildChrome", phase);
 
         phase = CardBrowserPerf.Start();
@@ -529,7 +522,7 @@ internal static partial class CardBrowserUI {
         libRowLbl.AddThemeColorOverride("font_color", ColSubtle);
         s.LibraryUpgradeRow.AddChild(libRowLbl);
         var viewUpgradeChip = CreateFilterChip(
-            I18N.T("cardBrowser.viewUpgrades", "View upgrades"),
+            I18N.T("cardBrowser.viewUpgrades", "Upgrades"),
             CardBrowserFilterPersistence.LibraryShowUpgradePreview);
         Action<bool> applyViewUpgrades = pressed => {
             if (s.LibraryShowUpgradePreview == pressed) return;
@@ -547,7 +540,7 @@ internal static partial class CardBrowserUI {
         viewUpgradeChip.Toggled += pressed => applyViewUpgrades(pressed);
         s.LibraryUpgradeRow.AddChild(viewUpgradeChip);
         var showHiddenChip = CreateFilterChip(
-            I18N.T("cardBrowser.showHidden", "Show hidden"),
+            I18N.T("cardBrowser.showHidden", "Hidden"),
             CardLibraryVisibility.ShowHiddenCards);
         Action<bool> applyShowHidden = pressed => {
             if (CardLibraryVisibility.ShowHiddenCards == pressed) return;
@@ -612,8 +605,6 @@ internal static partial class CardBrowserUI {
         RaiseHoverTipsLayer();
         CardBrowserPerf.Log("open.attach", phase);
 
-        Callable.From(() => AppendModSourceFilterRow(s)).CallDeferred();
-
         var initialPileTarget = BrowseSourceToTarget(_browseSource);
         if (initialPileTarget.HasValue)
             KitLibState.CardTarget = initialPileTarget.Value;
@@ -628,22 +619,6 @@ internal static partial class CardBrowserUI {
             $"filtered={s.FilteredCards.Count}");
 
         CardBrowserPerf.Log("open.total", openTotal);
-    }
-
-    static void AppendModSourceFilterRow(State s) {
-        var phase = CardBrowserPerf.Start();
-        foreach (var child in s.ModFilterSlot.GetChildren())
-            ((Node)child).QueueFree();
-
-        var modSourceRow = BrowserDetailHelpers.TryCreateModSourceFilterRow(
-            CardLibraryVisibility.GetModFilterEntries(),
-            s.ActiveModSourceFilters,
-            s.ExcludedModSourceFilters,
-            () => RebuildGrid(s, s.SearchInput.Text ?? ""));
-        if (modSourceRow != null)
-            s.ModFilterSlot.AddChild(modSourceRow);
-        CardBrowserPerf.Log("open.modSourceFilter", phase,
-            $"libraryCards={CardLibraryVisibility.GetLibraryCards().Count}");
     }
 
     public static void Remove(NGlobalUi globalUi) {

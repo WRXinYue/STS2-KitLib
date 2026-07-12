@@ -810,8 +810,8 @@
   "cardEdit.apply": "设置",
 
   "cardBrowser.chipLibrary": "图鉴",
-  "cardBrowser.viewUpgrades": "显示升级",
-  "cardBrowser.showHidden": "显示隐藏",
+  "cardBrowser.viewUpgrades": "升级",
+  "cardBrowser.showHidden": "隐藏",
   "cardBrowser.search": "搜索...",
   "cardBrowser.filterAll": "全部",
   "cardBrowser.filterAttack": "攻击",

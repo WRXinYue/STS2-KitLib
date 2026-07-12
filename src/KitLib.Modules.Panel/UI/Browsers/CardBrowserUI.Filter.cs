@@ -44,8 +44,6 @@ internal static partial class CardBrowserUI {
         public static readonly HashSet<CardRarity> ExcludedRarityFilters = new();
         public static readonly HashSet<int> ExcludedCostFilters = new();
         public static readonly HashSet<string> ExcludedPoolFilters = new();
-        public static readonly HashSet<string> ActiveModSourceFilters = new();
-        public static readonly HashSet<string> ExcludedModSourceFilters = new();
         public static readonly List<(SortField field, bool asc)> SortPriority = new() {
             (SortField.Rarity, true), (SortField.Type, true),
             (SortField.Cost, true), (SortField.Alphabet, true)

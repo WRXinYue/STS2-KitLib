@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using Godot;
 using KitLib.Actions;
-using KitLib.Modding;
 using KitLib.UI.Diagnostics;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.UI;
@@ -13,7 +12,6 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
-using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 
 namespace KitLib.UI;
 
@@ -729,11 +727,6 @@ internal static partial class CardBrowserUI {
             if (IsExcludedByRaritySet(c, s.ExcludedRarityFilters)) return false;
             if (!MatchesCostSet(c, s.ActiveCostFilters)) return false;
             if (IsExcludedByCostSet(c, s.ExcludedCostFilters)) return false;
-            if (!ContentModResolver.MatchesModSourceFilter(
-                    ContentModResolver.Resolve(c),
-                    s.ActiveModSourceFilters,
-                    s.ExcludedModSourceFilters))
-                return false;
             if (IsLibrarySource) {
                 if (!MatchesPoolSet(c, s.ActivePoolFilters, s.PoolFilterPredicates)) return false;
                 if (IsExcludedByPoolSet(c, s.ExcludedPoolFilters, s.PoolFilterPredicates)) return false;
