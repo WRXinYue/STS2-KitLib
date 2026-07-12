@@ -174,6 +174,8 @@ internal static partial class DevPanelUI {
 
         ThemeManager.OnThemeChanged -= ApplyRailTheme;
         ThemeManager.OnThemeChanged += ApplyRailTheme;
+        I18N.LanguageChanged -= OnRailLanguageChanged;
+        I18N.LanguageChanged += OnRailLanguageChanged;
 
         var root = new Control {
             Name = RootName,
@@ -368,6 +370,11 @@ internal static partial class DevPanelUI {
         ((Node)globalUi).AddChild(root);
     }
 
+    private static void OnRailLanguageChanged() {
+        if (_railGlobalUi != null && GodotObject.IsInstanceValid(_railGlobalUi))
+            RebuildRail(_railGlobalUi);
+    }
+
     // ──────── Detach ────────
     public static void Detach(NGlobalUi globalUi) {
         KitLib.Integration.KitLibHotkeySettingsUi.CancelCapture();
@@ -379,6 +386,7 @@ internal static partial class DevPanelUI {
         _browserRailHoldCount = 0;
         _pinRailCount = 0;
         ThemeManager.OnThemeChanged -= ApplyRailTheme;
+        I18N.LanguageChanged -= OnRailLanguageChanged;
         TeardownPeekTab();
         StopLogAlertBlink();
         _railStyle = null;

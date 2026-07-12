@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dev console** — KitLib `dm*` commands (cheats, saves, stats, enemies, cards, relics, and related tools). Use DevMode panels instead.
 
+### Fixed
+
+- **Dev Mode rail / settings** — Fixed tab labels mixing English and Chinese in the main-panel list and sidebar tooltips.
+
 ## [0.27.0] - 2026-07-13
 
 ### Added

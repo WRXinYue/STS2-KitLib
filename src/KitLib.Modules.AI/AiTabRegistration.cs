@@ -8,7 +8,8 @@ internal static class AiTabRegistration {
         KitLibHost.RegisterTab(new KitLibTabDescriptor {
             Id = "devmode.ai",
             IconKey = "robot",
-            DisplayName = I18N.T("panel.ai", "AI Host"),
+            DisplayNameKey = "panel.ai",
+            DisplayNameFallback = "AI Host",
             Order = 745,
             Group = KitLibTabGroup.Primary,
             Kind = KitLibTabKind.Cheat,

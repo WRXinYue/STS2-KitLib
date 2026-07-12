@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
 using KitLib.Icons;
@@ -100,7 +101,7 @@ internal static class DevPanelRegistry {
     private sealed class HostTabAdapter(KitLibTabDescriptor descriptor) : IDevPanelTab {
         public string Id => descriptor.Id;
         public MdiIcon Icon => MdiIcon.From(descriptor.IconKey);
-        public string DisplayName => descriptor.DisplayName;
+        public string DisplayName => KitLibTabLabels.Resolve(descriptor);
         public int Order => descriptor.Order;
         public DevPanelTabGroup Group =>
             descriptor.Group == KitLibTabGroup.Primary ? DevPanelTabGroup.Primary : DevPanelTabGroup.Utility;

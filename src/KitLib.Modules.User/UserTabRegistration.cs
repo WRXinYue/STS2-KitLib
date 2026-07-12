@@ -8,7 +8,8 @@ internal static class UserTabRegistration {
         KitLibHost.RegisterTab(new KitLibTabDescriptor {
             Id = "devmode.logs",
             IconKey = "text-box-outline",
-            DisplayName = I18N.T("panel.logs", "Logs"),
+            DisplayNameKey = "panel.logs",
+            DisplayNameFallback = "Logs",
             Order = 900,
             Group = KitLibTabGroup.Utility,
             Kind = KitLibTabKind.Developer,

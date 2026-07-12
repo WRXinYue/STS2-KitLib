@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **开发控制台** — 已移除 KitLib `dm*` 命令（作弊、存档、统计、敌人、卡牌、遗物等）。请改用 DevMode 面板。
 
+### Fixed
+
+- **Dev Mode 侧栏 / 设置** — 修复主面板与侧栏标签中英文混显。
+
 ## [0.27.0] - 2026-07-13
 
 ### Added

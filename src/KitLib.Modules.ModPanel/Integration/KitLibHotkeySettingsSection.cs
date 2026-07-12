@@ -111,8 +111,9 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
                 continue;
             if (!RailTabHotkeyDefaults.ByTabId.ContainsKey(tab.Id))
                 continue;
-            var labelKey = "panel." + tab.Id["devmode.".Length..];
-            rows.Add((RailTabHotkeyActionId.ForTab(tab.Id), labelKey, tab.DisplayName));
+            var labelKey = tab.DisplayNameKey ?? "panel." + tab.Id["devmode.".Length..];
+            var fallback = string.IsNullOrEmpty(tab.DisplayNameFallback) ? tab.DisplayName : tab.DisplayNameFallback;
+            rows.Add((RailTabHotkeyActionId.ForTab(tab.Id), labelKey, fallback));
         }
         rows.Sort((a, b) => string.Compare(a.LabelFallback, b.LabelFallback, StringComparison.OrdinalIgnoreCase));
         return rows;
