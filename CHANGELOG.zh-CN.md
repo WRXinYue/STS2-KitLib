@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-07-13
+
 ### Added
 
 - **Mod 面板** — 对局进行中可从 **暂停 → 设置 → 常规 → 模组 (KitLib)** 打开。
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **卡牌浏览器** — 筛选控件改为三行布局；移除 mod 来源筛选，库标签文案更短。
 - **卡牌浏览器** — 优化卡牌浏览器滚动性能。
+- **卡牌浏览器** — 性能耗时日志改为在 KitLib **Performance** 中可选开启（默认关闭）。
 - **Dev Mode 面板快捷键** — 再次按下同一快捷键可关闭已打开的面板；若侧栏仅因该快捷键而展开，关闭面板后侧栏会一并收起。
 
 ### Fixed

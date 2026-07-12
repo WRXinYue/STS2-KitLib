@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.27.0] - 2026-07-13
+
 ### Added
 
 - **Mod panel** — Open from **Pause → Settings → General → Mods (KitLib)** during a run.
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Card browser** — Filter controls are arranged in three rows; the mod-source filter is removed and library chips use shorter labels.
 - **Card browser** — Improved scroll performance.
+- **Card browser** — Performance timing logs are opt-in under KitLib **Performance** settings (off by default).
 - **Dev Mode panel shortcuts** — Press the same shortcut again to close the open panel; the sidebar hides afterward when it was shown only for that shortcut.
 
 ### Fixed
