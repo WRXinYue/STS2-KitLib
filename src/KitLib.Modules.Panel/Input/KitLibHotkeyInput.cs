@@ -16,6 +16,9 @@ internal static class KitLibHotkeyInput {
         if (KitLibHotkeySettingsSection.TryCaptureInputEvent(key, viewport))
             return true;
 
+        if (ModPanelHotkeys.TryHandle(key, viewport))
+            return true;
+
         if (DevPanelHotkeys.TryHandle(key, viewport))
             return true;
         if (QuickSlHotkeys.TryHandle(key, viewport))

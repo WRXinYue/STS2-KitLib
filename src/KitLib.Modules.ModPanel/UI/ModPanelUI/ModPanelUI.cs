@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Godot;
 using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
+using KitLib.Abstractions.ModPanel;
 using KitLib.Host;
 using KitLib.Integration;
 using KitLib.Modding;
@@ -14,6 +15,7 @@ using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
 namespace KitLib.UI;
@@ -24,7 +26,7 @@ namespace KitLib.UI;
 public static partial class ModPanelUI {
     private const int ZOrder = 2000;
     private static ModPanelSubmenu? _root;
-    private static NMainMenu? _hostMainMenu;
+    private static NSubmenuStack? _hostStack;
     private static string? _pendingInitialModId;
     private static string? _pendingInitialPageId;
     private static string? _pendingInitialPageModId;
@@ -50,7 +52,14 @@ public static partial class ModPanelUI {
         context = null;
         return false;
     }
-    public static void Show(NMainMenu mainMenu, string? initialModId = null, string? initialPageId = null) {
+    public static ModPanelHostSurface CurrentHostSurface => ModPanelHostContext.ActiveSurface;
+
+    public static bool IsOpenedInRun => ModPanelHostContext.IsInRun;
+
+    public static void Show(NMainMenu mainMenu, string? initialModId = null, string? initialPageId = null) =>
+        Show(mainMenu.SubmenuStack, initialModId, initialPageId);
+
+    public static void Show(NSubmenuStack stack, string? initialModId = null, string? initialPageId = null) {
         var perf = ModPanelPerf.Start();
         MainFile.Logger.Info("KitLib: Opening mod panel…");
         TeardownShell();
@@ -58,8 +67,9 @@ public static partial class ModPanelUI {
         _pendingInitialPageId = initialPageId;
         _pendingInitialPageModId = initialModId;
         RitsuModSettingsEmbedHost.Ensure();
-        _hostMainMenu = mainMenu;
-        _root = mainMenu.SubmenuStack.PushSubmenuType<ModPanelSubmenu>();
+        ModPanelHostContext.SetActiveSurface(ModPanelHostContext.ResolveCurrent());
+        _hostStack = stack;
+        _root = stack.PushSubmenuType<ModPanelSubmenu>();
         ModPanelPerf.Log("open.pushSubmenu", perf);
         var reportSw = ModPanelPerf.Start();
         var openReport = BuildOpenReport();
@@ -71,24 +81,44 @@ public static partial class ModPanelUI {
     public static void Hide() => TeardownShell();
     /// <summary>Back button, input forwarder, and re-open <see cref="Show" /> all use this one exit path.</summary>
     private static void TeardownShell() {
-        if (_hostMainMenu != null && GodotObject.IsInstanceValid(_hostMainMenu)) {
-            if (_hostMainMenu.SubmenuStack.Peek() is ModPanelSubmenu)
-                _hostMainMenu.SubmenuStack.Pop();
-            _hostMainMenu = null;
+        if (_hostStack != null && GodotObject.IsInstanceValid(_hostStack)) {
+            if (_hostStack.Peek() is ModPanelSubmenu)
+                _hostStack.Pop();
+            _hostStack = null;
         }
         _root = null;
     }
     internal static void OnSubmenuPopped(ModPanelSubmenu submenu) {
         if (_root == submenu)
             _root = null;
-        _hostMainMenu = null;
+        _hostStack = null;
         _detailTitleEditor = null;
+        ModPanelHostContext.SetActiveSurface(ModPanelHostSurface.MainMenu);
     }
     public static bool IsVisible =>
         _root != null && GodotObject.IsInstanceValid(_root) && _root.Visible;
 
-    internal static NMainMenu? TryGetHostMainMenu() =>
-        _hostMainMenu != null && GodotObject.IsInstanceValid(_hostMainMenu) ? _hostMainMenu : null;
+    internal static NSubmenuStack? TryGetHostStack() =>
+        _hostStack != null && GodotObject.IsInstanceValid(_hostStack) ? _hostStack : null;
+
+    internal static Node? TryGetOverlayHost() {
+        if (_root != null && GodotObject.IsInstanceValid(_root))
+            return _root;
+        return null;
+    }
+
+    internal static NMainMenu? TryGetHostMainMenu() {
+        var stack = TryGetHostStack();
+        if (stack == null)
+            return null;
+        var node = stack as Node;
+        while (node != null) {
+            if (node is NMainMenu mainMenu)
+                return mainMenu;
+            node = node.GetParent();
+        }
+        return null;
+    }
     private static bool IsSelectableSidebarMod(KitLibModEntry entry) => entry.IsLoaded;
 
     private static string ResolveInitialSidebarModId(
@@ -259,6 +289,20 @@ public static partial class ModPanelUI {
             },
         };
         listHeader.AddChild(pendingRestartBanner);
+        var readOnlyBanner = new Label {
+            Name = "ModPanelInRunReadOnlyBanner",
+            Visible = ModPanelHostContext.IsInRun,
+            AutowrapMode = TextServer.AutowrapMode.Word,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            LabelSettings = new LabelSettings {
+                FontSize = 12,
+                FontColor = new Color(0.72f, 0.74f, 0.82f, 0.95f),
+            },
+            Text = I18N.T("modpanel.inRun.readOnlyHint",
+                "Mod enable/disable and module toggles are read-only during a run. Return to the main menu to change them."),
+        };
+        listHeader.AddChild(readOnlyBanner);
         var scroll = SidebarModListScrollBuilder.Create(out var scrollInner);
         scrollInner.AddThemeConstantOverride("separation", 0);
         var modButtonList = new VBoxContainer {
@@ -415,10 +459,15 @@ public static partial class ModPanelUI {
                 rowContent.OffsetTop = 8;
                 rowContent.OffsetBottom = -8;
                 var enableTickbox = ModPanelEnableTickbox.Create(captured.IsEnabledInSettings);
-                enableTickbox.Toggled += tick => {
-                    ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, tick.IsTicked);
-                    RefreshPendingRestartBanner();
-                };
+                if (ModPanelHostContext.IsModLoadEditingAllowed) {
+                    enableTickbox.Toggled += tick => {
+                        ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, tick.IsTicked);
+                        RefreshPendingRestartBanner();
+                    };
+                }
+                else {
+                    enableTickbox.SetReadOnly(true);
+                }
                 rowContent.AddChild(enableTickbox);
                 var titleLbl = new Label {
                     MouseFilter = Control.MouseFilterEnum.Ignore,

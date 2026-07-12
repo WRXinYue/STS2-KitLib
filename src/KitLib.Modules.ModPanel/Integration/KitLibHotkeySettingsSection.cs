@@ -17,6 +17,7 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
     internal static KitLibHotkeySettingsSection? Active { get; private set; }
 
     private static readonly (string ActionId, string LabelKey, string LabelFallback)[] Rows = {
+        (HotkeyActionId.OpenModPanel, "hotkeys.openModPanel", "Open Mod settings"),
         (HotkeyActionId.ToggleRail, "hotkeys.toggleRail", "Toggle sidebar"),
         (HotkeyActionId.ClosePanel, "hotkeys.closePanel", "Close panel"),
         (HotkeyActionId.NextTab, "hotkeys.nextTab", "Next tab"),

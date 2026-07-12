@@ -47,7 +47,16 @@ internal static class KitLibSatelliteModuleSettingsUi {
         }
 
         RefreshModuleRows(toggleBindings);
+        if (!ModPanelHostContext.IsModLoadEditingAllowed)
+            ApplyInRunReadOnly(toggleBindings);
         return stack;
+    }
+
+    static void ApplyInRunReadOnly(IReadOnlyList<ModuleRowBinding> bindings) {
+        foreach (var binding in bindings) {
+            if (binding.Toggle != null)
+                binding.Toggle.Disabled = true;
+        }
     }
 
     static Control CreateRestartNotice() {
@@ -205,7 +214,8 @@ internal static class KitLibSatelliteModuleSettingsUi {
                 binding.Toggle.SetPressedNoSignal(enabledInSettings);
                 var requiresPanel = string.Equals(binding.ModuleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(binding.ModuleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase);
-                binding.Toggle.Disabled = requiresPanel && !panelOn;
+                binding.Toggle.Disabled = !ModPanelHostContext.IsModLoadEditingAllowed
+                    || (requiresPanel && !panelOn);
             }
 
             if (binding.StatusLabel == null)

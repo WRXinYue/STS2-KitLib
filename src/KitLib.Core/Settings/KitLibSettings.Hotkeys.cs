@@ -1,6 +1,7 @@
 namespace KitLib.Settings;
 
 public sealed partial class KitLibSettings {
+    public HotkeyBinding HotkeyOpenModPanel { get; set; } = HotkeyDefaults.OpenModPanel.Clone();
     public HotkeyBinding HotkeyToggleRail { get; set; } = HotkeyDefaults.ToggleRail.Clone();
     public HotkeyBinding HotkeyClosePanel { get; set; } = HotkeyDefaults.ClosePanel.Clone();
     public HotkeyBinding HotkeyNextTab { get; set; } = HotkeyDefaults.NextTab.Clone();
@@ -19,6 +20,7 @@ public sealed partial class KitLibSettings {
     }
 
     internal HotkeyBinding GetShellHotkey(string actionId) => actionId switch {
+        HotkeyActionId.OpenModPanel => HotkeyOpenModPanel,
         HotkeyActionId.ToggleRail => HotkeyToggleRail,
         HotkeyActionId.ClosePanel => HotkeyClosePanel,
         HotkeyActionId.NextTab => HotkeyNextTab,
@@ -43,6 +45,7 @@ public sealed partial class KitLibSettings {
     internal void SetShellHotkey(string actionId, HotkeyBinding binding) {
         var copy = binding.Clone();
         switch (actionId) {
+            case HotkeyActionId.OpenModPanel: HotkeyOpenModPanel = copy; break;
             case HotkeyActionId.ToggleRail: HotkeyToggleRail = copy; break;
             case HotkeyActionId.ClosePanel: HotkeyClosePanel = copy; break;
             case HotkeyActionId.NextTab: HotkeyNextTab = copy; break;

@@ -5,7 +5,6 @@ using System.Text;
 using Godot;
 using KitLib.Modding;
 using KitLib.Progress;
-using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Saves;
 
 namespace KitLib.UI;
@@ -19,7 +18,7 @@ internal static class ProgressGuardUI {
     }
 
     internal static void FinishRestore(
-        NMainMenu mainMenu,
+        Node overlayHost,
         string backupDir,
         string directoryName,
         int profileId) {
@@ -33,7 +32,7 @@ internal static class ProgressGuardUI {
                 MainFile.Logger.Info(I18N.T("progressGuard.restore.success",
                     "Progress restored from {0}.", directoryName));
                 ModCharacterProgressLossDetector.ClearPending();
-                if (GodotObject.IsInstanceValid(mainMenu))
+                if (ModPanelUI.TryGetHostMainMenu() is { } mainMenu && GodotObject.IsInstanceValid(mainMenu))
                     mainMenu.RefreshButtons();
                 HideAnywhere();
                 break;
@@ -48,8 +47,10 @@ internal static class ProgressGuardUI {
         }
     }
 
-    internal static void ShowRestoreConfirm(NMainMenu mainMenu, ProfileBackupSummary backup, int profileId) {
-        var root = mainMenu.GetTree().Root;
+    internal static void ShowRestoreConfirm(Node overlayHost, ProfileBackupSummary backup, int profileId) {
+        var root = overlayHost.GetTree()?.Root;
+        if (root == null)
+            return;
         DevMainMenuOverlay.RemoveAnywhere(RestoreConfirmName);
 
         var overlay = new Control {
@@ -152,7 +153,7 @@ internal static class ProgressGuardUI {
             cancelBtn.Disabled = true;
             var backupDir = backup.BackupDirectory;
             var dirName = backup.DirectoryName;
-            Callable.From(() => FinishRestore(mainMenu, backupDir, dirName, profileId)).CallDeferred();
+            Callable.From(() => FinishRestore(overlayHost, backupDir, dirName, profileId)).CallDeferred();
         };
         btnRow.AddChild(confirmBtn);
 

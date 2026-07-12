@@ -5,6 +5,9 @@ namespace KitLib.Settings;
 internal static class HotkeyDefaults {
     // Ctrl+Shift + mnemonic letter (official game shortcuts ignore modifiers).
 
+    internal static readonly HotkeyBinding OpenModPanel =
+        HotkeyBinding.Of(Key.M, ctrl: true, shift: true);
+
     internal static readonly HotkeyBinding ToggleRail =
         HotkeyBinding.Of(Key.D, ctrl: true, shift: true);
 
@@ -36,6 +39,7 @@ internal static class HotkeyDefaults {
         HotkeyBinding.Of(Key.P, ctrl: true, shift: true);
 
     internal static HotkeyBinding For(string actionId) => actionId switch {
+        HotkeyActionId.OpenModPanel => OpenModPanel.Clone(),
         HotkeyActionId.ToggleRail => ToggleRail.Clone(),
         HotkeyActionId.ClosePanel => ClosePanel.Clone(),
         HotkeyActionId.NextTab => NextTab.Clone(),
@@ -50,6 +54,7 @@ internal static class HotkeyDefaults {
     };
 
     internal static void ApplyTo(KitLibSettings settings) {
+        settings.HotkeyOpenModPanel = OpenModPanel.Clone();
         settings.HotkeyToggleRail = ToggleRail.Clone();
         settings.HotkeyClosePanel = ClosePanel.Clone();
         settings.HotkeyNextTab = NextTab.Clone();

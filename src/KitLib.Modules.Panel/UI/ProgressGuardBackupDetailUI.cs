@@ -5,15 +5,17 @@ using System.Text;
 using Godot;
 using KitLib.Modding;
 using KitLib.Progress;
-using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.UI;
 
 internal static class ProgressGuardBackupDetailUI {
     private const string RootName = "KitLibProgressBackupDetail";
 
-    public static void Show(NMainMenu mainMenu, ProfileBackupSummary backup, int profileId) {
-        var root = mainMenu.GetTree().Root;
+    public static void Show(Node overlayHost, ProfileBackupSummary backup, int profileId) {
+        var root = overlayHost.GetTree()?.Root;
+        if (root == null)
+            return;
         HideAnywhere();
 
         var details = ProgressBackupInspector.Inspect(backup.BackupDirectory);
@@ -84,7 +86,7 @@ internal static class ProgressGuardBackupDetailUI {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         content.AddThemeConstantOverride("separation", 6);
-        BuildDetailContent(content, details, backup, profileId, mainMenu);
+        BuildDetailContent(content, details, backup, profileId, overlayHost);
         scroll.AddChild(content);
         outer.AddChild(scroll);
 
@@ -107,7 +109,7 @@ internal static class ProgressGuardBackupDetailUI {
         ProgressBackupDetails details,
         ProfileBackupSummary backup,
         int profileId,
-        NMainMenu mainMenu) {
+        Node overlayHost) {
         if (details.LoadFailed) {
             content.AddChild(MakeBodyLabel(I18N.T("progressGuard.detail.loadFailed",
                 "Could not read progress.save: {0}", details.LoadError ?? "?")));
@@ -178,15 +180,16 @@ internal static class ProgressGuardBackupDetailUI {
         if (details.HasCurrentRun) files.Append(", current_run.save");
         content.AddChild(MakeBodyLabel(files.ToString()));
 
+        var runInProgress = RunManager.Instance?.IsInProgress == true;
         var restoreBtn = new Button {
             Text = I18N.T("progressGuard.restore.button", "Restore"),
             FocusMode = Control.FocusModeEnum.None,
-            Disabled = !backup.HasProgressSave,
+            Disabled = !backup.HasProgressSave || runInProgress,
         };
         restoreBtn.Pressed += () => {
             Callable.From(() => {
                 HideAnywhere();
-                ProgressGuardUI.ShowRestoreConfirm(mainMenu, backup, profileId);
+                ProgressGuardUI.ShowRestoreConfirm(overlayHost, backup, profileId);
             }).CallDeferred();
         };
         content.AddChild(restoreBtn);

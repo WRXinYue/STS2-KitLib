@@ -204,6 +204,8 @@ public static class SettingsStore {
     }
 
     private static void ApplyHotkeyDefaults() {
+        if (Current.HotkeyOpenModPanel.KeyCode == 0)
+            Current.HotkeyOpenModPanel = HotkeyDefaults.OpenModPanel.Clone();
         if (Current.HotkeyToggleRail.KeyCode == 0)
             Current.HotkeyToggleRail = HotkeyDefaults.ToggleRail.Clone();
         if (Current.HotkeyClosePanel.KeyCode == 0)

@@ -33,6 +33,12 @@ public partial class ModPanelEnableTickbox : PanelContainer {
     private bool _hovered;
     private bool _pressing;
 
+    public void SetReadOnly(bool readOnly) {
+        MouseFilter = readOnly ? MouseFilterEnum.Ignore : MouseFilterEnum.Stop;
+        FocusMode = readOnly ? FocusModeEnum.None : FocusModeEnum.All;
+        Modulate = readOnly ? new Color(1f, 1f, 1f, 0.45f) : Colors.White;
+    }
+
     public void SetTicked(bool ticked, bool emit = false) {
         if (_isTicked == ticked)
             return;

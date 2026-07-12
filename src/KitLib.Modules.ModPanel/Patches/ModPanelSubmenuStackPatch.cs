@@ -1,27 +1,46 @@
 using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Godot;
 using HarmonyLib;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.Patches;
 
-[HarmonyPatch(typeof(NMainMenuSubmenuStack), nameof(NMainMenuSubmenuStack.GetSubmenuType), new[] { typeof(Type) })]
+[HarmonyPatch]
 public static class ModPanelSubmenuStackPatch {
-    private static ModPanelSubmenu? _cached;
+    internal static readonly ConditionalWeakTable<NSubmenuStack, ModPanelSubmenu> Submenus = new();
+
+    static System.Collections.Generic.IEnumerable<MethodBase> TargetMethods() {
+        yield return AccessTools.Method(
+            typeof(NMainMenuSubmenuStack),
+            nameof(NMainMenuSubmenuStack.GetSubmenuType),
+            [typeof(Type)]);
+        yield return AccessTools.Method(
+            typeof(NRunSubmenuStack),
+            nameof(NRunSubmenuStack.GetSubmenuType),
+            [typeof(Type)]);
+    }
 
     [HarmonyPrefix]
-    public static bool Prefix(Type type, NMainMenuSubmenuStack __instance, ref NSubmenu __result) {
+    public static bool Prefix(NSubmenuStack __instance, Type type, ref NSubmenu __result) {
         if (type != typeof(ModPanelSubmenu))
             return true;
-        if (_cached == null || !GodotObject.IsInstanceValid(_cached)) {
-            _cached = new ModPanelSubmenu {
-                Visible = false,
-            };
-            __instance.AddChildSafely(_cached);
-        }
-        __result = _cached;
+
+        __result = Submenus.GetValue(__instance, CreateSubmenu);
         return false;
+    }
+
+    internal static ModPanelSubmenu CreateSubmenu(NSubmenuStack stack) {
+        var submenu = new ModPanelSubmenu {
+            Visible = false,
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            FocusMode = Control.FocusModeEnum.None,
+        };
+        stack.AddChildSafely(submenu);
+        return submenu;
     }
 }

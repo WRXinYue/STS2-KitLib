@@ -6,13 +6,13 @@ using Godot;
 using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.Progress;
-using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
+using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 
 namespace KitLib.UI;
 
 internal static class ProgressGuardPanelContent {
-    internal static void BuildPanel(VBoxContainer vbox, NMainMenu? mainMenu) {
+    internal static void BuildPanel(VBoxContainer vbox, Node? overlayHost) {
         vbox.AddChild(CreateSubtitleLabel());
 
         ProgressGuardPanelBuilder.AddToggleSection(vbox, includeSectionHeader: false);
@@ -21,7 +21,7 @@ internal static class ProgressGuardPanelContent {
         BuildStatusSection(vbox);
 
         vbox.AddChild(DevPanelUI.CreateOverlaySeparator());
-        BuildBackupsSection(vbox, mainMenu);
+        BuildBackupsSection(vbox, overlayHost);
     }
 
     static Label CreateSubtitleLabel() {
@@ -67,7 +67,7 @@ internal static class ProgressGuardPanelContent {
         vbox.AddChild(matchLabel);
     }
 
-    static void BuildBackupsSection(VBoxContainer vbox, NMainMenu? mainMenu) {
+    static void BuildBackupsSection(VBoxContainer vbox, Node? overlayHost) {
         int profileId;
         try {
             profileId = SaveManager.Instance.CurrentProfileId;
@@ -86,10 +86,10 @@ internal static class ProgressGuardPanelContent {
         }
 
         foreach (var backup in backups)
-            vbox.AddChild(BuildBackupRow(backup, profileId, mainMenu));
+            vbox.AddChild(BuildBackupRow(backup, profileId, overlayHost));
     }
 
-    static Control BuildBackupRow(ProfileBackupSummary backup, int profileId, NMainMenu? mainMenu) {
+    static Control BuildBackupRow(ProfileBackupSummary backup, int profileId, Node? overlayHost) {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
         row.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -106,7 +106,8 @@ internal static class ProgressGuardPanelContent {
         label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         row.AddChild(label);
 
-        var canAct = backup.HasProgressSave && mainMenu != null;
+        var runInProgress = RunManager.Instance?.IsInProgress == true;
+        var canAct = backup.HasProgressSave && overlayHost != null && !runInProgress;
 
         var detailsBtn = new Button {
             Text = I18N.T("progressGuard.detail.button", "Details"),
@@ -115,7 +116,7 @@ internal static class ProgressGuardPanelContent {
         };
         ModSettingsRitsuFormDevTheme.ApplyActionButton(detailsBtn);
         if (canAct)
-            detailsBtn.Pressed += () => ProgressGuardBackupDetailUI.Show(mainMenu!, backup, profileId);
+            detailsBtn.Pressed += () => ProgressGuardBackupDetailUI.Show(overlayHost!, backup, profileId);
         row.AddChild(detailsBtn);
 
         var restoreBtn = new Button {
@@ -125,7 +126,7 @@ internal static class ProgressGuardPanelContent {
         };
         ModSettingsRitsuFormDevTheme.ApplyActionButton(restoreBtn);
         if (canAct)
-            restoreBtn.Pressed += () => ProgressGuardUI.ShowRestoreConfirm(mainMenu!, backup, profileId);
+            restoreBtn.Pressed += () => ProgressGuardUI.ShowRestoreConfirm(overlayHost!, backup, profileId);
         row.AddChild(restoreBtn);
 
         return row;
