@@ -19,7 +19,7 @@ namespace KitLib.UI;
 
 internal static partial class CardBrowserUI {
     internal const string GridHolderMetaKey = "kitlib_card_browser_holder";
-    internal const float GridHolderDisplayScale = 0.73f;
+    internal const float GridHolderDisplayScale = 0.70f;
     internal static readonly Vector2 GridHolderDisplayScaleVector = Vector2.One * GridHolderDisplayScale;
     // Official grid: HoverScale 1.0, SmallScale 0.8 — preserve that ratio for our custom small scale.
     internal static readonly Vector2 GridHolderHoverScaleVector =
@@ -47,13 +47,23 @@ internal static partial class CardBrowserUI {
         if (w < 1f)
             return 0f;
 
-        // Pre-layout scroll rects can report the full expanded content width; clamp to ancestors.
+        // Pre-layout scroll rects can report expanded content width; clamp within the main panel only.
         var node = s.GridScroll.GetParent() as Control;
+        var mainPanel = s.Dual.MainPanel;
         while (node != null) {
+            if (node == mainPanel)
+                break;
+
             var pw = node.GetRect().Size.X;
             if (pw > 1f)
                 w = Math.Min(w, pw);
             node = node.GetParent() as Control;
+        }
+
+        if (GodotObject.IsInstanceValid(mainPanel)) {
+            var panelW = mainPanel.GetRect().Size.X;
+            if (panelW > 1f)
+                w = Math.Min(w, panelW);
         }
 
         return w - 2f * CardBrowserGridPadH;
@@ -68,12 +78,6 @@ internal static partial class CardBrowserUI {
         var cols = Math.Max(1, s.GridColumns);
         var cardSize = CardSize();
         return cols * cardSize.X + Math.Max(0, cols - 1) * CardGridSeparation;
-    }
-
-    private static float GridContentWidth(State s) {
-        var gridWidth = GridWidth(s);
-        var viewport = ContentViewportWidth(s);
-        return viewport < 2f ? gridWidth : Math.Max(gridWidth, viewport);
     }
 
     private static Vector2 GridOrigin(State s) {
@@ -127,15 +131,13 @@ internal static partial class CardBrowserUI {
     }
 
     private static void UpdateGridContentSize(State s) {
-        var cols = Math.Max(1, s.GridColumns);
         var totalRows = GetTotalRows(s);
         var cardSize = CardSize();
-        var gridWidth = cols * cardSize.X + Math.Max(0, cols - 1) * CardGridSeparation;
-        var width = GridContentWidth(s);
+        var gridWidth = GridWidth(s);
         var height = totalRows == 0
             ? 0
             : totalRows * cardSize.Y + Math.Max(0, totalRows - 1) * CardGridSeparation;
-        s.GridContent.CustomMinimumSize = new Vector2(width, height);
+        s.GridContent.CustomMinimumSize = new Vector2(gridWidth, height);
     }
 
     private static Vector2 PositionForCardIndex(State s, int cardIndex) {
