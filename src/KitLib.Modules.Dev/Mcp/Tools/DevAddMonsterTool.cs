@@ -9,7 +9,7 @@ namespace KitLib.Mcp.Tools;
 internal sealed class DevAddMonsterTool : IMcpTool {
     public string Name => "dev_add_monster";
     public string Description =>
-        "Add a monster to the current combat (same API as DevMode enemy browser / dmenemy spawn).";
+        "Add a monster to the current combat (same API as DevMode enemy browser).";
     public string InputSchemaJson => """
     {
         "type": "object",

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Command reference** — Commands are grouped under Official and per-mod sections; official command descriptions are localized (English / Chinese).
+
+### Removed
+
+- **Dev console** — KitLib `dm*` commands (cheats, saves, stats, enemies, cards, relics, and related tools). Use DevMode panels instead.
+
 ## [0.27.0] - 2026-07-13
 
 ### Added

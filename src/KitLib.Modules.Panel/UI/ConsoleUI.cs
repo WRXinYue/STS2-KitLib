@@ -19,14 +19,11 @@ internal static class ConsoleUI {
             globalUi, RootName, PanelW, () => Remove(globalUi));
         var vbox = dual.MainContent;
 
-        // ── Nav tab ──
         BuildNavTab(vbox);
 
-        // ── Search ──
         var (searchRow, searchInput) = DevPanelUI.CreateSearchRow(I18N.T("console.search", "Filter commands..."));
         vbox.AddChild(searchRow);
 
-        // ── Scrollable command list ──
         var scroll = new ScrollContainer {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
@@ -36,7 +33,6 @@ internal static class ConsoleUI {
         scroll.AddChild(listBox);
         vbox.AddChild(scroll);
 
-        // ── Copy hint ──
         var hint = new Label {
             Text = I18N.T("console.copyHint", "Click a command to copy to clipboard"),
             HorizontalAlignment = HorizontalAlignment.Center
@@ -95,26 +91,41 @@ internal static class ConsoleUI {
             ? commands
             : commands.Where(c =>
                 c.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                c.Description.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
+                c.Description.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                c.SourceLabel.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                ConsoleBridge.LocalizeDescription(c).Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
 
-        var native = filtered.Where(c => c.IsOfficial).ToList();
-        var devmode = filtered.Where(c => !c.IsOfficial).ToList();
+        var official = filtered
+            .Where(c => c.SourceKind == ConsoleBridge.CommandSourceKind.Official)
+            .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var kitlib = filtered
+            .Where(c => c.SourceKind == ConsoleBridge.CommandSourceKind.KitLib)
+            .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var modGroups = filtered
+            .Where(c => c.SourceKind == ConsoleBridge.CommandSourceKind.Mod)
+            .GroupBy(c => c.SourceLabel, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList())
+            .ToList();
 
-        if (native.Count > 0) {
-            listBox.AddChild(DevPanelUI.CreateSectionHeader(
-                $"{I18N.T("console.section.native", "Native Commands")}  ({native.Count})"));
-            foreach (var cmd in native)
-                listBox.AddChild(CreateCommandEntry(cmd));
+        int sectionCount = 0;
+        sectionCount += AddSection(
+            listBox,
+            official,
+            $"{I18N.T("console.section.official", "Official Commands")}  ({official.Count})");
+        sectionCount += AddSection(
+            listBox,
+            kitlib,
+            $"{I18N.T("console.section.kitlib", "KitLib Commands")}  ({kitlib.Count})");
+
+        foreach (var group in modGroups) {
+            string header = I18N.T("console.section.mod", "{0} Commands", group[0].SourceLabel);
+            sectionCount += AddSection(listBox, group, $"{header}  ({group.Count})");
         }
 
-        if (devmode.Count > 0) {
-            listBox.AddChild(DevPanelUI.CreateSectionHeader(
-                $"{I18N.T("console.section.devmode", "KitLib Commands")}  ({devmode.Count})"));
-            foreach (var cmd in devmode)
-                listBox.AddChild(CreateCommandEntry(cmd));
-        }
-
-        if (native.Count == 0 && devmode.Count == 0) {
+        if (sectionCount == 0) {
             var noResult = new Label {
                 Text = I18N.T("console.noResults", "No commands found."),
                 HorizontalAlignment = HorizontalAlignment.Center
@@ -124,27 +135,47 @@ internal static class ConsoleUI {
         }
     }
 
+    private static int AddSection(
+        VBoxContainer listBox,
+        IReadOnlyList<ConsoleBridge.CommandInfo> commands,
+        string header) {
+        if (commands.Count == 0) return 0;
+
+        listBox.AddChild(DevPanelUI.CreateSectionHeader(header));
+        foreach (var cmd in commands)
+            listBox.AddChild(CreateCommandEntry(cmd));
+        return 1;
+    }
+
     private static Control CreateCommandEntry(ConsoleBridge.CommandInfo cmd) {
         var container = new VBoxContainer();
         container.AddThemeConstantOverride("separation", 1);
 
+        string commandText = string.IsNullOrWhiteSpace(cmd.Args)
+            ? cmd.Name
+            : $"{cmd.Name}  {cmd.Args}";
+        string lineText = cmd.SourceKind == ConsoleBridge.CommandSourceKind.Mod
+            ? $"[{ConsoleBridge.SourceBadge(cmd)}]  {commandText}"
+            : commandText;
+
         var nameBtn = new Button {
-            Text = string.IsNullOrWhiteSpace(cmd.Args) ? cmd.Name : $"{cmd.Name}  {cmd.Args}",
+            Text = lineText,
             Alignment = HorizontalAlignment.Left,
             Flat = true,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             ClipText = false,
             FocusMode = Control.FocusModeEnum.None
         };
-        nameBtn.AddThemeColorOverride("font_color", new Color(0.45f, 0.85f, 0.55f));
-        nameBtn.AddThemeColorOverride("font_hover_color", new Color(0.60f, 1.00f, 0.70f));
+        nameBtn.AddThemeColorOverride("font_color", SourceNameColor(cmd.SourceKind));
+        nameBtn.AddThemeColorOverride("font_hover_color", SourceNameHoverColor(cmd.SourceKind));
         nameBtn.AddThemeFontSizeOverride("font_size", 13);
         nameBtn.Pressed += () => DisplayServer.ClipboardSet(cmd.Name);
         container.AddChild(nameBtn);
 
-        if (!string.IsNullOrWhiteSpace(cmd.Description)) {
+        string description = ConsoleBridge.LocalizeDescription(cmd);
+        if (!string.IsNullOrWhiteSpace(description)) {
             var descLabel = new Label {
-                Text = $"  {cmd.Description}",
+                Text = $"  {description}",
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
             };
@@ -159,4 +190,16 @@ internal static class ConsoleUI {
 
         return container;
     }
+
+    private static Color SourceNameColor(ConsoleBridge.CommandSourceKind kind) => kind switch {
+        ConsoleBridge.CommandSourceKind.Official => new Color(0.55f, 0.75f, 0.95f),
+        ConsoleBridge.CommandSourceKind.KitLib => new Color(0.45f, 0.85f, 0.55f),
+        _ => new Color(0.82f, 0.72f, 0.45f),
+    };
+
+    private static Color SourceNameHoverColor(ConsoleBridge.CommandSourceKind kind) => kind switch {
+        ConsoleBridge.CommandSourceKind.Official => new Color(0.70f, 0.88f, 1.00f),
+        ConsoleBridge.CommandSourceKind.KitLib => new Color(0.60f, 1.00f, 0.70f),
+        _ => new Color(0.95f, 0.85f, 0.55f),
+    };
 }

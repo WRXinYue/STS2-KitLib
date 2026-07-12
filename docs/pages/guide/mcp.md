@@ -40,7 +40,7 @@ Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Cl
 - **`dev_remove_card`** — Remove a card by `card_id` or `pile_index` from a pile
 - **`dev_list_monsters`** — List monster model IDs (for `dev_add_monster`)
 - **`dev_list_enemies`** — List enemies currently in combat (index, HP, monsterId)
-- **`dev_add_monster`** — Add a monster mid-combat (DevMode enemy panel / `dmenemy spawn`)
+- **`dev_add_monster`** — Add a monster mid-combat (DevMode enemy panel)
 - **`dev_set_cheat`** — Toggle cheats or set multipliers (`freeze_enemies`, `damage_multiplier`, …)
 - **`dev_set_stat`** — Set gold/energy/HP values or enable stat locks
 
@@ -61,7 +61,7 @@ Health check: `GET http://127.0.0.1:9877/health`
 - **`dev_remove_card`** — 按 `card_id` 或 `pile_index` 从某堆移除
 - **`dev_list_monsters`** — 怪物 model ID 列表（供 `dev_add_monster`）
 - **`dev_list_enemies`** — 当前战斗中的敌人（index、HP、monsterId）
-- **`dev_add_monster`** — 战斗中加怪（Dev 敌人面板 / `dmenemy spawn`）
+- **`dev_add_monster`** — 战斗中加怪（Dev 敌人面板）
 - **`dev_set_cheat`** — 开关作弊或设倍率（`freeze_enemies`、`damage_multiplier` 等）
 - **`dev_set_stat`** — 设金币/能量/生命或开启数值锁定
 

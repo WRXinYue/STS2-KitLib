@@ -162,7 +162,7 @@ internal sealed class Sts2McpTools {
         _bridge.CallToolAsync("dev_list_enemies", new JsonObject(), cancellationToken);
 
     [McpServerTool(Name = "dev_add_monster"), Description(
-        "Add a monster to the current combat (DevMode enemy browser / dmenemy spawn).")]
+        "Add a monster to the current combat (DevMode enemy browser).")]
     public Task<string> DevAddMonster(
         [Description("Monster model ID, e.g. OVICOPTER.")]
         string monster_id,

@@ -6,7 +6,7 @@ namespace KitLib.Mcp.Tools;
 internal sealed class DevSetStatTool : IMcpTool {
     public string Name => "dev_set_stat";
     public string Description =>
-        "Set run/combat stats or enable stat locks (DevMode Cheats panel / dmruntime locks).";
+        "Set run/combat stats or enable stat locks (DevMode Cheats panel).";
     public string InputSchemaJson => """
     {
         "type": "object",

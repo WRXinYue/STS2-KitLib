@@ -9,7 +9,7 @@ namespace KitLib.Mcp.Tools;
 internal sealed class DevAddCardTool : IMcpTool {
     public string Name => "dev_add_card";
     public string Description =>
-        "Add a card to deck or a combat pile (same API as DevMode card browser / dmcard console).";
+        "Add a card to deck or a combat pile (same API as DevMode card browser).";
     public string InputSchemaJson => """
     {
         "type": "object",

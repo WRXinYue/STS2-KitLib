@@ -6,7 +6,7 @@ namespace KitLib.Mcp.Tools;
 internal sealed class DevSetCheatTool : IMcpTool {
     public string Name => "dev_set_cheat";
     public string Description =>
-        "Toggle patch/runtime cheats or set multiplier values (DevMode Cheats panel / dmcheat / dmruntime).";
+        "Toggle patch/runtime cheats or set multiplier values (DevMode Cheats panel).";
     public string InputSchemaJson => """
     {
         "type": "object",
