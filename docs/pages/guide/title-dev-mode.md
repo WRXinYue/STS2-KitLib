@@ -19,7 +19,7 @@ On the main menu, **Dev Mode** replaces separate dev buttons with one submenu:
 - **Normal run: …** — Cycle **Disabled** → **Dev Mode** → **Cheat Mode** for non-test runs
 - **Multiplayer** — Multiplayer dev submenu (see below)
 - **Unlock All Progress** — Unlock timeline epochs, Ascension 10, and compendium entries (confirmation required)
-- **Diagnostics** — **Logs** and **Mod feedback** (progress protection also under **Mods → KitLib**)
+- **Diagnostics** — **Logs** (log export is in the log viewer header; progress protection also under **Mods → KitLib**)
 - **Progress protection** — Backup status, restore, per-backup **Details** (same flow in **Mods → KitLib**)
 - **Back** — Return to the stock main menu
 
@@ -41,7 +41,7 @@ Restore from **Progress protection** is title-screen only. Prefer matching the b
 - **普通局：…** — 在非测试局之间切换 **关闭** → **开发模式** → **作弊模式**
 - **多人** — 多人开发子菜单（见下）
 - **解锁全部进度** — 解锁时间线纪元、进阶 10、图鉴条目（需确认）
-- **诊断** — **日志** 与 **Mod 反馈**（进度保护也可在 **Mods → KitLib**）
+- **诊断** — **日志**（日志导出在日志查看器标题栏；进度保护也可在 **Mods → KitLib**）
 - **进度保护** — 备份状态、恢复、每条备份的 **详情**（**Mods → KitLib** 里同样流程）
 - **返回** — 回到原版主菜单
 

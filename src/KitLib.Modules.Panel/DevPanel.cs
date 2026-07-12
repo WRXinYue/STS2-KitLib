@@ -188,13 +188,15 @@ internal static class DevPanel {
         HookConfigUI.Show(_globalUi);
     }
 
-    internal static void OpenLogs() {
+    internal static void OpenLogs() => OpenLogs(expandLogExport: false);
+
+    internal static void OpenLogs(bool expandLogExport) {
         if (_globalUi == null) return;
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.Logs;
 
         LogCollector.AcknowledgeAlerts();
-        LogViewerUI.Show(_globalUi);
+        LogViewerUI.Show(_globalUi, expandLogExport);
         LogCollector.SyncLogViewerOpen(_globalUi);
         DevPanelUI.RefreshRailHintPresentation();
     }
@@ -215,13 +217,7 @@ internal static class DevPanel {
         EnemyIntentUI.Show(_globalUi);
     }
 
-    internal static void OpenFeedback() {
-        if (_globalUi == null) return;
-        TryDismissCurrent();
-        KitLibState.ActivePanel = ActivePanel.Feedback;
-
-        FeedbackReportUI.Show(_globalUi);
-    }
+    internal static void OpenLogExport() => OpenLogs(expandLogExport: true);
 
     internal static void StartNewTest() {
         try {
@@ -267,7 +263,7 @@ internal static class DevPanel {
             case ActivePanel.Logs: OpenLogs(); break;
             case ActivePanel.CombatStats: OpenCombatStats(); break;
             case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;
-            case ActivePanel.Feedback: OpenFeedback(); break;
+            case ActivePanel.Feedback: OpenLogs(expandLogExport: true); break;
         }
     }
 

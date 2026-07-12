@@ -9,7 +9,6 @@ internal static class DevTabRegistration {
         RegisterActionTab("devmode.enemyIntent", "bullseye-arrow", I18N.T("panel.enemyIntent", "Enemy intents"), 754, () => KitLibDevOps.OpenEnemyIntent?.Invoke(), KitLibTabKind.Developer);
         RegisterActionTab("devmode.combatStats", "chart-bar", I18N.T("panel.combatStats", "Combat Stats"), 756, () => KitLibDevOps.OpenCombatStats?.Invoke(), KitLibTabKind.Developer);
         RegisterActionTab("devmode.hooks", "lightning-bolt", I18N.T("panel.hooks", "Hooks"), 900, () => KitLibDevOps.OpenHooks?.Invoke());
-        RegisterActionTab("devmode.feedback", "bug-outline", I18N.T("panel.feedback", "Mod Feedback"), 970, () => KitLibDevOps.OpenFeedback?.Invoke(), KitLibTabKind.Developer);
         KitLibHost.RegisterTab(new KitLibTabDescriptor {
             Id = "devmode.settings",
             IconKey = "cog",

@@ -21,7 +21,6 @@ internal static partial class DevPanelUI {
         ["devmode.presets"] = "KitLibPresets",
         ["devmode.hooks"] = "KitLibHookConfig",
         ["devmode.logs"] = LogCollector.LogViewerRootName,
-        ["devmode.feedback"] = "KitLibFeedbackReport",
         ["devmode.save"] = "KitLibSaveLoad",
         ["devmode.settings"] = "KitLibSettings",
     };

@@ -27,7 +27,6 @@ internal static class RailTabHotkeyDefaults {
             ["devmode.enemyIntent"] = Tab(Key.N),
             ["devmode.combatStats"] = Tab(Key.U),
             ["devmode.hooks"] = Tab(Key.G),
-            ["devmode.feedback"] = Tab(Key.E),
             ["devmode.settings"] = Tab(Key.Comma),
             ["devmode.logs"] = Tab(Key.Z),
         };

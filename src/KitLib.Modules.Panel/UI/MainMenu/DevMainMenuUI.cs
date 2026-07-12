@@ -120,10 +120,6 @@ internal static class DevMainMenuUI {
             LogViewerUI.ShowOnMainMenu(mainMenu);
         });
 
-        AddButton(container, template, I18N.T("devmenu.feedback", "Mod Feedback"), () => {
-            FeedbackReportUI.ShowOnMainMenu(mainMenu);
-        });
-
         AddButton(container, template, I18N.T("devmenu.back", "Back"), ShowRootMenu);
         FinishMenuBuild(DevMenuLevel.Diagnostics);
     }
@@ -224,7 +220,6 @@ internal static class DevMainMenuUI {
 
     private static void DismissOverlays(Node? attachRoot) {
         SaveSlotUI.Hide();
-        FeedbackReportUI.HideAnywhere();
         LogViewerUI.HideAnywhere();
         ProgressGuardUI.HideAnywhere();
         ProgressLossPromptUI.HideAnywhere();
@@ -395,7 +390,6 @@ internal static class DevMainMenuUI {
         UnlockAllOverlayName,
         SaveSlotDialogRootId.NodeName,
         "KitLibLogViewer",
-        "KitLibFeedbackReport",
         "KitLibPseudoCoopLaunch",
     ];
 

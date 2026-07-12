@@ -1,7 +1,7 @@
 ---
 title:
-  en: Mod feedback
-  zh-CN: Mod 反馈
+  en: Log export
+  zh-CN: 日志导出
 top: 9910
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
@@ -11,37 +11,29 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-Open from the in-run rail or title screen **Dev Mode → Diagnostics → Mod Feedback**.
+Open the **Log Viewer** from the in-run rail or title screen **Dev Mode → Diagnostics → Logs**, then click **Log Export** in the header to open the slide-out export panel.
 
-Fill in a title and description, optionally attach a game log tail, and export a **ZIP report** for mod authors. **Privacy mode** replaces user-data paths with `<user-data>` in all text files.
+Choose which log file to include and export a **ZIP package**. **Privacy mode** replaces user-data paths with `<user-data>` in text files.
 
 Typical ZIP contents:
 
-- `report.txt` — Your description and environment summary
-- `mods.txt` — Loaded mod list
-- `logs-filtered.txt` — KitLib-filtered log excerpt
 - `harmony-patches.txt` — Active Harmony patch dump
-- `framework-bridge.txt` — Framework snapshot
-- `combat-stats.json` — Current combat stats export (if in a fight)
-- `game-logs/` — Optional attached vanilla log tail
+- `combat-stats.json` — Combat stats
+- `godot.log` — Vanilla game log
 
-Reports are written under `user://devmode-reports/` (account-scoped user data, same tree as `mod_data/KitLib/`).
+Exports are written under `user://devmode-reports/` (account-scoped user data, same tree as `mod_data/KitLib/`).
 :::
 
 ::: zh-CN
-从局内侧栏或标题画面 **开发模式 → 诊断 → Mod 反馈** 打开。
+从局内侧栏或标题画面 **开发模式 → 诊断 → 日志** 打开 **日志查看器**，点击标题栏 **日志导出** 滑出导出面板。
 
-填写标题和说明，可选附带游戏日志尾部，导出给 Mod 作者的 **ZIP 报告包**。**隐私模式**会把用户数据路径替换成 `<user-data>`。
+选择要包含的日志文件，导出 **ZIP 包**。**隐私模式**会把用户数据路径替换成 `<user-data>`。
 
 ZIP 通常包含：
 
-- `report.txt` — 你的描述和环境摘要
-- `mods.txt` — 已加载 mod 列表
-- `logs-filtered.txt` — KitLib 过滤后的日志摘录
 - `harmony-patches.txt` — Harmony 补丁快照
-- `framework-bridge.txt` — 框架桥接信息
-- `combat-stats.json` — 当前战斗统计（若在战斗中）
-- `game-logs/` — 可选附带的原版日志尾部
+- `combat-stats.json` — 战斗统计
+- `godot.log` — 原版游戏日志
 
-报告写在 `user://devmode-reports/`（与 `mod_data/KitLib/` 同账号目录树）。
+导出写在 `user://devmode-reports/`（与 `mod_data/KitLib/` 同账号目录树）。
 :::

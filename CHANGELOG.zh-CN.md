@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **日志导出 ZIP** — 移除 `report.txt` 与标题/复现步骤表单；导出始终包含 Harmony 补丁、战斗统计，以及 ZIP 根目录的完整游戏日志。
+- **日志导出界面** — 并入日志查看器；点击 **日志导出** 滑出扩展面板（与卡牌浏览器相同模式）。移除独立 Dev 侧栏项与主菜单入口。
 - **命令手册** — 命令按「官方」与各 mod 分区显示；官方命令说明支持中英文本地化。
 
 ### Removed

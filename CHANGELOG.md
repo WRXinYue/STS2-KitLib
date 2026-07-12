@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Log export ZIP** — Removed `report.txt` and the title/description form; export always includes Harmony patches, combat stats, and a full game log at the ZIP root.
+- **Log export UI** — Merged into the log viewer; **Log Export** opens a slide-out extension panel (same pattern as the card browser). Removed the standalone Dev rail tab and main-menu entry.
 - **Command reference** — Commands are grouped under Official and per-mod sections; official command descriptions are localized (English / Chinese).
 
 ### Removed

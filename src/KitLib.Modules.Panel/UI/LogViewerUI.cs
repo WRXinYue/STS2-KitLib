@@ -19,7 +19,10 @@ namespace KitLib.UI;
 /// </summary>
 internal static class LogViewerUI {
     private const string RootName = "KitLibLogViewer";
+    private const string DualMetaKey = "dm_dual_log_viewer";
+    private const string CarrierNodeName = "LogViewerDualCarrier";
     private const float PanelW = 880f;
+    private const float LogExportExtWidth = 300f;
     private const float FilterSideMinW = 216f;
     private const float StatsSideMinW = 164f;
 
@@ -38,33 +41,49 @@ internal static class LogViewerUI {
         return l;
     }
 
-    public static void Show(NGlobalUi globalUi) {
+    public static void Show(NGlobalUi globalUi, bool expandLogExport = false) {
         var parent = (Node)globalUi;
         Remove(parent);
         void Close() => DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(parent));
         LogCollector.RefreshFileSnapshot();
-        var dual = DevPanelUI.CreateMainOnlyDualOverlay(
-            globalUi, RootName, PanelW, Close, contentSeparation: 8);
-        var vbox = dual.MainContent;
+        var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
+            GlobalUi = globalUi,
+            RootName = RootName,
+            DualMetaKey = DualMetaKey,
+            CarrierNodeName = CarrierNodeName,
+            MainDefaultWidth = PanelW,
+            ExtDefaultWidth = LogExportExtWidth,
+            FallbackClose = Close,
+        });
+        dual.MainContent.AddThemeConstantOverride("separation", 8);
         LogSourcePieChart? pieChart = null;
-        BuildPanel(vbox, dual.Root, Close, chart => pieChart = chart);
+        var exportBtn = BuildPanel(dual.MainContent, dual.Root, Close, chart => pieChart = chart);
+        WireLogExportExtension(dual, exportBtn);
         dual.AttachToScene();
         pieChart?.RefreshAfterOverlayOpen();
+        if (expandLogExport)
+            dual.OpenExtension();
     }
 
-    public static void ShowOnMainMenu(NMainMenu mainMenu) {
+    public static void ShowOnMainMenu(NMainMenu mainMenu, bool expandLogExport = false) {
         var parent = mainMenu.GetTree().Root;
         HideAnywhere();
         Action close = HideAnywhere;
         LogCollector.AcknowledgeAlerts();
         LogCollector.RefreshFileSnapshot();
-        var (root, vbox) = DevMainMenuOverlay.Create(parent, RootName, PanelW, close, contentSeparation: 8);
-        BuildPanel(vbox, root, close);
+        var (root, vbox, mainPanel) = DevMainMenuOverlay.CreateWithPanel(
+            parent, RootName, PanelW, close, contentSeparation: 8);
+        var exportBtn = BuildPanel(vbox, root, close);
+        WireMainMenuLogExportExtension(root, mainPanel, exportBtn, expandLogExport);
     }
 
-    private static void BuildPanel(VBoxContainer vbox, Control root, Action onClose, Action<LogSourcePieChart>? capturePieChart = null) {
+    private static Button BuildPanel(
+        VBoxContainer vbox,
+        Control root,
+        Action onClose,
+        Action<LogSourcePieChart>? capturePieChart = null) {
         // ── Header ──
-        BuildHeader(vbox, onClose);
+        var exportBtn = BuildHeader(vbox, onClose);
 
         // ── Level / search / rule chips (wired below; placed in filter sidebar) ──
         var chipAll = DevPanelUI.CreateFilterChip(I18N.T("log.filter.all", "All"), active: true);
@@ -326,6 +345,7 @@ internal static class LogViewerUI {
         statsColumn.AddChild(statsScroll);
 
         bodyHBox.AddChild(statsColumn);
+
         vbox.AddChild(bodyHBox);
 
         // ── Footer: entry count ──
@@ -575,6 +595,7 @@ internal static class LogViewerUI {
         }
 
         ScheduleInitialRepopulate();
+        return exportBtn;
     }
 
     public static void Remove(NGlobalUi globalUi) => Remove((Node)globalUi);
@@ -987,7 +1008,7 @@ internal static class LogViewerUI {
     private static Button? _clearBtn;
     private static Label? _kitlogErrorLabel;
 
-    private static void BuildHeader(VBoxContainer vbox, Action onClose) {
+    private static Button BuildHeader(VBoxContainer vbox, Action onClose) {
         _kitlogErrorLabel = null;
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
@@ -999,6 +1020,17 @@ internal static class LogViewerUI {
         row.AddChild(title);
 
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+
+        var exportBtn = new Button {
+            Text = I18N.T("log.export", "Log Export"),
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(64, 26),
+            Icon = MdiIcon.ZipBox.Texture(14, KitLibTheme.Subtle),
+            TooltipText = I18N.T("log.export.subtitle",
+                "Export selected game log and diagnostics as a ZIP package."),
+        };
+        ApplySmallFlatButton(exportBtn);
+        row.AddChild(exportBtn);
 
         var openFolderBtn = new Button {
             Text = I18N.T("log.openFolder", "Open Folder"),
@@ -1090,6 +1122,133 @@ internal static class LogViewerUI {
             Color = KitLibTheme.ButtonBgNormal,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill
         });
+
+        return exportBtn;
+    }
+
+    private static void WireLogExportExtension(DevPanelUI.DualColumnOverlayHandle dual, Button exportBtn) {
+        var backBtn = BuildLogExportExtensionBackHeader(dual.ExtContent);
+        backBtn.Pressed += () => dual.CloseExtension();
+
+        var extScroll = new ScrollContainer {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
+        var exportInner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        FeedbackReportUI.BuildContent(exportInner, compact: false);
+        extScroll.AddChild(exportInner);
+        dual.ExtContent.AddChild(extScroll);
+
+        exportBtn.Pressed += () => dual.ToggleExtension();
+    }
+
+    private static void WireMainMenuLogExportExtension(
+        Control overlayRoot,
+        PanelContainer mainPanel,
+        Button exportBtn,
+        bool openInitially) {
+        const string extName = "KitLibLogViewerLogExportExt";
+        PanelContainer? extPanel = null;
+        Tween? closeTween = null;
+
+        void CloseExtension() {
+            closeTween?.Kill();
+            closeTween = null;
+            if (extPanel == null || !GodotObject.IsInstanceValid(extPanel))
+                return;
+
+            float w = Mathf.Max(1f, extPanel.Size.X);
+            closeTween = extPanel.CreateTween();
+            closeTween.SetTrans(Tween.TransitionType.Cubic);
+            closeTween.SetEase(Tween.EaseType.In);
+            closeTween.TweenProperty(extPanel, "position:x", w, 0.28f);
+            closeTween.TweenCallback(Callable.From(() => {
+                closeTween = null;
+                if (extPanel != null && GodotObject.IsInstanceValid(extPanel)) {
+                    extPanel.QueueFree();
+                    extPanel = null;
+                }
+            }));
+        }
+
+        void ToggleLogExportExtension() {
+            if (extPanel != null && GodotObject.IsInstanceValid(extPanel)) {
+                CloseExtension();
+                return;
+            }
+
+            closeTween?.Kill();
+            closeTween = null;
+
+            extPanel = DevPanelUI.CreateMainMenuModalPanel(LogExportExtWidth);
+            extPanel.Name = extName;
+            extPanel.MouseFilter = Control.MouseFilterEnum.Stop;
+            extPanel.AnchorTop = mainPanel.AnchorTop;
+            extPanel.AnchorBottom = mainPanel.AnchorBottom;
+            extPanel.OffsetTop = mainPanel.OffsetTop;
+            extPanel.OffsetBottom = mainPanel.OffsetBottom;
+
+            float mainHalfW = PanelW / 2f;
+            float gap = 8f;
+            extPanel.AnchorLeft = 0.5f;
+            extPanel.AnchorRight = 0.5f;
+            extPanel.OffsetLeft = mainHalfW + gap;
+            extPanel.OffsetRight = mainHalfW + gap + LogExportExtWidth;
+
+            var extContent = extPanel.GetNode<VBoxContainer>("Content");
+            extContent.AddThemeConstantOverride("separation", 8);
+            var backBtn = BuildLogExportExtensionBackHeader(extContent);
+            backBtn.Pressed += CloseExtension;
+
+            var extScroll = new ScrollContainer {
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            };
+            var exportInner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            FeedbackReportUI.BuildContent(exportInner, compact: false);
+            extScroll.AddChild(exportInner);
+            extContent.AddChild(extScroll);
+
+            overlayRoot.AddChild(extPanel);
+            DevPanelUI.PlayControlSlideOpenFromLeft(extPanel, 0.28f);
+        }
+
+        exportBtn.Pressed += ToggleLogExportExtension;
+        if (openInitially)
+            Callable.From(ToggleLogExportExtension).CallDeferred();
+    }
+
+    private static Button BuildLogExportExtensionBackHeader(VBoxContainer extVbox) {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 8);
+
+        var backBtn = new Button {
+            Text = I18N.T("room.ancients.back", "Back"),
+            FocusMode = Control.FocusModeEnum.None,
+            CustomMinimumSize = new Vector2(0, 32),
+        };
+        var flat = new StyleBoxFlat {
+            BgColor = Colors.Transparent,
+            ContentMarginLeft = 8,
+            ContentMarginRight = 8,
+            ContentMarginTop = 4,
+            ContentMarginBottom = 6,
+        };
+        foreach (var st in new[] { "normal", "hover", "pressed", "focus" })
+            backBtn.AddThemeStyleboxOverride(st, flat);
+        backBtn.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        backBtn.AddThemeFontSizeOverride("font_size", 12);
+        row.AddChild(backBtn);
+        row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        extVbox.AddChild(row);
+        extVbox.AddChild(new ColorRect {
+            CustomMinimumSize = new Vector2(0, 1),
+            Color = KitLibTheme.Separator,
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        });
+        return backBtn;
     }
 
     private static void BuildHeaderClearWire(VBoxContainer _, Action onClear) {

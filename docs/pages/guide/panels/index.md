@@ -78,7 +78,7 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 
 ::: en
 
-- **Logs** — Live + file history, filters, alerts — **[Mod feedback](/guide/mod-feedback/)** for ZIP export
+- **Logs** — Live + file history, filters, alerts; **Log Export** button in the header exports a ZIP — see **[Log export](/guide/mod-feedback/)**
 - **Combat stats / Enemy intents** — Overlays and rails (optional, under **Settings → Game**)
 - **Console** — Native + KitLib command reference
 
@@ -86,7 +86,7 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 
 ::: zh-CN
 
-- **日志** — 实时 + 文件历史、筛选、提醒 — ZIP 导出见 **[Mod 反馈](/guide/mod-feedback/)**
+- **日志** — 实时 + 文件历史、筛选、提醒；标题栏 **日志导出** 按钮可导出 ZIP — 见 **[日志导出](/guide/mod-feedback/)**
 - **战斗统计 / 敌人意图** — Overlay 与 rail（**设置 → 游戏** 中可选）
 - **控制台** — 原版与 KitLib 命令参考
 - **Harmony 分析 / 框架** — 补丁检视、mod 快照（默认在 **设置 → 侧栏** 隐藏）

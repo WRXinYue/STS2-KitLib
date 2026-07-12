@@ -12,6 +12,17 @@ internal static class DevMainMenuOverlay {
         Action onClose,
         int contentSeparation = 10,
         int zIndex = 2000) {
+        var (root, content, _) = CreateWithPanel(attachRoot, rootName, panelWidth, onClose, contentSeparation, zIndex);
+        return (root, content);
+    }
+
+    internal static (Control Root, VBoxContainer Content, PanelContainer Panel) CreateWithPanel(
+        Node attachRoot,
+        string rootName,
+        float panelWidth,
+        Action onClose,
+        int contentSeparation = 10,
+        int zIndex = 2000) {
         Remove(attachRoot, rootName);
 
         var root = new Control {
@@ -46,7 +57,7 @@ internal static class DevMainMenuOverlay {
 
         attachRoot.AddChild(root);
         DevMainMenuUI.NotifyOverlayOpened(root, panel);
-        return (root, content);
+        return (root, content, panel);
     }
 
     private static Control? FindFirstFocusableDescendant(Control root) {
