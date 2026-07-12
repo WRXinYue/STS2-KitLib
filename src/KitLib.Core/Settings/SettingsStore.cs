@@ -80,6 +80,11 @@ public static class SettingsStore {
         Save();
     }
 
+    public static void SetCardBrowserPerfLoggingEnabled(bool enabled) {
+        Current.CardBrowserPerfLoggingEnabled = enabled;
+        Save();
+    }
+
     public static void SetModPanelDiagnosticMode(bool enabled) {
         Current.ModPanelDiagnosticMode = enabled;
         Save();

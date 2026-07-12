@@ -94,6 +94,9 @@ public sealed partial class KitLibSettings {
     /// <summary>Append structured perf events to instances/{pid}/perf-trace.log.</summary>
     public bool PerfHudTraceToFile { get; set; }
 
+    /// <summary>Log [CardBrowserPerf] timings while using the Dev Mode card browser.</summary>
+    public bool CardBrowserPerfLoggingEnabled { get; set; }
+
     /// <summary>Log ModPanel open/refresh timings and verbose sidebar diagnostics.</summary>
     public bool ModPanelDiagnosticMode { get; set; }
 

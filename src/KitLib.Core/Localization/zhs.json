@@ -221,6 +221,8 @@
   "perfHud.enabled.desc": "右上角固定调试文字：过渡耗时、资源预热、帧尖峰。可在「快捷键」页重新绑定切换热键。",
   "perfHud.traceToFile": "写入性能 trace 文件",
   "perfHud.traceToFile.desc": "将过渡与帧尖峰以 CSV 追加到 instances/{pid}/perf-trace.log。",
+  "cardBrowser.perfLogging": "卡牌浏览器性能日志",
+  "cardBrowser.perfLogging.desc": "使用 Dev Mode 卡牌浏览器时，将 [CardBrowserPerf] 打开/网格/筛选等耗时写入主日志。",
 
   "syncbot.section": "SyncBot（开发）",
   "syncbot.enabled": "模拟远端玩家",

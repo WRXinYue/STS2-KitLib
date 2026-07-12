@@ -221,6 +221,8 @@
   "perfHud.enabled.desc": "Fixed top-right debug text for transitions, warmup, and frame spikes. Rebind the toggle hotkey on the Hotkeys page.",
   "perfHud.traceToFile": "Write perf trace to file",
   "perfHud.traceToFile.desc": "Append CSV lines to instances/{pid}/perf-trace.log when transitions or frame spikes are logged.",
+  "cardBrowser.perfLogging": "Card browser perf logging",
+  "cardBrowser.perfLogging.desc": "Log [CardBrowserPerf] open, grid, and filter timings to the main log while using the Dev Mode card browser.",
 
   "syncbot.section": "SyncBot (Dev)",
   "syncbot.enabled": "Simulate Remote Peers",

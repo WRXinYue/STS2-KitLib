@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using KitLib.DevPerf;
+using KitLib.Settings;
 
 namespace KitLib.UI.Diagnostics;
 
-/// <summary>Structured card browser timing logs; enabled by default for hitch diagnosis.</summary>
+/// <summary>Structured card browser timing logs; opt-in via Mod panel → Performance.</summary>
 internal static class CardBrowserPerf {
     public const string Prefix = "[CardBrowserPerf]";
 
-    public static bool IsEnabled => true;
+    public static bool IsEnabled => SettingsStore.Current.CardBrowserPerfLoggingEnabled;
 
     public static Stopwatch Start() => Stopwatch.StartNew();
 
