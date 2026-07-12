@@ -576,9 +576,7 @@ internal static partial class CardBrowserUI {
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled
         };
-        s.GridContent = new Control {
-            ClipContents = true,
-        };
+        s.GridContent = new Control();
 
         var gridOuterPad = new MarginContainer {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -586,7 +584,7 @@ internal static partial class CardBrowserUI {
         };
         gridOuterPad.AddThemeConstantOverride("margin_left", CardBrowserGridPadH);
         gridOuterPad.AddThemeConstantOverride("margin_right", CardBrowserGridPadH);
-        gridOuterPad.AddThemeConstantOverride("margin_top", CardBrowserGridPadV);
+        gridOuterPad.AddThemeConstantOverride("margin_top", CardBrowserGridPadTop);
         gridOuterPad.AddThemeConstantOverride("margin_bottom", CardBrowserGridPadV);
         gridOuterPad.AddChild(s.GridContent);
         s.GridScroll.AddChild(gridOuterPad);

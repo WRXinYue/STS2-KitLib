@@ -21,9 +21,10 @@ internal static partial class CardBrowserUI {
     internal const string GridHolderMetaKey = "kitlib_card_browser_holder";
     internal const float GridHolderDisplayScale = 0.70f;
     internal static readonly Vector2 GridHolderDisplayScaleVector = Vector2.One * GridHolderDisplayScale;
-    // Official grid: HoverScale 1.0, SmallScale 0.8 — preserve that ratio for our custom small scale.
+    // Official NCardGrid: HoverScale 1.0 / SmallScale 0.8 = 1.25; use slightly less in browser.
+    private const float GridHolderHoverScaleFactor = 1.2f;
     internal static readonly Vector2 GridHolderHoverScaleVector =
-        GridHolderDisplayScaleVector * (Vector2.One / NCardHolder.smallScale);
+        GridHolderDisplayScaleVector * GridHolderHoverScaleFactor;
 
     internal static bool IsBrowserGridHolder(NCardHolder holder) =>
         holder is NGridCardHolder && holder.HasMeta(GridHolderMetaKey);
@@ -31,6 +32,7 @@ internal static partial class CardBrowserUI {
     private static readonly Vector2 BaseCardPixelSize = new(300f, 422f);
     private const int CardBrowserGridPadH = 14;
     private const int CardBrowserGridPadV = 12;
+    private const int CardBrowserGridPadTop = 20;
     private const int GridScrollBufferRows = 3;
     private const int GridPreloadBufferRows = 1;
     private const int MaxHoldersPerFrame = 6;
@@ -124,7 +126,7 @@ internal static partial class CardBrowserUI {
         if (rowH < 1f)
             return s.SlidingWindowStart;
 
-        var topRow = Math.Max(0, (int)((scrollY - CardBrowserGridPadV) / rowH) - GridScrollBufferRows);
+        var topRow = Math.Max(0, (int)((scrollY - CardBrowserGridPadTop) / rowH) - GridScrollBufferRows);
         var slotCount = GetPoolSlotCount(s);
         var maxStart = Math.Max(0, s.FilteredCards.Count - slotCount);
         return Math.Min(topRow * cols, maxStart);
