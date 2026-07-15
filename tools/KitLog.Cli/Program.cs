@@ -6,7 +6,7 @@ using Spectre.Console;
 WindowsAnsiBootstrap.EnableIfNeeded();
 
 var pidOption = new Option<int?>("--pid") {
-    Description = "STS2 process id (instances/{pid}/session.log). Default: latest session.",
+    Description = "STS2 process id (KitLib-log-{pid} pipe). Default: latest active instance.",
 };
 
 var followOption = new Option<bool>("-f", "--follow") {
@@ -32,50 +32,48 @@ var syncViewerOption = new Option<bool>("--sync-viewer") {
     Description = "Mirror in-game log viewer filters (level, text, mod source, suppress rules).",
 };
 var noFallbackOption = new Option<bool>("--no-fallback") {
-    Description = "Do not fall back to session.log when the pipe is unavailable.",
+    Description = "Do not fall back to godot.log when the pipe is unavailable.",
 };
 
-var pathCmd = new Command("path", "Print resolved session.log path") {
+var pathCmd = new Command("path", "Print resolved godot.log path and pipe name") {
     pidOption,
 };
 pathCmd.SetAction(async (parseResult, ct) => {
-    var pid = parseResult.GetValue(pidOption);
-    var path = Sts2LogPathResolver.ResolveSessionLogPath(pid)
-               ?? Sts2LogPathResolver.ResolveGodotLogPath();
+    var path = Sts2LogPathResolver.ResolveGodotLogPath();
     if (path == null) {
-        AnsiConsole.MarkupLine("[red]No session log found.[/]");
+        AnsiConsole.MarkupLine("[red]No godot.log found.[/]");
         return 1;
     }
 
     Console.WriteLine(path);
-    if (TryResolvePid(pid, out var resolvedPid))
+    if (TryResolvePid(parseResult.GetValue(pidOption), out var resolvedPid))
         Console.WriteLine($"pipe: {LogStreamContract.PipeName(resolvedPid)}");
     return 0;
 });
 
-var listCmd = new Command("list", "List KitLib instance session logs");
+var listCmd = new Command("list", "List active KitLib instances and godot.log");
 listCmd.SetAction(async (_, ct) => {
-    var entries = Sts2LogPathResolver.ListSessionLogs();
+    var entries = Sts2LogPathResolver.ListActiveInstances();
     if (entries.Count == 0) {
-        AnsiConsole.MarkupLine("[yellow]No KitLib instance logs found.[/]");
-        var godot = Sts2LogPathResolver.ResolveGodotLogPath();
-        if (godot != null)
-            AnsiConsole.MarkupLine($"[grey]Fallback:[/] {Markup.Escape(godot)}");
-        return 1;
+        AnsiConsole.MarkupLine("[yellow]No active KitLib instances found.[/]");
+    }
+    else {
+        foreach (var entry in entries) {
+            var tag = entry.IsLatest ? " [green](latest)[/]" : "";
+            AnsiConsole.MarkupLine($"[grey]pid={entry.Pid}[/]{tag} pipe={Markup.Escape(LogStreamContract.PipeName(entry.Pid))}");
+        }
     }
 
-    foreach (var entry in entries) {
-        var tag = entry.IsLatest ? " [green](latest)[/]" : "";
-        var pipe = entry.Pid is int p ? LogStreamContract.PipeName(p) : "";
-        AnsiConsole.MarkupLine($"[grey]pid={entry.Pid}[/]{tag} {Markup.Escape(entry.Path)}");
-        if (!string.IsNullOrEmpty(pipe))
-            AnsiConsole.MarkupLine($"  [grey]pipe:[/] {Markup.Escape(pipe)}");
-    }
+    var godot = Sts2LogPathResolver.ResolveGodotLogPath();
+    if (godot != null)
+        AnsiConsole.MarkupLine($"[grey]godot.log:[/] {Markup.Escape(godot)}");
+    else if (entries.Count == 0)
+        return 1;
 
     return 0;
 });
 
-var attachCmd = new Command("attach", "Attach to the structured KitLib log pipe (falls back to session.log)") {
+var attachCmd = new Command("attach", "Attach to the structured KitLib log pipe (falls back to godot.log)") {
     pidOption,
     followOption,
     tailLinesOption,
@@ -87,7 +85,7 @@ var attachCmd = new Command("attach", "Attach to the structured KitLib log pipe 
 };
 attachCmd.SetAction(async (parseResult, ct) => {
     if (!TryResolvePid(parseResult.GetValue(pidOption), out var pid)) {
-        AnsiConsole.MarkupLine("[red]No KitLib session found.[/] Start the game or pass --pid.");
+        AnsiConsole.MarkupLine("[red]No KitLib instance found.[/] Start the game or pass --pid.");
         return 1;
     }
 
@@ -109,7 +107,7 @@ attachCmd.SetAction(async (parseResult, ct) => {
     }, ct);
 });
 
-var tailCmd = new Command("tail", "[legacy] Tail a KitLib session log file") {
+var tailCmd = new Command("tail", "[legacy] Tail godot.log") {
     pidOption,
     followOption,
     tailLinesOption,
@@ -146,7 +144,7 @@ tailCmd.SetAction(async (parseResult, ct) => {
     }, ct);
 });
 
-var root = new RootCommand("KitLib session log viewer for Slay the Spire 2") {
+var root = new RootCommand("KitLib log viewer for Slay the Spire 2") {
     pathCmd,
     listCmd,
     attachCmd,
@@ -161,9 +159,9 @@ static bool TryResolvePid(int? pid, out int resolvedPid) {
         return true;
     }
 
-    var latest = Sts2LogPathResolver.ListSessionLogs().FirstOrDefault(e => e.IsLatest);
-    if (latest?.Pid is int latestPid) {
-        resolvedPid = latestPid;
+    var latest = Sts2LogPathResolver.ListActiveInstances().FirstOrDefault(e => e.IsLatest);
+    if (latest != null) {
+        resolvedPid = latest.Pid;
         return true;
     }
 

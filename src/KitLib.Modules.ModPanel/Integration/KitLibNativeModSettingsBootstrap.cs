@@ -93,7 +93,7 @@ internal static class KitLibNativeModSettingsBootstrap {
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
             I18N.T("perfHud.traceToFile", "Write perf trace to file"),
             I18N.T("perfHud.traceToFile.desc",
-                "Append CSV lines to instances/{pid}/perf-trace.log when transitions or frame spikes are logged."),
+                "Append CSV lines to mod_data/KitLib/perf-trace.log when transitions or frame spikes are logged."),
             () => SettingsStore.Current.PerfHudTraceToFile,
             SettingsStore.SetPerfHudTraceToFile));
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(

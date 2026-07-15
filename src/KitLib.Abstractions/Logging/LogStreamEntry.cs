@@ -31,6 +31,17 @@ public sealed class LogStreamEntry {
     [JsonPropertyName("boundary")]
     public bool Boundary { get; init; }
 
+    [JsonPropertyName("kind")]
+    public string Kind { get; init; } = KindLog;
+
+    [JsonPropertyName("filter")]
+    public LogViewerFilterSnapshot? Filter { get; init; }
+
+    public const string KindLog = "log";
+    public const string KindFilter = "filter";
+
+    public bool IsFilterFrame => string.Equals(Kind, KindFilter, StringComparison.Ordinal);
+
     public string Fingerprint => $"{Lvl}|{Text}";
 
     public static LogStreamEntry FromKitLog(
@@ -55,6 +66,13 @@ public sealed class LogStreamEntry {
             Lvl = lvl,
             Text = text,
             Boundary = boundary,
+        };
+
+    public static LogStreamEntry FromFilterSnapshot(LogViewerFilterSnapshot snapshot)
+        => new() {
+            Kind = KindFilter,
+            Filter = snapshot,
+            Ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         };
 
     public static string LevelToken(KitLogLevel level) => level switch {

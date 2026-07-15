@@ -35,12 +35,8 @@ internal static class LogTailer {
         }
 
         LogViewerFilterWatcher? viewerWatcher = null;
-        if (options.SyncViewer) {
-            var profilePath = Sts2LogPathResolver.ResolveFilterProfilePath(options.Pid, options.FilePath);
-            viewerWatcher = new LogViewerFilterWatcher(profilePath);
-            if (viewerWatcher.PollForChanges(out _))
-                KitLog.Cli.Rendering.AnsiCodes.WriteStatusLine("Synced in-game log viewer filters.");
-        }
+        if (options.SyncViewer)
+            viewerWatcher = new LogViewerFilterWatcher();
 
         using var fs = new FileStream(
             options.FilePath,
@@ -59,9 +55,6 @@ internal static class LogTailer {
 
         string? line;
         while ((line = await reader.ReadLineAsync(ct)) != null) {
-            if (viewerWatcher?.PollForChanges(out var changed) == true && changed)
-                KitLog.Cli.Rendering.AnsiCodes.WriteStatusLine("── log viewer filters updated ──");
-
             if (!ShouldEmitLine(line, filter, options, viewerWatcher, boundaryTracker))
                 continue;
 
@@ -73,9 +66,6 @@ internal static class LogTailer {
             return 0;
 
         while (!ct.IsCancellationRequested) {
-            if (viewerWatcher?.PollForChanges(out var changed) == true && changed)
-                KitLog.Cli.Rendering.AnsiCodes.WriteStatusLine("── log viewer filters updated ──");
-
             line = await reader.ReadLineAsync(ct);
             if (line == null) {
                 await Task.Delay(200, ct);
@@ -94,9 +84,6 @@ internal static class LogTailer {
 
     static long ResolveStartPosition(FileStream fs, LogTailOptions options) {
         if (options.SyncViewer) {
-            if (LogViewerBoundaryTracker.IsInstanceSessionLog(options.FilePath))
-                return 0;
-
             var boundary = LogViewerBoundaryTracker.FindLastBoundaryEndOffset(options.FilePath);
             if (boundary >= 0)
                 return boundary;

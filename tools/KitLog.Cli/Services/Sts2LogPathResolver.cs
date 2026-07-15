@@ -1,9 +1,9 @@
 namespace KitLog.Cli.Services;
 
-internal sealed record SessionLogEntry(int? Pid, string Path, DateTime LastWriteUtc, bool IsLatest);
+internal sealed record ActiveInstanceEntry(int Pid, bool IsLatest);
 
 internal static class Sts2LogPathResolver {
-    static string InstancesDir(string accountDir) => Path.Combine(accountDir, "mod_data", "KitLib", "instances");
+    static readonly string[] Sts2ProcessNames = ["SlayTheSpire2", "Slay the Spire 2"];
 
     public static IReadOnlyList<string> UserDataRoots() {
         var roots = new List<string>();
@@ -30,67 +30,37 @@ internal static class Sts2LogPathResolver {
             .ToList();
     }
 
-    public static IReadOnlyList<SessionLogEntry> ListSessionLogs() {
-        var rows = new List<SessionLogEntry>();
-
-        foreach (var root in UserDataRoots()) {
-            var steamDir = Path.Combine(root, "steam");
-            if (!Directory.Exists(steamDir))
+    public static IReadOnlyList<ActiveInstanceEntry> ListActiveInstances() {
+        var ids = new HashSet<int>();
+        foreach (var name in Sts2ProcessNames) {
+            System.Diagnostics.Process[] processes;
+            try {
+                processes = System.Diagnostics.Process.GetProcessesByName(name);
+            }
+            catch {
                 continue;
+            }
 
-            foreach (var accountDir in Directory.EnumerateDirectories(steamDir)) {
-                var instancesDir = InstancesDir(accountDir);
-                if (!Directory.Exists(instancesDir))
-                    continue;
-
-                foreach (var instanceDir in Directory.EnumerateDirectories(instancesDir)) {
-                    var name = Path.GetFileName(instanceDir);
-                    if (!int.TryParse(name, out var pid))
-                        continue;
-
-                    var path = Path.Combine(instanceDir, "session.log");
-                    if (!File.Exists(path))
-                        continue;
-
-                    rows.Add(new SessionLogEntry(
-                        pid,
-                        path,
-                        File.GetLastWriteTimeUtc(path),
-                        IsLatest: false));
+            foreach (var process in processes) {
+                try {
+                    ids.Add(process.Id);
+                }
+                finally {
+                    process.Dispose();
                 }
             }
         }
 
-        if (rows.Count == 0)
-            return rows;
+        if (ids.Count == 0)
+            return [];
 
-        var latest = rows.OrderByDescending(r => r.LastWriteUtc).First().Path;
-        return rows
-            .Select(r => r with { IsLatest = string.Equals(r.Path, latest, StringComparison.OrdinalIgnoreCase) })
-            .OrderByDescending(r => r.IsLatest)
-            .ThenByDescending(r => r.LastWriteUtc)
+        var current = Environment.ProcessId;
+        var latest = ids.Contains(current) ? current : ids.Max();
+        return ids
+            .Select(pid => new ActiveInstanceEntry(pid, pid == latest))
+            .OrderByDescending(e => e.IsLatest)
+            .ThenByDescending(e => e.Pid)
             .ToList();
-    }
-
-    public static string? ResolveSessionLogPath(int? pid) {
-        if (pid is int id) {
-            foreach (var root in UserDataRoots()) {
-                var steamDir = Path.Combine(root, "steam");
-                if (!Directory.Exists(steamDir))
-                    continue;
-
-                foreach (var accountDir in Directory.EnumerateDirectories(steamDir)) {
-                    var path = Path.Combine(accountDir, "mod_data", "KitLib", "instances", id.ToString(), "session.log");
-                    if (File.Exists(path))
-                        return path;
-                }
-            }
-
-            return null;
-        }
-
-        var latest = ListSessionLogs().FirstOrDefault(e => e.IsLatest);
-        return latest?.Path;
     }
 
     public static string? ResolveGodotLogPath() {
@@ -107,39 +77,7 @@ internal static class Sts2LogPathResolver {
         if (!string.IsNullOrWhiteSpace(explicitFile))
             return File.Exists(explicitFile) ? Path.GetFullPath(explicitFile) : null;
 
-        if (pid is int id) {
-            var session = ResolveSessionLogPath(id);
-            if (session != null)
-                return session;
-            return ResolveGodotLogPath();
-        }
-
-        var godot = ResolveGodotLogPath();
-        if (godot != null)
-            return godot;
-
-        return ResolveSessionLogPath(null);
-    }
-
-    public static string? ResolveFilterProfilePath(int? pid, string? logPath = null) {
-        if (pid is int id) {
-            foreach (var root in UserDataRoots()) {
-                var steamDir = Path.Combine(root, "steam");
-                if (!Directory.Exists(steamDir))
-                    continue;
-
-                foreach (var accountDir in Directory.EnumerateDirectories(steamDir))
-                    return Path.Combine(accountDir, "mod_data", "KitLib", "instances", id.ToString(), LogViewerFilterContract.FileName);
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(logPath)) {
-            var dir = Path.GetDirectoryName(logPath);
-            if (!string.IsNullOrEmpty(dir))
-                return Path.Combine(dir, LogViewerFilterContract.FileName);
-        }
-
-        return null;
+        return ResolveGodotLogPath();
     }
 
     public static bool TailContainsSessionMarker(string path) {

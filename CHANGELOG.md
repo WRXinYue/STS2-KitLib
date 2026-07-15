@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Per-instance `session.log`** — KitLib no longer mirrors logs to `mod_data/KitLib/instances/{pid}/session.log`. All play uses the official `user://logs/godot.log`; dual-instance debugging uses `kitlog attach --pid <pid>` (named pipe).
+- **`mod_data/KitLib/instances/`** — Removed lock files, per-PID filter JSON, and instance subfolders. Dual-instance detection uses running STS2 process count; `kitlog attach --sync-viewer` receives filter updates over the log pipe. Optional `perf-trace.log` now lives directly under `mod_data/KitLib/`. Startup auto-deletes any leftover `instances/` folder (temporary migration; remove this cleanup in a later release).
+
 ### Changed
 
 - **Log export ZIP** — Removed `report.txt` and the title/description form; export always includes Harmony patches, combat stats, and a full game log at the ZIP root.

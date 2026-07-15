@@ -6,17 +6,9 @@ namespace KitLog.Cli.Services;
 /// Mirrors the in-game viewer: lines before the last session boundary are shown without viewer filters.
 /// </summary>
 internal sealed class LogViewerBoundaryTracker {
-    readonly bool _useBoundarySplit;
     bool _applyViewerFilters;
 
     public LogViewerBoundaryTracker(string logPath, long tailStartOffset) {
-        if (IsInstanceSessionLog(logPath)) {
-            _useBoundarySplit = false;
-            _applyViewerFilters = true;
-            return;
-        }
-
-        _useBoundarySplit = true;
         var lastBoundaryEnd = FindLastBoundaryEndOffset(logPath);
         if (lastBoundaryEnd < 0) {
             _applyViewerFilters = false;
@@ -29,20 +21,8 @@ internal sealed class LogViewerBoundaryTracker {
     public bool ApplyViewerFilters => _applyViewerFilters;
 
     public void OnLine(string line) {
-        if (!_useBoundarySplit)
-            return;
-
         if (LogViewerFilterMatcher.IsSessionBoundary(line))
             _applyViewerFilters = true;
-    }
-
-    internal static bool IsInstanceSessionLog(string path) {
-        if (string.IsNullOrEmpty(path))
-            return false;
-
-        var normalized = path.Replace('\\', '/');
-        return normalized.Contains("/mod_data/KitLib/instances/", StringComparison.OrdinalIgnoreCase)
-               && normalized.EndsWith("/session.log", StringComparison.OrdinalIgnoreCase);
     }
 
     internal static long FindLastBoundaryEndOffset(string logPath) {

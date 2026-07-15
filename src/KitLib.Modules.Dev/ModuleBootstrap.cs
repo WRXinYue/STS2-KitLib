@@ -61,12 +61,10 @@ internal static class ModuleBootstrap {
         KitLibBootstrapGate.EnterSceneReadyBootstrap();
         _completing = true;
         try {
-            KitLibHost.IsDualInstanceActive = KitLibInstanceRegistry.IsDualInstanceActive;
+            KitLibHost.IsDualInstanceActive = KitLibProcessScope.IsDualInstanceActive;
 
             EnsureHarmonyApplied();
             ApplyManualHookPatches();
-
-            KitLibInstanceRegistry.Register();
 
             SafeStep("FrameworkBridge", () => FrameworkBridge.Initialize());
             SafeStep("CombatStatsTracker", () => CombatStatsTracker.Initialize());

@@ -51,7 +51,8 @@ def _kitlog_description_bbcode(tools_rid: str) -> str:
     return (
         "[b]KitLog CLI[/b] (optional terminal log viewer)\n\n"
         "Tail KitLib session logs from a terminal. Use [code]kitlog attach[/code] for live structured "
-        "logs over a named pipe while the game runs; [code]kitlog tail[/code] reads [code]session.log[/code] "
+        "logs over a named pipe while the game runs; [code]kitlog attach[/code] is recommended, "
+        "[code]kitlog tail[/code] reads [code]godot.log[/code] "
         "offline.\n\n"
         f"Extract [code]{exe}[/code] to [code]PATH[/code] or [code]mods/KitLib/tools/[/code]. "
         "The in-game log viewer can launch attach automatically.\n\n"

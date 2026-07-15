@@ -10,9 +10,6 @@ namespace KitLib;
 /// </summary>
 internal sealed class KitLogUserSink : IKitLibLogSink {
     public void Write(AbstractionsKitLogLevel level, string source, string message) {
-        if (!InstanceLogWriter.IsActive)
-            return;
-
         var text = string.IsNullOrEmpty(message)
             ? $"[{source}]"
             : $"[{source}] {message}";

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using KitLib.Logging;
 
 namespace KitLog.Cli.Services;
 
@@ -48,6 +49,28 @@ internal sealed class LogViewerFilterState {
         };
     }
 
+    public static LogViewerFilterState FromSnapshot(LogViewerFilterSnapshot snapshot) {
+        ParsedLogLevel? minLevel = snapshot.MinLevel?.ToLowerInvariant() switch {
+            null or "" => null,
+            "info" => ParsedLogLevel.Info,
+            "warn" or "warning" => ParsedLogLevel.Warn,
+            "error" => ParsedLogLevel.Error,
+            _ => null,
+        };
+
+        return new LogViewerFilterState {
+            MinimumLevel = minLevel,
+            TextFilter = snapshot.TextFilter ?? "",
+            SuppressRules = snapshot.SuppressRules
+                .Select(r => (r.Pattern, r.Enabled))
+                .ToArray(),
+            HiddenSources = snapshot.HiddenSources.ToHashSet(StringComparer.Ordinal),
+            LoadedModIds = snapshot.LoadedModIds.ToHashSet(StringComparer.Ordinal),
+            ModIdAliases = snapshot.ModIdAliases
+                .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal),
+        };
+    }
+
     public static LogViewerFilterState Defaults() => new() {
         SuppressRules = DefaultSuppressPatterns.Select(p => (p, true)).ToArray(),
     };
@@ -65,22 +88,9 @@ internal sealed class LogViewerFilterState {
     };
 }
 
-internal sealed class LogViewerFilterWatcher : IDisposable {
-    static readonly JsonSerializerOptions JsonOptions = new() {
-        PropertyNameCaseInsensitive = true,
-    };
-
-    readonly string _path;
+internal sealed class LogViewerFilterWatcher {
     readonly object _lock = new();
-    LogViewerFilterState _state;
-    DateTime _lastWriteUtc = DateTime.MinValue;
-    string? _lastFingerprint;
-
-    public LogViewerFilterWatcher(string? profilePath) {
-        _path = profilePath ?? "";
-        _state = LogViewerFilterState.Defaults();
-        TryReload(force: true);
-    }
+    LogViewerFilterState _state = LogViewerFilterState.Defaults();
 
     public LogViewerFilterState Current {
         get {
@@ -89,40 +99,13 @@ internal sealed class LogViewerFilterWatcher : IDisposable {
         }
     }
 
+    public void ApplyFromSnapshot(LogViewerFilterSnapshot snapshot) {
+        lock (_lock)
+            _state = LogViewerFilterState.FromSnapshot(snapshot);
+    }
+
     public bool PollForChanges(out bool changed) {
-        changed = TryReload(force: false);
-        return changed;
+        changed = false;
+        return false;
     }
-
-    bool TryReload(bool force) {
-        if (string.IsNullOrEmpty(_path) || !File.Exists(_path))
-            return false;
-
-        try {
-            var writeUtc = File.GetLastWriteTimeUtc(_path);
-            if (!force && writeUtc == _lastWriteUtc)
-                return false;
-
-            var json = File.ReadAllText(_path);
-            if (!force && string.Equals(json, _lastFingerprint, StringComparison.Ordinal))
-                return false;
-
-            var profile = JsonSerializer.Deserialize<LogViewerFilterProfile>(json, JsonOptions)
-                          ?? new LogViewerFilterProfile();
-            var next = LogViewerFilterState.FromProfile(profile);
-
-            lock (_lock) {
-                _state = next;
-                _lastWriteUtc = writeUtc;
-                _lastFingerprint = json;
-            }
-
-            return true;
-        }
-        catch {
-            return false;
-        }
-    }
-
-    public void Dispose() { }
 }

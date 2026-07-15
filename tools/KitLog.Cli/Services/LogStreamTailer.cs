@@ -33,12 +33,8 @@ internal static class LogStreamTailer {
         }
 
         LogViewerFilterWatcher? viewerWatcher = null;
-        if (options.SyncViewer) {
-            var profilePath = Sts2LogPathResolver.ResolveFilterProfilePath(options.Pid, null);
-            viewerWatcher = new LogViewerFilterWatcher(profilePath);
-            if (viewerWatcher.PollForChanges(out _))
-                AnsiCodes.WriteStatusLine("Synced in-game log viewer filters.");
-        }
+        if (options.SyncViewer)
+            viewerWatcher = new LogViewerFilterWatcher();
 
         while (!ct.IsCancellationRequested) {
             await using var pipe = await LogPipeClient.TryConnectAsync(
@@ -48,7 +44,7 @@ internal static class LogStreamTailer {
 
             if (pipe == null) {
                 if (initialAttempt && options.AllowFallback)
-                    return await FallbackToSessionLogAsync(options, ct);
+                    return await FallbackToGodotLogAsync(options, ct);
 
                 if (!options.Follow)
                     return 1;
@@ -84,12 +80,17 @@ internal static class LogStreamTailer {
         CancellationToken ct) {
         try {
             while (!ct.IsCancellationRequested) {
-                if (viewerWatcher?.PollForChanges(out var changed) == true && changed)
-                    AnsiCodes.WriteStatusLine("── log viewer filters updated ──");
-
                 var entry = await LogStreamFraming.ReadFrameAsync(pipe, ct);
                 if (entry == null)
                     return true;
+
+                if (entry.IsFilterFrame) {
+                    if (options.SyncViewer && entry.Filter != null) {
+                        viewerWatcher?.ApplyFromSnapshot(entry.Filter);
+                        AnsiCodes.WriteStatusLine("── log viewer filters updated ──");
+                    }
+                    continue;
+                }
 
                 if (!ShouldEmit(entry, filter, options, viewerWatcher))
                     continue;
@@ -107,13 +108,13 @@ internal static class LogStreamTailer {
         return true;
     }
 
-    static async Task<int> FallbackToSessionLogAsync(LogAttachOptions options, CancellationToken ct) {
+    static async Task<int> FallbackToGodotLogAsync(LogAttachOptions options, CancellationToken ct) {
         AnsiConsole.MarkupLine(
-            $"[yellow]Pipe unavailable; falling back to session.log[/] ({Markup.Escape(LogStreamContract.PipeName(options.Pid))})");
+            $"[yellow]Pipe unavailable; falling back to godot.log[/] ({Markup.Escape(LogStreamContract.PipeName(options.Pid))})");
 
-        var path = Sts2LogPathResolver.ResolveSessionLogPath(options.Pid);
+        var path = Sts2LogPathResolver.ResolveGodotLogPath();
         if (path == null) {
-            AnsiConsole.MarkupLine("[red]No session log found for fallback.[/]");
+            AnsiConsole.MarkupLine("[red]No godot.log found for fallback.[/]");
             return 1;
         }
 

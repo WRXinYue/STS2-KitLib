@@ -18,6 +18,7 @@ public class MainFile {
         KitLibStartupAudit.Measure("runtimeProfile", Sts2RuntimeProfile.Initialize);
         KitLibStartupAudit.Measure("logBridge", ModKitLibLogBridge.Initialize);
         KitLibStartupAudit.Measure("dataPaths", DataPaths.EnsurePinnedOnMainThread);
+        LegacyInstancesDirCleanup.ScheduleOnStartup();
         KitLibStartupAudit.Measure("settings", SettingsStore.Load);
         KitLibStartupAudit.Measure("coreHarmony", () => KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID));
         KitLibStartupAudit.Measure("hostBootstrap", KitLibHost.Bootstrap);

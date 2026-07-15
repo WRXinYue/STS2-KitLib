@@ -14,9 +14,7 @@ internal static class DevPerfTraceWriter {
             if (_tracePath != null)
                 return _tracePath;
 
-            var dir = InstanceLogWriter.IsActive
-                ? InstanceLogWriter.InstanceDirectory
-                : Path.Combine(DataPaths.BaseDir, "instances", KitLibInstance.ProcessId.ToString());
+            var dir = DataPaths.BaseDir;
 
             Directory.CreateDirectory(dir);
             _tracePath = Path.Combine(dir, "perf-trace.log");

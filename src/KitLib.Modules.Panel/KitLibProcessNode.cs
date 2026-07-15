@@ -13,9 +13,6 @@ namespace KitLib;
 internal partial class KitLibProcessNode : Node {
     internal static KitLibProcessNode? Instance { get; private set; }
 
-    private double _heartbeatAccum;
-    private double _logFlushAccum;
-
     public override void _EnterTree() {
         Instance = this;
         ProcessPriority = 128;
@@ -24,19 +21,6 @@ internal partial class KitLibProcessNode : Node {
     }
 
     public override void _Process(double delta) {
-        _heartbeatAccum += delta;
-        if (_heartbeatAccum >= 2.0) {
-            _heartbeatAccum = 0;
-            KitLibInstanceRegistry.Heartbeat();
-            InstanceLogWriter.SyncDualInstanceMode();
-        }
-
-        _logFlushAccum += delta;
-        if (_logFlushAccum >= InstanceLogWriter.FlushIntervalSeconds) {
-            _logFlushAccum = 0;
-            InstanceLogWriter.TryFlush();
-        }
-
         GlobalUiReadyPatch.Process(delta);
     }
 
@@ -45,7 +29,5 @@ internal partial class KitLibProcessNode : Node {
             Instance = null;
         McpBridge.Shutdown();
         LogStreamPipeServer.Stop();
-        InstanceLogWriter.Shutdown();
-        KitLibInstanceRegistry.Unregister();
     }
 }

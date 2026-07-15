@@ -22,7 +22,7 @@ internal static class DualInstanceTestBootstrap {
     }
 
     public static void EnsureCheatsEnabled(string reason) {
-        if (!KitLibInstanceRegistry.IsDualInstanceActive())
+        if (!KitLibProcessScope.IsDualInstanceActive())
             return;
 
         KitLibState.NormalRunMode = NormalRunMode.Cheat;
@@ -41,7 +41,7 @@ internal static class DualInstanceTestBootstrap {
 
     /// <summary>Dual-instance LAN: auto-apply host-drive + client AFK presets so half-config cannot desync.</summary>
     internal static void TryAutoLanPresetsOnLaunch() {
-        if (!KitLibInstanceRegistry.IsDualInstanceActive()) return;
+        if (!KitLibProcessScope.IsDualInstanceActive()) return;
 
         var netType = RunManager.Instance?.NetService?.Type;
         if (netType == NetGameType.Host) {

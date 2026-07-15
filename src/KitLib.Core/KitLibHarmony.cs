@@ -86,7 +86,7 @@ public static class KitLibHarmony {
             $"KitLib Harmony patches applied: {harmonyId} ({appliedTypes.Count} types, {skipped.Count} skipped).");
         if (skipped.Count > 0) {
             MainFile.Logger.Warn(
-                $"KitLib Harmony {harmonyId}: {skipped.Count} patch type(s) skipped — search session.log for " +
+                $"KitLib Harmony {harmonyId}: {skipped.Count} patch type(s) skipped — search godot.log for " +
                 "'Harmony skipped patch type' or module health errors.");
         }
     }

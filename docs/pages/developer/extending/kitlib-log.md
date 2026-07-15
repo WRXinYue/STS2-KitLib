@@ -11,7 +11,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
 ::: en
 
-Content mods reference NuGet **`STS2.KitLib.Abstractions`** and call **`KitLib.Logging.KitLibLog`**. When KitLib Core is loaded at runtime, logs use a unified line format, appear in the game logger, and (with **KitLib.User**) land in `mod_data/KitLib/instances/{pid}/session.log` and the in-game log viewer.
+Content mods reference NuGet **`STS2.KitLib.Abstractions`** and call **`KitLib.Logging.KitLibLog`**. When KitLib Core is loaded at runtime, logs use a unified line format, appear in the game logger and `user://logs/godot.log`, and (with **KitLib.User**) stream to the in-game log viewer and `kitlog attach` pipe.
 
 **You do not pass your manifest id on every call.** KitLib resolves it from the **calling assembly** via `ModAssemblyLookup` (same map used for save-slot blame and content attribution). Satellite DLLs in your mod folder are registered automatically.
 
@@ -22,7 +22,7 @@ See also: [Mod runtime API](/developer/extending/mod-runtime) for catalog/timing
 
 ::: zh-CN
 
-内容 mod 引用 NuGet **`STS2.KitLib.Abstractions`**，调用 **`KitLib.Logging.KitLibLog`**。运行时加载 KitLib Core 后，日志走统一行格式，进入游戏 logger；安装 **KitLib.User** 时还会写入 `mod_data/KitLib/instances/{pid}/session.log` 与游戏内日志查看器。
+内容 mod 引用 NuGet **`STS2.KitLib.Abstractions`**，调用 **`KitLib.Logging.KitLibLog`**。运行时加载 KitLib Core 后，日志走统一行格式，进入游戏 logger 与 `user://logs/godot.log`；安装 **KitLib.User** 时还可进入游戏内日志查看器与 `kitlog attach` 管道。
 
 **不必每次传入 manifest id。** KitLib 通过 **调用方程序集** 经 `ModAssemblyLookup` 解析（与存档归因、内容归属同一套映射）。mod 目录下的卫星 DLL 会在启动时自动登记。
 
@@ -314,7 +314,7 @@ static object BuildLoggingPage() {
 | Mode | Compile | Runtime | Behavior |
 | --- | --- | --- | --- |
 | **Soft** | `STS2.KitLib.Abstractions` only | KitLib optional | `KitLibLog.IsAvailable == false`; calls no-op |
-| **Hard** | Abstractions + manifest `"dependencies": ["KitLib"]` | KitLib required | Full pipeline + session.log when User module present |
+| **Hard** | Abstractions + manifest `"dependencies": ["KitLib"]` | KitLib required | Full pipeline + log viewer / pipe when User module present |
 
 Abstractions types are safe to reference unconditionally; **`ModLog`** handles the KitLib vs fallback split for you. Use direct `KitLibLog` only when you need manual control.
 
@@ -326,7 +326,7 @@ Optional sink for tools: implement `IKitLibLogSink` and register via KitLib inte
 | 模式 | 编译 | 运行时 | 行为 |
 | --- | --- | --- | --- |
 | **软依赖** | 仅 `STS2.KitLib.Abstractions` | KitLib 可选 | `KitLibLog.IsAvailable == false`；调用为 no-op |
-| **硬依赖** | Abstractions + 清单 `"dependencies": ["KitLib"]` | 必须装 KitLib | 完整管道；有 User 模块时写入 session.log |
+| **硬依赖** | Abstractions + 清单 `"dependencies": ["KitLib"]` | 必须装 KitLib | 完整管道；有 User 模块时接入日志查看器与 pipe |
 
 Abstractions 类型可无条件引用；**`ModLog`** 会自动处理 KitLib 与 fallback 分支。仅在需要手动控制时使用底层 `KitLibLog`。
 
@@ -351,42 +351,48 @@ KitLib 各模块在 Core 内调用 **`KitLog.Info(scope, message)`**（同样为
 旧式单段方括号标签（如 `[KitLibHost]`）应改用 scope **`Host`**；`[KitLib.CombatAdd]` → **`CombatAdd`**。
 :::
 
-## Session logs & CLI{lang="en"}
+## Logs & CLI{lang="en"}
 
-## 会话日志与 CLI{lang="zh-CN"}
+## 日志与 CLI{lang="zh-CN"}
 
 ::: en
 
-With **KitLib.User**, session boundaries use `KitLogMarkers.SessionBoundaryPrefix`. Per-process logs:
+With **KitLib.User**, session boundaries use `KitLogMarkers.SessionBoundaryPrefix`. Disk output uses the official `user://logs/godot.log`.
 
-`mod_data/KitLib/instances/{pid}/session.log`
-
-External tail:
+Live per-process stream (recommended for dual-instance):
 
 ```bash
-kitlog tail --pid <pid> -f
-kitlog tail --sync-viewer
+kitlog attach --pid <pid> -f --sync-viewer
 ```
 
-Filter contract file: `log-viewer-filter.json` (`LogViewerFilterContract`).
+Legacy file tail:
 
-**Mod settings:** KitLib → General → **Open live log terminal on startup** (`LaunchKitlogOnStartup`, default off). When enabled, KitLib.User opens a terminal streaming the session log after it is ready; silently skips if KitLog.Cli (kitlog) is not installed.
+```bash
+kitlog tail -f --sync-viewer
+```
+
+Filter updates stream over the log pipe when using `kitlog attach --sync-viewer` (no disk file).
+
+**Mod settings:** KitLib → General → **Open live log terminal on startup** (`LaunchKitlogOnStartup`, default off). When enabled, KitLib.User opens `kitlog attach` after startup; silently skips if KitLog.Cli (kitlog) is not installed.
 :::
 
 ::: zh-CN
 
-安装 **KitLib.User** 时，会话边界使用 `KitLogMarkers.SessionBoundaryPrefix`。按进程日志路径：
+安装 **KitLib.User** 时，会话边界使用 `KitLogMarkers.SessionBoundaryPrefix`。磁盘日志使用官方 `user://logs/godot.log`。
 
-`mod_data/KitLib/instances/{pid}/session.log`
-
-外部 tail：
+按进程实时流（双开推荐）：
 
 ```bash
-kitlog tail --pid <pid> -f
-kitlog tail --sync-viewer
+kitlog attach --pid <pid> -f --sync-viewer
 ```
 
-过滤器契约文件：`log-viewer-filter.json`（`LogViewerFilterContract`）。
+传统文件 tail：
 
-**Mod 设置：** KitLib → 常规 → **启动时打开实时日志终端**（`LaunchKitlogOnStartup`，默认关）。开启后 KitLib.User 在 session 日志就绪后打开终端实时输出；未安装 KitLog.Cli（kitlog）时静默跳过。
+```bash
+kitlog tail -f --sync-viewer
+```
+
+筛选更新经日志管道发送给 `kitlog attach --sync-viewer`（不再写磁盘文件）。
+
+**Mod 设置：** KitLib → 常规 → **启动时打开实时日志终端**（`LaunchKitlogOnStartup`，默认关）。开启后 KitLib.User 在启动后打开 `kitlog attach`；未安装 KitLog.Cli（kitlog）时静默跳过。
 :::

@@ -989,8 +989,7 @@ internal static class LogViewerUI {
     private static string EscapeBbCode(string text)
         => text.Replace("[", "[lb]");
 
-    private static string GetGameLogsDirectory()
-        => InstanceLogWriter.IsActive ? InstanceLogWriter.InstanceDirectory : GameLogFileHydrator.LogsDirectory;
+    private static string GetGameLogsDirectory() => GameLogFileHydrator.LogsDirectory;
 
     private static void OpenGameLogsFolder() {
         var dir = GetGameLogsDirectory();
@@ -1037,10 +1036,7 @@ internal static class LogViewerUI {
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(64, 26),
             Icon = MdiIcon.FolderOpen.Texture(14, KitLibTheme.Subtle),
-            TooltipText = InstanceLogWriter.IsActive
-                ? I18N.T("log.openFolderTipInstance",
-                    "Open this window's log folder (mod_data/KitLib/instances/{0}/)", KitLibInstance.ProcessId)
-                : I18N.T("log.openFolderTip", "Open the game log folder (user://logs/) in the system file manager"),
+            TooltipText = I18N.T("log.openFolderTip", "Open the game log folder (user://logs/) in the system file manager"),
         };
         ApplySmallFlatButton(openFolderBtn);
         openFolderBtn.Pressed += OpenGameLogsFolder;
@@ -1095,10 +1091,10 @@ internal static class LogViewerUI {
         instanceRow.AddThemeConstantOverride("margin_left", 4);
         vbox.AddChild(instanceRow);
 
-        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
+        if (KitLibProcessScope.IsDualInstanceActive()) {
             var dualHint = new Label {
                 Text = I18N.T("log.instance.dualHint",
-                    "Dual-instance mode: this window writes to mod_data/KitLib/instances/{0}/session.log; Godot still shares user://logs/.",
+                    "Dual-instance: logs share user://logs/godot.log. Use kitlog attach --pid {0} for this window.",
                     KitLibInstance.ProcessId),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };

@@ -16,7 +16,6 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.dotenv import load_dotenv  # noqa: E402
-from lib.steam import read_sts2_dir_from_local_props  # noqa: E402
 
 
 def _repo_root(explicit: Path | None) -> Path:
@@ -60,30 +59,6 @@ def _wait_bridge(port: int, timeout_sec: float) -> bool:
     return False
 
 
-def _warn_existing_instances(repo_root: Path) -> None:
-    game_root = read_sts2_dir_from_local_props(repo_root)
-    if not game_root:
-        return
-
-    # mod_data path mirrors DevMode DataPaths on Windows (%AppData%)
-    import os
-
-    appdata = os.environ.get("APPDATA")
-    if not appdata:
-        return
-
-    instances_dir = Path(appdata) / "SlayTheSpire2" / "steam" / "mod_data" / "KitLib" / "instances"
-    if not instances_dir.is_dir():
-        return
-
-    locks = list(instances_dir.glob("*.lock"))
-    if locks:
-        print(
-            f"Note: {len(locks)} DevMode instance lock file(s) found — " "another STS2 session may already be running.",
-            file=sys.stderr,
-        )
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description="KitLib agent session bootstrap (L1 orchestrator).")
     ap.add_argument("--repo-root", type=Path, default=None, help="Repository root")
@@ -105,9 +80,6 @@ def main() -> int:
     if not args.sync and not args.launch and args.wait_bridge <= 0:
         ap.print_help()
         return 1
-
-    if args.launch:
-        _warn_existing_instances(repo_root)
 
     if args.sync:
         code = _run_sync(repo_root)

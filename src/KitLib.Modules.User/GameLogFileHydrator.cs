@@ -10,8 +10,7 @@ using MegaCrit.Sts2.Core.Logging;
 namespace KitLib;
 
 /// <summary>
-/// Reads and parses on-disk game logs for the in-game viewer.
-/// Single-instance: <c>user://logs/godot.log</c>. Dual-instance: per-process <c>session.log</c>.
+/// Reads and parses on-disk game logs for the in-game viewer from <c>user://logs/godot.log</c>.
 /// </summary>
 internal static class GameLogFileHydrator {
     private const int MaxReadBytes = 2 * 1024 * 1024;
@@ -25,7 +24,7 @@ internal static class GameLogFileHydrator {
         @"^\[(?<level>INFO|WARN|WARNING|ERROR|DEBUG|LOAD|VERYDEBUG|VDB|DBG)\]\s+(?<text>.*)$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-    private static string? _cachedSessionLogPath;
+    private static string? _cachedLogPath;
 
     internal static string LogsDirectory => Path.Combine(OS.GetUserDataDir(), "logs");
 
@@ -36,24 +35,21 @@ internal static class GameLogFileHydrator {
         }
     }
 
-    internal static string? CurrentSessionLogPath => FindSessionLogPath();
+    internal static string? CurrentLogPath => FindLogPath();
 
-    internal static string? CurrentSessionLogDisplayName {
+    internal static string? CurrentLogDisplayName {
         get {
-            var path = FindSessionLogPath();
-            if (path == null)
-                return null;
-            if (InstanceLogWriter.IsActive
-                && string.Equals(path, InstanceLogWriter.SessionLogPath, StringComparison.OrdinalIgnoreCase))
-                return InstanceLogWriter.DisplayName;
-            return Path.GetFileName(path);
+            var path = FindLogPath();
+            return path != null ? Path.GetFileName(path) : null;
         }
     }
 
-    internal static string? CurrentSessionLogFileName => CurrentSessionLogDisplayName;
+    internal static string? CurrentSessionLogPath => CurrentLogPath;
 
-    internal static List<LogCollector.Entry> ReadSessionLogEntries() {
-        var path = FindSessionLogPath();
+    internal static string? CurrentSessionLogFileName => CurrentLogDisplayName;
+
+    internal static List<LogCollector.Entry> ReadLogEntries() {
+        var path = FindLogPath();
         if (path == null)
             return [];
 
@@ -62,57 +58,37 @@ internal static class GameLogFileHydrator {
             return ParseFile(path, referenceDate);
         }
         catch (Exception ex) {
-            KitLog.Warn("LogViewer", $"Failed to read session log file: {ex.Message}");
+            KitLog.Warn("LogViewer", $"Failed to read log file: {ex.Message}");
             return [];
         }
     }
 
-    internal static string? FindSessionLogPath() {
-        if (_cachedSessionLogPath != null && File.Exists(_cachedSessionLogPath))
-            return _cachedSessionLogPath;
+    internal static List<LogCollector.Entry> ReadSessionLogEntries() => ReadLogEntries();
 
-        if (KitLibInstanceRegistry.IsDualInstanceActive()) {
-            if (InstanceLogWriter.IsActive && File.Exists(InstanceLogWriter.SessionLogPath)) {
-                _cachedSessionLogPath = InstanceLogWriter.SessionLogPath;
-                return _cachedSessionLogPath;
-            }
-
-            var dualResolved = ScanForSessionLogPath();
-            if (dualResolved != null)
-                _cachedSessionLogPath = dualResolved;
-            return dualResolved;
-        }
+    internal static string? FindLogPath() {
+        if (_cachedLogPath != null && File.Exists(_cachedLogPath))
+            return _cachedLogPath;
 
         var godot = GodotLogPath;
         if (godot != null) {
-            _cachedSessionLogPath = godot;
+            _cachedLogPath = godot;
             return godot;
         }
 
-        return ScanForSessionLogPath();
+        var resolved = ScanForMarkedLogPath();
+        if (resolved != null)
+            _cachedLogPath = resolved;
+        return resolved;
     }
 
-    internal static void InvalidateSessionLogPathCache() => _cachedSessionLogPath = null;
+    internal static void InvalidateSessionLogPathCache() => _cachedLogPath = null;
 
     /// <summary>All log files newest-first; marks the file bound to this process.</summary>
     internal static IReadOnlyList<(string DisplayName, string AbsPath, bool IsCurrentSession)> ScanLogFiles() {
         try {
-            var dual = KitLibInstanceRegistry.IsDualInstanceActive();
-            var current = FindSessionLogPath();
+            var current = FindLogPath();
             var currentTag = I18N.T("log.instance.currentFileTag", "(this window)");
             var rows = new List<(string Name, string Path, bool IsCurrent, DateTime WriteTime)>();
-
-            if (dual) {
-                if (InstanceLogWriter.IsActive && File.Exists(InstanceLogWriter.SessionLogPath)) {
-                    var path = InstanceLogWriter.SessionLogPath;
-                    bool isCurrent = current != null
-                        && string.Equals(path, current, StringComparison.OrdinalIgnoreCase);
-                    var name = InstanceLogWriter.DisplayName + (isCurrent ? " " + currentTag : "");
-                    rows.Add((name, path, isCurrent, File.GetLastWriteTime(path)));
-                }
-
-                TryAddOtherInstanceSessionLogs(rows, current, currentTag);
-            }
 
             var logsDir = LogsDirectory;
             if (Directory.Exists(logsDir)) {
@@ -137,38 +113,7 @@ internal static class GameLogFileHydrator {
         }
     }
 
-    static void TryAddOtherInstanceSessionLogs(
-        List<(string Name, string Path, bool IsCurrent, DateTime WriteTime)> rows,
-        string? current,
-        string currentTag) {
-        try {
-            var instancesDir = Path.Combine(DataPaths.BaseDir, "instances");
-            if (!Directory.Exists(instancesDir))
-                return;
-
-            foreach (var dir in Directory.GetDirectories(instancesDir)) {
-                if (!int.TryParse(Path.GetFileName(dir), out var pid))
-                    continue;
-
-                var path = Path.Combine(dir, "session.log");
-                if (!File.Exists(path))
-                    continue;
-
-                if (rows.Exists(r => string.Equals(r.Path, path, StringComparison.OrdinalIgnoreCase)))
-                    continue;
-
-                bool isCurrent = pid == KitLibInstance.ProcessId
-                    || (current != null && string.Equals(path, current, StringComparison.OrdinalIgnoreCase));
-                var name = $"instances/{pid}/session.log" + (isCurrent ? " " + currentTag : "");
-                rows.Add((name, path, isCurrent, File.GetLastWriteTime(path)));
-            }
-        }
-        catch {
-            // Best-effort scan only.
-        }
-    }
-
-    private static string? ScanForSessionLogPath() {
+    private static string? ScanForMarkedLogPath() {
         try {
             var logsDir = LogsDirectory;
             if (!Directory.Exists(logsDir))

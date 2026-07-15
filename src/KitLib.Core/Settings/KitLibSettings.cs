@@ -91,7 +91,7 @@ public sealed partial class KitLibSettings {
     /// <summary>Show fixed top-right Dev performance overlay (toggle via hotkey).</summary>
     public bool PerfHudEnabled { get; set; }
 
-    /// <summary>Append structured perf events to instances/{pid}/perf-trace.log.</summary>
+    /// <summary>Append structured perf events to mod_data/KitLib/perf-trace.log.</summary>
     public bool PerfHudTraceToFile { get; set; }
 
     /// <summary>Log [CardBrowserPerf] timings while using the Dev Mode card browser.</summary>

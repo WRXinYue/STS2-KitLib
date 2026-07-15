@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **按进程 `session.log`** — KitLib 不再镜像日志到 `mod_data/KitLib/instances/{pid}/session.log`。所有场景使用官方 `user://logs/godot.log`；双开调试请用 `kitlog attach --pid <pid>`（命名管道）。
+- **`mod_data/KitLib/instances/`** — 已移除 lock 文件、按 PID 的筛选 JSON 与子目录。双开检测改为统计运行中的 STS2 进程；`kitlog attach --sync-viewer` 经日志管道接收筛选更新。可选 `perf-trace.log` 现位于 `mod_data/KitLib/` 根目录。启动时会自动删除旧的 `instances/` 目录（临时迁移，后续版本移除该逻辑）。
+
 ### Changed
 
 - **日志导出 ZIP** — 移除 `report.txt` 与标题/复现步骤表单；导出始终包含 Harmony 补丁、战斗统计，以及 ZIP 根目录的完整游戏日志。

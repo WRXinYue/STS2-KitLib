@@ -22,5 +22,4 @@ internal static class DevModDataPaths {
     }
 
     internal static string ScriptsDir => Path.Combine(Root, "scripts");
-    internal static string InstancesDir => Path.Combine(Root, "instances");
 }

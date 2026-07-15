@@ -12,8 +12,7 @@ namespace KitLib;
 /// <summary>
 /// Captures log entries emitted by the game's logging system into an in-memory ring buffer.
 /// Subscribe via <see cref="Log.LogCallback"/> so every Logger instance is covered.
-/// Opening the log viewer hydrates from <c>user://logs/godot.log</c> in single-instance play,
-/// or from <c>mod_data/KitLib/instances/{pid}/session.log</c> when dual-instance is active.
+/// Opening the log viewer hydrates from <c>user://logs/godot.log</c>.
 /// </summary>
 internal static class LogCollector {
     public const int MaxLiveEntries = 2000;
@@ -56,30 +55,12 @@ internal static class LogCollector {
            || entry.Text.Contains(LegacySessionBoundaryMarker, StringComparison.Ordinal);
 
     public static void Initialize() {
-        KitLibInstanceRegistry.Register();
-        KitLibHost.IsDualInstanceActive = KitLibInstanceRegistry.IsDualInstanceActive;
-        InstanceLogWriter.SyncDualInstanceMode();
+        KitLibHost.IsDualInstanceActive = KitLibProcessScope.IsDualInstanceActive;
         LogStreamPipeServer.Start();
         Log.LogCallback += OnLogReceived;
         MainFile.Logger.Info(KitLibInstance.SessionBoundaryMarker);
         LogViewerFilterSync.PublishDefaults();
-        EnsurePeriodicFlush();
         ScheduleKitlogStartupIfEnabled();
-    }
-
-    static void EnsurePeriodicFlush() {
-        if (Engine.GetMainLoop() is not SceneTree tree)
-            return;
-
-        ScheduleFlushTimer(tree);
-    }
-
-    static void ScheduleFlushTimer(SceneTree tree) {
-        var timer = tree.CreateTimer(InstanceLogWriter.FlushIntervalSeconds);
-        timer.Timeout += () => {
-            InstanceLogWriter.TryFlush();
-            ScheduleFlushTimer(tree);
-        };
     }
 
     static void ScheduleKitlogStartupIfEnabled() {
@@ -92,20 +73,18 @@ internal static class LogCollector {
         if (!SettingsStore.Current.LaunchKitlogOnStartup)
             return;
 
-        InstanceLogWriter.TryFlush();
-
         if (!KitLogTerminalLauncher.TryOpenSessionTail(out var error) && !string.IsNullOrEmpty(error))
             KitLog.Debug("KitLog", error);
     }
 
     /// <summary>
-    /// Re-reads the current session log file and merges it with live callback entries on the next snapshot.
+    /// Re-reads the current log file and merges it with live callback entries on the next snapshot.
     /// </summary>
     public static void RefreshFileSnapshot() {
-        var parsed = GameLogFileHydrator.ReadSessionLogEntries();
+        var parsed = GameLogFileHydrator.ReadLogEntries();
         if (parsed.Count == 0) {
             GameLogFileHydrator.InvalidateSessionLogPathCache();
-            parsed = GameLogFileHydrator.ReadSessionLogEntries();
+            parsed = GameLogFileHydrator.ReadLogEntries();
         }
         lock (_lock) {
             _fileEntries = parsed;
@@ -114,7 +93,6 @@ internal static class LogCollector {
     }
 
     private static void OnLogReceived(LogLevel level, string text, int _) {
-        InstanceLogWriter.Enqueue(level, text);
         lock (_lock) {
             _liveEntries.Enqueue(new Entry(level, text, DateTime.Now));
             while (_liveEntries.Count > MaxLiveEntries)
@@ -129,7 +107,7 @@ internal static class LogCollector {
     }
 
     static void PublishStreamEntry(LogLevel level, string text) {
-        var lvl = SessionLogLineFormat.LevelToken(level).ToLowerInvariant();
+        var lvl = GameLogLineFormat.LevelToken(level).ToLowerInvariant();
         var fingerprint = $"{lvl}|{text}";
         if (StructuredLogDedupe.TryConsume(fingerprint))
             return;
