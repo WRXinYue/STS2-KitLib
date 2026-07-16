@@ -222,6 +222,8 @@ public static class KitLibState {
         public static bool MapRewriteEnabled { get; set; }
         /// <summary>When true, vanilla map allows debug-jump to any node while the map screen is open.</summary>
         public static bool MapDebugJumpEnabled { get; set; }
+        /// <summary>When true, hovering map nodes shows predicted room contents (encounters, events).</summary>
+        public static bool MapPredictionEnabled { get; set; }
         public static MapRewriteMode MapRewriteMode { get; set; } = MapRewriteMode.None;
         public static bool MapKeepFinalBoss { get; set; } = true;
 
@@ -229,6 +231,7 @@ public static class KitLibState {
             UnknownMapAlwaysTreasure = false;
             MapRewriteEnabled = false;
             MapDebugJumpEnabled = false;
+            MapPredictionEnabled = false;
             MapRewriteMode = MapRewriteMode.None;
             MapKeepFinalBoss = true;
         }

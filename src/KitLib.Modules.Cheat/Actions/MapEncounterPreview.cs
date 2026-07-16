@@ -5,12 +5,13 @@ using System.Reflection;
 using KitLib;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Events;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Actions;
 
-/// <summary>Predicts which encounter a map combat node will use, including dev overrides.</summary>
+/// <summary>Predicts map node contents (encounters, events, room types) including dev overrides.</summary>
 internal static class MapEncounterPreview {
     private static readonly FieldInfo? RoomsField =
         typeof(ActModel).GetField("_rooms", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -20,26 +21,53 @@ internal static class MapEncounterPreview {
         int Floor,
         RoomType CombatRoomType,
         EncounterModel? Encounter,
+        EventModel? Event,
         bool IsOverride,
         bool IsFloorOverride,
         bool IsGlobalOrTypeOverride,
         bool IsCurrentRoom,
-        bool IsCombatNode);
+        bool IsCombatNode,
+        bool IsApproximate);
 
     internal static bool IsCombatNode(MapPointType pointType) =>
         pointType is MapPointType.Monster or MapPointType.Elite or MapPointType.Boss;
+
+    internal static bool IsPreviewableNode(MapPointType pointType) =>
+        pointType is MapPointType.Monster or MapPointType.Elite or MapPointType.Boss
+            or MapPointType.Ancient or MapPointType.Shop or MapPointType.Treasure
+            or MapPointType.RestSite or MapPointType.Unknown;
 
     internal static RoomType? ToRoomType(MapPointType pointType) => pointType switch {
         MapPointType.Monster => RoomType.Monster,
         MapPointType.Elite => RoomType.Elite,
         MapPointType.Boss => RoomType.Boss,
+        MapPointType.Shop => RoomType.Shop,
+        MapPointType.Treasure => RoomType.Treasure,
+        MapPointType.RestSite => RoomType.RestSite,
+        MapPointType.Ancient => RoomType.Event,
         _ => null,
     };
 
     internal static Preview? Build(RunState state, MapPoint point) {
-        var roomType = ToRoomType(point.PointType);
-        if (roomType == null)
-            return null;
+        if (IsCombatNode(point.PointType))
+            return BuildCombat(state, point);
+
+        int floor = point.coord.row + 1;
+        bool isCurrentRoom = state.CurrentMapCoord.HasValue
+            && point.coord.Equals(state.CurrentMapCoord.Value);
+
+        return point.PointType switch {
+            MapPointType.Ancient => BuildAncient(state, point, floor, isCurrentRoom),
+            MapPointType.Shop => BuildFixedRoom(point, floor, isCurrentRoom, RoomType.Shop),
+            MapPointType.Treasure => BuildFixedRoom(point, floor, isCurrentRoom, RoomType.Treasure),
+            MapPointType.RestSite => BuildFixedRoom(point, floor, isCurrentRoom, RoomType.RestSite),
+            MapPointType.Unknown => BuildUnknown(state, point, floor, isCurrentRoom),
+            _ => null,
+        };
+    }
+
+    static Preview BuildCombat(RunState state, MapPoint point) {
+        var roomType = ToRoomType(point.PointType)!.Value;
 
         int floor = point.coord.row + 1;
         bool isCurrentRoom = state.CurrentMapCoord.HasValue
@@ -53,33 +81,110 @@ internal static class MapEncounterPreview {
         if (isCurrentRoom) {
             encounter = (state.CurrentRoom as CombatRoom)?.Encounter;
             isOverride = isFloorOverride
-                || KitLibState.ResolveOverride(roomType.Value, floor) != null;
+                || KitLibState.ResolveOverride(roomType, floor) != null;
         }
         else {
             var floorEnc = KitLibState.FloorOverrides.TryGetValue(floor, out var fo) ? fo : null;
             var modeEnc = KitLibState.EnemyMode switch {
                 EnemyMode.Global => KitLibState.GlobalEncounterOverride,
-                EnemyMode.PerType => KitLibState.RoomTypeOverrides.TryGetValue(roomType.Value, out var enc)
+                EnemyMode.PerType => KitLibState.RoomTypeOverrides.TryGetValue(roomType, out var enc)
                     ? enc
                     : null,
                 _ => null,
             };
             isGlobalOrTypeOverride = modeEnc != null && floorEnc == null;
-            var overrideEnc = KitLibState.ResolveOverride(roomType.Value, floor);
-            encounter = overrideEnc ?? PredictEncounter(state, point, roomType.Value);
+            var overrideEnc = KitLibState.ResolveOverride(roomType, floor);
+            encounter = overrideEnc ?? PredictEncounter(state, point, roomType);
             isOverride = overrideEnc != null;
         }
 
         return new Preview(
             point,
             floor,
-            roomType.Value,
+            roomType,
             encounter,
+            Event: null,
             isOverride,
             isFloorOverride,
             isGlobalOrTypeOverride,
             isCurrentRoom,
-            IsCombatNode: true);
+            IsCombatNode: true,
+            IsApproximate: false);
+    }
+
+    static Preview BuildAncient(RunState state, MapPoint point, int floor, bool isCurrentRoom) {
+        EventModel? ancient = TryGetAncient(state);
+        return new Preview(
+            point,
+            floor,
+            RoomType.Event,
+            Encounter: null,
+            ancient,
+            IsOverride: false,
+            IsFloorOverride: false,
+            IsGlobalOrTypeOverride: false,
+            isCurrentRoom,
+            IsCombatNode: false,
+            IsApproximate: false);
+    }
+
+    static Preview BuildFixedRoom(MapPoint point, int floor, bool isCurrentRoom, RoomType roomType) =>
+        new(
+            point,
+            floor,
+            roomType,
+            Encounter: null,
+            Event: null,
+            IsOverride: false,
+            IsFloorOverride: false,
+            IsGlobalOrTypeOverride: false,
+            isCurrentRoom,
+            IsCombatNode: false,
+            IsApproximate: false);
+
+    static Preview? BuildUnknown(RunState state, MapPoint point, int floor, bool isCurrentRoom) {
+        var predicted = MapUnknownSimulator.PredictUnknownNode(state, point);
+        if (predicted == null) {
+            return new Preview(
+                point,
+                floor,
+                RoomType.Unassigned,
+                Encounter: null,
+                Event: null,
+                IsOverride: false,
+                IsFloorOverride: false,
+                IsGlobalOrTypeOverride: false,
+                isCurrentRoom,
+                IsCombatNode: false,
+                IsApproximate: true);
+        }
+
+        bool isCombat = predicted.RoomType is RoomType.Monster or RoomType.Elite or RoomType.Boss;
+        return new Preview(
+            point,
+            floor,
+            predicted.RoomType,
+            predicted.Encounter,
+            predicted.Event,
+            IsOverride: false,
+            IsFloorOverride: false,
+            IsGlobalOrTypeOverride: false,
+            isCurrentRoom,
+            IsCombatNode: isCombat,
+            IsApproximate: predicted.IsApproximate);
+    }
+
+    static AncientEventModel? TryGetAncient(RunState state) {
+        try {
+            var act = state.Act;
+            if (act == null)
+                return null;
+            var roomSet = RoomsField?.GetValue(act) as RoomSet;
+            return roomSet is { HasAncient: true } ? roomSet.Ancient : null;
+        }
+        catch {
+            return null;
+        }
     }
 
     internal static EncounterModel? PredictEncounter(RunState state, MapPoint targetPoint, RoomType roomType) {
@@ -94,7 +199,11 @@ internal static class MapEncounterPreview {
             if (roomSet == null)
                 return act.PullNextEncounter(roomType);
 
-            int offset = CountSameTypeRoomsOnPath(state, targetPoint, roomType) ?? 0;
+            int offset = CountRoomsOnPath(state, targetPoint, roomType switch {
+                RoomType.Monster => MapPointType.Monster,
+                RoomType.Elite => MapPointType.Elite,
+                _ => MapPointType.Unassigned,
+            }) ?? 0;
 
             if (roomType == RoomType.Monster && roomSet.normalEncounters.Count > 0)
                 return roomSet.normalEncounters[
@@ -111,9 +220,7 @@ internal static class MapEncounterPreview {
         return null;
     }
 
-    private static int? CountSameTypeRoomsOnPath(RunState state, MapPoint target, RoomType roomType) {
-        var targetType = roomType == RoomType.Monster ? MapPointType.Monster : MapPointType.Elite;
-
+    static int? CountRoomsOnPath(RunState state, MapPoint target, MapPointType pointType) {
         try {
             var map = state.Map;
             if (map == null) return null;
@@ -146,7 +253,8 @@ internal static class MapEncounterPreview {
                 if (p.coord.Equals(target.coord))
                     return offset;
 
-                int costThrough = offset + (p.PointType == targetType ? 1 : 0);
+                bool countsHere = p.PointType == pointType;
+                int costThrough = offset + (countsHere ? 1 : 0);
 
                 foreach (var child in p.Children) {
                     if (!minOffset.TryGetValue(child.coord, out int childBest) || costThrough < childBest) {

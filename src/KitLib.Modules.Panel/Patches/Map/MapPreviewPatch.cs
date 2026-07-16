@@ -7,6 +7,7 @@ using KitLib.Actions;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Monsters;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.Map;
@@ -16,50 +17,34 @@ using MegaCrit.Sts2.Core.Runs;
 namespace KitLib.Patches.Map;
 
 /// <summary>
-/// Adds encounter preview tooltip on map node hover.
+/// Map node hover preview when map prediction cheat is enabled.
 /// </summary>
 [HarmonyPatch(typeof(NMapPoint), "OnFocus")]
 public static class MapPointHoverPatch {
     private const string TooltipName = "KitLibMapTooltip";
 
     public static void Postfix(NMapPoint __instance) {
-        if (!KitLibState.CheatsInRun) return;
+        if (!KitLibState.CheatsInRun || !KitLibState.MapCheats.MapPredictionEnabled)
+            return;
+
+        if (__instance.State == MapPointState.Traveled)
+            return;
 
         var point = __instance.Point;
-        if (point == null) return;
-
-        if (!MapEncounterPreview.IsCombatNode(point.PointType))
+        if (point == null || !MapEncounterPreview.IsPreviewableNode(point.PointType))
             return;
 
         var state = RunManager.Instance?.DebugOnlyGetState();
         if (state == null) return;
 
         var preview = MapEncounterPreview.Build(state, point);
-        if (preview?.Encounter == null) return;
+        if (preview == null) return;
 
         ShowTooltip(__instance, preview);
     }
 
     private static void ShowTooltip(NMapPoint mapPoint, MapEncounterPreview.Preview preview) {
         RemoveTooltip(mapPoint);
-
-        var encounter = preview.Encounter!;
-        var encounterName = encounter.Title?.GetFormattedText()
-            ?? ((AbstractModel)encounter).Id.Entry;
-        var encId = ((AbstractModel)encounter).Id.Entry;
-
-        var typeTag = preview.CombatRoomType switch {
-            RoomType.Monster => I18N.T("map.roomNormal", "Normal"),
-            RoomType.Elite => I18N.T("map.roomElite", "Elite"),
-            RoomType.Boss => I18N.T("map.roomBoss", "Boss"),
-            _ => ""
-        };
-
-        var tagColor = preview.CombatRoomType switch {
-            RoomType.Elite => new Color(1f, 0.8f, 0.27f),
-            RoomType.Boss => new Color(1f, 0.27f, 0.27f),
-            _ => new Color(0.53f, 0.8f, 0.53f)
-        };
 
         var panel = new PanelContainer {
             Name = TooltipName,
@@ -88,8 +73,11 @@ public static class MapPointHoverPatch {
         vbox.AddThemeConstantOverride("separation", 4);
         vbox.MouseFilter = Control.MouseFilterEnum.Ignore;
 
+        var (typeTag, tagColor) = GetRoomTag(preview.CombatRoomType);
         var headerLabel = new Label {
-            Text = I18N.T("map.tooltipHeader", "[{0}] Floor {1}", typeTag, preview.Floor),
+            Text = preview.IsApproximate
+                ? I18N.T("map.tooltipHeaderApprox", "[{0}] Floor {1} ~", typeTag, preview.Floor)
+                : I18N.T("map.tooltipHeader", "[{0}] Floor {1}", typeTag, preview.Floor),
             HorizontalAlignment = HorizontalAlignment.Center,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
@@ -97,77 +85,39 @@ public static class MapPointHoverPatch {
         headerLabel.AddThemeFontSizeOverride("font_size", 13);
         vbox.AddChild(headerLabel);
 
-        var nameLabel = new Label {
-            Text = preview.IsOverride ? I18N.T("map.override", "{0} (Override)", encounterName) : encounterName,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            MouseFilter = Control.MouseFilterEnum.Ignore
-        };
-        nameLabel.AddThemeColorOverride("font_color", new Color(0.95f, 0.92f, 0.85f));
-        vbox.AddChild(nameLabel);
-
-        if (encId != encounterName) {
-            var idLabel = new Label {
-                Text = encId,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            idLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.6f));
-            idLabel.AddThemeFontSizeOverride("font_size", 11);
-            vbox.AddChild(idLabel);
+        if (preview.Event is { } eventModel) {
+            string eventName = eventModel.Title?.GetFormattedText()
+                ?? ((AbstractModel)eventModel).Id.Entry;
+            vbox.AddChild(MakePrimaryLabel(eventName));
+            string eventId = ((AbstractModel)eventModel).Id.Entry;
+            if (eventId != eventName)
+                vbox.AddChild(MakeSubtleLabel(eventId));
         }
+        else if (preview.Encounter is { } encounter) {
+            string encounterName = encounter.Title?.GetFormattedText()
+                ?? ((AbstractModel)encounter).Id.Entry;
+            var encId = ((AbstractModel)encounter).Id.Entry;
 
-        var monsters = encounter.AllPossibleMonsters?.ToList();
-        if (monsters != null && monsters.Count > 0) {
-            var visualsContainer = new SubViewportContainer {
-                CustomMinimumSize = new Vector2(Math.Min(monsters.Count * 80, 240), 100),
-                StretchShrink = 1,
-                Stretch = true,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            var subViewport = new SubViewport {
-                Size = new Vector2I(Math.Min(monsters.Count * 80, 240), 100),
-                TransparentBg = true,
-                RenderTargetUpdateMode = SubViewport.UpdateMode.Always
-            };
-            visualsContainer.AddChild(subViewport);
+            vbox.AddChild(MakePrimaryLabel(
+                preview.IsOverride ? I18N.T("map.override", "{0} (Override)", encounterName) : encounterName));
 
-            float spacing = Math.Min(80f, 240f / monsters.Count);
-            for (int i = 0; i < Math.Min(monsters.Count, 3); i++) {
-                var visuals = EnemySelectUI.TryCreateVisualsPublic(monsters[i]);
-                if (visuals != null) {
-                    float scale = 0.3f;
-                    visuals.Scale = new Vector2(scale, scale);
-                    visuals.Position = new Vector2(spacing * i + spacing / 2, 80);
-                    subViewport.AddChild(visuals);
-                }
+            if (encId != encounterName)
+                vbox.AddChild(MakeSubtleLabel(encId));
+
+            var monsters = encounter.AllPossibleMonsters?.ToList();
+            if (monsters is { Count: > 0 }) {
+                vbox.AddChild(BuildMonsterRow(monsters));
+                vbox.AddChild(MakeSubtleLabel(string.Join(", ",
+                    monsters.Select(m => m.Title?.GetFormattedText() ?? ((AbstractModel)m).Id.Entry).Distinct())));
             }
-
-            vbox.AddChild(visualsContainer);
+        }
+        else if (preview.CombatRoomType == RoomType.Unassigned) {
+            vbox.AddChild(MakeSubtleLabel(
+                I18N.T("map.predictUnknown", "Unknown node — prediction unavailable (RNG); visit to reveal.")));
         }
 
-        if (monsters != null && monsters.Count > 0) {
-            var monsterNames = monsters
-                .Select(m => m.Title?.GetFormattedText() ?? ((AbstractModel)m).Id.Entry)
-                .Distinct();
-            var monstersLabel = new Label {
-                Text = string.Join(", ", monsterNames),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                AutowrapMode = TextServer.AutowrapMode.WordSmart,
-                CustomMinimumSize = new Vector2(160, 0),
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            monstersLabel.AddThemeColorOverride("font_color", new Color(0.7f, 0.75f, 0.85f));
-            monstersLabel.AddThemeFontSizeOverride("font_size", 11);
-            vbox.AddChild(monstersLabel);
-        }
-
-        if (!preview.IsCurrentRoom) {
-            var hintLabel = new Label {
-                Text = I18N.T("map.editHint", "Edit in Dev panel"),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                MouseFilter = Control.MouseFilterEnum.Ignore
-            };
-            hintLabel.AddThemeColorOverride("font_color", new Color(0.45f, 0.45f, 0.55f));
+        if (!preview.IsCurrentRoom && preview.IsCombatNode) {
+            var hintLabel = MakeSubtleLabel(I18N.T("map.editHint", "Edit in Dev panel"));
             hintLabel.AddThemeFontSizeOverride("font_size", 10);
             vbox.AddChild(hintLabel);
         }
@@ -183,6 +133,68 @@ public static class MapPointHoverPatch {
         }).CallDeferred();
     }
 
+    static (string tag, Color color) GetRoomTag(RoomType roomType) => roomType switch {
+        RoomType.Monster => (I18N.T("map.roomNormal", "Normal"), new Color(0.53f, 0.8f, 0.53f)),
+        RoomType.Elite => (I18N.T("map.roomElite", "Elite"), new Color(1f, 0.8f, 0.27f)),
+        RoomType.Boss => (I18N.T("map.roomBoss", "Boss"), new Color(1f, 0.27f, 0.27f)),
+        RoomType.Event => (I18N.T("map.roomEvent", "Event"), new Color(0.7f, 0.65f, 1f)),
+        RoomType.Shop => (I18N.T("map.roomShop", "Shop"), new Color(0.9f, 0.75f, 0.4f)),
+        RoomType.Treasure => (I18N.T("map.roomTreasure", "Treasure"), new Color(1f, 0.85f, 0.35f)),
+        RoomType.RestSite => (I18N.T("map.roomRest", "Rest Site"), new Color(0.55f, 0.85f, 0.95f)),
+        _ => ("?", Colors.White),
+    };
+
+    static Label MakePrimaryLabel(string text) {
+        var label = new Label {
+            Text = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        label.AddThemeColorOverride("font_color", new Color(0.95f, 0.92f, 0.85f));
+        return label;
+    }
+
+    static Label MakeSubtleLabel(string text) {
+        var label = new Label {
+            Text = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize = new Vector2(160, 0),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        label.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.6f));
+        label.AddThemeFontSizeOverride("font_size", 11);
+        return label;
+    }
+
+    static Control BuildMonsterRow(System.Collections.Generic.List<MonsterModel> monsters) {
+        var visualsContainer = new SubViewportContainer {
+            CustomMinimumSize = new Vector2(Math.Min(monsters.Count * 80, 240), 100),
+            StretchShrink = 1,
+            Stretch = true,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        var subViewport = new SubViewport {
+            Size = new Vector2I(Math.Min(monsters.Count * 80, 240), 100),
+            TransparentBg = true,
+            RenderTargetUpdateMode = SubViewport.UpdateMode.Always
+        };
+        visualsContainer.AddChild(subViewport);
+
+        float spacing = Math.Min(80f, 240f / monsters.Count);
+        for (int i = 0; i < Math.Min(monsters.Count, 3); i++) {
+            var visuals = EnemySelectUI.TryCreateVisualsPublic(monsters[i]);
+            if (visuals != null) {
+                float scale = 0.3f;
+                visuals.Scale = new Vector2(scale, scale);
+                visuals.Position = new Vector2(spacing * i + spacing / 2, 80);
+                subViewport.AddChild(visuals);
+            }
+        }
+
+        return visualsContainer;
+    }
+
     private static void RemoveTooltip(NMapPoint mapPoint) {
         mapPoint.GetNodeOrNull<Control>(TooltipName)?.QueueFree();
     }
@@ -191,7 +203,8 @@ public static class MapPointHoverPatch {
 [HarmonyPatch(typeof(NMapPoint), "OnUnfocus")]
 public static class MapPointUnhoverPatch {
     public static void Postfix(NMapPoint __instance) {
-        if (!KitLibState.CheatsInRun) return;
+        if (!KitLibState.CheatsInRun || !KitLibState.MapCheats.MapPredictionEnabled)
+            return;
         __instance.GetNodeOrNull<Control>("KitLibMapTooltip")?.QueueFree();
     }
 }

@@ -201,6 +201,12 @@ internal static partial class DevPanelUI {
                     MapScreenUnlock.ClearVisuals(openMap);
             }));
         secGame.AddChild(mapJumpToggle);
+        secGame.AddChild(CreateCheatToggle(
+            I18N.T("cheat.mapPrediction", "Map prediction"),
+            I18N.T("cheat.mapPrediction.desc",
+                "Hover map nodes to preview encounters, events, and room types. Off by default; vanilla traveled-node history is unchanged."),
+            () => KitLibState.MapCheats.MapPredictionEnabled,
+            MpCheatUi.WrapBoolSetter(v => KitLibState.MapCheats.MapPredictionEnabled = v)));
         var mapRewriteToggle = CreateCheatToggle(I18N.T("mapRewrite.enabled", "Enable Map Rewrite"), "", () => KitLibState.MapCheats.MapRewriteEnabled, v => KitLibState.MapCheats.MapRewriteEnabled = v);
         MpCheatUi.ApplyMultiplayerUnsupported(mapRewriteToggle, "mpcheat.unsupported.mp", "Not synced in multiplayer.");
         secGame.AddChild(mapRewriteToggle);
