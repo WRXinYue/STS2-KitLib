@@ -75,6 +75,8 @@ internal static partial class DevPanelUI {
             };
 
             ((Node)_options.GlobalUi).AddChild(Root);
+            // Match rail chrome: viewport-level so vanilla fullscreen modal blockers cannot eat panel clicks.
+            Root.TopLevel = true;
         }
 
         internal void OpenExtension(bool toggleIfOpen = false) {

@@ -41,7 +41,7 @@ public static class GlobalUiReadyPatch {
 
         // NGlobalUi can survive scene changes; TreeExiting may detach HUD while _attached stays set.
         if (_attached == __instance) {
-            bool railInTree = ((Node)__instance).GetNodeOrNull<Control>(DevPanelUI.RailRootName) != null;
+            bool railInTree = DevPanelUI.TryGetRailRoot(__instance) != null;
             if (!railInTree)
                 DevPanel.Attach(__instance);
 

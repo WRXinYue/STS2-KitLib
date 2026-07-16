@@ -17,6 +17,9 @@ internal static partial class DevPanelUI {
     private const string LegacyTopBarName = "KitLibTopBar";
     private const string RootName = RailRootName;
     private const string OverlayName = "KitLibOverlay";
+
+    internal static Control? TryGetRailRoot(NGlobalUi? globalUi = null) =>
+        globalUi != null ? ((Node)globalUi).GetNodeOrNull<Control>(RootName) : null;
     private const float RailW = 52f;
     private const float IconBtnSize = 36f;
     private const float OverlayW = 560f;
@@ -56,7 +59,7 @@ internal static partial class DevPanelUI {
     /// panels appear seamlessly connected.
     /// </summary>
     public static void SpliceRail(NGlobalUi globalUi, bool joined) {
-        var railRoot = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        var railRoot = TryGetRailRoot(globalUi);
         var rail = railRoot?.GetNodeOrNull<PanelContainer>("Rail");
         if (rail == null) return;
 
@@ -140,7 +143,7 @@ internal static partial class DevPanelUI {
 
     // ──────── Attach ────────
     public static void Attach(NGlobalUi globalUi, DevPanelActions actions) {
-        if (((Node)globalUi).GetNodeOrNull<Control>(RootName) != null)
+        if (TryGetRailRoot(globalUi) != null)
             return;
 
         _railGlobalUi = globalUi;
@@ -402,6 +405,7 @@ internal static partial class DevPanelUI {
             MonsterIntentOverlayUI.SyncState(globalUi);
         }
         ((Node)globalUi).AddChild(root);
+        root.TopLevel = true;
     }
 
     private static void OnRailLanguageChanged() {
@@ -457,7 +461,7 @@ internal static partial class DevPanelUI {
         CloseOverlay(globalUi);
         _activeOverlayId = id;
 
-        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        var root = TryGetRailRoot(globalUi);
         if (root == null) return;
 
         var clickaway = new Control {
@@ -488,7 +492,7 @@ internal static partial class DevPanelUI {
     }
 
     private static void CloseOverlay(NGlobalUi globalUi) {
-        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        var root = TryGetRailRoot(globalUi);
         if (root == null) { _activeOverlayId = null; return; }
 
         var clickaway = root.GetNodeOrNull<Control>("OverlayClickaway");

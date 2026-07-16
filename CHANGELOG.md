@@ -11,10 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Dev Mode rail expand** — Mod panel → KitLib → General: **Rail expand trigger** — **Hover peek tab** (default) expands when you hover the small left-edge tab; **Hover left edge** expands on the screen edge and hides the peek tab.
-- **Map prediction** — Dev Mode → Cheats → Game: **Map prediction** (off by default). With cheat mode on, hover unvisited map nodes to preview room type, enemies, and events; `?` nodes follow the same RNG rules as the game.
+- **Map prediction** — Dev Mode → Cheats → Game: **Map prediction** (off by default). With cheat mode on, hover unvisited map nodes to preview room type, encounters, and events; `?` nodes follow the same RNG rules as the game.
 - **Developer console (browser)** — Unified dev panel at `http://127.0.0.1:9878` with **Logs** and **Combat** tabs: live log stream, filter sync with the in-game log viewer, combat event timeline (per-turn state, search, kind filters), and JSON export. English / 中文.
 - **In-game log viewer → Dev viewer** — **Dev viewer** button opens the browser panel; filters stay in sync when **Sync with game** is on.
-- **Map prediction** — Dev Mode → Cheats → Game: **Map prediction** (off by default). With cheat mode on, hover unvisited map nodes to preview room type, encounters, and events; `?` nodes follow the same RNG rules as the game.
 
 ### Changed
 
@@ -26,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Log export UI** — Merged into the log viewer; **Log Export** opens a slide-out extension panel (same pattern as the card browser). Removed the standalone Dev rail tab and main-menu entry.
 - **Command reference** — Commands are grouped under Official and per-mod sections; official command descriptions are localized (English / Chinese).
 - **kitlog CLI** — Deprecated for day-to-day use; prefer the browser developer console. `kitlog attach` remains for dual-instance debugging over the named pipe.
-- **Map hover preview** — No longer shown automatically whenever cheat mode is on; enable **Map prediction** in Cheats → Game. Already-visited nodes keep the vanilla tooltip.
 
 ### Removed
 
@@ -49,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enemy browser — map** — Map encounter editing now works in normal runs with cheat mode enabled, not only dev test runs.
 - **Dev Mode rail (hover peek tab)** — Fixed the sidebar rapidly opening and closing when hovering the peek tab.
 - **Map prediction** — `?` nodes predicted as shop, treasure, or rest site no longer show “cannot predict” under the correct room-type header.
+- **Dev Mode sidebar after errors** — After a mid-transition game error (e.g. room load failure), the left sidebar no longer stays hoverable but ignores clicks until you restart.
+- **Dev Mode panels with game dialogs** — Panel content is clickable again while a vanilla fullscreen dialog is open (e.g. corrupt save load failure); previously only the sidebar responded.
 
 ## [0.27.0] - 2026-07-13
 
