@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Map prediction** — Dev Mode → Cheats → Game: **Map prediction** (off by default). With cheat mode on, hover unvisited map nodes to preview room type, encounters, and events; `?` nodes follow the same RNG rules as the game.
 - **Developer console (browser)** — Unified dev panel at `http://127.0.0.1:9878` with **Logs** and **Combat** tabs: live log stream, filter sync with the in-game log viewer, combat event timeline (per-turn state, search, kind filters), and JSON export. English / 中文.
 - **In-game log viewer → Dev viewer** — **Dev viewer** button opens the browser panel; filters stay in sync when **Sync with game** is on.
+- **Vanilla error dialogs** — Popups with **Feedback Bug** now include **Log Export (KitLib)** below that button for a one-click diagnostics ZIP.
 
 ### Changed
 

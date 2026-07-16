@@ -43,7 +43,8 @@ public static class ModuleEntry {
             typeof(ModuleEntry).Assembly,
             KitLibModuleIds.Panel,
             typeof(MainMenuPatch),
-            typeof(GlobalUiReadyPatch));
+            typeof(GlobalUiReadyPatch),
+            typeof(ErrorPopupKitLibLogExportPatch));
 
         KitLibHost.AnnounceModule(KitLibModuleIds.Panel);
         MainFile.Logger.Info("KitLib.Panel module initialized.");

@@ -1236,6 +1236,7 @@
 
   "log.title": "Log Viewer",
   "log.export": "Log Export",
+  "log.export.error_popup": "Log Export (KitLib)",
   "log.export.title": "Log Export",
   "log.export.subtitle": "Export selected game log and diagnostics as a ZIP package.",
   "log.export.contents.title": "ZIP contents",

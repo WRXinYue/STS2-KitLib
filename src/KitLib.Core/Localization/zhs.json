@@ -1268,6 +1268,7 @@
 
   "log.title": "日志查看器",
   "log.export": "日志导出",
+  "log.export.error_popup": "日志导出 (KitLib)",
   "log.export.title": "日志导出",
   "log.export.subtitle": "将所选游戏日志与诊断信息导出为 ZIP 包。",
   "log.export.contents.title": "ZIP 内容",

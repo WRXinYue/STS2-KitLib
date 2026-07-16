@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Godot;
+using KitLib;
 using KitLib.Feedback;
 using KitLib.Icons;
 using MegaCrit.Sts2.Core.Helpers;
@@ -134,6 +135,27 @@ internal static class FeedbackReportUI {
         }
 
         return 0;
+    }
+
+    internal static Task<(string? ZipPath, string? Error)> ExportDefaultZipAsync() {
+        LogCollector.RefreshFileSnapshot();
+        var logs = FeedbackReportBuilder.ScanLogFiles();
+        if (logs.Count == 0)
+            return Task.FromResult<(string?, string?)>((null, null));
+
+        int idx = ResolveDefaultLogIndex(logs);
+        var req = new FeedbackReportBuilder.BuildRequest(
+            LogFilePath: logs[idx].AbsPath,
+            PrivacyMode: true);
+
+        return Task.Run(() => {
+            try {
+                return ((string?)FeedbackReportBuilder.Build(req), (string?)null);
+            }
+            catch (Exception ex) {
+                return ((string?)null, ex.Message);
+            }
+        });
     }
 
     private static async Task RunExport(
