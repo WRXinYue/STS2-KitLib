@@ -58,6 +58,7 @@ internal static class KitLibNativeModSettingsBootstrap {
         var stack = CreatePageStack();
         stack.AddChild(KitLibNativeModSettingsUi.CreateAccentColorRow());
         stack.AddChild(KitLibNativeModSettingsUi.CreateNormalRunModeRow());
+        stack.AddChild(KitLibNativeModSettingsUi.CreateRailOpenModeRow());
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
             I18N.T("modpanel.kitlib.diagnosticMode", "Mod panel diagnostic mode"),
             I18N.T("modpanel.kitlib.diagnosticMode.desc",

@@ -63,6 +63,19 @@ public static class SettingsStore {
         Save();
     }
 
+    public static RailOpenMode GetRailOpenMode() => ParseRailOpenMode(Current.RailOpenMode);
+
+    public static void SetRailOpenMode(RailOpenMode mode) {
+        Current.RailOpenMode = mode.ToString();
+        Save();
+    }
+
+    static RailOpenMode ParseRailOpenMode(string? value) {
+        if (Enum.TryParse(value, ignoreCase: true, out RailOpenMode mode))
+            return mode;
+        return RailOpenMode.HoverButton;
+    }
+
     public static void SetPerfHudEnabled(bool enabled) {
         Current.PerfHudEnabled = enabled;
         Save();

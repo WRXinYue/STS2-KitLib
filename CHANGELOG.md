@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dev Mode rail expand** — Mod panel → KitLib → General: **Rail expand trigger** — **Hover peek tab** (default) expands when you hover the small left-edge tab; **Hover left edge** expands on the screen edge and hides the peek tab.
 - **Developer console (browser)** — Unified dev panel at `http://127.0.0.1:9878` with **Logs** and **Combat** tabs: live log stream, filter sync with the in-game log viewer, combat event timeline (per-turn state, search, kind filters), and JSON export. English / 中文.
 - **In-game log viewer → Dev viewer** — **Dev viewer** button opens the browser panel; filters stay in sync when **Sync with game** is on.
 
 ### Changed
 
+- **Dev Mode rail (default)** — The left sidebar now expands when you hover the peek tab by default; switch to left-edge hover in Mod panel → KitLib → General.
 - **Card test room** — Training dummy combat now uses a KitLib-only encounter. We’re sorry the old implementation also changed the official Battleworn Dummy event.
 - **Auto-open developer console** — KitLib setting renamed from the legacy kitlog terminal option; one toggle opens the browser dev panel on startup (default off).
 - **Log export ZIP** — Removed `report.txt` and the title/description form; export always includes Harmony patches, combat stats, and a full game log at the ZIP root.
@@ -41,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **In-game log viewer** — Godot gamepad input-map errors (and their backtrace blocks) are folded by a built-in suppress rule so mod and KitLib lines stay visible.
 - **Dev Mode rail / settings** — Fixed tab labels mixing English and Chinese in the main-panel list and sidebar tooltips.
 - **Enemy browser — map** — Map encounter editing now works in normal runs with cheat mode enabled, not only dev test runs.
+- **Dev Mode rail (hover peek tab)** — Fixed the sidebar rapidly opening and closing when hovering the peek tab.
 
 ## [0.27.0] - 2026-07-13
 

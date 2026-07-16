@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 using KitLib.Settings;
@@ -13,6 +14,11 @@ internal static partial class DevPanelUI {
     private static Panel? _railIndicator;
     private static readonly List<Button> _railButtons = new();
     private static Action<int, bool>? _moveRailIndicator;
+
+    internal static void RebuildRailIfAttached() {
+        if (_railGlobalUi != null && GodotObject.IsInstanceValid(_railGlobalUi))
+            RebuildRail(_railGlobalUi);
+    }
 
     /// <summary>Rebuilds rail icon buttons after settings change. No-op if rail is not attached.</summary>
     internal static void RebuildRail(NGlobalUi globalUi) {
@@ -114,18 +120,22 @@ internal static partial class DevPanelUI {
         btn.SetMeta("tab_label", tab.DisplayName);
         ApplyRailTabAvailability(btn);
         var t = tab;
-        btn.Pressed += () => {
-            if (btn.Disabled) return;
-            _controller.SwitchTo(t.Id, () => {
-                int idx = railButtons.IndexOf(btn);
-                if (idx >= 0)
-                    _moveRailIndicator?.Invoke(idx, true);
-                t.OnActivate(globalUi);
-            }, () => DevPanelUI.IsRailTabPanelVisible(globalUi, t.Id));
-        };
+        btn.Pressed += () => ActivateRailTab(globalUi, t, railButtons, btn);
         railButtons.Add(btn);
         _railIconButtons.Add((btn, tab.Icon));
         return btn;
+    }
+
+    static void ActivateRailTab(NGlobalUi globalUi, IDevPanelTab tab, List<Button> railButtons, Button btn) {
+        if (btn.Disabled)
+            return;
+
+        _controller.SwitchTo(tab.Id, () => {
+            int idx = railButtons.IndexOf(btn);
+            if (idx >= 0)
+                _moveRailIndicator?.Invoke(idx, true);
+            tab.OnActivate(globalUi);
+        }, () => IsRailTabPanelVisible(globalUi, tab.Id));
     }
 
     internal static void RefreshRailTabAvailability() {

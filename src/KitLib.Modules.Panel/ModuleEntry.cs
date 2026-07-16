@@ -34,6 +34,7 @@ public static class ModuleEntry {
             KitLibRootServices.EnsureRootServicesNode();
             DevPerfOverlayUI.SyncVisibility();
         };
+        KitLibHost.RebuildDevPanelRail = DevPanelUI.RebuildRailIfAttached;
         TryWireDevPanelHotkeys();
 
         DevPerfBuiltinProviders.RegisterAll();

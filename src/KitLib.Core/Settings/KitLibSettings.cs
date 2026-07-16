@@ -30,6 +30,9 @@ public sealed partial class KitLibSettings {
     /// </summary>
     public string NormalRunMode { get; set; } = "DevPanel";
 
+    /// <summary>In-run rail expand trigger: HoverButton (peek tab) or HoverSide (left edge).</summary>
+    public string RailOpenMode { get; set; } = "HoverButton";
+
     /// <summary>Opt in to synchronized multiplayer cheat sessions (requires DevMode on all peers).</summary>
     public bool MultiplayerCheatOptIn { get; set; }
 

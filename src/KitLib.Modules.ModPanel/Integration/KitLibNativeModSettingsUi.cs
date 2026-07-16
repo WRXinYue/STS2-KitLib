@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KitLib;
+using KitLib.Host;
 using KitLib.Settings;
 using KitLib.UI;
 using AbstractionsKitLogLevel = KitLib.Logging.KitLogLevel;
@@ -75,6 +76,26 @@ internal static class KitLibNativeModSettingsUi {
             I18N.T("modpanel.kitlib.normalRun.title", "In-run DevMode level"),
             I18N.T("modpanel.kitlib.normalRun.desc",
                 "Controls whether the DevPanel rail and cheat tools are available during normal (non test) runs."),
+            ob);
+    }
+
+    internal static Control CreateRailOpenModeRow() {
+        var ob = new OptionButton {
+            FocusMode = Control.FocusModeEnum.All,
+            CustomMinimumSize = new Vector2(DevModeFormChrome.Metrics.ChoiceRowMinWidth,
+                DevModeFormChrome.Metrics.ValueColumnMinHeight),
+        };
+        DevModeFormChrome.ApplyOptionButton(ob);
+        ob.AddItem(I18N.T("modpanel.kitlib.railOpenMode.hoverButton", "Hover peek tab to expand"),
+            (int)RailOpenMode.HoverButton);
+        ob.AddItem(I18N.T("modpanel.kitlib.railOpenMode.hoverSide", "Hover left edge to expand"),
+            (int)RailOpenMode.HoverSide);
+        ob.Selected = (int)SettingsStore.GetRailOpenMode();
+        ob.ItemSelected += idx => SettingsStore.SetRailOpenMode((RailOpenMode)(int)idx);
+        return DevModeFormChrome.CreateLabeledValueRow(
+            I18N.T("modpanel.kitlib.railOpenMode.title", "Rail expand trigger"),
+            I18N.T("modpanel.kitlib.railOpenMode.desc",
+                "HoverButton expands the rail when you hover the peek tab; HoverSide expands on the left edge and hides the peek tab."),
             ob);
     }
 

@@ -85,6 +85,14 @@ public enum NormalRunMode {
     Cheat,
 }
 
+/// <summary>How the in-run DevPanel rail expands from the left edge.</summary>
+public enum RailOpenMode {
+    /// <summary>Hover the peek tab to expand the rail (click still works).</summary>
+    HoverButton,
+    /// <summary>Hover the left screen edge to expand the rail.</summary>
+    HoverSide,
+}
+
 public static class KitLibState {
     /// <summary>True when this is a dev test run started from the Developer Mode menu (no save).</summary>
     public static bool InDevRun { get; set; }

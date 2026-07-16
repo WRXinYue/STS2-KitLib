@@ -1,5 +1,6 @@
 using System;
 using Godot;
+using KitLib;
 using KitLib.Icons;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Logging;
@@ -62,9 +63,29 @@ internal static partial class DevPanelUI {
     internal static void WirePeekTabPressed(Action onPressed)
         => _peekTabBtn!.Pressed += onPressed;
 
+    internal static void WirePeekTabMouseEntered(Action onEntered)
+        => _peekTabBtn!.MouseEntered += onEntered;
+
+    internal static bool IsMouseOverPeekTab(Vector2 globalMousePos) {
+        if (!IsPeekTabVisible || _peekTabBtn == null || !GodotObject.IsInstanceValid(_peekTabBtn))
+            return false;
+        return _peekTabBtn.GetGlobalRect().Grow(4).HasPoint(globalMousePos);
+    }
+
     internal static void SetPeekTabVisible(bool visible) {
         if (_peekTabBtn != null && GodotObject.IsInstanceValid(_peekTabBtn))
             _peekTabBtn.Visible = visible;
+    }
+
+    internal static void SyncPeekTabCollapsedVisibility(bool railShown) {
+        if (railShown) {
+            SetPeekTabVisible(false);
+            return;
+        }
+        bool showPeek = SettingsStore.GetRailOpenMode() == RailOpenMode.HoverButton;
+        SetPeekTabVisible(showPeek);
+        if (!showPeek)
+            StopPeekTabPresentation();
     }
 
     internal static void ApplyPeekTabTheme() {

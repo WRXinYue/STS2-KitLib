@@ -285,9 +285,12 @@ internal static partial class DevPanelUI {
         CreatePeekTab(root);
 
         // ── Auto-hide: timer-based mouse position polling ──
+        const double RailCollapseGraceMsec = 320;
         float hiddenX = -(24 + RailW);
         float visibleX = 24f;
         Tween? railTween = null;
+        double collapseAfterMsec = 0;
+        double expandBlockedUntilMsec = 0;
 
         rail.OffsetLeft = hiddenX;
         rail.OffsetRight = hiddenX + RailW;
@@ -302,6 +305,9 @@ internal static partial class DevPanelUI {
             }
 
             _railShown = show;
+
+            if (!show)
+                expandBlockedUntilMsec = Time.GetTicksMsec() + RailCollapseGraceMsec;
 
             railTween?.Kill();
             railTween = rail.CreateTween();
@@ -319,7 +325,7 @@ internal static partial class DevPanelUI {
                      .TweenProperty(rail, "modulate:a", targetAlpha, 0.15f)
                      .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
 
-            SetPeekTabVisible(!show);
+            SyncPeekTabCollapsedVisibility(show);
             RefreshRailHintPresentation();
         }
 
@@ -343,21 +349,50 @@ internal static partial class DevPanelUI {
 
             var mousePos = root.GetViewport().GetMousePosition();
             var railRect = rail.GetGlobalRect();
+            bool hoverSideMode = SettingsStore.GetRailOpenMode() == RailOpenMode.HoverSide;
+            bool hoverButtonMode = !hoverSideMode;
             bool inHitZone = mousePos.X < hitZoneRight
                           && mousePos.Y > railRect.Position.Y - 20
                           && mousePos.Y < railRect.End.Y + 20;
-            bool overRail = _railShown && railRect.Grow(8).HasPoint(mousePos);
+            bool inPeekAnchorZone = hoverButtonMode
+                                 && mousePos.X < visibleX
+                                 && mousePos.Y > railRect.Position.Y - 20
+                                 && mousePos.Y < railRect.End.Y + 20;
+            bool overRail = _railShown
+                         && (railRect.Grow(8).HasPoint(mousePos) || inPeekAnchorZone);
+            bool overPeek = IsMouseOverPeekTab(mousePos);
+            bool canExpand = Time.GetTicksMsec() >= expandBlockedUntilMsec;
 
-            if (inHitZone || overRail)
+            if (canExpand && (overRail || overPeek || (hoverSideMode && inHitZone))) {
+                collapseAfterMsec = 0;
                 SlideRail(true, userTriggered: true);
-            else if (_railShown)
-                SlideRail(false);
+            }
+            else if (_railShown) {
+                double now = Time.GetTicksMsec();
+                if (collapseAfterMsec <= 0)
+                    collapseAfterMsec = now + RailCollapseGraceMsec;
+                else if (now >= collapseAfterMsec)
+                    SlideRail(false);
+            }
+            else {
+                collapseAfterMsec = 0;
+                SyncPeekTabCollapsedVisibility(false);
+            }
 
             RefreshRailHintPresentation();
         };
         root.AddChild(pollTimer);
 
         WirePeekTabPressed(() => SlideRail(true, userTriggered: true));
+        WirePeekTabMouseEntered(() => {
+            if (SettingsStore.GetRailOpenMode() != RailOpenMode.HoverButton)
+                return;
+            if (Time.GetTicksMsec() < expandBlockedUntilMsec)
+                return;
+            collapseAfterMsec = 0;
+            SlideRail(true, userTriggered: true);
+        });
+        SyncPeekTabCollapsedVisibility(false);
         RefreshPeekTabHotkeyHint();
 
         RefreshRailHintPresentation();

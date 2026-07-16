@@ -198,6 +198,7 @@ public static class KitLibHost {
     public static Func<bool>? IsDualInstanceActive { get; set; }
     public static Action? SyncAiHudOverlay { get; set; }
     public static Action? SyncPerfHudOverlay { get; set; }
+    public static Action? RebuildDevPanelRail { get; set; }
     public static Action? NotifyPerfHudEnabledChanged { get; set; }
     public static Action? NotifyHotkeySettingsChanged { get; set; }
     public static Func<Creature, IReadOnlyList<Creature>, object, JsonArray>? CaptureMonsterIntentSteps { get; set; }
