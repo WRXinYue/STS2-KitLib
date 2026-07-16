@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Card test room** — Training dummy combat now uses a KitLib-only encounter. We’re sorry the old implementation also changed the official Battleworn Dummy event.
 - **Auto-open developer console** — KitLib setting renamed from the legacy kitlog terminal option; one toggle opens the browser dev panel on startup (default off).
 - **Log export ZIP** — Removed `report.txt` and the title/description form; export always includes Harmony patches, combat stats, and a full game log at the ZIP root.
 - **Log export UI** — Merged into the log viewer; **Log Export** opens a slide-out extension panel (same pattern as the card browser). Removed the standalone Dev rail tab and main-menu entry.
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Official Battleworn Dummy event** — With KitLib loaded, the hardest training tier no longer shows 999999999 HP or behaves like the card-test infinite dummy.
 - **In-game log viewer** — Fixed the panel stopping on old lines or showing only engine backtrace spam instead of the latest logs.
 - **In-game log viewer** — Godot gamepad input-map errors (and their backtrace blocks) are folded by a built-in suppress rule so mod and KitLib lines stay visible.
 - **Dev Mode rail / settings** — Fixed tab labels mixing English and Chinese in the main-panel list and sidebar tooltips.

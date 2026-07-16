@@ -101,13 +101,6 @@ internal static class LogViewerUI {
             chip.TooltipText = rule.Description;
             chip.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             ruleChips[i] = chip;
-
-            var capturedRule = rule;
-            chip.Toggled += v => {
-                capturedRule.Enabled = v;
-                PublishFilters();
-                Repopulate();
-            };
         }
 
         // ── Body: filter sidebar | log | stats ────────────────────────────
@@ -564,6 +557,15 @@ internal static class LogViewerUI {
                 PublishFilters(loadedModIds, modIdAliases);
 
             Callable.From(() => RestoreScrollAfterRepopulate(followTail, prevScroll, prevMax)).CallDeferred();
+        }
+
+        for (int i = 0; i < LogSuppressor.BuiltInRules.Length; i++) {
+            var capturedRule = LogSuppressor.BuiltInRules[i];
+            ruleChips[i].Toggled += v => {
+                capturedRule.Enabled = v;
+                PublishFilters();
+                Repopulate();
+            };
         }
 
         // ── Level chip logic ──

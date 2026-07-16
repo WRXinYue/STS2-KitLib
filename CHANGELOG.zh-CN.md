@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **卡牌测试房间** — 训练假人战斗改为 KitLib 专用遭遇。卡牌测试误改了官方「战痕累累的训练假人」，这次改动一并修正，对造成困扰表示抱歉。
 - **自启动开发者控制台** — KitLib 设置由原 kitlog 终端选项更名；单一开关在启动时打开浏览器开发面板（默认关闭）。
 - **日志导出 ZIP** — 移除 `report.txt` 与标题/复现步骤表单；导出始终包含 Harmony 补丁、战斗统计，以及 ZIP 根目录的完整游戏日志。
 - **日志导出界面** — 并入日志查看器；点击 **日志导出** 滑出扩展面板（与卡牌浏览器相同模式）。移除独立 Dev 侧栏项与主菜单入口。
@@ -35,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **官方「战痕累累的训练假人」事件** — 安装 KitLib 后，第 3 档不再错误显示 999999999 生命值，也不会再套用卡牌测试用的无限血假人行为。
 - **局内日志查看器** — 修复面板卡在旧行、或只显示引擎 backtrace 而看不到最新日志的问题。
 - **局内日志查看器** — Godot 手柄输入映射报错及其 backtrace 块默认折叠，避免刷屏遮挡 mod 与 KitLib 日志。
 - **Dev Mode 侧栏 / 设置** — 修复主面板与侧栏标签中英文混显。

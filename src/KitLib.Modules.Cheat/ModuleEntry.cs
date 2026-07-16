@@ -9,6 +9,7 @@ public static class ModuleEntry {
     public static void Initialize() {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat)) return;
         KitLibHost.AnnounceModule(KitLibModuleIds.Cheat);
+        CardTestModelRegistration.Register();
         MpCheatSync.Initialize();
         WireCheatDelegates();
         CheatTabRegistration.Register();

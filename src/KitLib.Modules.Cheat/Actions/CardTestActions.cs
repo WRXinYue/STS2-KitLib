@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KitLib.Models;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -10,7 +11,6 @@ using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
-using MegaCrit.Sts2.Core.Models.Encounters;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -41,11 +41,7 @@ internal static class CardTestActions {
         return player.PlayerCombatState != null || IsAtRestSite(state);
     }
 
-    /// <summary>
-    /// Teleports the run into a combat room containing the training dummy (BattleFriendV3, Setting3).
-    /// HP is patched to "infinite" via <see cref="BattleFriendV3InfiniteHpPatch"/> and the time limit
-    /// is suppressed via <see cref="BattlewornDummyTimeLimitPatch"/>.
-    /// </summary>
+    /// <summary>Teleports the run into a KitLib-owned card test combat (<see cref="KitLibCardTestEncounter"/>).</summary>
     internal static bool TryEnterTestRoom() {
         try {
             var rm = RunManager.Instance;
@@ -57,12 +53,7 @@ internal static class CardTestActions {
                 MainFile.Logger.Warn("CardTestActions: Test room not available in multiplayer.");
                 return false;
             }
-#if STS2_BETA_PROFILE
-            var encounter = ModelDb.Encounter<BattlewornDummyEventV3Encounter>().ToMutable();
-#else
-            var encounter = (BattlewornDummyEventEncounter)ModelDb.Encounter<BattlewornDummyEventEncounter>().ToMutable();
-            encounter.Setting = BattlewornDummyEventEncounter.DummySetting.Setting3;
-#endif
+            var encounter = ModelDb.Encounter<KitLibCardTestEncounter>().ToMutable();
             TaskHelper.RunSafely(rm.EnterRoomDebug(RoomType.Monster, MapPointType.Monster, encounter));
             return true;
         }
