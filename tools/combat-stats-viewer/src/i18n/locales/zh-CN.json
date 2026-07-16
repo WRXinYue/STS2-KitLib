@@ -1,0 +1,112 @@
+{
+  "app": {
+    "title": "KitLib 开发者面板",
+    "subtitle": "实时日志与战斗统计"
+  },
+  "nav": {
+    "logs": "日志",
+    "combat": "战斗"
+  },
+  "logs": {
+    "syncInGame": "同步局内筛选",
+    "syncActive": "已同步局内",
+    "copyAll": "复制全部",
+    "filter": {
+      "level": "级别",
+      "all": "全部",
+      "info": "≥ Info",
+      "warn": "≥ Warn",
+      "error": "Error",
+      "text": "文本",
+      "textPlaceholder": "筛选文本…",
+      "mods": "Mod 来源",
+      "suppress": "抑制规则"
+    },
+    "stats": {
+      "title": "来源统计",
+      "count": "{n} 条",
+      "countFiltered": "{visible} 条 · 已过滤 {suppressed} 条",
+      "empty": "无可见日志"
+    }
+  },
+  "status": {
+    "noData": "暂无战斗数据",
+    "live": "进行中",
+    "ended": "已结束",
+    "turn": "第 {n} 回合",
+    "connected": "已连接",
+    "connecting": "连接中…"
+  },
+  "actions": {
+    "exportJson": "下载 JSON",
+    "exported": "已下载 {filename}",
+    "exportFailed": "导出失败"
+  },
+  "empty": {
+    "noPayload": "未找到战斗统计数据。",
+    "noPayloadHint": "在设置 → 游戏中开启自动打开，或运行 {cmd} 使用示例数据。",
+    "noPlayer": "当前战斗中没有玩家数据。",
+    "noEvents": "没有符合筛选条件的事件。"
+  },
+  "filters": {
+    "search": "筛选事件…",
+    "allKinds": "全部类型"
+  },
+  "summary": {
+    "dealt": "伤害",
+    "taken": "承伤",
+    "block": "格挡",
+    "cards": "出牌"
+  },
+  "timeline": {
+    "turn": "第 {n} 回合",
+    "eventCount": "{n} 条事件"
+  },
+  "events": {
+    "blockText": "+{n} 格挡",
+    "energyText": "-{n} 能量"
+  },
+  "state": {
+    "player": "玩家",
+    "enemy": "敌人",
+    "players": "玩家",
+    "enemies": "敌人",
+    "turnStart": "回合开始",
+    "turnEnd": "回合结束",
+    "afterHit": "受击后",
+    "combatEnd": "战斗结束",
+    "finalHp": "最终血量",
+    "defeated": "已击败",
+    "hpShort": "生命 {current} / {max}",
+    "block": "格挡 {n}",
+    "energy": "能量 {n}"
+  },
+  "kinds": {
+    "DamageDealt": "伤害",
+    "DamageTaken": "承伤",
+    "BlockGained": "格挡",
+    "CardPlayed": "出牌",
+    "EnergySpent": "能量",
+    "PotionUsed": "药水",
+    "DebuffApplied": "Debuff",
+    "BuffApplied": "Buff",
+    "PowerSynergy": "协同",
+    "EnemyMove": "敌人",
+    "CreatureState": "状态"
+  },
+  "sourceKinds": {
+    "Card": "卡牌",
+    "Power": "能力",
+    "Relic": "遗物",
+    "Potion": "药水",
+    "Enemy": "敌人",
+    "MonsterMove": "敌人行动",
+    "Player": "玩家",
+    "Synergy": "协同",
+    "Unknown": "未知"
+  },
+  "lang": {
+    "en": "English",
+    "zh-CN": "中文"
+  }
+}

@@ -74,13 +74,16 @@ public static class LogStreamHub {
 
     public static void PublishFilter(LogViewerFilterSnapshot snapshot) {
         ArgumentNullException.ThrowIfNull(snapshot);
-        var entry = LogStreamEntry.FromFilterSnapshot(snapshot);
         Action<LogStreamEntry>[] subscribers;
         lock (Lock) {
+            if (_currentFilter != null && FilterEquals(_currentFilter, snapshot))
+                return;
+
             _currentFilter = snapshot;
             subscribers = Subscribers.ToArray();
         }
 
+        var entry = LogStreamEntry.FromFilterSnapshot(snapshot);
         foreach (var subscriber in subscribers) {
             try {
                 subscriber(entry);
@@ -89,6 +92,52 @@ public static class LogStreamHub {
                 // Best-effort fan-out only.
             }
         }
+    }
+
+    static bool FilterEquals(LogViewerFilterSnapshot a, LogViewerFilterSnapshot b) {
+        if (!string.Equals(a.MinLevel, b.MinLevel, StringComparison.Ordinal))
+            return false;
+        if (!string.Equals(a.TextFilter, b.TextFilter, StringComparison.Ordinal))
+            return false;
+        if (!SequenceEqual(a.HiddenSources, b.HiddenSources))
+            return false;
+        if (!SequenceEqual(a.LoadedModIds, b.LoadedModIds))
+            return false;
+        if (!DictionaryEqual(a.ModIdAliases, b.ModIdAliases))
+            return false;
+        if (a.SuppressRules.Length != b.SuppressRules.Length)
+            return false;
+
+        for (int i = 0; i < a.SuppressRules.Length; i++) {
+            if (!string.Equals(a.SuppressRules[i].Pattern, b.SuppressRules[i].Pattern, StringComparison.Ordinal))
+                return false;
+            if (a.SuppressRules[i].Enabled != b.SuppressRules[i].Enabled)
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool SequenceEqual(string[] a, string[] b) {
+        if (a.Length != b.Length)
+            return false;
+        for (int i = 0; i < a.Length; i++) {
+            if (!string.Equals(a[i], b[i], StringComparison.Ordinal))
+                return false;
+        }
+
+        return true;
+    }
+
+    static bool DictionaryEqual(Dictionary<string, string> a, Dictionary<string, string> b) {
+        if (a.Count != b.Count)
+            return false;
+        foreach (var (key, value) in a) {
+            if (!b.TryGetValue(key, out var other) || !string.Equals(value, other, StringComparison.Ordinal))
+                return false;
+        }
+
+        return true;
     }
 
     public static LogStreamEntry[] GetHistorySnapshot() {

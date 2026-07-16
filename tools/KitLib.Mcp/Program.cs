@@ -11,12 +11,14 @@ for (int i = 0; i < args.Length; i++) {
 }
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Logging.ClearProviders();
 builder.Logging.AddConsole(consoleLogOptions => {
     // MCP stdio transport owns stdout; keep logs on stderr.
     consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
 });
 
 builder.Services.AddSingleton(new GameBridgeClient(port));
+builder.Services.AddSingleton<GameOrchestrator>();
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()

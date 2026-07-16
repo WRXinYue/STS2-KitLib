@@ -5,7 +5,14 @@ import re
 from pathlib import Path
 
 MONSTERS_DIR = Path(r"C:\Users\WRXinYue\Documents\Project\STS2\Slay the Spire 2\src\Core\Models\Monsters")
-OUT_PATH = Path(__file__).resolve().parents[2] / "src" / "AI" / "Data" / "monster-move-effects.json"
+OUT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "KitLib.Modules.AI"
+    / "AI"
+    / "Data"
+    / "monster-move-effects.json"
+)
 
 ID_FIXES = {
     "EYEWITHTEETH": "EYE_WITH_TEETH",

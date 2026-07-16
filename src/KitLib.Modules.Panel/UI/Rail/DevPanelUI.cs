@@ -363,7 +363,6 @@ internal static partial class DevPanelUI {
         RefreshRailHintPresentation();
 
         if (!KitLibState.DualInstanceMinimalRail) {
-            CombatStatsUI.AttachMultiplayerOverlay(globalUi);
             MonsterIntentOverlayUI.Attach(globalUi);
             MonsterIntentOverlayUI.SyncState(globalUi);
         }
@@ -398,7 +397,6 @@ internal static partial class DevPanelUI {
         _railIndicator = null;
         _moveRailIndicator = null;
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
-        CombatStatsUI.DetachMultiplayerOverlay(globalUi);
         MonsterIntentOverlayUI.Detach(globalUi);
         ((Node)globalUi).GetNodeOrNull<Control>(LegacyTopBarName)?.QueueFree();
         _onRefreshPanel = null;

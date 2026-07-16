@@ -19,6 +19,9 @@ MOD_MAIN := src/KitLib.Core/KitLib.Core.csproj
 SMOKE_MOD_PROJECT := samples/KitLibSmokeMod/KitLibSmokeMod.csproj
 SMOKE_MOD_TESTS := tests/KitLib.SmokeMod.Tests/KitLib.SmokeMod.Tests.csproj
 MCP_PROJECT := tools/KitLib.Mcp/KitLib.Mcp.csproj
+DEV_VIEWER := tools/combat-stats-viewer
+COMBAT_STATS_VIEWER := $(DEV_VIEWER)
+
 KITLOG_PROJECT := tools/KitLog.Cli/KitLog.Cli.csproj
 
 # Runtime identifier for self-contained tool publish (override: make build-tools TOOLS_RID=linux-x64)
@@ -137,11 +140,13 @@ help:
 	@echo ""
 	@echo "  compile-tools dotnet build KitLib.Mcp Release (local MCP / Cursor)"
 	@echo "  build-tools  publish KitLib.Mcp self-contained exe to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
-	@echo "  deploy-tools copy kitlog + MCP into mods/KitLib/tools/ (build-if-missing)"
-	@echo "  sync-tools   build-tools + build-kitlog + deploy-tools (force copy)"
+	@echo "  deploy-tools copy KitLib.Mcp into mods/KitLib/tools/ (build-if-missing)"
+	@echo "  sync-tools   build-tools + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
 	@echo "  compile-kitlog dotnet build KitLog.Cli Release"
 	@echo "  build-kitlog publish kitlog self-contained to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
+	@echo "  build-dev-viewer  pnpm build → CombatStats/viewer-shell.html (embedded in KitLib.Dev)"
+	@echo "  build-combat-stats-viewer  alias for build-dev-viewer"
 	@echo "  zip-kitlog   build-kitlog + package build/KitLog.Cli-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
 	@echo "  zip          build-all + package build/KitLib-vX.X.X.zip (alias: zip-full)"
@@ -312,6 +317,9 @@ compile-kitlog:
 
 build-kitlog:
 	$(DOTNET) publish $(KITLOG_PROJECT) $(KITLOG_PUBLISH_FLAGS)
+
+build-dev-viewer build-combat-stats-viewer:
+	cd $(DEV_VIEWER) && pnpm install && pnpm build
 
 pck: deps
 	$(DOTNET) publish $(DEPLOY_TO_GAME) $(MOD_MAIN)

@@ -15,6 +15,26 @@ internal sealed class Sts2McpTools {
     public Task<string> GetGameState(CancellationToken cancellationToken) =>
         _bridge.CallToolAsync("get_game_state", new JsonObject(), cancellationToken);
 
+    [McpServerTool(Name = "get_combat_stats", ReadOnly = true), Description(
+        "Combat stats timeline: events with source attribution, creature snapshots. " +
+        "Use since_sequence after combat_action to read only new events.")]
+    public Task<string> GetCombatStats(
+        [Description("Return events with sequence greater than this.")]
+        int since_sequence = 0,
+        [Description("Max events to return (default 200).")]
+        int max_events = 200,
+        [Description("Optional turn filter.")]
+        int? turn = null,
+        CancellationToken cancellationToken = default) {
+        var args = new JsonObject {
+            ["since_sequence"] = since_sequence,
+            ["max_events"] = max_events,
+        };
+        if (turn.HasValue)
+            args["turn"] = turn.Value;
+        return _bridge.CallToolAsync("get_combat_stats", args, cancellationToken);
+    }
+
     [McpServerTool(Name = "combat_action"), Description(
         "Execute a combat action. play_card success returns afterState unless pseudo-coop queued.")]
     public Task<string> CombatAction(

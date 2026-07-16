@@ -13,7 +13,7 @@ namespace KitLib;
 internal static class LogViewerFilterSync {
     public static void PublishDefaults() {
         var loaded = ModRuntime.Catalog.GetIdSet();
-        Publish(null, "", BuildDefaultModVisibility(loaded), loaded, BuildModIdAliasLookup(loaded));
+        Publish(null, "", BuildDefaultModVisibility(loaded), loaded, LogModSourceResolver.BuildAliasLookup(loaded));
     }
 
     public static void Publish(
@@ -51,34 +51,14 @@ internal static class LogViewerFilterSync {
     }
 
     static Dictionary<string, bool> BuildDefaultModVisibility(HashSet<string> loadedModIds) {
-        var map = new Dictionary<string, bool>(StringComparer.Ordinal) { ["Game"] = true };
+        var map = new Dictionary<string, bool>(StringComparer.Ordinal) {
+            ["Game"] = true,
+            ["KitLib"] = true,
+        };
         foreach (var id in loadedModIds)
             map[id] = true;
         return map;
     }
-
-    static Dictionary<string, string> BuildModIdAliasLookup(HashSet<string> loadedModIds) {
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var mod in ModRuntime.Catalog.GetSnapshot()) {
-            RegisterModAlias(map, mod.Id, mod.Id);
-            if (!string.IsNullOrEmpty(mod.DisplayName))
-                RegisterModAlias(map, mod.DisplayName, mod.Id);
-        }
-
-        foreach (var id in loadedModIds)
-            RegisterModAlias(map, id, id);
-
-        return map;
-    }
-
-    static void RegisterModAlias(Dictionary<string, string> map, string alias, string canonicalId) {
-        var key = NormalizeModIdKey(alias);
-        if (!map.ContainsKey(key))
-            map[key] = canonicalId;
-    }
-
-    static string NormalizeModIdKey(string id)
-        => id.ToLowerInvariant().Replace('-', '_');
 
     static string? ToMinLevelToken(LogLevel? minLevel) => minLevel switch {
         null => null,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Godot;
 using KitLib.Host;
 using KitLib.Logging;
@@ -16,6 +17,8 @@ namespace KitLib;
 /// </summary>
 internal static class LogCollector {
     public const int MaxLiveEntries = 2000;
+    private const int MaxPostBoundaryFileLines = 1200;
+
     public const int MaxMergedEntries = 4000;
     internal const string LogViewerRootName = "KitLibLogViewer";
 
@@ -35,6 +38,7 @@ internal static class LogCollector {
     private static volatile bool _dirty;
     private static LogLevel? _unseenAlertSeverity;
     private static bool _logViewerOpen;
+    private static DateTime _lastFileSnapshotUtc = DateTime.MinValue;
 
     /// <summary>True when new entries have arrived since the last <see cref="MarkClean"/> call.</summary>
     public static bool IsDirty => _dirty;
@@ -70,11 +74,8 @@ internal static class LogCollector {
     }
 
     static void TryLaunchKitlogStartup() {
-        if (!SettingsStore.Current.LaunchKitlogOnStartup)
-            return;
-
-        if (!KitLogTerminalLauncher.TryOpenSessionTail(out var error) && !string.IsNullOrEmpty(error))
-            KitLog.Debug("KitLog", error);
+        if (!DevViewerLauncher.TryOpenLogs(out var error) && !string.IsNullOrEmpty(error))
+            KitLog.Debug("DevViewer", error);
     }
 
     /// <summary>
@@ -86,10 +87,39 @@ internal static class LogCollector {
             GameLogFileHydrator.InvalidateSessionLogPathCache();
             parsed = GameLogFileHydrator.ReadLogEntries();
         }
+        var path = GameLogFileHydrator.GodotLogPath;
+        if (path != null) {
+            try {
+                _lastFileSnapshotUtc = File.GetLastWriteTimeUtc(path);
+            }
+            catch {
+                // ignore mtime probe failures
+            }
+        }
         lock (_lock) {
             _fileEntries = parsed;
             _dirty = true;
         }
+    }
+
+    /// <summary>Re-reads godot.log only when the file changed since the last snapshot.</summary>
+    public static void RefreshFileSnapshotIfChanged() {
+        var path = GameLogFileHydrator.GodotLogPath;
+        if (path == null)
+            return;
+
+        DateTime mtime;
+        try {
+            mtime = File.GetLastWriteTimeUtc(path);
+        }
+        catch {
+            return;
+        }
+
+        if (mtime == _lastFileSnapshotUtc)
+            return;
+
+        RefreshFileSnapshot();
     }
 
     private static void OnLogReceived(LogLevel level, string text, int _) {
@@ -193,6 +223,12 @@ internal static class LogCollector {
                     postBoundary.Add(IsSessionBoundary(entry) ? entry : PromoteFileEntryToSession(entry));
                 }
 
+                if (postBoundary.Count > MaxPostBoundaryFileLines)
+                    postBoundary = postBoundary.GetRange(
+                        postBoundary.Count - MaxPostBoundaryFileLines,
+                        MaxPostBoundaryFileLines);
+
+                // File tail is chronological; live supplements callback-only lines not yet on disk.
                 AppendUnique(merged, postBoundary);
                 AppendUnique(merged, liveEntries);
             }
@@ -208,7 +244,8 @@ internal static class LogCollector {
     }
 
     /// <summary>
-    /// Caps total size while preserving the full pre-boundary file history; only trims the live tail.
+    /// Caps total size while preserving pre-boundary history and live callback lines.
+    /// File-only supplement lines (no wall clock) are dropped first.
     /// </summary>
     private static void TrimToMaxEntries(List<Entry> merged) {
         if (merged.Count <= MaxMergedEntries)
@@ -220,15 +257,30 @@ internal static class LogCollector {
             return;
         }
 
-        int preserveThroughBoundary = boundaryIdx + 1;
-        int maxLiveEntries = MaxMergedEntries - preserveThroughBoundary;
-        if (maxLiveEntries < 0)
-            maxLiveEntries = 0;
+        int tailStart = boundaryIdx + 1;
+        int tailBudget = MaxMergedEntries - tailStart;
+        if (tailBudget <= 0) {
+            merged.RemoveRange(tailStart, merged.Count - tailStart);
+            return;
+        }
 
-        int liveStart = preserveThroughBoundary;
-        int liveCount = merged.Count - liveStart;
-        if (liveCount > maxLiveEntries)
-            merged.RemoveRange(liveStart, liveCount - maxLiveEntries);
+        int excess = merged.Count - tailStart - tailBudget;
+        if (excess <= 0)
+            return;
+
+        var victims = new List<int>(excess);
+        for (int i = tailStart; i < merged.Count && victims.Count < excess; i++) {
+            if (!merged[i].HasWallClockTime)
+                victims.Add(i);
+        }
+
+        for (int i = tailStart; i < merged.Count && victims.Count < excess; i++) {
+            if (merged[i].HasWallClockTime)
+                victims.Add(i);
+        }
+
+        for (int i = victims.Count - 1; i >= 0; i--)
+            merged.RemoveAt(victims[i]);
     }
 
     private static int FindLastBoundaryIndex(List<Entry> entries) {
@@ -240,18 +292,7 @@ internal static class LogCollector {
         return -1;
     }
 
-    private static void AppendUnique(List<Entry> merged, List<Entry> entries, List<Entry>? skipFingerprints = null) {
-        var seen = skipFingerprints != null
-            ? BuildFingerprintSet(skipFingerprints)
-            : BuildFingerprintSet(merged);
-
-        foreach (var entry in entries) {
-            if (seen.Add(Fingerprint(entry)))
-                merged.Add(entry);
-        }
-    }
-
-    private static void AppendUnique(List<Entry> merged, Entry[] entries, List<Entry>? skipFingerprints = null) {
+    private static void AppendUnique(List<Entry> merged, IEnumerable<Entry> entries, List<Entry>? skipFingerprints = null) {
         var seen = skipFingerprints != null
             ? BuildFingerprintSet(skipFingerprints)
             : BuildFingerprintSet(merged);

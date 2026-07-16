@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KitLib;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Combat.History;
 using MegaCrit.Sts2.Core.Combat.History.Entries;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -11,23 +13,32 @@ using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.ValueProps;
 
 namespace KitLib.CombatStats;
 
 /// <summary>
-/// Aggregates combat statistics from <see cref="CombatHistory"/> for the DevMode stats panel.
+/// Aggregates combat statistics from <see cref="CombatHistory"/> for the browser viewer.
 /// </summary>
 internal static class CombatStatsTracker {
     private const int MaxEventsPerPlayer = 200;
+    private const int MaxCombatEvents = 500;
 
     private static CombatHistoryTailer? _tailer;
     private static bool _initialized;
     private static bool _wired;
+    private static CombatState? _combatState;
 
     private static CombatStatsSnapshot? _current;
     private static CombatStatsSnapshot? _last;
     private static CombatStatsSnapshot? _runTotal;
     private static int _runCombatCount;
+    private static int _nextEventSequence;
+    private static readonly HashSet<int> _turnEndStatesEmitted = new();
+    private static int _displayTurn = 1;
+    private static bool _playerTurnStarted;
+    private static bool _cardPlayResolutionActive;
+    private static CardPlay? _activeCardPlay;
 
     private static CombatHistoryTailer Tailer => _tailer ??= new CombatHistoryTailer();
 
@@ -36,6 +47,8 @@ internal static class CombatStatsTracker {
 
     internal static PowerDamageContext PendingPowerDamage { get; set; }
 
+    private static CombatStatSource? _pendingEffectSource;
+
     public static event Action? Changed;
 
     public static CombatStatsSnapshot Current => _current ??= new CombatStatsSnapshot();
@@ -43,6 +56,16 @@ internal static class CombatStatsTracker {
     public static CombatStatsSnapshot RunTotal => _runTotal ??= new CombatStatsSnapshot();
     public static int RunCombatCount => _runCombatCount;
     public static bool IsTracking => _current?.IsActive ?? false;
+
+    /// <summary>Player-facing turn counter (matches PlayerCombatState.TurnNumber).</summary>
+    internal static int DisplayTurn => _displayTurn;
+
+    internal static int ResolveEventTurn(CombatHistoryEntry entry) {
+        int turn = Sts2CombatCompat.ResolveHistoryDisplayTurn(entry);
+        if (Sts2CombatCompat.GetHistoryCurrentSide(entry) == CombatSide.Player)
+            turn = Math.Max(turn, _displayTurn);
+        return Math.Max(1, turn);
+    }
 
     public static void Initialize() {
         if (_initialized) return;
@@ -60,6 +83,8 @@ internal static class CombatStatsTracker {
             runManager.RunStarted += OnRunStarted;
             combatManager.CombatSetUp += OnCombatSetUp;
             combatManager.CombatEnded += OnCombatEnded;
+            combatManager.TurnStarted += OnTurnStarted;
+            combatManager.TurnEnded += OnTurnEnded;
             _wired = true;
         }
         catch (Exception) {
@@ -75,19 +100,73 @@ internal static class CombatStatsTracker {
     private static void OnCombatSetUp(CombatState state) {
         if (!KitLibState.IsActive) return;
 
+        _combatState = state;
         _current = new CombatStatsSnapshot {
             EncounterKey = ResolveEncounterKey(state),
             IsActive = true,
         };
+        _nextEventSequence = 0;
+        _turnEndStatesEmitted.Clear();
+        _displayTurn = Sts2CombatCompat.GetPrimaryPlayerTurnNumber(state);
+        _playerTurnStarted = false;
+        _cardPlayResolutionActive = false;
         PendingPowerDamage = PowerDamageContext.None;
+        _pendingEffectSource = null;
         _powerAppliers.Clear();
+
+        CombatStatsLiveBuffer.ResetForNewCombat();
 
         foreach (Player player in state.Players) {
             if (player?.Creature != null)
                 GetOrCreate(player.Creature);
         }
 
+        int openingTurn = Sts2CombatCompat.GetPrimaryPlayerTurnNumber(state);
+        RecordTurnSnapshot(state, openingTurn, "start");
+        EmitOpeningPlayerStates(openingTurn);
+        RefreshLiveCreatures(state);
+
         Tailer.Attach(CombatManager.Instance.History, state);
+
+        try {
+            DevViewerServer.EnsureStarted();
+        }
+        catch (Exception ex) {
+            KitLog.Warn("CombatStats", $"Viewer server unavailable: {ex.Message}");
+        }
+
+        NotifyChanged();
+    }
+
+    private static void OnTurnStarted(CombatState state) {
+        if (_current is not { IsActive: true })
+            return;
+
+        _combatState = state;
+
+        if (state.CurrentSide == CombatSide.Player) {
+            int newTurn = Sts2CombatCompat.GetPrimaryPlayerTurnNumber(state);
+            if (_playerTurnStarted && newTurn > _displayTurn)
+                EmitTurnEndCreatureStates(_displayTurn);
+            _playerTurnStarted = true;
+            _displayTurn = Math.Max(1, newTurn);
+        }
+
+        _current.MaxTurn = Math.Max(_current.MaxTurn, _displayTurn);
+        RecordTurnSnapshot(state, _displayTurn, "start");
+        RefreshLiveCreatures(state);
+        NotifyChanged();
+    }
+
+    private static void OnTurnEnded(CombatState state) {
+        if (_current is not { IsActive: true })
+            return;
+
+        _combatState = state;
+        Tailer.FlushPending();
+        _current.MaxTurn = Math.Max(_current.MaxTurn, _displayTurn);
+        RecordTurnSnapshot(state, _displayTurn, "end");
+        RefreshLiveCreatures(state);
         NotifyChanged();
     }
 
@@ -96,14 +175,44 @@ internal static class CombatStatsTracker {
         PendingPowerDamage = PowerDamageContext.None;
         _powerAppliers.Clear();
 
-        if (_current is not { IsActive: true }) return;
+        if (_current is { IsActive: true }) {
+            var state = _combatState ?? CombatManager.Instance?.DebugOnlyGetState();
+            if (state != null) {
+                _current.MaxTurn = Math.Max(_current.MaxTurn, _displayTurn);
+                Tailer.FlushPending();
+                RecordTurnSnapshot(state, _displayTurn, "end");
+                EmitTurnEndCreatureStates(_displayTurn);
+                RefreshLiveCreatures(state, includeDefeated: true);
+            }
 
-        _current.IsActive = false;
-        _last = _current.Clone();
-        _runTotal.MergeInto(_last);
-        _runCombatCount++;
-        NotifyChanged();
+            _current.IsActive = false;
+            _last = _current.Clone();
+            _runTotal.MergeInto(_last);
+            _runCombatCount++;
+        }
+
+        _combatState = null;
+        NotifyChanged(forcePersist: true);
     }
+
+    internal static void SetPendingEffectSource(CombatStatSource source) {
+        if (source.IsKnown)
+            _pendingEffectSource = source;
+    }
+
+    internal static CombatStatSource? TakePendingEffectSource() {
+        var source = _pendingEffectSource;
+        _pendingEffectSource = null;
+        return source is { IsKnown: true } ? source : null;
+    }
+
+    internal static void SetCardPlayResolutionActive(bool active) {
+        _cardPlayResolutionActive = active;
+        if (!active)
+            _activeCardPlay = null;
+    }
+
+    internal static void SetActiveCardPlay(CardPlay? cardPlay) => _activeCardPlay = cardPlay;
 
     internal static void RecordDamage(
         CombatState combatState,
@@ -135,7 +244,9 @@ internal static class CombatStatsTracker {
             AddToDict(stats.DamageTakenBySource, sourceKey, taken);
 
             if (taken > 0) {
-                AddEvent(stats, roundNumber, CombatStatEventKind.DamageTaken, $"{sourceKey} → {taken}", taken, 0);
+                var source = ResolveDamageTakenSource(dealer, cardSource);
+                AddPlayerEvent(receiver, roundNumber, CombatStatEventKind.DamageTaken, $"{source.Name} → {taken}", taken,
+                    source: source);
                 RecordTakenSynergies(dealer, receiver, result, cardSource, roundNumber);
             }
         }
@@ -163,9 +274,12 @@ internal static class CombatStatsTracker {
         string cardKey = ResolveDamageCardKey(dealer, cardSource);
         AddToDict(stats.DamageByCard, cardKey, total);
 
-        if (total > 0)
-            AddEvent(stats, roundNumber, CombatStatEventKind.DamageDealt, $"{cardKey} → {total}", total,
-                CombatScoreCalculator.DamageScore(total));
+        if (total > 0) {
+            var source = ResolveDamageDealtSource(dealer, cardSource);
+            AddPlayerEvent(owner, roundNumber, CombatStatEventKind.DamageDealt, $"{source.Name} → {total}", total,
+                source: source);
+            RecordCreatureStateAfterHit(receiver, roundNumber);
+        }
 
         RecordDealSynergies(owner, dealer, receiver, result, cardSource, roundNumber);
         return true;
@@ -189,13 +303,20 @@ internal static class CombatStatsTracker {
         AddToDict(stats.PowerDamageBySource, PendingPowerDamage.SourceKey, total);
 
         if (total > 0) {
-            AddEvent(stats, roundNumber, CombatStatEventKind.DamageDealt,
-                $"{PendingPowerDamage.SourceKey} → {total}", total,
-                CombatScoreCalculator.DamageScore(total));
+            var source = CombatStatSource.FromPower(
+                PendingPowerDamage.SourceKey, PendingPowerDamage.SourceDisplayName);
+            AddPlayerEvent(owner, roundNumber, CombatStatEventKind.DamageDealt,
+                $"{source.Name} → {total}", total, source: source);
+            RecordCreatureStateAfterHit(receiver, roundNumber);
         }
     }
 
-    internal static void RecordBlockGained(Creature receiver, int amount, CardPlay? cardPlay, int roundNumber) {
+    internal static void RecordBlockGained(
+        Creature receiver,
+        int amount,
+        ValueProp props,
+        CardPlay? cardPlay,
+        int roundNumber) {
         if (_current is not { IsActive: true } || amount <= 0 || !receiver.IsPlayer) return;
 
         var stats = GetOrCreate(receiver);
@@ -205,8 +326,11 @@ internal static class CombatStatsTracker {
         if (cardKey != null)
             AddToDict(stats.BlockByCard, cardKey, amount);
 
-        AddEvent(stats, roundNumber, CombatStatEventKind.BlockGained, $"+{amount} block", amount,
-            CombatScoreCalculator.BlockScore(amount));
+        var source = TakePendingEffectSource()
+            ?? CombatStatsSourceResolver.ResolveBlock(cardPlay, props, receiver);
+        AddPlayerEvent(receiver, roundNumber, CombatStatEventKind.BlockGained, $"+{amount} block", amount,
+            linkedToCardPlay: cardPlay != null && _cardPlayResolutionActive,
+            source: source);
     }
 
     internal static void RecordCardPlay(CardPlay cardPlay, int roundNumber) {
@@ -224,10 +348,10 @@ internal static class CombatStatsTracker {
         if (energy > 0)
             AddToDict(stats.EnergySpentByCard, cardKey, energy);
 
-        int utilityScore = cardPlay.Card.Type == CardType.Attack
-            ? 0
-            : CombatScoreCalculator.UtilityPlayScore(energy);
-        AddEvent(stats, roundNumber, CombatStatEventKind.CardPlayed, cardKey, energy, utilityScore);
+        AddPlayerEvent(owner, roundNumber, CombatStatEventKind.CardPlayed, cardKey, energy,
+            source: CombatStatSource.FromCard(cardPlay.Card));
+        _cardPlayResolutionActive = false;
+        _activeCardPlay = null;
     }
 
     internal static void RecordEnergySpent(int amount, Creature playerCreature, int roundNumber) {
@@ -235,7 +359,9 @@ internal static class CombatStatsTracker {
 
         var stats = GetOrCreate(playerCreature);
         stats.EnergySpent += amount;
-        AddEvent(stats, roundNumber, CombatStatEventKind.EnergySpent, $"-{amount} energy", amount, 0);
+        var source = ResolveEnergySource();
+        AddPlayerEvent(playerCreature, roundNumber, CombatStatEventKind.EnergySpent, $"-{amount} energy", amount,
+            source: source);
     }
 
     internal static void RecordPotionUsed(PotionModel potion, int roundNumber) {
@@ -248,7 +374,9 @@ internal static class CombatStatsTracker {
         stats.PotionsUsed++;
         string key = potion.Id.Entry;
         AddToDict(stats.PotionUseCount, key, 1);
-        AddEvent(stats, roundNumber, CombatStatEventKind.PotionUsed, key, 1, CombatScoreCalculator.PotionScore());
+        AddPlayerEvent(owner, roundNumber, CombatStatEventKind.PotionUsed,
+            CombatStatsDisplayNames.ResolvePotionName(potion), 1,
+            source: CombatStatSource.FromPotion(potion));
     }
 
     internal static void RecordDebuffApplied(
@@ -260,7 +388,7 @@ internal static class CombatStatsTracker {
         if (_current is not { IsActive: true }) return;
         if (power.Type != PowerType.Debuff) return;
 
-        // Only score debuffs applied by players (or their pets), not enemy debuffs on players.
+        // Only track debuffs applied by players (or their pets), not enemy debuffs on players.
         if (applier == null)
             return;
         var credit = ResolveDamageOwner(applier);
@@ -273,8 +401,9 @@ internal static class CombatStatsTracker {
         string key = power.Id.Entry;
         AddToDict(stats.DebuffsByPower, key, amount);
         RegisterPowerApplier(receiver, key, stats);
-        AddEvent(stats, roundNumber, CombatStatEventKind.DebuffApplied, key, amount,
-            CombatScoreCalculator.DebuffScore(amount));
+        var source = ResolvePowerApplicationSource(applier, power);
+        AddPlayerEvent(credit, roundNumber, CombatStatEventKind.DebuffApplied,
+            CombatStatsDisplayNames.ResolvePowerName(power), amount, source: source);
     }
 
     internal static void RecordBuffApplied(
@@ -295,8 +424,9 @@ internal static class CombatStatsTracker {
         stats.BuffsApplied += amount;
         string key = power.Id.Entry;
         RegisterPowerApplier(receiver, key, stats);
-        AddEvent(stats, roundNumber, CombatStatEventKind.BuffApplied, key, amount,
-            CombatScoreCalculator.BuffScore(amount));
+        var source = ResolvePowerApplicationSource(applier, power);
+        AddPlayerEvent(credit, roundNumber, CombatStatEventKind.BuffApplied,
+            CombatStatsDisplayNames.ResolvePowerName(power), amount, source: source);
     }
 
     private static bool IsTrackablePower(PowerModel power, int stacks) {
@@ -344,8 +474,9 @@ internal static class CombatStatsTracker {
         var stats = ResolveSynergyCreditStats(powerHost, hit.PowerId, fallbackPlayer);
         if (stats == null) return;
 
-        int score = CombatScoreCalculator.SynergyScore(hit.Amount);
-        AddEvent(stats, roundNumber, CombatStatEventKind.PowerSynergy, $"{hit.Label} → {hit.Amount}", hit.Amount, score);
+        AddEvent(stats, roundNumber, CombatStatEventKind.PowerSynergy, $"{hit.Label} → {hit.Amount}", hit.Amount,
+            stats.Key, "player", stats.DisplayName,
+            source: CombatStatSource.Synergy(hit.PowerId, hit.Label));
     }
 
     private static PlayerCombatStats? ResolveSynergyCreditStats(
@@ -384,12 +515,17 @@ internal static class CombatStatsTracker {
     internal static void RecordEnemyMove(MonsterModel monster, int roundNumber) {
         if (_current is not { IsActive: true }) return;
 
-        var player = ResolvePrimaryPlayerCreature();
-        if (player == null) return;
+        string actorKey = monster.Id.Entry;
+        string actorName = actorKey;
+        try {
+            string title = monster.Title.GetFormattedText();
+            if (!string.IsNullOrWhiteSpace(title))
+                actorName = title;
+        }
+        catch { }
 
-        var stats = GetOrCreate(player);
-        string name = monster.Id.Entry;
-        AddEvent(stats, roundNumber, CombatStatEventKind.EnemyMove, name, 0, 0);
+        AddCombatEvent(roundNumber, CombatStatEventKind.EnemyMove, actorName, 0, actorKey, "enemy", actorName,
+            source: CombatStatSource.FromMonster(monster));
     }
 
     private static PlayerCombatStats GetOrCreate(Creature creature) {
@@ -544,16 +680,10 @@ internal static class CombatStatsTracker {
     }
 
     private static string? ResolveCardKey(CardModel? card) {
-        if (card == null) return null;
-        try {
-            string title = card.Title;
-            if (!string.IsNullOrWhiteSpace(title))
-                return title;
-        }
-        catch {
-            // fall through
-        }
-        return card.Id.Entry;
+        if (card == null)
+            return null;
+        string name = CombatStatsDisplayNames.ResolveCardName(card);
+        return string.IsNullOrWhiteSpace(name) ? card.Id.Entry : name;
     }
 
     private static string ResolveDamageSourceKey(Creature? dealer) {
@@ -583,22 +713,215 @@ internal static class CombatStatsTracker {
         }
     }
 
+    private static CombatStatSource ResolveBlockSource(CardPlay? cardPlay, ValueProp props, Creature? receiver) =>
+        CombatStatsSourceResolver.ResolveBlock(cardPlay, props, receiver);
+
+    private static CombatStatSource ResolveDamageDealtSource(Creature? dealer, CardModel? cardSource) {
+        if (cardSource != null)
+            return CombatStatSource.FromCard(cardSource);
+        if (CombatStatsSourceContext.TryPeek(out var ctx))
+            return ctx;
+        return CombatStatSource.FromCreature(dealer);
+    }
+
+    private static CombatStatSource ResolveDamageTakenSource(Creature? dealer, CardModel? cardSource) {
+        if (cardSource != null)
+            return CombatStatSource.FromCard(cardSource);
+        if (dealer != null) {
+            var fromDealer = CombatStatSource.FromCreature(dealer);
+            if (fromDealer.IsKnown)
+                return fromDealer;
+        }
+        if (CombatStatsSourceContext.TryPeek(out var ctx))
+            return ctx;
+        return CombatStatSource.Unknown;
+    }
+
+    private static CombatStatSource ResolvePowerApplicationSource(Creature? applier, PowerModel? power = null) {
+        var pending = TakePendingEffectSource();
+        if (pending is { IsKnown: true } known)
+            return known;
+
+        if (power != null) {
+            var resolved = CombatStatsSourceResolver.ResolvePowerApply(power, applier);
+            if (resolved.IsKnown)
+                return resolved;
+        }
+
+        if (applier != null) {
+            var fromApplier = CombatStatSource.FromCreature(applier);
+            if (fromApplier.IsKnown && fromApplier.Kind != CombatStatSourceKind.Player)
+                return fromApplier;
+        }
+
+        return CombatStatSource.Unknown;
+    }
+
+    private static CombatStatSource ResolveEnergySource() {
+        if (_activeCardPlay?.Card is CardModel card)
+            return CombatStatSource.FromCard(card);
+        if (CombatStatsSourceContext.TryPeek(out var ctx))
+            return ctx;
+        return CombatStatSource.Unknown;
+    }
+
+    private static void AddPlayerEvent(
+        Creature creature,
+        int turn,
+        CombatStatEventKind kind,
+        string text,
+        int amount,
+        bool? linkedToCardPlay = null,
+        CombatStatSource? source = null) {
+        var stats = GetOrCreate(creature);
+        AddEvent(stats, turn, kind, text, amount, stats.Key, "player", stats.DisplayName, linkedToCardPlay, source);
+    }
+
+    private static void AddCombatEvent(
+        int turn,
+        CombatStatEventKind kind,
+        string text,
+        int amount,
+        string actorKey,
+        string actorSide,
+        string actorName,
+        CreatureState? creature = null,
+        string statePhase = "",
+        bool? linkedToCardPlay = null,
+        CombatStatSource? source = null) {
+        if (_current == null)
+            return;
+
+        if (_current.CombatEvents.Count >= MaxCombatEvents)
+            _current.CombatEvents.RemoveAt(0);
+
+        CombatStatSource resolved = source ?? CombatStatSource.Unknown;
+        _current.CombatEvents.Add(new CombatStatEvent {
+            Sequence = ++_nextEventSequence,
+            Turn = turn,
+            Kind = kind,
+            Text = text,
+            Amount = amount,
+            ActorKey = actorKey,
+            ActorSide = actorSide,
+            ActorName = actorName,
+            Creature = creature,
+            StatePhase = statePhase,
+            LinkedToCardPlay = linkedToCardPlay ?? ResolveLinkedToCardPlay(kind, statePhase),
+            SourceKind = resolved.Kind,
+            SourceKey = resolved.Key,
+            SourceName = resolved.Name,
+        });
+    }
+
+    private static bool ResolveLinkedToCardPlay(CombatStatEventKind kind, string statePhase = "") {
+        if (!_cardPlayResolutionActive)
+            return false;
+        if (kind == CombatStatEventKind.BlockGained)
+            return false;
+        if (kind == CombatStatEventKind.CreatureState)
+            return statePhase == "hit";
+        return kind is not (CombatStatEventKind.DebuffApplied or CombatStatEventKind.BuffApplied);
+    }
+
     private static void AddEvent(
         PlayerCombatStats stats,
         int turn,
         CombatStatEventKind kind,
         string text,
         int amount,
-        int scorePoints) {
+        string actorKey,
+        string actorSide,
+        string actorName,
+        bool? linkedToCardPlay = null,
+        CombatStatSource? source = null) {
         if (stats.Events.Count >= MaxEventsPerPlayer)
             stats.Events.RemoveAt(0);
-        stats.Events.Add(new CombatStatEvent {
+
+        CombatStatSource resolved = source ?? CombatStatSource.Unknown;
+        var ev = new CombatStatEvent {
             Turn = turn,
             Kind = kind,
             Text = text,
             Amount = amount,
-            ScorePoints = scorePoints,
-        });
+            ActorKey = actorKey,
+            ActorSide = actorSide,
+            ActorName = actorName,
+            SourceKind = resolved.Kind,
+            SourceKey = resolved.Key,
+            SourceName = resolved.Name,
+        };
+        stats.Events.Add(ev);
+        AddCombatEvent(turn, kind, text, amount, actorKey, actorSide, actorName,
+            linkedToCardPlay: linkedToCardPlay, source: resolved);
+    }
+
+    private static void RecordTurnSnapshot(CombatState state, int turn, string phase) {
+        if (_current == null)
+            return;
+
+        var snapshot = CombatStatsSnapshotCapture.CaptureTurn(state, turn, phase);
+        int existing = _current.TurnSnapshots.FindIndex(t => t.Turn == turn && t.Phase == phase);
+        if (existing >= 0)
+            _current.TurnSnapshots[existing] = snapshot;
+        else
+            _current.TurnSnapshots.Add(snapshot);
+    }
+
+    private static void RecordCreatureStateAfterHit(Creature creature, int turn) {
+        if (!creature.IsEnemy)
+            return;
+
+        var state = CombatStatsSnapshotCapture.CaptureEnemyCreature(creature);
+        RecordCreatureStateEvent(state, turn, "hit");
+    }
+
+    private static void EmitOpeningPlayerStates(int turn) {
+        if (_current == null)
+            return;
+
+        var snapshot = _current.TurnSnapshots.Find(t => t.Turn == turn && t.Phase == "start");
+        if (snapshot == null)
+            return;
+
+        foreach (CreatureState player in snapshot.Creatures.Where(c => c.Side == "player"))
+            RecordCreatureStateEvent(player, turn, "start");
+    }
+
+    private static void EmitTurnEndCreatureStates(int turn) {
+        if (_current == null || !_turnEndStatesEmitted.Add(turn))
+            return;
+
+        var snapshot = _current.TurnSnapshots.Find(t => t.Turn == turn && t.Phase == "end");
+        if (snapshot == null)
+            return;
+
+        foreach (CreatureState player in snapshot.Creatures.Where(c => c.Side == "player"))
+            RecordCreatureStateEvent(player, turn, "end");
+
+        foreach (CreatureState enemy in snapshot.Creatures.Where(c => c.Side == "enemy"))
+            RecordCreatureStateEvent(enemy, turn, "end");
+    }
+
+    private static void RecordCreatureStateEvent(CreatureState state, int turn, string statePhase) {
+        AddCombatEvent(
+            turn,
+            CombatStatEventKind.CreatureState,
+            state.DisplayName,
+            state.CurrentHp,
+            state.Key,
+            state.Side,
+            state.DisplayName,
+            state,
+            statePhase);
+    }
+
+    private static void RefreshLiveCreatures(CombatState state, bool includeDefeated = false) {
+        if (_current == null)
+            return;
+
+        _current.LiveCreatures.Clear();
+        _current.LiveCreatures.AddRange(CombatStatsSnapshotCapture.CaptureLive(state, includeDefeated));
     }
 
     private static void AddToDict<TKey>(Dictionary<TKey, int> dict, TKey key, int amount)
@@ -607,22 +930,31 @@ internal static class CombatStatsTracker {
         dict[key] = prev + amount;
     }
 
-    private static void NotifyChanged() => Changed?.Invoke();
+    private static void NotifyChanged(bool forcePersist = false) {
+        CombatStatsLiveBuffer.Persist(forcePersist);
+        Changed?.Invoke();
+    }
 
     /// <summary>Called when live combat stats change (history tailer processed new entries).</summary>
-    internal static void NotifyStatsUpdated() => NotifyChanged();
+    internal static void NotifyStatsUpdated() {
+        if (_current is { IsActive: true } && _combatState != null)
+            RefreshLiveCreatures(_combatState);
+        NotifyChanged();
+    }
 }
 
 internal readonly struct PowerDamageContext {
     public bool IsActive { get; init; }
     public Creature? Owner { get; init; }
     public string SourceKey { get; init; }
+    public string SourceDisplayName { get; init; }
 
     public static PowerDamageContext None => default;
 
-    public static PowerDamageContext Create(Creature? owner, string sourceKey) => new() {
+    public static PowerDamageContext Create(Creature? owner, string sourceKey, string sourceDisplayName) => new() {
         IsActive = true,
         Owner = owner,
         SourceKey = sourceKey,
+        SourceDisplayName = sourceDisplayName,
     };
 }

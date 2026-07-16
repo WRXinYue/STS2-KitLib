@@ -45,10 +45,19 @@ def _launch_windows(
     ensure_steam_appid_file(game_root)
     if fastmp == "dual":
         host_argv = build_launch_argv(
-            exe, game_root=game_root, fastmp="host", log_role="host", extra=extra,
+            exe,
+            game_root=game_root,
+            fastmp="host",
+            log_role="host",
+            extra=extra,
         )
         join_argv = build_launch_argv(
-            exe, game_root=game_root, fastmp="join", client_id=client_id, log_role="join", extra=extra,
+            exe,
+            game_root=game_root,
+            fastmp="join",
+            client_id=client_id,
+            log_role="join",
+            extra=extra,
         )
         launch_detached(exe, game_root, host_argv)
         print("Waiting 8s before launching join client (host ENet bind on :33771)...")

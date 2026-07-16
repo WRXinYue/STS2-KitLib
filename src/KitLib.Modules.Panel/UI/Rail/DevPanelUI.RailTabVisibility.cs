@@ -17,7 +17,6 @@ internal static partial class DevPanelUI {
         ["devmode.ai"] = "KitLibAi",
         ["devmode.cheats"] = "KitLibCheats",
         ["devmode.enemyIntent"] = "KitLibEnemyIntent",
-        ["devmode.combatStats"] = "KitLibCombatStats",
         ["devmode.presets"] = "KitLibPresets",
         ["devmode.hooks"] = "KitLibHookConfig",
         ["devmode.logs"] = LogCollector.LogViewerRootName,

@@ -34,7 +34,6 @@ public enum ActivePanel {
     Hooks,
     Logs,
     Feedback,
-    CombatStats,
     EnemyIntent,
 }
 

@@ -1,4 +1,5 @@
 using Godot;
+using KitLib.CombatStats;
 using KitLib.Dev;
 using KitLib.Host;
 using KitLib.Mcp;
@@ -28,6 +29,7 @@ internal partial class KitLibProcessNode : Node {
         if (Instance == this)
             Instance = null;
         McpBridge.Shutdown();
+        DevViewerServer.Shutdown();
         LogStreamPipeServer.Stop();
     }
 }

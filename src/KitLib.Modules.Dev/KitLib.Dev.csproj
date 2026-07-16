@@ -19,5 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Data\harmony-patch-registry.json" LogicalName="KitLib.Data.harmony-patch-registry.json" />
+    <EmbeddedResource Include="CombatStats\viewer-shell.html" LogicalName="KitLib.CombatStats.viewer-shell.html"
+                      Condition="Exists('CombatStats\viewer-shell.html')" />
   </ItemGroup>
 </Project>

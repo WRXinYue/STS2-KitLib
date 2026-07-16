@@ -1,0 +1,61 @@
+{
+  "active": {
+    "encounterKey": "SLIMED",
+    "isActive": true,
+    "maxTurn": 3,
+    "players": [
+      {
+        "key": "1",
+        "displayName": "Ironclad",
+        "characterId": "IRONCLAD",
+        "damageDealt": 42,
+        "damageTaken": 8,
+        "blockGained": 15,
+        "cardsPlayed": 6,
+        "hitCount": 4,
+        "events": []
+      }
+    ],
+    "combatEvents": [
+      { "turn": 1, "kind": "CardPlayed", "text": "STRIKE", "amount": 1, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" },
+      { "turn": 1, "kind": "DamageDealt", "text": "Strike → 6", "amount": 6, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" },
+      { "turn": 1, "kind": "BlockGained", "text": "+5 block", "amount": 5, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" },
+      { "turn": 2, "kind": "EnemyMove", "text": "SPIKE_SLIME_M", "amount": 0, "actorKey": "SPIKE_SLIME_M", "actorSide": "enemy", "actorName": "Spike Slime" },
+      { "turn": 2, "kind": "DebuffApplied", "text": "VULNERABLE", "amount": 2, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" },
+      { "turn": 2, "kind": "CardPlayed", "text": "BASH", "amount": 2, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" },
+      { "turn": 2, "kind": "DamageDealt", "text": "Bash → 12", "amount": 12, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" },
+      { "turn": 3, "kind": "PowerSynergy", "text": "Vulnerable bonus → 4", "amount": 4, "actorKey": "1", "actorSide": "player", "actorName": "Ironclad" }
+    ],
+    "turnSnapshots": [
+      {
+        "turn": 1,
+        "phase": "start",
+        "creatures": [
+          { "key": "1", "displayName": "Ironclad", "side": "player", "currentHp": 80, "maxHp": 80, "block": 0, "energy": 3, "powers": [] },
+          { "key": "slime-a", "displayName": "Acid Slime", "side": "enemy", "currentHp": 40, "maxHp": 40, "block": 0, "powers": [], "intentSummary": "Attack" }
+        ]
+      },
+      {
+        "turn": 1,
+        "phase": "end",
+        "creatures": [
+          { "key": "1", "displayName": "Ironclad", "side": "player", "currentHp": 72, "maxHp": 80, "block": 5, "energy": 0, "powers": [] },
+          { "key": "slime-a", "displayName": "Acid Slime", "side": "enemy", "currentHp": 28, "maxHp": 40, "block": 0, "powers": [], "intentSummary": "Attack" }
+        ]
+      },
+      {
+        "turn": 2,
+        "phase": "start",
+        "creatures": [
+          { "key": "1", "displayName": "Ironclad", "side": "player", "currentHp": 72, "maxHp": 80, "block": 0, "energy": 3, "powers": [] },
+          { "key": "slime-a", "displayName": "Acid Slime", "side": "enemy", "currentHp": 28, "maxHp": 40, "block": 0, "powers": [], "intentSummary": "Attack, Debuff" }
+        ]
+      }
+    ],
+    "liveCreatures": [
+      { "key": "1", "displayName": "Ironclad", "side": "player", "currentHp": 65, "maxHp": 80, "block": 0, "energy": 0, "powers": [] },
+      { "key": "slime-a", "displayName": "Acid Slime", "side": "enemy", "currentHp": 0, "maxHp": 40, "block": 0, "powers": [], "intentSummary": "" }
+    ]
+  },
+  "isActive": false
+}

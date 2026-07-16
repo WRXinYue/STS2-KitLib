@@ -103,7 +103,11 @@ internal static class LogViewerUI {
             ruleChips[i] = chip;
 
             var capturedRule = rule;
-            chip.Toggled += v => { capturedRule.Enabled = v; };
+            chip.Toggled += v => {
+                capturedRule.Enabled = v;
+                PublishFilters();
+                Repopulate();
+            };
         }
 
         // ── Body: filter sidebar | log | stats ────────────────────────────
@@ -364,8 +368,16 @@ internal static class LogViewerUI {
         string textFilter = "";
         var modVisible = new Dictionary<string, bool>(StringComparer.Ordinal);
         var modChips = new Dictionary<string, Button>(StringComparer.Ordinal);
+        var lastSyncedModIds = new HashSet<string>(StringComparer.Ordinal);
+
+        void PublishFilters(HashSet<string>? loaded = null, Dictionary<string, string>? aliases = null) {
+            loaded ??= ModRuntime.Catalog.GetIdSet();
+            aliases ??= LogModSourceResolver.BuildAliasLookup(loaded);
+            LogViewerFilterSync.Publish(minLevel, textFilter, modVisible, loaded, aliases);
+            lastSyncedModIds = new HashSet<string>(loaded, StringComparer.Ordinal);
+        }
         void SyncModFilterChips(HashSet<string> loadedModIds) {
-            var discovered = new HashSet<string>(StringComparer.Ordinal) { "Game" };
+            var discovered = new HashSet<string>(StringComparer.Ordinal) { "Game", "KitLib" };
             foreach (var id in loadedModIds)
                 discovered.Add(id);
 
@@ -394,6 +406,7 @@ internal static class LogViewerUI {
                 var capturedId = id;
                 chip.Toggled += v => {
                     modVisible[capturedId] = v;
+                    PublishFilters();
                     Repopulate();
                 };
                 modChips[id] = chip;
@@ -509,6 +522,7 @@ internal static class LogViewerUI {
         }
 
         void Repopulate() {
+            LogCollector.RefreshFileSnapshotIfChanged();
             var scrollBar = richText.GetVScrollBar();
             bool followTail = stickToBottom;
             double prevScroll = scrollBar?.Value ?? 0;
@@ -519,7 +533,7 @@ internal static class LogViewerUI {
 
             LogSuppressor.ResetCounts();
             var loadedModIds = ModRuntime.Catalog.GetIdSet();
-            var modIdAliases = BuildModIdAliasLookup(loadedModIds);
+            var modIdAliases = LogModSourceResolver.BuildAliasLookup(loadedModIds);
             SyncModFilterChips(loadedModIds);
             var (filtered, suppressed, modStats) = FilterEntries(
                 entries, minLevel, textFilter, modVisible, loadedModIds, modIdAliases);
@@ -546,7 +560,8 @@ internal static class LogViewerUI {
             // Update stats panel + pie chart
             pieChart.SetData(modStats);
             RefreshStatsPanel(statsVBox, modStats);
-            LogViewerFilterSync.Publish(minLevel, textFilter, modVisible, loadedModIds, modIdAliases);
+            if (!loadedModIds.SetEquals(lastSyncedModIds))
+                PublishFilters(loadedModIds, modIdAliases);
 
             Callable.From(() => RestoreScrollAfterRepopulate(followTail, prevScroll, prevMax)).CallDeferred();
         }
@@ -558,6 +573,7 @@ internal static class LogViewerUI {
             chipInfo.ButtonPressed = level == LogLevel.Info;
             chipWarn.ButtonPressed = level == LogLevel.Warn;
             chipError.ButtonPressed = level == LogLevel.Error;
+            PublishFilters();
             Repopulate();
         }
 
@@ -566,18 +582,17 @@ internal static class LogViewerUI {
         chipWarn.Pressed += () => SetMinLevel(LogLevel.Warn);
         chipError.Pressed += () => SetMinLevel(LogLevel.Error);
 
-        // Wire rule chip toggles to repopulate
-        foreach (var chip in ruleChips)
-            chip.Toggled += _ => Repopulate();
-
-        searchInput.TextChanged += t => { textFilter = t; Repopulate(); };
+        searchInput.TextChanged += t => { textFilter = t; PublishFilters(); Repopulate(); };
 
         void OnClear() { LogCollector.Clear(); Repopulate(); }
         BuildHeaderClearWire(vbox, OnClear);
 
         // ── Auto-refresh timer (1 s) ──
         var timer = new Godot.Timer { WaitTime = 1.0, Autostart = true };
-        timer.Timeout += () => { if (LogCollector.IsDirty) Repopulate(); };
+        timer.Timeout += () => {
+            if (LogCollector.IsDirty)
+                Repopulate();
+        };
         root.AddChild(timer);
 
         void ScheduleInitialRepopulate() {
@@ -619,12 +634,22 @@ internal static class LogViewerUI {
         var result = new List<FilteredLogEntry>(entries.Count);
         var modStats = new Dictionary<string, int>(StringComparer.Ordinal);
         int suppressed = 0;
+        bool inSuppressedNativeBlock = false;
 
         foreach (var e in entries) {
             if (LogCollector.IsSessionBoundary(e)) {
+                inSuppressedNativeBlock = false;
                 result.Add(new FilteredLogEntry(e, "KitLib"));
                 continue;
             }
+
+            // A suppressed Godot native error (e.g. "ERROR:") is followed by indented "at:"/
+            // "C# backtrace"/"[n] ..." lines; swallow them so the whole block hides together.
+            if (inSuppressedNativeBlock && IsNativeErrorContinuation(e.Text)) {
+                suppressed++;
+                continue;
+            }
+            inSuppressedNativeBlock = false;
 
             if (minLevel != null && e.Level < minLevel.Value) continue;
             if (!string.IsNullOrWhiteSpace(textFilter) &&
@@ -640,7 +665,11 @@ internal static class LogViewerUI {
             if (modSourceFilter.TryGetValue(source, out var showMod) && !showMod)
                 continue;
 
-            if (LogSuppressor.IsSuppressed(e.Text)) { suppressed++; continue; }
+            if (LogSuppressor.IsSuppressed(e.Text)) {
+                suppressed++;
+                inSuppressedNativeBlock = IsNativeErrorHeader(e.Text);
+                continue;
+            }
 
             result.Add(new FilteredLogEntry(e, source));
 
@@ -650,10 +679,19 @@ internal static class LogViewerUI {
         return (result, suppressed, modStats);
     }
 
+    /// <summary>True for a Godot native error/warning header whose indented detail lines should collapse with it.</summary>
+    private static bool IsNativeErrorHeader(string text)
+        => text.StartsWith("ERROR:", StringComparison.Ordinal)
+           || text.StartsWith("WARNING:", StringComparison.Ordinal);
+
+    /// <summary>Godot prints error detail ("at:", "C# backtrace", "[n] …") indented under the header line.</summary>
+    private static bool IsNativeErrorContinuation(string text)
+        => text.Length > 0 && char.IsWhiteSpace(text[0]);
+
     /// <summary>
     /// Resolves log source by matching bracket tags against <see cref="ModRuntime.Catalog"/> ids.
     /// Walks <c>[...]</c> segments from the left and returns the first whose inner text matches a loaded mod id
-    /// (exact or normalized via <see cref="NormalizeModIdKey"/>); otherwise "Game".
+    /// (exact or normalized via <see cref="LogModSourceResolver.NormalizeIdKey"/>); otherwise "Game".
     /// </summary>
     private static string ParseSource(
         string text,
@@ -704,29 +742,6 @@ internal static class LogViewerUI {
         return false;
     }
 
-    /// <summary>
-    /// Maps normalized mod id keys (case-insensitive, <c>-</c>/<c>_</c> equivalent) to canonical manifest ids.
-    /// </summary>
-    private static Dictionary<string, string> BuildModIdAliasLookup(HashSet<string> loadedModIds) {
-        var map = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var mod in ModRuntime.Catalog.GetSnapshot()) {
-            RegisterModAlias(map, mod.Id, mod.Id);
-            if (!string.IsNullOrEmpty(mod.DisplayName))
-                RegisterModAlias(map, mod.DisplayName, mod.Id);
-        }
-
-        foreach (var id in loadedModIds)
-            RegisterModAlias(map, id, id);
-
-        return map;
-    }
-
-    static void RegisterModAlias(Dictionary<string, string> map, string alias, string canonicalId) {
-        var key = NormalizeModIdKey(alias);
-        if (!map.ContainsKey(key))
-            map[key] = canonicalId;
-    }
-
     private static readonly HashSet<string> LogLevelBracketTags = new(StringComparer.OrdinalIgnoreCase) {
         "INFO", "WARN", "WARNING", "ERROR", "DEBUG", "LOAD", "VERYDEBUG", "VDB", "DBG",
     };
@@ -749,13 +764,12 @@ internal static class LogViewerUI {
             return true;
         }
 
-        if (TryResolveModIdKey(NormalizeModIdKey(candidate), modIdAliases, out modId))
+        if (TryResolveModIdKey(LogModSourceResolver.NormalizeIdKey(candidate), modIdAliases, out modId))
             return true;
 
-        // Reverse-domain logger ids (e.g. com.ritsukage.sts2-RitsuLib vs manifest STS2-RitsuLib).
         int lastDot = candidate.LastIndexOf('.');
         if (lastDot >= 0 && lastDot < candidate.Length - 1 &&
-            TryResolveModIdKey(NormalizeModIdKey(candidate[(lastDot + 1)..]), modIdAliases, out modId))
+            TryResolveModIdKey(LogModSourceResolver.NormalizeIdKey(candidate[(lastDot + 1)..]), modIdAliases, out modId))
             return true;
 
         return false;
@@ -773,10 +787,6 @@ internal static class LogViewerUI {
         modId = "";
         return false;
     }
-
-    /// <summary>Case-insensitive key where hyphen and underscore are treated as equivalent.</summary>
-    private static string NormalizeModIdKey(string id)
-        => id.ToLowerInvariant().Replace('-', '_');
 
     /// <summary>
     /// Pre-boundary disk history: dim single-color line, no mod tag highlighting or BBCode splitting.
@@ -1043,22 +1053,22 @@ internal static class LogViewerUI {
         row.AddChild(openFolderBtn);
 
         var openKitlogBtn = new Button {
-            Text = I18N.T("log.openKitlog", "kitlog"),
+            Text = I18N.T("log.openKitlog", "Dev viewer"),
             FocusMode = Control.FocusModeEnum.None,
             CustomMinimumSize = new Vector2(64, 26),
             Icon = MdiIcon.Console.Texture(14, KitLibTheme.Subtle),
             TooltipText = I18N.T(
                 "log.openKitlogTip",
-                "Open kitlog in a system terminal to tail this session live"),
+                "Open the dev viewer in your browser; mirrors this viewer's filters live"),
         };
         ApplySmallFlatButton(openKitlogBtn);
         openKitlogBtn.Pressed += () => {
             if (_kitlogErrorLabel != null)
                 _kitlogErrorLabel.Visible = false;
-            if (!KitLogTerminalLauncher.TryOpenSessionTail(out var error)) {
+            if (!DevViewerLauncher.TryOpenLogs(out var error)) {
                 if (_kitlogErrorLabel != null) {
                     _kitlogErrorLabel.Text = error
-                        ?? I18N.T("ai.terminal.launchFailed", "Could not start kitlog.");
+                        ?? I18N.T("devViewer.launchFailed", "Could not open the dev viewer.");
                     _kitlogErrorLabel.Visible = true;
                 }
             }

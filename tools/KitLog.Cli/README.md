@@ -1,11 +1,13 @@
-# KitLog CLI
+# KitLog CLI (deprecated)
+
+> **Deprecated:** KitLog is replaced by the embedded **Dev Viewer** at `http://127.0.0.1:9878/#/logs` (terminal-style logs in the browser). The in-game log viewer and AI panel open this URL instead of launching `kitlog`.
+
+This project remains buildable for users who still want a terminal tail (`kitlog attach`, `kitlog tail`), but it is no longer deployed with `make deploy-tools` or required by KitLib.
 
 Cross-platform log viewer for KitLib.
 
 Primary path: **structured named pipe** (`KitLib-log-{pid}`) via `kitlog attach`.
 Fallback: plain-text `godot.log` tail (`kitlog tail`, legacy regex coloring).
-
-Optional companion to the in-game log viewer — distributed separately from the main mod zip (like `KitLib.Mcp`).
 
 ## Build
 
@@ -54,11 +56,9 @@ KitLog scans STS2 user data:
 - Linux: `~/.local/share/SlayTheSpire2/...` (and common Flatpak paths)
 - macOS: `~/Library/Application Support/SlayTheSpire2/...`
 
-## In-game integration
+## In-game integration (legacy)
 
-The in-game log viewer **kitlog** button launches `kitlog attach --follow --sync-viewer --tail 0` so the terminal receives structured live logs (with session replay on connect) and mirrors viewer filters over the pipe.
-
-The AI panel **Open kitlog tail** button uses `--filter ai` instead. Both launch `kitlog` from `PATH` or `mods/KitLib/tools/`.
+Older KitLib builds launched `kitlog attach` from the log viewer. Current builds open the **Dev Viewer** in the system browser instead.
 
 Dual-instance: use `kitlog attach --pid <pid>` per window. `kitlog list` enumerates running STS2 processes.
 

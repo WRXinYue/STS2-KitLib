@@ -49,44 +49,6 @@ internal static partial class DevPanelUI {
         var recommendBox = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         recommendBox.AddThemeConstantOverride("separation", 4);
 
-        var terminalHint = new Label {
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        terminalHint.AddThemeFontSizeOverride("font_size", 12);
-        terminalHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
-
-        var terminalError = new Label {
-            Visible = false,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-        };
-        terminalError.AddThemeFontSizeOverride("font_size", 11);
-        terminalError.AddThemeColorOverride("font_color", KitLibTheme.RarityCurse);
-
-        void RefreshTerminalHint() {
-            var logName = GameLogFileHydrator.CurrentSessionLogFileName;
-            terminalHint.Text = string.IsNullOrEmpty(logName)
-                ? I18N.T(
-                    "ai.terminal.externalHintNoFile",
-                    "AI decisions are written to the session log. Open kitlog to tail them live.")
-                : I18N.T(
-                    "ai.terminal.externalHint",
-                    "Tail AI decisions with kitlog ({0}). Full log: KitLib → Logs.",
-                    logName);
-        }
-
-        var openTerminalBtn = CreatePlainButton(
-            I18N.T("ai.terminal.openExternal", "Open kitlog tail"),
-            MdiIcon.Console);
-        openTerminalBtn.Pressed += () => {
-            terminalError.Visible = false;
-            if (!KitLogTerminalLauncher.TryOpenAiTail(out var error)) {
-                terminalError.Text = error ?? I18N.T("ai.terminal.launchFailed", "Could not start a system terminal.");
-                terminalError.Visible = true;
-            }
-        };
-
         void RefreshMonitor() {
             statusLabel.Text = AiHostPanelModel.BuildStatusText();
 
@@ -102,18 +64,12 @@ internal static partial class DevPanelUI {
                 tipLabel.AddThemeColorOverride("font_color", KitLibTheme.Accent);
                 recommendBox.AddChild(tipLabel);
             }
-
-            RefreshTerminalHint();
         }
 
         inner.AddChild(CreateSectionHeader(I18N.T("ai.status.section", "AI Status")));
         inner.AddChild(statusLabel);
         inner.AddChild(CreateSectionHeader(I18N.T("ai.recommend.section", "Mode hints")));
         inner.AddChild(recommendBox);
-        inner.AddChild(CreateSectionHeader(I18N.T("ai.terminal.section", "AI Terminal")));
-        inner.AddChild(terminalHint);
-        inner.AddChild(openTerminalBtn);
-        inner.AddChild(terminalError);
         RefreshMonitor();
 
         var refreshTimer = new Godot.Timer { WaitTime = 0.5, Autostart = true };

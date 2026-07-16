@@ -63,11 +63,6 @@ public static class SettingsStore {
         Save();
     }
 
-    public static void SetCombatStatsMpOverlayEnabled(bool enabled) {
-        Current.CombatStatsMpOverlayEnabled = enabled;
-        Save();
-    }
-
     public static void SetPerfHudEnabled(bool enabled) {
         Current.PerfHudEnabled = enabled;
         Save();
@@ -133,23 +128,6 @@ public static class SettingsStore {
         HotkeyDefaults.ApplyTo(Current);
         RailTabHotkeyDefaults.ResetAll(Current);
         Save();
-    }
-
-    public static void SetCombatStatsMpOverlayPosition(float x, float y) {
-        if (KitLibHost.IsDualInstanceActive?.Invoke() == true) {
-            KitLibInstance.SessionOverlay.MpOverlayPosX = x;
-            KitLibInstance.SessionOverlay.MpOverlayPosY = y;
-            return;
-        }
-        Current.CombatStatsMpOverlayPosX = x;
-        Current.CombatStatsMpOverlayPosY = y;
-        Save();
-    }
-
-    public static (float? X, float? Y) GetCombatStatsMpOverlayPosition() {
-        if (KitLibHost.IsDualInstanceActive?.Invoke() == true)
-            return (KitLibInstance.SessionOverlay.MpOverlayPosX, KitLibInstance.SessionOverlay.MpOverlayPosY);
-        return (Current.CombatStatsMpOverlayPosX, Current.CombatStatsMpOverlayPosY);
     }
 
     public static void SetCombatStatsMonsterIntentOverlayEnabled(bool enabled) {

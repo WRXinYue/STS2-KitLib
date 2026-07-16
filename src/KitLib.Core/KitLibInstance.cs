@@ -19,8 +19,6 @@ public static class KitLibInstance {
 
     /// <summary>Per-process overlay positions while multiple instances are active.</summary>
     public static class SessionOverlay {
-        public static float? MpOverlayPosX { get; set; }
-        public static float? MpOverlayPosY { get; set; }
         public static float? MonsterIntentOverlayPosX { get; set; }
         public static float? MonsterIntentOverlayPosY { get; set; }
     }

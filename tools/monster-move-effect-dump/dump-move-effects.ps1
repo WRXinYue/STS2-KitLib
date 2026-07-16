@@ -15,5 +15,5 @@ if (-not (Test-Path $Sts2MonstersDir)) {
 python $py
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-$out = Join-Path $repoRoot "src\AI\Data\monster-move-effects.json"
+$out = Join-Path $repoRoot "src\KitLib.Modules.AI\AI\Data\monster-move-effects.json"
 Write-Host "Generated $out"

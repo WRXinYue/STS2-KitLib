@@ -65,9 +65,9 @@ internal static class KitLibNativeModSettingsBootstrap {
             () => SettingsStore.Current.ModPanelDiagnosticMode,
             SettingsStore.SetModPanelDiagnosticMode));
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
-            I18N.T("settings.launchKitlogOnStartup", "Open live log terminal on startup"),
+            I18N.T("settings.launchKitlogOnStartup", "Auto-open developer console on startup"),
             I18N.T("settings.launchKitlogOnStartup.desc",
-                "When KitLib loads, open a system terminal that streams this session's game log in real time. Requires the optional KitLog.Cli tool (kitlog) from the tools zip."),
+                "When KitLib loads, automatically open the developer console in your browser (http://127.0.0.1:9878/#/logs). Requires KitLib.Dev."),
             () => SettingsStore.Current.LaunchKitlogOnStartup,
             SettingsStore.SetLaunchKitlogOnStartup));
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(

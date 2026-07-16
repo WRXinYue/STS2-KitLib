@@ -373,7 +373,7 @@ kitlog tail -f --sync-viewer
 
 Filter updates stream over the log pipe when using `kitlog attach --sync-viewer` (no disk file).
 
-**Mod settings:** KitLib → General → **Open live log terminal on startup** (`LaunchKitlogOnStartup`, default off). When enabled, KitLib.User opens `kitlog attach` after startup; silently skips if KitLog.Cli (kitlog) is not installed.
+**Mod settings:** KitLib → General → **Auto-open developer console on startup** (`LaunchKitlogOnStartup`, default off). When enabled, KitLib.User opens the browser dev viewer at `http://127.0.0.1:9878/#/logs` after startup; silently skips if KitLib.Dev is not loaded.
 :::
 
 ::: zh-CN
@@ -394,5 +394,5 @@ kitlog tail -f --sync-viewer
 
 筛选更新经日志管道发送给 `kitlog attach --sync-viewer`（不再写磁盘文件）。
 
-**Mod 设置：** KitLib → 常规 → **启动时打开实时日志终端**（`LaunchKitlogOnStartup`，默认关）。开启后 KitLib.User 在启动后打开 `kitlog attach`；未安装 KitLog.Cli（kitlog）时静默跳过。
+**Mod 设置：** KitLib → 常规 → **自启动开发者控制台**（`LaunchKitlogOnStartup`，默认关）。开启后 KitLib.User 在启动后打开浏览器开发者控制台（`http://127.0.0.1:9878/#/logs`）；未加载 KitLib.Dev 时静默跳过。
 :::

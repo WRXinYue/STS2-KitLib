@@ -1,0 +1,112 @@
+{
+  "app": {
+    "title": "KitLib Dev Viewer",
+    "subtitle": "Live logs and combat stats"
+  },
+  "nav": {
+    "logs": "Logs",
+    "combat": "Combat"
+  },
+  "logs": {
+    "syncInGame": "Sync in-game filters",
+    "syncActive": "Synced with game",
+    "copyAll": "Copy all",
+    "filter": {
+      "level": "Level",
+      "all": "All",
+      "info": "≥ Info",
+      "warn": "≥ Warn",
+      "error": "Error",
+      "text": "Text",
+      "textPlaceholder": "Filter text…",
+      "mods": "Mod source",
+      "suppress": "Suppress rules"
+    },
+    "stats": {
+      "title": "Source stats",
+      "count": "{n} entries",
+      "countFiltered": "{visible} entries · {suppressed} filtered",
+      "empty": "No visible logs"
+    }
+  },
+  "status": {
+    "noData": "No combat data",
+    "live": "Live",
+    "ended": "Ended",
+    "turn": "Turn {n}",
+    "connected": "Connected",
+    "connecting": "Connecting…"
+  },
+  "actions": {
+    "exportJson": "Download JSON",
+    "exported": "Downloaded {filename}",
+    "exportFailed": "Export failed"
+  },
+  "empty": {
+    "noPayload": "No combat stats payload found.",
+    "noPayloadHint": "Enable auto-open in Settings → Game, or run {cmd} with sample data.",
+    "noPlayer": "No player stats in this combat.",
+    "noEvents": "No events match the current filters."
+  },
+  "filters": {
+    "search": "Filter events…",
+    "allKinds": "All kinds"
+  },
+  "summary": {
+    "dealt": "Dealt",
+    "taken": "Taken",
+    "block": "Block",
+    "cards": "Cards"
+  },
+  "timeline": {
+    "turn": "Turn {n}",
+    "eventCount": "{n} events"
+  },
+  "events": {
+    "blockText": "+{n} Block",
+    "energyText": "-{n} Energy"
+  },
+  "state": {
+    "player": "Player",
+    "enemy": "Enemy",
+    "players": "Players",
+    "enemies": "Enemies",
+    "turnStart": "Turn start",
+    "turnEnd": "Turn end",
+    "afterHit": "After hit",
+    "combatEnd": "Combat ended",
+    "finalHp": "Final HP",
+    "defeated": "Defeated",
+    "hpShort": "{current} / {max} HP",
+    "block": "Block {n}",
+    "energy": "Energy {n}"
+  },
+  "kinds": {
+    "DamageDealt": "Damage",
+    "DamageTaken": "Hit",
+    "BlockGained": "Block",
+    "CardPlayed": "Card",
+    "EnergySpent": "Energy",
+    "PotionUsed": "Potion",
+    "DebuffApplied": "Debuff",
+    "BuffApplied": "Buff",
+    "PowerSynergy": "Synergy",
+    "EnemyMove": "Enemy",
+    "CreatureState": "State"
+  },
+  "sourceKinds": {
+    "Card": "Card",
+    "Power": "Power",
+    "Relic": "Relic",
+    "Potion": "Potion",
+    "Enemy": "Enemy",
+    "MonsterMove": "Monster move",
+    "Player": "Player",
+    "Synergy": "Synergy",
+    "Unknown": "Unknown"
+  },
+  "lang": {
+    "en": "English",
+    "zh-CN": "中文"
+  }
+}

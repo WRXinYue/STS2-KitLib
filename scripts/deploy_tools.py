@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy KitLib CLI tools (kitlog, KitLib.Mcp) into game mods/KitLib/tools/."""
+"""Copy KitLib CLI tools (KitLib.Mcp) into game mods/KitLib/tools/."""
 
 from __future__ import annotations
 
@@ -21,11 +21,6 @@ BUNDLE_ID = "KitLib"
 TOOLS_SUBDIR = "tools"
 
 TOOL_SPECS = [
-    {
-        "project": _REPO / "tools" / "KitLog.Cli" / "KitLog.Cli.csproj",
-        "publish_folder": "KitLog.Cli",
-        "deploy_names": ("kitlog.exe", "kitlog"),
-    },
     {
         "project": _REPO / "tools" / "KitLib.Mcp" / "KitLib.Mcp.csproj",
         "publish_folder": "KitLib.Mcp",

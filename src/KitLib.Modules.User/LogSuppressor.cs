@@ -40,6 +40,9 @@ internal static class LogSuppressor {
 
         new("Restored foreground FPS",
             "窗口重新聚焦时恢复帧率：正常 INFO 日志"),
+
+        new("The InputMap action",
+            "Godot 引擎手柄输入映射缺失报错：STS2 未注册对应手柄动作，逐帧刷屏，连同其 C# backtrace 一并折叠，不影响运行"),
     };
 
     /// <summary>

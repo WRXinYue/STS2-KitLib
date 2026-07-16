@@ -54,16 +54,8 @@ public sealed partial class KitLibSettings {
     /// <summary>Include cards hidden from the official library (<c>ShouldShowInCardLibrary</c> false) in DevMode browsers.</summary>
     public bool ShowHiddenCards { get; set; }
 
-    /// <summary>Whether the draggable top-right multiplayer combat score panel is shown.</summary>
-    public bool CombatStatsMpOverlayEnabled { get; set; } = true;
-
     /// <summary>Whether the draggable enemy intent prediction panel is shown during combat.</summary>
     public bool CombatStatsMonsterIntentOverlayEnabled { get; set; }
-
-    /// <summary>Saved free position for the multiplayer score overlay (null = default top-right).</summary>
-    public float? CombatStatsMpOverlayPosX { get; set; }
-
-    public float? CombatStatsMpOverlayPosY { get; set; }
 
     /// <summary>Saved free position for the enemy intent overlay (null = default top-left).</summary>
     public float? CombatStatsMonsterIntentOverlayPosX { get; set; }
@@ -100,7 +92,7 @@ public sealed partial class KitLibSettings {
     /// <summary>Log ModPanel open/refresh timings and verbose sidebar diagnostics.</summary>
     public bool ModPanelDiagnosticMode { get; set; }
 
-    /// <summary>Launch optional kitlog CLI in a system terminal when KitLib.User starts (session tail, --sync-viewer).</summary>
+    /// <summary>When KitLib loads, open the dev viewer in the browser with live logs (replaces deprecated kitlog).</summary>
     public bool LaunchKitlogOnStartup { get; set; }
 
     /// <summary>Per-module enable flags for toggleable satellites (User/ModPanel are always on).</summary>

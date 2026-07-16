@@ -33,6 +33,8 @@ internal sealed class CombatHistoryTailer {
         Drain();
     }
 
+    public void FlushPending() => Drain();
+
     public void Detach() {
         if (_history != null)
             _history.Changed -= OnChanged;
@@ -40,7 +42,11 @@ internal sealed class CombatHistoryTailer {
         _combatState = null;
         _lastSeenIndex = 0;
         _lastCardWasSoul = false;
+        CombatStatsTracker.SetCardPlayResolutionActive(false);
+        CombatStatsTracker.SetActiveCardPlay(null);
         CombatStatsTracker.PendingPowerDamage = PowerDamageContext.None;
+        CombatStatsTracker.TakePendingEffectSource();
+        CombatStatsSourceContext.Clear();
     }
 
     private void OnChanged() => Drain();
@@ -64,7 +70,7 @@ internal sealed class CombatHistoryTailer {
     private void DispatchEntry(CombatHistoryEntry entry) {
         if (_combatState == null) return;
 
-        int roundNumber = Sts2CombatCompat.GetHistoryRoundNumber(entry);
+        int roundNumber = CombatStatsTracker.ResolveEventTurn(entry);
         CombatSide currentSide = Sts2CombatCompat.GetHistoryCurrentSide(entry);
 
         try {
@@ -77,7 +83,12 @@ internal sealed class CombatHistoryTailer {
                     _lastCardWasSoul = false;
                     break;
                 case BlockGainedEntry block:
-                    CombatStatsTracker.RecordBlockGained(block.Receiver, block.Amount, block.CardPlay, roundNumber);
+                    CombatStatsTracker.RecordBlockGained(
+                        block.Receiver, block.Amount, block.Props, block.CardPlay, roundNumber);
+                    break;
+                case CardPlayStartedEntry started:
+                    CombatStatsTracker.SetActiveCardPlay(started.CardPlay);
+                    CombatStatsTracker.SetCardPlayResolutionActive(true);
                     break;
                 case CardPlayFinishedEntry play:
                     _lastCardWasSoul = play.CardPlay.Card is Soul;
@@ -150,6 +161,8 @@ internal sealed class CombatHistoryTailer {
     }
 
     private static void SetPendingPowerDamage(Creature? owner, PowerModel power) {
-        CombatStatsTracker.PendingPowerDamage = PowerDamageContext.Create(owner, power.Id.Entry);
+        string key = power.Id.Entry;
+        string displayName = CombatStatsDisplayNames.ResolvePowerName(power);
+        CombatStatsTracker.PendingPowerDamage = PowerDamageContext.Create(owner, key, displayName);
     }
 }

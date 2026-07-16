@@ -1,6 +1,6 @@
-# Dump MonsterMechanicIndex via in-game MCP (requires DevMode running with MCP bridge).
+# Dump MonsterMechanicIndex via in-game MCP bridge (game running with KitLib.Dev).
 param(
-    [string]$McpUrl = "http://127.0.0.1:17831",
+    [string]$McpUrl = "http://127.0.0.1:9877/messages",
     [string]$OutPath = "",
     [string]$Prefix = ""
 )

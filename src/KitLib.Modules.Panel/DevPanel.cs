@@ -201,14 +201,6 @@ internal static class DevPanel {
         DevPanelUI.RefreshRailHintPresentation();
     }
 
-    internal static void OpenCombatStats() {
-        if (_globalUi == null) return;
-        TryDismissCurrent();
-        KitLibState.ActivePanel = ActivePanel.CombatStats;
-
-        CombatStatsUI.Show(_globalUi);
-    }
-
     internal static void OpenEnemyIntent() {
         if (_globalUi == null) return;
         TryDismissCurrent();
@@ -261,7 +253,6 @@ internal static class DevPanel {
             case ActivePanel.CardTest: OpenCardTest(); break;
             case ActivePanel.Hooks: OpenHooks(); break;
             case ActivePanel.Logs: OpenLogs(); break;
-            case ActivePanel.CombatStats: OpenCombatStats(); break;
             case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;
             case ActivePanel.Feedback: OpenLogs(expandLogExport: true); break;
         }

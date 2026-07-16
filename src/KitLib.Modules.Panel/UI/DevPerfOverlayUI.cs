@@ -10,7 +10,6 @@ internal static class DevPerfOverlayUI {
 
     const float MarginRight = 95f;
     const float MarginTop = 150f;
-    const float MpOverlayOffset = 220f;
     const float MaxLineWidth = 360f;
 
     static DevPerfOverlayHost? _overlay;
@@ -122,8 +121,6 @@ internal static class DevPerfOverlayUI {
             var viewport = GetViewport();
             var size = viewport?.GetVisibleRect().Size ?? new Vector2(1920, 1080);
             var top = MarginTop;
-            if (CombatStatsUI.IsMultiplayerOverlayActive())
-                top += MpOverlayOffset;
 
             Position = new Vector2(Mathf.Max(MarginRight, size.X - MaxLineWidth - MarginRight), top);
         }

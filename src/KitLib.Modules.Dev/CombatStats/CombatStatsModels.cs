@@ -14,15 +14,24 @@ internal enum CombatStatEventKind {
     BuffApplied,
     PowerSynergy,
     EnemyMove,
+    CreatureState,
 }
 
 internal sealed class CombatStatEvent {
+    public int Sequence { get; init; }
     public int Turn { get; init; }
     public CombatStatEventKind Kind { get; init; }
     public string Text { get; init; } = "";
     public int Amount { get; init; }
-    /// <summary>Contribution points for this line (SW-style combat score).</summary>
-    public int ScorePoints { get; init; }
+    public string ActorKey { get; init; } = "";
+    public string ActorSide { get; init; } = "";
+    public string ActorName { get; init; } = "";
+    public string StatePhase { get; init; } = "";
+    public CreatureState? Creature { get; init; }
+    public bool LinkedToCardPlay { get; set; }
+    public CombatStatSourceKind SourceKind { get; init; } = CombatStatSourceKind.Unknown;
+    public string SourceKey { get; init; } = "";
+    public string SourceName { get; init; } = "";
 }
 
 internal sealed class PlayerCombatStats {
@@ -121,11 +130,38 @@ internal sealed class PlayerCombatStats {
     }
 }
 
+internal sealed class PowerState {
+    public string Id { get; init; } = "";
+    public string DisplayName { get; init; } = "";
+    public int Amount { get; init; }
+}
+
+internal sealed class CreatureState {
+    public string Key { get; init; } = "";
+    public string DisplayName { get; init; } = "";
+    public string Side { get; init; } = "";
+    public int CurrentHp { get; init; }
+    public int MaxHp { get; init; }
+    public int Block { get; init; }
+    public int? Energy { get; init; }
+    public List<PowerState> Powers { get; init; } = new();
+    public string? IntentSummary { get; init; }
+}
+
+internal sealed class TurnSnapshot {
+    public int Turn { get; init; }
+    public string Phase { get; init; } = "start";
+    public List<CreatureState> Creatures { get; init; } = new();
+}
+
 internal sealed class CombatStatsSnapshot {
     public string EncounterKey { get; set; } = "";
     public bool IsActive { get; set; }
     public int MaxTurn { get; set; }
     public Dictionary<string, PlayerCombatStats> Players { get; } = new();
+    public List<CombatStatEvent> CombatEvents { get; } = new();
+    public List<TurnSnapshot> TurnSnapshots { get; } = new();
+    public List<CreatureState> LiveCreatures { get; } = new();
 
     public PlayerCombatStats? PrimaryPlayer {
         get {
@@ -142,8 +178,33 @@ internal sealed class CombatStatsSnapshot {
         };
         foreach (var (key, src) in Players)
             copy.Players[key] = src.CloneShallow();
+        copy.CombatEvents.AddRange(CombatEvents);
+        foreach (var turn in TurnSnapshots) {
+            copy.TurnSnapshots.Add(new TurnSnapshot {
+                Turn = turn.Turn,
+                Phase = turn.Phase,
+                Creatures = turn.Creatures.Select(CloneCreatureState).ToList(),
+            });
+        }
+        copy.LiveCreatures.AddRange(LiveCreatures.Select(CloneCreatureState));
         return copy;
     }
+
+    private static CreatureState CloneCreatureState(CreatureState src) => new() {
+        Key = src.Key,
+        DisplayName = src.DisplayName,
+        Side = src.Side,
+        CurrentHp = src.CurrentHp,
+        MaxHp = src.MaxHp,
+        Block = src.Block,
+        Energy = src.Energy,
+        IntentSummary = src.IntentSummary,
+        Powers = src.Powers.Select(p => new PowerState {
+            Id = p.Id,
+            DisplayName = p.DisplayName,
+            Amount = p.Amount,
+        }).ToList(),
+    };
 
     public void MergeInto(CombatStatsSnapshot totals) {
         totals.MaxTurn = System.Math.Max(totals.MaxTurn, MaxTurn);

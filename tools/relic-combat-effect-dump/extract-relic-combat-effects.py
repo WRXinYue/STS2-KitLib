@@ -8,7 +8,12 @@ RELICS_DIR = Path(
     r"C:\Users\WRXinYue\Documents\Project\STS2\Slay the Spire 2\src\Core\Models\Relics"
 )
 OUT_PATH = (
-    Path(__file__).resolve().parents[2] / "src" / "AI" / "Data" / "relic-combat-effects.json"
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "KitLib.Modules.AI"
+    / "AI"
+    / "Data"
+    / "relic-combat-effects.json"
 )
 
 COMBAT_HOOKS = {

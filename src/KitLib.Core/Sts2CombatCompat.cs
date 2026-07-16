@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
@@ -21,6 +23,50 @@ internal static class Sts2CombatCompat {
 
     public static CombatSide GetHistoryCurrentSide(CombatHistoryEntry entry) =>
         ReadEntryProperty<CombatSide>(entry, "CurrentSide");
+
+    public static int GetHistoryPlayerTurnNumber(CombatHistoryEntry entry, ulong playerNetId) {
+        if (TryReadPlayerTurnNumbers(entry, out var dict) && dict.TryGetValue(playerNetId, out int turn))
+            return turn;
+        return 0;
+    }
+
+    public static int GetHistoryActorPlayerTurnNumber(CombatHistoryEntry entry) {
+        if (entry.Actor?.Player != null)
+            return GetHistoryPlayerTurnNumber(entry, entry.Actor.Player.NetId);
+        return 0;
+    }
+
+    public static int GetHistoryMaxPlayerTurnNumber(CombatHistoryEntry entry) {
+        if (!TryReadPlayerTurnNumbers(entry, out var dict) || dict.Count == 0)
+            return 0;
+        return dict.Values.Max();
+    }
+
+    /// <summary>Player-facing turn label (matches in-game "Turn N" banner).</summary>
+    public static int GetPrimaryPlayerTurnNumber(CombatState state) {
+        int max = 0;
+        foreach (Player player in state.Players) {
+            int turn = player.PlayerCombatState?.TurnNumber ?? 0;
+            if (turn > max)
+                max = turn;
+        }
+        return max > 0 ? max : Math.Max(1, state.RoundNumber);
+    }
+
+    public static int ResolveHistoryDisplayTurn(CombatHistoryEntry entry) {
+        CombatSide side = GetHistoryCurrentSide(entry);
+        if (side == CombatSide.Player) {
+            int actorTurn = GetHistoryActorPlayerTurnNumber(entry);
+            if (actorTurn > 0)
+                return actorTurn;
+            int maxTurn = GetHistoryMaxPlayerTurnNumber(entry);
+            if (maxTurn > 0)
+                return maxTurn;
+        }
+
+        int round = GetHistoryRoundNumber(entry);
+        return round > 0 ? round : 1;
+    }
 
     public static bool IsCombatPlayPhase(CombatManager? cm) {
         if (cm is not { IsInProgress: true })
@@ -61,5 +107,14 @@ internal static class Sts2CombatCompat {
             .GetProperty(name, EntryPropFlags)
             ?.GetValue(entry);
         return raw is T value ? value : default!;
+    }
+
+    static bool TryReadPlayerTurnNumbers(CombatHistoryEntry entry, out Dictionary<ulong, int> dict) {
+        dict = null!;
+        var field = typeof(CombatHistoryEntry).GetField("_playerTurnNumbers", EntryPropFlags);
+        if (field?.GetValue(entry) is not Dictionary<ulong, int> numbers)
+            return false;
+        dict = numbers;
+        return true;
     }
 }

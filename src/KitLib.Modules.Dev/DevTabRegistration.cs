@@ -6,7 +6,6 @@ namespace KitLib.Dev;
 internal static class DevTabRegistration {
     internal static void Register() {
         RegisterActionTab("devmode.enemyIntent", "bullseye-arrow", "panel.enemyIntent", "Enemy intents", 754, () => KitLibDevOps.OpenEnemyIntent?.Invoke(), KitLibTabKind.Developer);
-        RegisterActionTab("devmode.combatStats", "chart-bar", "panel.combatStats", "Combat Stats", 756, () => KitLibDevOps.OpenCombatStats?.Invoke(), KitLibTabKind.Developer);
         RegisterActionTab("devmode.hooks", "lightning-bolt", "panel.hooks", "Hooks", 900, () => KitLibDevOps.OpenHooks?.Invoke());
         KitLibHost.RegisterTab(new KitLibTabDescriptor {
             Id = "devmode.settings",

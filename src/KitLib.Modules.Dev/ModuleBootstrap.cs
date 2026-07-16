@@ -77,6 +77,7 @@ internal static class ModuleBootstrap {
             SafeStep("DevTabRegistration", () => DevTabRegistration.Register());
 
             Callable.From(StartDeferredMcpBridge).CallDeferred();
+            WireDevViewerOps();
 
             _completed = true;
             KitLibBootstrapGate.EnterInteractive();
@@ -85,6 +86,19 @@ internal static class ModuleBootstrap {
         finally {
             _completing = false;
         }
+    }
+
+    static void WireDevViewerOps() {
+        KitLibDevOps.TryOpenDevViewerLogs = query => {
+            try {
+                DevViewerServer.OpenLogsInBrowser(query, force: true);
+                return true;
+            }
+            catch (Exception ex) {
+                KitLog.Warn("DevViewer", $"Open logs failed: {ex.Message}");
+                return false;
+            }
+        };
     }
 
     static void StartDeferredMcpBridge() {

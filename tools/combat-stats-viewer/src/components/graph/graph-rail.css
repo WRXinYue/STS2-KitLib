@@ -1,0 +1,231 @@
+.graph-turn {
+  --graph-rail-w: 2.5rem;
+  --graph-axis: 1.25rem;
+  --graph-dot-offset: 1.125rem;
+  --graph-dot-size: 0.5rem;
+  --graph-dot-color: color-mix(in oklch, var(--muted-foreground) 65%, transparent);
+  --graph-spine-color: color-mix(in oklch, var(--border) 88%, transparent);
+  --graph-turn-bracket: color-mix(in oklch, var(--primary) 26%, transparent);
+  --graph-play-branch: color-mix(in oklch, oklch(0.68 0.17 275) 32%, transparent);
+  --graph-play-indent: 1.5rem;
+}
+
+.graph-rail {
+  position: relative;
+  width: var(--graph-rail-w);
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 2.5rem;
+}
+
+.graph-rail--turn {
+  --graph-dot-size: 0.875rem;
+  --graph-dot-color: var(--primary);
+  --graph-spine-color: color-mix(in oklch, var(--primary) 38%, transparent);
+}
+
+.graph-rail--play {
+  --graph-dot-size: 0.625rem;
+  --graph-dot-color: oklch(0.68 0.17 275);
+  --graph-spine-color: color-mix(in oklch, var(--primary) 28%, transparent);
+}
+
+.graph-rail--hit {
+  --graph-dot-color: oklch(0.78 0.14 75);
+}
+
+.graph-rail--start {
+  --graph-dot-color: oklch(0.72 0.14 155);
+}
+
+.graph-rail--end {
+  --graph-dot-color: oklch(0.72 0.14 155);
+}
+
+.graph-rail--final {
+  --graph-dot-color: var(--primary);
+}
+
+.graph-rail__dot {
+  position: absolute;
+  left: calc(var(--graph-axis) - var(--graph-dot-size) / 2);
+  top: var(--graph-dot-offset);
+  z-index: 2;
+  width: var(--graph-dot-size);
+  height: var(--graph-dot-size);
+  border-radius: 9999px;
+  background: var(--graph-dot-color);
+  box-shadow: 0 0 0 2px var(--background);
+}
+
+.graph-rail--spine-down::before {
+  content: "";
+  position: absolute;
+  left: var(--graph-axis);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--graph-spine-color);
+  z-index: 1;
+}
+
+.graph-rail--branch .graph-rail__elbow {
+  position: absolute;
+  left: calc(var(--graph-axis) - 0.5px);
+  top: 0;
+  width: 0.875rem;
+  height: calc(var(--graph-dot-offset) + 1px);
+  border-left: 1px solid var(--graph-spine-color);
+  border-bottom: 1px solid var(--graph-spine-color);
+  border-bottom-left-radius: 0.25rem;
+  z-index: 1;
+}
+
+.graph-rail--branch.graph-rail--spine-down .graph-rail__tail {
+  position: absolute;
+  left: var(--graph-axis);
+  top: calc(var(--graph-dot-offset) + var(--graph-dot-size) / 2);
+  bottom: 0;
+  width: 1px;
+  transform: translateX(-50%);
+  background: var(--graph-spine-color);
+  z-index: 1;
+}
+
+.graph-row {
+  display: flex;
+  align-items: flex-start;
+  min-height: 2.5rem;
+}
+
+.graph-row--emphasized {
+  min-height: 2.75rem;
+}
+
+.graph-row__content {
+  min-width: 0;
+  flex: 1;
+  padding-top: 0.125rem;
+}
+
+/* Turn bracket overlays the shared spine without shifting event rows */
+.graph-turn__body {
+  position: relative;
+}
+
+.graph-turn__body::before {
+  content: "";
+  position: absolute;
+  left: var(--graph-axis);
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--graph-turn-bracket);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Card-play branch lane — indented to the right of the main play row */
+.graph-play__children {
+  position: relative;
+  margin-top: 0.125rem;
+  margin-left: calc(var(--graph-rail-w) + var(--graph-play-indent));
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--graph-play-branch);
+}
+
+.graph-play:has(.graph-play__children) > .graph-row > .graph-rail::after {
+  content: "";
+  position: absolute;
+  left: var(--graph-axis);
+  top: calc(var(--graph-dot-offset) + var(--graph-dot-size) / 2);
+  width: calc(var(--graph-rail-w) + var(--graph-play-indent) - var(--graph-axis) + 0.75rem);
+  height: 1px;
+  transform: translateY(-50%);
+  background: var(--graph-play-branch);
+  z-index: 1;
+}
+
+.graph-play__children .graph-rail {
+  width: 1.125rem;
+  --graph-axis: 0.5625rem;
+}
+
+.graph-play__children .graph-rail--branch .graph-rail__elbow {
+  left: calc(-0.5rem - 0.5px);
+  width: 0.5rem;
+}
+
+.graph-play__children .graph-rail--branch.graph-rail--spine-down .graph-rail__tail {
+  left: var(--graph-axis);
+}
+
+.graph-turn__header {
+  display: flex;
+  align-items: flex-start;
+  min-height: 2.5rem;
+}
+
+.graph-turn__meta {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.625rem;
+  padding-right: 0.5rem;
+}
+
+.graph-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.graph-section-divider__line {
+  height: 1px;
+  flex: 1;
+  background: color-mix(in oklch, var(--border) 70%, transparent);
+}
+
+.graph-section-divider__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.timeline-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+}
+
+.timeline-row--emphasized {
+  padding-block: 0.625rem;
+}
+
+.timeline-row__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.timeline-row__amount {
+  flex-shrink: 0;
+  width: 2.5rem;
+  text-align: right;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+  line-height: 1.375rem;
+}
