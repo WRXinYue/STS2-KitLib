@@ -23,7 +23,7 @@ public static class MapPointHoverPatch {
     private const string TooltipName = "KitLibMapTooltip";
 
     public static void Postfix(NMapPoint __instance) {
-        if (!KitLibState.InDevRun) return;
+        if (!KitLibState.CheatsInRun) return;
 
         var point = __instance.Point;
         if (point == null) return;
@@ -191,7 +191,7 @@ public static class MapPointHoverPatch {
 [HarmonyPatch(typeof(NMapPoint), "OnUnfocus")]
 public static class MapPointUnhoverPatch {
     public static void Postfix(NMapPoint __instance) {
-        if (!KitLibState.InDevRun) return;
+        if (!KitLibState.CheatsInRun) return;
         __instance.GetNodeOrNull<Control>("KitLibMapTooltip")?.QueueFree();
     }
 }

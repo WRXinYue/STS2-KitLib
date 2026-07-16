@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **局内日志查看器** — 修复面板卡在旧行、或只显示引擎 backtrace 而看不到最新日志的问题。
 - **局内日志查看器** — Godot 手柄输入映射报错及其 backtrace 块默认折叠，避免刷屏遮挡 mod 与 KitLib 日志。
 - **Dev Mode 侧栏 / 设置** — 修复主面板与侧栏标签中英文混显。
+- **敌人浏览器 — 地图** — 普通局开启作弊模式后也可编辑地图遭遇战，不再仅限开发者测试运行。
 
 ## [0.27.0] - 2026-07-13
 

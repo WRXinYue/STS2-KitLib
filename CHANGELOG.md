@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **In-game log viewer** — Fixed the panel stopping on old lines or showing only engine backtrace spam instead of the latest logs.
 - **In-game log viewer** — Godot gamepad input-map errors (and their backtrace blocks) are folded by a built-in suppress rule so mod and KitLib lines stay visible.
 - **Dev Mode rail / settings** — Fixed tab labels mixing English and Chinese in the main-panel list and sidebar tooltips.
+- **Enemy browser — map** — Map encounter editing now works in normal runs with cheat mode enabled, not only dev test runs.
 
 ## [0.27.0] - 2026-07-13
 

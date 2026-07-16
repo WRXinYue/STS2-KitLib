@@ -42,18 +42,27 @@ internal static partial class EnemySelectUI {
         public required Action RefreshAll;
     }
 
+    static void ShowMapUnavailable(MainBrowserState state, string message) {
+        if (_mapDetailHost != null)
+            ClearDetailHost(_mapDetailHost);
+        state.ContentHost.AddChild(new Label {
+            Text = message,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        });
+    }
+
     private static void BuildMapTab(MainBrowserState state) {
         _activeMapSession = null;
 
+        if (!KitLibState.CheatsInRun) {
+            ShowMapUnavailable(state, I18N.T("enemy.mapCheatRequired", "Enable cheat mode to edit encounters on the map."));
+            return;
+        }
+
         var runState = RunManager.Instance?.DebugOnlyGetState();
-        if (runState?.Map == null || !KitLibState.InDevRun) {
-            if (_mapDetailHost != null)
-                ClearDetailHost(_mapDetailHost);
-            state.ContentHost.AddChild(new Label {
-                Text = I18N.T("enemy.mapUnavailable", "Start a dev run to edit encounters on the map."),
-                AutowrapMode = TextServer.AutowrapMode.WordSmart,
-                HorizontalAlignment = HorizontalAlignment.Center,
-            });
+        if (runState?.Map == null) {
+            ShowMapUnavailable(state, I18N.T("enemy.mapNoRun", "Enter a run with a map to edit encounters."));
             return;
         }
 
