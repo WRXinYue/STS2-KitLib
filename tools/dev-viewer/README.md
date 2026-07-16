@@ -33,7 +33,7 @@ In-game log viewer and AI panel buttons open the browser dev viewer instead of `
 ## Develop
 
 ```bash
-cd tools/combat-stats-viewer
+cd tools/dev-viewer
 pnpm install
 pnpm dev
 ```

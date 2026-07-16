@@ -19,8 +19,7 @@ MOD_MAIN := src/KitLib.Core/KitLib.Core.csproj
 SMOKE_MOD_PROJECT := samples/KitLibSmokeMod/KitLibSmokeMod.csproj
 SMOKE_MOD_TESTS := tests/KitLib.SmokeMod.Tests/KitLib.SmokeMod.Tests.csproj
 MCP_PROJECT := tools/KitLib.Mcp/KitLib.Mcp.csproj
-DEV_VIEWER := tools/combat-stats-viewer
-COMBAT_STATS_VIEWER := $(DEV_VIEWER)
+DEV_VIEWER := tools/dev-viewer
 
 KITLOG_PROJECT := tools/KitLog.Cli/KitLog.Cli.csproj
 
@@ -146,7 +145,7 @@ help:
 	@echo "  compile-kitlog dotnet build KitLog.Cli Release"
 	@echo "  build-kitlog publish kitlog self-contained to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
 	@echo "  build-dev-viewer  pnpm build → CombatStats/viewer-shell.html (embedded in KitLib.Dev)"
-	@echo "  build-combat-stats-viewer  alias for build-dev-viewer"
+	@echo "  build-combat-stats-viewer  deprecated alias for build-dev-viewer"
 	@echo "  zip-kitlog   build-kitlog + package build/KitLog.Cli-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
 	@echo "  zip          build-all + package build/KitLib-vX.X.X.zip (alias: zip-full)"

@@ -36,11 +36,9 @@ src/KitLib.Modules.Panel/Icons/mdi-used.json
 # Other
 .DS_Store
 
-# Node (combat stats viewer)
+# Node (dev viewer)
 tools/dev-viewer/node_modules/
 tools/dev-viewer/dist/
-tools/combat-stats-viewer/node_modules/
-tools/combat-stats-viewer/dist/
 
 # Local scratch under tools/
 tools/_tmp*/

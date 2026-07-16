@@ -1086,7 +1086,6 @@
   "combatStats.browserHint": "在浏览器中打开实时时间线；游戏运行期间数据会自动刷新。",
   "combatStats.openedBrowser": "已打开 {0}",
   "combatStats.openBrowserFailed": "无法打开浏览器：{0}",
-  "combatStats.exportedHtml": "HTML 已保存至 {0}",
   "combatStats.playerSummary": "{0} — {1} 条事件 · 第 {2} 回合 · 伤害 {3} · 格挡 {4}",
   "combatStats.pie.other": "其他",
   "combatStats.pie.title": "构成",

@@ -1073,7 +1073,6 @@
   "combatStats.browserHint": "Opens a live timeline in your browser; stats refresh while the game is running.",
   "combatStats.openedBrowser": "Opened {0}",
   "combatStats.openBrowserFailed": "Could not open browser: {0}",
-  "combatStats.exportedHtml": "Saved HTML to {0}",
   "combatStats.playerSummary": "{0} — {1} events · T{2} · dealt {3} · block {4}",
   "combatStats.pie.other": "Other",
   "combatStats.pie.title": "Breakdown",
