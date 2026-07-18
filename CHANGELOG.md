@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-07-19
+
 ### Added
 
 - **Singleplayer AI companion** — Mods can summon a second character into an active solo run via `CompanionBridge.TrySummon`. The companion plays its own hand in combat, mirrors your map vote, and can handle rewards, events, and shop when enabled at spawn.

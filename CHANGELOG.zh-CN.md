@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-07-19
+
 ### Added
 
 - **单人 AI 同伴** — Mod 可通过 `CompanionBridge.TrySummon` 在进行中的单人局召唤第二名角色。同伴在战斗中独立出牌、镜像你的地图投票；召唤时启用非战斗 AI 时可处理奖励、事件与商店。
