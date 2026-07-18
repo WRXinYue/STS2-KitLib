@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
@@ -40,6 +40,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLibSmokeMod", "samples\KitLibSmokeMod\KitLibSmokeMod.csproj", "{6D9D01CA-C4BE-4240-AB16-E3051407079C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLibCompanionSampleMod", "samples\KitLibCompanionSampleMod\KitLibCompanionSampleMod.csproj", "{8E4B12F3-2A91-4D6E-9C0F-1B7E3D5A6F20}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A0000000-0000-0000-0000-000000000001} = {A0000000-0000-0000-0000-000000000001}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.SmokeMod.Tests", "tests\KitLib.SmokeMod.Tests\KitLib.SmokeMod.Tests.csproj", "{D8042C50-9F1B-4D61-AAF5-36904A3B0629}"
 EndProject

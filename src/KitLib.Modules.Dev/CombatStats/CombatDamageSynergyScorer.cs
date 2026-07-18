@@ -27,7 +27,11 @@ internal static class CombatDamageSynergyScorer {
         var vulnerable = receiver.GetPower<VulnerablePower>();
         if (vulnerable == null) yield break;
 
+#if STS2_BETA_PROFILE
         decimal mult = vulnerable.ModifyDamageMultiplicative(receiver, 1m, result.Props, dealer, cardSource, cardPlay: null);
+#else
+        decimal mult = vulnerable.ModifyDamageMultiplicative(receiver, 1m, result.Props, dealer, cardSource);
+#endif
         if (mult <= 1.001m) yield break;
 
         int bonus = (int)Math.Round(total * (mult - 1m) / mult);
@@ -53,7 +57,11 @@ internal static class CombatDamageSynergyScorer {
         var weak = dealer.GetPower<WeakPower>();
         if (weak == null) yield break;
 
+#if STS2_BETA_PROFILE
         decimal mult = weak.ModifyDamageMultiplicative(dealer, 1m, result.Props, dealer, cardSource, cardPlay: null);
+#else
+        decimal mult = weak.ModifyDamageMultiplicative(dealer, 1m, result.Props, dealer, cardSource);
+#endif
         if (mult >= 0.999m || mult <= 0m) yield break;
 
         int saved = (int)Math.Round(taken * (1m / mult - 1m));

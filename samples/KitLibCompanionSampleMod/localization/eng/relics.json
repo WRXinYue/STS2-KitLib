@@ -1,6 +1,4 @@
 {
-  "IRONCLAD_COMPANION_RELIC": {
-    "title": "Iron Companion Contract",
-    "description": "Summon the Ironclad as an AI companion. Debug relic — obtain via dev console only."
-  }
+  "IRONCLAD_COMPANION_RELIC.title": "Iron Companion Contract",
+  "IRONCLAD_COMPANION_RELIC.description": "Summon the Ironclad as an AI companion. Debug relic — obtain via dev console only."
 }

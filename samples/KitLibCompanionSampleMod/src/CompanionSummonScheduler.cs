@@ -5,7 +5,6 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Runs;
-using STS2RitsuLib;
 
 namespace KitLibCompanionSampleMod;
 
@@ -14,25 +13,38 @@ namespace KitLibCompanionSampleMod;
 /// </summary>
 internal static class CompanionSummonScheduler {
     static bool _pending;
-    static IDisposable? _subscription;
+    static RunManager? _hookedManager;
 
-    internal static void Initialize() {
-        _subscription ??= RitsuLibFramework.SubscribeLifecycle<RoomEnteringEvent>(
-            OnRoomEntering,
-            replayCurrentState: false);
-    }
+    internal static void Initialize() => EnsureRoomHook();
 
     internal static void RequestSummonFromRelic() {
         _pending = true;
+        EnsureRoomHook();
         TrySummon();
     }
 
-    static void OnRoomEntering(RoomEnteringEvent _) {
+    static void EnsureRoomHook() {
+        var runManager = RunManager.Instance;
+        if (runManager == null)
+            return;
+
+        if (ReferenceEquals(_hookedManager, runManager))
+            return;
+
+        if (_hookedManager != null)
+            _hookedManager.RoomEntered -= OnRoomEntered;
+
+        runManager.RoomEntered += OnRoomEntered;
+        _hookedManager = runManager;
+    }
+
+    static void OnRoomEntered() {
         if (_pending)
             TrySummon();
     }
 
     static void TrySummon() {
+        EnsureRoomHook();
         if (!_pending || !CompanionBridge.IsAvailable)
             return;
 

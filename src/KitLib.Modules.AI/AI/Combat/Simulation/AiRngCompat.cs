@@ -5,23 +5,13 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI.Combat.Simulation;
 
-/// <summary>Pinned STS2 refs expose counter via SerializableRng, not Rng.Counter / Rng(seed, counter).</summary>
 internal static class AiRngCompat {
-    public static Rng Create(uint seed, int counter) {
-        var rng = new Rng((ulong)seed);
-        FastForward(rng, counter);
-        return rng;
-    }
+    public static Rng Create(uint seed, int counter) => new(seed, counter);
 
-    public static int GetCounter(Rng rng) => rng.ToSerializable().counter;
+    public static int GetCounter(Rng rng) => rng.Counter;
 
     public static uint NamedSeed(RunRngSet rngSet, RunRngType type) {
         string name = StringHelper.SnakeCase(type.ToString());
         return (uint)(rngSet.Seed + (ulong)StringHelper.GetDeterministicHashCode(name));
-    }
-
-    static void FastForward(Rng rng, int target) {
-        while (rng.ToSerializable().counter < target)
-            rng.NextInt(2);
     }
 }

@@ -1,10 +1,12 @@
-using STS2RitsuLib.Interop.AutoRegistration;
-using STS2RitsuLib.Scaffolding.Content;
+using KitLibCompanionSampleMod.Relics;
+using MegaCrit.Sts2.Core.Models;
 
 namespace KitLibCompanionSampleMod.Pools;
 
 /// <summary>Private relic pool for console registration only; not linked to any act loot tables.</summary>
-[RitsuLibOwnedBy(MainFile.ModId)]
-public sealed class CompanionSampleRelicPool : TypeListRelicPoolModel {
+public sealed class CompanionSampleRelicPool : RelicPoolModel {
     public override string EnergyColorName => "ironclad";
+
+    protected override IEnumerable<RelicModel> GenerateAllRelics() =>
+        [ModelDb.Relic<IroncladCompanionRelic>()];
 }

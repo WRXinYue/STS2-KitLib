@@ -1,6 +1,4 @@
 {
-  "IRONCLAD_COMPANION_RELIC": {
-    "title": "铁甲契约",
-    "description": "召唤铁甲战士作为 AI 同伴。调试遗物，仅可通过控制台获取。"
-  }
+  "IRONCLAD_COMPANION_RELIC.title": "铁甲同伴契约",
+  "IRONCLAD_COMPANION_RELIC.description": "召唤铁甲战士作为 AI 同伴。调试用遗物，仅可通过开发者控制台获得。"
 }

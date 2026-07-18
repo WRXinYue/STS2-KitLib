@@ -12,11 +12,13 @@
     <PropertyGroup>
       <_CoreBuildProfile Condition="'$(Sts2Profile)' == ''">stable</_CoreBuildProfile>
       <_CoreBuildProfile Condition="'$(Sts2Profile)' != ''">$(Sts2Profile)</_CoreBuildProfile>
+      <_ContentModSts2Dir Condition="'$(Sts2Dir)' != ''">$(Sts2Dir)</_ContentModSts2Dir>
+      <_ContentModSts2Dir Condition="'$(_ContentModSts2Dir)' == '' and '$(KitLibSts2RefsStableRoot)' != '' and Exists('$(KitLibSts2RefsStableRoot)/data_sts2_windows_x86_64/sts2.dll')">$(KitLibSts2RefsStableRoot)</_ContentModSts2Dir>
     </PropertyGroup>
     <MSBuild
       Projects="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj"
       Targets="Build"
-      Properties="Configuration=$(Configuration);Sts2Profile=$(_CoreBuildProfile);Sts2Dir=$(Sts2Dir)"
+      Properties="Configuration=$(Configuration);Sts2Profile=$(_CoreBuildProfile);Sts2Dir=$(_ContentModSts2Dir);DeployToGame=false"
       Condition="!Exists('$(KitLibCoreDllPath)')" />
     <Error
       Condition="!Exists('$(KitLibCoreDllPath)')"

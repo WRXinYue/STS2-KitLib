@@ -11,21 +11,8 @@
   <Import Project="$(RepoRoot)eng/KitLib.ContentMod.props" />
 
   <ItemGroup>
-    <PackageReference Include="STS2.RitsuLib" Version="0.2.3" GeneratePathProperty="true" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <RitsuLibDllPath Condition="'$(RitsuLibDllPath)' == '' and Exists('$(Sts2ModsRoot)/STS2-RitsuLib/STS2-RitsuLib.dll')">$(Sts2ModsRoot)/STS2-RitsuLib/STS2-RitsuLib.dll</RitsuLibDllPath>
-    <RitsuLibDllPath Condition="'$(RitsuLibDllPath)' == ''">$(PkgSTS2_RitsuLib)/lib/net9.0/STS2-RitsuLib.dll</RitsuLibDllPath>
-  </PropertyGroup>
-
-  <ItemGroup>
     <Reference Include="sts2">
       <HintPath>$(Sts2DataDir)/sts2.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="STS2-RitsuLib">
-      <HintPath>$(RitsuLibDllPath)</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

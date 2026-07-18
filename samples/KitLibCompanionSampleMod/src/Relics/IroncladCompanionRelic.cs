@@ -1,15 +1,15 @@
-using KitLibCompanionSampleMod.Pools;
+using System.Threading.Tasks;
 using MegaCrit.Sts2.Core.Entities.Relics;
+using MegaCrit.Sts2.Core.Localization;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
-using STS2RitsuLib.Interop.AutoRegistration;
-using STS2RitsuLib.Scaffolding.Content;
 
 namespace KitLibCompanionSampleMod.Relics;
 
-[RitsuLibOwnedBy(MainFile.ModId)]
-[RegisterRelic(typeof(CompanionSampleRelicPool), FullPublicEntry = "IRONCLAD_COMPANION_RELIC")]
-public sealed class IroncladCompanionRelic : ModRelicTemplate {
+public sealed class IroncladCompanionRelic : RelicModel {
     public override RelicRarity Rarity => RelicRarity.None;
+
+    public override LocString Title => new("relics", "IRONCLAD_COMPANION_RELIC.title");
 
     public override bool HasUponPickupEffect => true;
 
