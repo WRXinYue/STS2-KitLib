@@ -52,7 +52,7 @@ internal static class PotionRandomPools {
             ? (uint)(potionSlot + 1) * 9973u + (uint)mcBranch * 7919u
             : state.ShuffleRngSeed;
         int counter = state.ShuffleRngCounter + potionSlot * 17 + mcBranch * 31;
-        var rng = new Rng(seed, counter);
+        var rng = AiRngCompat.Create(seed, counter);
         var pick = pool[rng.NextInt(pool.Length)];
 
         var profile = CardMechanicIndex.InferFromSnapshot(new System.Text.Json.Nodes.JsonObject {

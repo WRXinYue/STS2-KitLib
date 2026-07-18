@@ -15,6 +15,7 @@ namespace KitLib.Integration;
 /// </summary>
 internal partial class KitLibHotkeySettingsSection : VBoxContainer {
     internal static KitLibHotkeySettingsSection? Active { get; private set; }
+    internal static KitLibHotkeySettingsSection? ListeningSection { get; private set; }
 
     private static readonly (string ActionId, string LabelKey, string LabelFallback)[] Rows = {
         (HotkeyActionId.OpenModPanel, "hotkeys.openModPanel", "Open Mod settings"),
@@ -41,7 +42,9 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         SetProcessUnhandledKeyInput(true);
     }
 
-    public override void _EnterTree() => Active = this;
+    public override void _EnterTree() {
+        Active = this;
+    }
 
     public override void _ExitTree() {
         CancelListening();
@@ -129,21 +132,29 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         return label;
     }
 
-    internal static void CancelCapture() => Active?.CancelListening();
+    internal static void CancelCapture() => ListeningSection?.CancelListening();
 
     internal static bool TryCaptureInputEvent(InputEventKey key, Viewport viewport) {
-        var active = Active;
+        var active = ListeningSection;
         if (active == null || active._listeningActionId == null)
             return false;
 
-        active.ApplyCapturedKey(key);
+        if (!active.TryCaptureKey(key))
+            return false;
+
         viewport.SetInputAsHandled();
         return true;
     }
 
     internal void CancelListening() {
-        _listeningActionId = null;
+        EndListening();
         RefreshAllBindingButtons();
+    }
+
+    void EndListening() {
+        _listeningActionId = null;
+        if (ListeningSection == this)
+            ListeningSection = null;
     }
 
     public override void _UnhandledInput(InputEvent inputEvent) => TryCaptureRebindKey(inputEvent);
@@ -156,33 +167,41 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         if (inputEvent is not InputEventKey { Pressed: true, Echo: false } key)
             return;
 
-        ApplyCapturedKey(key);
-        GetViewport()?.SetInputAsHandled();
+        if (TryCaptureKey(key))
+            GetViewport()?.SetInputAsHandled();
     }
 
-    void ApplyCapturedKey(InputEventKey key) {
+    /// <summary>Consumes rebind keys; returns false when not listening.</summary>
+    bool TryCaptureKey(InputEventKey key) {
         if (_listeningActionId == null)
-            return;
-
-        var actionId = _listeningActionId;
-        CancelListening();
+            return false;
 
         if (key.Keycode == Key.Escape) {
+            CancelListening();
             KitLog.Info("Hotkey", "Rebind cancelled (Esc).");
-            return;
+            return true;
         }
+
+        if (HotkeyBinding.ShouldDeferCapture(key))
+            return true;
+
+        var actionId = _listeningActionId;
+        EndListening();
 
         var binding = HotkeyBinding.From(key);
         KitLog.Info("Hotkey", $"Rebind capture: action={actionId} key={binding.FormatLabel()}");
         var reason = SettingsStore.TrySetHotkeyBinding(actionId, binding);
+        RefreshAllBindingButtons();
+
         if (reason != null) {
             KitLog.Info("Hotkey", $"Rebind rejected: {I18N.T(reason, reason)}");
-            return;
+            return true;
         }
 
         KitLog.Info("Hotkey", $"Rebind saved: {actionId}={binding.FormatLabel()}");
 
         NotifyChanged();
+        return true;
     }
 
     private Control CreateBindingRow(string actionId, string labelKey, string labelFallback) {
@@ -266,7 +285,10 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
     }
 
     private void BeginListening(string actionId, Button bindBtn) {
+        ListeningSection?.CancelListening();
         CancelListening();
+        Active = this;
+        ListeningSection = this;
         _listeningActionId = actionId;
         StyleBindingButton(bindBtn, listening: true);
         bindBtn.Text = I18N.T("hotkeys.listening", "Listening…");

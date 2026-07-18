@@ -27,6 +27,14 @@ public sealed class HotkeyBinding {
         Alt = key.AltPressed
     };
 
+    /// <summary>True for bare modifier keycodes pressed alone during chord entry.</summary>
+    public static bool IsModifierKey(Key key) =>
+        key is Key.Ctrl or Key.Shift or Key.Alt or Key.Meta;
+
+    /// <summary>Ignore lone modifier presses; bind once a non-modifier key arrives.</summary>
+    public static bool ShouldDeferCapture(InputEventKey key) =>
+        IsModifierKey(key.Keycode);
+
     public static HotkeyBinding Of(Key key, bool ctrl = false, bool shift = false, bool alt = false) => new() {
         KeyCode = (int)key,
         Ctrl = ctrl,

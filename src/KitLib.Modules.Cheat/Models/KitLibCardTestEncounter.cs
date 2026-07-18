@@ -11,8 +11,6 @@ public sealed class KitLibCardTestEncounter : EncounterModel {
 
     public override bool ShouldGiveRewards => false;
 
-    public override bool IsDebugEncounter => true;
-
     public override IEnumerable<MonsterModel> AllPossibleMonsters =>
         [ModelDb.Monster<KitLibCardTestDummy>()];
 

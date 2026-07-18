@@ -31,7 +31,6 @@ internal static class PseudoCoopMapVoteSynchronizerPatch {
 
 [HarmonyPatch(typeof(ActChangeSynchronizer), nameof(ActChangeSynchronizer.OnPlayerReady))]
 internal static class PseudoCoopActReadyPatch {
-#if STS2_BETA_PROFILE
     [HarmonyPostfix]
     static void Postfix(ActChangeSynchronizer __instance, Player player, int actIndex) {
         if (!PseudoCoopMapVoteMirror.ShouldMirror) return;
@@ -43,17 +42,4 @@ internal static class PseudoCoopActReadyPatch {
             KitLog.Info("PseudoCoop", $"Auto act-ready vote netId={peer.NetId}.");
         }
     }
-#else
-    [HarmonyPostfix]
-    static void Postfix(ActChangeSynchronizer __instance, Player player) {
-        if (!PseudoCoopMapVoteMirror.ShouldMirror) return;
-        if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return;
-        if (!LocalContext.IsMe(player)) return;
-
-        foreach (var peer in SimulatedPeerRegistry.GetMapMirrorTargets()) {
-            __instance.OnPlayerReady(peer);
-            KitLog.Info("PseudoCoop", $"Auto act-ready vote netId={peer.NetId}.");
-        }
-    }
-#endif
 }

@@ -6,7 +6,6 @@ using KitLib.AI.Combat.Simulation;
 using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Extensions;
 using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Random;
 
 namespace KitLib.AI.Planning;
 
@@ -23,9 +22,9 @@ public static class DeckCombatStateFactory {
         var shuffleSeed = DeriveShuffleSeed(deck, floor, sampleIndex);
 
         var shuffled = pile.ToList();
-        var rng = new Rng(shuffleSeed, 0);
+        var rng = AiRngCompat.Create(shuffleSeed, 0);
         shuffled.StableShuffle(rng);
-        int shuffleCounter = rng.Counter;
+        int shuffleCounter = AiRngCompat.GetCounter(rng);
 
         var drawPile = shuffled;
         var discard = new List<CombatPileCard>();

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Developer console (browser)** — Unified dev panel at `http://127.0.0.1:9878` with **Logs** and **Combat** tabs: live log stream, filter sync with the in-game log viewer, combat event timeline (per-turn state, search, kind filters), and JSON export. English / 中文.
 - **In-game log viewer → Dev viewer** — **Dev viewer** button opens the browser panel; filters stay in sync when **Sync with game** is on.
 - **Vanilla error dialogs** — Popups with **Feedback Bug** now include **Log Export (KitLib)** below that button for a one-click diagnostics ZIP.
+- **KitLib hotkeys** — Rebind modifier combos (e.g. Ctrl+Shift+M) in Mod settings → Hotkeys.
 
 ### Changed
 
@@ -50,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Map prediction** — `?` nodes predicted as shop, treasure, or rest site no longer show “cannot predict” under the correct room-type header.
 - **Dev Mode sidebar after errors** — After a mid-transition game error (e.g. room load failure), the left sidebar no longer stays hoverable but ignores clicks until you restart.
 - **Dev Mode panels with game dialogs** — Panel content is clickable again while a vanilla fullscreen dialog is open (e.g. corrupt save load failure); previously only the sidebar responded.
+- **KitLib hotkeys** — Fixed hotkey rebinding in Mod settings.
 
 ## [0.27.0] - 2026-07-13
 

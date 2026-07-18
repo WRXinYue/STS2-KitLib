@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.AI.Combat;
+using KitLib.AI.Combat.Simulation;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
@@ -12,6 +13,7 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Entities.Rngs;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.Runs;
@@ -160,13 +162,13 @@ internal static class GameSnapshot {
         };
 
         combat["rngShuffle"] = new JsonObject {
-            ["seed"] = runState.Rng.Shuffle.Seed,
-            ["counter"] = runState.Rng.Shuffle.Counter,
+            ["seed"] = AiRngCompat.NamedSeed(runState.Rng, RunRngType.Shuffle),
+            ["counter"] = AiRngCompat.GetCounter(runState.Rng.Shuffle),
         };
 
         combat["rngEnergyCosts"] = new JsonObject {
-            ["seed"] = runState.Rng.CombatEnergyCosts.Seed,
-            ["counter"] = runState.Rng.CombatEnergyCosts.Counter,
+            ["seed"] = AiRngCompat.NamedSeed(runState.Rng, RunRngType.CombatEnergyCosts),
+            ["counter"] = AiRngCompat.GetCounter(runState.Rng.CombatEnergyCosts),
         };
 
         var hand = new JsonArray();

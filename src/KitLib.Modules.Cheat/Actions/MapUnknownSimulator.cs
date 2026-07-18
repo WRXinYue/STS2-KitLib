@@ -348,7 +348,6 @@ internal static class MapUnknownSimulator {
 
             var oddsSave = state.Odds.ToSerializable();
             var rng = new Rng(state.Rng.Seed, "unknown_map_point");
-            rng.FastForwardCounter(state.Rng.UnknownMapPoint.Counter);
             var odds = new UnknownMapPointOdds(rng) {
                 MonsterOdds = oddsSave.UnknownMapPointMonsterOddsValue,
                 EliteOdds = oddsSave.UnknownMapPointEliteOddsValue,

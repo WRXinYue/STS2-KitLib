@@ -48,19 +48,19 @@ internal static class CombatPileSimulator {
 
         if (shuffleSeed == 0) {
             var derived = DeriveFallbackShuffleSeed(merged);
-            var fallbackRng = new Rng(derived, shuffleCounter);
+            var fallbackRng = AiRngCompat.Create(derived, shuffleCounter);
             merged.StableShuffle(fallbackRng);
             if (!_loggedFallbackShuffle) {
                 _loggedFallbackShuffle = true;
                 KitLog.Warn("CombatPile", $"Using hash-derived fallback shuffle (rngShuffle seed missing).");
             }
 
-            return (merged, [], fallbackRng.Counter);
+            return (merged, [], AiRngCompat.GetCounter(fallbackRng));
         }
 
-        var rng = new Rng(shuffleSeed, shuffleCounter);
+        var rng = AiRngCompat.Create(shuffleSeed, shuffleCounter);
         merged.StableShuffle(rng);
-        return (merged, [], rng.Counter);
+        return (merged, [], AiRngCompat.GetCounter(rng));
     }
 
     public static (List<CombatHandCard> hand, List<CombatPileCard> draw, List<CombatPileCard> discard, int rngCounter)
@@ -126,15 +126,15 @@ internal static class CombatPileSimulator {
         int shuffleCounter) {
         var result = pile.ToList();
         var rng = shuffleSeed == 0
-            ? new Rng(DeriveFallbackShuffleSeed(result), shuffleCounter)
-            : new Rng(shuffleSeed, shuffleCounter);
+            ? AiRngCompat.Create(DeriveFallbackShuffleSeed(result), shuffleCounter)
+            : AiRngCompat.Create(shuffleSeed, shuffleCounter);
 
         for (int i = 0; i < count; i++) {
             int idx = rng.NextInt(result.Count + 1);
             result.Insert(idx, CreateStatusCard(cardId));
         }
 
-        return (result, rng.Counter);
+        return (result, AiRngCompat.GetCounter(rng));
     }
 
     public static List<CombatPileCard> InjectStatus(
