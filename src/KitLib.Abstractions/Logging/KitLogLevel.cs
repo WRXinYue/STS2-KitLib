@@ -1,6 +1,6 @@
 namespace KitLib.Logging;
 
-public enum KitLogLevel {
+internal enum KitLogLevel {
     Debug,
     Info,
     Warn,

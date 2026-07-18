@@ -3,37 +3,27 @@ using KitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib;
 
-/// <summary>Unified logging for KitLib: internal lines use <c>[KitLib]</c> or <c>[KitLib][scope]</c>.</summary>
+/// <summary>KitLib internal logging via the official <see cref="Logger"/> (same as content mods).</summary>
 public static class KitLog {
-    public static void Debug(string message) => WriteMod(KitLogLevel.Debug, MainFile.ModID, null, message);
-    public static void Info(string message) => WriteMod(KitLogLevel.Info, MainFile.ModID, null, message);
-    public static void Warn(string message) => WriteMod(KitLogLevel.Warn, MainFile.ModID, null, message);
-    public static void Error(string message) => WriteMod(KitLogLevel.Error, MainFile.ModID, null, message);
+    public static void Debug(string message) => Write(null, message, KitLogLevel.Debug);
+    public static void Info(string message) => Write(null, message, KitLogLevel.Info);
+    public static void Warn(string message) => Write(null, message, KitLogLevel.Warn);
+    public static void Error(string message) => Write(null, message, KitLogLevel.Error);
 
     public static void Debug(string scope, string message)
-        => WriteMod(KitLogLevel.Debug, MainFile.ModID, KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message);
+        => Write(KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message, KitLogLevel.Debug);
     public static void Info(string scope, string message)
-        => WriteMod(KitLogLevel.Info, MainFile.ModID, KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message);
+        => Write(KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message, KitLogLevel.Info);
     public static void Warn(string scope, string message)
-        => WriteMod(KitLogLevel.Warn, MainFile.ModID, KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message);
+        => Write(KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message, KitLogLevel.Warn);
     public static void Error(string scope, string message)
-        => WriteMod(KitLogLevel.Error, MainFile.ModID, KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message);
+        => Write(KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message, KitLogLevel.Error);
 
-    /// <summary>Content-mod or dynamic scope; same as <see cref="WriteMod"/>.</summary>
-    public static void Write(KitLogLevel level, string? scope, string message)
-        => WriteMod(level, MainFile.ModID, KitLib.Logging.KitLibLogFormat.NormalizeKitLibScope(scope, MainFile.ModID), message);
+    internal static void Write(KitLogLevel level, string? scope, string message)
+        => Write(scope, message, level);
 
-    /// <summary>Content-mod line format: <c>[modId]</c> or <c>[modId][scope]</c>.</summary>
-    public static void WriteMod(KitLogLevel level, string modId, string? scope, string message) {
-        var entry = KitLib.Logging.LogStreamEntry.FromKitLog(level, modId, scope, message, MainFile.ModID);
-        KitLib.Logging.LogStreamHub.Publish(entry);
-        KitLib.Logging.StructuredLogDedupe.Mark(entry.Fingerprint);
-
-        var line = KitLib.Logging.KitLibLogFormat.FormatGameLoggerText(modId, scope, message, MainFile.ModID);
-        WriteRaw(level, line);
-    }
-
-    static void WriteRaw(KitLogLevel level, string text) {
+    static void Write(string? scope, string message, KitLogLevel level) {
+        var text = string.IsNullOrWhiteSpace(scope) ? message : $"[{scope.Trim()}] {message}";
         switch (level) {
             case KitLogLevel.Error:
                 MainFile.Logger.Error(text);

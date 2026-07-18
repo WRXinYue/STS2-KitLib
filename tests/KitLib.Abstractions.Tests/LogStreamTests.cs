@@ -5,17 +5,17 @@ namespace KitLib.Abstractions.Tests;
 public class LogStreamEntryTests {
     [Fact]
     public void FromKitLog_scopedHostShape() {
-        var entry = LogStreamEntry.FromKitLog(KitLogLevel.Info, "KitLib", "PseudoCoop", "starting", "KitLib");
-        Assert.Equal("[KitLib] [PseudoCoop] starting", entry.Text);
+        var entry = LogStreamEntry.FromKitLog(KitLogLevel.Info, "KitLib", "ProgressGuard", "starting", "KitLib");
+        Assert.Equal("[KitLib] [ProgressGuard] starting", entry.Text);
         Assert.Equal("KitLib", entry.Mod);
-        Assert.Equal("PseudoCoop", entry.Scope);
+        Assert.Equal("ProgressGuard", entry.Scope);
         Assert.Equal("info", entry.Lvl);
     }
 
     [Fact]
     public void FromKitLog_contentModShape() {
         var entry = LogStreamEntry.FromKitLog(KitLogLevel.Warn, "my-mod", "Combat", "turn 3", "KitLib");
-        Assert.Equal("[KitLib] [my-mod][Combat] turn 3", entry.Text);
+        Assert.Equal("[my-mod][Combat] turn 3", entry.Text);
         Assert.Equal("my-mod", entry.Mod);
         Assert.Equal("Combat", entry.Scope);
         Assert.Equal("warn", entry.Lvl);

@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text.Json.Nodes;
-using KitLogLevel = KitLib.Logging.KitLogLevel;
 
 namespace KitLib.Host;
 
@@ -64,20 +63,5 @@ internal static class HostReflection {
         foreach (var item in enumerable)
             list.Add(item);
         return list;
-    }
-
-    internal static void InvokeLogSinkWrite(object sink, KitLogLevel level, string source, string message) {
-        var method = sink.GetType().GetMethod("Write", BindingFlags.Instance | BindingFlags.Public);
-        if (method == null)
-            return;
-
-        var parameters = method.GetParameters();
-        if (parameters.Length != 3)
-            return;
-
-        var levelArg = parameters[0].ParameterType.IsEnum
-            ? Enum.ToObject(parameters[0].ParameterType, (int)level)
-            : level;
-        method.Invoke(sink, [levelArg, source, message]);
     }
 }

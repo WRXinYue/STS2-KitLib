@@ -123,6 +123,7 @@ internal static class LogCollector {
     }
 
     private static void OnLogReceived(LogLevel level, string text, int _) {
+        text = NormalizeHostScopedCallbackText(text);
         lock (_lock) {
             _liveEntries.Enqueue(new Entry(level, text, DateTime.Now));
             while (_liveEntries.Count > MaxLiveEntries)
@@ -163,6 +164,16 @@ internal static class LogCollector {
     }
 
     internal static void Inject(string text, LogLevel level) => OnLogReceived(level, text, 0);
+
+    /// <summary>
+    /// Legacy KitLog hub lines used <c>[KitLib][scope]</c>; official <see cref="Logger"/> emits <c>[KitLib] [scope]</c>.
+    /// </summary>
+    static string NormalizeHostScopedCallbackText(string text) {
+        const string legacy = "[KitLib][";
+        if (text.StartsWith(legacy, StringComparison.Ordinal))
+            return "[KitLib] [" + text[legacy.Length..];
+        return text;
+    }
 
     /// <summary>Clears unseen Warn/Error alert state (e.g. when opening the log viewer).</summary>
     public static void AcknowledgeAlerts() {

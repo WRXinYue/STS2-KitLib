@@ -44,7 +44,7 @@ public sealed class LogStreamEntry {
 
     public string Fingerprint => $"{Lvl}|{Text}";
 
-    public static LogStreamEntry FromKitLog(
+    internal static LogStreamEntry FromKitLog(
         KitLogLevel level,
         string modId,
         string? scope,
@@ -75,7 +75,7 @@ public sealed class LogStreamEntry {
             Ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
         };
 
-    public static string LevelToken(KitLogLevel level) => level switch {
+    internal static string LevelToken(KitLogLevel level) => level switch {
         KitLogLevel.Error => "error",
         KitLogLevel.Warn => "warn",
         KitLogLevel.Debug => "debug",

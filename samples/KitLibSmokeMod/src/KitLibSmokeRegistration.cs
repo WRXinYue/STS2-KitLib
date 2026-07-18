@@ -2,7 +2,6 @@ extern alias KitLibCore;
 
 using KitLib.Abstractions.Modding;
 using KitLib.AI.Core;
-using KitLib.Logging;
 using KitLibCore::KitLib.Companion;
 using KitLibSmokeMod.AI;
 
@@ -28,8 +27,5 @@ internal static class KitLibSmokeRegistration {
             SortOrder = 0,
             BuildBody = static () => new object(),
         });
-
-        _ = KitLibLog.IsAvailable;
-        _ = new ModLogSettings();
     }
 }

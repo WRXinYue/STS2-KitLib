@@ -838,7 +838,10 @@ internal static class LogViewerUI {
                    out int secondaryEnd,
                    out bool isContentModTag,
                    out var secondaryInner)) {
-            sb.Append($"[color={levelCol}]{EscapeBbCode(entry.Text[pos..secondaryStart])}[/color]");
+            if (secondaryStart > pos)
+                sb.Append($"[color={levelCol}]{EscapeBbCode(entry.Text[pos..secondaryStart])}[/color]");
+            else if (secondaryStart == pos && entry.Text[secondaryStart] == '[')
+                sb.Append(' ');
 
             string secondaryCol = isContentModTag
                 ? LogSourceColors.ColorToBbHex(LogSourceColors.GetModHighlightColor(secondaryInner))

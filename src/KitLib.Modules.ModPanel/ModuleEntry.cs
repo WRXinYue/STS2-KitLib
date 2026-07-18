@@ -9,8 +9,6 @@ public static class ModuleEntry {
     public static void Initialize() {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.ModPanel)) return;
         KitLibHost.AnnounceModule(KitLibModuleIds.ModPanel);
-        KitLibModSettingsUiOps.BuildLogLevelRow = (title, desc, get, set) =>
-            KitLibNativeModSettingsUi.CreateLogLevelRow(title, desc, get, set);
         KitLibHost.RegisterModSettingsPanelHost(new ModSettingsPanelHost());
         KitLibNativeModSettingsBootstrap.RegisterKitLibPages();
         KitLibHost.NotifyPerfHudEnabledChanged = KitLibNativeModSettingsUi.RefreshBoolToggles;

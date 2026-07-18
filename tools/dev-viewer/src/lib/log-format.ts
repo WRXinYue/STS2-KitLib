@@ -118,7 +118,11 @@ function buildTextBodyAnsi(
     if (!secondary)
       break;
 
-    appendAnsiSegment(parts, levelAnsi, text.slice(pos, secondary.tagStart));
+    if (secondary.tagStart > pos)
+      appendAnsiSegment(parts, levelAnsi, text.slice(pos, secondary.tagStart));
+    else if (secondary.tagStart === pos && text[pos] === "[")
+      parts.push(" ");
+
     const secondaryAnsi = secondary.isContentModTag
       ? ansiTrueColorFg(modColorHex(secondary.tagInner))
       : ansiScopeDim();

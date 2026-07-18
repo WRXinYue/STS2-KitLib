@@ -5,7 +5,7 @@ namespace KitLib.Abstractions.Modding;
 
 /// <summary>Pure diagnostic log lines for ModPanel sidebar/embed probes (no Godot).</summary>
 public static class ModPanelDiagnosticLog {
-    /// <summary>KitLib log scope; full line is <c>[KitLib][ModPanelDiag] …</c>.</summary>
+    /// <summary>KitLib log scope; full line is <c>[KitLib] [ModPanelDiag] …</c>.</summary>
     public const string Scope = "ModPanelDiag";
 
     public static string FormatOpen(ModPanelOpenReport report)

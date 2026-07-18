@@ -16,7 +16,6 @@ public static class ModuleEntry {
         SettingsStore.Load();
         ModTitleStore.Load();
         LogCollector.Initialize();
-        KitLogHub.RegisterSink(new KitLogUserSink());
         UserTabRegistration.Register();
 
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.User);

@@ -16,7 +16,6 @@ public class MainFile {
         Logger.Info("KitLib Core initializing...");
         KitLibStartupAudit.Measure("dependencies", ModDependencyLoader.EnsureLoaded);
         KitLibStartupAudit.Measure("runtimeProfile", Sts2RuntimeProfile.Initialize);
-        KitLibStartupAudit.Measure("logBridge", ModKitLibLogBridge.Initialize);
         KitLibStartupAudit.Measure("dataPaths", DataPaths.EnsurePinnedOnMainThread);
         LegacyInstancesDirCleanup.ScheduleOnStartup();
         KitLibStartupAudit.Measure("settings", SettingsStore.Load);
