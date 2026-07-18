@@ -11,10 +11,16 @@
     <!-- Mods load inside the game host; .deps.json in mods/ is parsed as a mod manifest. -->
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <Sts2Profile Condition="'$(Sts2Profile)' == ''">stable</Sts2Profile>
-    <DefineConstants Condition="'$(Sts2Profile)' == 'beta'">$(DefineConstants);STS2_BETA_PROFILE</DefineConstants>
   </PropertyGroup>
   <!-- Must run before Sts2DataDir is derived (CI has no local.props). -->
   <Import Project="$(RepoRoot)eng/Sts2Refs.props" Condition="Exists('$(RepoRoot)eng/Sts2Refs.props')" />
+  <PropertyGroup Condition="'$(KitLibPinnedFormatCheck)' == 'true'">
+    <Sts2Profile>stable</Sts2Profile>
+    <Sts2Dir>$(RepoRoot)eng/sts2-refs/stable/0.107.1</Sts2Dir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DefineConstants Condition="'$(Sts2Profile)' == 'beta'">$(DefineConstants);STS2_BETA_PROFILE</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Sts2Dir)' != ''">
     <Sts2DataDir>$(Sts2Dir)/data_sts2_windows_x86_64</Sts2DataDir>
     <Sts2DataDir Condition="'$(OS)' != 'Windows_NT' and Exists('$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64')">$(Sts2Dir)/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64</Sts2DataDir>

@@ -182,7 +182,11 @@ format:
 
 format-check:
 	@test -f eng/sts2-refs/stable/0.107.1/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs (git lfs pull?). Run: make capture-sts2-ref PROFILE=stable" >&2; exit 1)
-	$(DOTNET) format KitLib.sln --verify-no-changes
+ifeq ($(OS),Windows_NT)
+	@set KitLibPinnedFormatCheck=true&& $(DOTNET) format KitLib.sln --verify-no-changes
+else
+	KitLibPinnedFormatCheck=true $(DOTNET) format KitLib.sln --verify-no-changes
+endif
 
 lint-scripts:
 	$(UV) run flake8 scripts
