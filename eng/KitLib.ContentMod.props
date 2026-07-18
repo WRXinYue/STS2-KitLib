@@ -2,10 +2,14 @@
   <!-- Compile-time refs for content mods: Abstractions contracts + KitLib host (CompanionBridge). -->
   <PropertyGroup>
     <KitLibBundleDir>$(RepoRoot)build/KitLib/</KitLibBundleDir>
-    <KitLibAbstractionsDllPath>$(KitLibBundleDir)KitLib.Abstractions.dll</KitLibAbstractionsDllPath>
-    <KitLibAbstractionsDllPath Condition="!Exists('$(KitLibAbstractionsDllPath)')">$(RepoRoot)src/KitLib.Abstractions/bin/$(Configuration)/net9.0/KitLib.Abstractions.dll</KitLibAbstractionsDllPath>
-    <KitLibCoreDllPath>$(KitLibBundleDir)KitLib.Core.dll</KitLibCoreDllPath>
-    <KitLibCoreDllPath Condition="!Exists('$(KitLibCoreDllPath)')">$(RepoRoot)src/KitLib.Core/bin/$(Configuration)/net9.0/KitLib.Core.dll</KitLibCoreDllPath>
+    <_KitLibAbstractionsBundleDll>$(KitLibBundleDir)KitLib.Abstractions.dll</_KitLibAbstractionsBundleDll>
+    <_KitLibAbstractionsBinDll>$(RepoRoot)src/KitLib.Abstractions/bin/$(Configuration)/net9.0/KitLib.Abstractions.dll</_KitLibAbstractionsBinDll>
+    <_KitLibCoreBundleDll>$(KitLibBundleDir)KitLib.Core.dll</_KitLibCoreBundleDll>
+    <_KitLibCoreBinDll>$(RepoRoot)src/KitLib.Core/bin/$(Configuration)/net9.0/KitLib.Core.dll</_KitLibCoreBinDll>
+    <KitLibAbstractionsDllPath>$(_KitLibAbstractionsBundleDll)</KitLibAbstractionsDllPath>
+    <KitLibAbstractionsDllPath Condition="!Exists('$(KitLibAbstractionsDllPath)')">$(_KitLibAbstractionsBinDll)</KitLibAbstractionsDllPath>
+    <KitLibCoreDllPath>$(_KitLibCoreBundleDll)</KitLibCoreDllPath>
+    <KitLibCoreDllPath Condition="!Exists('$(KitLibCoreDllPath)')">$(_KitLibCoreBinDll)</KitLibCoreDllPath>
   </PropertyGroup>
 
   <Target Name="EnsureKitLibCoreForContentMod" BeforeTargets="ResolveAssemblyReferences">
@@ -19,25 +23,29 @@
       Projects="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj"
       Targets="Build"
       Properties="Configuration=$(Configuration);Sts2Profile=$(_CoreBuildProfile);Sts2Dir=$(_ContentModSts2Dir);DeployToGame=false"
-      Condition="!Exists('$(KitLibCoreDllPath)')" />
+      Condition="!Exists('$(_KitLibCoreBundleDll)') and !Exists('$(_KitLibCoreBinDll)')" />
+    <PropertyGroup>
+      <KitLibAbstractionsDllPath Condition="Exists('$(_KitLibAbstractionsBundleDll)')">$(_KitLibAbstractionsBundleDll)</KitLibAbstractionsDllPath>
+      <KitLibAbstractionsDllPath Condition="'$(KitLibAbstractionsDllPath)' == '' and Exists('$(_KitLibAbstractionsBinDll)')">$(_KitLibAbstractionsBinDll)</KitLibAbstractionsDllPath>
+      <KitLibCoreDllPath Condition="Exists('$(_KitLibCoreBundleDll)')">$(_KitLibCoreBundleDll)</KitLibCoreDllPath>
+      <KitLibCoreDllPath Condition="'$(KitLibCoreDllPath)' == '' and Exists('$(_KitLibCoreBinDll)')">$(_KitLibCoreBinDll)</KitLibCoreDllPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <Reference Remove="KitLib.Abstractions;KitLib.Core" />
+      <Reference Include="KitLib.Abstractions">
+        <HintPath>$(KitLibAbstractionsDllPath)</HintPath>
+        <Private>false</Private>
+      </Reference>
+      <Reference Include="KitLib.Core" Aliases="KitLibCore">
+        <HintPath>$(KitLibCoreDllPath)</HintPath>
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
     <Error
-      Condition="!Exists('$(KitLibCoreDllPath)')"
-      Text="KitLib.Core.dll not found at $(KitLibCoreDllPath). Run make build." />
+      Condition="'$(KitLibAbstractionsDllPath)' == '' or !Exists('$(KitLibAbstractionsDllPath)')"
+      Text="KitLib.Abstractions.dll not found (checked $(_KitLibAbstractionsBundleDll) and $(_KitLibAbstractionsBinDll)). Run make build." />
+    <Error
+      Condition="'$(KitLibCoreDllPath)' == '' or !Exists('$(KitLibCoreDllPath)')"
+      Text="KitLib.Core.dll not found (checked $(_KitLibCoreBundleDll) and $(_KitLibCoreBinDll)). Run make build." />
   </Target>
-
-  <Target Name="CheckContentModKitLibRefs" BeforeTargets="BeforeBuild;BeforePublish" DependsOnTargets="EnsureKitLibCoreForContentMod">
-    <Error Condition="!Exists('$(KitLibAbstractionsDllPath)')" Text="KitLib.Abstractions.dll not found at $(KitLibAbstractionsDllPath). Run make build." />
-    <Error Condition="!Exists('$(KitLibCoreDllPath)')" Text="KitLib.Core.dll not found at $(KitLibCoreDllPath). Run make build." />
-  </Target>
-
-  <ItemGroup>
-    <Reference Include="KitLib.Abstractions">
-      <HintPath>$(KitLibAbstractionsDllPath)</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="KitLib.Core" Aliases="KitLibCore">
-      <HintPath>$(KitLibCoreDllPath)</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
 </Project>
