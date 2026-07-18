@@ -1106,7 +1106,7 @@ internal static class LogViewerUI {
         if (KitLibProcessScope.IsDualInstanceActive()) {
             var dualHint = new Label {
                 Text = I18N.T("log.instance.dualHint",
-                    "Dual-instance: logs share user://logs/godot.log. Use kitlog attach --pid {0} for this window.",
+                    "Dual-instance: logs share user://logs/godot.log. Open Dev viewer for live tail (this window PID {0}).",
                     KitLibInstance.ProcessId),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
             };

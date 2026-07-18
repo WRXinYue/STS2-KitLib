@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy sts2.dll (+ Harmony) from a matching STS2 install into eng/sts2-refs/."""
+"""Copy sts2.dll (+ Harmony) from a matching STS2 install into eng/sts2-refs/beta/."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.dotenv import load_dotenv  # noqa: E402
 from lib.sts2_profiles import (  # noqa: E402
+    DEFAULT_PROFILE,
     capture_profile_ref,
     pinned_version,
     resolve_capture_source,
@@ -21,8 +22,13 @@ from lib.sts2_profiles import (  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Capture STS2 compile refs into eng/sts2-refs/<profile>/<version>/.")
-    ap.add_argument("profile", choices=("stable", "beta"))
+    ap = argparse.ArgumentParser(description="Capture STS2 beta compile refs into eng/sts2-refs/beta/.")
+    ap.add_argument(
+        "profile",
+        nargs="?",
+        choices=(DEFAULT_PROFILE,),
+        default=DEFAULT_PROFILE,
+    )
     ap.add_argument(
         "--repo-root",
         type=Path,
@@ -32,7 +38,7 @@ def main() -> int:
         "--source",
         type=Path,
         default=None,
-        help="STS2 install root (default: local.props Sts2Dir). release_info.json must match profile.",
+        help="STS2 install root (default: local.props Sts2Dir). release_info.json must match pinned beta.",
     )
     args = ap.parse_args()
 
@@ -53,13 +59,12 @@ def main() -> int:
         return 1
 
     dll = resolve_sts2_dll(dest)
-    print(f"Captured {args.profile} ref (pinned {pinned_version(args.profile)})")
+    print(f"Captured beta ref (pinned {pinned_version()})")
     print(f"  source={source}")
     print(f"  dest={dest}")
     print(f"  dll={dll}")
     print("")
     print("Next: git add eng/sts2-refs && git commit (Git LFS tracks *.dll under refs).")
-    print("For the other profile, switch Steam branch and capture again.")
     return 0
 
 

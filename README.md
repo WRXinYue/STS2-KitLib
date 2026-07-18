@@ -52,7 +52,7 @@ KitLib is modular: `KitLib` Core handles loading; satellite modules are optional
 ### Logs
 
 - In-run / main-menu log viewer with filters
-- Optional kitlog live tail
+- Browser dev viewer (`http://127.0.0.1:9878/#/logs`)
 
 ### AI and multiplayer
 
@@ -87,7 +87,7 @@ KitLib is modular: `KitLib` Core handles loading; satellite modules are optional
 ## Install
 
 - **KitLib mod** — Steam Workshop or Nexus.
-- **Auxiliary tools** (`kitlog` CLI, `KitLib.Mcp`) — [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or Nexus.
+- **Auxiliary tools** (`KitLib.Mcp`) — [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or Nexus.
 
 ## For mod developers
 

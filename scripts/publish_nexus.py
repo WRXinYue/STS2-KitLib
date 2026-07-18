@@ -3,13 +3,11 @@
 
 Environment variables (required):
     NEXUS_API_KEY              - Your personal API key (.env)
-    NEXUS_FILE_GROUP_ID        - Main file group ID — stable / public game (release.env)
-    NEXUS_FILE_GROUP_ID_BETA   - Main file group ID — beta game branch (release.env)
+    NEXUS_FILE_GROUP_ID        - Main file group ID (release.env; NEXUS_FILE_GROUP_ID_BETA also accepted)
     NEXUS_FILE_GROUP_ID_MCP    - Optional MCP proxy file group (release.env)
-    NEXUS_FILE_GROUP_ID_KITLOG - Optional KitLog CLI file group (release.env)
 
 Usage:
-    python scripts/publish_nexus.py [--version X.Y.Z] [--beta | --mcp | --kitlog] [--dry-run]
+    python scripts/publish_nexus.py [--version X.Y.Z] [--mcp] [--dry-run]
 """
 
 from __future__ import annotations
@@ -27,7 +25,6 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from lib.release_assets import (  # noqa: E402
-    kitlog_zip_path,
     mcp_zip_path,
     mod_zip_path,
     tools_rid,
@@ -46,28 +43,13 @@ def _mcp_description_bbcode(tools_rid: str) -> str:
     )
 
 
-def _kitlog_description_bbcode(tools_rid: str) -> str:
-    exe = "kitlog.exe" if tools_rid.startswith("win") else "kitlog"
-    return (
-        "[b]KitLog CLI[/b] (optional terminal log viewer)\n\n"
-        "Tail KitLib session logs from a terminal. Use [code]kitlog attach[/code] for live structured "
-        "logs over a named pipe while the game runs; [code]kitlog attach[/code] is recommended, "
-        "[code]kitlog tail[/code] reads [code]godot.log[/code] "
-        "offline.\n\n"
-        f"Extract [code]{exe}[/code] to [code]PATH[/code] or [code]mods/KitLib/tools/[/code]. "
-        "The in-game log viewer can launch attach automatically.\n\n"
-        "Full usage: GitHub README → KitLog CLI section."
-    )
-
-
-def _resolve_nexus_group_id(*, tool: str | None, profile: str) -> str:
+def _resolve_nexus_group_id(*, tool: str | None) -> str:
     if tool == "mcp":
         return os.environ.get("NEXUS_FILE_GROUP_ID_MCP", "").strip()
-    if tool == "kitlog":
-        return os.environ.get("NEXUS_FILE_GROUP_ID_KITLOG", "").strip()
-    if profile == "beta":
-        return os.environ.get("NEXUS_FILE_GROUP_ID_BETA", "").strip()
-    return os.environ.get("NEXUS_FILE_GROUP_ID", "").strip()
+    return (
+        os.environ.get("NEXUS_FILE_GROUP_ID", "").strip()
+        or os.environ.get("NEXUS_FILE_GROUP_ID_BETA", "").strip()
+    )
 
 
 def _nexus_display_name(
@@ -75,14 +57,9 @@ def _nexus_display_name(
     *,
     tool: str | None,
     tools_rid_value: str,
-    profile: str,
 ) -> str:
     if tool == "mcp":
         return f"KitLib.Mcp v{version} ({tools_rid_value})"
-    if tool == "kitlog":
-        return f"KitLog v{version} ({tools_rid_value})"
-    if profile == "beta":
-        return f"KitLib v{version} (beta)"
     return f"KitLib v{version}"
 
 
@@ -100,43 +77,29 @@ def _nexus_attach_options(*, tool: str | None) -> dict[str, object]:
     }
 
 
-def _zip_path_for(version: str, *, tool: str | None, tools_rid_value: str, profile: str) -> Path:
+def _zip_path_for(version: str, *, tool: str | None, tools_rid_value: str) -> Path:
     if tool == "mcp":
         return mcp_zip_path(_REPO_ROOT, version, tools_rid_value)
-    if tool == "kitlog":
-        return kitlog_zip_path(_REPO_ROOT, version, tools_rid_value)
-    return mod_zip_path(_REPO_ROOT, version, profile)
+    return mod_zip_path(_REPO_ROOT, version)
 
 
-def _make_target_for(*, tool: str | None, profile: str) -> str:
+def _make_target_for(*, tool: str | None) -> str:
     if tool == "mcp":
         return "zip-mcp"
-    if tool == "kitlog":
-        return "zip-kitlog"
-    return "zip-profiles"
+    return "zip-release"
 
 
 def _tool_env_hint(tool: str) -> tuple[str, str]:
-    if tool == "mcp":
-        return (
-            "NEXUS_FILE_GROUP_ID_MCP",
-            "Create an Optional file for KitLib.Mcp on your mod page first, " "then copy its group ID from API Info.",
-        )
     return (
-        "NEXUS_FILE_GROUP_ID_KITLOG",
-        "Create an Optional file for KitLog on your mod page first, " "then copy its group ID from API Info.",
+        "NEXUS_FILE_GROUP_ID_MCP",
+        "Create an Optional file for KitLib.Mcp on your mod page first, then copy its group ID from API Info.",
     )
 
 
-def _profile_env_hint(profile: str) -> tuple[str, str]:
-    if profile == "beta":
-        return (
-            "NEXUS_FILE_GROUP_ID_BETA",
-            "Create a Main file for the beta game branch on your mod page, " "then copy its group ID from API Info.",
-        )
+def _main_env_hint() -> tuple[str, str]:
     return (
         "NEXUS_FILE_GROUP_ID",
-        "Find it on your mod's Files tab → API Info.",
+        "Find it on your mod's Files tab → API Info (NEXUS_FILE_GROUP_ID_BETA also works).",
     )
 
 
@@ -384,19 +347,9 @@ def main() -> int:
     ap.add_argument("--version", default="", help="Semver, e.g. 0.6.0 (default: KitLib.json)")
     tool_group = ap.add_mutually_exclusive_group()
     tool_group.add_argument(
-        "--beta",
-        action="store_true",
-        help="Upload beta main zip (KitLib-vX-beta.zip) to NEXUS_FILE_GROUP_ID_BETA.",
-    )
-    tool_group.add_argument(
         "--mcp",
         action="store_true",
         help="Build/package/upload the KitLib.Mcp stdio proxy (make zip-mcp).",
-    )
-    tool_group.add_argument(
-        "--kitlog",
-        action="store_true",
-        help="Build/package/upload the KitLog CLI (make zip-kitlog).",
     )
     ap.add_argument(
         "--tools-rid",
@@ -418,16 +371,15 @@ def main() -> int:
         version = str(manifest["version"])
         print(f"Version auto-detected from KitLib.json: {version}")
 
-    tool: str | None = "mcp" if args.mcp else "kitlog" if args.kitlog else None
-    profile = "beta" if args.beta else "stable"
+    tool: str | None = "mcp" if args.mcp else None
     tools_rid_value = tools_rid(args.tools_rid)
-    zip_path = _zip_path_for(version, tool=tool, tools_rid_value=tools_rid_value, profile=profile)
+    zip_path = _zip_path_for(version, tool=tool, tools_rid_value=tools_rid_value)
     if tool:
         print(f"Tool runtime: {tools_rid_value}")
 
     # ── check credentials ────────────────────────────────────────────────────
     api_key = os.environ.get("NEXUS_API_KEY", "").strip()
-    group_id = _resolve_nexus_group_id(tool=tool, profile=profile)
+    group_id = _resolve_nexus_group_id(tool=tool)
     attach = _nexus_attach_options(tool=tool)
 
     if not args.dry_run:
@@ -441,7 +393,7 @@ def main() -> int:
             if tool:
                 env_name, hint = _tool_env_hint(tool)
             else:
-                env_name, hint = _profile_env_hint(profile)
+                env_name, hint = _main_env_hint()
             print(
                 f"ERROR: {env_name} environment variable is not set.\n" f"       {hint}",
                 file=sys.stderr,
@@ -450,7 +402,7 @@ def main() -> int:
 
     # ── ensure zip exists ────────────────────────────────────────────────────
     if not zip_path.is_file():
-        make_target = _make_target_for(tool=tool, profile=profile)
+        make_target = _make_target_for(tool=tool)
         print(f"Zip not found at {zip_path} - running 'make {make_target}' first...")
         import subprocess
 
@@ -469,8 +421,6 @@ def main() -> int:
     # ── build file description ───────────────────────────────────────────────
     if tool == "mcp":
         description = _mcp_description_bbcode(tools_rid_value)
-    elif tool == "kitlog":
-        description = _kitlog_description_bbcode(tools_rid_value)
     else:
         from md_to_nexus import convert_markdown  # noqa: PLC0415
 
@@ -487,7 +437,6 @@ def main() -> int:
         version,
         tool=tool,
         tools_rid_value=tools_rid_value,
-        profile=profile,
     )
 
     if args.dry_run:

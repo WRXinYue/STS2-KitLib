@@ -59,7 +59,7 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 - **Hooks** — Trigger → Condition → Action rules
 - **AI Host** — Solo autoplay (**StrongStrategy** default); disabled during multiplayer hand-play
 - **MCP** — See **[MCP](/guide/mcp/)**
-- **KitLog CLI** — See **[tools/KitLog.Cli/README.md](https://github.com/WRXinYue/STS2-KitLib/blob/main/tools/KitLog.Cli/README.md)**
+- **Dev viewer** — Browser logs at `http://127.0.0.1:9878/#/logs` (see **[Log export](/guide/mod-feedback/)**)
 
 :::
 
@@ -68,7 +68,7 @@ Title-screen entry: **[Title Dev Mode](/guide/title-dev-mode/)**. Panel overview
 - **钩子** — 触发器 → 条件 → 动作
 - **AI 托管** — 单人自动（默认 **StrongStrategy**）；联机手打时禁用
 - **MCP** — 见 **[MCP](/guide/mcp/)**
-- **KitLog CLI** — 见仓库 `tools/KitLog.Cli/README.md`
+- **开发者控制台** — 浏览器日志 `http://127.0.0.1:9878/#/logs`（见 **[日志导出](/guide/mod-feedback/)**）
 
 :::
 

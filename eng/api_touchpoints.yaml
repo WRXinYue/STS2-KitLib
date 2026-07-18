@@ -2,7 +2,6 @@
 # profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.
 
 profiles:
-  stable: "0.107.1"
   beta: "0.109.0"
 
 touchpoints:

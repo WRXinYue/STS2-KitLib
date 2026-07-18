@@ -9,7 +9,7 @@
 ## Scope
 
 - [ ] KitLib mod / modules (`src/`)
-- [ ] Tools (`tools/KitLog.Cli`, `tools/KitLib.Mcp`)
+- [ ] Tools (`tools/KitLib.Mcp`)
 - [ ] Repo tooling only (scripts, CI, docs)
 
 ## Checklist
@@ -22,4 +22,4 @@
 
 ## Test plan
 
-<!-- How you verified the change (in-game steps, kitlog, etc.). -->
+<!-- How you verified the change (in-game steps, dev viewer, etc.). -->

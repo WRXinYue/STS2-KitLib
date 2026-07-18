@@ -4,7 +4,7 @@ Vue 3 + Vite developer panel embedded in KitLib.Dev at `http://127.0.0.1:9878/`.
 
 **Tabs:** Logs (terminal-style via [xterm.js](https://xtermjs.org/)) · Combat stats timeline
 
-Replaces the deprecated `kitlog` terminal for in-game log tailing.
+Embedded browser dev panel for KitLib logs and combat stats.
 
 ## Stack
 
@@ -28,7 +28,7 @@ Replaces the deprecated `kitlog` terminal for in-game log tailing.
 - **HTTP** `GET /api/export/json` — download full stats bundle as JSON
 - **HTTP** `GET /api/live` — latest combat snapshot
 
-In-game log viewer and AI panel buttons open the browser dev viewer instead of `kitlog`.
+In-game log viewer and AI panel buttons open the browser dev viewer.
 
 ## Develop
 

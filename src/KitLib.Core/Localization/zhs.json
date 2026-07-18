@@ -1288,7 +1288,7 @@
   "log.export.error": "导出失败：{0}",
   "log.instance.subtitle": "本窗口 · PID {0} · {1}",
   "log.instance.subtitleLive": "本窗口 · PID {0} · 实时捕获",
-  "log.instance.dualHint": "双开：日志共用 user://logs/godot.log。请用 kitlog attach --pid {0} 查看本窗口。",
+  "log.instance.dualHint": "双开：日志共用 user://logs/godot.log。请用 Dev 控制台实时查看（本窗口 PID {0}）。",
   "log.instance.currentFileTag": "（本窗口）",
   "log.clear": "清空",
   "log.search": "过滤文本...",

@@ -18,7 +18,7 @@ nav:
   mod_runtime: Mod 运行时
   kitlib_log: KitLib 日志
   sts2_compat: STS2 版本兼容
-  api_profiles: API profiles（维护者）
+  api_profiles: 编译引用（维护者）
 
 category:
   guide: 用户指南

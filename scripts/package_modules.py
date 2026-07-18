@@ -34,7 +34,6 @@ BUNDLE_DLLS = [
 ENTRY_DLL = "KitLib.dll"
 CORE_DLL = "KitLib.Core.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
-MOD_VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
     "Semver.dll",
     "Microsoft.Extensions.Primitives.dll",
@@ -110,7 +109,7 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
 
 
 def _assert_core_bundle(bundle_dir: Path) -> None:
-    required = [ENTRY_DLL, CORE_DLL, ABSTRACTIONS_DLL, MOD_VARIANT_LOADER_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+    required = [ENTRY_DLL, CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
@@ -129,9 +128,8 @@ def _dotnet_build(*, configuration: str, sts2_profile: str) -> None:
     build_bundle(configuration=configuration, sts2_profile=sts2_profile, sts2_dir=sts2_dir)
 
 
-def _package_profile(
+def _package_release(
     version: str,
-    profile: str,
     *,
     configuration: str,
     skip_build: bool,
@@ -142,23 +140,13 @@ def _package_profile(
     dist.mkdir(parents=True)
 
     if not skip_build:
-        _dotnet_build(configuration=configuration, sts2_profile=profile)
+        _dotnet_build(configuration=configuration, sts2_profile="beta")
 
     bundle_dir = _stage_bundle(dist)
-    zip_path = mod_zip_path(_REPO, version, profile)
+    zip_path = mod_zip_path(_REPO, version)
     _zip_dir(bundle_dir, zip_path)
-    print(f"Packaged release zip: {zip_path.name} ({profile})")
+    print(f"Packaged release zip: {zip_path.name}")
     return zip_path
-
-
-def _restage_dist_for_profile(profile: str, *, configuration: str) -> None:
-    """Leave build/dist/KitLib staged (stable profile) for downstream packaging."""
-    dist = _REPO / "build" / "dist"
-    if dist.exists():
-        shutil.rmtree(dist)
-    dist.mkdir(parents=True)
-    _dotnet_build(configuration=configuration, sts2_profile=profile)
-    _stage_bundle(dist)
 
 
 def _should_package_root_item(item: Path) -> bool:
@@ -205,10 +193,6 @@ def _stage_bundle(dist_root: Path) -> Path:
         raise FileNotFoundError("Missing Core build output under build/KitLib/. Run make build first.")
 
     shutil.copy2(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL)
-    variant_loader = _REPO / "build" / BUNDLE_ID / MOD_VARIANT_LOADER_DLL
-    if not variant_loader.is_file():
-        raise FileNotFoundError(f"Missing {MOD_VARIANT_LOADER_DLL}. Run make build first.")
-    shutil.copy2(variant_loader, dst / MOD_VARIANT_LOADER_DLL)
     for runtime_dll in ABSTRACTIONS_RUNTIME_DLLS:
         shutil.copy2(_resolve_abstractions_runtime_dll(runtime_dll), dst / runtime_dll)
     _assert_core_bundle(dst)
@@ -246,12 +230,7 @@ def main() -> int:
         "--sts2-profile",
         choices=RELEASE_PROFILES,
         default="",
-        help="STS2 API profile (default: resolve_sts2_compile_profile.py)",
-    )
-    ap.add_argument(
-        "--all-profiles",
-        action="store_true",
-        help="Build and zip stable + beta (KitLib-vX.zip and KitLib-vX-beta.zip)",
+        help="Ignored; KitLib always builds against beta refs.",
     )
     ap.add_argument(
         "--stage-dir",
@@ -261,23 +240,9 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    if args.all_profiles and args.sts2_profile:
-        print("ERROR: use --all-profiles or --sts2-profile, not both.", file=sys.stderr)
-        return 1
-
-    if not args.skip_build and args.stage_dir is None:
-        if args.all_profiles:
-            pass
-        elif args.sts2_profile:
-            _dotnet_build(configuration=args.configuration, sts2_profile=args.sts2_profile)
-        else:
-            profile = subprocess.check_output(
-                [sys.executable, str(_REPO / "scripts" / "resolve_sts2_compile_profile.py")],
-                text=True,
-            ).strip()
-            _dotnet_build(configuration=args.configuration, sts2_profile=profile)
-
     if args.stage_dir is not None:
+        if not args.skip_build:
+            _dotnet_build(configuration=args.configuration, sts2_profile="beta")
         stage_root = args.stage_dir.resolve()
         if stage_root.exists():
             shutil.rmtree(stage_root)
@@ -287,28 +252,8 @@ def main() -> int:
         return 0
 
     version = args.version.strip() or _read_version()
-
-    if args.all_profiles:
-        for profile in RELEASE_PROFILES:
-            _package_profile(
-                version,
-                profile,
-                configuration=args.configuration,
-                skip_build=False,
-            )
-        _restage_dist_for_profile("stable", configuration=args.configuration)
-        return 0
-
-    profile = (
-        args.sts2_profile
-        or subprocess.check_output(
-            [sys.executable, str(_REPO / "scripts" / "resolve_sts2_compile_profile.py")],
-            text=True,
-        ).strip()
-    )
-    _package_profile(
+    _package_release(
         version,
-        profile,
         configuration=args.configuration,
         skip_build=args.skip_build,
     )

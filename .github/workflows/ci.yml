@@ -1,4 +1,3 @@
-# GitHub Actions — push/PR to main.
 name: CI
 
 on:
@@ -25,16 +24,17 @@ jobs:
 
       - name: Verify STS2 ref DLLs (required for dotnet format)
         run: |
-          test -f eng/sts2-refs/stable/0.107.1/data_sts2_windows_x86_64/sts2.dll
-          test -f eng/sts2-refs/stable/0.107.1/data_sts2_windows_x86_64/0Harmony.dll
+          test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll
+          test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/0Harmony.dll
 
       - name: Format check
         run: |
-          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py stable)"
+          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py)"
           printf '%s\n' \
             '<Project>' \
             '  <PropertyGroup>' \
             "    <Sts2Dir>${STS2_DIR}</Sts2Dir>" \
+            '    <Sts2Profile>beta</Sts2Profile>' \
             '  </PropertyGroup>' \
             '</Project>' > local.props
           dotnet format KitLib.sln --verify-no-changes
@@ -49,10 +49,7 @@ jobs:
           uv sync
           uv run flake8 scripts
 
-      - name: Build KitLog CLI
-        run: dotnet build tools/KitLog.Cli/KitLog.Cli.csproj -c Release --disable-build-servers
-
-  sts2-profiles:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -72,22 +69,22 @@ jobs:
 
       - name: Verify STS2 ref DLLs
         run: |
-          test -f eng/sts2-refs/stable/0.107.1/data_sts2_windows_x86_64/sts2.dll
           test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll
 
-      - name: Dual-profile build
-        run: make build-profiles
+      - name: Build
+        run: make build
 
       - name: API touchpoint check
         run: make check-api
 
       - name: Content mod smoke fixture
         run: |
-          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py stable)"
+          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py)"
           printf '%s\n' \
             '<Project>' \
             '  <PropertyGroup>' \
             "    <Sts2Dir>${STS2_DIR}</Sts2Dir>" \
+            '    <Sts2Profile>beta</Sts2Profile>' \
             '  </PropertyGroup>' \
             '</Project>' > local.props
           make check-smoke-mod

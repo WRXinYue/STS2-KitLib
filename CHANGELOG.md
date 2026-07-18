@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Steam beta only** — KitLib releases and Steam Workshop uploads now target the **public-beta** game branch (currently **0.109.x**). There is no separate build for the stable/public Steam branch; match your game branch before installing or updating.
 - **Dev Mode rail (default)** — The left sidebar now expands when you hover the peek tab by default; switch to left-edge hover in Mod panel → KitLib → General.
 - **Map hover preview** — No longer appears whenever cheat mode is on; enable **Map prediction** under Cheats → Game. Visited nodes keep the vanilla tooltip.
 - **Card test room** — Training dummy combat now uses a KitLib-only encounter. We’re sorry the old implementation also changed the official Battleworn Dummy event.
@@ -28,12 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Log export ZIP** — Removed `report.txt` and the title/description form; export always includes Harmony patches, combat stats, and a full game log at the ZIP root.
 - **Log export UI** — Merged into the log viewer; **Log Export** opens a slide-out extension panel (same pattern as the card browser). Removed the standalone Dev rail tab and main-menu entry.
 - **Command reference** — Commands are grouped under Official and per-mod sections; official command descriptions are localized (English / Chinese).
-- **kitlog CLI** — Deprecated for day-to-day use; prefer the browser developer console. `kitlog attach` remains for dual-instance debugging over the named pipe.
 
 ### Removed
 
-- **Per-instance `session.log`** — KitLib no longer mirrors logs to `mod_data/KitLib/instances/{pid}/session.log`. All play uses the official `user://logs/godot.log`; dual-instance debugging uses `kitlog attach --pid <pid>` (named pipe).
-- **`mod_data/KitLib/instances/`** — Removed lock files, per-PID filter JSON, and instance subfolders. Dual-instance detection uses running STS2 process count; `kitlog attach --sync-viewer` receives filter updates over the log pipe. Optional `perf-trace.log` now lives directly under `mod_data/KitLib/`. Startup auto-deletes any leftover `instances/` folder (temporary migration; remove this cleanup in a later release).
+- **kitlog CLI** — Removed from the repo, build pipeline, GitHub/Nexus releases, and `make deploy-tools`. Use the browser developer console (`http://127.0.0.1:9878/#/logs`) or tail `%AppData%\SlayTheSpire2\logs\godot.log` for dual-instance debugging.
+- **Per-instance `session.log`** — KitLib no longer mirrors logs to `mod_data/KitLib/instances/{pid}/session.log`. All play uses the official `user://logs/godot.log`.
+- **`mod_data/KitLib/instances/`** — Removed lock files, per-PID filter JSON, and instance subfolders. Dual-instance detection uses running STS2 process count. Optional `perf-trace.log` now lives directly under `mod_data/KitLib/`. Startup auto-deletes any leftover `instances/` folder (temporary migration; remove this cleanup in a later release).
 - **Combat stats auto-open** — Removed the separate “open combat stats in browser when combat starts” setting; use **Auto-open developer console** instead.
 - **Combat contribution score** — Removed weighted combat scores, the multiplayer top-right score overlay, and related settings.
 - **Combat stats Dev panel** — Removed the in-game **Combat Stats** rail tab and launcher panel.
@@ -41,9 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Combat stats right rail** — Removed the in-combat right-edge event overlay.
 - **Combat stats viewer: Current / Last** — Removed the snapshot source toggle; the viewer shows the active combat only.
 - **Dev console** — KitLib `dm*` commands (cheats, saves, stats, enemies, cards, relics, and related tools). Use DevMode panels instead.
+- **Mod variant bundles** — Removed `KitLib.ModVariantLoader` and multi-DLL `lib/<ModId>_<version>/` layouts. Content mods should ship one build for the current beta game line.
 
 ### Fixed
 
+- **KitLib on Steam beta (0.109+)** — Fixed startup errors when optional satellite modules (e.g. Cheats) or content mods that register custom cards or relics were installed.
 - **Official Battleworn Dummy event** — With KitLib loaded, the hardest training tier no longer shows 999999999 HP or behaves like the card-test infinite dummy.
 - **In-game log viewer** — Fixed the panel stopping on old lines or showing only engine backtrace spam instead of the latest logs.
 - **In-game log viewer** — Godot gamepad input-map errors (and their backtrace blocks) are folded by a built-in suppress rule so mod and KitLib lines stay visible.

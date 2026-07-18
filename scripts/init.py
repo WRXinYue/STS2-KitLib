@@ -75,26 +75,17 @@ def main() -> int:
 
     ensure_mdi_icons(root)
 
-    dual_hint = True
-    for profile in ("stable", "beta"):
-        try:
-            from lib.sts2_profiles import ref_is_valid, ref_root
+    from lib.sts2_profiles import ref_is_valid, ref_root
 
-            if not ref_is_valid(ref_root(root, profile)):
-                dual_hint = False
-                break
-        except Exception:
-            dual_hint = False
-            break
-    if dual_hint:
+    ref = ref_root(root)
+    if ref_is_valid(ref):
         print("")
-        print("STS2 ref DLLs present under eng/sts2-refs/.")
-        print("  make build-profiles  -- compile against stable + beta refs")
-        print("  make verify-profiles -- build-profiles + check-api (pre-release)")
+        print("STS2 beta ref present under eng/sts2-refs/.")
+        print("  make verify  -- build + check-api (pre-release)")
     else:
         print("")
-        print("Dual-profile refs missing under eng/sts2-refs/.")
-        print("  Switch Steam branch, then: make capture-sts2-ref PROFILE=stable|beta")
+        print("Beta ref missing under eng/sts2-refs/.")
+        print("  Switch Steam to public-beta, then: make capture-sts2-ref")
 
     print("")
     print("Done. You can now run:")
@@ -107,7 +98,7 @@ def main() -> int:
     print("  make deploy    -- deploy from build/KitLib/ (after make build)")
     print("  make build     -- artifacts under build/KitLib/ only (no game copy)")
     print("  make upload-steam  -- Workshop upload (STS2_MOD_UPLOADER in .env)")
-    print("  make upload-all    -- GitHub + Nexus stable/beta/tools + Steam")
+    print("  make upload-all    -- GitHub + Nexus + tools + Steam Workshop")
     return 0
 
 

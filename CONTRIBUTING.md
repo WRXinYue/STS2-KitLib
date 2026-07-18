@@ -6,7 +6,7 @@
 - Keep changes **scoped** to the feature or fix; avoid drive-by reformatting or unrelated file churn.
 - Run **`make init`** once per clone — generates `local.props`, `.vscode`, and installs pre-commit hooks via [uv](https://docs.astral.sh/uv/) (`make hooks-install` if hooks are missing).
 - Before opening a PR: **`dotnet build KitLib.sln`** (or `make build-all`), then **`make check`** (`format-check` + `lint-scripts`). If you changed C# formatting, run **`make format`** first. With hooks installed, staged commits run the same checks automatically.
-- **CI (GitHub):** push/PR to `main` runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (`format-check`, `lint-scripts`, `KitLog.Cli` build). Full mod `dotnet build` is not run in CI (requires a local game `sts2.dll`).
+- **CI (GitHub):** push/PR to `main` runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (`format-check`, `lint-scripts`). Full mod `dotnet build` is not run in CI (requires a local game `sts2.dll`).
 - Do **not** commit `.env`, `local.props`, `build/`, or other generated artifacts listed in [`.gitignore`](.gitignore).
 
 ### Code style (C#)

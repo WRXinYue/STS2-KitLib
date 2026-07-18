@@ -37,12 +37,12 @@ features:
         en: >-
           In-run rail: browsers, cheats, saves, presets, logs, AI, hooks, scripts.
           Title Dev Mode: test runs, pseudo co-op, diagnostics.
-          Also: kitlog CLI, mod feedback ZIP, progress guard, MCP.
+          Also: browser dev viewer, mod feedback ZIP, progress guard, MCP.
           See /guide/panels/ and /guide/title-dev-mode/
         zh-CN: >-
           局内侧栏：浏览器、作弊、存档、预设、日志、AI、钩子、脚本等。
           标题 Dev Mode：测试局、伪联机、诊断。
-          另含 kitlog、Mod 反馈、进度保护、MCP。详见 /guide/panels/ 与 /guide/title-dev-mode/
+          另含浏览器开发者控制台、Mod 反馈、进度保护、MCP。详见 /guide/panels/ 与 /guide/title-dev-mode/
     - title:
         en: For mod developers
         zh-CN: Mod 开发者

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print MSBuild Sts2Profile (stable|beta) from env, local.props, or release_info.json."""
+"""Print MSBuild Sts2Profile (always beta)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from lib.sts2_profiles import resolve_compile_profile  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Print Sts2Profile for MSBuild (stable|beta).")
+    ap = argparse.ArgumentParser(description="Print Sts2Profile for MSBuild (beta).")
     ap.add_argument("--repo-root", type=Path, default=_SCRIPT_DIR.parent)
     ap.add_argument("--sts2-dir", type=Path, default=None)
     args = ap.parse_args()

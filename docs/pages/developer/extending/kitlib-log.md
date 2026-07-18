@@ -11,7 +11,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
 ::: en
 
-Content mods reference NuGet **`STS2.KitLib.Abstractions`** and call **`KitLib.Logging.KitLibLog`**. When KitLib Core is loaded at runtime, logs use a unified line format, appear in the game logger and `user://logs/godot.log`, and (with **KitLib.User**) stream to the in-game log viewer and `kitlog attach` pipe.
+Content mods reference NuGet **`STS2.KitLib.Abstractions`** and call **`KitLib.Logging.KitLibLog`**. When KitLib Core is loaded at runtime, logs use a unified line format, appear in the game logger and `user://logs/godot.log`, and (with **KitLib.User**) stream to the in-game log viewer and browser dev console.
 
 **You do not pass your manifest id on every call.** KitLib resolves it from the **calling assembly** via `ModAssemblyLookup` (same map used for save-slot blame and content attribution). Satellite DLLs in your mod folder are registered automatically.
 
@@ -22,7 +22,7 @@ See also: [Mod runtime API](/developer/extending/mod-runtime) for catalog/timing
 
 ::: zh-CN
 
-内容 mod 引用 NuGet **`STS2.KitLib.Abstractions`**，调用 **`KitLib.Logging.KitLibLog`**。运行时加载 KitLib Core 后，日志走统一行格式，进入游戏 logger 与 `user://logs/godot.log`；安装 **KitLib.User** 时还可进入游戏内日志查看器与 `kitlog attach` 管道。
+内容 mod 引用 NuGet **`STS2.KitLib.Abstractions`**，调用 **`KitLib.Logging.KitLibLog`**。运行时加载 KitLib Core 后，日志走统一行格式，进入游戏 logger 与 `user://logs/godot.log`；安装 **KitLib.User** 时还可进入游戏内日志查看器与浏览器开发者控制台。
 
 **不必每次传入 manifest id。** KitLib 通过 **调用方程序集** 经 `ModAssemblyLookup` 解析（与存档归因、内容归属同一套映射）。mod 目录下的卫星 DLL 会在启动时自动登记。
 
@@ -45,7 +45,7 @@ See also: [Mod runtime API](/developer/extending/mod-runtime) for catalog/timing
 Rules:
 
 - First `[…]` must match a loaded manifest **id** (or alias) for log-viewer mod filtering.
-- Second `[…]` is optional scope text; filter with text search or `kitlog --filter Combat`.
+- Second `[…]` is optional scope text; filter with text search in the log viewer or dev console.
 - Levels: `Debug`, `Info`, `Warn`, `Error` (`KitLogLevel` enum).
 :::
 
@@ -59,7 +59,7 @@ Rules:
 规则：
 
 - 第一个 `[…]` 须匹配已加载清单 **id**（或别名），供日志查看器按 mod 过滤。
-- 第二个 `[…]` 为可选 scope；可用文本搜索或 `kitlog --filter Combat` 过滤。
+- 第二个 `[…]` 为可选 scope；可在日志查看器或开发者控制台中用文本搜索过滤。
 - 级别：`Debug`、`Info`、`Warn`、`Error`（`KitLogLevel` 枚举）。
 :::
 
@@ -351,48 +351,36 @@ KitLib 各模块在 Core 内调用 **`KitLog.Info(scope, message)`**（同样为
 旧式单段方括号标签（如 `[KitLibHost]`）应改用 scope **`Host`**；`[KitLib.CombatAdd]` → **`CombatAdd`**。
 :::
 
-## Logs & CLI{lang="en"}
+## Logs & dev viewer{lang="en"}
 
-## 日志与 CLI{lang="zh-CN"}
+## 日志与开发者控制台{lang="zh-CN"}
 
 ::: en
 
 With **KitLib.User**, session boundaries use `KitLogMarkers.SessionBoundaryPrefix`. Disk output uses the official `user://logs/godot.log`.
 
-Live per-process stream (recommended for dual-instance):
+Live tail (recommended):
 
-```bash
-kitlog attach --pid <pid> -f --sync-viewer
+```text
+http://127.0.0.1:9878/#/logs
 ```
 
-Legacy file tail:
+Open from the in-game log viewer **Dev viewer** button, or enable **Auto-open developer console on startup** in Mod settings → KitLib → General (`LaunchKitlogOnStartup`, default off). Filter sync works when **Sync with game** is on in the log viewer.
 
-```bash
-kitlog tail -f --sync-viewer
-```
-
-Filter updates stream over the log pipe when using `kitlog attach --sync-viewer` (no disk file).
-
-**Mod settings:** KitLib → General → **Auto-open developer console on startup** (`LaunchKitlogOnStartup`, default off). When enabled, KitLib.User opens the browser dev viewer at `http://127.0.0.1:9878/#/logs` after startup; silently skips if KitLib.Dev is not loaded.
+Dual-instance: each STS2 process serves its own dev console on port 9878 (one window at a time unless you use separate log files via `make launch-mp` with `--log-file`).
 :::
 
 ::: zh-CN
 
 安装 **KitLib.User** 时，会话边界使用 `KitLogMarkers.SessionBoundaryPrefix`。磁盘日志使用官方 `user://logs/godot.log`。
 
-按进程实时流（双开推荐）：
+实时 tail（推荐）：
 
-```bash
-kitlog attach --pid <pid> -f --sync-viewer
+```text
+http://127.0.0.1:9878/#/logs
 ```
 
-传统文件 tail：
+从局内日志查看器点击 **Dev viewer**，或在 Mod 设置 → KitLib → 常规 开启 **自启动开发者控制台**（`LaunchKitlogOnStartup`，默认关）。日志查看器开启 **与游戏同步** 时筛选会同步。
 
-```bash
-kitlog tail -f --sync-viewer
-```
-
-筛选更新经日志管道发送给 `kitlog attach --sync-viewer`（不再写磁盘文件）。
-
-**Mod 设置：** KitLib → 常规 → **自启动开发者控制台**（`LaunchKitlogOnStartup`，默认关）。开启后 KitLib.User 在启动后打开浏览器开发者控制台（`http://127.0.0.1:9878/#/logs`）；未加载 KitLib.Dev 时静默跳过。
+双开：每个 STS2 进程在 9878 端口提供独立的开发者控制台（同时只开一个窗口时；也可用 `make launch-mp` 配合 `--log-file` 分文件日志）。
 :::

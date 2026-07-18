@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run KitLib.ApiCheck against stable and beta sts2.dll."""
+"""Run KitLib.ApiCheck against the pinned beta sts2.dll."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def _run_profile(profile: str, dll: Path, manifest: Path) -> int:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Check API touchpoints against stable + beta sts2.dll")
+    ap = argparse.ArgumentParser(description="Check API touchpoints against beta sts2.dll")
     ap.add_argument("--repo-root", type=Path, default=_REPO_ROOT)
     ap.add_argument("--manifest", type=Path, default=_MANIFEST)
     args = ap.parse_args()

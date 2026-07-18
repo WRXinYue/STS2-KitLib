@@ -75,7 +75,7 @@ make init    # detect STS2 path, write local.props
 make sync-full    # build + deploy to game mods/KitLib/
 ```
 
-`make init` only needs to run once. One release zip supports **stable and beta** STS2 builds; a startup banner appears when the mod build mismatches your game.
+`make init` only needs to run once. KitLib targets the **Steam public-beta** line; a startup banner may appear when your game version is outside the supported range.
 
 See **[Contributing](/developer/dev/)** for Makefile targets and collaboration norms.
 :::
@@ -90,7 +90,7 @@ make init
 make sync-full
 ```
 
-`make init` 只需运行一次。同一安装包支持 **stable 与 beta**；版本不匹配时启动会显示横幅。
+`make init` 只需运行一次。KitLib 面向 **Steam public-beta**；游戏版本不在支持范围内时可能显示启动横幅。
 
 Makefile 与协作规范见 **[参与贡献](/developer/dev/)**。
 :::

@@ -21,8 +21,6 @@ SMOKE_MOD_TESTS := tests/KitLib.SmokeMod.Tests/KitLib.SmokeMod.Tests.csproj
 MCP_PROJECT := tools/KitLib.Mcp/KitLib.Mcp.csproj
 DEV_VIEWER := tools/dev-viewer
 
-KITLOG_PROJECT := tools/KitLog.Cli/KitLog.Cli.csproj
-
 # Runtime identifier for self-contained tool publish (override: make build-tools TOOLS_RID=linux-x64)
 ifeq ($(OS),Windows_NT)
 TOOLS_RID ?= win-x64
@@ -45,7 +43,6 @@ endif
 endif
 
 TOOLS_PUBLISH_DIR := build/tools/KitLib.Mcp/$(TOOLS_RID)/publish
-KITLOG_PUBLISH_DIR := build/tools/KitLog.Cli/$(TOOLS_RID)/publish
 TOOLS_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(TOOLS_PUBLISH_DIR)
 DEPLOY_TOOLS := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID)
 DEPLOY_TOOLS_BUILD := $(PYTHON) scripts/deploy_tools.py --tools-rid $(TOOLS_RID) --build-if-missing
@@ -60,12 +57,8 @@ STS2_MSBUILD_PROFILE := -p:Sts2Profile=$(STS2_COMPILE_PROFILE)
 DEPLOY_COPY   := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployRepoBuildToMods -p:DeployFromRepoBuild=true
 
 ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
-ZIP_KITLOG_NAME := build/KitLog.Cli-v$(VERSION)-$(TOOLS_RID).zip
 MCP_PUBLISH_EXE := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp.exe
 MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
-KITLOG_PUBLISH_EXE := $(KITLOG_PUBLISH_DIR)/kitlog.exe
-KITLOG_PUBLISH_BIN := $(KITLOG_PUBLISH_DIR)/kitlog
-KITLOG_PUBLISH_FLAGS := -c Release -r $(TOOLS_RID) --self-contained true -p:PublishSingleFile=true -o $(KITLOG_PUBLISH_DIR)
 
 MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.User/KitLib.User.csproj src/KitLib.Modules.ModPanel/KitLib.ModPanel.csproj \
@@ -75,19 +68,16 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
 STEAM_UPLOAD_FLAGS := $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
-STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync all $(STEAM_SYNC_FLAGS)
-STEAM_SYNC_STABLE := $(PYTHON) scripts/publish_steam.py sync stable $(STEAM_SYNC_FLAGS)
-STEAM_SYNC_BETA := $(PYTHON) scripts/publish_steam.py sync beta $(STEAM_SYNC_FLAGS)
-STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload all --optional $(STEAM_UPLOAD_FLAGS)
-STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload all $(STEAM_UPLOAD_FLAGS)
+STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync $(STEAM_SYNC_FLAGS)
+STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload --optional $(STEAM_UPLOAD_FLAGS)
+STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload $(STEAM_UPLOAD_FLAGS)
 LAUNCH := $(PYTHON) scripts/launch_sts2.py
 LAUNCH_MP_CLIENT_ID ?= 1001
 
-.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus nexus-beta upload-all readme-nexus zip zip-full zip-profiles clean docs docs-build \
-        build-stable build-beta build-profiles build-flat workshop workshop-stable workshop-beta extract-touchpoints check-api verify-profiles capture-sts2-ref \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip zip-full zip-release clean docs docs-build \
+        build-flat workshop extract-touchpoints check-api verify capture-sts2-ref \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
-        compile-kitlog build-kitlog zip-kitlog upload-nexus-kitlog nexus-kitlog \
-        upload-github upload-nexus upload-nexus-beta workshop upload-steam upload-steam-stable upload-steam-beta readme-nexus readme-steam readme-assets
+        upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
 
 help:
 	@echo "KitLib — targets"
@@ -104,23 +94,18 @@ help:
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
 	@echo "  sync         build-flat + deploy full mods/KitLib/ bundle (Core + modules/)"
-	@echo "  sync-full    sync + deploy tools/ (kitlog + MCP)"
+	@echo "  sync-full    sync + deploy tools/ (MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build-all    same as build-flat (current Sts2Profile)"
-	@echo "  build-flat   dotnet build for local.props Sts2Profile (flat KitLib.dll)"
-	@echo "  workshop-stable  stage build/dist/workshop-stable/ (public branch, same workshop item)"
-	@echo "  workshop-beta    stage build/dist/workshop-beta/ (public-beta branch, same workshop item)"
-	@echo "  workshop         workshop-stable + workshop-beta"
-	@echo "  build-stable dotnet build KitLib.sln against stable sts2 ref (API compile check)"
-	@echo "  build-beta   dotnet build KitLib.sln against beta sts2 ref"
-	@echo "  build-profiles build-stable then build-beta (CI / pre-release)"
+	@echo "  build-flat   dotnet build against pinned STS2 ref (flat KitLib.dll)"
+	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
-	@echo "  check-api    reflect KitLib API touchpoints against both sts2.dll"
-	@echo "  verify-profiles  build-profiles + check-api (pre-release)"
+	@echo "  check-api    reflect KitLib API touchpoints against sts2.dll"
+	@echo "  verify       build + check-api (pre-release)"
 	@echo "  check-smoke-mod  build + content-mod smoke fixture + Cecil/ref/load tests"
 	@echo "  deploy-smoke-mod copy smoke mod into game mods/KitLibSmokeMod/ (manual in-game check)"
-	@echo "  capture-sts2-ref PROFILE=stable|beta  copy sts2.dll into eng/sts2-refs/ (validates release_info)"
-	@echo "  zip-profiles build stable + beta release zips (KitLib-vX.zip + KitLib-vX-beta.zip)"
+	@echo "  capture-sts2-ref  copy sts2.dll into eng/sts2-refs/beta/ (validates release_info)"
+	@echo "  zip-release  build Release + package build/KitLib-vX.X.X.zip"
 	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip (local profile only)"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  launch       launch STS2 (Vulkan on Windows; Steam on macOS/Linux)"
@@ -142,24 +127,17 @@ help:
 	@echo "  deploy-tools copy KitLib.Mcp into mods/KitLib/tools/ (build-if-missing)"
 	@echo "  sync-tools   build-tools + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
-	@echo "  compile-kitlog dotnet build KitLog.Cli Release"
-	@echo "  build-kitlog publish kitlog self-contained to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
 	@echo "  build-dev-viewer  pnpm build → CombatStats/viewer-shell.html (embedded in KitLib.Dev)"
 	@echo "  build-combat-stats-viewer  deprecated alias for build-dev-viewer"
-	@echo "  zip-kitlog   build-kitlog + package build/KitLog.Cli-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
 	@echo "  zip          build-all + package build/KitLib-vX.X.X.zip (alias: zip-full)"
 	@echo ""
 	@echo "  [upload]"
-	@echo "  upload-github  stable + beta mod zips + MCP/kitlog exes → GitHub Release (alias: publish)"
-	@echo "  upload-nexus   stable main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
-	@echo "  upload-nexus-beta  beta main zip → Nexus (NEXUS_FILE_GROUP_ID_BETA; alias: nexus-beta)"
+	@echo "  upload-github  mod zip + MCP exe → GitHub Release (alias: publish)"
+	@echo "  upload-nexus   main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
-	@echo "  upload-nexus-kitlog  zip-kitlog + Nexus Optional KitLog CLI (NEXUS_FILE_GROUP_ID_KITLOG; alias: nexus-kitlog)"
-	@echo "  upload-all     GitHub + Nexus stable/beta/tools + Steam"
-	@echo "  upload-steam       workshop + upload stable and beta branch payloads (one STS2_WORKSHOP_ID)"
-	@echo "  upload-steam-stable  workshop-stable + upload public branch"
-	@echo "  upload-steam-beta    workshop-beta + upload public-beta branch"
+	@echo "  upload-all     GitHub + Nexus + MCP + Steam Workshop"
+	@echo "  upload-steam   workshop + upload to Steam Workshop"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo "  readme-steam   README.md + README.zh-CN.md → assets/readme.steam.en.txt + .zh-CN.txt"
 	@echo "  readme-assets  readme-nexus + readme-steam"
@@ -181,12 +159,8 @@ format:
 	$(UV) run black scripts
 
 format-check:
-	@test -f eng/sts2-refs/stable/0.107.1/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs (git lfs pull?). Run: make capture-sts2-ref PROFILE=stable" >&2; exit 1)
-ifeq ($(OS),Windows_NT)
-	@set KitLibPinnedFormatCheck=true&& $(DOTNET) format KitLib.sln --verify-no-changes
-else
-	KitLibPinnedFormatCheck=true $(DOTNET) format KitLib.sln --verify-no-changes
-endif
+	@test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs/beta (git lfs pull?). Run: make capture-sts2-ref" >&2; exit 1)
+	$(DOTNET) format KitLib.sln --verify-no-changes
 
 lint-scripts:
 	$(UV) run flake8 scripts
@@ -218,13 +192,8 @@ build-flat:
 
 build-all: build-flat
 
-workshop-stable:
-	$(STEAM_SYNC_STABLE)
-
-workshop-beta:
-	$(STEAM_SYNC_BETA)
-
-workshop: workshop-stable workshop-beta
+workshop:
+	$(STEAM_SYNC)
 
 build-smoke-mod: build
 	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE)
@@ -239,27 +208,16 @@ endif
 deploy-smoke-mod: build-smoke-mod
 	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE) -p:DeploySmokeMod=true
 
-build-stable:
-	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py stable)" -p:Sts2Profile=stable -c Debug
+check-api:
+	$(PYTHON) scripts/check_api_touchpoints.py
 
-build-beta:
-	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py beta)" -p:Sts2Profile=beta -c Debug
-
-build-profiles: build-stable build-beta
+verify: build check-api
 
 extract-touchpoints:
 	$(PYTHON) scripts/extract_api_touchpoints.py
 
-check-api:
-	$(PYTHON) scripts/check_api_touchpoints.py
-
-verify-profiles: build-profiles check-api
-
 capture-sts2-ref:
-ifndef PROFILE
-	$(error Usage: make capture-sts2-ref PROFILE=stable|beta)
-endif
-	$(PYTHON) scripts/capture_sts2_ref.py $(PROFILE)
+	$(PYTHON) scripts/capture_sts2_ref.py
 
 deploy:
 	$(PYTHON) scripts/deploy_modules.py
@@ -312,14 +270,8 @@ build-tools:
 deploy-tools:
 	$(DEPLOY_TOOLS_BUILD)
 
-sync-tools: build-tools build-kitlog
+sync-tools: build-tools
 	$(DEPLOY_TOOLS)
-
-compile-kitlog:
-	$(DOTNET) build $(KITLOG_PROJECT) -c Release
-
-build-kitlog:
-	$(DOTNET) publish $(KITLOG_PROJECT) $(KITLOG_PUBLISH_FLAGS)
 
 build-dev-viewer build-combat-stats-viewer:
 	cd $(DEV_VIEWER) && pnpm install && pnpm build
@@ -333,27 +285,15 @@ publish upload-github:
 nexus upload-nexus:
 	$(PYTHON) scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
 
-nexus-beta upload-nexus-beta:
-	$(PYTHON) scripts/publish_nexus.py --beta $(if $(VERSION),--version $(VERSION),)
-
 nexus-mcp upload-nexus-mcp:
 	$(PYTHON) scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
-nexus-kitlog upload-nexus-kitlog:
-	$(PYTHON) scripts/publish_nexus.py --kitlog $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
-
-upload-all: publish nexus nexus-beta nexus-kitlog nexus-mcp
+upload-all: publish nexus nexus-mcp
 	$(STEAM_SYNC)
 	$(STEAM_UPLOAD)
 
 upload-steam: workshop
 	$(STEAM_UPLOAD_STRICT)
-
-upload-steam-stable: workshop-stable
-	$(PYTHON) scripts/publish_steam.py upload stable $(STEAM_UPLOAD_FLAGS)
-
-upload-steam-beta: workshop-beta
-	$(PYTHON) scripts/publish_steam.py upload beta $(STEAM_UPLOAD_FLAGS)
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py
@@ -370,8 +310,8 @@ docs-build:
 	cd docs && pnpm install && pnpm run build:ssg
 
 # ── zip: modular release (Core + satellites under modules/) ──
-zip-profiles:
-	$(PYTHON) scripts/package_modules.py --all-profiles --configuration Release
+zip-release:
+	$(PYTHON) scripts/package_modules.py --configuration Release
 
 zip-full: build-all
 	$(PACKAGE_MODULES) --skip-build
@@ -385,12 +325,6 @@ zip-mcp: build-tools
 	@echo.
 	@echo Done: $(ZIP_MCP_NAME)
 
-zip-kitlog: build-kitlog
-	@if not exist $(KITLOG_PUBLISH_EXE) (echo ERROR: kitlog.exe not found. Run make build-kitlog first. & exit /b 1)
-	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_KITLOG_NAME)','w',zipfile.ZIP_DEFLATED);z.write(r'$(KITLOG_PUBLISH_EXE)','kitlog.exe');z.close()"
-	@echo.
-	@echo Done: $(ZIP_KITLOG_NAME)
-
 clean:
 	@if exist build rmdir /s /q build
 	powershell -NoProfile -Command "Get-ChildItem -Path src -Recurse -Include '*.uid','*.import' -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue"
@@ -401,12 +335,6 @@ zip-mcp: build-tools
 	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_MCP_NAME)','w',zipfile.ZIP_DEFLATED);z.write('$(MCP_PUBLISH_BIN)','KitLib.Mcp');z.close()"
 	@echo ""
 	@echo "Done: $(ZIP_MCP_NAME)"
-
-zip-kitlog: build-kitlog
-	@test -f $(KITLOG_PUBLISH_BIN) || (echo "ERROR: kitlog not found. Run make build-kitlog first." >&2; exit 1)
-	$(PYTHON) -c "import zipfile;z=zipfile.ZipFile('$(ZIP_KITLOG_NAME)','w',zipfile.ZIP_DEFLATED);z.write('$(KITLOG_PUBLISH_BIN)','kitlog');z.close()"
-	@echo ""
-	@echo "Done: $(ZIP_KITLOG_NAME)"
 
 clean:
 	rm -rf build

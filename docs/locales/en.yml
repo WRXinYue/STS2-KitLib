@@ -18,7 +18,7 @@ nav:
   mod_runtime: Mod runtime
   kitlib_log: KitLib logging
   sts2_compat: STS2 compatibility
-  api_profiles: API profiles (maintainers)
+  api_profiles: Compile refs (maintainers)
 
 category:
   guide: User guide

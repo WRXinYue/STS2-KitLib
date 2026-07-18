@@ -9,7 +9,7 @@ public static class Sts2ProfileMap {
         Sts2Platform.Linux,
     ];
 
-    public const string PinnedGameVersion = "0.107.1";
+    public const string PinnedGameVersion = "0.109.0";
 
     public static readonly string[] PinnedGameVersions = [PinnedGameVersion];
 

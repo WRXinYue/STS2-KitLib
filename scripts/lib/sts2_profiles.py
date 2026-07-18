@@ -1,24 +1,20 @@
-"""Resolve STS2 stable/beta ref roots and sts2.dll paths for dual-profile checks."""
+"""Resolve STS2 beta ref roots and sts2.dll paths for compile checks."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-import re
 import shutil
 import sys
 from pathlib import Path
 
 from lib.steam import _sts2_game_root_valid, read_sts2_dir_from_local_props, resolve_sts2_dir
 
-ProfileName = str  # "stable" | "beta"
+ProfileName = str  # always "beta"
 
-# stable (public) and Steam beta diverged at v0.108.0; pins may move independently later.
-_PINNED_VERSIONS: dict[str, str] = {
-    "stable": "0.107.1",
-    "beta": "0.109.0",
-}
+PINNED_VERSION = "0.109.0"
+DEFAULT_PROFILE: ProfileName = "beta"
 
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
 
@@ -52,36 +48,16 @@ def read_release_version(sts2_dir: Path) -> str | None:
     return None
 
 
-def compile_profile_from_game_version(raw: str | None) -> ProfileName | None:
-    if not raw:
-        return None
-    normalized = raw.lstrip("vV").strip()
-    match = re.match(r"(\d+)\.(\d+)", normalized)
-    if not match:
-        return None
-    major = int(match.group(1))
-    minor = int(match.group(2))
-    if major == 0 and minor >= 106:
-        # Same install path/version for public + beta today; default to stable (public).
-        return "stable"
-    return None
-
-
-def read_local_props_profile(repo_root: Path) -> ProfileName | None:
-    path = repo_root / "local.props"
-    if not path.is_file():
-        return None
-    text = path.read_text(encoding="utf-8", errors="replace")
-    match = re.search(r"<Sts2Profile>([^<]+)</Sts2Profile>", text)
-    if not match:
-        return None
-    value = match.group(1).strip().lower()
-    return value if value in ("stable", "beta") else None
-
-
 def read_sts2_profile_env() -> ProfileName | None:
     value = os.environ.get("STS2_PROFILE", "").strip().lower()
-    return value if value in ("stable", "beta") else None
+    if value in ("beta", "stable"):
+        if value != DEFAULT_PROFILE:
+            print(
+                f"Note: STS2_PROFILE={value} ignored; KitLib compiles against beta only.",
+                file=sys.stderr,
+            )
+        return DEFAULT_PROFILE
+    return None
 
 
 def _file_sha256(path: Path) -> str:
@@ -92,87 +68,33 @@ def _file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def infer_profile_from_ref_hash(game_root: Path, *, repo_root: Path) -> ProfileName | None:
-    try:
-        install_dll = resolve_sts2_dll(game_root)
-        install_hash = _file_sha256(install_dll)
-    except OSError:
-        return None
-
-    matched: ProfileName | None = None
-    for profile in _PINNED_VERSIONS:
-        ref = ref_root(repo_root, profile)
-        if not ref_is_valid(ref):
-            continue
-        try:
-            ref_dll = resolve_sts2_dll(ref)
-            if _file_sha256(ref_dll) == install_hash:
-                matched = profile
-                if profile == "beta":
-                    return profile
-        except OSError:
-            continue
-
-    return matched
-
-
 def resolve_compile_profile(
     *,
     repo_root: Path | None = None,
     sts2_dir: Path | None = None,
     allow_game_inference: bool = True,
 ) -> ProfileName:
-    """Resolve MSBuild Sts2Profile for compile (stable|beta ref channel).
-
-    Precedence: STS2_PROFILE env, then game install (release_info / ref hash),
-    then local.props Sts2Profile, then stable.
-
-    When Sts2Dir points at a live install, the game branch wins over a stale
-    local.props Sts2Profile (e.g. after switching Steam from beta to release).
-    """
-    root = repo_root or Path(__file__).resolve().parents[2]
-
-    env_profile = read_sts2_profile_env()
-    if env_profile:
-        return env_profile
-
-    game_inferred: ProfileName | None = None
-    if allow_game_inference:
-        game_root = sts2_dir or read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
-        if game_root is not None:
-            hash_inferred = infer_profile_from_ref_hash(game_root, repo_root=root)
-            version_inferred = compile_profile_from_game_version(read_release_version(game_root))
-            # Prefer ref hash when stable/beta DLLs diverge (e.g. beta 0.108 vs stable 0.107).
-            game_inferred = hash_inferred or version_inferred
-
-    props_profile = read_local_props_profile(root)
-    if game_inferred:
-        if props_profile and props_profile != game_inferred:
-            print(
-                f"Note: local.props Sts2Profile={props_profile} but STS2 install looks like "
-                f"{game_inferred} — compiling for {game_inferred}. Run make init to refresh local.props.",
-                file=sys.stderr,
-            )
-        return game_inferred
-
-    if props_profile:
-        return props_profile
-
-    return "stable"
+    _ = repo_root, sts2_dir, allow_game_inference
+    if read_sts2_profile_env():
+        return DEFAULT_PROFILE
+    return DEFAULT_PROFILE
 
 
 def assert_capture_source_matches_profile(profile: ProfileName, source: Path) -> None:
+    if profile != DEFAULT_PROFILE:
+        raise RuntimeError(f"Unknown profile {profile!r}; KitLib only supports {DEFAULT_PROFILE}.")
     version = read_release_version(source)
     pinned = pinned_version(profile)
     if not version:
-        raise RuntimeError(f"No release_info.json under {source}. " "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder.")
+        raise RuntimeError(
+            f"No release_info.json under {source}. "
+            "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder."
+        )
     normalized = version.lstrip("vV").strip()
     if normalized != pinned:
-        inferred = compile_profile_from_game_version(version) or "unknown"
         raise RuntimeError(
-            f"Ref capture profile mismatch: PROFILE={profile} expects v{pinned}, "
-            f"but {source} reports {version!r} (looks like {inferred}). "
-            "Switch Steam branch (same Sts2Dir) or pass --source explicitly."
+            f"Ref capture expects v{pinned}, but {source} reports {version!r}. "
+            "Switch Steam to the public-beta branch or pass --source explicitly."
         )
 
 
@@ -182,6 +104,8 @@ def resolve_capture_source(
     explicit: Path | None = None,
     repo_root: Path | None = None,
 ) -> Path:
+    if profile != DEFAULT_PROFILE:
+        raise RuntimeError(f"Unknown profile {profile!r}; KitLib only supports {DEFAULT_PROFILE}.")
     if explicit is not None:
         source = Path(os.path.expandvars(str(explicit))).expanduser().resolve()
         if not ref_is_valid(source):
@@ -197,16 +121,20 @@ def resolve_capture_source(
     return fallback
 
 
-def pinned_version(profile: ProfileName) -> str:
-    return _PINNED_VERSIONS[profile]
+def pinned_version(profile: ProfileName = DEFAULT_PROFILE) -> str:
+    if profile != DEFAULT_PROFILE:
+        raise ValueError(f"Unknown profile: {profile!r}")
+    return PINNED_VERSION
 
 
 def refs_base(repo_root: Path) -> Path:
     return repo_root / "eng" / "sts2-refs"
 
 
-def ref_root(repo_root: Path, profile: ProfileName) -> Path:
-    return refs_base(repo_root) / profile / pinned_version(profile)
+def ref_root(repo_root: Path, profile: ProfileName = DEFAULT_PROFILE) -> Path:
+    if profile != DEFAULT_PROFILE:
+        raise ValueError(f"Unknown profile: {profile!r}")
+    return refs_base(repo_root) / DEFAULT_PROFILE / PINNED_VERSION
 
 
 def list_ref_data_dirs(game_root: Path) -> list[Path]:
@@ -229,16 +157,20 @@ def ref_is_valid(game_root: Path) -> bool:
     return False
 
 
-def resolve_profile_dir(profile: ProfileName, *, repo_root: Path | None = None) -> Path:
-    if profile not in _PINNED_VERSIONS:
+def resolve_profile_dir(profile: ProfileName = DEFAULT_PROFILE, *, repo_root: Path | None = None) -> Path:
+    if profile != DEFAULT_PROFILE:
         raise ValueError(f"Unknown profile: {profile!r}")
 
     root = repo_root or Path(__file__).resolve().parents[2]
-    ref = ref_root(root, profile)
+    ref = ref_root(root)
     if ref_is_valid(ref):
         return ref
 
-    raise RuntimeError(f"No STS2 {profile} ref at {ref}. " f"Run: make capture-sts2-ref PROFILE={profile} " "(with Steam on the matching branch; see eng/sts2-refs/README.md).")
+    raise RuntimeError(
+        f"No STS2 beta ref at {ref}. "
+        f"Run: make capture-sts2-ref PROFILE={DEFAULT_PROFILE} "
+        "(with Steam on public-beta; see eng/sts2-refs/README.md)."
+    )
 
 
 def resolve_sts2_dll(game_root: Path) -> Path:
@@ -265,7 +197,7 @@ def resolve_sts2_dll(game_root: Path) -> Path:
 
 
 def capture_profile_ref(
-    profile: ProfileName,
+    profile: ProfileName = DEFAULT_PROFILE,
     *,
     repo_root: Path | None = None,
     source_root: Path | None = None,
@@ -273,7 +205,7 @@ def capture_profile_ref(
     root = repo_root or Path(__file__).resolve().parents[2]
     source = resolve_capture_source(profile, explicit=source_root, repo_root=root)
 
-    dest_root = ref_root(root, profile)
+    dest_root = ref_root(root)
     copied = 0
     for data_dir in list_ref_data_dirs(source):
         rel = data_dir.name
@@ -292,13 +224,8 @@ def capture_profile_ref(
     return dest_root
 
 
-def read_game_version(dll_path: Path) -> str | None:
-    _ = dll_path
-    return None
-
-
 def format_profile_paths(repo_root: Path) -> dict[str, Path]:
-    return {profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root)) for profile in ("stable", "beta")}
+    return {DEFAULT_PROFILE: resolve_sts2_dll(resolve_profile_dir(repo_root=repo_root))}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -306,7 +233,7 @@ def main(argv: list[str] | None = None) -> int:
 
     from lib.dotenv import load_dotenv
 
-    ap = argparse.ArgumentParser(description="Print STS2 profile ref / install paths.")
+    ap = argparse.ArgumentParser(description="Print STS2 beta ref / install paths.")
     ap.add_argument(
         "--repo-root",
         type=Path,
@@ -314,26 +241,24 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument(
         "--profile",
-        choices=("stable", "beta", "all"),
-        default="all",
+        choices=(DEFAULT_PROFILE,),
+        default=DEFAULT_PROFILE,
     )
     ap.add_argument("--game-root-only", action="store_true")
     args = ap.parse_args(argv)
 
     load_dotenv(args.repo_root / ".env")
-    profiles = ("stable", "beta") if args.profile == "all" else (args.profile,)
 
     try:
-        for profile in profiles:
-            game_root = resolve_profile_dir(profile, repo_root=args.repo_root)
-            if args.game_root_only:
-                print(game_root)
-                continue
-            dll = resolve_sts2_dll(game_root)
-            pinned = pinned_version(profile)
-            print(f"{profile}\tpinned={pinned}")
-            print(f"  root={game_root}")
-            print(f"  dll={dll}")
+        game_root = resolve_profile_dir(repo_root=args.repo_root)
+        if args.game_root_only:
+            print(game_root)
+            return 0
+        dll = resolve_sts2_dll(game_root)
+        pinned = pinned_version()
+        print(f"{DEFAULT_PROFILE}\tpinned={pinned}")
+        print(f"  root={game_root}")
+        print(f"  dll={dll}")
     except RuntimeError as ex:
         print(str(ex), file=sys.stderr)
         return 1

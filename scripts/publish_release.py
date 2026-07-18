@@ -57,10 +57,10 @@ def _ensure_release_assets(version: str, rid: str) -> list[Path]:
     if not missing:
         return assets
 
-    print("Building release assets (zip-profiles build-tools build-kitlog)...")
+    print("Building release assets (zip-release build-tools)...")
     env = {**os.environ, "TOOLS_RID": rid}
     subprocess.run(
-        ["make", "zip-profiles", "build-tools", "build-kitlog"],
+        ["make", "zip-release", "build-tools"],
         cwd=_REPO_ROOT,
         env=env,
         check=True,

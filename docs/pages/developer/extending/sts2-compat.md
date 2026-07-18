@@ -5,124 +5,36 @@ title:
 cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ---
 
-## Two layers{lang="en"}
+## Target game line{lang="en"}
 
-## 两层机制{lang="zh-CN"}
+## 目标游戏版本{lang="zh-CN"}
 
 ::: en
-KitLib and other STS2 mods often need to support more than one game build (for example **stable 0.103.3** and **beta 0.107.0**). Treat compatibility as **two separate layers**:
+KitLib targets the **Steam public-beta** STS2 line. The repo pins one compile reference under `eng/sts2-refs/beta/<version>/` (currently **0.109.0**). MSBuild uses `Sts2Profile=beta` by default (`Directory.Build.props`).
 
-| Layer | When | Typical tools | One DLL or two? |
-| --- | --- | --- | --- |
-| **Compile-time profile** | Build | `Sts2Profile`, `STS2_BETA_PROFILE`, `#if` | **One build = one profile branch** |
-| **Runtime profile** | Player launch | `Sts2ProfileMap`, `kitlib.compat.toml` | Same DLL checks facts at runtime |
-
-Opening a runtime API does **not** replace `#if`. Conditional compilation exists because **stable and beta reference different `sts2.dll` surfaces** — a member renamed or removed on one line cannot be compiled against the other reference in a single pass.
+`make init` writes `local.props` with your `Sts2Dir`. `make sync-full` builds against the pinned beta ref and deploys to `mods/KitLib/`.
 :::
 
 ::: zh-CN
-KitLib 与其它 STS2 mod 常需同时支持多个游戏版本（例如 **stable 0.103.3** 与 **beta 0.107.0**）。兼容应分为 **两层**：
+KitLib 面向 **Steam public-beta** 分支的 STS2。仓库在 `eng/sts2-refs/beta/<version>/` 固定一份编译引用（当前 **0.109.0**）。MSBuild 默认 `Sts2Profile=beta`（见根目录 `Directory.Build.props`）。
 
-| 层级 | 时机 | 典型手段 | 一个 DLL 还是两个？ |
-| --- | --- | --- | --- |
-| **编译期 profile** | 构建 | `Sts2Profile`、`STS2_BETA_PROFILE`、`#if` | **一次编译只保留一个 profile 分支** |
-| **运行时 profile** | 玩家启动 | `Sts2ProfileMap`、`kitlib.compat.toml` | 同一 DLL 在运行时读事实 |
-
-开放运行时 API **不能替代** `#if`。条件编译存在的原因是 **stable 与 beta 引用的 `sts2.dll` 接口不同** —— 某成员在一侧改名或删除时，无法在同一次编译、同一引用下同时通过编译。
+`make init` 会写入 `Sts2Dir`；`make sync-full` 按固定 beta 引用构建并部署到 `mods/KitLib/`。
 :::
 
-## Pinned profiles{lang="en"}
+## Runtime compatibility checks{lang="en"}
 
-## 固定 profile{lang="zh-CN"}
+## 运行时兼容检查{lang="zh-CN"}
 
 ::: en
-KitLib pins two PC profiles (see `KitLib.Abstractions.Compat.Sts2ProfileMap`):
+At launch, KitLib maps the game’s `release_info.json` version through **`Sts2ProfileMap`** (`KitLib.Abstractions.Compat`). PC builds with `0.106+` are treated as **supported**; older or unknown versions may show a startup banner.
 
-| Profile | Pinned game version | MSBuild |
-| --- | --- | --- |
-| `stable` | 0.107.1 | `-p:Sts2Profile=stable` |
-| `beta` | 0.108.0 | `-p:Sts2Profile=beta` |
-
-When `Sts2Profile=beta`, MSBuild defines **`STS2_BETA_PROFILE`**. KitLib imports this from the repo root `Directory.Build.props`.
+Other mods can reuse the same types without dual-profile loaders or variant DLL folders.
 :::
 
 ::: zh-CN
-KitLib 固定两个 PC profile（见 `KitLib.Abstractions.Compat.Sts2ProfileMap`）：
+启动时，KitLib 用 **`Sts2ProfileMap`**（`KitLib.Abstractions.Compat`）解析游戏的 `release_info.json` 版本。PC 端 `0.106+` 视为 **supported**；更旧或未知版本可能显示启动横幅。
 
-| Profile | 固定游戏版本 | MSBuild |
-| --- | --- | --- |
-| `stable` | 0.107.1 | `-p:Sts2Profile=stable` |
-| `beta` | 0.108.0 | `-p:Sts2Profile=beta` |
-
-当 `Sts2Profile=beta` 时，MSBuild 会定义 **`STS2_BETA_PROFILE`**。KitLib 在仓库根目录的 `Directory.Build.props` 中注入该常量。
-:::
-
-## Conditional compilation example{lang="en"}
-
-## 条件编译示例{lang="zh-CN"}
-
-::: en
-When Megacrit renames or replaces a member between profiles, use `#if` and **build once per profile**:
-
-```csharp
-#if STS2_BETA_PROFILE
-        var inventory = merchantRoom.GetLocalInventory();
-#else
-        var inventory = merchantRoom.Inventory;
-#endif
-```
-
-- Build with **beta** refs → only `GetLocalInventory()` remains in IL.
-- Build with **stable** refs → only `Inventory` remains in IL.
-
-You cannot ship **one** compiled DLL that contains both branches unless you switch to reflection or a shared shim library that KitLib (or you) maintains for both lines.
-:::
-
-::: zh-CN
-当 Megacrit 在不同 profile 间改名或替换成员时，用 `#if` 且 **每个 profile 各编一次**：
-
-```csharp
-#if STS2_BETA_PROFILE
-        var inventory = merchantRoom.GetLocalInventory();
-#else
-        var inventory = merchantRoom.Inventory;
-#endif
-```
-
-- 用 **beta** 引用编译 → IL 里只保留 `GetLocalInventory()`。
-- 用 **stable** 引用编译 → IL 里只保留 `Inventory`。
-
-除非改用反射或由 KitLib（或你）维护的双版本 shim，否则 **无法** 用 **一次** 编译产出同时包含两个分支的 DLL。
-:::
-
-## Adopting dual-profile builds in your mod{lang="en"}
-
-## 在你的 mod 中接入双 profile 构建{lang="zh-CN"}
-
-::: en
-**Minimum build contract** (copy or import from KitLib):
-
-1. Pin **`sts2.dll`** per profile — KitLib stores refs under `eng/sts2-refs/` (Git LFS). You may vendor the same layout or point `HintPath` at your game install when building locally.
-2. Set **`Sts2Profile=stable|beta`** on `dotnet build` / `msbuild`.
-3. Define **`STS2_BETA_PROFILE`** when profile is beta (same symbol name keeps examples portable).
-4. **Publish** the artifact that matches the player’s game line — either two release zips, or one package with profile-specific DLL names and a loader/manifest note.
-
-KitLib daily flow: `make init` → `make sync-full` auto-detects profile from `release_info.json` or ref hash. See [STS2 API profiles](/developer/sts2-api-profiles) for LFS refs and CI.
-
-**Optional:** add `Import` of KitLib’s `Directory.Build.props` if your mod repo lives alongside KitLib; otherwise duplicate the small `PropertyGroup` that maps `Sts2Profile` → `DefineConstants`.
-:::
-
-::: zh-CN
-**最小构建约定**（从 KitLib 复制或 Import）：
-
-1. 每个 profile 固定 **`sts2.dll`** — KitLib 存在 `eng/sts2-refs/`（Git LFS）。你可复用同一目录结构，或在本地构建时让 `HintPath` 指向当前游戏安装。
-2. 在 `dotnet build` / `msbuild` 上传 **`Sts2Profile=stable|beta`**。
-3. profile 为 beta 时定义 **`STS2_BETA_PROFILE`**（统一符号名便于照搬示例）。
-4. **发布**与玩家游戏线一致的产物 —— 两个 zip，或一个包内按 profile 放不同 DLL 并在 manifest 中说明。
-
-KitLib 日常流程：`make init` → `make sync-full` 会根据 `release_info.json` 或 ref 哈希自动检测 profile。LFS ref 与 CI 见 [STS2 API profiles](/developer/sts2-api-profiles)。
-
-**可选：** 若 mod 仓库与 KitLib 同 monorepo，可 `Import` KitLib 的 `Directory.Build.props`；否则复制将 `Sts2Profile` 映射到 `DefineConstants` 的那几行即可。
+其它 mod 可直接复用这些类型，无需多版本 Loader 或 `lib/<mod>_<version>.dll` 变体目录。
 :::
 
 ## Runtime APIs (Abstractions){lang="en"}
@@ -130,44 +42,35 @@ KitLib 日常流程：`make init` → `make sync-full` 会根据 `release_info.j
 ## 运行时 API（Abstractions）{lang="zh-CN"}
 
 ::: en
-These types live in **`KitLib.Abstractions`** and are safe for other mods to reference:
+Safe for content mods to reference:
 
 | API | Purpose |
 | --- | --- |
 | `Sts2ProfileMap.Resolve(version, platform)` | Map raw game version → `Sts2GameProfile` |
 | `Sts2GameProfile` | `Unknown`, `Supported` |
-| `ModVariantLayout` / `ModVariantManifestIO` | Dual API variant bundle layout and manifest read/write |
-| `Sts2GameVersion.TryParseCore` | Parse `release_info.json` version labels for variant selection |
+| `Sts2SupportedGameVersions.All` | Pinned version strings KitLib was built for |
+| `KitLibHostPaths` | Resolve sibling `KitLib/` mod directory paths |
 | `KitLibCompatDocument` / `KitLibCompatTomlReader` | Parse `kitlib.compat.toml` |
 | `KitLibCompatEvaluator` | Evaluate constraints at load time |
 | `KitLibCompatRuntime` | Facts you supply (game version, KitLib version, loaded modules) |
 
-Use **runtime profile** when behavior differs but **both APIs exist in the DLL you compiled against**, or for feature flags. Use **`#if`** when the **member graph** differs between stable and beta.
-
-A thin **`Sts2Compat` runtime facade** (single entry for “current profile at launch”) is planned; until then call `Sts2ProfileMap` with the game’s release version string.
-
-For **dual API variant bundles** (stable + beta implementation DLLs as flat `lib/<modId>_<version>.dll`), use **`STS2.KitLib.ModVariantLoader`**: ship a thin mod-root loader DLL that calls `ModVariantBootstrap.Initialize()`, build each API line into `lib/<modId>_<pinned-game-version>.dll`, then run MSBuild target **`ComposeModVariantBundle`** to write the slim variant manifest with SHA256 hashes.
+Use runtime checks for **behavior** differences on the same API surface. When Megacrit changes member names or signatures, bump the pinned beta ref and fix KitLib against the new `sts2.dll` — KitLib no longer ships dual compile profiles or per-mod variant bundles.
 :::
 
 ::: zh-CN
-以下类型在 **`KitLib.Abstractions`**，可供其它 mod 引用：
+内容 mod 可安全引用：
 
 | API | 用途 |
 | --- | --- |
 | `Sts2ProfileMap.Resolve(version, platform)` | 原始游戏版本 → `Sts2GameProfile` |
 | `Sts2GameProfile` | `Unknown`、`Supported` |
-| `Sts2SupportedGameVersions.All` | Pinned version strings |
-| `ModVariantLayout` / `ModVariantManifestIO` | 双 API 变体包布局与 manifest 读写 |
-| `Sts2GameVersion.TryParseCore` | 解析 `release_info.json` 版本标签以供变体选择 |
+| `Sts2SupportedGameVersions.All` | KitLib 构建时固定的版本字符串 |
+| `KitLibHostPaths` | 解析相邻 `KitLib/` mod 目录路径 |
 | `KitLibCompatDocument` / `KitLibCompatTomlReader` | 解析 `kitlib.compat.toml` |
 | `KitLibCompatEvaluator` | 加载时评估约束 |
 | `KitLibCompatRuntime` | 由你提供的运行时事实（游戏版本、KitLib 版本、已加载模块） |
 
-在 **所编译的 DLL 两侧 API 都存在**、仅行为不同时，用 **运行时 profile** 或功能开关；当 stable/beta **成员签名/名称不同** 时用 **`#if`**。
-
-统一的 **`Sts2Compat` 运行时门面**（启动时当前 profile 单入口）在规划中；在此之前可用游戏 release 版本字符串调用 `Sts2ProfileMap`。
-
-**双 API 变体包**（扁平 `lib/<modId>_<version>.dll`）请用 **`STS2.KitLib.ModVariantLoader`**：根目录薄 Loader 调用 `ModVariantBootstrap.Initialize()`，各 API 线编译为 `lib/<modId>_<固定游戏版本>.dll`，再用 **`ComposeModVariantBundle`** 生成带 SHA256 的瘦 manifest。
+同一 API 表面上的**行为**差异用运行时检查。Megacrit 改名或改签名时，提升固定的 beta ref 并对新 `sts2.dll` 修 KitLib —— KitLib 已不再提供双 profile 编译或其它 mod 的多版本变体包。
 :::
 
 ## `kitlib.compat.toml`{lang="en"}
@@ -181,7 +84,7 @@ Example:
 
 ```toml
 [game]
-version = ["0.103.3", "0.107.0"]
+version = [">=0.109.0"]
 
 [kitlib]
 version = [">=0.13.0"]
@@ -201,7 +104,7 @@ Ranges use npm-style semver (`||`, `>=`, exact pins). Empty file sections are ig
 
 ```toml
 [game]
-version = ["0.103.3", "0.107.0"]
+version = [">=0.109.0"]
 
 [kitlib]
 version = [">=0.13.0"]
@@ -221,8 +124,8 @@ modules = ["KitLib.Panel"]
 ::: en
 Not required for consumer mods:
 
-- `eng/api_touchpoints.yaml` and `KitLib.ApiCheck` — KitLib’s private contract tests against pinned `sts2.dll` refs
-- ILRepack / satellite module loader — KitLib packaging only
+- `eng/api_touchpoints.yaml` and `KitLib.ApiCheck` — contract tests against the pinned beta `sts2.dll` ref
+- Satellite module loader — KitLib packaging only
 
 Use this Valaxy site for extension guides and the **[rail panels](/guide/panels/)** overview while playing.
 :::
@@ -230,10 +133,10 @@ Use this Valaxy site for extension guides and the **[rail panels](/guide/panels/
 ::: zh-CN
 内容 mod **不必**接入：
 
-- `eng/api_touchpoints.yaml` 与 `KitLib.ApiCheck` — KitLib 对固定 `sts2.dll` ref 的私有契约测试
-- ILRepack / 卫星模块加载器 — 仅 KitLib 打包
+- `eng/api_touchpoints.yaml` 与 `KitLib.ApiCheck` — 对固定 beta `sts2.dll` ref 的契约测试
+- 卫星模块加载器 — 仅 KitLib 打包
 
-扩展开发与本站 **[轨道面板](/guide/panels/)** 概览即可；不再内嵌游戏内手册。
+扩展开发与本站 **[轨道面板](/guide/panels/)** 概览即可。
 :::
 
 ## Related{lang="en"}
@@ -243,11 +146,11 @@ Use this Valaxy site for extension guides and the **[rail panels](/guide/panels/
 ::: en
 - [Mod runtime API](/developer/extending/mod-runtime) — catalog and load timing
 - [Dev panel registry](/developer/extending/panel-registry) — UI tabs
-- [STS2 API profiles (maintainers)](/developer/sts2-api-profiles) — LFS refs, `make build-profiles`, CI
+- [STS2 compile refs (maintainers)](/developer/sts2-api-profiles) — LFS refs, `make verify`, CI
 :::
 
 ::: zh-CN
 - [Mod 运行时 API](/developer/extending/mod-runtime) — 目录与加载时机
 - [开发者面板注册](/developer/extending/panel-registry) — UI 标签页
-- [STS2 API profiles（维护者）](/developer/sts2-api-profiles) — LFS ref、`make build-profiles`、CI
+- [STS2 编译引用（维护者）](/developer/sts2-api-profiles) — LFS ref、`make verify`、CI
 :::

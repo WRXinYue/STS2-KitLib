@@ -100,7 +100,7 @@ internal static class ModAssemblyLoader {
 
         if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(simple, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
-            var core = Path.Combine(modDir, ModVariantLayout.KitLibHostCoreFileName);
+            var core = Path.Combine(modDir, KitLibHostPaths.CoreFileName);
             if (File.Exists(core))
                 return Path.GetFullPath(core);
 

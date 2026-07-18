@@ -129,15 +129,7 @@
 
   <Target Name="AutoSyncFrameworkModsAfterRestore" AfterTargets="Restore" DependsOnTargets="CopyFrameworkModsToGame" Condition="'$(Sts2Dir)' != '' and '$(DisableFrameworkModsAfterRestore)' != 'true'" />
 
-  <Target Name="StageModVariantLoader" AfterTargets="Build">
-    <PropertyGroup>
-      <_ModVariantLoaderDll>$(RepoRoot)src\KitLib.ModVariantLoader\bin\$(Configuration)\net9.0\KitLib.ModVariantLoader.dll</_ModVariantLoaderDll>
-    </PropertyGroup>
-    <MSBuild Projects="$(RepoRoot)src\KitLib.ModVariantLoader\KitLib.ModVariantLoader.csproj" Targets="Build" Properties="Configuration=$(Configuration)" Condition="!Exists('$(_ModVariantLoaderDll)')" />
-    <Copy SourceFiles="$(_ModVariantLoaderDll)" DestinationFolder="$(RepoBuildDir)" SkipUnchangedFiles="true" Condition="Exists('$(_ModVariantLoaderDll)')" />
-  </Target>
-
-  <Target Name="DeployRepoBuildToMods" DependsOnTargets="CheckLocalProps;StageModVariantLoader">
+  <Target Name="DeployRepoBuildToMods" DependsOnTargets="CheckLocalProps">
     <Error Condition="'$(DeployFromRepoBuild)' != 'true'" Text="Set DeployFromRepoBuild=true (e.g. make deploy)." />
     <Error
       Condition="'$(ModsDir)' == '$(Sts2ModsRoot)' or '$(ModsDir)' == '$(Sts2ModsRoot)/' or '$(ModsDir)' == '$(Sts2ModsRoot)\'"
@@ -148,7 +140,6 @@
     <Copy SourceFiles="$(RepoBuildDir)\KitLib.Abstractions.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.Abstractions.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\Semver.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Semver.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll')" />
-    <Copy SourceFiles="$(RepoBuildDir)\KitLib.ModVariantLoader.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\KitLib.ModVariantLoader.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
     <ItemGroup>
       <_KitLibModuleDlls Include="$(RepoBuildDir)\modules\*.dll" />

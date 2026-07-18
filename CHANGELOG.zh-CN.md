@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **仅 Steam beta** — KitLib 发布包与 Steam 创意工坊上传现仅面向 **public-beta** 游戏分支（当前 **0.109.x**）。不再提供 stable/正式版 Steam 分支的独立构建；安装或更新前请确认游戏分支一致。
 - **Dev Mode 轨道（默认）** — 左侧轨道默认改为悬停小标签展开；可在 Mod 面板 → KitLib → 常规切换为侧边悬停展开。
 - **地图悬停预览** — 不再在开启作弊模式时自动显示；请在 作弊 → 游戏 中开启 **地图预测**。已走过的节点仍使用原版提示。
 - **卡牌测试房间** — 训练假人战斗改为 KitLib 专用遭遇。卡牌测试误改了官方「战痕累累的训练假人」，这次改动一并修正，对造成困扰表示抱歉。
@@ -28,12 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **日志导出 ZIP** — 移除 `report.txt` 与标题/复现步骤表单；导出始终包含 Harmony 补丁、战斗统计，以及 ZIP 根目录的完整游戏日志。
 - **日志导出界面** — 并入日志查看器；点击 **日志导出** 滑出扩展面板（与卡牌浏览器相同模式）。移除独立 Dev 侧栏项与主菜单入口。
 - **命令手册** — 命令按「官方」与各 mod 分区显示；官方命令说明支持中英文本地化。
-- **kitlog CLI** — 日常调试请改用浏览器开发者控制台；双开场景仍可用 `kitlog attach`（命名管道）。
 
 ### Removed
 
-- **按进程 `session.log`** — KitLib 不再镜像日志到 `mod_data/KitLib/instances/{pid}/session.log`。所有场景使用官方 `user://logs/godot.log`；双开调试请用 `kitlog attach --pid <pid>`（命名管道）。
-- **`mod_data/KitLib/instances/`** — 已移除 lock 文件、按 PID 的筛选 JSON 与子目录。双开检测改为统计运行中的 STS2 进程；`kitlog attach --sync-viewer` 经日志管道接收筛选更新。可选 `perf-trace.log` 现位于 `mod_data/KitLib/` 根目录。启动时会自动删除旧的 `instances/` 目录（临时迁移，后续版本移除该逻辑）。
+- **kitlog CLI** — 已从仓库、构建/发布流程、GitHub/Nexus 发行包及 `make deploy-tools` 中移除。日常与双开调试请使用浏览器开发者控制台（`http://127.0.0.1:9878/#/logs`）或 tail `%AppData%\SlayTheSpire2\logs\godot.log`。
+- **按进程 `session.log`** — KitLib 不再镜像日志到 `mod_data/KitLib/instances/{pid}/session.log`。所有场景使用官方 `user://logs/godot.log`。
+- **`mod_data/KitLib/instances/`** — 已移除 lock 文件、按 PID 的筛选 JSON 与子目录。双开检测改为统计运行中的 STS2 进程。可选 `perf-trace.log` 现位于 `mod_data/KitLib/` 根目录。启动时会自动删除旧的 `instances/` 目录（临时迁移，后续版本移除该逻辑）。
 - **战斗统计自动打开** — 移除「战斗开始时在浏览器打开战斗统计」独立选项；请改用 **自启动开发者控制台**。
 - **战斗贡献分** — 移除加权战斗贡献分、右上角联机分数浮层及相关设置。
 - **战斗统计 Dev 面板** — 移除游戏内 **战斗统计** 侧栏项与启动器面板。
@@ -41,9 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **战斗统计右侧轨** — 移除局内右侧事件浮层。
 - **战斗统计查看器「当前 / 上一场」** — 移除快照来源切换；查看器仅展示当前战斗。
 - **开发控制台** — 已移除 KitLib `dm*` 命令（作弊、存档、统计、敌人、卡牌、遗物等）。请改用 DevMode 面板。
+- **Mod 变体包** — 移除 `KitLib.ModVariantLoader` 与 `lib/<ModId>_<version>/` 多 DLL 布局。内容 mod 请针对当前 beta 游戏线发布单一构建。
 
 ### Fixed
 
+- **Steam beta 上的 KitLib（0.109+）** — 修复安装可选卫星模块（如作弊）或注册自定义卡牌/遗物的内容 mod 时，游戏启动报错的问题。
 - **官方「战痕累累的训练假人」事件** — 安装 KitLib 后，第 3 档不再错误显示 999999999 生命值，也不会再套用卡牌测试用的无限血假人行为。
 - **局内日志查看器** — 修复面板卡在旧行、或只显示引擎 backtrace 而看不到最新日志的问题。
 - **局内日志查看器** — Godot 手柄输入映射报错及其 backtrace 块默认折叠，避免刷屏遮挡 mod 与 KitLib 日志。

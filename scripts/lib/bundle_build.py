@@ -10,7 +10,6 @@ _REPO = Path(__file__).resolve().parents[2]
 # Keep in sync with package_modules.BUNDLE_DLLS + host entry/core/loader deps.
 MOD_BUNDLE_PROJECTS = [
     "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
-    "src/KitLib.ModVariantLoader/KitLib.ModVariantLoader.csproj",
     "src/KitLib.Core/KitLib.Core.csproj",
     "src/KitLib.Loader/KitLib.Loader.csproj",
     "src/KitLib.Modules.User/KitLib.User.csproj",

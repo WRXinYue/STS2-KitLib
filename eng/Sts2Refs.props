@@ -1,17 +1,16 @@
 <Project>
   <!--
     Fallback Sts2Dir when local.props is absent (CI format-check, fresh clones).
-    Version must stay in sync with scripts/lib/sts2_profiles.py (_PINNED_VERSIONS.stable).
+    Version must stay in sync with scripts/lib/sts2_profiles.py (PINNED_VERSION).
   -->
   <PropertyGroup>
-    <KitLibSts2RefsStableVersion>0.107.1</KitLibSts2RefsStableVersion>
-    <KitLibSts2RefsBetaVersion>0.109.0</KitLibSts2RefsBetaVersion>
-    <KitLibSts2RefsStableRoot>$(RepoRoot)eng/sts2-refs/stable/$(KitLibSts2RefsStableVersion)</KitLibSts2RefsStableRoot>
-    <KitLibSts2RefsStableDataDir>$(KitLibSts2RefsStableRoot)/data_sts2_windows_x86_64</KitLibSts2RefsStableDataDir>
+    <KitLibSts2PinnedVersion>0.109.0</KitLibSts2PinnedVersion>
+    <KitLibSts2RefsRoot>$(RepoRoot)eng/sts2-refs/beta/$(KitLibSts2PinnedVersion)</KitLibSts2RefsRoot>
+    <KitLibSts2RefsDataDir>$(KitLibSts2RefsRoot)/data_sts2_windows_x86_64</KitLibSts2RefsDataDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Sts2Dir)' == '' and Exists('$(KitLibSts2RefsStableDataDir)/sts2.dll')">
-    <Sts2Dir>$(KitLibSts2RefsStableRoot)</Sts2Dir>
-    <Sts2DataDir>$(KitLibSts2RefsStableDataDir)</Sts2DataDir>
-    <Sts2Profile>stable</Sts2Profile>
+  <PropertyGroup Condition="'$(Sts2Dir)' == '' and Exists('$(KitLibSts2RefsDataDir)/sts2.dll')">
+    <Sts2Dir>$(KitLibSts2RefsRoot)</Sts2Dir>
+    <Sts2DataDir>$(KitLibSts2RefsDataDir)</Sts2DataDir>
+    <Sts2Profile>beta</Sts2Profile>
   </PropertyGroup>
 </Project>

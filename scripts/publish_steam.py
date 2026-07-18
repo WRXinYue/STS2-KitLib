@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Package and upload KitLib Steam Workshop workspaces (stable + beta branches).
+"""Package and upload KitLib Steam Workshop workspace (public-beta branch).
 
-One Workshop item (STS2_WORKSHOP_ID) can target multiple game branches via minBranch/maxBranch.
+One Workshop item (STS2_WORKSHOP_ID) targets the public-beta game branch via minBranch/maxBranch.
 
 Environment:
     release.env  STS2_WORKSHOP_ID
     .env         STS2_MOD_UPLOADER path (see .env.example)
 
 Usage:
-    python scripts/publish_steam.py sync [stable|beta|all] [--skip-build] [--change-note TEXT] [--unreleased]
-    python scripts/publish_steam.py upload [stable|beta|all] [--dry-run] [--optional]
+    python scripts/publish_steam.py sync [--skip-build] [--change-note TEXT] [--unreleased]
+    python scripts/publish_steam.py upload [--dry-run] [--optional]
 
-Workspaces: build/dist/workshop-stable/, build/dist/workshop-beta/
+Workspace: build/dist/workshop/
 
 workshop.json omits description on first sync; later syncs preserve a local copy only.
 Steam listing text is not updated by sync/upload — edit it on the Workshop page.
@@ -38,10 +38,8 @@ _PREVIEW_CANDIDATES = (
     _REPO / "assets" / "workshop-image.png",
 )
 
-PROFILE_BRANCH = {
-    "stable": ("public", "public"),
-    "beta": ("public-beta", "public-beta"),
-}
+WORKSHOP_DIR = _DIST / "workshop"
+STEAM_BRANCH = ("public-beta", "public-beta")
 
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
@@ -52,22 +50,12 @@ from lib.bundle_build import build_bundle  # noqa: E402
 from lib.steam_readme import STEAM_DESCRIPTION_MAX  # noqa: E402
 
 
-def _profiles(selection: str) -> list[str]:
-    if selection == "all":
-        return ["stable", "beta"]
-    return [selection]
-
-
-def _workspace_dir(profile: str) -> Path:
-    return _DIST / f"workshop-{profile}"
-
-
-def _run_profile_build(profile: str) -> None:
+def _run_build() -> None:
     sts2_dir = subprocess.check_output(
-        [sys.executable, str(_SCRIPT_DIR / "resolve_sts2_profile_dir.py"), profile],
+        [sys.executable, str(_SCRIPT_DIR / "resolve_sts2_profile_dir.py")],
         text=True,
     ).strip()
-    build_bundle(configuration="Release", sts2_profile=profile, sts2_dir=sts2_dir)
+    build_bundle(configuration="Release", sts2_profile="beta", sts2_dir=sts2_dir)
 
 
 def _stage_bundle(skip_build: bool) -> Path:
@@ -97,25 +85,24 @@ def _resolve_preview_image() -> Path:
 def _resolve_change_note(
     change_note: str | None,
     *,
-    profile: str,
     prefer_unreleased: bool,
 ) -> str:
     if change_note and change_note.strip():
         return change_note.strip()
-    if profile == "beta":
-        version = read_kitlib_version(_REPO)
-        if not version:
-            raise RuntimeError("KitLib.json version is missing; cannot build beta changeNote.")
+    version = read_kitlib_version(_REPO)
+    if version:
         return f"[b] v{version} [/b]"
     note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
     if not note:
-        raise RuntimeError("ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released " "## [X.Y.Z] section, or pass --change-note.")
+        raise RuntimeError(
+            "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
+            "## [X.Y.Z] section, or pass --change-note."
+        )
     return note
 
 
 def _write_workshop_json(
     workspace: Path,
-    profile: str,
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
@@ -123,7 +110,6 @@ def _write_workshop_json(
 ) -> None:
     base_note = _resolve_change_note(
         change_note,
-        profile=profile,
         prefer_unreleased=prefer_unreleased,
     )
     resolved_note = base_note
@@ -136,7 +122,7 @@ def _write_workshop_json(
         "contentDescriptors": [],
     }
     if branch_targeting:
-        min_branch, max_branch = PROFILE_BRANCH[profile]
+        min_branch, max_branch = STEAM_BRANCH
         workshop["minBranch"] = min_branch
         workshop["maxBranch"] = max_branch
     (workspace / "workshop.json").write_text(
@@ -186,18 +172,17 @@ def _clear_branch_targeting(workspace: Path) -> None:
     print(f"Cleared minBranch/maxBranch in {path.relative_to(_REPO)}")
 
 
-def sync_profile(
-    profile: str,
+def sync_workspace(
     skip_build: bool,
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
     branch_targeting: bool = True,
 ) -> Path:
-    workspace = _workspace_dir(profile)
+    workspace = WORKSHOP_DIR
     content = workspace / "content"
     if not skip_build:
-        _run_profile_build(profile)
+        _run_build()
     bundle = _stage_bundle(skip_build=True)
 
     if content.exists():
@@ -207,7 +192,6 @@ def sync_profile(
     shutil.copy2(_resolve_preview_image(), workspace / "image.png")
     _write_workshop_json(
         workspace,
-        profile,
         change_note,
         prefer_unreleased=prefer_unreleased,
         branch_targeting=branch_targeting,
@@ -215,26 +199,8 @@ def sync_profile(
     _sync_mod_id_file(workspace)
 
     file_count = sum(1 for p in content.rglob("*") if p.is_file())
-    print(f"Workshop-{profile} synced -> {workspace.relative_to(_REPO)} ({file_count} files)")
+    print(f"Workshop synced -> {workspace.relative_to(_REPO)} ({file_count} files)")
     return workspace
-
-
-def sync_workspaces(
-    selection: str,
-    skip_build: bool,
-    change_note: str | None,
-    *,
-    prefer_unreleased: bool = False,
-    branch_targeting: bool = True,
-) -> None:
-    for profile in _profiles(selection):
-        sync_profile(
-            profile,
-            skip_build,
-            change_note,
-            prefer_unreleased=prefer_unreleased,
-            branch_targeting=branch_targeting,
-        )
 
 
 def _uploader_setup_error() -> str | None:
@@ -279,12 +245,12 @@ def _persist_workshop_id(mod_id: str) -> None:
         print(f"Updated {dotenv_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
 
 
-def upload_profile(profile: str, dry_run: bool, *, branch_targeting: bool = True) -> int:
-    workspace = _workspace_dir(profile)
+def upload_workspace(dry_run: bool, *, branch_targeting: bool = True) -> int:
+    workspace = WORKSHOP_DIR
     for name in ("workshop.json", "image.png"):
         if not (workspace / name).is_file():
             print(
-                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. " f"Run: make workshop-{profile}",
+                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. Run: make workshop",
                 file=sys.stderr,
             )
             return 1
@@ -293,14 +259,14 @@ def upload_profile(profile: str, dry_run: bool, *, branch_targeting: bool = True
     content = workspace / "content"
     if not content.is_dir() or not any(content.iterdir()):
         print(
-            f"ERROR: {content.relative_to(_REPO)} is empty. Run: make workshop-{profile}",
+            f"ERROR: {content.relative_to(_REPO)} is empty. Run: make workshop",
             file=sys.stderr,
         )
         return 1
 
     uploader = _resolve_uploader()
     cmd = [str(uploader), "upload", "-w", str(workspace.resolve())]
-    print(f"Upload workshop-{profile}:", " ".join(f'"{part}"' if " " in part else part for part in cmd))
+    print("Upload workshop:", " ".join(f'"{part}"' if " " in part else part for part in cmd))
     if dry_run:
         print("(dry-run — not invoking ModUploader)")
         return 0
@@ -316,7 +282,7 @@ def upload_profile(profile: str, dry_run: bool, *, branch_targeting: bool = True
     return 0
 
 
-def upload_workspaces(selection: str, dry_run: bool, *, optional: bool = False, branch_targeting: bool = True) -> int:
+def upload_workspace_cmd(dry_run: bool, *, optional: bool = False, branch_targeting: bool = True) -> int:
     err = _uploader_setup_error()
     if err:
         if optional:
@@ -324,28 +290,16 @@ def upload_workspaces(selection: str, dry_run: bool, *, optional: bool = False, 
             return 0
         raise RuntimeError(err)
 
-    exit_code = 0
-    for profile in _profiles(selection):
-        code = upload_profile(profile, dry_run, branch_targeting=branch_targeting)
-        if code != 0:
-            exit_code = code
-    return exit_code
+    return upload_workspace(dry_run, branch_targeting=branch_targeting)
 
 
 def main() -> int:
     load_release_config(_REPO)
 
-    ap = argparse.ArgumentParser(description="Sync or upload KitLib Steam Workshop workspaces.")
+    ap = argparse.ArgumentParser(description="Sync or upload KitLib Steam Workshop workspace.")
     sub = ap.add_subparsers(dest="command", required=True)
 
-    sync_ap = sub.add_parser("sync", help="Build and stage build/dist/workshop-{profile}/")
-    sync_ap.add_argument(
-        "profile",
-        nargs="?",
-        default="all",
-        choices=["stable", "beta", "all"],
-        help="STS2 API profile / Steam branch (default: all)",
-    )
+    sync_ap = sub.add_parser("sync", help="Build and stage build/dist/workshop/")
     sync_ap.add_argument("--skip-build", action="store_true", help="Use existing build/ artifacts")
     sync_ap.add_argument(
         "--change-note",
@@ -363,14 +317,7 @@ def main() -> int:
         help="Omit minBranch/maxBranch from workshop.json (upload test / legacy items)",
     )
 
-    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe for workshop workspace(s)")
-    upload_ap.add_argument(
-        "profile",
-        nargs="?",
-        default="all",
-        choices=["stable", "beta", "all"],
-        help="Which workspace to upload (default: all)",
-    )
+    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe for the workshop workspace")
     upload_ap.add_argument("--dry-run", action="store_true", help="Print command only")
     upload_ap.add_argument(
         "--optional",
@@ -385,16 +332,14 @@ def main() -> int:
 
     args = ap.parse_args()
     if args.command == "sync":
-        sync_workspaces(
-            args.profile,
+        sync_workspace(
             args.skip_build,
             args.change_note or None,
             prefer_unreleased=args.unreleased,
             branch_targeting=not args.no_branch_targeting,
         )
         return 0
-    return upload_workspaces(
-        args.profile,
+    return upload_workspace_cmd(
         args.dry_run,
         optional=args.optional,
         branch_targeting=not args.no_branch_targeting,

@@ -1256,7 +1256,7 @@
   "log.export.error": "Export failed: {0}",
   "log.instance.subtitle": "This window · PID {0} · {1}",
   "log.instance.subtitleLive": "This window · PID {0} · live capture",
-  "log.instance.dualHint": "Dual-instance: logs share user://logs/godot.log. Use kitlog attach --pid {0} for this window.",
+  "log.instance.dualHint": "Dual-instance: logs share user://logs/godot.log. Open Dev viewer for live tail (this window PID {0}).",
   "log.instance.currentFileTag": "(this window)",
   "log.clear": "Clear",
   "log.search": "Filter text...",

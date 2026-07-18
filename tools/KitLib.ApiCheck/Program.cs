@@ -67,7 +67,7 @@ internal static class Program {
     }
 
     static void PrintUsage() {
-        Console.Error.WriteLine("Usage: KitLib.ApiCheck --dll <sts2.dll> --profile stable|beta --manifest eng/api_touchpoints.yaml");
+        Console.Error.WriteLine("Usage: KitLib.ApiCheck --dll <sts2.dll> --profile beta --manifest eng/api_touchpoints.yaml");
         Console.Error.WriteLine("       KitLib.ApiCheck --list-type <TypeName> <sts2.dll>");
     }
 
