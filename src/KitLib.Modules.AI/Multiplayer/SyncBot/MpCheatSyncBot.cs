@@ -3,6 +3,7 @@ using KitLib.Companion;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Settings;
+using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Entities.Models;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -31,6 +32,8 @@ internal static class MpCheatSyncBot {
     }
 
     public static void OnRunEnded() {
+        MpPendingPlayerChoice.Clear();
+        SpvCompanionAiHost.OnRunEnded();
         PseudoCoopLobbyRoster.OnRunEnded();
         SimulatedPeerRegistry.OnRunEnded();
         MpAiTeammateHost.OnRunEnded();

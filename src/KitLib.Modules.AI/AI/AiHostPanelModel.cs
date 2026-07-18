@@ -9,6 +9,7 @@ using KitLib.Host;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
+using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI;
@@ -46,6 +47,13 @@ internal static class AiHostPanelModel {
             AiPlayModule.Instance.IsRunning
                 ? I18N.T("ai.status.on", "running")
                 : I18N.T("ai.status.off", "off")));
+
+        if (!MultiplayerRunProbe.InMultiplayerRun && SpvCompanionRegistry.HasAny) {
+            lines.Add(I18N.T(
+                "ai.status.spCompanion",
+                "Solo companions: {0}",
+                CompanionBridge.ListCompanions().Count));
+        }
 
         if (MultiplayerRunProbe.InMultiplayerRun && MultiplayerRunProbe.IsHost) {
             lines.Add(I18N.T(
@@ -131,6 +139,12 @@ internal static class AiHostPanelModel {
         if (!MultiplayerRunProbe.InMultiplayerRun && RunManager.Instance?.IsInProgress == true
             && !AiSessionSettings.AutoPlayEnabled)
             tips.Add(I18N.T("ai.rec.soloAutoplay", "Solo run: enable AI Host below to automate map, combat, and rewards."));
+
+        if (!MultiplayerRunProbe.InMultiplayerRun && RunManager.Instance?.IsInProgress == true
+            && SpvCompanionRegistry.HasAny)
+            tips.Add(I18N.T(
+                "ai.rec.spCompanion",
+                "Solo companions auto-play combat, rewards, events, and shop; you hand-play your character."));
 
         foreach (var companion in CompanionBridge.ListCompanions()) {
             if (!CompanionNonCombatRegistry.IsEnabled(companion.NetId)

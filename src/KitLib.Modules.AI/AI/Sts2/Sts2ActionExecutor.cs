@@ -11,6 +11,7 @@ using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2.Helpers;
 using KitLib.Multiplayer.PseudoCoop;
+using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Context;
@@ -59,6 +60,13 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
     public Sts2ActionExecutor(Sts2StateProvider stateProvider, Action<string> log) {
         _stateProvider = stateProvider;
         _log = log;
+    }
+
+    static ActionResult? RejectSpCompanionSharedUi(Player? player, string actionName) {
+        if (player == null || !SpvCompanionRegistry.IsCompanion(player) || !SpvCompanionRegistry.IsSingleplayerRun())
+            return null;
+
+        return ActionResult.Fail($"SP companion cannot drive shared local UI ({actionName}).");
     }
 
     public async Task<ActionResult> ExecuteAsync(GameAction action) {
@@ -138,6 +146,13 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
             return ActionResult.Ok($"Queued play [{card.Title}] netId={player.NetId}");
         }
 
+        if (SpvCompanionRegistry.IsCompanion(player)) {
+            using (SpvCompanionCardSelectScope.Enter()) {
+                await CardCmd.AutoPlay(new BlockingPlayerChoiceContext(), card, target);
+            }
+            return ActionResult.Ok($"Auto-played [{card.Title}] netId={player.NetId}");
+        }
+
         if (!card.TryManualPlay(target))
             return ActionResult.Fail($"Card [{card.Title}] cannot be played.");
 
@@ -156,6 +171,11 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
 
         if (LanAiOwnership.IsHostHandPlayLocal(player))
             return ActionResult.Fail("LAN host local combat is hand-play only.");
+
+        if (SpvCompanionRegistry.IsCompanion(player) && SpvCompanionRegistry.IsSingleplayerRun()) {
+            SpvCompanionCombatActions.SignalEndTurn(player);
+            return ActionResult.Ok($"Companion ready to end turn netId={player.NetId}.");
+        }
 
         if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
             MpAiTeammateCombatActions.SignalEndTurn(player);
@@ -192,6 +212,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
     // ── Map ──
 
     private async Task<ActionResult> SelectMapNode(RunState state, int nodeIndex) {
+        _stateProvider.TryGetRunAndPlayer(out _, out var mapPlayer);
+        if (RejectSpCompanionSharedUi(mapPlayer, nameof(SelectMapNode)) is { } rejected)
+            return rejected;
+
         var mapScreen = NMapScreen.Instance;
         if (mapScreen == null || !mapScreen.IsOpen)
             return ActionResult.Fail("Map screen not open.");
@@ -269,6 +293,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
     // ──────── Rewards ────────
 
     private async Task<ActionResult> PickCardReward(int cardIndex) {
+        _stateProvider.TryGetRunAndPlayer(out _, out var rewardPlayer);
+        if (RejectSpCompanionSharedUi(rewardPlayer, nameof(PickCardReward)) is { } rejected)
+            return rejected;
+
         var screen = OverlayPhaseHelper.FindCardRewardScreen();
         if (screen == null)
             return ActionResult.Fail("Card reward screen not open.");
@@ -324,6 +352,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
     }
 
     private async Task<ActionResult> SkipCardReward() {
+        _stateProvider.TryGetRunAndPlayer(out _, out var rewardPlayer);
+        if (RejectSpCompanionSharedUi(rewardPlayer, nameof(SkipCardReward)) is { } rejected)
+            return rejected;
+
         var screen = OverlayPhaseHelper.FindCardRewardScreen();
         if (screen == null)
             return ActionResult.Fail("Card reward screen not open.");
@@ -385,6 +417,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
     }
 
     private async Task<ActionResult> CollectReward(int rewardIndex) {
+        _stateProvider.TryGetRunAndPlayer(out _, out var rewardPlayer);
+        if (RejectSpCompanionSharedUi(rewardPlayer, nameof(CollectReward)) is { } rejected)
+            return rejected;
+
         if (NOverlayStack.Instance?.Peek() is not NRewardsScreen screen) {
             ResetRewardTracking();
             return ActionResult.Fail("Rewards screen not open.");
@@ -595,6 +631,10 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
     }
 
     private async Task<ActionResult> PickRelic(int relicIndex) {
+        _stateProvider.TryGetRunAndPlayer(out _, out var relicPlayer);
+        if (RejectSpCompanionSharedUi(relicPlayer, nameof(PickRelic)) is { } rejected)
+            return rejected;
+
         var screen = OverlayPhaseHelper.FindRelicSelectionScreen();
         if (screen == null)
             return ActionResult.Fail("Relic selection screen not open.");

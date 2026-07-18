@@ -1,3 +1,5 @@
+using MegaCrit.Sts2.Core.Models;
+
 namespace KitLib;
 
 /// <summary>
@@ -11,6 +13,7 @@ public static class AiSessionSettings {
     public static bool MpAiTeammateAfkClient { get; set; }
     public static bool SyncBotEnabled { get; set; }
     public static bool SyncBotSpawnPhantomPlayer { get; set; }
+    public static CharacterModel? PhantomCharacter { get; set; }
     public static bool PseudoCoopAutoPresetOnLaunch { get; set; }
 
     public static void ResetRunSession() {
@@ -20,6 +23,7 @@ public static class AiSessionSettings {
         MpAiTeammateAfkClient = false;
         SyncBotEnabled = false;
         SyncBotSpawnPhantomPlayer = false;
+        PhantomCharacter = null;
         PseudoCoopAutoPresetOnLaunch = false;
     }
 }

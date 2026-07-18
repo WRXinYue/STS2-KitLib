@@ -55,14 +55,28 @@ internal static class DevMainMenuPseudoCoopUI {
 
         var charRow = new HBoxContainer();
         charRow.AddThemeConstantOverride("separation", 8);
-        charRow.AddChild(CreateFieldLabel(I18N.T("devmenu.pseudocoop.character", "Character")));
+        charRow.AddChild(CreateFieldLabel(I18N.T("devmenu.pseudocoop.hostCharacter", "Your character")));
 
         var charPicker = new OptionButton { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         foreach (var c in Characters)
             charPicker.AddItem(c.Title.GetFormattedText());
-        charPicker.Selected = Math.Max(0, Characters.FindIndex(c => c.Id.Entry == "ironclad"));
+        var hostIndex = Math.Max(0, Characters.FindIndex(c => c.Id.Entry == "ironclad"));
+        charPicker.Selected = hostIndex;
         charRow.AddChild(charPicker);
         vbox.AddChild(charRow);
+
+        var phantomCharRow = new HBoxContainer();
+        phantomCharRow.AddThemeConstantOverride("separation", 8);
+        phantomCharRow.AddChild(CreateFieldLabel(I18N.T("devmenu.pseudocoop.phantomCharacter", "AI teammate")));
+
+        var phantomCharPicker = new OptionButton {
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+        };
+        foreach (var c in Characters)
+            phantomCharPicker.AddItem(c.Title.GetFormattedText());
+        phantomCharPicker.Selected = DefaultPhantomIndex(hostIndex);
+        phantomCharRow.AddChild(phantomCharPicker);
+        vbox.AddChild(phantomCharRow);
 
         var seedRow = new HBoxContainer();
         seedRow.AddThemeConstantOverride("separation", 8);
@@ -97,6 +111,18 @@ internal static class DevMainMenuPseudoCoopUI {
         vbox.AddChild(chkTeammate);
         vbox.AddChild(chkAutoEndTurn);
         vbox.AddChild(chkAutoPresetLaunch);
+
+        void SyncPhantomPickerEnabled() =>
+            phantomCharPicker.Disabled = !chkPhantom.ButtonPressed;
+
+        void SyncPhantomPickerSelection() {
+            if (phantomCharPicker.Selected == charPicker.Selected && Characters.Count > 1)
+                phantomCharPicker.Selected = DefaultPhantomIndex(charPicker.Selected);
+        }
+
+        charPicker.ItemSelected += _ => SyncPhantomPickerSelection();
+        chkPhantom.Toggled += _ => SyncPhantomPickerEnabled();
+        SyncPhantomPickerEnabled();
 
         var statusLbl = new Label {
             Visible = false,
@@ -149,8 +175,23 @@ internal static class DevMainMenuPseudoCoopUI {
                 return;
             }
 
+            CharacterModel? phantomCharacter = null;
+            if (chkPhantom.ButtonPressed) {
+                var phantomIdx = phantomCharPicker.Selected;
+                if (phantomIdx < 0 || phantomIdx >= Characters.Count) {
+                    errorLbl.Text = I18N.T("devmenu.pseudocoop.noPhantomCharacter", "Invalid AI teammate character.");
+                    errorLbl.Visible = true;
+                    statusLbl.Visible = false;
+                    startBtn.Disabled = false;
+                    cancelBtn.Disabled = false;
+                    return;
+                }
+                phantomCharacter = Characters[phantomIdx];
+            }
+
             var options = new PseudoCoopLobbyHost.LaunchOptions {
                 Character = Characters[idx],
+                PhantomCharacter = phantomCharacter,
                 Seed = string.IsNullOrWhiteSpace(seedEdit.Text) ? null : seedEdit.Text.Trim(),
                 SyncBotEnabled = chkSyncBot.ButtonPressed,
                 SpawnPhantomPlayer = chkPhantom.ButtonPressed,
@@ -194,6 +235,11 @@ internal static class DevMainMenuPseudoCoopUI {
         }
 
         overlay.QueueFree();
+    }
+
+    static int DefaultPhantomIndex(int hostIndex) {
+        if (Characters.Count <= 1) return 0;
+        return (hostIndex + 1) % Characters.Count;
     }
 
     static Label CreateTitle() {

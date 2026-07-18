@@ -9,6 +9,7 @@ using KitLib.AI.Planning;
 using KitLib.AI.Sts2;
 using KitLib.Host;
 using KitLib.Settings;
+using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Helpers;
 
@@ -44,6 +45,7 @@ internal sealed class AiPlayModule {
 
     public void OnRunEnded() {
         StopLoop();
+        SpvCompanionAiHost.OnRunEnded();
         AiSessionSettings.ResetRunSession();
         AiDecisionLog.Clear();
         AiHudState.Clear();

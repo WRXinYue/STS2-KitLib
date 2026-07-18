@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Singleplayer AI companion** — Mods can summon a second character into an active solo run via `CompanionBridge.TrySummon`. The companion plays its own hand in combat, mirrors your map vote, and can handle rewards, events, and shop when enabled at spawn.
+- **AI Host panel** — Shows active companion count and solo-companion mode hints in Dev Mode → AI Host.
 - **Dev Mode rail expand** — Mod panel → KitLib → General: **Rail expand trigger** — **Hover peek tab** (default) expands when you hover the small left-edge tab; **Hover left edge** expands on the screen edge and hides the peek tab.
 - **Map prediction** — Dev Mode → Cheats → Game: **Map prediction** (off by default). With cheat mode on, hover unvisited map nodes to preview room type, encounters, and events; `?` nodes follow the same RNG rules as the game.
 - **Developer console (browser)** — Unified dev panel at `http://127.0.0.1:9878` with **Logs** and **Combat** tabs: live log stream, filter sync with the in-game log viewer, combat event timeline (per-turn state, search, kind filters), and JSON export. English / 中文.

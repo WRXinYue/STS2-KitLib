@@ -2,7 +2,10 @@ using Godot;
 using KitLib;
 using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.SyncBot;
+using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.PseudoCoop;
 
@@ -42,6 +45,9 @@ internal static class PseudoCoopDeferredInit {
 
     internal static void RunLateDevPanel() {
         KitLibState.PseudoCoopDeferHeavyUi = false;
+        var state = RunManager.Instance?.DebugOnlyGetState();
+        if (state != null)
+            PhantomPlayerSpawner.TrySpawn(state);
         if (KitLibHost.IsDualInstanceActive?.Invoke() == true) {
             KitLog.Info("PseudoCoop", $"Map finish: minimal DevPanel (AI Host)…");
             KitLibPseudoCoopOps.AttachDualInstanceMinimalDevPanel?.Invoke();

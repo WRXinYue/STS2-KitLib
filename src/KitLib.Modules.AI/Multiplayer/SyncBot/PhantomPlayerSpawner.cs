@@ -17,13 +17,14 @@ internal static class PhantomPlayerSpawner {
         if (state.CurrentMapPointHistoryEntry == null) return false;
 
         var host = state.Players[0];
-        if (host.Character == null) {
-            KitLog.Warn("SyncBot", $"Phantom player spawn failed: host character is null.");
+        var character = AiSessionSettings.PhantomCharacter ?? host.Character;
+        if (character == null) {
+            KitLog.Warn("SyncBot", $"Phantom player spawn failed: no character selected.");
             return false;
         }
 
         var result = CompanionBridge.TrySummon(new CompanionSpawnRequest(
-            host.Character,
+            character,
             PreferredNetId: MpCheatSyncBot.PhantomPlayerNetId,
             UnlockState: host.UnlockState));
 

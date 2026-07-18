@@ -24,6 +24,7 @@ internal static class PseudoCoopLobbyHost {
 
     public sealed class LaunchOptions {
         public CharacterModel Character { get; init; } = null!;
+        public CharacterModel? PhantomCharacter { get; init; }
         public string? Seed { get; init; }
         public bool SyncBotEnabled { get; init; } = true;
         public bool SpawnPhantomPlayer { get; init; } = true;
@@ -88,6 +89,9 @@ internal static class PseudoCoopLobbyHost {
         AiSessionSettings.AutoPlayEnabled = false;
         AiSessionSettings.SyncBotEnabled = options.SyncBotEnabled;
         AiSessionSettings.SyncBotSpawnPhantomPlayer = options.SpawnPhantomPlayer;
+        AiSessionSettings.PhantomCharacter = options.SpawnPhantomPlayer
+            ? options.PhantomCharacter ?? options.Character
+            : null;
         SettingsStore.Current.SyncBotAutoEndTurn = options.SyncBotAutoEndTurn;
         AiSessionSettings.MpAiTeammateEnabled = options.MpAiTeammateEnabled;
         AiSessionSettings.PseudoCoopAutoPresetOnLaunch = options.AutoPresetOnLaunch;

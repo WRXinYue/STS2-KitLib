@@ -41,6 +41,23 @@ internal static class MpAiTeammateCombatActions {
         KitLog.Info("MpAiTeammate", $"Enqueued end turn netId={player.NetId} round={round}.");
     }
 
+    public static void SignalReadyToBeginEnemyTurn(Player player) {
+        var cm = CombatManager.Instance;
+        if (cm is not { IsInProgress: true }) return;
+        if (Sts2CombatCompat.IsPlayerReadyToBeginEnemyTurn(cm, player)) return;
+        if (PseudoCoopActionQueue.HasQueuedReadyToBeginEnemyTurn(player.NetId)) return;
+
+        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
+            var action = new ReadyToBeginEnemyTurnAction(player);
+            RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(action);
+            KitLog.Info("MpAiTeammate", $"Enqueued ready-to-begin-enemy-turn netId={player.NetId}.");
+            return;
+        }
+
+        cm.SetReadyToBeginEnemyTurn(player);
+        KitLog.Info("MpAiTeammate", $"Ready-to-begin-enemy-turn netId={player.NetId}.");
+    }
+
     static void EnqueueOrSetReady(Player player) {
         if (SimulatedPeerRegistry.ShouldHostRouteCombatEnqueue(player))
             EnqueueEndTurn(player);

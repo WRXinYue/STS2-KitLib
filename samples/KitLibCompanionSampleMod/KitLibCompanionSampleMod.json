@@ -1,0 +1,14 @@
+{
+  "id": "KitLibCompanionSampleMod",
+  "name": "KitLib Companion Sample",
+  "author": "KitLib",
+  "description": "Sample content mod: console-only relic that summons the Ironclad as a solo-run AI companion.",
+  "version": "0.1.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [
+    { "id": "KitLib", "min_version": "0.24.0" },
+    { "id": "STS2-RitsuLib", "min_version": "0.2.0" }
+  ],
+  "affects_gameplay": true
+}

@@ -78,10 +78,9 @@ internal static class PseudoCoopCombatReady {
             if (PseudoCoopActionQueue.HasQueuedReadyToBeginEnemyTurn(peer.NetId)) continue;
 
             // Live ENet AFK client enqueues after host Ready + phase-1 checkpoint (see #11).
-            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) continue;
+            if (SimulatedPeerRegistry.IsLiveEnetPeer(peer.NetId)) continue;
 
-            cm.SetReadyToBeginEnemyTurn(peer);
-            KitLog.Info("PseudoCoop", $"Auto ready-to-begin-enemy-turn netId={peer.NetId}.");
+            MpAiTeammateCombatActions.SignalReadyToBeginEnemyTurn(peer);
         }
     }
 }

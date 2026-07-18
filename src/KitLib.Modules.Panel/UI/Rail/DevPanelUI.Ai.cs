@@ -2,6 +2,8 @@ using Godot;
 using KitLib;
 using KitLib.AI;
 using KitLib.AI.AutoPlay;
+using KitLib.Companion;
+using KitLib.Host;
 using KitLib.Icons;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.PseudoCoop;
@@ -127,6 +129,40 @@ internal static partial class DevPanelUI {
                 SettingsStore.Current.AutoPlayDelayMs = (int)v;
                 SettingsStore.Save();
             }));
+
+        if (!mpRun && RunManager.Instance?.IsInProgress == true) {
+            inner.AddChild(CreateSectionHeader(I18N.T("spcompanion.section", "Solo Companion")));
+            var summonBtn = CreatePlainButton(
+                I18N.T("spcompanion.summon", "Summon AI Companion"),
+                MdiIcon.Robot);
+            summonBtn.Pressed += () => {
+                if (!RunContext.TryGetRunAndPlayer(out _, out var me) || me.Character == null) {
+                    KitLog.Warn("SpCompanion", "Summon failed: no local player.");
+                    return;
+                }
+
+                var result = CompanionBridge.TrySummon(new CompanionSpawnRequest(
+                    me.Character,
+                    EnableAiTeammate: true,
+                    MirrorMapVotes: false));
+                if (result.Ok)
+                    KitLog.Info("SpCompanion", $"Summoned netId={result.NetId}.");
+                else
+                    KitLog.Warn("SpCompanion", $"Summon failed: {result.Error}");
+                RefreshMonitor();
+            };
+            inner.AddChild(summonBtn);
+            var spHint = new Label {
+                Text = I18N.T(
+                    "spcompanion.hint",
+                    "Singleplayer only: adds a second Player mid-run (after first map node). Combat uses AutoPlay, not multiplayer sync."),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            };
+            spHint.AddThemeFontSizeOverride("font_size", 12);
+            spHint.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+            inner.AddChild(spHint);
+        }
 
         // ── SyncBot / Pseudo Co-op ──
         if (MpCheatSession.InMultiplayerRun && MpCheatSession.IsHost) {
