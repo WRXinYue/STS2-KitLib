@@ -32,9 +32,10 @@
       <CompanionSampleModsDir>$(Sts2ModsRoot)/$(ModId)</CompanionSampleModsDir>
     </PropertyGroup>
     <MakeDir Directories="$(CompanionSampleModsDir)" />
+    <Copy SourceFiles="$(OutputPath)$(ModId).dll;$(OutputPath)mod_manifest.json" DestinationFolder="$(CompanionSampleModsDir)" SkipUnchangedFiles="true" />
     <ItemGroup>
-      <_DeployFiles Include="$(OutputPath)$(ModId).dll;$(OutputPath)mod_manifest.json;$(OutputPath)localization/**/*" />
+      <_LocDeployFiles Include="$(OutputPath)localization/**/*" />
     </ItemGroup>
-    <Copy SourceFiles="@(_DeployFiles)" DestinationFolder="$(CompanionSampleModsDir)/%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_LocDeployFiles)" DestinationFolder="$(CompanionSampleModsDir)/localization/%(_LocDeployFiles.RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 </Project>

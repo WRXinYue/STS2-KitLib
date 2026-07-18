@@ -3,7 +3,7 @@
 
 profiles:
   stable: "0.107.1"
-  beta: "0.108.0"
+  beta: "0.109.0"
 
 touchpoints:
   - id: ActChangeSynchronizer.OnPlayerReady

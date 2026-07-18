@@ -1,4 +1,3 @@
-using KitLibCompanionSampleMod.Relics;
 using MegaCrit.Sts2.Core.Models;
 
 namespace KitLibCompanionSampleMod.Pools;
@@ -7,6 +6,5 @@ namespace KitLibCompanionSampleMod.Pools;
 public sealed class CompanionSampleRelicPool : RelicPoolModel {
     public override string EnergyColorName => "ironclad";
 
-    protected override IEnumerable<RelicModel> GenerateAllRelics() =>
-        [ModelDb.Relic<IroncladCompanionRelic>()];
+    protected override IEnumerable<RelicModel> GenerateAllRelics() => [];
 }

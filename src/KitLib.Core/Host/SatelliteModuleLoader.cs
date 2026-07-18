@@ -170,6 +170,7 @@ internal static class SatelliteModuleLoader {
             var assembly = LoadAssembly(modDir, spec.AssemblyName, spec.ModuleId);
             if (assembly == null)
                 return false;
+            AssociateSatelliteAssembly(assembly);
             KitLog.Info($"Satellite loader: {spec.AssemblyName} assembly loaded.");
 
             if (spec.EntryTypeName == null) {
@@ -331,6 +332,13 @@ internal static class SatelliteModuleLoader {
     static string? ResolveSatelliteAssemblyPath(string modDir, string assemblyName) {
         var path = Path.Combine(modDir, ModulesSubdir, assemblyName + ".dll");
         return File.Exists(path) ? path : null;
+    }
+
+    static void AssociateSatelliteAssembly(Assembly assembly) {
+        if (assembly == typeof(MainFile).Assembly)
+            return;
+
+        ModManager.AssociateAssemblyWithMod(MainFile.ModID, assembly);
     }
 
 }

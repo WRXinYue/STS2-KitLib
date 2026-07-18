@@ -17,7 +17,7 @@ ProfileName = str  # "stable" | "beta"
 # stable (public) and Steam beta diverged at v0.108.0; pins may move independently later.
 _PINNED_VERSIONS: dict[str, str] = {
     "stable": "0.107.1",
-    "beta": "0.108.0",
+    "beta": "0.109.0",
 }
 
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
