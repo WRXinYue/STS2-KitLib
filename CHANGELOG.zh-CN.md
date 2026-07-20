@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP 卡牌选择** — 新增 **`get_selection_state`** 与 **`selection_action`**，让 MCP 代理读取并点选战斗内卡牌选择界面（弃牌堆/抽牌堆/消耗堆选取、手牌多选等）。**`combat_action`** 的 `play_card` 可传 `selection_card_id` 或 `selection_index` 在同一次调用内自动点选；若选择界面仍打开，响应会包含 `pendingSelection` 与 `selectionState`，而非立即失败。
+
+### Changed
+
+- **日志查看器与开发者控制台** — KitLib 带 scope 的日志行与官方 STS2 logger 的标签间距一致（`[KitLib] [Scope]`，不再显示为 `[KitLib][Scope]`）。
+
 ### 移除
 
 - **内容 mod 日志 API（`KitLibLog` / `ModLog` / `ModLogSettings`）** — 内容 mod 应使用官方 STS2 `MegaCrit.Sts2.Core.Logging.Logger`（参考 [LustTravel2](https://github.com/WRXinYue/LustTravel2)）。KitLib.User 仍会采集所有 logger 输出供游戏内日志查看器与开发者控制台使用。

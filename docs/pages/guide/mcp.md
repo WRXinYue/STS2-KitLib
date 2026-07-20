@@ -29,7 +29,9 @@ Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Cl
 ::: en
 - **`get_game_state`** — Current run snapshot (HP, gold, deck, combat, enemies, …). In combat: `playerPowers[]` (`id`, `modelId`, `amount`), `phase` / `isPlayPhaseActive`, `enemies[].index` + `powers[]`
 - **`get_combat_stats`** — Combat event log with `since_sequence` for incremental checks (`combatEvents`: `kind`, `sourceKey`, `amount`, …)
-- **`combat_action`** — Play a card, end turn, or use a potion. `play_card` success returns `afterState` (player powers + enemy HP) unless pseudo-coop queued
+- **`combat_action`** — Play a card, end turn, or use a potion. `play_card` success returns `afterState` (player powers + enemy HP) unless pseudo-coop queued. When a pile/hand picker opens, may return `pendingSelection` + `selectionState`; use **`selection_action`** or pass `selection_card_id` on `play_card`
+- **`get_selection_state`** — Active combat card selection UI and indexed options (id, name, cost)
+- **`selection_action`** — Pick cards on the active selection screen (`card_index`, `card_indices`, or `card_id`)
 - **`map_action`** — Map node, rewards, events, shop, rest
 - **`dev_get_session`** — Run active, game phase, dev-run flag, blocking startup prompts
 - **`dev_list_save_slots`** — Save slots with metadata and `debugNotes` for AI selection
@@ -51,7 +53,9 @@ Health check: `GET http://127.0.0.1:9877/health`
 ::: zh-CN
 - **`get_game_state`** — 当前局快照（生命、金币、牌组、战斗、敌人等）。战斗中含 `playerPowers[]`（`id`、`modelId`、`amount`）、`phase` / `isPlayPhaseActive`、`enemies[].index` + `powers[]`
 - **`get_combat_stats`** — 战斗事件日志；`since_sequence` 可只取增量（`combatEvents`：`kind`、`sourceKey`、`amount` 等）
-- **`combat_action`** — 出牌、结束回合或使用药水。`play_card` 成功会返回 `afterState`（玩家能力 + 敌人生命），伪联机排队时除外
+- **`combat_action`** — 出牌、结束回合或使用药水。`play_card` 成功会返回 `afterState`（玩家能力 + 敌人生命），伪联机排队时除外。若弹出堆/手牌选择，可能返回 `pendingSelection` + `selectionState`；可调用 **`selection_action`** 或在 `play_card` 上传 `selection_card_id`
+- **`get_selection_state`** — 当前战斗内卡牌选择界面及带 index 的选项（id、名称、费用）
+- **`selection_action`** — 在打开的选择界面上点选（`card_index`、`card_indices` 或 `card_id`）
 - **`map_action`** — 地图节点、奖励、事件、商店、休息
 - **`dev_get_session`** — 是否在局、游戏阶段、是否 dev 局、阻塞的启动提示
 - **`dev_list_save_slots`** — 存档槽及元数据、`debugNotes`（供 AI 选档）

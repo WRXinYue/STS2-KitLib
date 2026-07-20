@@ -10,6 +10,7 @@ using KitLib.AI.AutoPlay.Scoring;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2.Helpers;
+using KitLib.AI.Sts2.Mcp;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Combat;
@@ -156,10 +157,21 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
         if (!card.TryManualPlay(target))
             return ActionResult.Fail($"Card [{card.Title}] cannot be played.");
 
-        if (!await Sts2CombatPlayHelper.WaitForManualPlayAsync(card, TimeSpan.FromSeconds(8)))
-            return ActionResult.Fail($"Card [{card.Title}] play did not complete.");
+        try {
+            return await WaitForManualPlayResultAsync(card);
+        }
+        finally {
+            McpPlayContext.Clear();
+        }
+    }
 
-        return ActionResult.Ok($"Played [{card.Title}]");
+    static async Task<ActionResult> WaitForManualPlayResultAsync(CardModel card) {
+        var outcome = await Sts2CombatPlayHelper.WaitForManualPlayAsync(card, TimeSpan.FromSeconds(30));
+        return outcome switch {
+            ManualPlayOutcome.Completed => ActionResult.Ok($"Played [{card.Title}]"),
+            ManualPlayOutcome.PendingSelection => ActionResult.Fail("pending_selection"),
+            _ => ActionResult.Fail($"Card [{card.Title}] play did not complete."),
+        };
     }
 
     private static ActionResult EndTurn(Player player) {

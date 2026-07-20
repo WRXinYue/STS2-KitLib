@@ -35,6 +35,8 @@ internal static class McpBridge {
 
         Tools.Register(new GameStateTool());
         Tools.Register(new CombatActionTool());
+        Tools.Register(new GetSelectionStateTool());
+        Tools.Register(new SelectionActionTool());
         Tools.Register(new GetCombatStatsTool());
         Tools.Register(new MapActionTool());
         Tools.Register(new DevGetSessionTool());

@@ -36,7 +36,7 @@ internal sealed class Sts2McpTools {
     }
 
     [McpServerTool(Name = "combat_action"), Description(
-        "Execute a combat action. play_card success returns afterState unless pseudo-coop queued.")]
+        "Execute a combat action. play_card may return pendingSelection; pass selection_card_id for auto-pick.")]
     public Task<string> CombatAction(
         [Description("The combat action to perform: play_card, end_turn, or use_potion.")]
         string action,
@@ -44,12 +44,53 @@ internal sealed class Sts2McpTools {
         int card_index = 0,
         [Description("Index of the enemy to target (for targeted cards). -1 for untargeted.")]
         int target_index = -1,
-        CancellationToken cancellationToken = default) =>
-        _bridge.CallToolAsync("combat_action", new JsonObject {
+        [Description("For play_card: auto-pick this card id when a selection screen opens.")]
+        string? selection_card_id = null,
+        [Description("For play_card: auto-pick this option index when a selection screen opens.")]
+        int? selection_index = null,
+        CancellationToken cancellationToken = default) {
+        var args = new JsonObject {
             ["action"] = action,
             ["card_index"] = card_index,
             ["target_index"] = target_index,
-        }, cancellationToken);
+        };
+        if (!string.IsNullOrWhiteSpace(selection_card_id))
+            args["selection_card_id"] = selection_card_id.Trim();
+        if (selection_index.HasValue)
+            args["selection_index"] = selection_index.Value;
+        return _bridge.CallToolAsync("combat_action", args, cancellationToken);
+    }
+
+    [McpServerTool(Name = "get_selection_state", ReadOnly = true), Description(
+        "Get the active card selection UI: combat pile / hand pick with indexed options.")]
+    public Task<string> GetSelectionState(CancellationToken cancellationToken = default) =>
+        _bridge.CallToolAsync("get_selection_state", new JsonObject(), cancellationToken);
+
+    [McpServerTool(Name = "selection_action"), Description(
+        "Pick card(s) on the active selection screen. Use get_selection_state to list options.")]
+    public Task<string> SelectionAction(
+        [Description("Single option index from get_selection_state.options.")]
+        int? card_index = null,
+        [Description("Multiple option indices for multi-select prompts.")]
+        int[]? card_indices = null,
+        [Description("Pick the first visible option matching this card model id.")]
+        string? card_id = null,
+        [Description("Click confirm/proceed when enabled (default true).")]
+        bool confirm = true,
+        CancellationToken cancellationToken = default) {
+        var args = new JsonObject { ["confirm"] = confirm };
+        if (!string.IsNullOrWhiteSpace(card_id))
+            args["card_id"] = card_id.Trim();
+        if (card_indices is { Length: > 0 }) {
+            var arr = new JsonArray();
+            foreach (var index in card_indices)
+                arr.Add(index);
+            args["card_indices"] = arr;
+        }
+        else if (card_index.HasValue)
+            args["card_index"] = card_index.Value;
+        return _bridge.CallToolAsync("selection_action", args, cancellationToken);
+    }
 
     [McpServerTool(Name = "map_action"), Description(
         "Execute a non-combat action: select map node, pick card reward, choose event option, interact with shop, rest, or proceed.")]

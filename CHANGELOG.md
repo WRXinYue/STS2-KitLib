@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP card selection** — New **`get_selection_state`** and **`selection_action`** tools let agents read and pick cards on in-combat selection screens (discard/draw/exhaust pile picks, hand multi-select). **`combat_action`** `play_card` can pass `selection_card_id` or `selection_index` for one-shot auto-pick; when a picker stays open, the response includes `pendingSelection` and `selectionState` instead of failing immediately.
+
+### Changed
+
+- **Log viewer & developer console** — KitLib scoped log lines now use the same tag spacing as the official STS2 logger (`[KitLib] [Scope]`, not `[KitLib][Scope]`).
+
 ### Removed
 
 - **Content mod logging API (`KitLibLog` / `ModLog` / `ModLogSettings`)** — Content mods should use the official STS2 `MegaCrit.Sts2.Core.Logging.Logger` (see [LustTravel2](https://github.com/WRXinYue/LustTravel2)). KitLib.User still captures all logger output for the in-game log viewer and dev console.
