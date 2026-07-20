@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **Content mod logging API (`KitLibLog` / `ModLog` / `ModLogSettings`)** — Content mods should use the official STS2 `MegaCrit.Sts2.Core.Logging.Logger` (see [LustTravel2](https://github.com/WRXinYue/LustTravel2)). KitLib.User still captures all logger output for the in-game log viewer and dev console.
+- **Content mod logging API (`KitLibLog` / `ModLog` / `ModLogSettings`)** — Content mods should use the official STS2 `MegaCrit.Sts2.Core.Logging.Logger`. KitLib.User still captures all logger output for the in-game log viewer and dev console.
 - **`KitLibModSettingsUiOps.BuildLogLevelRow`** — Use `Logger.SetLogLevelForType` in your mod settings instead.
 
 ## [0.30.0] - 2026-07-19

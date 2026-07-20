@@ -89,16 +89,16 @@ def _resolve_change_note(
 ) -> str:
     if change_note and change_note.strip():
         return change_note.strip()
+    note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
+    if note:
+        return note
     version = read_kitlib_version(_REPO)
     if version:
         return f"[b] v{version} [/b]"
-    note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
-    if not note:
-        raise RuntimeError(
-            "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
-            "## [X.Y.Z] section, or pass --change-note."
-        )
-    return note
+    raise RuntimeError(
+        "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
+        "## [X.Y.Z] section, or pass --change-note."
+    )
 
 
 def _write_workshop_json(

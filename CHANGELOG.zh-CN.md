@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 移除
 
-- **内容 mod 日志 API（`KitLibLog` / `ModLog` / `ModLogSettings`）** — 内容 mod 应使用官方 STS2 `MegaCrit.Sts2.Core.Logging.Logger`（参考 [LustTravel2](https://github.com/WRXinYue/LustTravel2)）。KitLib.User 仍会采集所有 logger 输出供游戏内日志查看器与开发者控制台使用。
+- **内容 mod 日志 API（`KitLibLog` / `ModLog` / `ModLogSettings`）** — 内容 mod 应使用官方 STS2 `MegaCrit.Sts2.Core.Logging.Logger`。KitLib.User 仍会采集所有 logger 输出供游戏内日志查看器与开发者控制台使用。
 - **`KitLibModSettingsUiOps.BuildLogLevelRow`** — 请在 mod 设置中改用 `Logger.SetLogLevelForType`。
 
 ## [0.30.0] - 2026-07-19
