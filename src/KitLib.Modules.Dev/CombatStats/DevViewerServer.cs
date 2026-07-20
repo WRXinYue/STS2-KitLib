@@ -32,8 +32,13 @@ internal static class DevViewerServer {
     private static bool _logHubSubscribed;
     private static Action<LogStreamEntry>? _logHubHandler;
     private static bool _browserLaunchedThisSession;
+    private static int _startupOpenGeneration;
+    private const int StartupOpenDelayMs = 2500;
 
     public static bool IsRunning => _listener?.IsListening ?? false;
+
+    public static bool HasConnectedViewerClients =>
+        !_logClients.IsEmpty || !_statsClients.IsEmpty;
 
     public static string BaseUrl => $"http://127.0.0.1:{Port}/";
 
@@ -82,7 +87,36 @@ internal static class DevViewerServer {
         return OpenInBrowser(hash, force);
     }
 
+    /// <summary>
+    /// Startup auto-open: wait briefly for an existing browser tab to reconnect, then open only if none connected.
+    /// </summary>
+    public static void ScheduleOpenLogsIfNoClient(string? query = null) {
+        EnsureStarted();
+        var generation = ++_startupOpenGeneration;
+        _ = Task.Run(async () => {
+            try {
+                await Task.Delay(StartupOpenDelayMs).ConfigureAwait(false);
+                if (generation != _startupOpenGeneration)
+                    return;
+
+                Callable.From(() => {
+                    if (generation != _startupOpenGeneration)
+                        return;
+                    if (HasConnectedViewerClients) {
+                        _browserLaunchedThisSession = true;
+                        return;
+                    }
+                    OpenLogsInBrowser(query, force: false);
+                }).CallDeferred();
+            }
+            catch (Exception ex) {
+                KitLog.Debug("DevViewer", $"Startup open skipped: {ex.Message}");
+            }
+        });
+    }
+
     public static void Shutdown() {
+        _startupOpenGeneration++;
         if (_trackerSubscribed) {
             CombatStatsTracker.Changed -= OnTrackerChanged;
             _trackerSubscribed = false;

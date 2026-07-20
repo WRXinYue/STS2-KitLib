@@ -68,7 +68,7 @@ internal static class KitLibNativeModSettingsBootstrap {
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
             I18N.T("settings.launchKitlogOnStartup", "Auto-open developer console on startup"),
             I18N.T("settings.launchKitlogOnStartup.desc",
-                "When KitLib loads, automatically open the developer console in your browser (http://127.0.0.1:9878/#/logs). Requires KitLib.Dev."),
+                "When KitLib loads, open the developer console in your browser if no tab is already connected (http://127.0.0.1:9878/#/logs). Requires KitLib.Dev."),
             () => SettingsStore.Current.LaunchKitlogOnStartup,
             SettingsStore.SetLaunchKitlogOnStartup));
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **开发者控制台（自启动）** — 若浏览器里已有连上本地查看器的标签页，启动时不再额外打开新标签。
+
 ### Fixed
 
 - **卡牌浏览器** — 在图鉴中添加卡牌时，不再整页刷新卡牌网格与右侧详情面板。

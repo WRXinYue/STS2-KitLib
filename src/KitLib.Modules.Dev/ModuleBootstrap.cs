@@ -99,6 +99,16 @@ internal static class ModuleBootstrap {
                 return false;
             }
         };
+        KitLibDevOps.TryScheduleDevViewerLogsOnStartup = query => {
+            try {
+                DevViewerServer.ScheduleOpenLogsIfNoClient(query);
+                return true;
+            }
+            catch (Exception ex) {
+                KitLog.Warn("DevViewer", $"Startup open schedule failed: {ex.Message}");
+                return false;
+            }
+        };
     }
 
     static void StartDeferredMcpBridge() {

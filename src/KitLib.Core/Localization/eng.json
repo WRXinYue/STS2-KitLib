@@ -47,7 +47,7 @@
   "modpanel.kitlib.multiplayerCheatOptIn": "Multiplayer cheat opt-in",
   "modpanel.kitlib.multiplayerCheatOptIn.desc": "Allow KitLib cheat tools during multiplayer runs. Required for pseudo co-op and dual-instance LAN testing.",
   "settings.launchKitlogOnStartup": "Auto-open developer console on startup",
-  "settings.launchKitlogOnStartup.desc": "When KitLib loads, automatically open the developer console in your browser (http://127.0.0.1:9878/#/logs). Requires KitLib.Dev.",
+  "settings.launchKitlogOnStartup.desc": "When KitLib loads, open the developer console in your browser if no tab is already connected (http://127.0.0.1:9878/#/logs). Requires KitLib.Dev.",
   "modlog.level.debug": "Debug",
   "modlog.level.info": "Info",
   "modlog.level.warn": "Warn",

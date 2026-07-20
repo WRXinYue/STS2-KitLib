@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Developer console (auto-open on startup)** — If a browser tab is already connected to the local viewer, KitLib no longer opens another one on startup.
+
 ### Fixed
 
 - **Card browser** — Adding a card from the library no longer refreshes the entire card grid and detail panel.

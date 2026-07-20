@@ -47,7 +47,7 @@
   "modpanel.kitlib.multiplayerCheatOptIn": "联机作弊 opt-in",
   "modpanel.kitlib.multiplayerCheatOptIn.desc": "允许在联机对局中使用 KitLib 作弊工具。伪联机与双开 LAN 测试需要开启。",
   "settings.launchKitlogOnStartup": "自启动开发者控制台",
-  "settings.launchKitlogOnStartup.desc": "KitLib 加载后自动在浏览器打开开发者控制台，默认进入日志页（http://127.0.0.1:9878/#/logs）。需要 KitLib.Dev。",
+  "settings.launchKitlogOnStartup.desc": "KitLib 加载后，若浏览器里还没有已连接的开发者控制台标签页，再自动打开（默认日志页 http://127.0.0.1:9878/#/logs）。需要 KitLib.Dev。",
   "modpanel.kitlib.modules.restartNotice": "更改将在重启游戏后生效。",
   "modpanel.kitlib.modules.section.core": "核心模块",
   "modpanel.kitlib.modules.section.optional": "可选模块",

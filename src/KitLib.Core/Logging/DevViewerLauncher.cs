@@ -15,6 +15,16 @@ public static class DevViewerLauncher {
         return false;
     }
 
+    /// <summary>
+    /// Startup path: prefer reusing a still-open browser tab that reconnects to the local viewer.
+    /// </summary>
+    public static bool TryOpenLogsOnStartup(out string? error, string? query = null) {
+        error = null;
+        if (KitLibDevOps.TryScheduleDevViewerLogsOnStartup?.Invoke(query) == true)
+            return true;
+        return TryOpenLogs(out error, query);
+    }
+
     public static bool TryOpenAiLogs(out string? error)
         => TryOpenLogs(out error, "preset=ai");
 }

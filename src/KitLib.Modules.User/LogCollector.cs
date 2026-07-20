@@ -74,7 +74,7 @@ internal static class LogCollector {
     }
 
     static void TryLaunchKitlogStartup() {
-        if (!DevViewerLauncher.TryOpenLogs(out var error) && !string.IsNullOrEmpty(error))
+        if (!DevViewerLauncher.TryOpenLogsOnStartup(out var error) && !string.IsNullOrEmpty(error))
             KitLog.Debug("DevViewer", error);
     }
 
