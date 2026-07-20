@@ -12,9 +12,9 @@ namespace KitLib.UI;
 internal static partial class DevPanelUI {
     internal static void ShowSettingsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
         KitLibHotkeySettingsUi.CancelCapture();
-        ((Node)globalUi).GetNodeOrNull<Control>(SettingsRootName)?.QueueFree();
+        DiscardOverlayImmediate(globalUi, SettingsRootName);
 
-        void FallbackClose() => ((Node)globalUi).GetNodeOrNull<Control>(SettingsRootName)?.QueueFree();
+        void FallbackClose() => DiscardOverlayImmediate(globalUi, SettingsRootName);
 
         var dual = CreateDualColumnOverlay(new DualColumnOverlayOptions {
             GlobalUi = globalUi,

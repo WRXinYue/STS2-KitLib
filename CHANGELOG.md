@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Card browser** — Adding a card from the library no longer refreshes the entire card grid and detail panel.
 - **Card browser** — After searching or filtering, adding a card, then closing and reopening the panel, filtered cards can be selected again without clearing the search.
+- **Settings** — Changing Dark / OLED / Light theme no longer freezes the Settings panel so it cannot be closed. Thanks to [@minatowolf](https://github.com/minatowolf) for reporting.
 
 ## [0.31.0] - 2026-07-20
 

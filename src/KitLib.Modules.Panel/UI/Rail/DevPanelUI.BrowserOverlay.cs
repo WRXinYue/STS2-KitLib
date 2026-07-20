@@ -71,6 +71,35 @@ internal static partial class DevPanelUI {
         fallbackClose();
     }
 
+    /// <summary>
+    /// Detach and free an overlay immediately so a same-name replacement cannot stack with a
+    /// still-queued-free node (e.g. Settings theme rebuild).
+    /// </summary>
+    internal static void DiscardOverlayImmediate(NGlobalUi globalUi, string rootName) {
+        var parent = (Node)globalUi;
+        for (var i = parent.GetChildCount() - 1; i >= 0; i--) {
+            if (parent.GetChild(i) is not Control child)
+                continue;
+            var name = child.Name.ToString();
+            if (!IsOverlayNameOrDuplicate(name, rootName))
+                continue;
+            parent.RemoveChild(child);
+            child.QueueFree();
+        }
+    }
+
+    private static bool IsOverlayNameOrDuplicate(string name, string rootName) {
+        if (name == rootName)
+            return true;
+        if (!name.StartsWith(rootName, StringComparison.Ordinal) || name.Length <= rootName.Length)
+            return false;
+        for (var i = rootName.Length; i < name.Length; i++) {
+            if (!char.IsDigit(name[i]))
+                return false;
+        }
+        return true;
+    }
+
     internal static bool TryAnimateBrowserOverlayClose(Node parent, Control root) {
         var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
         if (!root.HasMeta(DualCarrierMetaKey))
