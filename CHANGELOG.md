@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Card browser** — Adding a card from the library no longer refreshes the entire card grid and detail panel.
+
 ## [0.31.0] - 2026-07-20
 
 ### Added

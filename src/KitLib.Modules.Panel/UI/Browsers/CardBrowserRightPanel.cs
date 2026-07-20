@@ -160,7 +160,7 @@ internal static class CardBrowserRightPanel {
         if (isLibrary) {
             libraryUi = new LibraryAddUiState { Card = card, Staging = libraryAddStaging! };
             BuildAddSection(container, statusLabel, card, displayCard, state, player,
-                libraryUpgradeDetailPreview, libraryAddStaging!, onCardListChanged, libraryUi);
+                libraryUpgradeDetailPreview, libraryAddStaging!, libraryUi);
         }
         else {
             BuildOwnedCardActions(container, statusLabel, card, state, player, globalUi, onCardListChanged, browseTarget);
@@ -231,7 +231,7 @@ internal static class CardBrowserRightPanel {
 
     private static void BuildAddSection(VBoxContainer container, Label statusLabel,
         CardModel card, CardModel displayCard, RunState state, Player player, bool libraryUpgradeDetailPreview,
-        LibraryAddStaging addStaging, Action onCardListChanged, LibraryAddUiState libraryUi) {
+        LibraryAddStaging addStaging, LibraryAddUiState libraryUi) {
         var upgradeLevelsToApply = 0;
         if (libraryUpgradeDetailPreview && !ReferenceEquals(displayCard, card)) {
             try {
@@ -377,7 +377,6 @@ internal static class CardBrowserRightPanel {
                 : await MpCheatCardAddCoordinator.TryClientRequestAddCardAsync(
                     state, addTargetPlayer, card, addRequest, CardPreviewStyle.HorizontalLayout);
             statusLabel.Text = result;
-            onCardListChanged();
         }
 
         addBtn.Pressed += () => {
@@ -401,7 +400,6 @@ internal static class CardBrowserRightPanel {
                     .UpgradeLevels(upgradeLevelsToApply)
                     .UpgradePreviewStyle(CardPreviewStyle.HorizontalLayout)
                     .RunAsync();
-                onCardListChanged();
             }
         };
         container.AddChild(addBtn);
