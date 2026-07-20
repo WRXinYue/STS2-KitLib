@@ -34,6 +34,7 @@ internal static partial class CardBrowserUI {
     private const int GridScrollBufferRows = 3;
     private const int GridPreloadBufferRows = 1;
     private const int MaxHoldersPerFrame = 6;
+    private const int MaxHoldersPerPopulatePass = 512;
 
     private static bool _gridLayoutInProgress;
 
@@ -194,8 +195,10 @@ internal static partial class CardBrowserUI {
 
     private static void ReleaseCardRows(State s) {
         foreach (var row in s.CardRows) {
-            foreach (var holder in row)
+            foreach (var holder in row) {
+                s.GridInput.Unwire(holder);
                 holder.QueueFreeSafely();
+            }
         }
         s.CardRows.Clear();
         s.SelectedHolder = null;
@@ -220,12 +223,73 @@ internal static partial class CardBrowserUI {
         holder.Scale = holder.SmallScale;
         holder.MouseFilter = Control.MouseFilterEnum.Pass;
         holder.Modulate = ColCardPickNormal;
-        holder.Pressed += h => OnHolderPressed(s, (NGridCardHolder)h);
-        holder.GuiInput += evt => OnHolderGuiInput(s, holder, evt);
+        s.GridInput.Wire(holder);
         s.GridContent.AddChild(holder);
         nCard.UpdateVisuals(PileType.None, CardPreviewMode.Normal);
         ApplyUpgradePreview(s, holder);
         return holder;
+    }
+
+    /// <summary>
+    /// Owns card-grid input for one browser session (like official NCardGrid).
+    /// Holders are pooled: always <see cref="Unwire"/> before returning them to the pool.
+    /// </summary>
+    private sealed class GridInputHost {
+        private readonly State _s;
+
+        public GridInputHost(State s) => _s = s;
+
+        public void Wire(NGridCardHolder holder) {
+            Unwire(holder);
+            holder.Pressed += OnPressed;
+            holder.GuiInput += evt => OnGuiInput(holder, evt);
+        }
+
+        public void Unwire(NGridCardHolder holder) {
+            DisconnectAll(holder, NCardHolder.SignalName.Pressed);
+            DisconnectAll(holder, Control.SignalName.GuiInput);
+        }
+
+        private void OnPressed(NCardHolder h) {
+            if (h is not NGridCardHolder holder)
+                return;
+            if (!GodotObject.IsInstanceValid(_s.GridContent) || !GodotObject.IsInstanceValid(_s.RightContent))
+                return;
+
+            var card = holder.CardModel;
+            if (card == null)
+                return;
+
+            if (_s.SelectedHolder != null && GodotObject.IsInstanceValid(_s.SelectedHolder))
+                _s.SelectedHolder.Modulate = ColCardPickNormal;
+            _s.SelectedHolder = holder;
+            holder.Modulate = ColCardPickSelected;
+            ShowRightPanel(_s, card);
+        }
+
+        private void OnGuiInput(NGridCardHolder holder, InputEvent evt) {
+            if (!GodotObject.IsInstanceValid(_s.GridContent))
+                return;
+            if (evt is not InputEventMouseButton mb || !mb.Pressed || mb.ButtonIndex != MouseButton.Left)
+                return;
+            if (!mb.DoubleClick || _pickerCallback == null)
+                return;
+
+            var card = holder.CardModel;
+            if (card == null)
+                return;
+
+            _pickerCallback(card.CanonicalInstance);
+            holder.AcceptEvent();
+        }
+
+        private static void DisconnectAll(GodotObject obj, StringName signal) {
+            foreach (var conn in obj.GetSignalConnectionList(signal)) {
+                var callable = conn["callable"].AsCallable();
+                if (obj.IsConnected(signal, callable))
+                    obj.Disconnect(signal, callable);
+            }
+        }
     }
 
     private static int _hoverTipsRestoreZ;
@@ -261,32 +325,6 @@ internal static partial class CardBrowserUI {
             holder.SetIsPreviewingUpgrade(s.LibraryShowUpgradePreview);
         else
             holder.SetIsPreviewingUpgrade(false);
-    }
-
-    private static void OnHolderPressed(State s, NGridCardHolder holder) {
-        var card = holder.CardModel;
-        if (card == null)
-            return;
-
-        if (s.SelectedHolder != null)
-            s.SelectedHolder.Modulate = ColCardPickNormal;
-        s.SelectedHolder = holder;
-        holder.Modulate = ColCardPickSelected;
-        ShowRightPanel(s, card);
-    }
-
-    private static void OnHolderGuiInput(State s, NGridCardHolder holder, InputEvent evt) {
-        if (evt is not InputEventMouseButton mb || !mb.Pressed || mb.ButtonIndex != MouseButton.Left)
-            return;
-        if (!mb.DoubleClick || _pickerCallback == null)
-            return;
-
-        var card = holder.CardModel;
-        if (card == null)
-            return;
-
-        _pickerCallback(card.CanonicalInstance);
-        holder.AcceptEvent();
     }
 
     private static void AssignHolderAtIndex(State s, NGridCardHolder holder, int cardIndex, ref int reassigns, ref int skips) {
@@ -404,8 +442,9 @@ internal static partial class CardBrowserUI {
         var cols = Math.Max(1, s.GridColumns);
         var targetCount = Math.Min(s.DisplayedRows * cols, s.FilteredCards.Count);
         var created = 0;
+        var perPassLimit = initTimer != null ? MaxHoldersPerPopulatePass : MaxHoldersPerFrame;
 
-        while (s.GridPopulateCardIdx < targetCount && created < MaxHoldersPerFrame) {
+        while (s.GridPopulateCardIdx < targetCount && created < perPassLimit) {
             var rowIdx = s.GridPopulateCardIdx / cols;
             while (s.CardRows.Count <= rowIdx)
                 s.CardRows.Add(new List<NGridCardHolder>());
@@ -436,6 +475,32 @@ internal static partial class CardBrowserUI {
             CardBrowserPerf.Log("initGrid", initTimer,
                 $"rows={s.DisplayedRows} cols={cols} pool={GetPoolSlotCount(s)} filtered={s.FilteredCards.Count}");
         }
+
+        ReconcileGridViewportIfNeeded(s);
+        if (s.SelectedCard != null)
+            TryHighlightCardHost(s, s.SelectedCard);
+    }
+
+    private static bool IsGridPopulationInProgress(State s) {
+        if (s.GridPopulateScheduled)
+            return true;
+
+        var cols = Math.Max(1, s.GridColumns);
+        var targetCount = s.FilteredCards.Count == 0
+            ? 0
+            : Math.Min(s.DisplayedRows * cols, s.FilteredCards.Count);
+        return targetCount > 0 && s.GridPopulateCardIdx < targetCount;
+    }
+
+    private static void ReconcileGridViewportIfNeeded(State s) {
+        if (s.GridViewportFrozen || IsGridPopulationInProgress(s) || !s.GridContent.IsNodeReady())
+            return;
+
+        var neededRows = CalculateDisplayedRows(s);
+        if (neededRows == s.DisplayedRows)
+            return;
+
+        InitGrid(s, resetScroll: false);
     }
 
     private static void RunGridLayout(State s, Action action) {
@@ -669,8 +734,53 @@ internal static partial class CardBrowserUI {
         holder.Modulate = ColCardPickSelected;
     }
 
+    private static void OnOpenAnimationFinished(State s) {
+        if (!GodotObject.IsInstanceValid(s.GridContent))
+            return;
+
+        s.GridViewportFrozen = false;
+        EnsureGridMatchesViewport(s);
+    }
+
+    /// <summary>
+    /// Single post-layout sync: rebuild only when columns/rows/pool are wrong; otherwise reallocate.
+    /// </summary>
+    private static void EnsureGridMatchesViewport(State s) {
+        if (!s.GridContent.IsNodeReady() || s.FilteredCards.Count == 0)
+            return;
+
+        if (IsGridPopulationInProgress(s)) {
+            Callable.From(() => EnsureGridMatchesViewport(s)).CallDeferred();
+            return;
+        }
+
+        RunGridLayout(s, () => {
+            var colsChanged = TryUpdateCardGridColumns(s);
+            var neededRows = CalculateDisplayedRows(s);
+            var poolSlots = GetPoolSlotCount(s);
+            if (poolSlots == 0 || colsChanged || neededRows != s.DisplayedRows) {
+                InitGridCore(s, resetScroll: false);
+                return;
+            }
+
+            UpdateGridContentSize(s);
+            AllocateCardHoldersCore(s, force: true);
+            if (s.SelectedCard != null)
+                TryHighlightCardHost(s, s.SelectedCard);
+        });
+    }
+
     private static void OnGridViewportChanged(State s) {
-        if (_gridLayoutInProgress)
+        if (_gridLayoutInProgress || s.GridViewportFrozen)
+            return;
+
+        if (s.FilteredCards.Count == 0)
+            return;
+
+        if (IsGridPopulationInProgress(s))
+            return;
+
+        if (s.CardRows.Count == 0)
             return;
 
         RunGridLayout(s, () => {
@@ -701,10 +811,9 @@ internal static partial class CardBrowserUI {
         return true;
     }
 
-    private static void RebuildGrid(State s, string searchText, GridRebuildOptions options = default) {
+    private static void RebuildGrid(State s, string searchText, GridRebuildOptions options = default, bool resetScroll = false) {
         var total = CardBrowserPerf.Start();
         var preserveSelection = !options.InvalidateAllVisuals && !options.RefreshCardList;
-        var selectedCard = preserveSelection ? s.SelectedCard : null;
 
         if (options.RefreshCardList) {
             var refresh = CardBrowserPerf.Start();
@@ -747,9 +856,7 @@ internal static partial class CardBrowserUI {
         s.FilteredCards.Sort((a, b) => CompareCards(a, b, s.SortPriority));
         CardBrowserPerf.Log("rebuildGrid.sort", sort);
 
-        Callable.From(() => InitGrid(s, resetScroll: options.RefreshCardList)).CallDeferred();
-        if (selectedCard != null)
-            Callable.From(() => TryHighlightCardHost(s, selectedCard)).CallDeferred();
+        Callable.From(() => InitGrid(s, resetScroll: resetScroll || options.RefreshCardList)).CallDeferred();
 
         s.StatusLabel.Text = string.Format(I18N.T("cardBrowser.count", "{0} / {1} cards"),
             s.FilteredCards.Count, s.CachedAllCards.Count);

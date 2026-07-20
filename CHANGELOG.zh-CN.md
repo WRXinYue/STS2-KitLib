@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **卡牌浏览器** — 在图鉴中添加卡牌时，不再整页刷新卡牌网格与右侧详情面板。
+- **卡牌浏览器** — 搜索或筛选后添加卡牌、关闭再打开面板时，无需清空搜索即可再次选中筛选结果中的卡牌。
 
 ## [0.31.0] - 2026-07-20
 

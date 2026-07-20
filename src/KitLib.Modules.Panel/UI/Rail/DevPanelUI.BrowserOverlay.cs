@@ -107,13 +107,17 @@ internal static partial class DevPanelUI {
         return true;
     }
 
-    internal static void PlaySubPanelSlideOpenFromLeft(Control mover) {
-        if (!mover.IsInsideTree())
+    internal static void PlaySubPanelSlideOpenFromLeft(Control mover, Action? onFinished = null) {
+        if (!mover.IsInsideTree()) {
+            onFinished?.Invoke();
             return;
+        }
 
         float w = Mathf.Max(1f, mover.GetRect().Size.X);
-        if (w < 2f)
+        if (w < 2f) {
+            onFinished?.Invoke();
             return;
+        }
 
         mover.SetMeta(BrowserPanelAnimatingMetaKey, true);
         float targetX = mover.Position.X;
@@ -125,7 +129,10 @@ internal static partial class DevPanelUI {
         t.SetEase(Tween.EaseType.Out);
         t.TweenProperty(mover, "position:x", targetX, 0.82f);
         t.Chain()
-            .TweenCallback(Callable.From(() => mover.SetMeta(BrowserPanelAnimatingMetaKey, false)));
+            .TweenCallback(Callable.From(() => {
+                mover.SetMeta(BrowserPanelAnimatingMetaKey, false);
+                onFinished?.Invoke();
+            }));
     }
 
     internal static void PlayBrowserPanelOpenFromLeft(PanelContainer panel, float durationSec = 0.82f) =>

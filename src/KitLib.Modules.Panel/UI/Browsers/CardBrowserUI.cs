@@ -12,6 +12,7 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.CardPools;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -95,6 +96,11 @@ internal static partial class CardBrowserUI {
         public bool GridPopulateScheduled;
         public bool GridPopulateResetScroll;
         public bool GridAllocateScheduled;
+        /// <summary>True while the open slide runs; viewport resize must not rebuild the grid mid-populate.</summary>
+        public bool GridViewportFrozen;
+
+        /// <summary>Session-scoped input host for pooled grid holders (wire on create, unwire on release).</summary>
+        public readonly GridInputHost GridInput;
 
         // Selection
         public CardModel? SelectedCard;
@@ -104,6 +110,7 @@ internal static partial class CardBrowserUI {
             GlobalUi = globalUi;
             RunState = runState;
             Player = player;
+            GridInput = new GridInputHost(this);
         }
     }
 
@@ -147,6 +154,7 @@ internal static partial class CardBrowserUI {
         CardBrowserPerf.Log("open.createState", phase);
 
         phase = CardBrowserPerf.Start();
+        s.GridViewportFrozen = true;
         var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
             GlobalUi = globalUi,
             RootName = RootName,
@@ -155,6 +163,7 @@ internal static partial class CardBrowserUI {
             MainUseMaxWidth = true,
             ExtDefaultWidth = DefaultExtWidth,
             FallbackClose = () => Remove(globalUi),
+            OnOpenAnimationFinished = () => OnOpenAnimationFinished(s),
         });
         s.Dual = dual;
         CardBrowserPerf.Log("open.createOverlay", phase);
@@ -577,6 +586,9 @@ internal static partial class CardBrowserUI {
         phase = CardBrowserPerf.Start();
         dual.AttachToScene();
         RaiseHoverTipsLayer();
+        dual.Root.TreeExiting += () => {
+            RestoreHoverTipsLayer();
+        };
         CardBrowserPerf.Log("open.attach", phase);
 
         var initialPileTarget = BrowseSourceToTarget(_browseSource);
@@ -588,7 +600,7 @@ internal static partial class CardBrowserUI {
         CardBrowserPerf.Log("open.invalidateCache", phase, $"cached={s.CachedAllCards.Count}");
 
         phase = CardBrowserPerf.Start();
-        RebuildGrid(s, s.SearchInput.Text ?? "");
+        RebuildGrid(s, s.SearchInput.Text ?? "", resetScroll: true);
         CardBrowserPerf.Log("open.rebuildGrid", phase,
             $"filtered={s.FilteredCards.Count}");
 

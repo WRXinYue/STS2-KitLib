@@ -18,6 +18,8 @@ internal static partial class DevPanelUI {
         public float ExtDefaultWidth { get; init; } = 420f;
         public float ExtSlideOutSec { get; init; } = 0.28f;
         public int ZIndex { get; init; } = BrowserOverlayZIndex;
+        /// <summary>Invoked once after the open slide finishes (or immediately if the slide is skipped).</summary>
+        public Action? OnOpenAnimationFinished { get; init; }
     }
 
     internal sealed class DualColumnOverlayHandle {
@@ -70,7 +72,7 @@ internal static partial class DevPanelUI {
                 opened = true;
                 Callable.From(() => {
                     SyncMoverWidth();
-                    PlaySubPanelSlideOpenFromLeft(Mover);
+                    PlaySubPanelSlideOpenFromLeft(Mover, _options.OnOpenAnimationFinished);
                 }).CallDeferred();
             };
 

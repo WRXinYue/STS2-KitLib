@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Card browser** — Adding a card from the library no longer refreshes the entire card grid and detail panel.
+- **Card browser** — After searching or filtering, adding a card, then closing and reopening the panel, filtered cards can be selected again without clearing the search.
 
 ## [0.31.0] - 2026-07-20
 
