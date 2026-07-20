@@ -139,17 +139,28 @@ onUnmounted(() => {
     <div class="log-main">
       <header class="log-toolbar">
         <span
-          class="log-status"
-          :data-state="state"
-        >{{ state }}</span>
+          class="log-traffic"
+          role="status"
+          :aria-label="t(`status.${state}`)"
+          :title="t(`status.${state}`)"
+        >
+          <span
+            class="log-traffic__dot log-traffic__dot--red"
+            :data-active="state === 'disconnected' ? '' : undefined"
+          />
+          <span
+            class="log-traffic__dot log-traffic__dot--yellow"
+            :data-active="state === 'connecting' ? '' : undefined"
+          />
+          <span
+            class="log-traffic__dot log-traffic__dot--green"
+            :data-active="state === 'connected' ? '' : undefined"
+          />
+        </span>
         <span
           v-if="preset"
           class="log-preset"
         >preset: {{ preset }}</span>
-        <span
-          v-if="syncWithGame"
-          class="log-sync-badge"
-        >{{ t("logs.syncActive") }}</span>
         <button
           type="button"
           class="log-copy-btn"
@@ -195,20 +206,42 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.log-status[data-state="connected"] {
-  color: #3fb950;
+.log-traffic {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 2px 0;
 }
 
-.log-status[data-state="connecting"] {
-  color: #d29922;
+.log-traffic__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  opacity: 0.28;
+  box-shadow: inset 0 0.5px 0.5px rgba(255, 255, 255, 0.35);
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
-.log-status[data-state="disconnected"] {
-  color: #f85149;
+.log-traffic__dot--red {
+  background: #ff5f57;
 }
 
-.log-preset,
-.log-sync-badge {
+.log-traffic__dot--yellow {
+  background: #febc2e;
+}
+
+.log-traffic__dot--green {
+  background: #28c840;
+}
+
+.log-traffic__dot[data-active] {
+  opacity: 1;
+  box-shadow:
+    inset 0 0.5px 0.5px rgba(255, 255, 255, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.log-preset {
   color: #58a6ff;
 }
 

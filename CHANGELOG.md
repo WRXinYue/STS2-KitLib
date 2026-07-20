@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Developer console (auto-open on startup)** — If a browser tab is already connected to the local viewer, KitLib no longer opens another one on startup.
+- **Developer console (logs)** — Connection status uses traffic-light dots; removed the “Synced with game” toolbar badge.
 
 ### Fixed
 

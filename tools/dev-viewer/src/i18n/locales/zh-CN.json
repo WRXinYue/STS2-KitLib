@@ -9,7 +9,6 @@
   },
   "logs": {
     "syncInGame": "同步局内筛选",
-    "syncActive": "已同步局内",
     "copyAll": "复制全部",
     "filter": {
       "level": "级别",

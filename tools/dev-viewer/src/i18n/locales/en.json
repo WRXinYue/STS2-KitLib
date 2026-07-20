@@ -9,7 +9,6 @@
   },
   "logs": {
     "syncInGame": "Sync in-game filters",
-    "syncActive": "Synced with game",
     "copyAll": "Copy all",
     "filter": {
       "level": "Level",

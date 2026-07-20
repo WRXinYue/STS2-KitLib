@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **开发者控制台（自启动）** — 若浏览器里已有连上本地查看器的标签页，启动时不再额外打开新标签。
+- **开发者控制台（日志）** — 连接状态改为红黄绿圆点指示；去掉工具栏「已同步局内」提示。
 
 ### Fixed
 
