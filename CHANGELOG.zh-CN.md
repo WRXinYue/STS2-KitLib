@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-07-20
+
 ### Added
 
 - **MCP 卡牌选择** — 新增 **`get_selection_state`** 与 **`selection_action`**，让 MCP 代理读取并点选战斗内卡牌选择界面（弃牌堆/抽牌堆/消耗堆选取、手牌多选等）。**`combat_action`** 的 `play_card` 可传 `selection_card_id` 或 `selection_index` 在同一次调用内自动点选；若选择界面仍打开，响应会包含 `pendingSelection` 与 `selectionState`，而非立即失败。

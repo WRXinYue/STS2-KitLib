@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2026-07-20
+
 ### Added
 
 - **MCP card selection** — New **`get_selection_state`** and **`selection_action`** tools let agents read and pick cards on in-combat selection screens (discard/draw/exhaust pile picks, hand multi-select). **`combat_action`** `play_card` can pass `selection_card_id` or `selection_index` for one-shot auto-pick; when a picker stays open, the response includes `pendingSelection` and `selectionState` instead of failing immediately.
