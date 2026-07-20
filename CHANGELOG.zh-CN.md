@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.1] - 2026-07-21
+
 ### Changed
 
 - **开发者控制台（自启动）** — 若浏览器里已有连上本地查看器的标签页，启动时不再额外打开新标签。
