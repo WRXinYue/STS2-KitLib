@@ -37,6 +37,7 @@ internal static class CombatSyncBotPatch {
         foreach (var player in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
             if (player.PlayerCombatState == null || player.Creature.IsDead) continue;
+            if (SimulatedPeerRegistry.IsLiveEnetPeer(player.NetId)) continue;
 
             if (AiSessionSettings.MpAiTeammateEnabled
                 && player.PlayerCombatState.Hand?.Cards.Any(c => c.CanPlay(out _, out _)) == true)

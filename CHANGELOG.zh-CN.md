@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **双开 LAN 预设** — 移除开局自动套用主机/客机 preset；请在 DevPanel → AI 托管 手动点击 LAN 预设按钮。
 
+### Fixed
+
+- **双开联机** — 以 1001 接入的真实 LAN 客机不再被误判为 phantom 同伴；主机不再为真实客机代点结束回合，修复双方各自出牌时的战斗不同步。
+
 ## [0.31.1] - 2026-07-21
 
 ### Changed

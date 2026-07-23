@@ -58,6 +58,7 @@ internal static class PseudoCoopCombatReady {
 
         foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
+            if (SimulatedPeerRegistry.IsLiveEnetPeer(peer.NetId)) continue;
             if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) continue;
             if (cm.IsPlayerReadyToEndTurn(peer)) continue;
 

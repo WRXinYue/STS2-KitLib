@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dual-instance LAN presets** — Removed auto-apply on launch; use DevPanel → AI Host LAN preset buttons on each window.
 
+### Fixed
+
+- **Dual-instance multiplayer** — A real LAN client joining as player 1001 is no longer mistaken for the phantom companion; the host no longer auto-ready-to-end-turn for live clients, fixing combat desync when both players take their own turns.
+
 ## [0.31.1] - 2026-07-21
 
 ### Changed

@@ -21,9 +21,13 @@ internal static class SimulatedPeerRegistry {
         IsHostMultiplayer
         && (AiSessionSettings.SyncBotEnabled || AiSessionSettings.MpAiTeammateEnabled);
 
-    /// <summary>True when <paramref name="netId"/> is a real ENet lobby peer (not phantom/debug).</summary>
+    /// <summary>
+    /// True when <paramref name="netId"/> has an active ENet transport peer on this host.
+    /// Phantom companions use the same default net id as fastmp join (<see cref="MpCheatSyncBot.PhantomPlayerNetId"/>);
+    /// distinguish by <see cref="NetHostGameService.ConnectedPeers"/>, not by net id alone.
+    /// </summary>
     public static bool IsLiveEnetPeer(ulong netId) {
-        if (netId == 0 || netId == MpCheatSyncBot.PhantomPlayerNetId) return false;
+        if (netId == 0) return false;
         if (RunManager.Instance?.NetService is not NetHostGameService host) return false;
         return host.ConnectedPeers.Any(p => p.peerId == netId);
     }
