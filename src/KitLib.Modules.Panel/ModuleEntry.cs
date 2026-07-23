@@ -91,7 +91,6 @@ public static class ModuleEntry {
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib.Panel: pseudo-coop rail probe unavailable ({ex.Message}).");
         }
-        KitLibPseudoCoopOps.RunDualInstanceLanPresets = DualInstanceTestBootstrap.TryAutoLanPresetsOnLaunch;
         KitLibPseudoCoopOps.EnsureMultiplayerDevActive = DualInstanceTestBootstrap.EnsureMultiplayerDevActive;
     }
 

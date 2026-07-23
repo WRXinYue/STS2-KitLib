@@ -64,9 +64,9 @@ These features are **opt-in** from DevPanel → **AI Host**. They do not change 
 - **AI Host (solo)** — `StrongStrategy` (default) drives your character locally: DeckPlan macro scoring, shallow combat search, lethal checks. Set `AutoPlayStrategy` to `Simple` for legacy heuristics. Use for single-player automation.
 - **SyncBot** — Simulates remote peer ACKs and default choices on one machine; optional phantom player (NetId 1001). Use for host-only co-op smoke tests without a second client.
 - **Pseudo Co-op preset** — Hand-play host + AI teammate for phantom/offline peers via action queue. Use for solo host with simulated teammate.
-- **LAN host-drive + AFK** — Host hand-plays local player; AI enqueues combat for connected ENet client; client AFK blocks local combat input; map votes mirrored. Use for two game instances on one PC (auto preset on dual launch).
+- **LAN host-drive + AFK** — Host hand-plays local player; AI enqueues combat for connected ENet client; client AFK blocks local combat input; map votes mirrored. Use for two game instances on one PC; apply LAN presets manually in DevPanel → AI Host.
 
-**Dual-instance LAN (recommended):** launch host + client on the same machine → presets apply automatically; host logs `LAN host preset applied`, client logs `AFK client enabled`.
+**Dual-instance LAN (recommended):** launch host + client on the same machine → click LAN preset buttons on each window; host logs `LAN host preset applied`, client logs `AFK client enabled`.
 
 Detailed architecture, verification checklist, and desync history: **[LAN host-drive & AFK co-op](/developer/lan-host-drive-afk)** · [Documentation index](/)
 :::
@@ -77,9 +77,9 @@ Detailed architecture, verification checklist, and desync history: **[LAN host-d
 - **AI Host（单机）** — 默认 `StrongStrategy` 本地代打：DeckPlan 宏观评分、浅层战斗搜索、斩杀判定。`AutoPlayStrategy` 设为 `Simple` 可退回旧启发式。用于单机自动化。
 - **SyncBot** — 单机模拟远端 ACK 和默认选项；可选幻影玩家（NetId 1001）。主机侧联机冒烟测试，无需第二个客户端。
 - **伪联机预设** — 主机手打 + AI 队友，通过动作队列为幻影/离线 peer 代打。适合单机主机带模拟队友。
-- **LAN 主机代打 + AFK** — 主机手打本地角色；AI 为已连接的 ENet 客机排队战斗输入；客机 AFK 会屏蔽本地战斗输入；地图投票由主机镜像。适合同一台电脑开两个游戏实例（双开时自动套用预设）。
+- **LAN 主机代打 + AFK** — 主机手打本地角色；AI 为已连接的 ENet 客机排队战斗输入；客机 AFK 会屏蔽本地战斗输入；地图投票由主机镜像。适合同一台电脑开两个游戏实例；在 DevPanel → AI 托管 手动点 LAN 预设。
 
-**双开 LAN（推荐）：** 同机启动主机 + 客机 → 预设自动生效；主机日志 `LAN host preset applied`，客机 `AFK client enabled`。
+**双开 LAN（推荐）：** 同机启动主机 + 客机 → 各窗口手动点 LAN 预设按钮；主机日志 `LAN host preset applied`，客机 `AFK client enabled`。
 
 架构细节、验收清单与历史 desync 记录：**[LAN 主机代打与 AFK 联机](/developer/lan-host-drive-afk)** · [文档索引](/)
 :::

@@ -61,9 +61,6 @@ internal static class PseudoCoopDeferredInit {
             KitLog.Info("PseudoCoop", $"DevPanel attached.");
         else
             KitLog.Warn("PseudoCoop", $"DevPanel attach skipped (DevMode inactive or UI unavailable).");
-
-        if (KitLibHost.IsDualInstanceActive?.Invoke() == true)
-            KitLibPseudoCoopOps.RunDualInstanceLanPresets?.Invoke();
     }
 
     internal static void RunLateMpCheatArm() {

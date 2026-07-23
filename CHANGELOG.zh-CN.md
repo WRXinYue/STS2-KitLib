@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **双开 LAN 预设** — 移除开局自动套用主机/客机 preset；请在 DevPanel → AI 托管 手动点击 LAN 预设按钮。
+
 ## [0.31.1] - 2026-07-21
 
 ### Changed

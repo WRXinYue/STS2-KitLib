@@ -1,8 +1,5 @@
 using KitLib.Multiplayer.Cheat;
-using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Settings;
-using MegaCrit.Sts2.Core.Multiplayer.Game;
-using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.LanTest;
 
@@ -37,31 +34,5 @@ internal static class DualInstanceTestBootstrap {
 
         KitLog.Info("DualInstance", $"Cheat mode enabled for dual-instance test ({reason}).");
         KitLog.Warn("DualInstance", $"Use different game profiles per window (profile1 + profile2) to avoid save conflicts.");
-    }
-
-    /// <summary>Dual-instance LAN: auto-apply host-drive + client AFK presets so half-config cannot desync.</summary>
-    internal static void TryAutoLanPresetsOnLaunch() {
-        if (!KitLibProcessScope.IsDualInstanceActive()) return;
-
-        var netType = RunManager.Instance?.NetService?.Type;
-        if (netType == NetGameType.Host) {
-            if (AiSessionSettings.MpAiTeammateEnabled
-                && AiSessionSettings.MpAiTeammateDriveLiveEnet) {
-                KitLog.Info("DualInstance", $"LAN host preset already active.");
-                return;
-            }
-
-            PseudoCoopBootstrap.ApplyLanHostPreset();
-            KitLog.Info("DualInstance", $"Auto-applied LAN host preset (dual-instance).");
-        }
-        else if (netType == NetGameType.Client) {
-            if (MpAiTeammateAfkClient.IsSessionEnabled) {
-                KitLog.Info("DualInstance", $"LAN client AFK already active.");
-                return;
-            }
-
-            PseudoCoopBootstrap.ApplyLanClientPreset();
-            KitLog.Info("DualInstance", $"Auto-applied LAN client AFK preset (dual-instance).");
-        }
     }
 }

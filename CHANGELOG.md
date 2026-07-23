@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dual-instance LAN presets** — Removed auto-apply on launch; use DevPanel → AI Host LAN preset buttons on each window.
+
 ## [0.31.1] - 2026-07-21
 
 ### Changed

@@ -6,6 +6,5 @@ public static class KitLibPseudoCoopOps {
     public static Action? AttachDeferredDevPanel { get; set; }
     public static Action? AttachDualInstanceMinimalDevPanel { get; set; }
     public static Func<bool>? IsDevPanelRailAttached { get; set; }
-    public static Action? RunDualInstanceLanPresets { get; set; }
     public static Action<string>? EnsureMultiplayerDevActive { get; set; }
 }
