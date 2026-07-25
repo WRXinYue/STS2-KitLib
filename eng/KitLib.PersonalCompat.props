@@ -1,9 +1,9 @@
 <Project>
   <!--
-    Personal multi-version KitLib builds (local only; not used by CI/release).
-    Enable with -p:KitLibPersonalCompat=true or make bundle-personal / sync-personal.
+    Multi-version KitLib builds (stable + beta).
+    Enable with -p:KitLibPersonalCompat=true or make bundle / sync-bundle.
 
-    Targets: stable 0.107.1 + beta 0.109.0 (see scripts/package_personal_bundle.py).
+    Targets: stable 0.107.1 + beta 0.109.0 (see scripts/package_bundle.py).
   -->
   <PropertyGroup>
     <KitLibPersonalCompatTargets>0.107.1;0.109.0</KitLibPersonalCompatTargets>

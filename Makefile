@@ -66,6 +66,7 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Dev/KitLib.Dev.csproj src/KitLib.Modules.AI/KitLib.AI.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
+PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
 STEAM_UPLOAD_FLAGS := $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
 STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync $(STEAM_SYNC_FLAGS)
@@ -76,7 +77,7 @@ LAUNCH_MP_CLIENT_ID ?= 1001
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip zip-full zip-release clean docs docs-build \
         build-flat workshop extract-touchpoints check-api verify capture-sts2-ref \
-        build-stable build-beta build-profiles bundle-personal sync-personal \
+        build-stable build-beta build-profiles bundle sync-bundle \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
 
@@ -109,9 +110,9 @@ help:
 	@echo "  build-stable      compile against stable ref (0.107.1)"
 	@echo "  build-beta        compile against beta ref (0.109.0)"
 	@echo "  build-profiles    build-stable then build-beta"
-	@echo "  bundle-personal   multi-API bundle → build/KitLib-personal/ (local only)"
-	@echo "  sync-personal     bundle-personal + deploy to game mods/KitLib/"
-	@echo "  zip-release  build Release + package build/KitLib-vX.X.X.zip"
+	@echo "  bundle            multi-API bundle → build/KitLib-release/ (release / Workshop / zip)"
+	@echo "  sync-bundle       bundle + deploy to game mods/KitLib/"
+	@echo "  zip-release  bundle + package build/KitLib-vX.X.X.zip (multi-API)"
 	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip (local profile only)"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  launch       launch STS2 (Vulkan on Windows; Steam on macOS/Linux)"
@@ -136,7 +137,7 @@ help:
 	@echo "  build-dev-viewer  pnpm build → CombatStats/viewer-shell.html (embedded in KitLib.Dev)"
 	@echo "  build-combat-stats-viewer  deprecated alias for build-dev-viewer"
 	@echo ""
-	@echo "  zip          build-all + package build/KitLib-vX.X.X.zip (alias: zip-full)"
+	@echo "  zip          bundle + package build/KitLib-vX.X.X.zip (alias: zip-release)"
 	@echo ""
 	@echo "  [upload]"
 	@echo "  upload-github  mod zip + MCP exe → GitHub Release (alias: publish)"
@@ -233,11 +234,11 @@ build-beta:
 
 build-profiles: build-stable build-beta
 
-bundle-personal:
-	$(PYTHON) scripts/package_personal_bundle.py
+bundle:
+	$(PACKAGE_BUNDLE) --no-zip -c Release
 
-sync-personal:
-	$(PYTHON) scripts/package_personal_bundle.py --deploy
+sync-bundle:
+	$(PACKAGE_BUNDLE) --no-zip -c Release --deploy
 
 deploy:
 	$(PYTHON) scripts/deploy_modules.py
@@ -329,14 +330,14 @@ docs:
 docs-build:
 	cd docs && pnpm install && pnpm run build:ssg
 
-# ── zip: modular release (Core + satellites under modules/) ──
-zip-release:
-	$(PYTHON) scripts/package_modules.py --configuration Release
+# ── zip: multi-API release (loader + lib/<api>/) ──
+zip-release: bundle
+	$(PACKAGE_BUNDLE) --zip-only
 
 zip-full: build-all
 	$(PACKAGE_MODULES) --skip-build
 
-zip: zip-full
+zip: zip-release
 
 ifeq ($(OS),Windows_NT)
 zip-mcp: build-tools

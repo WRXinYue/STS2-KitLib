@@ -46,25 +46,33 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
 from lib.steam_changelog import get_change_note, read_kitlib_version  # noqa: E402
-from lib.bundle_build import build_bundle  # noqa: E402
 from lib.steam_readme import STEAM_DESCRIPTION_MAX  # noqa: E402
 
 
 def _run_build() -> None:
-    sts2_dir = subprocess.check_output(
-        [sys.executable, str(_SCRIPT_DIR / "resolve_sts2_profile_dir.py")],
-        text=True,
-    ).strip()
-    build_bundle(configuration="Release", sts2_profile="beta", sts2_dir=sts2_dir)
+    subprocess.run(
+        [
+            sys.executable,
+            str(_SCRIPT_DIR / "package_bundle.py"),
+            "--no-zip",
+            "-c",
+            "Release",
+        ],
+        cwd=_REPO,
+        check=True,
+    )
 
 
 def _stage_bundle(skip_build: bool) -> Path:
     staging = _REPO / "build" / "steam-stage"
     cmd = [
         sys.executable,
-        str(_SCRIPT_DIR / "package_modules.py"),
+        str(_SCRIPT_DIR / "package_bundle.py"),
         "--stage-dir",
         str(staging),
+        "-c",
+        "Release",
+        "--no-zip",
     ]
     if skip_build:
         cmd.append("--skip-build")

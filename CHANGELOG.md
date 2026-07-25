@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-version support** — One KitLib install can cover stable and beta; the matching build loads for your game version. Limited maintainer bandwidth — public releases and ongoing support still focus on **beta**.
+
 ### Changed
 
 - **Dual-instance LAN presets** — Removed auto-apply on launch; use DevPanel → AI Host LAN preset buttons on each window.

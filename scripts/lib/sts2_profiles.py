@@ -20,7 +20,7 @@ _PINNED_VERSIONS: dict[str, str] = {
 PINNED_VERSION = _PINNED_VERSIONS["beta"]
 DEFAULT_PROFILE: ProfileName = "beta"
 
-PERSONAL_VARIANT_TARGETS: list[tuple[str, ProfileName]] = [
+VARIANT_TARGETS: list[tuple[str, ProfileName]] = [
     (_PINNED_VERSIONS["stable"], "stable"),
     (_PINNED_VERSIONS["beta"], "beta"),
 ]
