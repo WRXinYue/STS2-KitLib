@@ -12,19 +12,26 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.bundle_build import build_bundle  # noqa: E402
+from lib.dotenv import load_dotenv  # noqa: E402
+from lib.sts2_profiles import resolve_profile_dir  # noqa: E402
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build KitLib mod bundle projects only.")
     ap.add_argument("-c", "--configuration", default="Debug")
-    ap.add_argument("--sts2-profile", choices=("beta",), default="beta")
+    ap.add_argument("--sts2-profile", choices=tuple(("beta", "stable")), default="beta")
     ap.add_argument("--sts2-dir", default="")
     args = ap.parse_args()
+    load_dotenv(_SCRIPT_DIR.parent / ".env")
+
+    sts2_dir = args.sts2_dir.strip()
+    if not sts2_dir:
+        sts2_dir = str(resolve_profile_dir(args.sts2_profile, repo_root=_SCRIPT_DIR.parent))
 
     build_bundle(
         configuration=args.configuration,
         sts2_profile=args.sts2_profile or None,
-        sts2_dir=args.sts2_dir or None,
+        sts2_dir=sts2_dir,
     )
     return 0
 

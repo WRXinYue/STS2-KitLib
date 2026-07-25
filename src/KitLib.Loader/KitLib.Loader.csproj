@@ -17,7 +17,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KitLib.Abstractions\KitLib.Abstractions.csproj" />
     <ProjectReference Include="..\KitLib.Core\KitLib.Core.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve STS2 beta ref game root for Makefile / build scripts."""
+"""Resolve STS2 ref game root for Makefile / build scripts."""
 
 from __future__ import annotations
 
@@ -12,15 +12,15 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.dotenv import load_dotenv  # noqa: E402
-from lib.sts2_profiles import DEFAULT_PROFILE, resolve_profile_dir  # noqa: E402
+from lib.sts2_profiles import DEFAULT_PROFILE, _PINNED_VERSIONS, resolve_profile_dir  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Print STS2 beta ref root for MSBuild Sts2Dir.")
+    ap = argparse.ArgumentParser(description="Print STS2 ref root for MSBuild Sts2Dir.")
     ap.add_argument(
         "profile",
         nargs="?",
-        choices=(DEFAULT_PROFILE,),
+        choices=tuple(_PINNED_VERSIONS),
         default=DEFAULT_PROFILE,
     )
     ap.add_argument(
@@ -32,7 +32,7 @@ def main() -> int:
 
     load_dotenv(args.repo_root / ".env")
     try:
-        print(resolve_profile_dir(repo_root=args.repo_root))
+        print(resolve_profile_dir(args.profile, repo_root=args.repo_root))
     except RuntimeError as ex:
         print(str(ex), file=sys.stderr)
         return 1

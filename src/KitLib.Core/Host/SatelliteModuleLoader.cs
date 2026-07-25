@@ -1,6 +1,7 @@
 using System.Reflection;
 using KitLib.Abstractions.Compat;
 using KitLib.Abstractions.Host;
+using KitLib.Abstractions.Modding;
 using KitLib.Diagnostics;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
@@ -330,7 +331,7 @@ internal static class SatelliteModuleLoader {
     }
 
     static string? ResolveSatelliteAssemblyPath(string modDir, string assemblyName) {
-        var path = Path.Combine(modDir, ModulesSubdir, assemblyName + ".dll");
+        var path = Path.Combine(KitLibHostPaths.ResolveModulesDirectory(modDir), assemblyName + ".dll");
         return File.Exists(path) ? path : null;
     }
 
@@ -338,7 +339,7 @@ internal static class SatelliteModuleLoader {
         if (assembly == typeof(MainFile).Assembly)
             return;
 
-        ModManager.AssociateAssemblyWithMod(MainFile.ModID, assembly);
+        ModAssemblyAssociation.Associate(MainFile.ModID, assembly);
     }
 
 }

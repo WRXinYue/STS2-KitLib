@@ -171,14 +171,24 @@ public partial class ModPanelControllerSupport : Node {
     private static bool IsUpPress(InputEvent @event) =>
         @event.IsActionPressed("ui_up")
         || @event.IsActionPressed(MegaInput.up)
+#if STS2_STABLE_PROFILE
+        || @event.IsActionPressed(Controller.dPadNorth)
+        || @event.IsActionPressed(Controller.joystickUp);
+#else
         || @event.IsActionPressed(Controller.dPadUp)
         || @event.IsActionPressed(Controller.lStickUp);
+#endif
 
     private static bool IsDownPress(InputEvent @event) =>
         @event.IsActionPressed("ui_down")
         || @event.IsActionPressed(MegaInput.down)
+#if STS2_STABLE_PROFILE
+        || @event.IsActionPressed(Controller.dPadSouth)
+        || @event.IsActionPressed(Controller.joystickDown);
+#else
         || @event.IsActionPressed(Controller.dPadDown)
         || @event.IsActionPressed(Controller.lStickDown);
+#endif
 
     private string? DescribeSkipReason() {
         if (_submenu == null || !GodotObject.IsInstanceValid(_submenu))

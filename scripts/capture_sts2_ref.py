@@ -14,6 +14,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 from lib.dotenv import load_dotenv  # noqa: E402
 from lib.sts2_profiles import (  # noqa: E402
     DEFAULT_PROFILE,
+    _PINNED_VERSIONS,
     capture_profile_ref,
     pinned_version,
     resolve_capture_source,
@@ -22,11 +23,11 @@ from lib.sts2_profiles import (  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Capture STS2 beta compile refs into eng/sts2-refs/beta/.")
+    ap = argparse.ArgumentParser(description="Capture STS2 compile refs into eng/sts2-refs/<profile>/.")
     ap.add_argument(
         "profile",
         nargs="?",
-        choices=(DEFAULT_PROFILE,),
+        choices=tuple(_PINNED_VERSIONS),
         default=DEFAULT_PROFILE,
     )
     ap.add_argument(
@@ -59,7 +60,7 @@ def main() -> int:
         return 1
 
     dll = resolve_sts2_dll(dest)
-    print(f"Captured beta ref (pinned {pinned_version()})")
+    print(f"Captured {args.profile} ref (pinned {pinned_version(args.profile)})")
     print(f"  source={source}")
     print(f"  dest={dest}")
     print(f"  dll={dll}")

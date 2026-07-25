@@ -11,10 +11,28 @@ from pathlib import Path
 
 from lib.steam import _sts2_game_root_valid, read_sts2_dir_from_local_props, resolve_sts2_dir
 
-ProfileName = str  # always "beta"
+ProfileName = str  # "stable" | "beta"
 
-PINNED_VERSION = "0.109.0"
+_PINNED_VERSIONS: dict[str, str] = {
+    "stable": "0.107.1",
+    "beta": "0.109.0",
+}
+PINNED_VERSION = _PINNED_VERSIONS["beta"]
 DEFAULT_PROFILE: ProfileName = "beta"
+
+PERSONAL_VARIANT_TARGETS: list[tuple[str, ProfileName]] = [
+    (_PINNED_VERSIONS["stable"], "stable"),
+    (_PINNED_VERSIONS["beta"], "beta"),
+]
+
+
+def variant_profile(compat_target: str) -> ProfileName:
+    normalized = compat_target.lstrip("vV").strip()
+    for profile, pinned in _PINNED_VERSIONS.items():
+        if normalized == pinned:
+            return profile  # type: ignore[return-value]
+    raise ValueError(f"Unknown personal compat target: {compat_target!r}")
+
 
 _REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
 
@@ -50,13 +68,8 @@ def read_release_version(sts2_dir: Path) -> str | None:
 
 def read_sts2_profile_env() -> ProfileName | None:
     value = os.environ.get("STS2_PROFILE", "").strip().lower()
-    if value in ("beta", "stable"):
-        if value != DEFAULT_PROFILE:
-            print(
-                f"Note: STS2_PROFILE={value} ignored; KitLib compiles against beta only.",
-                file=sys.stderr,
-            )
-        return DEFAULT_PROFILE
+    if value in _PINNED_VERSIONS:
+        return value  # type: ignore[return-value]
     return None
 
 
@@ -74,15 +87,16 @@ def resolve_compile_profile(
     sts2_dir: Path | None = None,
     allow_game_inference: bool = True,
 ) -> ProfileName:
+    env = read_sts2_profile_env()
+    if env:
+        return env
     _ = repo_root, sts2_dir, allow_game_inference
-    if read_sts2_profile_env():
-        return DEFAULT_PROFILE
     return DEFAULT_PROFILE
 
 
 def assert_capture_source_matches_profile(profile: ProfileName, source: Path) -> None:
-    if profile != DEFAULT_PROFILE:
-        raise RuntimeError(f"Unknown profile {profile!r}; KitLib only supports {DEFAULT_PROFILE}.")
+    if profile not in _PINNED_VERSIONS:
+        raise RuntimeError(f"Unknown profile {profile!r}.")
     version = read_release_version(source)
     pinned = pinned_version(profile)
     if not version:
@@ -104,8 +118,8 @@ def resolve_capture_source(
     explicit: Path | None = None,
     repo_root: Path | None = None,
 ) -> Path:
-    if profile != DEFAULT_PROFILE:
-        raise RuntimeError(f"Unknown profile {profile!r}; KitLib only supports {DEFAULT_PROFILE}.")
+    if profile not in _PINNED_VERSIONS:
+        raise RuntimeError(f"Unknown profile {profile!r}.")
     if explicit is not None:
         source = Path(os.path.expandvars(str(explicit))).expanduser().resolve()
         if not ref_is_valid(source):
@@ -122,9 +136,9 @@ def resolve_capture_source(
 
 
 def pinned_version(profile: ProfileName = DEFAULT_PROFILE) -> str:
-    if profile != DEFAULT_PROFILE:
+    if profile not in _PINNED_VERSIONS:
         raise ValueError(f"Unknown profile: {profile!r}")
-    return PINNED_VERSION
+    return _PINNED_VERSIONS[profile]
 
 
 def refs_base(repo_root: Path) -> Path:
@@ -132,9 +146,9 @@ def refs_base(repo_root: Path) -> Path:
 
 
 def ref_root(repo_root: Path, profile: ProfileName = DEFAULT_PROFILE) -> Path:
-    if profile != DEFAULT_PROFILE:
+    if profile not in _PINNED_VERSIONS:
         raise ValueError(f"Unknown profile: {profile!r}")
-    return refs_base(repo_root) / DEFAULT_PROFILE / PINNED_VERSION
+    return refs_base(repo_root) / profile / pinned_version(profile)
 
 
 def list_ref_data_dirs(game_root: Path) -> list[Path]:
@@ -158,18 +172,18 @@ def ref_is_valid(game_root: Path) -> bool:
 
 
 def resolve_profile_dir(profile: ProfileName = DEFAULT_PROFILE, *, repo_root: Path | None = None) -> Path:
-    if profile != DEFAULT_PROFILE:
+    if profile not in _PINNED_VERSIONS:
         raise ValueError(f"Unknown profile: {profile!r}")
 
     root = repo_root or Path(__file__).resolve().parents[2]
-    ref = ref_root(root)
+    ref = ref_root(root, profile)
     if ref_is_valid(ref):
         return ref
 
     raise RuntimeError(
-        f"No STS2 beta ref at {ref}. "
-        f"Run: make capture-sts2-ref PROFILE={DEFAULT_PROFILE} "
-        "(with Steam on public-beta; see eng/sts2-refs/README.md)."
+        f"No STS2 {profile} ref at {ref}. "
+        f"Run: make capture-sts2-ref PROFILE={profile} "
+        "(see eng/sts2-refs/README.md)."
     )
 
 
@@ -225,7 +239,11 @@ def capture_profile_ref(
 
 
 def format_profile_paths(repo_root: Path) -> dict[str, Path]:
-    return {DEFAULT_PROFILE: resolve_sts2_dll(resolve_profile_dir(repo_root=repo_root))}
+    return {
+        profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root))
+        for profile in _PINNED_VERSIONS
+        if ref_is_valid(ref_root(repo_root, profile))
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -241,7 +259,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument(
         "--profile",
-        choices=(DEFAULT_PROFILE,),
+        choices=tuple(_PINNED_VERSIONS),
         default=DEFAULT_PROFILE,
     )
     ap.add_argument("--game-root-only", action="store_true")
@@ -255,8 +273,8 @@ def main(argv: list[str] | None = None) -> int:
             print(game_root)
             return 0
         dll = resolve_sts2_dll(game_root)
-        pinned = pinned_version()
-        print(f"{DEFAULT_PROFILE}\tpinned={pinned}")
+        pinned = pinned_version(args.profile)
+        print(f"{args.profile}\tpinned={pinned}")
         print(f"  root={game_root}")
         print(f"  dll={dll}")
     except RuntimeError as ex:

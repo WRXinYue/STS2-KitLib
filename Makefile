@@ -76,6 +76,7 @@ LAUNCH_MP_CLIENT_ID ?= 1001
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip zip-full zip-release clean docs docs-build \
         build-flat workshop extract-touchpoints check-api verify capture-sts2-ref \
+        build-stable build-beta build-profiles bundle-personal sync-personal \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
 
@@ -104,7 +105,12 @@ help:
 	@echo "  verify       build + check-api (pre-release)"
 	@echo "  check-smoke-mod  build + content-mod smoke fixture + Cecil/ref/load tests"
 	@echo "  deploy-smoke-mod copy smoke mod into game mods/KitLibSmokeMod/ (manual in-game check)"
-	@echo "  capture-sts2-ref  copy sts2.dll into eng/sts2-refs/beta/ (validates release_info)"
+	@echo "  capture-sts2-ref  copy sts2.dll into eng/sts2-refs/PROFILE/ (PROFILE=stable|beta)"
+	@echo "  build-stable      compile against stable ref (0.107.1)"
+	@echo "  build-beta        compile against beta ref (0.109.0)"
+	@echo "  build-profiles    build-stable then build-beta"
+	@echo "  bundle-personal   multi-API bundle → build/KitLib-personal/ (local only)"
+	@echo "  sync-personal     bundle-personal + deploy to game mods/KitLib/"
 	@echo "  zip-release  build Release + package build/KitLib-vX.X.X.zip"
 	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip (local profile only)"
 	@echo "  sync-launch  sync + launch game"
@@ -217,7 +223,21 @@ extract-touchpoints:
 	$(PYTHON) scripts/extract_api_touchpoints.py
 
 capture-sts2-ref:
-	$(PYTHON) scripts/capture_sts2_ref.py
+	$(PYTHON) scripts/capture_sts2_ref.py $(or $(PROFILE),beta)
+
+build-stable:
+	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py stable)" -p:Sts2Profile=stable -c Debug
+
+build-beta:
+	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py beta)" -p:Sts2Profile=beta -c Debug
+
+build-profiles: build-stable build-beta
+
+bundle-personal:
+	$(PYTHON) scripts/package_personal_bundle.py
+
+sync-personal:
+	$(PYTHON) scripts/package_personal_bundle.py --deploy
 
 deploy:
 	$(PYTHON) scripts/deploy_modules.py
