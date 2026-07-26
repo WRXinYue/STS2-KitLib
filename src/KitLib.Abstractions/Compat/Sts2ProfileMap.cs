@@ -3,10 +3,11 @@ using Semver;
 namespace KitLib.Abstractions.Compat;
 
 public static class Sts2ProfileMap {
-    private static readonly Sts2Platform[] PcPlatforms = [
+    private static readonly Sts2Platform[] SupportedPlatforms = [
         Sts2Platform.Windows,
         Sts2Platform.macOS,
         Sts2Platform.Linux,
+        Sts2Platform.Android,
     ];
 
     public const string PinnedGameVersion = "0.109.0";
@@ -16,7 +17,7 @@ public static class Sts2ProfileMap {
     internal static Sts2GameProfile Resolve(SemVersion? version, Sts2Platform platform) {
         if (version == null || platform == Sts2Platform.Unknown)
             return Sts2GameProfile.Unknown;
-        if (!Array.Exists(PcPlatforms, p => p == platform))
+        if (!Array.Exists(SupportedPlatforms, p => p == platform))
             return Sts2GameProfile.Unknown;
         if (version.Major == 0 && version.Minor >= 106)
             return Sts2GameProfile.Supported;

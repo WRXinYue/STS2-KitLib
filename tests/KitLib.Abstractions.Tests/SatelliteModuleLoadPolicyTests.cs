@@ -5,11 +5,20 @@ namespace KitLib.Abstractions.Tests;
 public sealed class SatelliteModuleLoadPolicyTests {
     [Fact]
     public void Default_toggles_enable_panel_only() {
-        var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles();
+        var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles(mobileDefaults: false);
         Assert.True(defaults[KitLibModuleIds.Panel]);
         Assert.False(defaults[KitLibModuleIds.Ai]);
         Assert.False(defaults[KitLibModuleIds.Cheat]);
         Assert.False(defaults[KitLibModuleIds.Dev]);
+    }
+
+    [Fact]
+    public void Default_toggles_enable_all_optional_modules_on_mobile() {
+        var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles(mobileDefaults: true);
+        Assert.True(defaults[KitLibModuleIds.Panel]);
+        Assert.True(defaults[KitLibModuleIds.Ai]);
+        Assert.True(defaults[KitLibModuleIds.Cheat]);
+        Assert.True(defaults[KitLibModuleIds.Dev]);
     }
 
     [Fact]

@@ -23,11 +23,14 @@ public static class SatelliteModuleLoadPolicy {
         Modules.Where(m => !m.AlwaysOn).Select(m => m.Id),
         StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Fresh-install defaults: in-run dev panel on; AI, cheat, and dev satellites off.</summary>
-    public static IReadOnlyDictionary<string, bool> GetDefaultToggles() {
+    /// <summary>Fresh-install defaults: Panel on for PC; all optional modules on for Android (failed loads are skipped quietly).</summary>
+    public static IReadOnlyDictionary<string, bool> GetDefaultToggles(bool? mobileDefaults = null) {
+        var defaultOn = mobileDefaults ?? OperatingSystem.IsAndroid();
         var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-        foreach (var module in Modules.Where(m => !m.AlwaysOn))
-            toggles[module.Id] = string.Equals(module.Id, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase);
+        foreach (var module in Modules.Where(m => !m.AlwaysOn)) {
+            toggles[module.Id] = defaultOn
+                || string.Equals(module.Id, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase);
+        }
         return toggles;
     }
 

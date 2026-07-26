@@ -77,19 +77,28 @@ internal static class SatelliteModuleLoader {
             ModAssemblyLoader.LoadFromModPath(path);
         }
         catch (Exception ex) {
-            KitLog.Warn($"Preload {assemblyName} failed — {ex.Message}");
+            if (Sts2RuntimeProfile.Platform == Sts2Platform.Android)
+                KitLog.Debug($"Preload {assemblyName} failed — {ex.Message}");
+            else
+                KitLog.Warn($"Preload {assemblyName} failed — {ex.Message}");
         }
     }
 
-    // Modules that create Godot partial-class nodes and add them to the SceneTree.
-    // On Android (wsdx233 community build) this causes a native SIGABRT; skip them.
-    static readonly string[] AndroidUnsupportedModules = [
-        ModuleIds.Panel,
-        ModuleIds.ModPanel,
-        ModuleIds.Ai,
-        ModuleIds.Cheat,
-        ModuleIds.Dev,
-    ];
+    static void LogModuleSkip(string moduleId, string reason) {
+        var message = $"Module {moduleId} skipped — {reason}";
+        if (Sts2RuntimeProfile.Platform == Sts2Platform.Android)
+            KitLog.Debug(message);
+        else
+            KitLog.Warn(message);
+    }
+
+    static void LogModuleFailure(string moduleId, string reason) {
+        var message = $"Module {moduleId} init failed — skipped ({reason})";
+        if (Sts2RuntimeProfile.Platform == Sts2Platform.Android)
+            KitLog.Debug(message);
+        else
+            KitLog.Warn(message);
+    }
 
     static bool IsAlwaysOnModule(string moduleId) {
         foreach (var module in SatelliteModuleLoadPolicy.Modules) {
@@ -101,15 +110,9 @@ internal static class SatelliteModuleLoader {
     }
 
     static bool TryLoadModule(string modDir, ModuleSpec spec, IReadOnlyDictionary<string, bool> resolvedToggles) {
-        if (Sts2RuntimeProfile.Platform == Sts2Platform.Android
-            && Array.Exists(AndroidUnsupportedModules, id => id == spec.ModuleId)) {
-            KitLog.Warn($"Module {spec.ModuleId} skipped — Godot scene modules are not supported on Android.");
-            return false;
-        }
-
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
-            KitLog.Warn($"Module {spec.ModuleId} skipped — unsupported STS2 version {Sts2RuntimeProfile.RawVersion ?? "?"}.");
+            LogModuleSkip(spec.ModuleId, $"unsupported STS2 version {Sts2RuntimeProfile.RawVersion ?? "?"}.");
             return false;
         }
 
@@ -147,7 +150,7 @@ internal static class SatelliteModuleLoader {
 
         foreach (var required in spec.Requires) {
             if (!ModuleCatalog.IsLoaded(required)) {
-                KitLog.Warn($"Module {spec.ModuleId} skipped — prerequisite {required} is not loaded.");
+                LogModuleSkip(spec.ModuleId, $"prerequisite {required} is not loaded.");
                 return false;
             }
         }
@@ -156,11 +159,11 @@ internal static class SatelliteModuleLoader {
             return KitLibStartupAudit.Measure($"satellite.{spec.ModuleId}", () => LoadModuleCore(modDir, spec));
         }
         catch (TargetInvocationException ex) {
-            KitLog.Warn($"Module {spec.ModuleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            LogModuleFailure(spec.ModuleId, ex.InnerException?.Message ?? ex.Message);
             return false;
         }
         catch (Exception ex) {
-            KitLog.Warn($"Module {spec.ModuleId} load conflict — skipped ({ex.Message}).");
+            LogModuleFailure(spec.ModuleId, ex.Message);
             return false;
         }
     }
@@ -183,7 +186,7 @@ internal static class SatelliteModuleLoader {
             KitLog.Info($"Satellite loader: resolving entry {spec.EntryTypeName}.");
             var entryType = assembly.GetType(spec.EntryTypeName, throwOnError: false);
             if (entryType == null) {
-                KitLog.Warn($"Module {spec.ModuleId} skipped — entry type {spec.EntryTypeName} not found.");
+                LogModuleSkip(spec.ModuleId, $"entry type {spec.EntryTypeName} not found.");
                 return false;
             }
 
@@ -194,7 +197,7 @@ internal static class SatelliteModuleLoader {
                 types: Type.EmptyTypes,
                 modifiers: null);
             if (init == null) {
-                KitLog.Warn($"Module {spec.ModuleId} skipped — Initialize() not found.");
+                LogModuleSkip(spec.ModuleId, "Initialize() not found.");
                 return false;
             }
 
@@ -209,11 +212,11 @@ internal static class SatelliteModuleLoader {
             return ModuleCatalog.IsLoaded(spec.ModuleId);
         }
         catch (TargetInvocationException ex) {
-            KitLog.Warn($"Module {spec.ModuleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            LogModuleFailure(spec.ModuleId, ex.InnerException?.Message ?? ex.Message);
             return false;
         }
         catch (Exception ex) {
-            KitLog.Warn($"Module {spec.ModuleId} load conflict — skipped ({ex.Message}).");
+            LogModuleFailure(spec.ModuleId, ex.Message);
             return false;
         }
     }
@@ -271,10 +274,10 @@ internal static class SatelliteModuleLoader {
             init.Invoke(null, null);
         }
         catch (TargetInvocationException ex) {
-            KitLog.Warn($"Module {moduleId} init failed — skipped ({ex.InnerException?.Message ?? ex.Message}).");
+            LogModuleFailure(moduleId, ex.InnerException?.Message ?? ex.Message);
         }
         catch (Exception ex) {
-            KitLog.Warn($"Module {moduleId} init failed — skipped ({ex.Message}).");
+            LogModuleFailure(moduleId, ex.Message);
         }
     }
 
@@ -299,7 +302,7 @@ internal static class SatelliteModuleLoader {
         }
         catch (ReflectionTypeLoadException ex) {
             var details = string.Join("; ", ex.LoaderExceptions?.Select(e => e?.Message) ?? []);
-            KitLog.Warn($"Module {moduleId} skipped — failed to load {assemblyName} ({details}).");
+            LogModuleSkip(moduleId, $"failed to load {assemblyName} ({details}).");
             return null;
         }
     }
