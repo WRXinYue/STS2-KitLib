@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Package and upload KitLib Steam Workshop workspace (public-beta branch).
+"""Package and upload KitLib Steam Workshop workspace.
 
-One Workshop item (STS2_WORKSHOP_ID) targets the public-beta game branch via minBranch/maxBranch.
+By default workshop.json omits minBranch/maxBranch (Steam branch targeting is unreliable).
+Pass --branch-targeting to pin public-beta if you need it.
 
 Environment:
     release.env  STS2_WORKSHOP_ID
@@ -114,7 +115,7 @@ def _write_workshop_json(
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
-    branch_targeting: bool = True,
+    branch_targeting: bool = False,
 ) -> None:
     base_note = _resolve_change_note(
         change_note,
@@ -185,7 +186,7 @@ def sync_workspace(
     change_note: str | None,
     *,
     prefer_unreleased: bool = False,
-    branch_targeting: bool = True,
+    branch_targeting: bool = False,
 ) -> Path:
     workspace = WORKSHOP_DIR
     content = workspace / "content"
@@ -253,7 +254,7 @@ def _persist_workshop_id(mod_id: str) -> None:
         print(f"Updated {dotenv_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
 
 
-def upload_workspace(dry_run: bool, *, branch_targeting: bool = True) -> int:
+def upload_workspace(dry_run: bool, *, branch_targeting: bool = False) -> int:
     workspace = WORKSHOP_DIR
     for name in ("workshop.json", "image.png"):
         if not (workspace / name).is_file():
@@ -290,7 +291,7 @@ def upload_workspace(dry_run: bool, *, branch_targeting: bool = True) -> int:
     return 0
 
 
-def upload_workspace_cmd(dry_run: bool, *, optional: bool = False, branch_targeting: bool = True) -> int:
+def upload_workspace_cmd(dry_run: bool, *, optional: bool = False, branch_targeting: bool = False) -> int:
     err = _uploader_setup_error()
     if err:
         if optional:
@@ -320,9 +321,14 @@ def main() -> int:
         help="Use ## [Unreleased] instead of the latest released version section",
     )
     sync_ap.add_argument(
+        "--branch-targeting",
+        action="store_true",
+        help="Set minBranch/maxBranch to public-beta (default: omit branch targeting)",
+    )
+    sync_ap.add_argument(
         "--no-branch-targeting",
         action="store_true",
-        help="Omit minBranch/maxBranch from workshop.json (upload test / legacy items)",
+        help=argparse.SUPPRESS,
     )
 
     upload_ap = sub.add_parser("upload", help="Run ModUploader.exe for the workshop workspace")
@@ -333,24 +339,31 @@ def main() -> int:
         help="Exit 0 with a warning if STS2_MOD_UPLOADER is missing (for upload-all)",
     )
     upload_ap.add_argument(
+        "--branch-targeting",
+        action="store_true",
+        help="Keep minBranch/maxBranch in workshop.json (default: strip before upload)",
+    )
+    upload_ap.add_argument(
         "--no-branch-targeting",
         action="store_true",
-        help="Strip minBranch/maxBranch from workshop.json before upload",
+        help=argparse.SUPPRESS,
     )
 
     args = ap.parse_args()
     if args.command == "sync":
+        branch_targeting = args.branch_targeting and not args.no_branch_targeting
         sync_workspace(
             args.skip_build,
             args.change_note or None,
             prefer_unreleased=args.unreleased,
-            branch_targeting=not args.no_branch_targeting,
+            branch_targeting=branch_targeting,
         )
         return 0
+    branch_targeting = args.branch_targeting and not args.no_branch_targeting
     return upload_workspace_cmd(
         args.dry_run,
         optional=args.optional,
-        branch_targeting=not args.no_branch_targeting,
+        branch_targeting=branch_targeting,
     )
 
 

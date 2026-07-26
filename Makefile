@@ -67,8 +67,8 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
 PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
-STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
-STEAM_UPLOAD_FLAGS := $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
+STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
+STEAM_UPLOAD_FLAGS := $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
 STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync $(STEAM_SYNC_FLAGS)
 STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload --optional $(STEAM_UPLOAD_FLAGS)
 STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload $(STEAM_UPLOAD_FLAGS)
@@ -144,7 +144,7 @@ help:
 	@echo "  upload-nexus   main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
 	@echo "  upload-all     GitHub + Nexus + MCP + Steam Workshop"
-	@echo "  upload-steam   workshop + upload to Steam Workshop"
+	@echo "  upload-steam   workshop + upload to Steam Workshop (no branch targeting by default)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo "  readme-steam   README.md + README.zh-CN.md → assets/readme.steam.en.txt + .zh-CN.txt"
 	@echo "  readme-assets  readme-nexus + readme-steam"
