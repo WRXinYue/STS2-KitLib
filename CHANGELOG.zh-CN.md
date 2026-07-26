@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-07-26
+
 ### Added
 
 - **多版本支持** — 同一 KitLib 安装可同时覆盖 stable 与 beta，启动时自动加载匹配构建。受个人精力所限，公开发布与日常维护仍以 **beta** 为主。
+- **Android 支持** — Android 上 KitLib 模块默认尝试加载；无法加载的模块会自动跳过，不影响其余功能。
 
 ### Changed
 

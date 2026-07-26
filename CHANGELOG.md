@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.0] - 2026-07-26
+
 ### Added
 
 - **Multi-version support** — One KitLib install can cover stable and beta; the matching build loads for your game version. Limited maintainer bandwidth — public releases and ongoing support still focus on **beta**.
+- **Android support** — KitLib modules are enabled by default on Android; modules that fail to load are skipped so the rest of KitLib keeps working.
 
 ### Changed
 
