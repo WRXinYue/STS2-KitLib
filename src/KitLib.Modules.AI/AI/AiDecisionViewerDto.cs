@@ -18,7 +18,46 @@ public sealed record AiDecisionSnapshotDto(
     IReadOnlyList<string> DecisionLog,
     IReadOnlyList<AiCardOfferDto> CardOffers,
     int SkipCost,
-    AiFightOutlookDto? FightOutlook);
+    AiFightOutlookDto? FightOutlook,
+    AiMacroInsightsDto? MacroInsights);
+
+public sealed record AiMacroInsightsDto(
+    AiMacroResourcesDto Resources,
+    AiScoringPhaseDto PhaseWeights,
+    AiDeckComboDto DeckCombo,
+    string ScoringSummary);
+
+public sealed record AiMacroResourcesDto(
+    int Hp,
+    int MaxHp,
+    int Gold,
+    int DeckSize,
+    int ActIndex,
+    int TotalFloor,
+    int RouteFightScore,
+    string PhaseLabel);
+
+public sealed record AiScoringPhaseDto(
+    float CurrentSimWeight,
+    float OptionWeight,
+    float DilutionWeight,
+    string PhaseLabel,
+    string Rationale);
+
+public sealed record AiDeckComboDto(
+    int RouteFightScore,
+    int DeckQualityScore,
+    int SurvivalGap,
+    int ThinGap,
+    int StarterBloat,
+    IReadOnlyList<AiDeckArchetypeDto> Archetypes);
+
+public sealed record AiDeckArchetypeDto(
+    string Id,
+    string Role,
+    int DeckPieces,
+    int RelicPieces,
+    int ScoreContribution);
 
 public sealed record AiCardOfferDto(
     int Index,
@@ -30,7 +69,13 @@ public sealed record AiCardOfferDto(
     int Option,
     int Dilution,
     int Early,
-    float ExerciseProb);
+    float ExerciseProb,
+    string PrimaryRole,
+    bool FightFuture,
+    string RoleReason,
+    int InRunScore,
+    int OutRunScore,
+    IReadOnlyList<string> ArchetypeIds);
 
 public sealed record AiFightOutlookDto(
     string EncounterId,

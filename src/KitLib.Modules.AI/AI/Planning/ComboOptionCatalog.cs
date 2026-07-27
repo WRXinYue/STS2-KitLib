@@ -238,20 +238,18 @@ public static class ComboOptionCatalog {
         return Math.Clamp(total, -15, 55);
     }
 
-    public static bool MatchesOffered(JsonObject card, CardMechanicProfile profile, ComboPartnerSpec spec) =>
-        MatchesCard(card, profile, spec);
+    public static List<string> MatchedArchetypeIds(JsonObject card) {
+        var profile = ResolveProfile(card);
+        var ids = new List<string>();
+        foreach (var archetype in Archetypes) {
+            if (MatchesOffered(card, profile, archetype.Offered))
+                ids.Add(archetype.Id);
+        }
 
-    public static bool MatchesCardPublic(JsonObject card, CardMechanicProfile profile, ComboPartnerSpec spec) =>
-        MatchesCard(card, profile, spec);
-
-    static CardMechanicProfile ResolveProfile(JsonObject card) {
-        var id = card["id"]?.GetValue<string>();
-        if (CardMechanicIndex.TryGet(id, out var profile))
-            return profile;
-        return CardMechanicIndex.InferFromSnapshot(card);
+        return ids;
     }
 
-    static int CountDeckPartners(JsonArray? deck, ComboPartnerSpec[] specs) {
+    public static int CountDeckPartners(JsonArray? deck, ComboPartnerSpec[] specs) {
         if (deck == null || specs.Length == 0)
             return 0;
 
@@ -267,7 +265,23 @@ public static class ComboOptionCatalog {
         return count;
     }
 
-    static int CountRelicPartners(JsonArray? relics, ComboPartnerSpec[] specs) {
+    public static int CountDeckOfferedPieces(JsonArray? deck, ComboPartnerSpec offered) {
+        if (deck == null)
+            return 0;
+
+        int count = 0;
+        foreach (var node in deck) {
+            if (node is not JsonObject card)
+                continue;
+            var profile = ResolveProfile(card);
+            if (MatchesOffered(card, profile, offered))
+                count++;
+        }
+
+        return count;
+    }
+
+    public static int CountRelicPartners(JsonArray? relics, ComboPartnerSpec[] specs) {
         if (relics == null || specs.Length == 0)
             return 0;
 
@@ -351,6 +365,9 @@ public static class ComboOptionCatalog {
         return Math.Clamp(0.35f + sum * 0.22f, 0.3f, 1.65f);
     }
 
+    public static float PlanMultiplierPublic(DeckPlan plan, AiTag[] tags) =>
+        PlanMultiplier(plan, tags);
+
     static float MaturityMultiplier(int deckPartners, int relicPartners, int maxDeck, ComboRole role) {
         int partners = deckPartners + relicPartners;
         if (partners <= 0)
@@ -385,6 +402,19 @@ public static class ComboOptionCatalog {
 
     static bool TryParsePower(string token, out PlayerPowerEffectKind power) =>
         Enum.TryParse(token, out power);
+
+    public static bool MatchesOffered(JsonObject card, CardMechanicProfile profile, ComboPartnerSpec spec) =>
+        MatchesCard(card, profile, spec);
+
+    public static bool MatchesCardPublic(JsonObject card, CardMechanicProfile profile, ComboPartnerSpec spec) =>
+        MatchesCard(card, profile, spec);
+
+    static CardMechanicProfile ResolveProfile(JsonObject card) {
+        var id = card["id"]?.GetValue<string>();
+        if (CardMechanicIndex.TryGet(id, out var profile))
+            return profile;
+        return CardMechanicIndex.InferFromSnapshot(card);
+    }
 
     public sealed record ComboArchetype(
         string Id,

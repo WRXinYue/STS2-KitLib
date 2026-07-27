@@ -181,6 +181,50 @@ export interface AiDecisionSnapshotDto {
   cardOffers: AiCardOfferDto[];
   skipCost: number;
   fightOutlook: AiFightOutlookDto | null;
+  macroInsights: AiMacroInsightsDto | null;
+}
+
+export interface AiMacroInsightsDto {
+  resources: AiMacroResourcesDto;
+  phaseWeights: AiScoringPhaseDto;
+  deckCombo: AiDeckComboDto;
+  scoringSummary: string;
+}
+
+export interface AiMacroResourcesDto {
+  hp: number;
+  maxHp: number;
+  gold: number;
+  deckSize: number;
+  actIndex: number;
+  totalFloor: number;
+  routeFightScore: number;
+  phaseLabel: string;
+}
+
+export interface AiScoringPhaseDto {
+  currentSimWeight: number;
+  optionWeight: number;
+  dilutionWeight: number;
+  phaseLabel: string;
+  rationale: string;
+}
+
+export interface AiDeckComboDto {
+  routeFightScore: number;
+  deckQualityScore: number;
+  survivalGap: number;
+  thinGap: number;
+  starterBloat: number;
+  archetypes: AiDeckArchetypeDto[];
+}
+
+export interface AiDeckArchetypeDto {
+  id: string;
+  role: string;
+  deckPieces: number;
+  relicPieces: number;
+  scoreContribution: number;
 }
 
 export interface AiCardOfferDto {
@@ -194,6 +238,12 @@ export interface AiCardOfferDto {
   dilution: number;
   early: number;
   exerciseProb: number;
+  primaryRole: string;
+  fightFuture: boolean;
+  roleReason: string;
+  inRunScore: number;
+  outRunScore: number;
+  archetypeIds: string[];
 }
 
 export interface AiFightOutlookDto {

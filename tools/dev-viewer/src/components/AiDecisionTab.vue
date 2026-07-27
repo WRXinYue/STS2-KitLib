@@ -57,10 +57,17 @@ const blockPolicyRows = computed(() => {
 
 const cardOffers = computed(() => snapshot.value?.cardOffers ?? []);
 const fightOutlook = computed(() => snapshot.value?.fightOutlook ?? null);
+const macroInsights = computed(() => snapshot.value?.macroInsights ?? null);
 const skipCost = computed(() => snapshot.value?.skipCost ?? 0);
 const showMacroPanels = computed(() => !live.value?.isInCombat);
 const macroTelemetryRows = computed(() =>
   telemetryRows.value.filter((row) => row.key === "hp"));
+
+function roleLabel(role: string) {
+  const key = `ai.roles.${role}`;
+  const translated = t(key);
+  return translated === key ? role : translated;
+}
 
 function boolLabel(v: boolean) {
   return v ? t("ai.bool.yes") : t("ai.bool.no");
@@ -128,9 +135,143 @@ function boolLabel(v: boolean) {
         </CardContent>
       </Card>
 
+      <Card v-if="showMacroPanels && macroInsights">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.macro.resourcesTitle") }}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="ai-grid">
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.hp") }}</span>
+              <span class="ai-grid__value">
+                {{ macroInsights.resources.hp }}/{{ macroInsights.resources.maxHp }}
+              </span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.gold") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.resources.gold }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.deckSize") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.resources.deckSize }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.act") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.resources.actIndex + 1 }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.floor") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.resources.totalFloor }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.routeFightScore") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.resources.routeFightScore }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.phase") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.resources.phaseLabel }}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card v-if="showMacroPanels && macroInsights">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.macro.phaseTitle") }}</CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-2">
+          <div class="ai-grid">
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.simWeight") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.phaseWeights.currentSimWeight.toFixed(2) }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.optionWeight") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.phaseWeights.optionWeight.toFixed(2) }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.dilutionWeight") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.phaseWeights.dilutionWeight.toFixed(2) }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.phase") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.phaseWeights.phaseLabel }}</span>
+            </div>
+          </div>
+          <p class="text-sm text-muted-foreground">
+            {{ macroInsights.phaseWeights.rationale }}
+          </p>
+          <p class="text-xs text-muted-foreground">
+            {{ t("ai.macro.summary") }}: {{ macroInsights.scoringSummary }}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card v-if="showMacroPanels && macroInsights">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.macro.deckComboTitle") }}</CardTitle>
+        </CardHeader>
+        <CardContent class="ai-hand-wrap">
+          <div class="ai-grid mb-3">
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.routeFightScore") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.deckCombo.routeFightScore }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.deckQuality") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.deckCombo.deckQualityScore }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.survivalGap") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.deckCombo.survivalGap }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.thinGap") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.deckCombo.thinGap }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.macro.starterBloat") }}</span>
+              <span class="ai-grid__value">{{ macroInsights.deckCombo.starterBloat }}</span>
+            </div>
+          </div>
+          <table
+            v-if="macroInsights.deckCombo.archetypes.length > 0"
+            class="ai-hand"
+          >
+            <thead>
+              <tr>
+                <th>{{ t("ai.macro.archetypeId") }}</th>
+                <th>{{ t("ai.macro.archetypeRole") }}</th>
+                <th>{{ t("ai.macro.deckPieces") }}</th>
+                <th>{{ t("ai.macro.relicPieces") }}</th>
+                <th>{{ t("ai.macro.contrib") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="arch in macroInsights.deckCombo.archetypes"
+                :key="arch.id"
+              >
+                <td>{{ arch.id }}</td>
+                <td>{{ roleLabel(arch.role) }}</td>
+                <td class="mono">{{ arch.deckPieces }}</td>
+                <td class="mono">{{ arch.relicPieces }}</td>
+                <td class="mono">{{ arch.scoreContribution }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p
+            v-else
+            class="text-sm text-muted-foreground"
+          >
+            {{ t("ai.log.empty") }}
+          </p>
+        </CardContent>
+      </Card>
+
       <Card v-if="showMacroPanels && fightOutlook">
         <CardHeader class="pb-2">
-          <CardTitle class="text-base">{{ t("ai.fightOutlook.title") }}</CardTitle>
+          <CardTitle class="text-base">{{ t("ai.macro.inRunTitle") }} · {{ t("ai.fightOutlook.title") }}</CardTitle>
         </CardHeader>
         <CardContent>
           <div class="ai-grid">
@@ -180,13 +321,17 @@ function boolLabel(v: boolean) {
             <thead>
               <tr>
                 <th>{{ t("ai.hand.name") }}</th>
+                <th>{{ t("ai.cardOffers.role") }}</th>
                 <th>{{ t("ai.cardOffers.total") }}</th>
+                <th>{{ t("ai.cardOffers.inRun") }}</th>
+                <th>{{ t("ai.cardOffers.outRun") }}</th>
                 <th>{{ t("ai.cardOffers.marginal") }}</th>
                 <th>{{ t("ai.cardOffers.option") }}</th>
                 <th>{{ t("ai.cardOffers.synergy") }}</th>
                 <th>{{ t("ai.cardOffers.dilution") }}</th>
                 <th>{{ t("ai.cardOffers.early") }}</th>
                 <th>{{ t("ai.cardOffers.exercise") }}</th>
+                <th>{{ t("ai.cardOffers.reason") }}</th>
               </tr>
             </thead>
             <tbody>
@@ -197,14 +342,30 @@ function boolLabel(v: boolean) {
                 <td>
                   <span class="font-medium">{{ offer.name }}</span>
                   <span class="text-xs text-muted-foreground ml-1">{{ offer.id }}</span>
+                  <div
+                    v-if="offer.archetypeIds?.length"
+                    class="text-xs text-muted-foreground mt-1"
+                  >
+                    {{ offer.archetypeIds.join(", ") }}
+                  </div>
+                </td>
+                <td class="ai-tags">
+                  <Badge
+                    :variant="offer.fightFuture ? 'destructive' : 'secondary'"
+                  >
+                    {{ roleLabel(offer.primaryRole) }}
+                  </Badge>
                 </td>
                 <td class="mono">{{ offer.total }}</td>
+                <td class="mono">{{ offer.inRunScore }}</td>
+                <td class="mono">{{ offer.outRunScore }}</td>
                 <td class="mono">{{ offer.marginal }}</td>
                 <td class="mono">{{ offer.option }}</td>
                 <td class="mono">{{ offer.synergy }}</td>
                 <td class="mono">{{ offer.dilution }}</td>
                 <td class="mono">{{ offer.early }}</td>
                 <td class="mono">{{ (offer.exerciseProb * 100).toFixed(0) }}%</td>
+                <td class="ai-defer text-xs text-muted-foreground">{{ offer.roleReason }}</td>
               </tr>
             </tbody>
           </table>

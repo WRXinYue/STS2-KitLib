@@ -58,7 +58,8 @@ public static class AiDecisionViewerModel {
             CopyDecisionLog(),
             BuildCardOffers(snapshot, plan),
             skipCost,
-            BuildFightOutlook(snapshot));
+            BuildFightOutlook(snapshot),
+            BuildMacroInsights(snapshot, plan));
     }
 
     static AiDecisionSnapshotDto BuildCombat(JsonObject snapshot, GamePhase phase, GameAction? action) {
@@ -126,6 +127,7 @@ public static class AiDecisionViewerModel {
             CopyDecisionLog(),
             [],
             0,
+            null,
             null);
     }
 
@@ -142,6 +144,7 @@ public static class AiDecisionViewerModel {
                 continue;
 
             var breakdown = CardOfferScoring.ScoreBreakdown(card, plan, deckSize, snapshot);
+            var role = MacroScoringInsights.ClassifyOffer(card, breakdown, snapshot, plan);
             list.Add(new AiCardOfferDto(
                 card["index"]?.GetValue<int>() ?? list.Count,
                 card["id"]?.GetValue<string>() ?? "",
@@ -152,7 +155,13 @@ public static class AiDecisionViewerModel {
                 breakdown.Option,
                 breakdown.Dilution,
                 breakdown.Early,
-                breakdown.ExerciseProb));
+                breakdown.ExerciseProb,
+                role.PrimaryRole,
+                role.FightFuture,
+                role.Reason,
+                role.InRunScore,
+                role.OutRunScore,
+                role.ArchetypeIds));
         }
 
         list.Sort((a, b) => b.Total.CompareTo(a.Total));
@@ -175,6 +184,46 @@ public static class AiDecisionViewerModel {
             outcome.ExpectedFightChip,
             outcome.LethalSamples,
             outcome.SampleCount);
+    }
+
+    static AiMacroInsightsDto BuildMacroInsights(JsonObject snapshot, DeckPlan plan) {
+        var resources = MacroScoringInsights.BuildResources(snapshot, plan);
+        var weights = MacroScoringInsights.GetPhaseWeights(snapshot);
+        var deckCombo = MacroScoringInsights.ScoreDeckComposition(snapshot, plan);
+
+        var archetypes = deckCombo.Archetypes
+            .Select(a => new AiDeckArchetypeDto(
+                a.Id, a.Role, a.DeckPieces, a.RelicPieces, a.ScoreContribution))
+            .ToList();
+
+        string summary =
+            $"Phase={weights.PhaseLabel}; simWt={weights.CurrentSimWeight:F2} optWt={weights.OptionWeight:F2}; "
+            + $"route={deckCombo.RouteFightScore} quality={deckCombo.DeckQualityScore}";
+
+        return new AiMacroInsightsDto(
+            new AiMacroResourcesDto(
+                resources.Hp,
+                resources.MaxHp,
+                resources.Gold,
+                resources.DeckSize,
+                resources.ActIndex,
+                resources.TotalFloor,
+                resources.RouteFightScore,
+                resources.PhaseLabel),
+            new AiScoringPhaseDto(
+                weights.CurrentSimWeight,
+                weights.OptionWeight,
+                weights.DilutionWeight,
+                weights.PhaseLabel,
+                weights.Rationale),
+            new AiDeckComboDto(
+                deckCombo.RouteFightScore,
+                deckCombo.DeckQualityScore,
+                deckCombo.SurvivalGap,
+                deckCombo.ThinGap,
+                deckCombo.StarterBloat,
+                archetypes),
+            summary);
     }
 
     static List<AiHandCardDto> BuildHand(CombatState state, int focusEnemy) {
