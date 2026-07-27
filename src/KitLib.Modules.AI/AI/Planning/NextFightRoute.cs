@@ -24,11 +24,26 @@ public static class NextFightRoute {
     public const int MaxCombats = 3;
 
     static readonly float[] DistanceWeights = [1.0f, 0.55f, 0.30f];
+    static int _cacheVisited = -1;
+    static MapCoord _cacheNextCoord = new(-1, -1);
+    static IReadOnlyList<NextFightNode>? _cachedNodes;
+
+    public static void ClearCache() {
+        _cacheVisited = -1;
+        _cacheNextCoord = new(-1, -1);
+        _cachedNodes = null;
+    }
 
     public static IReadOnlyList<NextFightNode> Resolve(RunState state, Player player) {
-        var plan = MapPathPlanner.Plan(state, player, forceRefresh: true);
+        var plan = MapPathPlanner.Plan(state, player);
         if (plan == null || plan.PathCoords.Count == 0)
             return [];
+
+        int visited = state.VisitedMapCoords.Count;
+        if (_cachedNodes != null
+            && _cacheVisited == visited
+            && _cacheNextCoord.Equals(plan.NextCoord))
+            return _cachedNodes;
 
         var map = state.Map;
         if (map == null)
@@ -69,6 +84,9 @@ public static class NextFightRoute {
             combatIdx++;
         }
 
+        _cacheVisited = visited;
+        _cacheNextCoord = plan.NextCoord;
+        _cachedNodes = nodes;
         return nodes;
     }
 

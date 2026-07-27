@@ -32,32 +32,37 @@ internal static class CardPileEffectResolver {
         int draw = 0, discard = 0, scry = 0, exhaustHand = 0;
         bool selfExhausts = false;
 
-        foreach (var card in ModelDb.AllCards) {
-            if (!string.Equals(card.Id.Entry, cardId, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            selfExhausts = card.Keywords.Contains(CardKeyword.Exhaust);
-
-            foreach (var key in CardEditActions.GetDynamicVarKeys(card)) {
-                var amount = CardEditActions.GetDynamicVar(card, key) ?? 0;
-                if (amount <= 0) continue;
-
-                var flags = OfficialMechanicProbe.FlagsFromDynamicVar(key);
-                if (flags.HasFlag(CardMechanicFlags.HasDraw)
-                    && string.Equals(key, "Cards", StringComparison.OrdinalIgnoreCase)) {
-                    draw = Math.Max(draw, amount);
+        try {
+            foreach (var card in ModelDb.AllCards) {
+                if (!string.Equals(card.Id.Entry, cardId, StringComparison.OrdinalIgnoreCase))
                     continue;
+
+                selfExhausts = card.Keywords.Contains(CardKeyword.Exhaust);
+
+                foreach (var key in CardEditActions.GetDynamicVarKeys(card)) {
+                    var amount = CardEditActions.GetDynamicVar(card, key) ?? 0;
+                    if (amount <= 0) continue;
+
+                    var flags = OfficialMechanicProbe.FlagsFromDynamicVar(key);
+                    if (flags.HasFlag(CardMechanicFlags.HasDraw)
+                        && string.Equals(key, "Cards", StringComparison.OrdinalIgnoreCase)) {
+                        draw = Math.Max(draw, amount);
+                        continue;
+                    }
+
+                    if (flags.HasFlag(CardMechanicFlags.HasDraw))
+                        draw = Math.Max(draw, amount);
+                    if (flags.HasFlag(CardMechanicFlags.HasDiscard))
+                        discard = Math.Max(discard, amount);
+                    if (flags.HasFlag(CardMechanicFlags.HasScry))
+                        scry = Math.Max(scry, amount);
                 }
 
-                if (flags.HasFlag(CardMechanicFlags.HasDraw))
-                    draw = Math.Max(draw, amount);
-                if (flags.HasFlag(CardMechanicFlags.HasDiscard))
-                    discard = Math.Max(discard, amount);
-                if (flags.HasFlag(CardMechanicFlags.HasScry))
-                    scry = Math.Max(scry, amount);
+                break;
             }
-
-            break;
+        }
+        catch {
+            // Offline sandbox / headless tests without full game data.
         }
 
         if (draw == 0 && CardMechanicIndex.TryGet(cardId, out var profile)
@@ -72,5 +77,14 @@ internal static class CardPileEffectResolver {
         var effects = new PileEffects(draw, discard, scry, exhaustHand);
         Cache[cardId] = effects;
         return effects;
+    }
+
+    /// <summary>Offline combat sandbox: skip ModelDb scan for simple cards.</summary>
+    internal static void SeedNoPileEffects(IEnumerable<string> cardIds) {
+        foreach (var id in cardIds) {
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+            Cache[id] = default;
+        }
     }
 }

@@ -19,7 +19,8 @@ public sealed record AiDecisionSnapshotDto(
     IReadOnlyList<AiCardOfferDto> CardOffers,
     int SkipCost,
     AiFightOutlookDto? FightOutlook,
-    AiMacroInsightsDto? MacroInsights);
+    AiMacroInsightsDto? MacroInsights,
+    AiMapRouteInsightsDto? MapRouteInsights);
 
 public sealed record AiMacroInsightsDto(
     AiMacroResourcesDto Resources,
@@ -143,3 +144,41 @@ public sealed record AiBlockPolicyDto(
     int EnergyReserve,
     int NetDamage,
     int AffordableBlock);
+
+public sealed record AiMapRouteInsightsDto(
+    string PathSummary,
+    int PathScore,
+    int PathRisk,
+    float CombatsToRest,
+    int ElitesToRest,
+    string? NextNodeType,
+    AiRestEvDto RestEv,
+    IReadOnlyList<AiRouteFightEvDto> RouteFights,
+    IReadOnlyList<AiMapOptionDto> MapOptions);
+
+public sealed record AiRestEvDto(
+    int HealEv,
+    int SmithEv,
+    int HealAmount,
+    int RouteValueBaseline,
+    int HealRouteValue,
+    int SmithRouteValue,
+    string Recommended,
+    int? UpgradeCardIndex,
+    string? UpgradeCardId);
+
+public sealed record AiRouteFightEvDto(
+    string EncounterId,
+    string RoomType,
+    float Weight,
+    int RewardEv,
+    int FightCost,
+    int NetEv,
+    int IncomingTurn1);
+
+public sealed record AiMapOptionDto(
+    int Index,
+    string PointType,
+    int Score,
+    int Row,
+    int Col);

@@ -13,6 +13,8 @@ internal static class CombatSetupEvaluator {
     const int IncomingTradeFutureReliefDivisor = 2;
     const int IncomingTradeChipFocusDivisor = 4;
     const int InfernoMultiTargetTradeMinRatio = 4;
+    const int HighNextTurnPressureThreshold = 12;
+    const int NonDamageIncomingFoldCap = 10;
     public static int ComputeVulnerableDeferValue(
         JsonObject snapshot,
         JsonArray? hand,
@@ -80,7 +82,8 @@ internal static class CombatSetupEvaluator {
         int InfernoOutlook,
         int PileOutlook,
         int PlayerHpAfterTurn,
-        int PotionRetainCost);
+        int PotionRetainCost,
+        int AvoidableIncoming);
 
     /// <summary>Greedy completion of the turn from a mid-turn state, then outcome metrics.</summary>
     public static CombatLineOutcome EvaluateLine(CombatState midTurn, CombatState? decisionRoot = null) {
@@ -88,8 +91,32 @@ internal static class CombatSetupEvaluator {
         return EvaluateLineOutcome(SimulateGreedyPlays(midTurn), potionCost);
     }
 
+    /// <summary>End-of-turn outcome from the current sim state — no greedy card completion.</summary>
+    public static CombatLineOutcome EvaluateTerminalLine(CombatState state, CombatState? decisionRoot = null) {
+        int potionCost = decisionRoot != null ? PotionLineCost.Estimate(decisionRoot, state) : 0;
+        return EvaluateLineOutcome(state, potionCost);
+    }
+
+    /// <summary>Beam width ranking from mid-turn state without greedy fill-in.</summary>
+    public static int RankMidTurnForBeam(CombatState state) {
+        if (state.AliveEnemyCount == 0)
+            return PackLineScore(WipeOutcome(state));
+
+        long score = PackLineScore(EvaluateTerminalLine(state));
+        if (!LineSearchState.IsExhausted(state)) {
+            score += Math.Min(state.Energy, 8) * 400_000L;
+            score += Math.Min(CombatCardCost.CountAffordable(state), 6) * 80_000L;
+        }
+
+        const int packedCap = int.MaxValue - 2;
+        return score > packedCap ? packedCap : (int)score;
+    }
+
     /// <summary>Positive when <paramref name="candidate"/> is better than <paramref name="baseline"/>.</summary>
     public static int CompareLines(CombatLineOutcome baseline, CombatLineOutcome candidate) {
+        if (candidate.AvoidableIncoming != baseline.AvoidableIncoming)
+            return baseline.AvoidableIncoming - candidate.AvoidableIncoming;
+
         if (candidate.Incoming != baseline.Incoming) {
             int incomingCmp = CompareIncomingTrade(
                 baseline.Incoming, candidate.Incoming,
@@ -106,6 +133,10 @@ internal static class CombatSetupEvaluator {
             baseline.FutureIncoming0, baseline.FutureIncoming1, baseline.FutureIncoming2);
         if (futureCmp != 0)
             return futureCmp;
+
+        int setupCmp = CompareNoImmediateThreatSetup(baseline, candidate);
+        if (setupCmp != 0)
+            return setupCmp;
 
         if (candidate.DeckPollution != baseline.DeckPollution)
             return baseline.DeckPollution - candidate.DeckPollution;
@@ -152,7 +183,14 @@ internal static class CombatSetupEvaluator {
             return 1;
 
         int extra = candidateIncoming - baselineIncoming;
-        int futureRelief = (baselineF0 - candidateF0) + (baselineF1 - candidateF1) + (baselineF2 - candidateF2);
+        if (extra > BlockDefensePolicy.SafeChipNetMax
+            && candidateF1 >= HighNextTurnPressureThreshold
+            && candidateFocusHp > 0)
+            return baselineIncoming - candidateIncoming;
+
+        int futureRelief = (baselineF0 - candidateF0)
+            + 2 * (baselineF1 - candidateF1)
+            + (baselineF2 - candidateF2);
         int focusGain = baselineFocusHp - candidateFocusHp;
         int focusBenefit = candidateFocusHp == 0
             ? focusGain
@@ -163,11 +201,41 @@ internal static class CombatSetupEvaluator {
         return baselineIncoming - candidateIncoming;
     }
 
+    /// <summary>
+    /// When this turn has no attack damage, prefer setup (vuln/weak) and real damage over idle block.
+    /// Block played into a shrink-only turn is cleared before the next attack lands.
+    /// </summary>
+    static int CompareNoImmediateThreatSetup(CombatLineOutcome baseline, CombatLineOutcome candidate) {
+        if (baseline.Incoming > 0 || candidate.Incoming > 0)
+            return 0;
+        if (baseline.AvoidableIncoming > 0 || candidate.AvoidableIncoming > 0)
+            return 0;
+        if (!HasUpcomingAttackPressure(baseline) && !HasUpcomingAttackPressure(candidate))
+            return 0;
+
+        if (candidate.VulnerableOutlook != baseline.VulnerableOutlook)
+            return candidate.VulnerableOutlook - baseline.VulnerableOutlook;
+
+        if (candidate.WeakOutlook != baseline.WeakOutlook)
+            return candidate.WeakOutlook - baseline.WeakOutlook;
+
+        if (candidate.FocusHp != baseline.FocusHp)
+            return baseline.FocusHp - candidate.FocusHp;
+
+        return 0;
+    }
+
+    static bool HasUpcomingAttackPressure(CombatLineOutcome outcome) =>
+        outcome.FutureIncoming0 > 0
+        || outcome.FutureIncoming1 >= HighNextTurnPressureThreshold / 2;
+
     /// <summary>Fixed packing aligned with <see cref="CompareLines"/> — fits in int32 without clipping.</summary>
     public static int PackLineScore(CombatLineOutcome outcome) {
         const int cap = 250;
+        int playerHp = Math.Clamp(outcome.PlayerHpAfterTurn, 0, cap);
         long score =
             (cap - Math.Min(outcome.Incoming, cap)) * 8_000_000L
+            + (cap - Math.Min(outcome.AvoidableIncoming, cap)) * 4_000_000L
             + (cap - Math.Min(outcome.FutureIncoming0, cap)) * 8_000L
             + (cap - Math.Min(outcome.FutureIncoming1, cap)) * 800L
             + (cap - Math.Min(outcome.FutureIncoming2, cap)) * 80L
@@ -178,7 +246,7 @@ internal static class CombatSetupEvaluator {
             + Math.Min(outcome.WeakOutlook, 2000)
             + Math.Min(outcome.InfernoOutlook, 8000)
             + Math.Min(outcome.PileOutlook, 500)
-            + Math.Min(outcome.PlayerHpAfterTurn, cap) * 4_000L;
+            + playerHp * 4_000L;
         const int packedCap = int.MaxValue - 2;
         return score > packedCap ? packedCap : (int)score;
     }
@@ -186,7 +254,9 @@ internal static class CombatSetupEvaluator {
     public static int RankPlayAction(
         CombatState state,
         SimCombatAction action,
-        JsonObject? rootSnapshot = null) {
+        JsonObject? rootSnapshot = null,
+        CombatState? decisionRoot = null,
+        bool greedyLineCompletion = false) {
         if (action.Kind == SimActionKind.EndTurn)
             return int.MinValue;
 
@@ -194,15 +264,20 @@ internal static class CombatSetupEvaluator {
         if (next.AliveEnemyCount == 0)
             return int.MaxValue;
 
-        int baseScore = PackLineScore(EvaluateLine(next));
+        var lineOutcome = greedyLineCompletion
+            ? EvaluateLine(next, decisionRoot)
+            : EvaluateTerminalLine(next, decisionRoot);
+        int baseScore = PackLineScore(lineOutcome);
         if (action.Kind == SimActionKind.PlayCard
             && action.HandIndex >= 0
             && action.HandIndex < state.Hand.Count) {
             var card = state.Hand[action.HandIndex];
             baseScore += AttackerKillPriority.OpenerBonus(state, action);
             baseScore -= AttackerKillPriority.SetupOpenerPenalty(state, card);
+            baseScore -= AttackerKillPriority.WrongTargetPenalty(state, action.EnemyIndex);
             if (BlockDefensePolicy.ShouldDeferBlockScalingAttack(state, card, action.HandIndex, action.EnemyIndex))
                 baseScore -= AttackerKillPriority.SetupOpenerPenaltyAmount;
+            baseScore -= BlockDefensePolicy.IdleBlockOpenerPenalty(state, card);
             if (KeyCardBurnRiskEvaluator.ShouldPruneBurnEnablerOpener(state, action.HandIndex))
                 baseScore -= AttackerKillPriority.SetupOpenerPenaltyAmount;
         }
@@ -210,7 +285,7 @@ internal static class CombatSetupEvaluator {
     }
 
     public static CombatLineOutcome WipeOutcome(CombatState state) =>
-        new(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, state.PlayerHp, 0);
+        new(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, state.PlayerHp, 0, 0);
 
     static int CompareLineOutcome(CombatLineOutcome without, CombatLineOutcome with) =>
         CompareLines(without, with);
@@ -239,7 +314,8 @@ internal static class CombatSetupEvaluator {
             0,
             PileRhythmEvaluator.DrawPileOutlook(afterTurn),
             afterTurn.PlayerHp + InfernoLinePlayerHpCredit(afterTurn),
-            potionRetainCost);
+            potionRetainCost,
+            AvoidableIncomingAtLineEnd(midTurn));
     }
 
     /// <summary>PackLineScore weights player HP heavily; credit inferno turn-start AOE trades on multi-target turns.</summary>
@@ -263,7 +339,35 @@ internal static class CombatSetupEvaluator {
     static int EffectiveIncomingForLine(CombatState midTurn) {
         if (midTurn.AliveEnemyCount == 0)
             return 0;
-        return ThreatModel.NetDamageAfterBlock(midTurn);
+
+        int net = ThreatModel.NetDamageAfterBlock(midTurn);
+        if (net > 0)
+            return net;
+
+        int nd = ThreatModel.NonDamageAtIntentStep(midTurn, 0);
+        if (nd <= 0)
+            return 0;
+
+        return Math.Min(nd, NonDamageIncomingFoldCap);
+    }
+
+    /// <summary>Net damage affordable block could still eliminate before end turn.</summary>
+    static int AvoidableIncomingAtLineEnd(CombatState midTurn) {
+        if (midTurn.AliveEnemyCount == 0)
+            return 0;
+
+        int net = ThreatModel.NetDamageAfterBlock(midTurn);
+        if (net <= 0)
+            return 0;
+
+        if (SimLethalChecker.CanSecureKillThisTurn(midTurn))
+            return 0;
+
+        int affordable = BlockDefensePolicy.AffordableBlockWithBudget(midTurn, midTurn.Energy);
+        if (affordable < net)
+            return 0;
+
+        return net;
     }
 
     static int ScoreMidTurn(CombatState s) =>
@@ -772,8 +876,16 @@ internal static class CombatSetupEvaluator {
             .ThenBy(e => e.EffectiveHp);
 
     /// <summary>Primary focus for single-target attacks this turn.</summary>
-    public static int PrimaryAttackTargetIndex(CombatState state) =>
-        OrderEnemiesByThreat(state).Select(e => e.Index).FirstOrDefault();
+    public static int PrimaryAttackTargetIndex(CombatState state) {
+        if (ThreatModel.IncomingDamage(state) > 0) {
+            int focus = GreedyAttackFocusIndex(state);
+            if (focus >= 0)
+                return focus;
+        }
+
+        var first = OrderEnemiesByThreat(state).FirstOrDefault();
+        return first?.Index ?? -1;
+    }
 
     /// <summary>Greedy sim focus: this-turn attackers, then status injectors, then horizon threat.</summary>
     public static int GreedyAttackFocusIndex(CombatState state) {
@@ -791,19 +903,26 @@ internal static class CombatSetupEvaluator {
                 .FirstOrDefault();
             if (attacker != null)
                 return attacker.Index;
+
+            int topIncoming = ThreatModel.HighestIncomingAttackerIndex(state);
+            if (topIncoming >= 0)
+                return topIncoming;
         }
 
-        var statusThreat = state.Enemies
-            .Where(e => e.IsAlive && ThreatModel.IsViableAttackTarget(state, e))
-            .Where(e => ThreatModel.NonDamageForStep(state, e, 0) > 0
-                || e.MechanicFlags.HasFlag(EnemyMechanicFlags.HasStatusCardIntent))
-            .OrderBy(e => e.EffectiveHp)
-            .ThenByDescending(e => ThreatModel.NonDamageForStep(state, e, 0))
-            .FirstOrDefault();
-        if (statusThreat != null)
-            return statusThreat.Index;
+        if (!ThreatModel.HasIncomingAttackers(state)) {
+            var statusThreat = state.Enemies
+                .Where(e => e.IsAlive && ThreatModel.IsViableAttackTarget(state, e))
+                .Where(e => ThreatModel.NonDamageForStep(state, e, 0) > 0
+                    || e.MechanicFlags.HasFlag(EnemyMechanicFlags.HasStatusCardIntent))
+                .OrderBy(e => e.EffectiveHp)
+                .ThenByDescending(e => ThreatModel.NonDamageForStep(state, e, 0))
+                .FirstOrDefault();
+            if (statusThreat != null)
+                return statusThreat.Index;
+        }
 
-        return PrimaryAttackTargetIndex(state);
+        var first = OrderEnemiesByThreat(state).FirstOrDefault();
+        return first?.Index ?? -1;
     }
 
     public static IEnumerable<CombatEnemy> OrderEnemiesForGreedyAttacks(CombatState state) {
@@ -831,7 +950,9 @@ internal static class CombatSetupEvaluator {
         if (state.AliveEnemyCount < 2)
             return 0;
 
-        var focus = PrimaryAttackTargetIndex(state);
+        var focus = ThreatModel.IncomingDamage(state) > 0
+            ? GreedyAttackFocusIndex(state)
+            : PrimaryAttackTargetIndex(state);
         if (focus < 0)
             return 0;
 
@@ -896,11 +1017,8 @@ internal static class CombatSetupEvaluator {
         int focusIndex = GreedyAttackFocusIndex(state);
 
         while (true) {
+            focusIndex = GreedyAttackFocusIndex(s);
             var focusEnemy = s.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIndex);
-            if (focusEnemy == null) {
-                focusIndex = GreedyAttackFocusIndex(s);
-                focusEnemy = s.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == focusIndex);
-            }
 
             int incomingSlack = ThreatModel.IncomingDamage(s) > 0
                 ? 0

@@ -6,6 +6,7 @@ using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
 using KitLib.AI.Sts2;
 using MegaCrit.Sts2.Core.Map;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI.AutoPlay.Scoring;
 
@@ -17,14 +18,6 @@ public static class RestScorer {
         var options = snapshot["restOptions"]?.AsArray();
         if (IsRestChoiceConsumed(options))
             return new GameAction { Type = ActionType.Proceed, Reason = "Leave rest site (action used)" };
-        var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
-        var maxHp = snapshot["maxHp"]?.GetValue<int>() ?? 1;
-        var hpRatio = maxHp > 0 ? (float)hp / maxHp : 1f;
-        var plan = DeckPlanInferer.Infer(snapshot);
-        var metrics = DeckEvaluator.Evaluate(snapshot, plan);
-        var upgradeScore = MapUpgradeEvaluator.BestDeckUpgradeScore(snapshot, plan);
-        var eliteAhead = NextNodeIsElite();
-        var pathPressure = HasPathSurvivalPressure(metrics);
 
         if (options == null || options.Count == 0)
             return new GameAction { Type = ActionType.Proceed, Reason = "Leave rest site (no options)" };
@@ -34,6 +27,36 @@ public static class RestScorer {
 
         if (healIdx < 0)
             return new GameAction { Type = ActionType.Proceed, Reason = "Leave rest site (heal used)" };
+
+        var hp = snapshot["currentHp"]?.GetValue<int>() ?? 0;
+        var maxHp = snapshot["maxHp"]?.GetValue<int>() ?? 1;
+        var hpRatio = maxHp > 0 ? (float)hp / maxHp : 1f;
+        var ev = RestEvScorer.Evaluate(snapshot);
+        bool hasRoute = NextFightRoute.ResolveFromSnapshot(snapshot).Count > 0;
+
+        if (hasRoute && smithIdx >= 0 && ev.SmithEv > ev.HealEv && ev.SmithEv > 0) {
+            return new GameAction {
+                Type = ActionType.UpgradeCard,
+                TargetIndex = smithIdx,
+                Reason = $"Rest smith EV +{ev.SmithEv} > heal +{ev.HealEv} "
+                    + $"route {ev.RouteValueBaseline}→{ev.SmithRouteValue} HP {hp}/{maxHp}",
+            };
+        }
+
+        if (hasRoute && ev.HealEv >= ev.SmithEv) {
+            return new GameAction {
+                Type = ActionType.Rest,
+                TargetIndex = healIdx,
+                Reason = $"Rest heal EV +{ev.HealEv} route {ev.RouteValueBaseline}→{ev.HealRouteValue} "
+                    + $"(+{ev.HealAmount} HP) HP {hp}/{maxHp}",
+            };
+        }
+
+        var plan = DeckPlanInferer.Infer(snapshot);
+        var metrics = DeckEvaluator.Evaluate(snapshot, plan);
+        var upgradeScore = MapUpgradeEvaluator.BestDeckUpgradeScore(snapshot, plan);
+        var eliteAhead = NextNodeIsElite();
+        var pathPressure = HasPathSurvivalPressure(metrics);
 
         var urgentHealThreshold = pathPressure ? 0.65f : 0.55f;
         if (hpRatio < urgentHealThreshold || (hpRatio < 0.7f && eliteAhead)) {

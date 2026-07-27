@@ -54,7 +54,7 @@ public static class MapScorer {
             if (!Enum.TryParse<MapPointType>(typeStr, out var type))
                 continue;
 
-            int score = MapNodeWeightScorer.ScoreNode(type, ctx);
+            int score = MapNodeEvScorer.ScoreNode(type, ctx, snapshot);
             if (score > bestScore) {
                 bestScore = score;
                 bestIdx = node["index"]?.GetValue<int>() ?? i;

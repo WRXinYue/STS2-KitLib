@@ -137,7 +137,8 @@ public static class DeckDrawEvEstimator {
     }
 
     public static TurnOneMetrics EstimateSingle(CombatState state, int incoming) {
-        int beamScore = CombatBeamSearch.RunBestScore(state, CombatBeamSearch.ShallowMacro);
+        int beamScore = CombatBeamSearch.RunBestScore(
+            state, CombatBeamSearch.ShallowMacro, scoreCompleteLinesOnly: false);
         int maxDamage = SimLethalChecker.EstimateMaxDamage(state);
         int affordableBlock = BlockDefensePolicy.AffordableBlockTotal(state);
         int blockGap = Math.Max(0, incoming - affordableBlock - state.PlayerBlock);

@@ -47,20 +47,33 @@ public static class VulnerableOutlookEvaluator {
     }
 
     static int AverageCyclingAttackDamage(CombatState state) {
-        var cards = state.DrawPile
-            .Concat(state.DiscardPile)
-            .Where(c => c.Damage > 0
-                && (string.Equals(c.CardType, "Attack", StringComparison.OrdinalIgnoreCase) || c.Damage > 0))
-            .ToList();
+        long sum = 0;
+        int count = 0;
 
-        if (cards.Count == 0)
+        foreach (var card in state.Hand) {
+            if (card.Damage <= 0
+                && !string.Equals(card.CardType, "Attack", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (!CombatDamageCalc.DealsAttackDamage(card))
+                continue;
+
+            sum += CombatDamageCalc.OutgoingDamage(card, state, vulnerableOnTarget: 0);
+            count++;
+        }
+
+        foreach (var card in state.DrawPile.Concat(state.DiscardPile)) {
+            if (card.Damage <= 0
+                && !string.Equals(card.CardType, "Attack", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            sum += CombatDamageCalc.OutgoingDamage(card, state.Modifiers, vulnerableOnTarget: 0);
+            count++;
+        }
+
+        if (count == 0)
             return 0;
 
-        long sum = 0;
-        foreach (var card in cards)
-            sum += CombatDamageCalc.OutgoingDamage(card, state.Modifiers, vulnerableOnTarget: 0);
-
-        return (int)Math.Round((double)sum / cards.Count);
+        return (int)Math.Round((double)sum / count);
     }
 
     static double EstimateAttackHitsPerTurn(CombatState state) {
@@ -72,8 +85,30 @@ public static class VulnerableOutlookEvaluator {
         int deck = state.DrawPile.Count + state.DiscardPile.Count;
         int sampleSize = deck > 0 ? Math.Min(deck, Math.Max(draw * 4, 20)) : draw * 4;
         var sample = DrawPlanner.PeekTop(state, sampleSize);
-        if (sample.Count == 0)
+        if (sample.Count == 0) {
+            int handHits = 0;
+            int remaining = energy;
+            foreach (var card in state.Hand) {
+                if (card.Damage <= 0
+                    && !string.Equals(card.CardType, "Attack", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (!CombatDamageCalc.DealsAttackDamage(card))
+                    continue;
+
+                int cost = CombatDamageCalc.PlanningCost(
+                    CombatPileSimulator.HandToPile(card), state.Modifiers, energy);
+                if (cost > remaining)
+                    continue;
+
+                remaining -= cost;
+                handHits++;
+            }
+
+            if (handHits > 0)
+                return handHits;
+
             return Math.Min(energy, draw);
+        }
 
         int windows = 0;
         int hitTotal = 0;

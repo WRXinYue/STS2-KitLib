@@ -39,6 +39,7 @@ public static class ThreatModel {
             0,
             PileRhythmEvaluator.DrawPileOutlook(state),
             state.PlayerHp,
+            0,
             0));
     }
 
@@ -79,6 +80,20 @@ public static class ThreatModel {
 
     public static int EffectiveHp(CombatState state) =>
         Math.Max(1, state.PlayerHp - state.StatusDamage);
+
+    /// <summary>Combat index of the highest this-turn incoming attacker, or -1.</summary>
+    public static int HighestIncomingAttackerIndex(CombatState state) {
+        var attacker = state.Enemies
+            .Where(e => e.IsAlive && e.EffectiveIncoming > 0
+                && IsViableAttackTarget(state, e))
+            .OrderByDescending(e => e.EffectiveIncoming)
+            .ThenBy(e => e.EffectiveHp)
+            .FirstOrDefault();
+        return attacker?.Index ?? -1;
+    }
+
+    public static bool HasIncomingAttackers(CombatState state) =>
+        HighestIncomingAttackerIndex(state) >= 0;
 
     public static bool IsFatalIfUnblocked(CombatState state) =>
         NetDamageAfterBlock(state) >= EffectiveHp(state);
@@ -280,8 +295,12 @@ public static class ThreatModel {
 
         int peak = PeakScheduledDamage(enemy);
         int horizon = HorizonThreatForEnemy(enemy, state, 1, LineFutureHorizonTurns);
-        int thisTurn = DebuffDamageCalc.MitigateWeakIncoming(enemy.IntentDamage, enemy.Weak)
-            + NonDamageForStep(state, enemy, 0);
+        int damageThisTurn = DebuffDamageCalc.MitigateWeakIncoming(enemy.IntentDamage, enemy.Weak);
+        int ndThisTurn = NonDamageForStep(state, enemy, 0);
+        if (HasIncomingAttackers(state) && damageThisTurn <= 0)
+            ndThisTurn /= 4;
+
+        int thisTurn = damageThisTurn + ndThisTurn;
 
         int poolPeak = 0;
         foreach (var e in alive)
@@ -299,10 +318,12 @@ public static class ThreatModel {
         int peakTerm = poolPeak > 0 ? peak * 1000 / poolPeak : peak * 100;
         int horizonTerm = poolHorizon > 0 ? horizon * 1000 / poolHorizon : horizon * 100;
         int hpTerm = poolHp > 0 ? enemy.CurrentHp * 1000 / poolHp : enemy.CurrentHp * 100;
-        int pokeDenom = Math.Max(1, poolPeak + thisTurn);
+        int pokeDenom = Math.Max(1, poolPeak + damageThisTurn);
         int thisTerm = smallPoke
-            ? thisTurn * 250 / pokeDenom
-            : thisTurn * 500 / pokeDenom;
+            ? damageThisTurn * 250 / pokeDenom
+            : damageThisTurn * 500 / pokeDenom;
+        if (NetDamageAfterBlock(state) > 0 && damageThisTurn > 0)
+            thisTerm += damageThisTurn * 400 / Math.Max(1, EffectiveHp(state));
 
         return peakTerm + horizonTerm + hpTerm + thisTerm;
     }

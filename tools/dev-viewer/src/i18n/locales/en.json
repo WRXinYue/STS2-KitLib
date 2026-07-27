@@ -247,6 +247,41 @@
       "chip": "E[turn-1 chip]",
       "fightChip": "E[fight chip]",
       "lethal": "Lethal samples"
+    },
+    "mapRoute": {
+      "title": "Map route (sim EV)",
+      "path": "Planned path",
+      "pathScore": "Path score",
+      "pathRisk": "Path risk",
+      "combatsToRest": "Combats to rest",
+      "elitesToRest": "Elites to rest",
+      "nextNode": "Next node",
+      "restTitle": "Rest site EV",
+      "healEv": "Heal EV",
+      "smithEv": "Smith EV",
+      "healAmount": "Heal amount",
+      "routeBaseline": "Route baseline",
+      "healRoute": "After heal",
+      "smithRoute": "After smith",
+      "recommended": "Recommended",
+      "upgradeCard": "Upgrade target",
+      "fightsTitle": "Route fight EV",
+      "encounter": "Encounter",
+      "roomType": "Room",
+      "weight": "Weight",
+      "rewardEv": "Reward EV",
+      "fightCost": "Fight cost",
+      "netEv": "Net EV",
+      "incoming": "Turn-1 incoming",
+      "optionsTitle": "Map node scores",
+      "nodeType": "Type",
+      "score": "Sim score",
+      "row": "Row",
+      "col": "Col"
+    },
+    "restChoice": {
+      "Heal": "Heal",
+      "Smith": "Smith"
     }
   }
 }

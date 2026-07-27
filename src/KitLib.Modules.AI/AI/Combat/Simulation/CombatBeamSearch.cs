@@ -23,17 +23,19 @@ public static class CombatBeamSearch {
     public static int RunBestScore(
         CombatState root,
         BeamSearchOptions options,
-        JsonObject? rootSnapshot = null) {
-        var result = Run(root, options, rootSnapshot);
+        JsonObject? rootSnapshot = null,
+        bool scoreCompleteLinesOnly = true) {
+        var result = Run(root, options, rootSnapshot, scoreCompleteLinesOnly);
         return result.HasResult ? result.Score : int.MinValue;
     }
 
     public static BeamSearchResult Run(
         CombatState root,
         BeamSearchOptions options,
-        JsonObject? rootSnapshot = null) {
+        JsonObject? rootSnapshot = null,
+        bool scoreCompleteLinesOnly = true) {
         var sw = Stopwatch.StartNew();
-        return RunBeam(root, options.MaxDepth, options, sw, rootSnapshot);
+        return RunBeam(root, options.MaxDepth, options, sw, rootSnapshot, scoreCompleteLinesOnly);
     }
 
     static BeamSearchResult RunBeam(
@@ -41,14 +43,19 @@ public static class CombatBeamSearch {
         int maxDepth,
         BeamSearchOptions config,
         Stopwatch sw,
-        JsonObject? rootSnapshot) {
+        JsonObject? rootSnapshot,
+        bool scoreCompleteLinesOnly) {
         var beam = new List<BeamNode> {
-            new(root, [], RankLine(root)),
+            new(root, [], RankLine(root, scoreCompleteLinesOnly)),
         };
 
         List<SimCombatAction>? bestPath = null;
         CombatSetupEvaluator.CombatLineOutcome? bestOutcome = null;
         int bestDepth = 0;
+
+        if (LineSearchState.IsExhausted(root))
+            ConsiderLeaf(root, root, [], 0, rootSnapshot, scoreCompleteLinesOnly,
+                ref bestPath, ref bestOutcome, ref bestDepth);
 
         for (int depth = 0; depth < maxDepth && sw.ElapsedMilliseconds < config.TimeBudgetMs; depth++) {
             var nextBeam = new List<BeamNode>();
@@ -56,12 +63,16 @@ public static class CombatBeamSearch {
                 if (sw.ElapsedMilliseconds >= config.TimeBudgetMs)
                     break;
 
-                if (node.State.Energy <= 0 || !CombatCardCost.HasAffordablePlay(node.State))
-                    ConsiderLeaf(root, node.State, node.Path, depth, rootSnapshot,
+                if (LineSearchState.IsExhausted(node.State))
+                    ConsiderLeaf(root, node.State, node.Path, depth, rootSnapshot, scoreCompleteLinesOnly,
                         ref bestPath, ref bestOutcome, ref bestDepth);
 
                 foreach (var action in LegalActionGenerator.GenerateOrdered(
-                    node.State, config.MaxActionsPerNode, rootSnapshot)) {
+                    node.State,
+                    config.MaxActionsPerNode,
+                    rootSnapshot,
+                    root,
+                    scoreCompleteLinesOnly)) {
                     if (action.Kind == SimActionKind.EndTurn)
                         continue;
 
@@ -69,19 +80,26 @@ public static class CombatBeamSearch {
                     var newPath = node.Path.Append(action).ToList();
 
                     if (next.AliveEnemyCount == 0) {
-                        ConsiderLeaf(root, next, newPath, depth + 1, rootSnapshot,
+                        ConsiderLeaf(root, next, newPath, depth + 1, rootSnapshot, scoreCompleteLinesOnly,
                             ref bestPath, ref bestOutcome, ref bestDepth);
                         continue;
                     }
 
-                    ConsiderLeaf(root, next, newPath, depth + 1, rootSnapshot,
-                        ref bestPath, ref bestOutcome, ref bestDepth);
+                    if (scoreCompleteLinesOnly) {
+                        if (LineSearchState.IsExhausted(next))
+                            ConsiderLeaf(root, next, newPath, depth + 1, rootSnapshot, scoreCompleteLinesOnly,
+                                ref bestPath, ref bestOutcome, ref bestDepth);
+                    }
+                    else {
+                        ConsiderLeaf(root, next, newPath, depth + 1, rootSnapshot, scoreCompleteLinesOnly,
+                            ref bestPath, ref bestOutcome, ref bestDepth);
+                    }
 
-                    bool exhausted = next.Energy <= 0 || !CombatCardCost.HasAffordablePlay(next);
+                    bool exhausted = LineSearchState.IsExhausted(next);
                     if (exhausted || depth + 1 >= maxDepth)
                         continue;
 
-                    nextBeam.Add(new BeamNode(next, newPath, RankLine(next)));
+                    nextBeam.Add(new BeamNode(next, newPath, RankLine(next, scoreCompleteLinesOnly)));
                 }
             }
 
@@ -92,6 +110,12 @@ public static class CombatBeamSearch {
                 .OrderByDescending(n => n.Score)
                 .Take(config.BeamWidth)
                 .ToList();
+        }
+
+        foreach (var node in beam) {
+            if (LineSearchState.IsExhausted(node.State) || node.State.AliveEnemyCount == 0)
+                ConsiderLeaf(root, node.State, node.Path, node.Path.Count, rootSnapshot, scoreCompleteLinesOnly,
+                    ref bestPath, ref bestOutcome, ref bestDepth);
         }
 
         int score = int.MinValue;
@@ -110,12 +134,15 @@ public static class CombatBeamSearch {
         List<SimCombatAction> path,
         int depth,
         JsonObject? rootSnapshot,
+        bool scoreCompleteLinesOnly,
         ref List<SimCombatAction>? bestPath,
         ref CombatSetupEvaluator.CombatLineOutcome? bestOutcome,
         ref int bestDepth) {
         CombatSetupEvaluator.CombatLineOutcome outcome = state.AliveEnemyCount == 0
             ? CombatSetupEvaluator.WipeOutcome(state)
-            : CombatSetupEvaluator.EvaluateLine(state, root);
+            : scoreCompleteLinesOnly
+                ? CombatSetupEvaluator.EvaluateTerminalLine(state, root)
+                : CombatSetupEvaluator.EvaluateLine(state, root);
 
         if (IsBetterLineOutcome(root, bestOutcome, bestPath, outcome, path)) {
             bestOutcome = outcome;
@@ -136,7 +163,8 @@ public static class CombatBeamSearch {
         int cmp = CombatSetupEvaluator.CompareLines(currentBest.Value, candidate);
         if (cmp > 0)
             return !ShouldRejectBlockFirstOpener(root, currentPath, candidatePath)
-                && !ShouldRejectBlockScalingFirstOpener(root, currentPath, candidatePath);
+                && !ShouldRejectBlockScalingFirstOpener(root, currentPath, candidatePath)
+                && !ShouldRejectIdleBlockOpener(root, currentPath, candidatePath);
         if (cmp < 0)
             return false;
 
@@ -215,9 +243,37 @@ public static class CombatBeamSearch {
         return !BlockDefensePolicy.IsPureBlockOpening(root, incumbentPath[0]);
     }
 
-    static int RankLine(CombatState state) {
+    /// <summary>Do not prefer lines that waste block on shrink-only turns when a non-block line ties.</summary>
+    static bool ShouldRejectIdleBlockOpener(
+        CombatState root,
+        List<SimCombatAction>? incumbentPath,
+        List<SimCombatAction> candidatePath) {
+        if (ThreatModel.IncomingDamage(root) > 0)
+            return false;
+        if (incumbentPath is not { Count: > 0 } || candidatePath.Count == 0)
+            return false;
+        if (!PathHasIdleBlockOpener(root, candidatePath))
+            return false;
+        return !PathHasIdleBlockOpener(root, incumbentPath);
+    }
+
+    static bool PathHasIdleBlockOpener(CombatState root, List<SimCombatAction> path) {
+        foreach (var action in path) {
+            if (action.Kind != SimActionKind.PlayCard
+                || action.HandIndex < 0
+                || action.HandIndex >= root.Hand.Count)
+                continue;
+            if (BlockDefensePolicy.IsIdleBlockOpener(root, root.Hand[action.HandIndex]))
+                return true;
+        }
+        return false;
+    }
+
+    static int RankLine(CombatState state, bool scoreCompleteLinesOnly) {
         if (state.AliveEnemyCount == 0)
             return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.WipeOutcome(state));
+        if (scoreCompleteLinesOnly)
+            return CombatSetupEvaluator.RankMidTurnForBeam(state);
         return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.EvaluateLine(state));
     }
 

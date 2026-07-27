@@ -182,6 +182,49 @@ export interface AiDecisionSnapshotDto {
   skipCost: number;
   fightOutlook: AiFightOutlookDto | null;
   macroInsights: AiMacroInsightsDto | null;
+  mapRouteInsights: AiMapRouteInsightsDto | null;
+}
+
+export interface AiMapRouteInsightsDto {
+  pathSummary: string;
+  pathScore: number;
+  pathRisk: number;
+  combatsToRest: number;
+  elitesToRest: number;
+  nextNodeType: string | null;
+  restEv: AiRestEvDto;
+  routeFights: AiRouteFightEvDto[];
+  mapOptions: AiMapOptionDto[];
+}
+
+export interface AiRestEvDto {
+  healEv: number;
+  smithEv: number;
+  healAmount: number;
+  routeValueBaseline: number;
+  healRouteValue: number;
+  smithRouteValue: number;
+  recommended: string;
+  upgradeCardIndex: number | null;
+  upgradeCardId: string | null;
+}
+
+export interface AiRouteFightEvDto {
+  encounterId: string;
+  roomType: string;
+  weight: number;
+  rewardEv: number;
+  fightCost: number;
+  netEv: number;
+  incomingTurn1: number;
+}
+
+export interface AiMapOptionDto {
+  index: number;
+  pointType: string;
+  score: number;
+  row: number;
+  col: number;
 }
 
 export interface AiMacroInsightsDto {

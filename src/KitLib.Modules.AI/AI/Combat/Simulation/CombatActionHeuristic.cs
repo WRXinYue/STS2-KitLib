@@ -43,6 +43,12 @@ internal static class CombatActionHeuristic {
         if (setupPenalty > 0)
             return int.MinValue + 5;
 
+        if (card.IsAttack && card.Damage > 0 && action.EnemyIndex >= 0) {
+            int wrongTarget = AttackerKillPriority.WrongTargetPenalty(state, action.EnemyIndex);
+            if (wrongTarget > 0)
+                return int.MinValue + 6;
+        }
+
         if (DeckPollutionEvaluator.IsHandJunk(card)) {
             var emergency = DeckPollutionEvaluator.EmergencyJunkPlayScore(state, card, action.HandIndex);
             if (emergency > int.MinValue + 1)
@@ -126,7 +132,7 @@ internal static class CombatActionHeuristic {
 
     static int ScoreEndTurn(CombatState state) {
         if (ThreatModel.IsFatalIfUnblocked(state))
-            return int.MinValue;
+            return int.MinValue + 8;
 
         if (BlockDefensePolicy.ShouldPrioritizeBlock(state))
             return int.MinValue + 1;
@@ -136,7 +142,7 @@ internal static class CombatActionHeuristic {
         if (DeckPollutionEvaluator.HasAffordableEmergencyJunkClear(state))
             return int.MinValue + 3;
 
-        return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.EvaluateLine(state));
+        return CombatSetupEvaluator.PackLineScore(CombatSetupEvaluator.EvaluateTerminalLine(state));
     }
 
     static bool ShouldPruneIllusionAttack(CombatState state, SimCombatAction action) {

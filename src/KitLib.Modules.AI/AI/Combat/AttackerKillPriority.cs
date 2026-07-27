@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using KitLib.AI.Combat.Simulation;
 
@@ -28,8 +29,39 @@ internal static class AttackerKillPriority {
         return false;
     }
 
-    public static bool ShouldDeferSetup(CombatState state) =>
-        ThreatModel.IncomingDamage(state) >= 8 && HasKillableAttacker(state);
+    public static bool ShouldDeferSetup(CombatState state) {
+        if (ThreatModel.IncomingDamage(state) < 8)
+            return false;
+        if (HasKillableAttacker(state))
+            return true;
+        return ThreatModel.HasIncomingAttackers(state)
+            && !BlockDefensePolicy.CanFullyBlock(state);
+    }
+
+    public static int BlockOpenerPenalty(CombatState state, CombatHandCard card) {
+        if (CombatDamageCalc.OutgoingBlock(card, state) <= 0)
+            return 0;
+        if (ThreatModel.IncomingDamage(state) < 8)
+            return 0;
+        if (BlockDefensePolicy.CanFullyBlock(state))
+            return 0;
+        if (HasKillableAttacker(state) || ThreatModel.IsFatalIfUnblocked(state))
+            return SetupOpenerPenaltyAmount;
+        if (ThreatModel.HasIncomingAttackers(state))
+            return SetupOpenerPenaltyAmount / 2;
+        return 0;
+    }
+
+    public static int WrongTargetPenalty(CombatState state, int enemyIndex) {
+        if (enemyIndex < 0 || !ThreatModel.HasIncomingAttackers(state))
+            return 0;
+
+        var target = state.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == enemyIndex);
+        if (target == null || target.EffectiveIncoming > 0)
+            return 0;
+
+        return SetupOpenerPenaltyAmount / 2;
+    }
 
     public static int OpenerBonus(CombatState state, SimCombatAction action) {
         if (action.Kind != SimActionKind.PlayCard
@@ -48,17 +80,22 @@ internal static class AttackerKillPriority {
         if (!PrimaryWipeEngagementPolicy.PreferMinionAttackerFocus(state, target))
             return 0;
 
-        if (!SimLethalChecker.CanKillEnemyThisAction(state, action.HandIndex, action.EnemyIndex))
-            return target.EffectiveIncoming * 4;
+        if (SimLethalChecker.CanKillEnemyThisAction(state, action.HandIndex, action.EnemyIndex))
+            return target.EffectiveIncoming * KillOpenerBonusPerIncoming;
 
-        return target.EffectiveIncoming * KillOpenerBonusPerIncoming;
+        int bonus = target.EffectiveIncoming * 4;
+        if (target.Index == ThreatModel.HighestIncomingAttackerIndex(state))
+            bonus = Math.Max(bonus, target.EffectiveIncoming * 6);
+        if (ThreatModel.IsFatalIfUnblocked(state))
+            bonus += target.EffectiveIncoming * 2;
+        return bonus;
     }
 
     public static int SetupOpenerPenalty(CombatState state, CombatHandCard card) {
         if (card.IsAttack && card.Damage > 0)
             return 0;
         if (CombatDamageCalc.OutgoingBlock(card, state) > 0)
-            return 0;
+            return BlockOpenerPenalty(state, card);
         if (PlayerPowerSimulator.InstallsInferno(card.Profile))
             return 0;
         if (!ShouldDeferSetup(state))

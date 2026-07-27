@@ -97,7 +97,7 @@ public static class CombatScorer {
     static int ScoreEndTurn(bool needsBlock, bool fatal, int netIncoming) {
         var score = EndTurnBaseScore;
         if (fatal)
-            return int.MinValue;
+            return int.MinValue + 8;
         if (needsBlock && netIncoming > 0)
             score -= 20 + netIncoming;
         return score;

@@ -10,6 +10,9 @@ namespace KitLib.AI.Combat.Simulation;
 public static class LegalActionGenerator {
     public const int MaxMcBranches = 3;
 
+    public static IEnumerable<SimCombatAction> GenerateUnpruned(CombatState state) =>
+        GenerateRaw(state);
+
     public static IEnumerable<SimCombatAction> Generate(
         CombatState state,
         JsonObject? rootSnapshot = null) {
@@ -29,16 +32,22 @@ public static class LegalActionGenerator {
     public static IEnumerable<SimCombatAction> GenerateOrdered(
         CombatState state,
         int maxActions = int.MaxValue,
-        JsonObject? rootSnapshot = null) =>
+        JsonObject? rootSnapshot = null,
+        CombatState? decisionRoot = null,
+        bool greedyLineCompletion = false) =>
         Generate(state, rootSnapshot)
-            .OrderByDescending(a => RankActionByLineOutcome(state, a, rootSnapshot))
+            .OrderByDescending(a => RankActionByLineOutcome(
+                state, a, rootSnapshot, decisionRoot, greedyLineCompletion))
             .Take(maxActions);
 
     static int RankActionByLineOutcome(
         CombatState state,
         SimCombatAction action,
-        JsonObject? rootSnapshot) =>
-        CombatSetupEvaluator.RankPlayAction(state, action, rootSnapshot);
+        JsonObject? rootSnapshot,
+        CombatState? decisionRoot,
+        bool greedyLineCompletion) =>
+        CombatSetupEvaluator.RankPlayAction(
+            state, action, rootSnapshot, decisionRoot, greedyLineCompletion);
 
     static IEnumerable<SimCombatAction> GenerateRaw(CombatState state) {
         for (int i = 0; i < state.Hand.Count; i++) {

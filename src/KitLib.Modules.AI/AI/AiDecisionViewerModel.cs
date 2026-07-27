@@ -7,6 +7,7 @@ using KitLib.AI.Combat.Simulation;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI;
 
@@ -58,8 +59,9 @@ public static class AiDecisionViewerModel {
             CopyDecisionLog(),
             BuildCardOffers(snapshot, plan),
             skipCost,
-            BuildFightOutlook(snapshot),
-            BuildMacroInsights(snapshot, plan));
+            BuildFightOutlook(snapshot, phase),
+            BuildMacroInsights(snapshot, plan, phase),
+            BuildMapRouteInsights(snapshot, plan, phase));
     }
 
     static AiDecisionSnapshotDto BuildCombat(JsonObject snapshot, GamePhase phase, GameAction? action) {
@@ -128,6 +130,7 @@ public static class AiDecisionViewerModel {
             [],
             0,
             null,
+            null,
             null);
     }
 
@@ -168,7 +171,10 @@ public static class AiDecisionViewerModel {
         return list;
     }
 
-    static AiFightOutlookDto? BuildFightOutlook(JsonObject snapshot) {
+    static AiFightOutlookDto? BuildFightOutlook(JsonObject snapshot, GamePhase phase) {
+        if (phase is not GamePhase.CardReward and not GamePhase.MapSelection and not GamePhase.RestSite)
+            return null;
+
         var route = NextFightRoute.ResolveFromSnapshot(snapshot);
         if (route.Count == 0)
             return null;
@@ -186,10 +192,10 @@ public static class AiDecisionViewerModel {
             outcome.SampleCount);
     }
 
-    static AiMacroInsightsDto BuildMacroInsights(JsonObject snapshot, DeckPlan plan) {
-        var resources = MacroScoringInsights.BuildResources(snapshot, plan);
+    static AiMacroInsightsDto BuildMacroInsights(JsonObject snapshot, DeckPlan plan, GamePhase phase) {
+        var resources = MacroScoringInsights.BuildResources(snapshot, plan, phase);
         var weights = MacroScoringInsights.GetPhaseWeights(snapshot);
-        var deckCombo = MacroScoringInsights.ScoreDeckComposition(snapshot, plan);
+        var deckCombo = MacroScoringInsights.ScoreDeckComposition(snapshot, plan, phase);
 
         var archetypes = deckCombo.Archetypes
             .Select(a => new AiDeckArchetypeDto(
@@ -224,6 +230,80 @@ public static class AiDecisionViewerModel {
                 deckCombo.StarterBloat,
                 archetypes),
             summary);
+    }
+
+    static AiMapRouteInsightsDto? BuildMapRouteInsights(
+        JsonObject snapshot,
+        DeckPlan plan,
+        GamePhase phase) {
+        if (phase is not GamePhase.MapSelection and not GamePhase.RestSite)
+            return null;
+
+        if (!MapRouteInsights.HasData(snapshot))
+            return null;
+
+        bool onMap = phase == GamePhase.MapSelection;
+        bool onRest = phase == GamePhase.RestSite;
+        bool hasRestOptions = snapshot["restOptions"]?.AsArray()?.Count > 0;
+
+        try {
+            var mapPlan = MapRouteInsights.ResolvePlan();
+            var restEv = (onRest || hasRestOptions)
+                ? MapRouteInsights.EvaluateRest(snapshot)
+                : new RestEvBreakdown(0, 0, 0, 0, 0, 0, "Heal", null, null);
+            var fights = onMap || onRest
+                ? MapRouteInsights.BuildRouteFightEv(snapshot, plan)
+                : [];
+
+            List<MapRouteInsights.MapOptionInsight> options = [];
+            if (onMap)
+                options = MapRouteInsights.BuildMapOptions(snapshot, plan);
+            string? nextType = null;
+            if (onMap && mapPlan != null
+                && AiPlayServices.StateProvider.TryGetRunAndPlayer(out var planRun, out _)
+                && planRun.Map != null) {
+                var nextPoint = planRun.Map.GetPoint(mapPlan.NextCoord);
+                nextType = nextPoint?.PointType.ToString();
+            }
+
+            var fightDtos = fights
+                .Select(f => new AiRouteFightEvDto(
+                    f.EncounterId,
+                    f.RoomType,
+                    f.Weight,
+                    f.RewardEv,
+                    f.FightCost,
+                    f.NetEv,
+                    f.IncomingTurn1))
+                .ToList();
+
+            var optionDtos = options
+                .Select(o => new AiMapOptionDto(o.Index, o.PointType, o.Score, o.Row, o.Col))
+                .ToList();
+
+            return new AiMapRouteInsightsDto(
+                mapPlan?.Summary ?? "",
+                mapPlan?.PathScore ?? 0,
+                mapPlan?.PathRiskAtNext ?? 0,
+                mapPlan?.CombatsToRestAtNext ?? 0f,
+                mapPlan?.ElitesToRestAtNext ?? 0,
+                nextType,
+                new AiRestEvDto(
+                    restEv.HealEv,
+                    restEv.SmithEv,
+                    restEv.HealAmount,
+                    restEv.RouteValueBaseline,
+                    restEv.HealRouteValue,
+                    restEv.SmithRouteValue,
+                    restEv.Recommended,
+                    restEv.UpgradeCardIndex,
+                    restEv.UpgradeCardId),
+                fightDtos,
+                optionDtos);
+        }
+        catch {
+            return null;
+        }
     }
 
     static List<AiHandCardDto> BuildHand(CombatState state, int focusEnemy) {

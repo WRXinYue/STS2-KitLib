@@ -59,18 +59,28 @@ public static class CardMechanicIndex {
         if (_initialized) return;
         _initialized = true;
 
-        foreach (var card in ModelDb.AllCards) {
-            try {
-                var id = card.Id.Entry ?? "";
-                if (string.IsNullOrWhiteSpace(id)) continue;
-                ById[id] = BuildProfile(card);
+        try {
+            foreach (var card in ModelDb.AllCards) {
+                try {
+                    var id = card.Id.Entry ?? "";
+                    if (string.IsNullOrWhiteSpace(id)) continue;
+                    ById[id] = BuildProfile(card);
+                }
+                catch {
+                    // Skip cards that cannot be probed headless or in partial ModelDb.
+                }
             }
-            catch (Exception ex) {
-                KitLog.Warn("AiMechanic", $"Skipped card {card.Id.Entry}: {ex.Message}");
+
+            try {
+                KitLog.Info("AiMechanic", $"CardMechanicIndex indexed {ById.Count} cards.");
+            }
+            catch {
+                // Headless test host may not initialize game logging.
             }
         }
-
-        KitLog.Info("AiMechanic", $"CardMechanicIndex indexed {ById.Count} cards.");
+        catch {
+            // ModelDb not ready (offline tests, partial Init).
+        }
     }
 
     public static bool TryGet(string? id, out CardMechanicProfile profile) {

@@ -58,6 +58,7 @@ const blockPolicyRows = computed(() => {
 const cardOffers = computed(() => snapshot.value?.cardOffers ?? []);
 const fightOutlook = computed(() => snapshot.value?.fightOutlook ?? null);
 const macroInsights = computed(() => snapshot.value?.macroInsights ?? null);
+const mapRouteInsights = computed(() => snapshot.value?.mapRouteInsights ?? null);
 const skipCost = computed(() => snapshot.value?.skipCost ?? 0);
 const showMacroPanels = computed(() => !live.value?.isInCombat);
 const macroTelemetryRows = computed(() =>
@@ -67,6 +68,12 @@ function roleLabel(role: string) {
   const key = `ai.roles.${role}`;
   const translated = t(key);
   return translated === key ? role : translated;
+}
+
+function restChoiceLabel(choice: string) {
+  const key = `ai.mapRoute.restChoice.${choice}`;
+  const translated = t(key);
+  return translated === key ? choice : translated;
 }
 
 function boolLabel(v: boolean) {
@@ -132,6 +139,164 @@ function boolLabel(v: boolean) {
               <span class="ai-grid__value">{{ row.value }}</span>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card v-if="showMacroPanels && mapRouteInsights">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.mapRoute.title") }}</CardTitle>
+        </CardHeader>
+        <CardContent class="space-y-3">
+          <p
+            v-if="mapRouteInsights.pathSummary"
+            class="text-sm font-mono"
+          >
+            {{ t("ai.mapRoute.path") }}: {{ mapRouteInsights.pathSummary }}
+          </p>
+          <div class="ai-grid">
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.pathScore") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.pathScore }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.pathRisk") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.pathRisk }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.combatsToRest") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.combatsToRest.toFixed(1) }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.elitesToRest") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.elitesToRest }}</span>
+            </div>
+            <div
+              v-if="mapRouteInsights.nextNodeType"
+              class="ai-grid__item"
+            >
+              <span class="ai-grid__label">{{ t("ai.mapRoute.nextNode") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.nextNodeType }}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card v-if="showMacroPanels && mapRouteInsights">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.mapRoute.restTitle") }}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="ai-grid mb-2">
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.healEv") }}</span>
+              <span class="ai-grid__value">+{{ mapRouteInsights.restEv.healEv }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.smithEv") }}</span>
+              <span class="ai-grid__value">+{{ mapRouteInsights.restEv.smithEv }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.healAmount") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.restEv.healAmount }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.routeBaseline") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.restEv.routeValueBaseline }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.healRoute") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.restEv.healRouteValue }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.mapRoute.smithRoute") }}</span>
+              <span class="ai-grid__value">{{ mapRouteInsights.restEv.smithRouteValue }}</span>
+            </div>
+          </div>
+          <p class="text-sm">
+            <Badge variant="secondary">
+              {{ t("ai.mapRoute.recommended") }}:
+              {{ restChoiceLabel(mapRouteInsights.restEv.recommended) }}
+            </Badge>
+            <span
+              v-if="mapRouteInsights.restEv.upgradeCardId"
+              class="text-xs text-muted-foreground ml-2"
+            >
+              {{ t("ai.mapRoute.upgradeCard") }}: {{ mapRouteInsights.restEv.upgradeCardId }}
+            </span>
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card
+        v-if="showMacroPanels && mapRouteInsights && mapRouteInsights.routeFights.length > 0"
+      >
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.mapRoute.fightsTitle") }}</CardTitle>
+        </CardHeader>
+        <CardContent class="ai-hand-wrap">
+          <table class="ai-hand">
+            <thead>
+              <tr>
+                <th>{{ t("ai.mapRoute.encounter") }}</th>
+                <th>{{ t("ai.mapRoute.roomType") }}</th>
+                <th>{{ t("ai.mapRoute.weight") }}</th>
+                <th>{{ t("ai.mapRoute.rewardEv") }}</th>
+                <th>{{ t("ai.mapRoute.fightCost") }}</th>
+                <th>{{ t("ai.mapRoute.netEv") }}</th>
+                <th>{{ t("ai.mapRoute.incoming") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="fight in mapRouteInsights.routeFights"
+                :key="`${fight.encounterId}-${fight.roomType}`"
+              >
+                <td>{{ fight.encounterId }}</td>
+                <td>{{ fight.roomType }}</td>
+                <td class="mono">{{ fight.weight.toFixed(2) }}</td>
+                <td class="mono">{{ fight.rewardEv }}</td>
+                <td class="mono">{{ fight.fightCost }}</td>
+                <td
+                  class="mono"
+                  :class="fight.netEv < 0 ? 'text-destructive' : ''"
+                >
+                  {{ fight.netEv }}
+                </td>
+                <td class="mono">{{ fight.incomingTurn1 }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card
+        v-if="showMacroPanels && mapRouteInsights && mapRouteInsights.mapOptions.length > 0"
+      >
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.mapRoute.optionsTitle") }}</CardTitle>
+        </CardHeader>
+        <CardContent class="ai-hand-wrap">
+          <table class="ai-hand">
+            <thead>
+              <tr>
+                <th>{{ t("ai.mapRoute.nodeType") }}</th>
+                <th>{{ t("ai.mapRoute.score") }}</th>
+                <th>{{ t("ai.mapRoute.row") }}</th>
+                <th>{{ t("ai.mapRoute.col") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="opt in mapRouteInsights.mapOptions"
+                :key="opt.index"
+              >
+                <td>{{ opt.pointType }}</td>
+                <td class="mono">{{ opt.score }}</td>
+                <td class="mono">{{ opt.row }}</td>
+                <td class="mono">{{ opt.col }}</td>
+              </tr>
+            </tbody>
+          </table>
         </CardContent>
       </Card>
 

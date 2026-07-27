@@ -247,6 +247,41 @@
       "chip": "E[首回合受击]",
       "fightChip": "E[整场受击]",
       "lethal": "致死样本"
+    },
+    "mapRoute": {
+      "title": "地图路线 (sim EV)",
+      "path": "规划路径",
+      "pathScore": "路径分",
+      "pathRisk": "路径风险",
+      "combatsToRest": "到篝火战斗数",
+      "elitesToRest": "到篝火精英数",
+      "nextNode": "下一节点",
+      "restTitle": "篝火 EV",
+      "healEv": "回血 EV",
+      "smithEv": "敲牌 EV",
+      "healAmount": "回血量",
+      "routeBaseline": "路线基准",
+      "healRoute": "回血后",
+      "smithRoute": "敲牌后",
+      "recommended": "推荐",
+      "upgradeCard": "升级目标",
+      "fightsTitle": "路线战斗 EV",
+      "encounter": "遭遇",
+      "roomType": "房间",
+      "weight": "权重",
+      "rewardEv": "奖励 EV",
+      "fightCost": "战斗成本",
+      "netEv": "净 EV",
+      "incoming": "首回合 incoming",
+      "optionsTitle": "地图节点 sim 分",
+      "nodeType": "类型",
+      "score": "Sim 分",
+      "row": "行",
+      "col": "列"
+    },
+    "restChoice": {
+      "Heal": "回血",
+      "Smith": "敲牌"
     }
   }
 }

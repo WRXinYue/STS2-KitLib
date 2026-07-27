@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
+using KitLib.Actions;
+using KitLib.AI.Combat.Simulation;
 using KitLib.AI.Sts2.Snapshots;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
+using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI.Planning;
@@ -24,13 +28,19 @@ public sealed record MapPlan(
 
 public static class MapPathPlanner {
     static MapPlan? _cached;
+    static int _cachedVisitedCount = -1;
 
     public static MapPlan? CachedPlan => _cached;
 
-    public static void ClearCache() => _cached = null;
+    public static void ClearCache() {
+        _cached = null;
+        _cachedVisitedCount = -1;
+        NextFightRoute.ClearCache();
+    }
 
     public static MapPlan? Plan(RunState state, Player player, bool forceRefresh = false) {
-        if (!forceRefresh && _cached != null)
+        int visited = state.VisitedMapCoords.Count;
+        if (!forceRefresh && _cached != null && _cachedVisitedCount == visited)
             return _cached;
 
         var map = state.Map;
@@ -52,7 +62,12 @@ public static class MapPathPlanner {
                 continue;
             }
 
-            int baseNodeScore = MapNodeWeightScorer.ScoreNode(point.PointType, ctx);
+            int baseNodeScore = MapNodeEvScorer.ScoreNode(
+                point.PointType,
+                ctx,
+                snapshot,
+                combatFight: null,
+                forRouteDp: true);
             int best = int.MinValue;
             MapCoord? chosen = null;
 
@@ -131,6 +146,7 @@ public static class MapPathPlanner {
             pathRiskAtNext,
             nextSegment.CombatsToRest,
             nextSegment.ElitesToRest);
+        _cachedVisitedCount = visited;
         return _cached;
     }
 
@@ -199,4 +215,35 @@ public static class MapPathPlanner {
         MapPointType.Ancient => "Ancient",
         _ => type.ToString(),
     };
+
+    public static NextFightNode? TryBuildFightNode(RunState state, MapPoint point) {
+        try {
+            var roomType = MapEncounterPreview.ToRoomType(point.PointType);
+            if (roomType == null)
+                return null;
+
+            var preview = MapEncounterPreview.Build(state, point);
+            if (preview?.Encounter == null)
+                return null;
+
+            var enemies = EncounterCombatFactory.CreateEnemies(
+                preview.Encounter,
+                preview.CombatRoomType,
+                state.CurrentActIndex);
+            if (enemies.Count == 0)
+                return null;
+
+            int incoming = enemies.Where(e => e.IsAlive).Sum(e => e.IntentDamage);
+            var encounterId = ((AbstractModel)preview.Encounter).Id.Entry ?? "?";
+            return new NextFightNode(
+                1f,
+                preview.CombatRoomType,
+                encounterId,
+                enemies,
+                incoming);
+        }
+        catch {
+            return null;
+        }
+    }
 }

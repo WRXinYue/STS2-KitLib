@@ -12,8 +12,6 @@ internal static class CombatPileSimulator {
     public const int MaxHandSize = 10;
     public const int BaseHandDrawCount = 5;
 
-    static bool _loggedFallbackShuffle;
-
     public static (List<CombatHandCard> retained, List<CombatPileCard> discard) DiscardHand(
         IReadOnlyList<CombatHandCard> hand,
         IReadOnlyList<CombatPileCard> discard) {
@@ -50,10 +48,6 @@ internal static class CombatPileSimulator {
             var derived = DeriveFallbackShuffleSeed(merged);
             var fallbackRng = AiRngCompat.Create(derived, shuffleCounter);
             merged.StableShuffle(fallbackRng);
-            if (!_loggedFallbackShuffle) {
-                _loggedFallbackShuffle = true;
-                KitLog.Warn("CombatPile", $"Using hash-derived fallback shuffle (rngShuffle seed missing).");
-            }
 
             return (merged, [], AiRngCompat.GetCounter(fallbackRng));
         }
@@ -197,7 +191,16 @@ internal static class CombatPileSimulator {
         var parts = new List<string>(pile.Count);
         foreach (var card in pile)
             parts.Add($"{card.Id}|{card.Name}");
-        return (uint)StringHelper.GetDeterministicHashCode(string.Join(";", parts));
+
+        unchecked {
+            uint hash = 2166136261;
+            foreach (var ch in string.Join(";", parts)) {
+                hash ^= ch;
+                hash *= 16777619;
+            }
+
+            return hash == 0 ? 1u : hash;
+        }
     }
 
     internal static CombatHandCard PileToHand(CombatPileCard card, int index) {

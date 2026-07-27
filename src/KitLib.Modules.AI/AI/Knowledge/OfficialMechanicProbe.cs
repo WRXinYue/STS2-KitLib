@@ -17,6 +17,18 @@ internal static class OfficialMechanicProbe {
     const BindingFlags MemberFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     const int MaxGraphDepth = 2;
 
+    static bool ShouldSkipGodotReflectionMember(string memberName) =>
+        memberName is "HasPortrait"
+            or "HasBetaPortrait"
+            or "Portrait"
+            or "PortraitBorder"
+            or "Frame"
+            or "AncientTextBg"
+            or "AncientBorder"
+            or "EnergyIcon"
+            or "BannerTexture"
+            or "AllPortraitPaths";
+
     static readonly CardMechanicFlags CardStructuralMask =
         CardMechanicFlags.TransformsCards
         | CardMechanicFlags.TransformsHandAttacks
@@ -161,6 +173,8 @@ internal static class OfficialMechanicProbe {
         foreach (var prop in type.GetProperties(MemberFlags)) {
             if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
                 continue;
+            if (ShouldSkipGodotReflectionMember(prop.Name))
+                continue;
             object? value;
             try { value = prop.GetValue(root); }
             catch { continue; }
@@ -216,6 +230,8 @@ internal static class OfficialMechanicProbe {
 
         foreach (var prop in type.GetProperties(MemberFlags)) {
             if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
+                continue;
+            if (ShouldSkipGodotReflectionMember(prop.Name))
                 continue;
             object? value;
             try { value = prop.GetValue(root); }

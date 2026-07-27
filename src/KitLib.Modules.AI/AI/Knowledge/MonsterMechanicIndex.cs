@@ -135,7 +135,14 @@ public static class MonsterMechanicIndex {
     }
 
     static void EnsureInitialized() {
-        if (!_initialized)
+        if (_initialized)
+            return;
+
+        try {
             Initialize();
+        }
+        catch {
+            _initialized = true;
+        }
     }
 }

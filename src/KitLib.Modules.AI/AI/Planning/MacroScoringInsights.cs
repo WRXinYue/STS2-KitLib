@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
 
 namespace KitLib.AI.Planning;
@@ -48,8 +49,11 @@ public sealed record CardRoleInsight(
 
 /// <summary>Macro scoring labels for Dev Viewer: in-run vs out-of-run, transition/terminal/system.</summary>
 public static class MacroScoringInsights {
-    public static MacroResourceSnapshot BuildResources(JsonObject snapshot, DeckPlan plan) {
-        int route = DeckSimScorer.HasRoutePreview(snapshot)
+    public static MacroResourceSnapshot BuildResources(
+        JsonObject snapshot,
+        DeckPlan plan,
+        GamePhase phase = GamePhase.None) {
+        int route = ShouldRunRouteSim(snapshot, phase)
             ? DeckSimScorer.ScoreDeck(snapshot, plan)
             : 0;
         int act = snapshot["actIndex"]?.GetValue<int>() ?? 0;
@@ -94,9 +98,12 @@ public static class MacroScoringInsights {
             "Balanced sim and option; avoid over-thinning.");
     }
 
-    public static DeckComboScore ScoreDeckComposition(JsonObject snapshot, DeckPlan plan) {
+    public static DeckComboScore ScoreDeckComposition(
+        JsonObject snapshot,
+        DeckPlan plan,
+        GamePhase phase = GamePhase.None) {
         var metrics = DeckEvaluator.Evaluate(snapshot, plan);
-        int route = DeckSimScorer.HasRoutePreview(snapshot)
+        int route = ShouldRunRouteSim(snapshot, phase)
             ? DeckSimScorer.ScoreDeck(snapshot, plan)
             : 0;
         var archetypes = AnalyzeDeckArchetypes(snapshot, plan);
@@ -189,6 +196,16 @@ public static class MacroScoringInsights {
 
         list.Sort((a, b) => b.ScoreContribution.CompareTo(a.ScoreContribution));
         return list;
+    }
+
+    static bool ShouldRunRouteSim(JsonObject snapshot, GamePhase phase) {
+        if (!DeckSimScorer.HasRoutePreview(snapshot))
+            return false;
+
+        return phase is GamePhase.CardReward
+            or GamePhase.MapSelection
+            or GamePhase.RestSite
+            or GamePhase.Combat;
     }
 
     static string DescribePhase(int act, int floor) {

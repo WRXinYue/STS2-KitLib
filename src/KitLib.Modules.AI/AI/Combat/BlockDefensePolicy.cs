@@ -109,6 +109,16 @@ public static class BlockDefensePolicy {
         return IsPureBlockCard(root.Hand[action.HandIndex], root);
     }
 
+    /// <summary>Block into a turn with no incoming attack is wasted — cleared before the next hit.</summary>
+    public static bool IsIdleBlockOpener(CombatState state, CombatHandCard card) {
+        if (CombatDamageCalc.OutgoingBlock(card, state) <= 0)
+            return false;
+        return IncomingDamage(state) <= 0;
+    }
+
+    public static int IdleBlockOpenerPenalty(CombatState state, CombatHandCard card) =>
+        IsIdleBlockOpener(state, card) ? AttackerKillPriority.SetupOpenerPenaltyAmount : 0;
+
     public static bool IsBlockScalingAttack(CombatHandCard card) =>
         card.Profile.HitScaleMode == AttackHitScaleMode.PlayerBlock
         || IsBlockScalingCardId(card.Id);
