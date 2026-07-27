@@ -107,6 +107,7 @@ public static class CardMechanicIndex {
         var cost = card["cost"]?.GetValue<int>() ?? 1;
         var costsEnergyX = card["costsX"]?.GetValue<bool>() == true;
         var derived = CardTagRules.InferTagsFromSnapshot(id, cardType, keywords);
+        var hitScale = InferHitScaleModeFromId(id);
         return new CardMechanicProfile(
             id ?? "",
             flags,
@@ -116,7 +117,14 @@ public static class CardMechanicIndex {
             card["block"]?.GetValue<int>(),
             cardType,
             derived,
-            CostsEnergyX: costsEnergyX);
+            CostsEnergyX: costsEnergyX,
+            HitScaleMode: hitScale);
+    }
+
+    static AttackHitScaleMode InferHitScaleModeFromId(string? id) {
+        if (string.Equals(id, "BODY_SLAM", StringComparison.OrdinalIgnoreCase))
+            return AttackHitScaleMode.PlayerBlock;
+        return AttackHitScaleMode.None;
     }
 
     static CardMechanicProfile BuildProfile(CardModel card) {
@@ -198,6 +206,7 @@ public static class CardMechanicIndex {
             ["Barrage"] = AttackHitScaleMode.OrbCount,
             ["FlakCannon"] = AttackHitScaleMode.StatusCardsOwned,
             ["TearAsunder"] = AttackHitScaleMode.UnblockedDamageTakenPlusOne,
+            ["BodySlam"] = AttackHitScaleMode.PlayerBlock,
         };
 
     static readonly HashSet<string> AttackHitsScaleWithEnergyByTypeName =

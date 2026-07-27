@@ -135,7 +135,8 @@ public static class CombatBeamSearch {
 
         int cmp = CombatSetupEvaluator.CompareLines(currentBest.Value, candidate);
         if (cmp > 0)
-            return !ShouldRejectBlockFirstOpener(root, currentPath, candidatePath);
+            return !ShouldRejectBlockFirstOpener(root, currentPath, candidatePath)
+                && !ShouldRejectBlockScalingFirstOpener(root, currentPath, candidatePath);
         if (cmp < 0)
             return false;
 
@@ -160,12 +161,44 @@ public static class CombatBeamSearch {
             return CombatSetupEvaluator.EstimateInfernoOpenerValue(root, action.HandIndex);
 
         int setupPenalty = AttackerKillPriority.SetupOpenerPenalty(root, card);
-        if (card.Damage <= 0)
+        if (card.Damage <= 0 && !CombatDamageCalc.DealsAttackDamage(card))
             return -setupPenalty;
 
         var target = root.Enemies.FirstOrDefault(e => e.IsAlive && e.Index == action.EnemyIndex);
         int damage = CombatDamageCalc.OutgoingDamage(card, root, target?.Vulnerable ?? 0);
+        if (BlockDefensePolicy.ShouldDeferBlockScalingAttack(root, card, action.HandIndex, action.EnemyIndex))
+            damage -= AttackerKillPriority.SetupOpenerPenaltyAmount;
         return damage + AttackerKillPriority.OpenerBonus(root, action) - setupPenalty;
+    }
+
+    static bool IsBlockScalingOpening(CombatState root, SimCombatAction action) {
+        if (action.Kind != SimActionKind.PlayCard
+            || action.HandIndex < 0
+            || action.HandIndex >= root.Hand.Count)
+            return false;
+
+        return BlockDefensePolicy.IsBlockScalingAttack(root.Hand[action.HandIndex]);
+    }
+
+    /// <summary>Under incoming pressure, prefer block-before-slam openers over weak early Body Slam.</summary>
+    static bool ShouldRejectBlockScalingFirstOpener(
+        CombatState root,
+        List<SimCombatAction>? incumbentPath,
+        List<SimCombatAction> candidatePath) {
+        if (incumbentPath is not { Count: > 0 } || candidatePath.Count == 0)
+            return false;
+        if (!IsBlockScalingOpening(root, candidatePath[0]))
+            return false;
+        if (IsBlockScalingOpening(root, incumbentPath[0]))
+            return false;
+
+        var card = root.Hand[candidatePath[0].HandIndex];
+        if (!BlockDefensePolicy.ShouldDeferBlockScalingAttack(
+            root, card, candidatePath[0].HandIndex, candidatePath[0].EnemyIndex))
+            return false;
+
+        return BlockDefensePolicy.IsPureBlockOpening(root, incumbentPath[0])
+            || !IsBlockScalingOpening(root, incumbentPath[0]);
     }
 
     /// <summary>Secure-kill turns: do not replace a non-block opener with a block-first line.</summary>

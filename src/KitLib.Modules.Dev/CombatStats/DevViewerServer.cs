@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using KitLib;
+using KitLib.AI;
 using KitLib.Host;
 using KitLib.Logging;
 
@@ -28,8 +29,10 @@ internal static class DevViewerServer {
     private static string? _viewerHtml;
     private static readonly ConcurrentDictionary<WebSocket, byte> _statsClients = new();
     private static readonly ConcurrentDictionary<WebSocket, byte> _logClients = new();
+    private static readonly ConcurrentDictionary<WebSocket, byte> _aiClients = new();
     private static bool _trackerSubscribed;
     private static bool _logHubSubscribed;
+    private static bool _aiHubSubscribed;
     private static Action<LogStreamEntry>? _logHubHandler;
     private static bool _browserLaunchedThisSession;
     private static int _startupOpenGeneration;
@@ -38,7 +41,9 @@ internal static class DevViewerServer {
     public static bool IsRunning => _listener?.IsListening ?? false;
 
     public static bool HasConnectedViewerClients =>
-        !_logClients.IsEmpty || !_statsClients.IsEmpty;
+        !_logClients.IsEmpty || !_statsClients.IsEmpty || !_aiClients.IsEmpty;
+
+    public static string AiUrl => $"{BaseUrl}#/ai";
 
     public static string BaseUrl => $"http://127.0.0.1:{Port}/";
 
@@ -60,6 +65,7 @@ internal static class DevViewerServer {
             _ = Task.Run(() => ListenLoop(_cts.Token));
             EnsureTrackerSubscription();
             EnsureLogHubSubscription();
+            EnsureAiHubSubscription();
         }
         catch (Exception ex) {
             _listener = null;
@@ -128,9 +134,15 @@ internal static class DevViewerServer {
             _logHubSubscribed = false;
         }
 
+        if (_aiHubSubscribed) {
+            AiDecisionHub.Changed -= OnAiDecisionChanged;
+            _aiHubSubscribed = false;
+        }
+
         _cts?.Cancel();
         CloseAll(_statsClients);
         CloseAll(_logClients);
+        CloseAll(_aiClients);
         try { _listener?.Stop(); } catch { }
         _listener = null;
         _cts?.Dispose();
@@ -173,6 +185,25 @@ internal static class DevViewerServer {
             _ = SendStats(socket, live, revision);
     }
 
+    private static void EnsureAiHubSubscription() {
+        if (_aiHubSubscribed)
+            return;
+
+        AiDecisionHub.Changed += OnAiDecisionChanged;
+        _aiHubSubscribed = true;
+    }
+
+    private static void OnAiDecisionChanged() {
+        AiDecisionLiveBuffer.PersistFromHub();
+        var live = AiDecisionLiveBuffer.Latest;
+        if (live == null)
+            return;
+
+        long revision = AiDecisionLiveBuffer.Revision;
+        foreach (var socket in _aiClients.Keys.ToArray())
+            _ = SendAi(socket, live, revision);
+    }
+
     private static void OnLogEntry(LogStreamEntry entry) {
         foreach (var socket in _logClients.Keys.ToArray())
             _ = SendLogEntry(socket, entry);
@@ -210,6 +241,12 @@ internal static class DevViewerServer {
                     await HandleLogWebSocket(wsContext.WebSocket, serverCt);
                     return;
                 }
+
+                if (path == "/api/ai/ws") {
+                    var wsContext = await ctx.AcceptWebSocketAsync(subProtocol: null);
+                    await HandleAiWebSocket(wsContext.WebSocket, serverCt);
+                    return;
+                }
             }
 
             switch (path) {
@@ -220,6 +257,10 @@ internal static class DevViewerServer {
 
                 case "/api/live":
                     await WriteLiveSnapshot(res);
+                    return;
+
+                case "/api/ai/live":
+                    await WriteAiLiveSnapshot(res);
                     return;
 
                 case "/api/export/json":
@@ -249,6 +290,17 @@ internal static class DevViewerServer {
         }
 
         res.Headers.Add("X-Combat-Stats-Revision", CombatStatsLiveBuffer.Revision.ToString());
+        await WriteBuffer(res, Encoding.UTF8.GetBytes(json), "application/json; charset=utf-8");
+    }
+
+    private static async Task WriteAiLiveSnapshot(HttpListenerResponse res) {
+        AiDecisionLiveBuffer.PersistFromHub();
+        string json;
+        if (!AiDecisionLiveBuffer.TryReadJson(out json) || string.IsNullOrWhiteSpace(json)) {
+            json = JsonSerializer.Serialize(new AiDecisionLiveDto(null, false), AiDecisionHub.JsonOptions);
+        }
+
+        res.Headers.Add("X-Ai-Decision-Revision", AiDecisionLiveBuffer.Revision.ToString());
         await WriteBuffer(res, Encoding.UTF8.GetBytes(json), "application/json; charset=utf-8");
     }
 
@@ -315,6 +367,27 @@ internal static class DevViewerServer {
         }
     }
 
+    private static async Task HandleAiWebSocket(WebSocket socket, CancellationToken serverCt) {
+        EnsureAiHubSubscription();
+        _aiClients[socket] = 0;
+
+        try {
+            await SendJson(socket, new { type = "hello", stream = "ai", revision = AiDecisionLiveBuffer.Revision });
+            await SendAi(socket);
+
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(serverCt);
+            await ReceiveAiLoop(socket, linked.Token);
+        }
+        catch (Exception ex) {
+            KitLog.Warn("DevViewer", $"AI WebSocket error: {ex.Message}");
+        }
+        finally {
+            _aiClients.TryRemove(socket, out _);
+            try { await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None); } catch { }
+            socket.Dispose();
+        }
+    }
+
     private static async Task ReceiveStatsLoop(WebSocket socket, CancellationToken ct) {
         var buffer = new byte[4096];
         while (socket.State == WebSocketState.Open && !ct.IsCancellationRequested) {
@@ -345,6 +418,31 @@ internal static class DevViewerServer {
                     : "";
                 if (type == "ping")
                     await SendJson(socket, new { type = "pong" });
+            }
+            catch {
+                // ignore malformed frames
+            }
+        }
+    }
+
+    private static async Task ReceiveAiLoop(WebSocket socket, CancellationToken ct) {
+        var buffer = new byte[4096];
+        while (socket.State == WebSocketState.Open && !ct.IsCancellationRequested) {
+            var result = await socket.ReceiveAsync(buffer, ct);
+            if (result.MessageType == WebSocketMessageType.Close)
+                break;
+            if (result.MessageType != WebSocketMessageType.Text)
+                continue;
+
+            try {
+                using var doc = JsonDocument.Parse(Encoding.UTF8.GetString(buffer, 0, result.Count));
+                string type = doc.RootElement.TryGetProperty("type", out var typeEl)
+                    ? typeEl.GetString() ?? ""
+                    : "";
+                if (type == "ping")
+                    await SendJson(socket, new { type = "pong" });
+                else if (type == "requestAi")
+                    await SendAi(socket);
             }
             catch {
                 // ignore malformed frames
@@ -392,6 +490,22 @@ internal static class DevViewerServer {
             return;
 
         await SendJson(socket, new { type = "stats", payload = live, revision });
+    }
+
+    private static async Task SendAi(WebSocket socket) {
+        if (socket.State != WebSocketState.Open)
+            return;
+
+        AiDecisionLiveBuffer.PersistFromHub();
+        var live = AiDecisionLiveBuffer.Latest ?? new AiDecisionLiveDto(null, false);
+        await SendAi(socket, live, AiDecisionLiveBuffer.Revision);
+    }
+
+    private static async Task SendAi(WebSocket socket, AiDecisionLiveDto live, long revision) {
+        if (socket.State != WebSocketState.Open)
+            return;
+
+        await SendJson(socket, new { type = "ai", payload = live, revision });
     }
 
     private static async Task SendLogEntry(WebSocket socket, LogStreamEntry entry) {

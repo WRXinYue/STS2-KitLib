@@ -49,6 +49,7 @@ internal sealed class AiPlayModule {
         AiSessionSettings.ResetRunSession();
         AiDecisionLog.Clear();
         AiHudState.Clear();
+        AiDecisionHub.Clear();
         NextFightDeckEvaluator.ClearCache();
         MapPathPlanner.ClearCache();
         KitLibHost.SyncAiHudOverlay?.Invoke();

@@ -106,6 +106,7 @@ public sealed class GameLoop {
                  $"Target={action.TargetIndex} Reason=[{action.Reason}]");
 
             AiHudState.Publish(decidePhase, action);
+            AiDecisionHub.Publish(snapshot, decidePhase, action);
 
             if (ShouldDelayBeforeAction(action))
                 await Task.Delay(ActionDelayMs);

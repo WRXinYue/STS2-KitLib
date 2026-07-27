@@ -4,8 +4,9 @@ import { useI18n } from "vue-i18n";
 import LangSwitcher from "@/components/LangSwitcher.vue";
 import LogViewerPanel from "@/components/LogViewerPanel.vue";
 import CombatStatsTab from "@/components/CombatStatsTab.vue";
+import AiDecisionTab from "@/components/AiDecisionTab.vue";
 
-type Tab = "logs" | "combat";
+type Tab = "logs" | "combat" | "ai";
 
 const { t } = useI18n();
 const tab = ref<Tab>("logs");
@@ -13,7 +14,12 @@ const tab = ref<Tab>("logs");
 function syncTabFromHash() {
   const raw = location.hash.replace(/^#\/?/, "");
   const path = raw.split("?")[0] || "";
-  tab.value = path === "combat" ? "combat" : "logs";
+  if (path === "combat")
+    tab.value = "combat";
+  else if (path === "ai")
+    tab.value = "ai";
+  else
+    tab.value = "logs";
 }
 
 function setTab(next: Tab) {
@@ -22,8 +28,11 @@ function setTab(next: Tab) {
     const q = location.hash.includes("?") ? `?${location.hash.split("?").slice(1).join("?")}` : "";
     location.hash = `#/logs${q}`;
   }
-  else {
+  else if (next === "combat") {
     location.hash = "#/combat";
+  }
+  else {
+    location.hash = "#/ai";
   }
 }
 
@@ -40,7 +49,7 @@ onUnmounted(() => {
 <template>
   <div
     class="app-shell"
-    :class="{ 'app-shell--fill': tab === 'logs' || tab === 'combat' }"
+    :class="{ 'app-shell--fill': tab === 'logs' || tab === 'combat' || tab === 'ai' }"
   >
     <header class="app-header app-content">
       <div class="min-w-0">
@@ -71,6 +80,14 @@ onUnmounted(() => {
       >
         {{ t("nav.combat") }}
       </button>
+      <button
+        type="button"
+        class="app-nav-btn"
+        :class="{ 'app-nav-btn--active': tab === 'ai' }"
+        @click="setTab('ai')"
+      >
+        {{ t("nav.ai") }}
+      </button>
     </nav>
 
     <main class="app-main">
@@ -85,6 +102,14 @@ onUnmounted(() => {
       >
         <div class="combat-inner app-content">
           <CombatStatsTab />
+        </div>
+      </div>
+      <div
+        v-show="tab === 'ai'"
+        class="combat-wrap tab-pane"
+      >
+        <div class="combat-inner app-content">
+          <AiDecisionTab />
         </div>
       </div>
     </main>

@@ -9,4 +9,6 @@ public enum AttackHitScaleMode {
     OrbCount,
     StatusCardsOwned,
     UnblockedDamageTakenPlusOne,
+    /// <summary>Damage equals current player block (Body Slam).</summary>
+    PlayerBlock,
 }

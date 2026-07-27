@@ -201,6 +201,10 @@ internal static class CombatSetupEvaluator {
             var card = state.Hand[action.HandIndex];
             baseScore += AttackerKillPriority.OpenerBonus(state, action);
             baseScore -= AttackerKillPriority.SetupOpenerPenalty(state, card);
+            if (BlockDefensePolicy.ShouldDeferBlockScalingAttack(state, card, action.HandIndex, action.EnemyIndex))
+                baseScore -= AttackerKillPriority.SetupOpenerPenaltyAmount;
+            if (KeyCardBurnRiskEvaluator.ShouldPruneBurnEnablerOpener(state, action.HandIndex))
+                baseScore -= AttackerKillPriority.SetupOpenerPenaltyAmount;
         }
         return SimMoveScoring.WithModifiers(state, action, baseScore, rootSnapshot);
     }
@@ -314,7 +318,7 @@ internal static class CombatSetupEvaluator {
             playedTransform = true;
         }
 
-        if (BlockDefensePolicy.NeedsBlock(s))
+        if (BlockDefensePolicy.NeedsBlock(s) && !BlockDefensePolicy.ShouldSkipGreedyBlockForBlockScalingAttack(s))
             s = SimulateGreedyBlock(s, excludeHandIndex);
 
         if (s.Buffs.InfernoRetaliation > 0 && ThreatModel.EffectiveAoeEnemyCount(s) >= 2)
@@ -322,7 +326,7 @@ internal static class CombatSetupEvaluator {
 
         s = SimulateGreedyAttacks(s, excludeHandIndex);
 
-        if (BlockDefensePolicy.NeedsBlock(s))
+        if (BlockDefensePolicy.NeedsBlock(s) && !BlockDefensePolicy.ShouldSkipGreedyBlockForBlockScalingAttack(s))
             s = SimulateGreedyBlock(s, excludeHandIndex);
 
         return SimulateGreedyJunkClear(s, excludeHandIndex);
@@ -441,8 +445,12 @@ internal static class CombatSetupEvaluator {
         string? excludeId = excludeHandIndex >= 0 && excludeHandIndex < state.Hand.Count
             ? state.Hand[excludeHandIndex].Id
             : null;
+        int energyReserve = BlockDefensePolicy.BlockScalingAttackEnergyReserve(s);
 
         while (ThreatModel.NetDamageAfterBlock(s) > 0) {
+            if (s.Energy <= energyReserve)
+                break;
+
             int bestHand = -1;
             int bestCover = 0;
 
@@ -851,7 +859,7 @@ internal static class CombatSetupEvaluator {
         foreach (var card in state.Hand.OrderByDescending(c => c.Damage)) {
             if (!CombatCardCost.CanAfford(card, state))
                 continue;
-            if (!card.IsAttack || card.Damage <= 0)
+            if (!CombatDamageCalc.DealsAttackDamage(card))
                 continue;
 
             int cost = CombatCardCost.EffectiveCost(card, state);
@@ -914,7 +922,7 @@ internal static class CombatSetupEvaluator {
                 var card = s.Hand[i];
                 if (excludeId != null && card.Id == excludeId)
                     continue;
-                if (!CombatCardCost.CanAfford(card, s) || !card.IsAttack || card.Damage <= 0)
+                if (!CombatCardCost.CanAfford(card, s) || !CombatDamageCalc.DealsAttackDamage(card))
                     continue;
 
                 if (card.IsAoe) {

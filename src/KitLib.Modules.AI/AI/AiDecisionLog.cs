@@ -19,6 +19,8 @@ public static class AiDecisionLog {
             while (Lines.Count > MaxLines)
                 Lines.Dequeue();
         }
+
+        AiDecisionHub.TouchDecisionLog();
     }
 
     public static IReadOnlyList<string> Snapshot() {

@@ -74,6 +74,9 @@ public static class CombatDecisionLog {
         if (!anyAlt)
             sb.Append(" (none)");
 
+        int pickedHand = picked.Type == ActionType.PlayCard ? picked.TargetIndex : -1;
+        sb.Append(BlockScalingDecisionDiag.FormatContext(state, pickedHand, enemyIndex));
+
         AiDecisionLog.Record("AutoPlay", sb.ToString());
     }
 

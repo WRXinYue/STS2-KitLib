@@ -1,11 +1,12 @@
 {
   "app": {
     "title": "KitLib 开发者面板",
-    "subtitle": "实时日志与战斗统计"
+    "subtitle": "实时日志、战斗统计与 AI 决策"
   },
   "nav": {
     "logs": "日志",
-    "combat": "战斗"
+    "combat": "战斗",
+    "ai": "AI"
   },
   "logs": {
     "syncInGame": "同步局内筛选",
@@ -107,5 +108,80 @@
   "lang": {
     "en": "English",
     "zh-CN": "中文"
+  },
+  "ai": {
+    "status": {
+      "noData": "暂无 AI 决策数据",
+      "inCombat": "战斗中",
+      "outOfCombat": "非战斗"
+    },
+    "empty": {
+      "noPayload": "尚无 AI 决策快照。",
+      "noPayloadHint": "开启 KitLib AI 并进入战斗后，每次决策会更新此面板。"
+    },
+    "bool": {
+      "yes": "是",
+      "no": "否"
+    },
+    "lastAction": {
+      "title": "上次行动",
+      "type": "类型",
+      "label": "标签",
+      "reason": "原因"
+    },
+    "telemetry": {
+      "title": "战斗遥测",
+      "hp": "生命",
+      "block": "格挡",
+      "energy": "能量",
+      "incoming": "Incoming",
+      "netDamage": "净伤害",
+      "nonDamageThreat": "非伤害威胁",
+      "nextTurnIncoming": "下回合 Incoming",
+      "junk": "废牌",
+      "pollution": "污染",
+      "playDamage": "可打伤害",
+      "playBlock": "可打格挡",
+      "setupDebt": "铺垫债务",
+      "infernoDebt": "Inferno 债务",
+      "outlook": "抽牌展望",
+      "peek": "窥视"
+    },
+    "blockPolicy": {
+      "title": "格挡策略",
+      "needsBlock": "需要格挡",
+      "canSkipForKill": "可跳过（斩杀）",
+      "prioritize": "优先格挡",
+      "hasPureBlock": "有纯格挡",
+      "energyReserve": "能量预留",
+      "netDamage": "净伤害",
+      "affordableBlock": "可买格挡"
+    },
+    "piles": {
+      "title": "牌堆展望",
+      "draw": "抽牌堆",
+      "discard": "弃牌堆",
+      "exhaust": "消耗堆",
+      "reshuffle": "将洗牌",
+      "peek": "窥视"
+    },
+    "hand": {
+      "title": "手牌排序",
+      "rank": "分数",
+      "name": "卡牌",
+      "cost": "费用",
+      "dmg": "伤害",
+      "block": "格挡",
+      "play": "可打",
+      "tags": "标签",
+      "defer": "延后",
+      "blockScaling": "格挡缩放",
+      "pureBlock": "纯格挡",
+      "deferYes": "延后"
+    },
+    "log": {
+      "title": "决策日志",
+      "empty": "暂无决策日志。"
+    }
   }
 }

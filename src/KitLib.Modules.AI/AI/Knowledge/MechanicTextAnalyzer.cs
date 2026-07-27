@@ -38,6 +38,9 @@ internal static class MechanicTextAnalyzer {
         if (ContainsAny(text, "ALL ENEMY", "ALL ENEMIES"))
             flags |= CardMechanicFlags.Aoe;
 
+        if (ContainsAny(text, "DAMAGE EQUAL TO YOUR BLOCK", "DAMAGE EQUAL TO BLOCK"))
+            flags |= CardMechanicFlags.HasDamage;
+
         if (ContainsAny(text, "INTO YOUR DECK", "ADD TO YOUR DECK", "SHUFFLE")
             && ContainsAny(text, "CARD", "RANDOM", "ATTACK"))
             flags |= CardMechanicFlags.AddsCardsToDeck;

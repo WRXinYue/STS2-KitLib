@@ -1,10 +1,21 @@
 using System;
 using System.Collections.Generic;
 
+using KitLib.AI.Knowledge;
+
 namespace KitLib.AI.Combat.Simulation;
 
 internal static class CombatDamageCalc {
     public const float ConfusedDrawCostEv = 1.5f;
+
+    public static bool DealsAttackDamage(CombatHandCard card) {
+        if (!card.IsAttack)
+            return false;
+        if (card.Profile.HitScaleMode == AttackHitScaleMode.PlayerBlock
+            || BlockDefensePolicy.IsBlockScalingCardId(card.Id))
+            return true;
+        return card.Damage > 0;
+    }
 
     public static int OutgoingDamage(int baseDamage, IReadOnlyList<PlayerCombatModifier> modifiers, int vulnerableOnTarget = 0) {
         if (baseDamage <= 0)
@@ -24,10 +35,37 @@ internal static class CombatDamageCalc {
     }
 
     public static int OutgoingDamage(CombatHandCard card, CombatState state, int vulnerableOnTarget = 0, int skillsInHand = 0) {
-        if (!card.IsAttack || card.Damage <= 0)
+        if (!DealsAttackDamage(card))
             return 0;
-        var perHit = OutgoingDamage(card.Damage, state.Modifiers, vulnerableOnTarget);
+
+        int baseDamage = ResolveAttackBaseDamage(card, state);
+        if (baseDamage <= 0
+            && card.Profile.HitScaleMode == AttackHitScaleMode.PlayerBlock) {
+            int flatOnly = 0;
+            float mult = 1f;
+            foreach (var mod in state.Modifiers) {
+                flatOnly += mod.AttackDamageFlat;
+                mult *= mod.AttackDamageMultiplier;
+            }
+
+            if (flatOnly <= 0)
+                return 0;
+
+            var strengthOnly = (int)Math.Round(flatOnly * mult);
+            if (vulnerableOnTarget > 0)
+                strengthOnly = (int)Math.Round(strengthOnly * 1.5f);
+            return Math.Max(0, strengthOnly);
+        }
+
+        var perHit = OutgoingDamage(baseDamage, state.Modifiers, vulnerableOnTarget);
         return perHit * Math.Max(0, CombatCardStats.ResolveEffectiveHitCount(card, state, skillsInHand));
+    }
+
+    static int ResolveAttackBaseDamage(CombatHandCard card, CombatState state) {
+        if (card.Profile.HitScaleMode == AttackHitScaleMode.PlayerBlock
+            || BlockDefensePolicy.IsBlockScalingCardId(card.Id))
+            return Math.Max(card.Damage, state.PlayerBlock);
+        return card.Damage;
     }
 
     public static int OutgoingDamage(CombatPileCard card, IReadOnlyList<PlayerCombatModifier> modifiers, int vulnerableOnTarget = 0) {

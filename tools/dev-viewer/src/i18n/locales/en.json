@@ -1,11 +1,12 @@
 {
   "app": {
     "title": "KitLib Dev Viewer",
-    "subtitle": "Live logs and combat stats"
+    "subtitle": "Live logs, combat stats, and AI decisions"
   },
   "nav": {
     "logs": "Logs",
-    "combat": "Combat"
+    "combat": "Combat",
+    "ai": "AI"
   },
   "logs": {
     "syncInGame": "Sync in-game filters",
@@ -107,5 +108,80 @@
   "lang": {
     "en": "English",
     "zh-CN": "中文"
+  },
+  "ai": {
+    "status": {
+      "noData": "No AI decision data",
+      "inCombat": "In combat",
+      "outOfCombat": "Out of combat"
+    },
+    "empty": {
+      "noPayload": "No AI decision snapshot yet.",
+      "noPayloadHint": "Start a combat with KitLib AI enabled; snapshots update each decision."
+    },
+    "bool": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "lastAction": {
+      "title": "Last action",
+      "type": "Type",
+      "label": "Label",
+      "reason": "Reason"
+    },
+    "telemetry": {
+      "title": "Combat telemetry",
+      "hp": "HP",
+      "block": "Block",
+      "energy": "Energy",
+      "incoming": "Incoming",
+      "netDamage": "Net damage",
+      "nonDamageThreat": "Non-damage threat",
+      "nextTurnIncoming": "Next turn incoming",
+      "junk": "Junk",
+      "pollution": "Pollution",
+      "playDamage": "Play damage",
+      "playBlock": "Play block",
+      "setupDebt": "Setup debt",
+      "infernoDebt": "Inferno debt",
+      "outlook": "Draw outlook",
+      "peek": "Peek"
+    },
+    "blockPolicy": {
+      "title": "Block policy",
+      "needsBlock": "Needs block",
+      "canSkipForKill": "Can skip for kill",
+      "prioritize": "Prioritize block",
+      "hasPureBlock": "Has pure block",
+      "energyReserve": "Energy reserve",
+      "netDamage": "Net damage",
+      "affordableBlock": "Affordable block"
+    },
+    "piles": {
+      "title": "Pile outlook",
+      "draw": "Draw pile",
+      "discard": "Discard pile",
+      "exhaust": "Exhaust pile",
+      "reshuffle": "Will reshuffle",
+      "peek": "Peek"
+    },
+    "hand": {
+      "title": "Hand ranking",
+      "rank": "Rank",
+      "name": "Card",
+      "cost": "Cost",
+      "dmg": "Dmg",
+      "block": "Block",
+      "play": "Playable",
+      "tags": "Tags",
+      "defer": "Defer",
+      "blockScaling": "Block scaling",
+      "pureBlock": "Pure block",
+      "deferYes": "Defer"
+    },
+    "log": {
+      "title": "Decision log",
+      "empty": "No decision log lines yet."
+    }
   }
 }

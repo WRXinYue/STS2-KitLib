@@ -33,6 +33,12 @@ internal static class CombatActionHeuristic {
         if (BlockDefensePolicy.IsPureBlockCard(card, state) && BlockDefensePolicy.CanSkipBlockForKill(state))
             return int.MinValue;
 
+        if (BlockDefensePolicy.ShouldDeferBlockScalingAttack(state, card, action.HandIndex, action.EnemyIndex))
+            return int.MinValue + 4;
+
+        if (KeyCardBurnRiskEvaluator.ShouldPruneBurnEnablerOpener(state, action.HandIndex))
+            return int.MinValue + 3;
+
         int setupPenalty = AttackerKillPriority.SetupOpenerPenalty(state, card);
         if (setupPenalty > 0)
             return int.MinValue + 5;

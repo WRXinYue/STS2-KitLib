@@ -1,4 +1,4 @@
-import type { CombatStatsLiveDto } from "../types";
+import type { CombatStatsLiveDto, AiDecisionLiveDto } from "../types";
 import sample from "../sample-data.json";
 
 export function loadEmbeddedLive(): CombatStatsLiveDto | null {
@@ -42,6 +42,15 @@ export function logsWsUrl(): string {
 
 export function liveApiUrl(): string {
   return `${window.location.origin}/api/live`;
+}
+
+export function aiWsUrl(): string {
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${proto}//${window.location.host}/api/ai/ws`;
+}
+
+export function aiLiveApiUrl(): string {
+  return `${window.location.origin}/api/ai/live`;
 }
 
 export function exportJsonUrl(): string {
@@ -102,6 +111,18 @@ export async function fetchLiveSnapshot(): Promise<CombatStatsLiveDto | null> {
       return null;
     const data = (await res.json()) as CombatStatsLiveDto;
     return data.active ? data : null;
+  }
+  catch {
+    return null;
+  }
+}
+
+export async function fetchAiLiveSnapshot(): Promise<AiDecisionLiveDto | null> {
+  try {
+    const res = await fetch(aiLiveApiUrl(), { cache: "no-store" });
+    if (!res.ok)
+      return null;
+    return (await res.json()) as AiDecisionLiveDto;
   }
   catch {
     return null;

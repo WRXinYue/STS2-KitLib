@@ -106,3 +106,164 @@ export type WsServerMessage =
   | { type: "pong" }
   | { type: "stats"; payload: CombatStatsLiveDto; revision?: number }
   | { type: "exported"; format: "json"; path: string };
+
+export interface AiTelemetryDto {
+  summary: string;
+  playerHp: number;
+  playerMaxHp: number;
+  playerBlock: number;
+  energy: number;
+  incoming: number;
+  netDamage: number;
+  nonDamageThreat: number;
+  nextTurnIncoming: number;
+  junk: number;
+  pollution: number;
+  playDamage: number;
+  playBlock: number;
+  setupDebt: number;
+  infernoDebt: number;
+  peekSummary: string;
+  outlook: number;
+}
+
+export interface AiLastActionDto {
+  actionType: string;
+  label: string;
+  reason: string;
+  targetIndex: number;
+  secondaryIndex: number;
+}
+
+export interface AiHandCardDto {
+  index: number;
+  id: string;
+  name: string;
+  cost: number;
+  damage: number;
+  block: number;
+  cardType: string;
+  canPlay: boolean;
+  rankScore: number;
+  blockScaling: boolean;
+  pureBlock: boolean;
+  deferBlockScaling: boolean;
+  deferReason: string;
+}
+
+export interface AiPileOutlookDto {
+  drawCount: number;
+  discardCount: number;
+  exhaustCount: number;
+  willReshuffle: boolean;
+  peekSummary: string;
+}
+
+export interface AiBlockPolicyDto {
+  needsBlock: boolean;
+  canSkipBlockForKill: boolean;
+  shouldPrioritizeBlock: boolean;
+  hasPureBlock: boolean;
+  energyReserve: number;
+  netDamage: number;
+  affordableBlock: number;
+}
+
+export interface AiDecisionSnapshotDto {
+  phase: string;
+  utcMs: number;
+  telemetry: AiTelemetryDto;
+  lastAction: AiLastActionDto | null;
+  hand: AiHandCardDto[];
+  piles: AiPileOutlookDto;
+  blockPolicy: AiBlockPolicyDto;
+  decisionLog: string[];
+}
+
+export interface AiDecisionLiveDto {
+  active: AiDecisionSnapshotDto | null;
+  isInCombat: boolean;
+}
+
+export interface AiTelemetryDto {
+  summary: string;
+  playerHp: number;
+  playerMaxHp: number;
+  playerBlock: number;
+  energy: number;
+  incoming: number;
+  netDamage: number;
+  nonDamageThreat: number;
+  nextTurnIncoming: number;
+  junk: number;
+  pollution: number;
+  playDamage: number;
+  playBlock: number;
+  setupDebt: number;
+  infernoDebt: number;
+  peekSummary: string;
+  outlook: number;
+}
+
+export interface AiLastActionDto {
+  actionType: string;
+  label: string;
+  reason: string;
+  targetIndex: number;
+  secondaryIndex: number;
+}
+
+export interface AiHandCardDto {
+  index: number;
+  id: string;
+  name: string;
+  cost: number;
+  damage: number;
+  block: number;
+  cardType: string;
+  canPlay: boolean;
+  rankScore: number;
+  blockScaling: boolean;
+  pureBlock: boolean;
+  deferBlockScaling: boolean;
+  deferReason: string;
+}
+
+export interface AiPileOutlookDto {
+  drawCount: number;
+  discardCount: number;
+  exhaustCount: number;
+  willReshuffle: boolean;
+  peekSummary: string;
+}
+
+export interface AiBlockPolicyDto {
+  needsBlock: boolean;
+  canSkipBlockForKill: boolean;
+  shouldPrioritizeBlock: boolean;
+  hasPureBlock: boolean;
+  energyReserve: number;
+  netDamage: number;
+  affordableBlock: number;
+}
+
+export interface AiDecisionSnapshotDto {
+  phase: string;
+  utcMs: number;
+  telemetry: AiTelemetryDto;
+  lastAction: AiLastActionDto | null;
+  hand: AiHandCardDto[];
+  piles: AiPileOutlookDto;
+  blockPolicy: AiBlockPolicyDto;
+  decisionLog: string[];
+}
+
+export interface AiDecisionLiveDto {
+  active: AiDecisionSnapshotDto | null;
+  isInCombat: boolean;
+}
+
+export type AiWsServerMessage =
+  | { type: "hello"; stream?: string; revision?: number }
+  | { type: "pong" }
+  | { type: "ai"; payload: AiDecisionLiveDto; revision?: number };

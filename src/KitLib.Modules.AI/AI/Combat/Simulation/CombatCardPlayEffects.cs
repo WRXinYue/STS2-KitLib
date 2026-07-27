@@ -19,12 +19,9 @@ internal static class CombatCardPlayEffects {
             PlayerPowerSimulator.ApplyPlayerHpLoss(
                 card.Profile.HpLoss, buffs, ref playerHp, ref enemies);
 
-        if (card.IsAttack && card.Damage > 0) {
-            if (card.IsAoe || CombatTargetTypes.IsAllEnemies(card.TargetType)) {
-                var aoeDamage = CombatDamageCalc.OutgoingDamage(card, state, vulnerableOnTarget: 0, skillsInHand);
-                CombatEffectApplier.ApplyAoeDamage(enemies, aoeDamage);
-            }
-            else {
+        if (CombatDamageCalc.DealsAttackDamage(card)) {
+            int vulnerableOnTarget = 0;
+            if (!card.IsAoe && !CombatTargetTypes.IsAllEnemies(card.TargetType)) {
                 var targetIndex = enemyIndex;
                 if (targetIndex < 0)
                     targetIndex = CombatSetupEvaluator.PrimaryAttackTargetIndex(state with {
@@ -33,14 +30,30 @@ internal static class CombatCardPlayEffects {
                         Enemies = enemies,
                     });
 
-                if (targetIndex >= 0) {
-                    var target = FindEnemy(enemies, targetIndex);
-                    var damage = CombatDamageCalc.OutgoingDamage(
-                        card,
-                        state with { PlayerHp = playerHp, PlayerBlock = block, Enemies = enemies },
-                        target?.Vulnerable ?? 0,
-                        skillsInHand);
-                    CombatEffectApplier.ApplySingleDamage(enemies, targetIndex, damage);
+                var target = targetIndex >= 0 ? FindEnemy(enemies, targetIndex) : null;
+                vulnerableOnTarget = target?.Vulnerable ?? 0;
+            }
+
+            int outgoing = CombatDamageCalc.OutgoingDamage(
+                card,
+                state with { PlayerHp = playerHp, PlayerBlock = block, Enemies = enemies },
+                vulnerableOnTarget,
+                skillsInHand);
+
+            if (outgoing > 0) {
+                if (card.IsAoe || CombatTargetTypes.IsAllEnemies(card.TargetType))
+                    CombatEffectApplier.ApplyAoeDamage(enemies, outgoing);
+                else {
+                    var targetIndex = enemyIndex;
+                    if (targetIndex < 0)
+                        targetIndex = CombatSetupEvaluator.PrimaryAttackTargetIndex(state with {
+                            PlayerHp = playerHp,
+                            PlayerBlock = block,
+                            Enemies = enemies,
+                        });
+
+                    if (targetIndex >= 0)
+                        CombatEffectApplier.ApplySingleDamage(enemies, targetIndex, outgoing);
                 }
             }
         }

@@ -73,7 +73,7 @@ public static class CombatSimulator {
                     ref block,
                     ref enemies);
 
-                if (card.IsAttack && card.Damage > 0)
+                if (card.IsAttack && CombatDamageCalc.DealsAttackDamage(card))
                     attacksPlayed++;
             }
         }

@@ -101,4 +101,135 @@ public static class BlockDefensePolicy {
 
         return IsPureBlockCard(root.Hand[action.HandIndex], root);
     }
+
+    public static bool IsBlockScalingAttack(CombatHandCard card) =>
+        card.Profile.HitScaleMode == AttackHitScaleMode.PlayerBlock
+        || IsBlockScalingCardId(card.Id);
+
+    public static bool HasAffordablePureBlock(CombatState state, int excludeHandIndex = -1) {
+        for (int i = 0; i < state.Hand.Count; i++) {
+            if (i == excludeHandIndex)
+                continue;
+            var card = state.Hand[i];
+            if (!CombatCardCost.CanAfford(card, state))
+                continue;
+            if (IsPureBlockCard(card, state))
+                return true;
+        }
+
+        return KeyCardBurnRiskEvaluator.PeekTopPureBlockAtBurnRisk(state, excludeHandIndex) > 0;
+    }
+
+    public static int BestAffordablePureBlockAfterReserve(
+        CombatState state,
+        int excludeHandIndex,
+        int energyReserve) {
+        int best = 0;
+        for (int i = 0; i < state.Hand.Count; i++) {
+            if (i == excludeHandIndex)
+                continue;
+            var card = state.Hand[i];
+            if (!IsPureBlockCard(card, state))
+                continue;
+            int cost = CombatCardCost.EffectiveCost(card, state);
+            if (cost > state.Energy - energyReserve)
+                continue;
+            best = Math.Max(best, CombatDamageCalc.OutgoingBlock(card, state));
+        }
+
+        int peekBlock = KeyCardBurnRiskEvaluator.PeekTopPureBlockAtBurnRisk(state, excludeHandIndex);
+        if (peekBlock > 0)
+            best = Math.Max(best, peekBlock);
+
+        return best;
+    }
+
+    /// <summary>Block-scaling attacks should not open while affordable block would add more slam damage or cover net incoming.</summary>
+    public static bool ShouldDeferBlockScalingAttack(
+        CombatState state,
+        CombatHandCard card,
+        int handIndex = -1,
+        int enemyIndex = -1) {
+        if (!IsBlockScalingAttack(card))
+            return false;
+
+        if (handIndex >= 0
+            && enemyIndex >= 0
+            && SimLethalChecker.CanKillEnemyThisAction(state, handIndex, enemyIndex))
+            return false;
+
+        int slamDamage = CombatDamageCalc.OutgoingDamage(card, state);
+        if (slamDamage <= 0)
+            return HasAffordablePureBlock(state, handIndex);
+
+        if (!NeedsBlock(state)) {
+            if (state.PlayerBlock > 0 || !HasAffordablePureBlock(state, handIndex))
+                return false;
+
+            int reserve = BlockScalingAttackEnergyReserve(state);
+            int extraBlock = BestAffordablePureBlockAfterReserve(state, handIndex, reserve);
+            if (extraBlock <= 0)
+                return false;
+
+            int slamAfterBlock = CombatDamageCalc.OutgoingDamage(
+                card,
+                state with { PlayerBlock = state.PlayerBlock + extraBlock });
+            return slamAfterBlock > slamDamage;
+        }
+
+        if (!HasAffordablePureBlock(state, handIndex))
+            return false;
+
+        int net = NetDamage(state);
+        if (slamDamage < net)
+            return true;
+
+        int energyReserve = BlockScalingAttackEnergyReserve(state);
+        int blockGain = BestAffordablePureBlockAfterReserve(state, handIndex, energyReserve);
+        if (blockGain <= 0)
+            return false;
+
+        int slamAfterGain = CombatDamageCalc.OutgoingDamage(
+            card,
+            state with { PlayerBlock = state.PlayerBlock + blockGain });
+        return slamAfterGain > slamDamage;
+    }
+
+    /// <summary>Energy to keep for affordable block-scaling attacks (e.g. Body Slam).</summary>
+    public static int BlockScalingAttackEnergyReserve(CombatState state) {
+        int reserve = 0;
+        foreach (var card in state.Hand) {
+            if (!CombatCardCost.CanAfford(card, state))
+                continue;
+            if (!CombatDamageCalc.DealsAttackDamage(card)
+                || card.Profile.HitScaleMode != AttackHitScaleMode.PlayerBlock)
+                continue;
+
+            reserve = Math.Max(reserve, CombatCardCost.EffectiveCost(card, state));
+        }
+
+        return reserve;
+    }
+
+    /// <summary>Skip greedy block when already safe and slam damage is worth spending current block.</summary>
+    public static bool ShouldSkipGreedyBlockForBlockScalingAttack(CombatState state) {
+        if (NetDamage(state) > 0)
+            return false;
+
+        foreach (var card in state.Hand) {
+            if (!CombatCardCost.CanAfford(card, state))
+                continue;
+            if (!IsBlockScalingAttack(card))
+                continue;
+            if (ShouldDeferBlockScalingAttack(state, card))
+                continue;
+            if (CombatDamageCalc.OutgoingDamage(card, state) > 0)
+                return true;
+        }
+
+        return false;
+    }
+
+    internal static bool IsBlockScalingCardId(string? id) =>
+        string.Equals(id, "BODY_SLAM", StringComparison.OrdinalIgnoreCase);
 }
