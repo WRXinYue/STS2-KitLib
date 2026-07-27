@@ -23,6 +23,7 @@ public static class CardRewardScorer {
         int bestIdx = -1;
         int bestScore = int.MinValue;
         int bestMarginal = 0;
+        int bestOption = 0;
         int bestNextFight = 0;
 
         for (int i = 0; i < offered.Count; i++) {
@@ -31,6 +32,7 @@ public static class CardRewardScorer {
             if (breakdown.Total > bestScore) {
                 bestScore = breakdown.Total;
                 bestMarginal = breakdown.Marginal;
+                bestOption = breakdown.Option;
                 bestNextFight = breakdown.NextFight;
                 bestIdx = card["index"]?.GetValue<int>() ?? i;
             }
@@ -38,14 +40,15 @@ public static class CardRewardScorer {
 
         int skipCost = DeckEvaluator.SkipOpportunityCost(metrics, plan, snapshot);
         if (bestIdx < 0 || bestScore < skipCost)
-            return SkipAction(metrics, plan, bestScore, bestMarginal, bestNextFight, skipCost);
+            return SkipAction(metrics, plan, bestScore, bestMarginal, bestOption, bestNextFight, skipCost);
 
         var name = FindOfferName(offered, bestIdx);
-        LogPick(snapshot, name, bestScore, bestMarginal, bestNextFight, skipCost);
+        LogPick(snapshot, name, bestScore, bestMarginal, bestOption, bestNextFight, skipCost);
         return new GameAction {
             Type = ActionType.PickCardReward,
             TargetIndex = bestIdx,
-            Reason = $"Card pick [{name}] score={bestScore} skipCost={skipCost} marginal={bestMarginal} nextFight={bestNextFight}",
+            Reason = $"Card pick [{name}] score={bestScore} skipCost={skipCost} "
+                + $"sim={bestMarginal} opt={bestOption}",
         };
     }
 
@@ -64,23 +67,34 @@ public static class CardRewardScorer {
         DeckPlan plan,
         int bestScore,
         int marginal,
+        int option,
         int nextFight,
         int skipCost) {
         int quality = DeckEvaluator.DeckQualityScore(metrics, plan);
         AiDecisionLog.Record("AutoPlay",
-            $"card skip best={bestScore} skipCost={skipCost} marginal={marginal} nextFight={nextFight} quality={quality}");
+            $"card skip best={bestScore} skipCost={skipCost} marginal={marginal} "
+            + $"opt={option} nextFight={nextFight} quality={quality}");
         return new GameAction {
             Type = ActionType.SkipCardReward,
-            Reason = $"Skip (best={bestScore} skipCost={skipCost} marginal={marginal} nextFight={nextFight} quality={quality})",
+            Reason = $"Skip (best={bestScore} skipCost={skipCost} sim={marginal} opt={option} "
+                + $"nextFight={nextFight} quality={quality})",
         };
     }
 
-    static void LogPick(JsonObject snapshot, string name, int score, int marginal, int nextFight, int skipCost) {
+    static void LogPick(
+        JsonObject snapshot,
+        string name,
+        int score,
+        int marginal,
+        int option,
+        int nextFight,
+        int skipCost) {
         var preview = snapshot["nextFightPreview"]?.AsArray();
         var fightHint = preview != null && preview.Count > 0
             ? preview[0]?["encounterId"]?.GetValue<string>() ?? "?"
             : "none";
         AiDecisionLog.Record("AutoPlay",
-            $"card pick [{name}:+{score}] skipCost={skipCost} marginal={marginal} nextFight={nextFight} vs={fightHint}");
+            $"card pick [{name}:+{score}] skipCost={skipCost} sim={marginal} opt={option} "
+            + $"nextFight={nextFight} vs={fightHint}");
     }
 }

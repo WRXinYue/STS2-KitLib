@@ -178,84 +178,33 @@ export interface AiDecisionSnapshotDto {
   piles: AiPileOutlookDto;
   blockPolicy: AiBlockPolicyDto;
   decisionLog: string[];
+  cardOffers: AiCardOfferDto[];
+  skipCost: number;
+  fightOutlook: AiFightOutlookDto | null;
 }
 
-export interface AiDecisionLiveDto {
-  active: AiDecisionSnapshotDto | null;
-  isInCombat: boolean;
-}
-
-export interface AiTelemetryDto {
-  summary: string;
-  playerHp: number;
-  playerMaxHp: number;
-  playerBlock: number;
-  energy: number;
-  incoming: number;
-  netDamage: number;
-  nonDamageThreat: number;
-  nextTurnIncoming: number;
-  junk: number;
-  pollution: number;
-  playDamage: number;
-  playBlock: number;
-  setupDebt: number;
-  infernoDebt: number;
-  peekSummary: string;
-  outlook: number;
-}
-
-export interface AiLastActionDto {
-  actionType: string;
-  label: string;
-  reason: string;
-  targetIndex: number;
-  secondaryIndex: number;
-}
-
-export interface AiHandCardDto {
+export interface AiCardOfferDto {
   index: number;
   id: string;
   name: string;
-  cost: number;
-  damage: number;
-  block: number;
-  cardType: string;
-  canPlay: boolean;
-  rankScore: number;
-  blockScaling: boolean;
-  pureBlock: boolean;
-  deferBlockScaling: boolean;
-  deferReason: string;
+  total: number;
+  marginal: number;
+  synergy: number;
+  option: number;
+  dilution: number;
+  early: number;
+  exerciseProb: number;
 }
 
-export interface AiPileOutlookDto {
-  drawCount: number;
-  discardCount: number;
-  exhaustCount: number;
-  willReshuffle: boolean;
-  peekSummary: string;
-}
-
-export interface AiBlockPolicyDto {
-  needsBlock: boolean;
-  canSkipBlockForKill: boolean;
-  shouldPrioritizeBlock: boolean;
-  hasPureBlock: boolean;
-  energyReserve: number;
-  netDamage: number;
-  affordableBlock: number;
-}
-
-export interface AiDecisionSnapshotDto {
-  phase: string;
-  utcMs: number;
-  telemetry: AiTelemetryDto;
-  lastAction: AiLastActionDto | null;
-  hand: AiHandCardDto[];
-  piles: AiPileOutlookDto;
-  blockPolicy: AiBlockPolicyDto;
-  decisionLog: string[];
+export interface AiFightOutlookDto {
+  encounterId: string;
+  expectedRemainingHp: number;
+  minRemainingHp: number;
+  expectedKillTurns: number;
+  expectedChip: number;
+  expectedFightChip: number;
+  lethalSamples: number;
+  sampleCount: number;
 }
 
 export interface AiDecisionLiveDto {

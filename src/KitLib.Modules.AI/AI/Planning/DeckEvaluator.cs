@@ -236,6 +236,9 @@ public static class DeckEvaluator {
 
     /// <summary>Quality delta from hypothetically adding one offered card to the deck.</summary>
     public static int MarginalPickScore(JsonObject snapshot, DeckPlan plan, JsonObject offeredCard) {
+        if (DeckSimScorer.HasRoutePreview(snapshot))
+            return DeckSimScorer.MarginalCardDelta(snapshot, offeredCard, plan);
+
         var before = Evaluate(snapshot, plan);
         var after = Evaluate(WithAddedCard(snapshot, offeredCard), plan);
         return DeckQualityScore(after, plan) - DeckQualityScore(before, plan);

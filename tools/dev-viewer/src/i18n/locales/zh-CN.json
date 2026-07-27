@@ -182,6 +182,27 @@
     "log": {
       "title": "决策日志",
       "empty": "暂无决策日志。"
+    },
+    "cardOffers": {
+      "title": "选牌评分",
+      "skipCost": "跳过代价",
+      "total": "总分",
+      "marginal": "当期(sim)",
+      "synergy": "协同",
+      "option": "期权",
+      "dilution": "稀释",
+      "early": "前期",
+      "exercise": "行权概率"
+    },
+    "fightOutlook": {
+      "title": "下场战斗展望",
+      "encounter": "遭遇",
+      "remainingHp": "E[剩余HP]",
+      "minRemainingHp": "最小剩余HP",
+      "killTurns": "E[击杀回合]",
+      "chip": "E[首回合受击]",
+      "fightChip": "E[整场受击]",
+      "lethal": "致死样本"
     }
   }
 }

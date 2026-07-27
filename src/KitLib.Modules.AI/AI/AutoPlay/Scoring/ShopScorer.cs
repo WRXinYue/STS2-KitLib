@@ -1,7 +1,6 @@
 using System;
 using System.Text.Json.Nodes;
 using KitLib.AI.Core.Schema;
-using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
 
 namespace KitLib.AI.AutoPlay.Scoring;
@@ -49,9 +48,9 @@ public static class ShopScorer {
             return new GameAction {
                 Type = ActionType.RemoveCardAtShop,
                 TargetIndex = 0,
-                Reason = $"Remove [{metrics.WorstCardName}] uplift={metrics.RemovalUplift} "
-                    + $"strikes+{metrics.StrikeSurplus} burnDebt={metrics.CardsNeedingBurn} "
-                    + $"score={removeScore} vs buy={bestOfferType}({bestPurchaseScore})",
+                Reason = $"Remove [{metrics.WorstCardName}] score={removeScore} "
+                    + $"heur={metrics.RemovalUplift} strikes+{metrics.StrikeSurplus} "
+                    + $"burnDebt={metrics.CardsNeedingBurn} vs buy={bestOfferType}({bestPurchaseScore})",
             };
         }
 
@@ -87,19 +86,13 @@ public static class ShopScorer {
         var cost = offer["cost"]?.GetValue<int>() ?? 999;
         if (gold < cost) return 0;
 
+        var plan = DeckPlanInferer.Infer(snapshot);
         int score = metrics.RemovalUplift;
-        string? worstId = null;
-        var deck = snapshot["deck"]?.AsArray();
-        if (deck != null) {
-            foreach (var node in deck) {
-                if (node is not JsonObject card) continue;
-                if ((card["index"]?.GetValue<int>() ?? -1) == metrics.WorstCardIndex) {
-                    worstId = card["id"]?.GetValue<string>();
-                    break;
-                }
-            }
+        if (DeckSimScorer.HasRoutePreview(snapshot)) {
+            int simDelta = DeckSimScorer.RemovalDelta(snapshot, plan, metrics.WorstCardIndex);
+            score = Math.Max(metrics.RemovalUplift, 10 + simDelta);
         }
-        score += CodexPriorCatalog.GetRemoveBonus(snapshot["characterId"]?.GetValue<string>(), worstId);
+
         score -= cost / 4;
         score -= OpportunityCost(gold, cost, snapshot);
         if (gold >= cost + MinGoldAfterShopping + 50) score += 5;

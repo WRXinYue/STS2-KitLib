@@ -16,9 +16,84 @@ public sealed record TurnOneMetrics(
     bool CanLethal,
     int NonDamageThreat);
 
+public sealed record DeckFightEstimate(TurnOneMetrics Turn, FightOutcomeMetrics Outcome);
+
 /// <summary>Monte Carlo turn-1 metrics from deck shuffle samples.</summary>
 public static class DeckDrawEvEstimator {
     public const int DefaultSampleCount = 8;
+
+    public static DeckFightEstimate EstimateCombined(
+        JsonObject snapshot,
+        JsonObject? offeredCard,
+        NextFightNode fight,
+        int sampleCount = DefaultSampleCount) {
+        if (sampleCount <= 0)
+            sampleCount = DefaultSampleCount;
+
+        long beamTotal = 0;
+        long maxDamageTotal = 0;
+        long blockTotal = 0;
+        long blockGapTotal = 0;
+        long nonDamageTotal = 0;
+        int lethalCount = 0;
+        int incoming = fight.IncomingTurn1;
+
+        long remainingTotal = 0;
+        int minRemaining = int.MaxValue;
+        int maxRemaining = 0;
+        long chipTotal = 0;
+        int maxChip = 0;
+        long killTurnsTotal = 0;
+        long fightChipTotal = 0;
+        int outcomeLethal = 0;
+
+        for (int s = 0; s < sampleCount; s++) {
+            var state = DeckCombatStateFactory.BuildOpeningTurn(
+                snapshot, offeredCard, fight.Enemies, s);
+            var metrics = EstimateSingle(state, incoming);
+            var outcome = FightOutcomeEstimator.EstimateSingle(state, fight);
+
+            beamTotal += metrics.BeamScore;
+            maxDamageTotal += metrics.MaxDamage;
+            blockTotal += metrics.AffordableBlock;
+            blockGapTotal += metrics.BlockGap;
+            nonDamageTotal += metrics.NonDamageThreat;
+            if (metrics.CanLethal)
+                lethalCount++;
+
+            remainingTotal += outcome.RemainingHp;
+            minRemaining = Math.Min(minRemaining, outcome.RemainingHp);
+            maxRemaining = Math.Max(maxRemaining, outcome.RemainingHp);
+            chipTotal += outcome.Chip;
+            maxChip = Math.Max(maxChip, outcome.Chip);
+            killTurnsTotal += outcome.KillTurns;
+            fightChipTotal += outcome.FightChip;
+            if (outcome.RemainingHp == 0)
+                outcomeLethal++;
+        }
+
+        int n = sampleCount;
+        var turn = new TurnOneMetrics(
+            (int)(beamTotal / n),
+            (int)(maxDamageTotal / n),
+            (int)(blockTotal / n),
+            incoming,
+            (int)(blockGapTotal / n),
+            lethalCount >= n / 2,
+            (int)(nonDamageTotal / n));
+        var fightOutcome = new FightOutcomeMetrics(
+            (int)(remainingTotal / n),
+            minRemaining == int.MaxValue ? 0 : minRemaining,
+            maxRemaining,
+            (int)(chipTotal / n),
+            maxChip,
+            (int)(killTurnsTotal / n),
+            (int)(fightChipTotal / n),
+            outcomeLethal,
+            n);
+
+        return new DeckFightEstimate(turn, fightOutcome);
+    }
 
     public static TurnOneMetrics EstimateAverage(
         JsonObject snapshot,

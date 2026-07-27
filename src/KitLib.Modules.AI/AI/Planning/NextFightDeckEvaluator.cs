@@ -47,8 +47,9 @@ public static class NextFightDeckEvaluator {
         float weightSum = 0f;
 
         foreach (var fight in route) {
-            var metrics = DeckDrawEvEstimator.EstimateAverage(snapshot, offeredCard, fight);
-            total += fight.Weight * ScoreMetrics(metrics, snapshot);
+            var estimate = DeckDrawEvEstimator.EstimateCombined(snapshot, offeredCard, fight);
+            total += fight.Weight * ScoreMetrics(
+                estimate.Turn, snapshot, fight, estimate.Outcome);
             weightSum += fight.Weight;
         }
 
@@ -58,7 +59,11 @@ public static class NextFightDeckEvaluator {
         return (int)Math.Round(total / weightSum);
     }
 
-    static int ScoreMetrics(TurnOneMetrics metrics, JsonObject snapshot) {
+    static int ScoreMetrics(
+        TurnOneMetrics metrics,
+        JsonObject snapshot,
+        NextFightNode fight,
+        FightOutcomeMetrics outcome) {
         int score = Math.Clamp(metrics.BeamScore / 8, -120, 120);
 
         if (metrics.CanLethal)
@@ -75,6 +80,7 @@ public static class NextFightDeckEvaluator {
         }
 
         score -= Math.Min(metrics.NonDamageThreat * 2, 40);
+        score += FightOutcomeEstimator.ScoreOutcome(outcome, snapshot, fight);
         return Math.Clamp(score, -120, 120);
     }
 

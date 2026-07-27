@@ -15,7 +15,32 @@ public sealed record AiDecisionSnapshotDto(
     IReadOnlyList<AiHandCardDto> Hand,
     AiPileOutlookDto Piles,
     AiBlockPolicyDto BlockPolicy,
-    IReadOnlyList<string> DecisionLog);
+    IReadOnlyList<string> DecisionLog,
+    IReadOnlyList<AiCardOfferDto> CardOffers,
+    int SkipCost,
+    AiFightOutlookDto? FightOutlook);
+
+public sealed record AiCardOfferDto(
+    int Index,
+    string Id,
+    string Name,
+    int Total,
+    int Marginal,
+    int Synergy,
+    int Option,
+    int Dilution,
+    int Early,
+    float ExerciseProb);
+
+public sealed record AiFightOutlookDto(
+    string EncounterId,
+    int ExpectedRemainingHp,
+    int MinRemainingHp,
+    int ExpectedKillTurns,
+    int ExpectedChip,
+    int ExpectedFightChip,
+    int LethalSamples,
+    int SampleCount);
 
 public sealed record AiTelemetryDto(
     string Summary,

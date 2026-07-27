@@ -55,6 +55,13 @@ const blockPolicyRows = computed(() => {
   ];
 });
 
+const cardOffers = computed(() => snapshot.value?.cardOffers ?? []);
+const fightOutlook = computed(() => snapshot.value?.fightOutlook ?? null);
+const skipCost = computed(() => snapshot.value?.skipCost ?? 0);
+const showMacroPanels = computed(() => !live.value?.isInCombat);
+const macroTelemetryRows = computed(() =>
+  telemetryRows.value.filter((row) => row.key === "hp"));
+
 function boolLabel(v: boolean) {
   return v ? t("ai.bool.yes") : t("ai.bool.no");
 }
@@ -103,7 +110,108 @@ function boolLabel(v: boolean) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card v-if="showMacroPanels && macroTelemetryRows.length > 0">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.telemetry.title") }}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="ai-grid">
+            <div
+              v-for="row in macroTelemetryRows"
+              :key="row.key"
+              class="ai-grid__item"
+            >
+              <span class="ai-grid__label">{{ row.label }}</span>
+              <span class="ai-grid__value">{{ row.value }}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card v-if="showMacroPanels && fightOutlook">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.fightOutlook.title") }}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="ai-grid">
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.encounter") }}</span>
+              <span class="ai-grid__value">{{ fightOutlook.encounterId }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.remainingHp") }}</span>
+              <span class="ai-grid__value">{{ fightOutlook.expectedRemainingHp }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.minRemainingHp") }}</span>
+              <span class="ai-grid__value">{{ fightOutlook.minRemainingHp }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.killTurns") }}</span>
+              <span class="ai-grid__value">{{ fightOutlook.expectedKillTurns }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.chip") }}</span>
+              <span class="ai-grid__value">{{ fightOutlook.expectedChip }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.fightChip") }}</span>
+              <span class="ai-grid__value">{{ fightOutlook.expectedFightChip }}</span>
+            </div>
+            <div class="ai-grid__item">
+              <span class="ai-grid__label">{{ t("ai.fightOutlook.lethal") }}</span>
+              <span class="ai-grid__value">
+                {{ fightOutlook.lethalSamples }}/{{ fightOutlook.sampleCount }}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card v-if="showMacroPanels && cardOffers.length > 0">
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base">{{ t("ai.cardOffers.title") }}</CardTitle>
+        </CardHeader>
+        <CardContent class="ai-hand-wrap">
+          <p class="text-sm text-muted-foreground mb-2">
+            {{ t("ai.cardOffers.skipCost") }}: {{ skipCost }}
+          </p>
+          <table class="ai-hand">
+            <thead>
+              <tr>
+                <th>{{ t("ai.hand.name") }}</th>
+                <th>{{ t("ai.cardOffers.total") }}</th>
+                <th>{{ t("ai.cardOffers.marginal") }}</th>
+                <th>{{ t("ai.cardOffers.option") }}</th>
+                <th>{{ t("ai.cardOffers.synergy") }}</th>
+                <th>{{ t("ai.cardOffers.dilution") }}</th>
+                <th>{{ t("ai.cardOffers.early") }}</th>
+                <th>{{ t("ai.cardOffers.exercise") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="offer in cardOffers"
+                :key="offer.index"
+              >
+                <td>
+                  <span class="font-medium">{{ offer.name }}</span>
+                  <span class="text-xs text-muted-foreground ml-1">{{ offer.id }}</span>
+                </td>
+                <td class="mono">{{ offer.total }}</td>
+                <td class="mono">{{ offer.marginal }}</td>
+                <td class="mono">{{ offer.option }}</td>
+                <td class="mono">{{ offer.synergy }}</td>
+                <td class="mono">{{ offer.dilution }}</td>
+                <td class="mono">{{ offer.early }}</td>
+                <td class="mono">{{ (offer.exerciseProb * 100).toFixed(0) }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card v-if="!showMacroPanels">
         <CardHeader class="pb-2">
           <CardTitle class="text-base">{{ t("ai.telemetry.title") }}</CardTitle>
         </CardHeader>
@@ -121,7 +229,7 @@ function boolLabel(v: boolean) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card v-if="!showMacroPanels">
         <CardHeader class="pb-2">
           <CardTitle class="text-base">{{ t("ai.blockPolicy.title") }}</CardTitle>
         </CardHeader>
@@ -139,7 +247,7 @@ function boolLabel(v: boolean) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card v-if="!showMacroPanels">
         <CardHeader class="pb-2">
           <CardTitle class="text-base">{{ t("ai.piles.title") }}</CardTitle>
         </CardHeader>
@@ -154,7 +262,7 @@ function boolLabel(v: boolean) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card v-if="!showMacroPanels && snapshot.hand.length > 0">
         <CardHeader class="pb-2">
           <CardTitle class="text-base">{{ t("ai.hand.title") }}</CardTitle>
         </CardHeader>

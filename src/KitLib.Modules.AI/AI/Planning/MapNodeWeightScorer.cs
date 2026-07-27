@@ -95,6 +95,16 @@ public static class MapNodeWeightScorer {
         if (ctx.TotalFloor < 6) score += 4;
         if (ctx.ActIndex == 0 && ctx.TotalFloor is >= 6 and <= 9 && ctx.HpRatio < 0.75f)
             score -= 15;
+
+        if (ctx.RouteFightScore >= 25)
+            score += 14;
+        else if (ctx.RouteFightScore >= 10)
+            score += 6;
+        if (ctx.RouteFightScore <= -25)
+            score -= 20;
+        else if (ctx.RouteFightScore <= -10)
+            score -= 10;
+
         return score;
     }
 

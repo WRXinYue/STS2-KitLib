@@ -26,7 +26,14 @@ public static class BlockDefensePolicy {
     public static bool IsFullyBlocked(CombatState state) =>
         NetDamage(state) <= 0;
 
-    public static int AffordableBlockTotal(CombatState state) {
+    public static int AffordableBlockTotal(CombatState state) =>
+        AffordableBlockWithBudget(state, state.Energy);
+
+    /// <summary>Greedy block total when at most <paramref name="energyBudget"/> may be spent on block.</summary>
+    public static int AffordableBlockWithBudget(CombatState state, int energyBudget) {
+        if (energyBudget <= 0)
+            return 0;
+
         var options = new List<(int Cost, int Block)>();
         foreach (var card in state.Hand) {
             if (!CombatCardCost.CanAfford(card, state)) continue;
@@ -39,7 +46,7 @@ public static class BlockDefensePolicy {
         }
 
         options.Sort((a, b) => b.Block.CompareTo(a.Block));
-        int energy = state.Energy;
+        int energy = Math.Min(state.Energy, energyBudget);
         int total = 0;
         foreach (var (cost, block) in options) {
             if (cost > energy) continue;

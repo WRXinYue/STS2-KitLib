@@ -83,6 +83,24 @@ public static class CardCatalog {
         return CardTagProviderHub.MergeTags(id, inferred);
     }
 
+    public static IEnumerable<CardCatalogEntry> EntriesForCharacter(string characterId) {
+        AiKnowledgeBootstrap.EnsureRegistered();
+        foreach (var entry in ById.Values) {
+            if (BelongsToCharacterPool(entry.Pool, characterId))
+                yield return entry;
+        }
+    }
+
+    static bool BelongsToCharacterPool(string? pool, string characterId) {
+        if (string.IsNullOrWhiteSpace(characterId))
+            return true;
+        if (string.IsNullOrWhiteSpace(pool))
+            return false;
+
+        return pool.Contains(characterId, StringComparison.OrdinalIgnoreCase)
+            || characterId.Contains(pool, StringComparison.OrdinalIgnoreCase);
+    }
+
     internal static void ClearForTests() {
         ById.Clear();
         _initialized = false;

@@ -13,20 +13,25 @@ namespace KitLib.AI;
 /// <summary>Builds structured AI decision snapshots for Dev Viewer and diagnostics.</summary>
 public static class AiDecisionViewerModel {
     public static AiDecisionLiveDto BuildLive(JsonObject snapshot, GamePhase phase, GameAction? action) {
+        var combatObj = snapshot["combat"] as JsonObject;
         bool inCombat = phase == GamePhase.Combat
-            || snapshot["combat"]?["isPlayPhaseActive"]?.GetValue<bool>() == true;
+            || combatObj?["isPlayPhaseActive"]?.GetValue<bool>() == true;
 
         if (!inCombat)
-            return new AiDecisionLiveDto(BuildNonCombat(phase, action), false);
+            return new AiDecisionLiveDto(BuildNonCombat(snapshot, phase, action), false);
 
         return new AiDecisionLiveDto(BuildCombat(snapshot, phase, action), true);
     }
 
-    static AiDecisionSnapshotDto BuildNonCombat(GamePhase phase, GameAction? action) {
+    static AiDecisionSnapshotDto BuildNonCombat(JsonObject snapshot, GamePhase phase, GameAction? action) {
+        var plan = DeckPlanInferer.Infer(snapshot);
+        var metrics = DeckEvaluator.Evaluate(snapshot, plan);
+        int skipCost = DeckEvaluator.SkipOpportunityCost(metrics, plan, snapshot);
+
         var telemetry = new AiTelemetryDto(
             Summary: AiHudModel.PhaseShortLabel(phase),
-            PlayerHp: 0,
-            PlayerMaxHp: 0,
+            PlayerHp: snapshot["currentHp"]?.GetValue<int>() ?? 0,
+            PlayerMaxHp: snapshot["maxHp"]?.GetValue<int>() ?? 0,
             PlayerBlock: 0,
             Energy: 0,
             Incoming: 0,
@@ -50,7 +55,10 @@ public static class AiDecisionViewerModel {
             [],
             new AiPileOutlookDto(0, 0, 0, false, ""),
             new AiBlockPolicyDto(false, false, false, false, 0, 0, 0),
-            CopyDecisionLog());
+            CopyDecisionLog(),
+            BuildCardOffers(snapshot, plan),
+            skipCost,
+            BuildFightOutlook(snapshot));
     }
 
     static AiDecisionSnapshotDto BuildCombat(JsonObject snapshot, GamePhase phase, GameAction? action) {
@@ -115,7 +123,58 @@ public static class AiDecisionViewerModel {
             hand,
             piles,
             blockPolicy,
-            CopyDecisionLog());
+            CopyDecisionLog(),
+            [],
+            0,
+            null);
+    }
+
+    static List<AiCardOfferDto> BuildCardOffers(JsonObject snapshot, DeckPlan plan) {
+        var offered = snapshot["offeredCards"]?.AsArray();
+        if (offered == null || offered.Count == 0)
+            return [];
+
+        int deckSize = snapshot["deck"]?.AsArray()?.Count ?? 0;
+        var list = new List<AiCardOfferDto>(offered.Count);
+
+        foreach (var node in offered) {
+            if (node is not JsonObject card)
+                continue;
+
+            var breakdown = CardOfferScoring.ScoreBreakdown(card, plan, deckSize, snapshot);
+            list.Add(new AiCardOfferDto(
+                card["index"]?.GetValue<int>() ?? list.Count,
+                card["id"]?.GetValue<string>() ?? "",
+                card["name"]?.GetValue<string>() ?? "?",
+                breakdown.Total,
+                breakdown.Marginal,
+                breakdown.Synergy,
+                breakdown.Option,
+                breakdown.Dilution,
+                breakdown.Early,
+                breakdown.ExerciseProb));
+        }
+
+        list.Sort((a, b) => b.Total.CompareTo(a.Total));
+        return list;
+    }
+
+    static AiFightOutlookDto? BuildFightOutlook(JsonObject snapshot) {
+        var route = NextFightRoute.ResolveFromSnapshot(snapshot);
+        if (route.Count == 0)
+            return null;
+
+        var fight = route[0];
+        var outcome = FightOutcomeEstimator.EstimateAverage(snapshot, null, fight);
+        return new AiFightOutlookDto(
+            fight.EncounterId,
+            outcome.ExpectedRemainingHp,
+            outcome.MinRemainingHp,
+            outcome.ExpectedKillTurns,
+            outcome.ExpectedChip,
+            outcome.ExpectedFightChip,
+            outcome.LethalSamples,
+            outcome.SampleCount);
     }
 
     static List<AiHandCardDto> BuildHand(CombatState state, int focusEnemy) {

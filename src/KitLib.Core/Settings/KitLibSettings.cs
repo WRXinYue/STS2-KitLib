@@ -48,8 +48,8 @@ public sealed partial class KitLibSettings {
     /// <summary>Show in-game AI hosting HUD overlay during solo AutoPlay.</summary>
     public bool AiHudEnabled { get; set; } = true;
 
-    /// <summary>Weight for Spire Codex community priors (0 = off, 1 = default).</summary>
-    public float CodexPriorWeight { get; set; } = 1f;
+    /// <summary>Weight for Spire Codex community priors (0 = off, sim-first macro scoring).</summary>
+    public float CodexPriorWeight { get; set; } = 0f;
 
     /// <summary>Auto ready-to-end-turn for non-local players when SyncBot is on.</summary>
     public bool SyncBotAutoEndTurn { get; set; } = true;

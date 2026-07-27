@@ -182,6 +182,27 @@
     "log": {
       "title": "Decision log",
       "empty": "No decision log lines yet."
+    },
+    "cardOffers": {
+      "title": "Card offer scoring",
+      "skipCost": "Skip cost",
+      "total": "Total",
+      "marginal": "Sim (current)",
+      "synergy": "Synergy",
+      "option": "Option",
+      "dilution": "Dilution",
+      "early": "Early",
+      "exercise": "Exercise prob."
+    },
+    "fightOutlook": {
+      "title": "Next fight outlook",
+      "encounter": "Encounter",
+      "remainingHp": "E[remaining HP]",
+      "minRemainingHp": "Min remaining HP",
+      "killTurns": "E[kill turns]",
+      "chip": "E[turn-1 chip]",
+      "fightChip": "E[fight chip]",
+      "lethal": "Lethal samples"
     }
   }
 }

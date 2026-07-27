@@ -5,53 +5,20 @@ using KitLib.AI.Planning;
 
 namespace KitLib.AI.AutoPlay.Scoring;
 
-internal readonly record struct CardOfferBreakdown(
-    int Marginal,
-    int Synergy,
-    int Dilution,
-    int Early,
-    int Codex,
-    int NextFight) {
-    public int Total => Marginal + Synergy + Dilution + Early + Codex + NextFight;
-}
-
 internal static class MacroScorerHelper {
     public static int RarityScore(string? rarity) => DeckCardScoring.RarityScore(rarity);
 
     public static int ScoreCardOffer(JsonObject card, DeckPlan plan, int deckSize, JsonObject? snapshot = null) =>
-        ScoreCardOfferBreakdown(card, plan, deckSize, snapshot).Total;
+        CardOfferScoring.ScoreTotal(card, plan, deckSize, snapshot);
 
     public static CardOfferBreakdown ScoreCardOfferBreakdown(
         JsonObject card,
         DeckPlan plan,
         int deckSize,
-        JsonObject? snapshot = null) {
-        if (snapshot == null) {
-            int absolute = ScoreCardOfferAbsolute(card, plan, deckSize);
-            return new CardOfferBreakdown(absolute, 0, 0, 0, 0, 0);
-        }
+        JsonObject? snapshot = null) =>
+        CardOfferScoring.ScoreBreakdown(card, plan, deckSize, snapshot);
 
-        var metrics = DeckEvaluator.Evaluate(snapshot, plan);
-        var deck = snapshot["deck"]?.AsArray();
-
-        int marginal = DeckEvaluator.MarginalPickScore(snapshot, plan, card);
-        int synergy = DeckSynergyEvaluator.ScoreCard(card, plan, snapshot);
-        int dilution = DeckSynergyEvaluator.ScoreDeckDilutionOffer(card, plan, metrics, deck);
-        int early = EarlyCardRewardAdjustments.Score(card, snapshot);
-        int codex = ScaledCodexBonus(card, snapshot, metrics);
-        int nextFight = NextFightDeckEvaluator.ScoreOfferDelta(snapshot, card, plan);
-
-        return new CardOfferBreakdown(marginal, synergy, dilution, early, codex, nextFight);
-    }
-
-    static int ScoreCardOfferAbsolute(JsonObject card, DeckPlan plan, int deckSize) {
-        var composition = new DeckComposition(0, 0, 0, 0);
-        var score = DeckCardScoring.ScoreInDeck(card, plan, composition);
-        score -= (int)Math.Round(DeckPlanInferer.DilutionPenalty(deckSize + 1, plan));
-        return score;
-    }
-
-    static int ScaledCodexBonus(JsonObject card, JsonObject snapshot, DeckMetrics metrics) {
+    internal static int ScaledCodexBonus(JsonObject card, JsonObject snapshot, DeckMetrics metrics) {
         var characterId = snapshot["characterId"]?.GetValue<string>();
         var cardId = card["id"]?.GetValue<string>();
         var context = snapshot["shopOffers"] != null ? "shop" : "combat_reward";

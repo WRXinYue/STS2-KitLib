@@ -9,15 +9,19 @@ namespace KitLib.AI.Combat.Simulation;
 public static class LethalDamageSolver {
     public const int AoeWipeSignal = int.MaxValue / 4;
 
-    public static int MaxSingleTargetDamage(CombatState state, int targetIndex) {
+    public static int MaxSingleTargetDamage(CombatState state, int targetIndex) =>
+        MaxSingleTargetDamage(state, targetIndex, state.Energy);
+
+    public static int MaxSingleTargetDamage(CombatState state, int targetIndex, int maxAttackEnergy) {
         var target = FindEnemy(state, targetIndex);
         int vulnerable = target?.Vulnerable ?? 0;
+        int energyCap = Math.Min(state.Energy, maxAttackEnergy);
 
-        var attacks = CollectAttacks(state, vulnerable);
+        var attacks = CollectAttacks(state, vulnerable, energyCap);
         if (attacks.Any(a => a.IsAoe && AoeDamageEstimator.EstimateAoeKills(state, RawDamage(state, a.HandIndex)) > 0))
             return AoeWipeSignal;
 
-        return SearchMaxDamage(attacks, state.Energy);
+        return SearchMaxDamage(attacks, energyCap);
     }
 
     public static int MaxSingleTargetDamage(JsonArray hand, int energy, int targetIndex, JsonArray? enemies) {
@@ -29,13 +33,14 @@ public static class LethalDamageSolver {
         return SearchMaxDamage(attacks, energy);
     }
 
-    static List<AttackOption> CollectAttacks(CombatState state, int vulnerable) {
+    static List<AttackOption> CollectAttacks(CombatState state, int vulnerable, int maxEnergy = -1) {
+        int energyCap = maxEnergy < 0 ? state.Energy : maxEnergy;
         var attacks = new List<AttackOption>();
         for (int i = 0; i < state.Hand.Count; i++) {
             var card = state.Hand[i];
             if (!card.CanPlay || !card.IsAttack || card.Damage <= 0) continue;
             var cost = CombatCardCost.EffectiveCost(card, state);
-            if (cost > state.Energy) continue;
+            if (cost > energyCap) continue;
 
             attacks.Add(new AttackOption(
                 i,
