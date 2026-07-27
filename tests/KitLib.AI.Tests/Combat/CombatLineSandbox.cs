@@ -130,6 +130,7 @@ public static class CombatLineSandbox {
                 .Append(" AV=").Append(line.Outcome.AvoidableIncoming)
                 .Append(" F1=").Append(line.Outcome.FutureIncoming1)
                 .Append(" focus=").Append(line.Outcome.FocusHp)
+                .Append(" vuln=").Append(line.Outcome.VulnerableOutlook)
                 .Append(" pack=").Append(line.PackedScore)
                 .AppendLine();
             rank++;
@@ -144,4 +145,41 @@ public static class CombatLineSandbox {
     public static RankedLine? FindByLabel(IReadOnlyList<RankedLine> ranked, string labelPrefix) =>
         ranked.FirstOrDefault(l => l.Label.StartsWith(labelPrefix, System.StringComparison.Ordinal)
             || l.Label == labelPrefix);
+
+    public static CombatState ApplyPath(CombatState state, IReadOnlyList<SimCombatAction> path) {
+        var sim = state;
+        foreach (var action in path)
+            sim = CombatSimulator.Apply(sim, action);
+        return sim;
+    }
+
+    public static List<SimCombatAction> BuildPlayPath(CombatState state, params string[] cardIdsInOrder) {
+        var path = new List<SimCombatAction>(cardIdsInOrder.Length);
+        var sim = state;
+        foreach (var cardId in cardIdsInOrder) {
+            int handIndex = -1;
+            for (int i = 0; i < sim.Hand.Count; i++) {
+                if (string.Equals(sim.Hand[i].Id, cardId, StringComparison.OrdinalIgnoreCase)) {
+                    handIndex = i;
+                    break;
+                }
+            }
+
+            if (handIndex < 0)
+                throw new InvalidOperationException($"Card '{cardId}' not in hand: {FormatHand(sim)}");
+
+            var action = LegalActionGenerator.GenerateUnpruned(sim)
+                .FirstOrDefault(a => a.Kind == SimActionKind.PlayCard && a.HandIndex == handIndex);
+            if (action == null)
+                throw new InvalidOperationException($"Cannot play '{cardId}' at index {handIndex}");
+
+            path.Add(action);
+            sim = CombatSimulator.Apply(sim, action);
+        }
+
+        return path;
+    }
+
+    static string FormatHand(CombatState state) =>
+        string.Join(",", state.Hand.Select(c => c.Id));
 }

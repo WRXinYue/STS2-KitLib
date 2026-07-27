@@ -8,7 +8,7 @@ namespace KitLib.AI.Tests.Combat;
 /// Offline sandbox for SHRINKER_BEETLE turn-1 openings (no game process).
 /// Uses official Ironclad starter IDs from ModelDb when available.
 /// </summary>
-public sealed class ShrinkerBeetleTurn1SandboxTests {
+public sealed class ShrinkerBeetleTurn1SandboxTests : ModelDbTestBase {
     const string BashId = OfficialIroncladCards.Bash;
     const string StrikeId = OfficialIroncladCards.Strike;
     const string DefendId = OfficialIroncladCards.Defend;

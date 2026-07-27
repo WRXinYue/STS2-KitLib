@@ -128,15 +128,22 @@ internal static class CombatSetupEvaluator {
                 return incomingCmp;
         }
 
+        if (baseline.Incoming == 0 && candidate.Incoming == 0
+            && baseline.AvoidableIncoming == 0 && candidate.AvoidableIncoming == 0) {
+            int setupCmp = CompareNoImmediateThreatSetup(baseline, candidate);
+            if (setupCmp != 0)
+                return setupCmp;
+
+            int safeChipCmp = CompareSafeLineChip(baseline, candidate);
+            if (safeChipCmp != 0)
+                return safeChipCmp;
+        }
+
         int futureCmp = ThreatModel.CompareFutureIncoming(
             candidate.FutureIncoming0, candidate.FutureIncoming1, candidate.FutureIncoming2,
             baseline.FutureIncoming0, baseline.FutureIncoming1, baseline.FutureIncoming2);
         if (futureCmp != 0)
             return futureCmp;
-
-        int setupCmp = CompareNoImmediateThreatSetup(baseline, candidate);
-        if (setupCmp != 0)
-            return setupCmp;
 
         if (candidate.DeckPollution != baseline.DeckPollution)
             return baseline.DeckPollution - candidate.DeckPollution;
@@ -199,6 +206,18 @@ internal static class CombatSetupEvaluator {
         if (extra * IncomingTradeDamageMultiplier <= benefit && benefit > 0)
             return 1;
         return baselineIncoming - candidateIncoming;
+    }
+
+    /// <summary>When this turn is fully safe, prefer chip damage over redundant block before horizon metrics.</summary>
+    static int CompareSafeLineChip(CombatLineOutcome baseline, CombatLineOutcome candidate) {
+        if (baseline.Incoming > 0 || candidate.Incoming > 0)
+            return 0;
+        if (baseline.AvoidableIncoming > 0 || candidate.AvoidableIncoming > 0)
+            return 0;
+        if (candidate.FocusHp == baseline.FocusHp)
+            return 0;
+
+        return baseline.FocusHp - candidate.FocusHp;
     }
 
     /// <summary>

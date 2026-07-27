@@ -84,19 +84,26 @@ public static class CombatScenarioFactory {
 
     /// <summary>
     /// SHRINKER_BEETLE WEAK turn 1: shrink → chomp → stomp loop.
-    /// Move IDs and damage from official <c>ShrinkerBeetle.cs</c> (deadly ascension chomp/stomp).
+    /// Move IDs and damage from official <c>ShrinkerBeetle.cs</c>.
     /// </summary>
-    public static CombatEnemy ShrinkerBeetleWeakOpening() {
+    public static CombatEnemy ShrinkerBeetleWeakOpening() =>
+        ShrinkerBeetle(hp: 40, chompDamage: 8, stompDamage: 14);
+
+    /// <summary>Baseline weak encounter without deadly ascension (7/13 chomp/stomp).</summary>
+    public static CombatEnemy ShrinkerBeetleVanillaWeak() =>
+        ShrinkerBeetle(hp: 40, chompDamage: 7, stompDamage: 13);
+
+    public static CombatEnemy ShrinkerBeetle(int hp, int chompDamage, int stompDamage) {
         var steps = new CombatIntentStep[] {
             new("SHRINKER_MOVE", 0, false, ["debuff"], 0),
-            new("CHOMP_MOVE", 8, false, ["attack"], 0),
-            new("STOMP_MOVE", 14, false, ["attack"], 0),
+            new("CHOMP_MOVE", chompDamage, false, ["attack"], 0),
+            new("STOMP_MOVE", stompDamage, false, ["attack"], 0),
         };
 
         return new CombatEnemy(
             0,
-            40,
-            40,
+            hp,
+            hp,
             0,
             true,
             false,
@@ -116,5 +123,27 @@ public static class CombatScenarioFactory {
         return BaseIronclad()
             .WithHand(Hand(handCardIds.ToArray()))
             .WithEnemies([ShrinkerBeetleWeakOpening()]);
+    }
+
+    /// <summary>Full starter deck split + optional relics for multi-turn sandboxes.</summary>
+    public static CombatState ShrinkerBeetleIroncladFight(
+        IReadOnlyList<string> openingHandIds,
+        IReadOnlyList<string>? relicIds = null,
+        bool deadlyEnemies = true,
+        int beetleHp = 40) {
+        CardPileEffectResolver.SeedNoPileEffects(IroncladStarterDeck.FullDeckIds);
+        var (hand, draw) = IroncladStarterDeck.SplitOpening(openingHandIds);
+        var beetle = deadlyEnemies
+            ? ShrinkerBeetle(beetleHp, 8, 14)
+            : ShrinkerBeetleVanillaWeak() with { CurrentHp = beetleHp, MaxHp = beetleHp };
+        var relics = relicIds ?? [];
+        int startBlock = RelicCombatRules.StartOfCombatBlock(relics);
+
+        return BaseIronclad()
+            .WithPlayerVitals(80, 80, startBlock, 3)
+            .WithHand(hand)
+            .WithPiles(draw, [], [])
+            .WithEnemies([beetle])
+            with { RelicIds = relics };
     }
 }

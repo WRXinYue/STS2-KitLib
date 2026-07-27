@@ -1,3 +1,5 @@
+using System.Linq;
+using KitLib.AI.Combat.Simulation;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 
@@ -46,10 +48,17 @@ internal static class OfficialCombatSimBootstrap {
             AssertStat(OfficialIroncladCards.Defend, ModelDb.Card<DefendIronclad>(), 1, null, 5, null);
         }
         finally {
+            ResetForTest();
+        }
+    }
+
+    internal static void ResetForTest() {
+        lock (Gate) {
             if (_ready) {
                 ModelDb.ResetForTest();
                 _ready = false;
                 _attempted = false;
+                _error = null;
             }
         }
     }
