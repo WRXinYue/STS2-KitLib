@@ -44,6 +44,14 @@
     </ItemGroup>
   </Target>
 
+  <!--
+    The MDI icon tree-shake deliberately does NOT live here, even though shake_icons.py's
+    docstring claims a ShakeIcons target in this project. A target here runs too late for
+    its consumers: PrepareForBuild in KitLib.Panel / KitLib.ModPanel is ordered before the
+    ResolveReferences that builds this project. Each consumer runs the shaker itself, from
+    a target hooked at AssignTargetPaths — see the comment in KitLib.Panel.csproj.
+  -->
+
 
   <ItemGroup>
     <ProjectReference Include="..\KitLib.Abstractions\KitLib.Abstractions.csproj" />

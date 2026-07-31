@@ -5,11 +5,9 @@ public readonly partial struct MdiIcon
 {
     public static readonly MdiIcon AnimationPlay = new("animation-play");
     public static readonly MdiIcon BookOpenVariant = new("book-open-variant");
-    public static readonly MdiIcon BugOutline = new("bug-outline");
     public static readonly MdiIcon BullseyeArrow = new("bullseye-arrow");
     public static readonly MdiIcon CalendarStar = new("calendar-star");
     public static readonly MdiIcon Cards = new("cards");
-    public static readonly MdiIcon ChartBar = new("chart-bar");
     public static readonly MdiIcon Check = new("check");
     public static readonly MdiIcon ChevronRight = new("chevron-right");
     public static readonly MdiIcon Close = new("close");

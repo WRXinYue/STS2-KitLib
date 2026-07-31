@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from collections import OrderedDict
@@ -24,6 +25,23 @@ if str(_SCRIPT_DIR) not in sys.path:
 from lib.ensure_iconify_mdi import ensure_mdi_icons  # noqa: E402
 
 SKIP_NAMES = frozenset({"Name", "IsAvailable", "Texture"})
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    """Write via a unique temp file in the same directory, then rename over the target.
+
+    Both KitLib.Panel and KitLib.ModPanel now run this script from their own build, so two
+    copies can be in flight at once on a parallel build, each writing BOTH modules' files.
+    A plain write_text lets one process read a half-written file; os.replace is atomic on
+    Windows and POSIX, so a racing reader sees either the old file or the new one.
+    """
+    tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
 
 # Exclude MdiIcon.Get(…) / MdiIcon.From(…) — otherwise [A-Za-z]+ backtracks to "Ge"/"Fro".
 USAGE_RE = re.compile(r"(?<![\w.])MdiIcon\.(?!(?:Get|From)\s*\()([A-Z][A-Za-z0-9]+)(?!\s*\()")
@@ -199,7 +217,7 @@ def _shake_bundle(repo_root: Path, full_json: Path, module_name: str) -> int:
 
     output = OrderedDict([("prefix", prefix), ("viewBox", view_box), ("icons", extracted)])
     icons_dir.mkdir(parents=True, exist_ok=True)
-    out_json.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+    _write_atomic(out_json, json.dumps(output, indent=2) + "\n")
 
     total_icons = len(icons_full)
     print(f"\n[{module_name}] Wrote {len(extracted)} icon(s) to {out_json}")
@@ -223,7 +241,7 @@ def _shake_bundle(repo_root: Path, full_json: Path, module_name: str) -> int:
         gen_lines.append(f'    public static readonly MdiIcon {label} = new("{kebab}");')
         emitted += 1
     gen_lines.append("}")
-    out_gen.write_text("\n".join(gen_lines) + "\n", encoding="utf-8")
+    _write_atomic(out_gen, "\n".join(gen_lines) + "\n")
     print(f"[{module_name}] Wrote MdiIcon.Generated.cs ({emitted} fields)")
     return 0
 
