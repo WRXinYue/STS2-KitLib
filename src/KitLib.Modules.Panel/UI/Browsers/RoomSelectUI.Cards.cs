@@ -52,7 +52,64 @@ internal static partial class RoomSelectUI {
         return card;
     }
 
+    private static readonly Color ModTestAccent = new(0.72f, 0.55f, 0.92f);
     private static readonly Color TestRoomAccent = new(0.45f, 0.80f, 0.70f);
+
+    private static Control BuildModTestCard(
+        string nameKey,
+        string nameFallback,
+        string descKey,
+        string descFallback,
+        MdiIcon icon,
+        Func<bool> teleport,
+        Label warnLabel,
+        Label statusLabel) {
+        var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        var cardStyle = new StyleBoxFlat {
+            BgColor = KitLibTheme.ButtonBgNormal,
+            CornerRadiusTopLeft = 8,
+            CornerRadiusTopRight = 8,
+            CornerRadiusBottomLeft = 8,
+            CornerRadiusBottomRight = 8,
+            BorderWidthLeft = 3,
+            BorderColor = ModTestAccent with { A = 0.6f },
+        };
+        card.AddThemeStyleboxOverride("panel", cardStyle);
+        card.MouseFilter = Control.MouseFilterEnum.Stop;
+        card.AddChild(BuildCardBody(
+            icon,
+            ModTestAccent,
+            I18N.T(nameKey, nameFallback),
+            I18N.T(descKey, descFallback)));
+
+        WireCardHover(card, cardStyle, ModTestAccent);
+
+        card.GuiInput += evt => {
+            if (evt is not InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: true })
+                return;
+
+            if (!RoomActions.IsRunInProgress) {
+                warnLabel.Visible = true;
+                statusLabel.Text = "";
+                return;
+            }
+
+            if (MpCheatSession.InMultiplayerRun) {
+                warnLabel.Visible = false;
+                statusLabel.Text = I18N.T("cardtest.mpWarning", "⚠ Not available in multiplayer.");
+                return;
+            }
+
+            warnLabel.Visible = false;
+            bool ok = teleport();
+            string title = I18N.T(nameKey, nameFallback);
+            statusLabel.Text = ok
+                ? I18N.T("room.entered", "Entering: {0}", title)
+                : I18N.T("modTest.status.failed", "Teleport failed. Start a solo run first.");
+        };
+
+        return card;
+    }
 
     private static Control BuildTestRoomCard(Label warnLabel, Label statusLabel) {
         var card = new PanelContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };

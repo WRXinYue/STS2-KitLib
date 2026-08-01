@@ -76,6 +76,22 @@ internal static partial class RoomSelectUI {
         foreach (var entry in Rooms)
             list.AddChild(BuildRoomCard(entry, warnLabel, statusLabel));
 
+        list.AddChild(BuildModTestCard(
+            "modTest.restSiteFourSame", "Mod test — Rest site",
+            "modTest.restSiteFourSameHint",
+            "Spawns three extra players using your current character, then enters the rest site.",
+            MdiIcon.Heart,
+            MpUiDebugPlayerService.TryTeleportRestSiteFourSame,
+            warnLabel, statusLabel));
+
+        list.AddChild(BuildModTestCard(
+            "modTest.relicSoloHand", "Mod test — Treasure",
+            "modTest.relicSoloHandHint",
+            "Keeps only your player, enters the treasure room, then open the chest to pick a relic.",
+            MdiIcon.TreasureChest,
+            MpUiDebugPlayerService.TryTeleportRelicSoloHand,
+            warnLabel, statusLabel));
+
         list.AddChild(BuildTestRoomCard(warnLabel, statusLabel));
 
         return new MainPanelHandle(list, warnLabel, statusLabel);
