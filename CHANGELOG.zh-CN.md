@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Mod 测试房间传送** — 开发模式 **房间传送** 新增 **Mod 测试 — 篝火** 与 **Mod 测试 — 宝箱房** 入口，会额外生成与你相同角色的假玩家，便于在单人开发局中预览官方多人篝火与遗物手部 UI。
+
 ## [0.32.1] - 2026-08-01
 
 ### Added
