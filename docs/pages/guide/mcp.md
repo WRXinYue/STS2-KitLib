@@ -41,11 +41,13 @@ Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Cl
 - **`dev_list_cards`** — List cards in deck / hand / draw / discard / exhaust (or all piles)
 - **`dev_add_card`** — Add a card to a pile (`card_id`, `target`, `duration`, `upgrade_levels`)
 - **`dev_remove_card`** — Remove a card by `card_id` or `pile_index` from a pile
+- **`dev_add_relic`** — Grant a relic by model id (`relic_id`), or pass `search` to list ids and rarities
 - **`dev_list_monsters`** — List monster model IDs (for `dev_add_monster`)
 - **`dev_list_enemies`** — List enemies currently in combat (index, HP, monsterId)
 - **`dev_add_monster`** — Add a monster mid-combat (DevMode enemy panel)
 - **`dev_set_cheat`** — Toggle cheats or set multipliers (`freeze_enemies`, `damage_multiplier`, …)
 - **`dev_set_stat`** — Set gold/energy/HP values or enable stat locks
+- **`dev_hover`** — Focus a UI element so hover-only behaviour fires (`map_node`, `reward_alternative`, `rest_option`, `relic`); omit `index` to list what is on screen, `target: "none"` to unhover, `click` to press after focusing
 
 Health check: `GET http://127.0.0.1:9877/health`
 :::
@@ -65,11 +67,13 @@ Health check: `GET http://127.0.0.1:9877/health`
 - **`dev_list_cards`** — 列出牌组 / 手牌 / 抽牌堆 / 弃牌堆 / 消耗堆（或全部堆）
 - **`dev_add_card`** — 往某堆加牌（`card_id`、`target`、`duration`、`upgrade_levels`）
 - **`dev_remove_card`** — 按 `card_id` 或 `pile_index` 从某堆移除
+- **`dev_add_relic`** — 按 model id 授予遗物（`relic_id`）；传 `search` 则列出 id 与稀有度
 - **`dev_list_monsters`** — 怪物 model ID 列表（供 `dev_add_monster`）
 - **`dev_list_enemies`** — 当前战斗中的敌人（index、HP、monsterId）
 - **`dev_add_monster`** — 战斗中加怪（Dev 敌人面板）
 - **`dev_set_cheat`** — 开关作弊或设倍率（`freeze_enemies`、`damage_multiplier` 等）
 - **`dev_set_stat`** — 设金币/能量/生命或开启数值锁定
+- **`dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为（`map_node`、`reward_alternative`、`rest_option`、`relic`）；不传 `index` 只列出当前可悬停项，`target: "none"` 取消悬停，`click` 可在聚焦后按下
 
 健康检查：`GET http://127.0.0.1:9877/health`
 :::

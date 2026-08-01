@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MCP `dev_add_relic`** — Grant a relic to the local player by model id, the relic counterpart of `dev_add_card`. Pass `search` to list ids and rarities without a run.
+- **MCP `dev_hover`** — Focus a UI element so hover-only behaviour fires: map node, card-reward alternative, campfire option, or relic. Omit `index` to list what is on screen, `target: "none"` to unhover, `click` to press after focusing.
+
 ## [0.32.1] - 2026-08-01
 
 ### Added
