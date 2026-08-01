@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **MCP `dev_hover` targets** — `target` now takes any node type name as well as the aliases (plus new `boss_icon`, `event_option`, `potion`, `card`, `creature`, `treasure_relic`), and `target: "list"` reports every focusable type on screen.
+
 ### Added
 
 - **MCP `dev_add_relic`** — Grant a relic to the local player by model id, the relic counterpart of `dev_add_card`. Pass `search` to list ids and rarities without a run.

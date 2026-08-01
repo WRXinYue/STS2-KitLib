@@ -47,7 +47,7 @@ Connect any [Model Context Protocol](https://modelcontextprotocol.io) client (Cl
 - **`dev_add_monster`** — Add a monster mid-combat (DevMode enemy panel)
 - **`dev_set_cheat`** — Toggle cheats or set multipliers (`freeze_enemies`, `damage_multiplier`, …)
 - **`dev_set_stat`** — Set gold/energy/HP values or enable stat locks
-- **`dev_hover`** — Focus a UI element so hover-only behaviour fires (`map_node`, `reward_alternative`, `rest_option`, `relic`); omit `index` to list what is on screen, `target: "none"` to unhover, `click` to press after focusing
+- **`dev_hover`** — Focus a UI element so hover-only behaviour fires. `target` takes an alias (`map_node`, `reward_alternative`, `rest_option`, `relic`, `boss_icon`, `event_option`, `potion`, `card`, `creature`, `treasure_relic`) or **any node type name**; `target: "list"` reports what is hoverable on screen, `"none"` unhovers, `click` presses after focusing
 
 Health check: `GET http://127.0.0.1:9877/health`
 :::
@@ -73,7 +73,7 @@ Health check: `GET http://127.0.0.1:9877/health`
 - **`dev_add_monster`** — 战斗中加怪（Dev 敌人面板）
 - **`dev_set_cheat`** — 开关作弊或设倍率（`freeze_enemies`、`damage_multiplier` 等）
 - **`dev_set_stat`** — 设金币/能量/生命或开启数值锁定
-- **`dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为（`map_node`、`reward_alternative`、`rest_option`、`relic`）；不传 `index` 只列出当前可悬停项，`target: "none"` 取消悬停，`click` 可在聚焦后按下
+- **`dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为。`target` 可用别名（`map_node`、`reward_alternative`、`rest_option`、`relic`、`boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`）或**任意节点类型名**；`target: "list"` 列出当前屏幕上可悬停的类型，`"none"` 取消悬停，`click` 在聚焦后按下
 
 健康检查：`GET http://127.0.0.1:9877/health`
 :::

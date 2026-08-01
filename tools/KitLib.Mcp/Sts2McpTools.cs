@@ -225,10 +225,12 @@ internal sealed class Sts2McpTools {
     }
 
     [McpServerTool(Name = "dev_hover"), Description(
-        "Hover (focus) a UI element so hover-only behaviour fires: map node, card-reward alternative "
-        + "button, campfire option, or relic. Omit index to list what is hoverable. target 'none' unhovers.")]
+        "Hover (focus) a UI element so hover-only behaviour fires. target takes an alias (map_node, "
+        + "reward_alternative, rest_option, relic, boss_icon, event_option, potion, card, creature, "
+        + "treasure_relic) or ANY node type name; 'list' discovers what is hoverable on screen, 'none' "
+        + "unhovers. Pair with dev_read_text to read the panel the hover opens.")]
     public Task<string> DevHover(
-        [Description("map_node, reward_alternative, rest_option, relic, or none (unhover).")]
+        [Description("Alias, any node type name (e.g. NTopBarBossIcon), 'list' to discover, or 'none' to unhover.")]
         string target,
         [Description("Which one to hover, from the list this tool returns. Omit to only list them.")]
         int index = -1,

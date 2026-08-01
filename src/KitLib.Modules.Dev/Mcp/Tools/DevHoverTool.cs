@@ -41,8 +41,11 @@ internal sealed class DevHoverTool : IMcpTool {
     public string Name => "dev_hover";
 
     public string Description =>
-        "Hover (focus) a UI element so hover-only behaviour fires: map node, card-reward alternative button, "
-        + "campfire option, or relic. Omit index to list what is hoverable. Use target 'none' to unhover.";
+        "Hover (focus) a UI element so hover-only behaviour fires. target takes an alias (map_node, "
+        + "reward_alternative, rest_option, relic, boss_icon, event_option, potion, card, creature, "
+        + "treasure_relic) or ANY node type name. Use target 'list' to see what is hoverable on screen, "
+        + "'none' to unhover. Omit index to list that target's instances. Pair with dev_read_text to "
+        + "read the panel the hover opens.";
 
     public string InputSchemaJson => """
     {
@@ -50,7 +53,7 @@ internal sealed class DevHoverTool : IMcpTool {
         "properties": {
             "target": {
                 "type": "string",
-                "description": "map_node, reward_alternative, rest_option, relic, or none (unhover)."
+                "description": "Alias (map_node, reward_alternative, rest_option, relic, boss_icon, event_option, potion, card, creature, treasure_relic), any node type name (e.g. NTopBarDeckButton), 'list' to discover what is on screen, or 'none' to unhover."
             },
             "index": {
                 "type": "integer",
@@ -84,10 +87,15 @@ internal sealed class DevHoverTool : IMcpTool {
         if (Engine.GetMainLoop() is not SceneTree tree)
             return DevCardMcpHelper.Fail("Scene tree unavailable.");
 
+        if (target == "list") {
+            var types = ListHoverableTypes(tree.Root);
+            return new JsonObject { ["ok"] = true, ["count"] = types.Count, ["hoverableTypes"] = types };
+        }
+
         List<Node>? candidates = Collect(target, tree.Root);
         if (candidates == null)
             return DevCardMcpHelper.Fail(
-                $"Unknown target '{target}'. Use map_node, reward_alternative, rest_option, relic, or none.");
+                $"Unknown target '{target}'. Pass an alias, a node type name, or 'list' to see what is on screen.");
 
         var listed = new JsonArray();
         foreach (var node in candidates)
@@ -136,13 +144,99 @@ internal sealed class DevHoverTool : IMcpTool {
         };
     }
 
-    private static List<Node>? Collect(string target, Node root) => target switch {
-        "map_node" => Widen(UIHelper.FindAll<NMapPoint>(root)),
-        "reward_alternative" => Widen(UIHelper.FindAll<NCardRewardAlternativeButton>(root)),
-        "rest_option" => Widen(UIHelper.FindAll<NRestSiteButton>(root)),
-        "relic" => Widen(UIHelper.FindAll<NRelicInventoryHolder>(root)),
-        _ => null,
+    /// <summary>Friendly names for the surfaces asked for most; any other type name works directly.</summary>
+    private static readonly Dictionary<string, string> Aliases = new() {
+        ["map_node"] = nameof(NMapPoint),
+        ["reward_alternative"] = nameof(NCardRewardAlternativeButton),
+        ["rest_option"] = nameof(NRestSiteButton),
+        ["relic"] = nameof(NRelicInventoryHolder),
+        ["boss_icon"] = "NTopBarBossIcon",
+        ["event_option"] = "NEventOptionButton",
+        ["potion"] = "NPotionHolder",
+        ["card"] = "NCardHolder",
+        ["creature"] = "NCreature",
+        ["treasure_relic"] = "NTreasureRoomRelicHolder",
     };
+
+    /// <remarks>
+    /// Resolution is by TYPE NAME rather than a fixed list, because 124 node types implement
+    /// <c>OnFocus()</c> and hard-coding a handful means a new surface needs a new build every time.
+    /// The aliases above are shorthand for the common ones; anything else is reachable by naming its
+    /// type, and <c>target: "list"</c> reports what is actually on screen right now.
+    /// </remarks>
+    private static List<Node>? Collect(string target, Node root) {
+        var typeName = Aliases.TryGetValue(target, out var mapped) ? mapped : target;
+
+        var matches = new List<Node>();
+        CollectByTypeName(root, typeName, matches);
+        return matches.Count > 0 || IsKnownTypeName(root, typeName) ? Widen(matches) : null;
+    }
+
+    private static void CollectByTypeName(Node node, string typeName, List<Node> found) {
+        if (node is CanvasItem { Visible: false })
+            return;
+
+        if (string.Equals(node.GetType().Name, typeName, StringComparison.OrdinalIgnoreCase))
+            found.Add(node);
+
+        foreach (var child in node.GetChildren())
+            CollectByTypeName(child, typeName, found);
+    }
+
+    /// <summary>
+    /// Distinguishes "no such surface on screen" (an empty list, which is a valid answer) from
+    /// "you named something that is not a node type here" (an error worth reporting).
+    /// </summary>
+    private static bool IsKnownTypeName(Node root, string typeName) =>
+        Aliases.ContainsValue(typeName) || typeName.StartsWith("N", StringComparison.Ordinal);
+
+    /// <summary>Every focusable type currently on screen, so a caller can discover targets.</summary>
+    private static JsonArray ListHoverableTypes(Node root) {
+        var counts = new Dictionary<string, int>();
+        CountFocusable(root, counts);
+
+        var reverse = new Dictionary<string, string>();
+        foreach (var pair in Aliases)
+            reverse[pair.Value] = pair.Key;
+
+        var arr = new JsonArray();
+        foreach (var pair in counts.OrderByDescending(p => p.Value)) {
+            var entry = new JsonObject {
+                ["type"] = pair.Key,
+                ["count"] = pair.Value,
+            };
+            if (reverse.TryGetValue(pair.Key, out var alias))
+                entry["alias"] = alias;
+            arr.Add(entry);
+        }
+        return arr;
+    }
+
+    private static void CountFocusable(Node node, Dictionary<string, int> counts) {
+        if (node is CanvasItem { Visible: false })
+            return;
+
+        // "Focusable" is exactly what this tool can drive: a type declaring OnFocus somewhere in its
+        // chain. Anything listed here is a valid target value.
+        if (node is Control && HasMethod(node, "OnFocus")) {
+            var name = node.GetType().Name;
+            counts[name] = counts.TryGetValue(name, out var n) ? n + 1 : 1;
+        }
+
+        foreach (var child in node.GetChildren())
+            CountFocusable(child, counts);
+    }
+
+    private static bool HasMethod(Node node, string method) {
+        const BindingFlags flags =
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+
+        for (var type = node.GetType(); type != null; type = type.BaseType) {
+            if (type.GetMethod(method, flags, null, System.Type.EmptyTypes, null) != null)
+                return true;
+        }
+        return false;
+    }
 
     private static List<Node> Widen<T>(List<T> nodes) where T : Node {
         var result = new List<Node>(nodes.Count);

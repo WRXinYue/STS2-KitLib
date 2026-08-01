@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **MCP `dev_hover` 目标** — `target` 除别名外还可传任意节点类型名（新增 `boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`），`target: "list"` 可列出当前屏幕上所有可聚焦类型。
+
 ### Added
 
 - **MCP `dev_add_relic`** — 按 model id 给本地玩家授予遗物，相当于 `dev_add_card` 的遗物版。传 `search` 可在无对局时列出 id 与稀有度。
