@@ -8,13 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.1] - 2026-08-01
+
+### Added
+
+- **Dev Viewer AI 面板** — 输出战斗与宏观决策遥测、模拟/选项分解、卡组连招面板与宏观评分洞察。
+- **模拟优先的卡组评分** — 宏观选牌结合路线战斗结果与连招选项链（含执行概率），不再仅依赖 Codex 默认值。
+
 ### Changed
 
-- **STS2 v0.110.1** — beta 编译引用与个人兼容目标由 **0.109.0** 提升至 **0.110.1**。
+- **战斗 AI 开局与地图评分** — 安全回合优先易伤铺垫而非空挡；地图路线按路线模拟 EV 评分。
 
 ### Fixed
 
-- **v0.110.1 API 兼容** — 联机握手（`PeerVersionInfo`）、快捷键分发（`ProcessHotkeyInput` / `ProcessFkbInput`）、手柄检测（`InputType`）与大厅玩家列表（`RunLobby.PlayerIds`）。
+- **STS2 v0.110.1** — 支持最新游戏版本；联机握手、快捷键、手柄 UI 与大厅玩家列表在 v0.110.1 上恢复正常。
+- **战斗 AI 护甲缩放** — 模拟中计入 Body Slam 伤害；护甲型开局延后到有收益时再出；Havoc 类出牌不再浪费已窥视的关键牌。
+- **战斗 AI 碎伤** — 当受到的伤害已被完全挡住时，优先安全碎伤而非叠多余护甲。
 
 ## [0.32.0] - 2026-07-26
 

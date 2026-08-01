@@ -8,13 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.32.1] - 2026-08-01
+
+### Added
+
+- **Dev Viewer AI panel** — Stream combat and macro decision telemetry, sim/option breakdown, deck combo panel, and macro scoring insights.
+- **Sim-first deck scoring** — Macro picks use route fight outcomes and combo option chains with exercise probability instead of Codex defaults alone.
+
 ### Changed
 
-- **STS2 v0.110.1** — Bump beta compile refs and personal-compat target from **0.109.0** to **0.110.1**.
+- **Combat AI opener and map scoring** — Prioritize vulnerable setup over idle block on safe turns; map routes scored with route-sim EV.
 
 ### Fixed
 
-- **v0.110.1 API compatibility** — Multiplayer handshake (`PeerVersionInfo`), hotkey dispatch (`ProcessHotkeyInput` / `ProcessFkbInput`), controller detection (`InputType`), and lobby peer listing (`RunLobby.PlayerIds`).
+- **STS2 v0.110.1** — KitLib supports the latest game build; multiplayer handshake, hotkeys, controller UI, and lobby peer listing work again on v0.110.1.
+- **Combat AI block scaling** — Body Slam damage modeled in simulation; block-scaling openers deferred until block is useful; peeked key cards no longer burned by Havoc-style plays.
+- **Combat AI chip damage** — Prefer safe chip damage over redundant block when incoming damage is already fully covered.
 
 ## [0.32.0] - 2026-07-26
 
