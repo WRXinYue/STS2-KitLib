@@ -205,6 +205,42 @@ internal sealed class Sts2McpTools {
         return _bridge.CallToolAsync("dev_remove_card", args, cancellationToken);
     }
 
+    [McpServerTool(Name = "dev_add_relic"), Description(
+        "Grant a relic to the local player by model id (DevMode relic browser API). "
+        + "Pass 'search' instead to look an id up.")]
+    public Task<string> DevAddRelic(
+        [Description("Relic model ID, e.g. DRIFTWOOD, PAELS_WING, DREAM_CATCHER.")]
+        string? relic_id = null,
+        [Description("List relic ids/rarities containing this text instead of granting. Empty string lists all.")]
+        string? search = null,
+        CancellationToken cancellationToken = default) {
+        var args = new JsonObject();
+        // search is checked FIRST by the bridge and needs no run, so forward it alone when given --
+        // sending both would silently turn a grant into a lookup.
+        if (search != null)
+            args["search"] = search;
+        else if (!string.IsNullOrWhiteSpace(relic_id))
+            args["relic_id"] = relic_id.Trim();
+        return _bridge.CallToolAsync("dev_add_relic", args, cancellationToken);
+    }
+
+    [McpServerTool(Name = "dev_hover"), Description(
+        "Hover (focus) a UI element so hover-only behaviour fires: map node, card-reward alternative "
+        + "button, campfire option, or relic. Omit index to list what is hoverable. target 'none' unhovers.")]
+    public Task<string> DevHover(
+        [Description("map_node, reward_alternative, rest_option, relic, or none (unhover).")]
+        string target,
+        [Description("Which one to hover, from the list this tool returns. Omit to only list them.")]
+        int index = -1,
+        [Description("Also click it after focusing (default false).")]
+        bool click = false,
+        CancellationToken cancellationToken = default) =>
+        _bridge.CallToolAsync("dev_hover", new JsonObject {
+            ["target"] = target,
+            ["index"] = index,
+            ["click"] = click,
+        }, cancellationToken);
+
     [McpServerTool(Name = "dev_list_monsters", ReadOnly = true), Description(
         "List known monster model IDs for dev_add_monster.")]
     public Task<string> DevListMonsters(
