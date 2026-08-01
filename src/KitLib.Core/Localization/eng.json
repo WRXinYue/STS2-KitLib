@@ -1038,8 +1038,8 @@
   "panel.enemyIntent": "Enemy intents",
   "modTest.restSiteFourSame": "Mod test — Rest site",
   "modTest.restSiteFourSameHint": "Spawns three extra players using your current character, then enters the rest site.",
-  "modTest.relicSoloHand": "Mod test — Treasure",
-  "modTest.relicSoloHandHint": "Keeps only your player, enters the treasure room, then open the chest to pick a relic.",
+  "modTest.treasureFourSame": "Mod test — Treasure",
+  "modTest.treasureFourSameHint": "Spawns three extra players using your current character, then enters the treasure room.",
   "modTest.status.failed": "Teleport failed. Start a solo run first.",
 
   "combatStats.title": "Combat Stats",

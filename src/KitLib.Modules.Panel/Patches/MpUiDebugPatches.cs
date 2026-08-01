@@ -1,6 +1,7 @@
 using HarmonyLib;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Nodes.Screens.TreasureRoomRelic;
 
 namespace KitLib.Patches;
@@ -12,8 +13,33 @@ internal static class MpUiDebugRestSiteReadyPatch {
         MpUiDebugPlayerService.ApplyPendingScenario(MpUiDebugScenario.RestSiteFourSame);
 }
 
+[HarmonyPatch(typeof(NRestSiteRoom), nameof(NRestSiteRoom.BeforeExitingRoom))]
+internal static class MpUiDebugRestSiteExitPatch {
+    static void Postfix() => MpUiDebugPlayerService.ScheduleRestoreAfterScenarioRoom();
+}
+
 [HarmonyPatch(typeof(NTreasureRoomRelicCollection), nameof(NTreasureRoomRelicCollection.Initialize))]
 internal static class MpUiDebugTreasureRelicInitPatch {
     static void Prefix() =>
-        MpUiDebugPlayerService.ApplyPendingScenario(MpUiDebugScenario.RelicSoloHand);
+        MpUiDebugPlayerService.ApplyPendingScenario(MpUiDebugScenario.TreasureFourSame);
+}
+
+[HarmonyPatch(typeof(NTreasureRoomRelicCollection), nameof(NTreasureRoomRelicCollection.RelicPickingFinished))]
+internal static class MpUiDebugTreasureRelicPickedPatch {
+    static void Postfix() => MpUiDebugPlayerService.ScheduleRestoreAfterScenarioRoom();
+}
+
+[HarmonyPatch(typeof(NTreasureRoom), "_ExitTree")]
+internal static class MpUiDebugTreasureTreeExitPatch {
+    static void Postfix() => MpUiDebugPlayerService.ScheduleRestoreAfterScenarioRoom();
+}
+
+[HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.Open))]
+internal static class MpUiDebugMapOpenPatch {
+    static void Postfix() => MpUiDebugPlayerService.TryReinitializeSoloMapVotes();
+}
+
+[HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.RefreshAllMapPointVotes))]
+internal static class MpUiDebugMapVotesRefreshPatch {
+    static void Prefix() => MpUiDebugPlayerService.TryReinitializeSoloMapVotes();
 }

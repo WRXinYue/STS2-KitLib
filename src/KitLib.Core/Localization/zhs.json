@@ -1051,8 +1051,8 @@
   "panel.enemyIntent": "敌方意图",
   "modTest.restSiteFourSame": "Mod 测试 — 篝火",
   "modTest.restSiteFourSameHint": "额外生成 3 名与你当前角色相同的玩家，然后进入篝火休息处。",
-  "modTest.relicSoloHand": "Mod 测试 — 宝箱房",
-  "modTest.relicSoloHandHint": "只保留你自己，进入宝箱房后打开宝箱选遗物。",
+  "modTest.treasureFourSame": "Mod 测试 — 宝箱房",
+  "modTest.treasureFourSameHint": "额外生成 3 名与你当前角色相同的玩家，然后进入宝箱房。",
   "modTest.status.failed": "传送失败，请先开始一局单人游戏。",
 
   "combatStats.title": "战斗统计",

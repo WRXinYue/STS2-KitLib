@@ -85,11 +85,11 @@ internal static partial class RoomSelectUI {
             warnLabel, statusLabel));
 
         list.AddChild(BuildModTestCard(
-            "modTest.relicSoloHand", "Mod test — Treasure",
-            "modTest.relicSoloHandHint",
-            "Keeps only your player, enters the treasure room, then open the chest to pick a relic.",
+            "modTest.treasureFourSame", "Mod test — Treasure",
+            "modTest.treasureFourSameHint",
+            "Spawns three extra players using your current character, then enters the treasure room.",
             MdiIcon.TreasureChest,
-            MpUiDebugPlayerService.TryTeleportRelicSoloHand,
+            MpUiDebugPlayerService.TryTeleportTreasureFourSame,
             warnLabel, statusLabel));
 
         list.AddChild(BuildTestRoomCard(warnLabel, statusLabel));

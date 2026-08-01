@@ -1,9 +1,12 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Godot;
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
+using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Multiplayer;
@@ -20,15 +23,56 @@ internal static class PseudoCoopMultiplayerUiRefresh {
     static readonly FieldInfo VoteAllPlayersField =
         AccessTools.Field(typeof(NMultiplayerVoteContainer), "_allPlayers")!;
 
+    static readonly FieldInfo VoteIconsField =
+        AccessTools.Field(typeof(NMultiplayerVoteContainer), "_votes")!;
+
+    static readonly FieldInfo VoteIconsAnimatingOutField =
+        AccessTools.Field(typeof(NMultiplayerVoteContainer), "_iconsAnimatingOut")!;
+
     static readonly FieldInfo PlayerStateNodesField =
         AccessTools.Field(typeof(NMultiplayerPlayerStateContainer), "_nodes")!;
 
     static readonly FieldInfo MapPointDictionaryField =
         AccessTools.Field(typeof(NMapScreen), "_mapPointDictionary")!;
 
+    static readonly FieldInfo? PlayerVoteDictionaryField =
+        AccessTools.Field(typeof(NMapScreen), "<PlayerVoteDictionary>k__BackingField");
+
+    static readonly FieldInfo SyncVotesField =
+        AccessTools.Field(typeof(MapSelectionSynchronizer), "_votes")!;
+
+    static readonly MethodInfo? InitMapVotesMethod =
+        AccessTools.Method(typeof(NMapScreen), "InitMapVotes");
+
+    static readonly MethodInfo? InitMarkerMethod =
+        AccessTools.Method(typeof(NMapScreen), "InitMarker", [typeof(MapCoord)]);
+
+    static readonly MethodInfo VoteContainerInitializeMethod =
+        AccessTools.Method(typeof(NMultiplayerVoteContainer), "Initialize", [typeof(RunState)])!;
+
+    static bool _reinitializingMapVotes;
+
     public static void TryRefreshAfterPlayerJoined(RunState state) {
         if (state.Players.Count <= 1) return;
         Callable.From(() => RefreshDeferred(state)).CallDeferred();
+    }
+
+    public static void TryRefreshAfterPlayerCountChanged(RunState state) {
+        Callable.From(() => RefreshDeferred(state)).CallDeferred();
+    }
+
+    public static void RefreshAfterDebugPlayersRemoved(RunState state) => RefreshDeferred(state);
+
+    public static bool TryReinitializeSoloMapVotes(RunState state) {
+        if (state.Players.Count > 1)
+            return false;
+
+        var map = NMapScreen.Instance;
+        if (map is not { IsOpen: true })
+            return false;
+
+        ReinitializeMapVotes(state);
+        return true;
     }
 
     public static bool NeedsMultiplayerUiRefresh(RunState state) {
@@ -48,17 +92,25 @@ internal static class PseudoCoopMultiplayerUiRefresh {
             return false;
 
         var sample = points.Values.First().VoteContainer;
-        if (VoteAllPlayersField.GetValue(sample) is List<MegaCrit.Sts2.Core.Entities.Players.Player> all)
+        if (VoteAllPlayersField.GetValue(sample) is List<Player> all)
             return all.Count < state.Players.Count;
 
         return true;
     }
 
     static void RefreshDeferred(RunState state) {
-        if (!NeedsMultiplayerUiRefresh(state)) return;
-
         var globalUi = NRun.Instance?.GlobalUi;
         if (globalUi == null) return;
+
+        if (state.Players.Count <= 1) {
+            RefreshMultiplayerPlayerBar(globalUi.MultiplayerPlayerContainer, state);
+            globalUi.MultiplayerPlayerContainer.HideImmediately();
+            if (NMapScreen.Instance is { IsOpen: true })
+                ReinitializeMapVotes(state);
+            return;
+        }
+
+        if (!NeedsMultiplayerUiRefresh(state)) return;
 
         RefreshMultiplayerPlayerBar(globalUi.MultiplayerPlayerContainer, state);
         RefreshMapVoteContainers(state);
@@ -82,6 +134,51 @@ internal static class PseudoCoopMultiplayerUiRefresh {
         container.Initialize(state);
     }
 
+    static void ReinitializeMapVotes(RunState state) {
+        if (_reinitializingMapVotes)
+            return;
+
+        var map = NMapScreen.Instance;
+        if (map == null)
+            return;
+
+        _reinitializingMapVotes = true;
+        try {
+            TrimSynchronizerVotes(state);
+            RunManager.Instance?.MapSelectionSynchronizer?.OnLocationChanged(state.MapLocation);
+
+            if (PlayerVoteDictionaryField?.GetValue(map) is IDictionary playerVotes)
+                playerVotes.Clear();
+
+            InitMapVotesMethod?.Invoke(map, null);
+
+            if (MapPointDictionaryField.GetValue(map) is Dictionary<MapCoord, NMapPoint> points) {
+                foreach (var point in points.Values)
+                    ResetVoteContainer(point.VoteContainer, state);
+            }
+
+            map.RefreshAllMapPointVotes();
+            map.RefreshAllPointVisuals();
+
+            if (state.CurrentMapCoord is { } coord)
+                InitMarkerMethod?.Invoke(map, [coord]);
+        }
+        finally {
+            _reinitializingMapVotes = false;
+        }
+    }
+
+    static void TrimSynchronizerVotes(RunState state) {
+        var sync = RunManager.Instance?.MapSelectionSynchronizer;
+        if (sync == null)
+            return;
+
+        if (SyncVotesField.GetValue(sync) is IList votes) {
+            while (votes.Count > state.Players.Count)
+                votes.RemoveAt(votes.Count - 1);
+        }
+    }
+
     static void RefreshMapVoteContainers(RunState state) {
         var map = NMapScreen.Instance;
         if (map == null) return;
@@ -89,15 +186,36 @@ internal static class PseudoCoopMultiplayerUiRefresh {
         if (MapPointDictionaryField.GetValue(map) is not Dictionary<MapCoord, NMapPoint> points)
             return;
 
-        foreach (var point in points.Values) {
-            var vc = point.VoteContainer;
-            if (VoteAllPlayersField.GetValue(vc) is List<MegaCrit.Sts2.Core.Entities.Players.Player> allPlayers) {
-                allPlayers.Clear();
-                allPlayers.AddRange(state.Players);
-            }
-            vc.RefreshPlayerVotes(animate: false);
-        }
+        foreach (var point in points.Values)
+            ResetVoteContainer(point.VoteContainer, state);
 
         map.RefreshAllMapPointVotes();
+    }
+
+    static void ResetVoteContainer(NMultiplayerVoteContainer container, RunState state) {
+        foreach (var child in container.GetChildren().ToArray())
+            child.QueueFree();
+
+        ClearVoteIconList(VoteIconsField.GetValue(container));
+        ClearVoteIconList(VoteIconsAnimatingOutField.GetValue(container));
+
+        if (VoteAllPlayersField.GetValue(container) is List<Player> allPlayers)
+            allPlayers.Clear();
+
+        VoteContainerInitializeMethod.Invoke(container, [state]);
+    }
+
+    static void ClearVoteIconList(object? listObj) {
+        if (listObj is not IList list)
+            return;
+
+        foreach (var item in list) {
+            if (item is Node node)
+                node.QueueFree();
+            else if (item is GodotObject godot && godot is Node godotNode)
+                godotNode.QueueFree();
+        }
+
+        list.Clear();
     }
 }

@@ -22,6 +22,24 @@ internal static class PseudoCoopActionQueue {
     static readonly FieldInfo OwnerIdField = AccessTools.Field(QueueType, "ownerId")!;
     static readonly FieldInfo ActionsField = AccessTools.Field(QueueType, "actions")!;
 
+    internal static void RemoveQueuesForMissingPlayers(RunState state) {
+        var set = RunManager.Instance?.ActionQueueSet;
+        if (set == null)
+            return;
+        if (QueuesField.GetValue(set) is not IList queues)
+            return;
+
+        var keep = state.Players.Select(p => p.NetId).ToHashSet();
+        for (int i = queues.Count - 1; i >= 0; i--) {
+            var ownerId = (ulong)OwnerIdField.GetValue(queues[i])!;
+            if (keep.Contains(ownerId))
+                continue;
+
+            queues.RemoveAt(i);
+            InFlightCounts.Remove(ownerId);
+        }
+    }
+
     internal static void EnsureQueueForPlayer(Player player) {
         var set = RunManager.Instance?.ActionQueueSet;
         if (set == null) return;

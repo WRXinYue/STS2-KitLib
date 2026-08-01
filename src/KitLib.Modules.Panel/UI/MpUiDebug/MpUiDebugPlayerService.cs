@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 using HarmonyLib;
 using KitLib.Actions;
 using KitLib.Host;
@@ -22,23 +23,25 @@ internal static class MpUiDebugPlayerService {
     private static readonly AccessTools.FieldRef<RunState, List<Player>> PlayersRef =
         AccessTools.FieldRefAccess<RunState, List<Player>>("_players");
 
+    private static bool _restoreScheduled;
+
     internal static bool TryTeleportRestSiteFourSame() {
         if (!CanUse())
             return false;
 
         MpUiDebugState.PendingScenario = MpUiDebugScenario.RestSiteFourSame;
-        if (!PreparePlayers(MpUiDebugState.RestSitePlayerCount, sameCharacterAsHost: true))
+        if (!PreparePlayers(MpUiDebugState.DebugPlayerCount, sameCharacterAsHost: true))
             return false;
 
         return RoomActions.TryEnterRoom(RoomType.RestSite);
     }
 
-    internal static bool TryTeleportRelicSoloHand() {
+    internal static bool TryTeleportTreasureFourSame() {
         if (!CanUse())
             return false;
 
-        MpUiDebugState.PendingScenario = MpUiDebugScenario.RelicSoloHand;
-        if (!PreparePlayers(1, sameCharacterAsHost: false))
+        MpUiDebugState.PendingScenario = MpUiDebugScenario.TreasureFourSame;
+        if (!PreparePlayers(MpUiDebugState.DebugPlayerCount, sameCharacterAsHost: true))
             return false;
 
         return RoomActions.TryEnterRoom(RoomType.Treasure);
@@ -52,12 +55,62 @@ internal static class MpUiDebugPlayerService {
 
         switch (scenario) {
             case MpUiDebugScenario.RestSiteFourSame:
-                PreparePlayers(MpUiDebugState.RestSitePlayerCount, sameCharacterAsHost: true);
-                break;
-            case MpUiDebugScenario.RelicSoloHand:
-                PreparePlayers(1, sameCharacterAsHost: false);
+            case MpUiDebugScenario.TreasureFourSame:
+                PreparePlayers(MpUiDebugState.DebugPlayerCount, sameCharacterAsHost: true);
                 break;
         }
+    }
+
+    internal static void ScheduleRestoreAfterScenarioRoom() {
+        if (!MpUiDebugState.HasSpawnedDebugPlayers)
+            return;
+
+        // Another mod-test teleport is switching rooms; keep players until the new room applies.
+        if (MpUiDebugState.PendingScenario != MpUiDebugScenario.None)
+            return;
+
+        if (_restoreScheduled)
+            return;
+
+        _restoreScheduled = true;
+        Callable.From(RestoreAfterScenarioRoomDeferred).CallDeferred();
+    }
+
+    private static void RestoreAfterScenarioRoomDeferred() {
+        _restoreScheduled = false;
+
+        if (!MpUiDebugState.HasSpawnedDebugPlayers)
+            return;
+
+        if (MpUiDebugState.PendingScenario != MpUiDebugScenario.None)
+            return;
+
+        var state = RunManager.Instance?.DebugOnlyGetState();
+        if (state == null)
+            return;
+
+        if (!RemoveMpUiDebugPlayers(state))
+            return;
+
+        MpUiDebugState.HasSpawnedDebugPlayers = false;
+        MpUiDebugState.PendingMapVoteCleanup = true;
+        PseudoCoopActionQueue.RemoveQueuesForMissingPlayers(state);
+        PseudoCoopMultiplayerUiRefresh.RefreshAfterDebugPlayersRemoved(state);
+        TryReinitializeSoloMapVotes();
+    }
+
+    internal static void TryReinitializeSoloMapVotes() {
+        if (!MpUiDebugState.PendingMapVoteCleanup)
+            return;
+
+        var state = RunManager.Instance?.DebugOnlyGetState();
+        if (state == null || state.Players.Count > 1)
+            return;
+
+        if (!PseudoCoopMultiplayerUiRefresh.TryReinitializeSoloMapVotes(state))
+            return;
+
+        MpUiDebugState.PendingMapVoteCleanup = false;
     }
 
     private static bool CanUse() {
@@ -83,12 +136,7 @@ internal static class MpUiDebugPlayerService {
         if (host.Character == null)
             return false;
 
-        bool changed = false;
-
-        while (players.Count > targetCount) {
-            players.RemoveAt(players.Count - 1);
-            changed = true;
-        }
+        bool changed = RemoveMpUiDebugPlayers(state);
 
         var unlock = host.UnlockState ?? new UnlockState(SaveManager.Instance.Progress);
         var character = host.Character;
@@ -104,6 +152,7 @@ internal static class MpUiDebugPlayerService {
                 var debugPlayer = Player.CreateForNewRun(spawnCharacter, unlock, netId);
                 state.AddPlayerDebug(debugPlayer, -1);
                 changed = true;
+                MpUiDebugState.HasSpawnedDebugPlayers = true;
             }
             catch (Exception ex) {
                 MainFile.Logger.Warn($"MpUiDebug: failed to spawn debug player slot {slot}: {ex.Message}");
@@ -116,6 +165,23 @@ internal static class MpUiDebugPlayerService {
 
         return players.Count == targetCount;
     }
+
+    private static bool RemoveMpUiDebugPlayers(RunState state) {
+        var players = PlayersRef(state);
+        bool changed = false;
+
+        for (int i = players.Count - 1; i >= 1; i--) {
+            if (!IsMpUiDebugPlayer(players[i]))
+                continue;
+
+            players.RemoveAt(i);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static bool IsMpUiDebugPlayer(Player player) => player.NetId >= FirstDebugNetId;
 
     private static CharacterModel? ResolveCharacter(int slot) {
         string[] fallback = ["ironclad", "silent", "defect", "regent"];
