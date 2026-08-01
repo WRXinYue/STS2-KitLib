@@ -79,13 +79,13 @@ public partial class ModPanelControllerSupport : Node {
         }
         if (NInputManager.Instance != null)
             NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, _refreshHintsCallable.Value);
-        _lastUsingController = NControllerManager.Instance?.IsUsingController == true;
+        _lastUsingController = NControllerManager.Instance?.InputType == InputType.Controller;
         RefreshHints();
         _pageTabChrome?.RefreshTriggerIcons();
     }
 
     public override void _Process(double delta) {
-        var usingController = NControllerManager.Instance?.IsUsingController == true;
+        var usingController = NControllerManager.Instance?.InputType == InputType.Controller;
         if (usingController != _lastUsingController) {
             _lastUsingController = usingController;
             RefreshHints();
@@ -199,8 +199,8 @@ public partial class ModPanelControllerSupport : Node {
             var current = ActiveScreenContext.Instance.GetCurrentScreen();
             return $"notCurrent(screen={current?.GetType().Name ?? "null"})";
         }
-        if (NControllerManager.Instance?.IsUsingController != true)
-            return "mouseMode(IsUsingController=false)";
+        if (NControllerManager.Instance?.InputType != InputType.Controller)
+            return "mouseMode(InputType!=Controller)";
         if (_sidebarRows.Count == 0 || _getSelectedModId == null || _selectMod == null)
             return "sidebarNotReady";
         return null;
@@ -209,7 +209,7 @@ public partial class ModPanelControllerSupport : Node {
     public void RefreshHints() {
         if (_hintsRow == null || !GodotObject.IsInstanceValid(_hintsRow))
             return;
-        var usingController = NControllerManager.Instance?.IsUsingController == true;
+        var usingController = NControllerManager.Instance?.InputType == InputType.Controller;
         _hintsRow.Visible = usingController;
         KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerHints(
             usingController, _hintsRow.Visible, _pageTabChrome?.PageCount ?? 0));

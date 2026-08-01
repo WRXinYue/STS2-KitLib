@@ -2,7 +2,7 @@
 # profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.
 
 profiles:
-  beta: "0.109.0"
+  beta: "0.110.1"
 
 touchpoints:
   - id: ActChangeSynchronizer.OnPlayerReady
@@ -296,9 +296,9 @@ touchpoints:
     sources:
       - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
 
-  - id: NInputManager.ProcessShortcutKeyInput
+  - id: NInputManager.ProcessHotkeyInput
     type: NInputManager
-    member: ProcessShortcutKeyInput
+    member: ProcessHotkeyInput
     kind: method
     sources:
       - src/KitLib.Modules.Panel/Patches/NInputManagerHotkeyPatch.cs

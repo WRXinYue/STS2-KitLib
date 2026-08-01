@@ -5,7 +5,7 @@
   -->
   <PropertyGroup>
     <KitLibSts2RefsStableVersion>0.107.1</KitLibSts2RefsStableVersion>
-    <KitLibSts2RefsBetaVersion>0.109.0</KitLibSts2RefsBetaVersion>
+    <KitLibSts2RefsBetaVersion>0.110.1</KitLibSts2RefsBetaVersion>
     <KitLibSts2PinnedVersion Condition="'$(Sts2Profile)' == 'stable'">$(KitLibSts2RefsStableVersion)</KitLibSts2PinnedVersion>
     <KitLibSts2PinnedVersion Condition="'$(Sts2Profile)' != 'stable'">$(KitLibSts2RefsBetaVersion)</KitLibSts2PinnedVersion>
     <KitLibSts2RefsRoot>$(RepoRoot)eng/sts2-refs/$(Sts2Profile)/$(KitLibSts2PinnedVersion)</KitLibSts2RefsRoot>

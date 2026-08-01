@@ -15,7 +15,7 @@ ProfileName = str  # "stable" | "beta"
 
 _PINNED_VERSIONS: dict[str, str] = {
     "stable": "0.107.1",
-    "beta": "0.109.0",
+    "beta": "0.110.1",
 }
 PINNED_VERSION = _PINNED_VERSIONS["beta"]
 DEFAULT_PROFILE: ProfileName = "beta"

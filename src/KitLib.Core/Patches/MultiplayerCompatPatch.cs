@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Messages.Lobby;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
 using MegaCrit.Sts2.Core.Timeline;
@@ -46,8 +47,9 @@ internal static class MultiplayerCompatRules {
     public static void NormalizeInitialGameInfoMessage(ref InitialGameInfoMessage message) {
         FilterHandshakeModFields(ref message);
 
-        if (CanNormalizeModelIdHash() && message.idDatabaseHash != ModelIdSerializationCache.Hash) {
-            message.idDatabaseHash = ModelIdSerializationCache.Hash;
+        ref var versionInfo = ref message.versionInfo;
+        if (CanNormalizeModelIdHash() && versionInfo.idDatabaseHash != ModelIdSerializationCache.Hash) {
+            versionInfo.idDatabaseHash = ModelIdSerializationCache.Hash;
             if (!_loggedHashNormalization) {
                 _loggedHashNormalization = true;
                 MainFile.Logger.Warn("Normalized multiplayer ModelDb hash for KitLib compatibility.");
@@ -56,26 +58,11 @@ internal static class MultiplayerCompatRules {
     }
 
     private static void FilterHandshakeModFields(ref InitialGameInfoMessage message) {
-        const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public;
-        var type = message.GetType();
-
-        var modsField = type.GetField("mods", flags);
-        if (modsField?.FieldType == typeof(List<string>)) {
-            var current = (List<string>?)modsField.GetValue(message);
-            modsField.SetValue(message, FilterIgnoredModSignatures(current, out var removed));
-            LogModFilter(removed);
-            return;
-        }
-
-        var gameplayField = type.GetField("gameplayAffectingMods", flags);
-        var otherField = type.GetField("otherMods", flags);
-        if (gameplayField?.FieldType != typeof(List<string>) || otherField?.FieldType != typeof(List<string>))
-            return;
-
-        var gameplay = (List<string>?)gameplayField.GetValue(message);
-        var other = (List<string>?)otherField.GetValue(message);
-        gameplayField.SetValue(message, FilterIgnoredModSignatures(gameplay, out var removedGameplay));
-        otherField.SetValue(message, FilterIgnoredModSignatures(other, out var removedOther));
+        ref var versionInfo = ref message.versionInfo;
+        versionInfo.gameplayAffectingMods =
+            FilterIgnoredModSignatures(versionInfo.gameplayAffectingMods, out var removedGameplay);
+        versionInfo.otherMods =
+            FilterIgnoredModSignatures(versionInfo.otherMods, out var removedOther);
         LogModFilter(removedGameplay + removedOther);
     }
 

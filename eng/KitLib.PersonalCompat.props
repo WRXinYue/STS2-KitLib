@@ -3,11 +3,11 @@
     Multi-version KitLib builds (stable + beta).
     Enable with -p:KitLibPersonalCompat=true or make bundle / sync-bundle.
 
-    Targets: stable 0.107.1 + beta 0.109.0 (see scripts/package_bundle.py).
+    Targets: stable 0.107.1 + beta 0.110.1 (see scripts/package_bundle.py).
   -->
   <PropertyGroup>
-    <KitLibPersonalCompatTargets>0.107.1;0.109.0</KitLibPersonalCompatTargets>
+    <KitLibPersonalCompatTargets>0.107.1;0.110.1</KitLibPersonalCompatTargets>
     <KitLibPersonalStableVersion>0.107.1</KitLibPersonalStableVersion>
-    <KitLibPersonalBetaVersion>0.109.0</KitLibPersonalBetaVersion>
+    <KitLibPersonalBetaVersion>0.110.1</KitLibPersonalBetaVersion>
   </PropertyGroup>
 </Project>

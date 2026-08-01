@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **STS2 v0.110.1** — beta 编译引用与个人兼容目标由 **0.109.0** 提升至 **0.110.1**。
+
+### Fixed
+
+- **v0.110.1 API 兼容** — 联机握手（`PeerVersionInfo`）、快捷键分发（`ProcessHotkeyInput` / `ProcessFkbInput`）、手柄检测（`InputType`）与大厅玩家列表（`RunLobby.PlayerIds`）。
+
 ## [0.32.0] - 2026-07-26
 
 ### Added

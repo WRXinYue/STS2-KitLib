@@ -10,13 +10,13 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 目标游戏版本{lang="zh-CN"}
 
 ::: en
-KitLib targets the **Steam public-beta** STS2 line. The repo pins one compile reference under `eng/sts2-refs/beta/<version>/` (currently **0.109.0**). MSBuild uses `Sts2Profile=beta` by default (`Directory.Build.props`).
+KitLib targets the **Steam public-beta** STS2 line. The repo pins one compile reference under `eng/sts2-refs/beta/<version>/` (currently **0.110.1**). MSBuild uses `Sts2Profile=beta` by default (`Directory.Build.props`).
 
 `make init` writes `local.props` with your `Sts2Dir`. `make sync-full` builds against the pinned beta ref and deploys to `mods/KitLib/`.
 :::
 
 ::: zh-CN
-KitLib 面向 **Steam public-beta** 分支的 STS2。仓库在 `eng/sts2-refs/beta/<version>/` 固定一份编译引用（当前 **0.109.0**）。MSBuild 默认 `Sts2Profile=beta`（见根目录 `Directory.Build.props`）。
+KitLib 面向 **Steam public-beta** 分支的 STS2。仓库在 `eng/sts2-refs/beta/<version>/` 固定一份编译引用（当前 **0.110.1**）。MSBuild 默认 `Sts2Profile=beta`（见根目录 `Directory.Build.props`）。
 
 `make init` 会写入 `Sts2Dir`；`make sync-full` 按固定 beta 引用构建并部署到 `mods/KitLib/`。
 :::
@@ -84,7 +84,7 @@ Example:
 
 ```toml
 [game]
-version = [">=0.109.0"]
+version = [">=0.110.1"]
 
 [kitlib]
 version = [">=0.13.0"]
@@ -104,7 +104,7 @@ Ranges use npm-style semver (`||`, `>=`, exact pins). Empty file sections are ig
 
 ```toml
 [game]
-version = [">=0.109.0"]
+version = [">=0.110.1"]
 
 [kitlib]
 version = [">=0.13.0"]

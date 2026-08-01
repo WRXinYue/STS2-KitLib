@@ -5,6 +5,7 @@ using Godot;
 using HarmonyLib;
 using KitLib;
 using KitLib.Actions;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -289,7 +290,7 @@ internal static class DevMainMenuUI {
     }
 
     private static bool ShouldPreferControllerFocus() =>
-        NControllerManager.Instance?.IsUsingController == true
+        NControllerManager.Instance?.InputType == InputType.Controller
         || Input.GetConnectedJoypads().Count > 0;
 
     private static void RestoreStockMainMenuControllerFocus(NMainMenu mainMenu) {

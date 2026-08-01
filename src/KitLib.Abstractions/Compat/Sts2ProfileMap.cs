@@ -10,7 +10,7 @@ public static class Sts2ProfileMap {
         Sts2Platform.Android,
     ];
 
-    public const string PinnedGameVersion = "0.109.0";
+    public const string PinnedGameVersion = "0.110.1";
 
     public static readonly string[] PinnedGameVersions = [PinnedGameVersion];
 

@@ -24,8 +24,8 @@ jobs:
 
       - name: Verify STS2 ref DLLs (required for dotnet format)
         run: |
-          test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll
-          test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/0Harmony.dll
+          test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll
+          test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/0Harmony.dll
 
       - name: Format check
         run: |
@@ -69,7 +69,7 @@ jobs:
 
       - name: Verify STS2 ref DLLs
         run: |
-          test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll
+          test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll
 
       - name: Build
         run: make build

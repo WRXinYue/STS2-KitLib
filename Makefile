@@ -108,7 +108,7 @@ help:
 	@echo "  deploy-smoke-mod copy smoke mod into game mods/KitLibSmokeMod/ (manual in-game check)"
 	@echo "  capture-sts2-ref  copy sts2.dll into eng/sts2-refs/PROFILE/ (PROFILE=stable|beta)"
 	@echo "  build-stable      compile against stable ref (0.107.1)"
-	@echo "  build-beta        compile against beta ref (0.109.0)"
+	@echo "  build-beta        compile against beta ref (0.110.1)"
 	@echo "  build-profiles    build-stable then build-beta"
 	@echo "  bundle            multi-API bundle → build/KitLib-release/ (release / Workshop / zip)"
 	@echo "  sync-bundle       bundle + deploy to game mods/KitLib/"
@@ -166,7 +166,7 @@ format:
 	$(UV) run black scripts
 
 format-check:
-	@test -f eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs/beta (git lfs pull?). Run: make capture-sts2-ref" >&2; exit 1)
+	@test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs/beta (git lfs pull?). Run: make capture-sts2-ref" >&2; exit 1)
 	$(DOTNET) format KitLib.sln --verify-no-changes
 
 lint-scripts:

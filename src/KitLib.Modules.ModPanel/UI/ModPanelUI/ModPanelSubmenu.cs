@@ -5,6 +5,7 @@ using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.ModPanel.Diagnostics;
 using KitLib.Settings;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Nodes.Screens.ScreenContext;
@@ -129,7 +130,7 @@ public partial class ModPanelSubmenu : NSubmenu {
         if (!GodotObject.IsInstanceValid(this))
             return;
         this.UpdateControllerNavEnabled();
-        if (NControllerManager.Instance?.IsUsingController != true)
+        if (NControllerManager.Instance?.InputType != InputType.Controller)
             return;
         GetViewport()?.GuiReleaseFocus();
         ActiveScreenContext.Instance.FocusOnDefaultControl();

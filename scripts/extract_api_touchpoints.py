@@ -220,7 +220,7 @@ def _write_manifest(
         "# profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.",
         "",
         "profiles:",
-        f'  beta: "{profile_versions.get("beta", "0.109.0")}"',
+        f'  beta: "{profile_versions.get("beta", "0.110.1")}"',
         "",
         "touchpoints:",
     ]
@@ -305,7 +305,7 @@ def main() -> int:
 
     existing = _parse_yaml_simple(args.manifest)
     overrides: dict[str, dict[str, dict[str, str]]] = existing.get("overrides", {})
-    profile_versions = existing.get("profiles") or {"beta": "0.109.0"}
+    profile_versions = existing.get("profiles") or {"beta": "0.110.1"}
 
     touchpoints: dict[str, Touchpoint] = {}
     for cs in sorted(src_root.rglob("*.cs")):

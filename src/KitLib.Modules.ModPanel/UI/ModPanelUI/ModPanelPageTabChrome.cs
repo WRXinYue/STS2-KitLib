@@ -161,7 +161,7 @@ public partial class ModPanelPageTabChrome : Control {
             ApplyScrollGutters();
             return;
         }
-        var usingController = NControllerManager.Instance?.IsUsingController == true;
+        var usingController = NControllerManager.Instance?.InputType == InputType.Controller;
         _leftTrigger.Visible = usingController;
         _rightTrigger.Visible = usingController;
         if (usingController) {

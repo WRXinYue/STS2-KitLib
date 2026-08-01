@@ -23,9 +23,9 @@ KitLib compiles against one pinned game build (see `scripts/lib/sts2_profiles.py
 | Setting | Value |
 | --- | --- |
 | Profile | `beta` |
-| Pinned version | `0.109.0` (update when Steam beta moves) |
+| Pinned version | `0.110.1` (update when Steam beta moves) |
 | MSBuild | `-p:Sts2Profile=beta` (default) |
-| Ref path | `eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll` |
+| Ref path | `eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll` |
 
 CI and `dotnet format` use the LFS ref — not your local Steam install.
 :::
@@ -36,9 +36,9 @@ KitLib 只针对一条固定的游戏构建编译（见 `scripts/lib/sts2_profil
 | 项 | 值 |
 | --- | --- |
 | Profile | `beta` |
-| 固定版本 | `0.109.0`（Steam beta 前进时更新） |
+| 固定版本 | `0.110.1`（Steam beta 前进时更新） |
 | MSBuild | `-p:Sts2Profile=beta`（默认） |
-| Ref 路径 | `eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll` |
+| Ref 路径 | `eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll` |
 
 CI 与 `dotnet format` 使用 LFS ref，而非本机 Steam 安装目录。
 :::
@@ -66,8 +66,8 @@ git commit -m "Update STS2 beta compile ref"
 Refs are stored as:
 
 ```
-eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/sts2.dll
-eng/sts2-refs/beta/0.109.0/data_sts2_windows_x86_64/0Harmony.dll
+eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll
+eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/0Harmony.dll
 ```
 
 ## Daily dev{lang="en"}

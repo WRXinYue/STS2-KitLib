@@ -11,6 +11,7 @@ using KitLib.Modding;
 using KitLib.ModPanel.Diagnostics;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -394,7 +395,7 @@ public static partial class ModPanelUI {
             var selectedRow = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
             if (selectedRow != null) {
                 shell.SetInitialFocusedControl(selectedRow.Host);
-                if (NControllerManager.Instance?.IsUsingController == true)
+                if (NControllerManager.Instance?.InputType == InputType.Controller)
                     Callable.From(() => selectedRow.Host.TryGrabFocus()).CallDeferred();
             }
         }

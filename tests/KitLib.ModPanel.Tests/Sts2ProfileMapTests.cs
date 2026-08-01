@@ -4,17 +4,17 @@ namespace KitLib.ModPanel.Tests;
 
 public sealed class Sts2ProfileMapTests {
     [Fact]
-    public void Resolve_pinned_1090_windows() {
+    public void Resolve_pinned_1101_windows() {
         Assert.Equal(
             Sts2GameProfile.Supported,
-            Sts2ProfileMap.Resolve("0.109.0", Sts2Platform.Windows));
+            Sts2ProfileMap.Resolve("0.110.1", Sts2Platform.Windows));
     }
 
     [Fact]
     public void Resolve_v_prefix() {
         Assert.Equal(
             Sts2GameProfile.Supported,
-            Sts2ProfileMap.Resolve("v0.109.0", Sts2Platform.macOS));
+            Sts2ProfileMap.Resolve("v0.110.1", Sts2Platform.macOS));
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public sealed class Sts2ProfileMapTests {
     public void Resolve_android_supported_for_106plus() {
         Assert.Equal(
             Sts2GameProfile.Supported,
-            Sts2ProfileMap.Resolve("0.109.0", Sts2Platform.Android));
+            Sts2ProfileMap.Resolve("0.110.1", Sts2Platform.Android));
         Assert.Equal(
             Sts2GameProfile.Supported,
             Sts2ProfileMap.Resolve("0.107.1", Sts2Platform.Android));

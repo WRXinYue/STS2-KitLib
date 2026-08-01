@@ -5,20 +5,25 @@ namespace KitLib.Settings;
 
 /// <summary>
 /// KitLib hotkey validation against live official keyboard bindings
-/// (<see cref="NInputManager.GetShortcutKey"/> / <c>ProcessShortcutKeyInput</c>).
+/// (<see cref="NInputManager.GetCurrentHotkey"/> / <c>ProcessHotkeyInput</c>).
 /// </summary>
 internal static class OfficialGameInput {
     /// <summary>
     /// True when <paramref name="key"/> matches a bound official action keycode
-    /// (modifiers ignored, same as <c>ProcessShortcutKeyInput</c>).
+    /// (modifiers ignored, same as <c>ProcessHotkeyInput</c>).
     /// </summary>
     internal static bool UsesPlayerKeyboardShortcut(Key key) {
         var mgr = NInputManager.Instance;
         if (mgr == null)
             return false;
 
-        foreach (var input in NInputManager.remappableKeyboardInputs) {
-            if (mgr.GetShortcutKey(input) == key)
+        foreach (var input in NInputManager.remappableMKbInputs) {
+            if (mgr.GetMKbHotkey(input) == key)
+                return true;
+        }
+
+        foreach (var input in NInputManager.remappableKbOnlyInputs) {
+            if (mgr.GetKbOnlyHotkey(input) == key)
                 return true;
         }
 

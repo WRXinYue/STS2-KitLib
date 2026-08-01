@@ -10,20 +10,34 @@ namespace KitLib.Patches;
 /// <summary>
 /// Dispatches mod-panel open hotkey when DevMode (<see cref="KitLibModuleIds.Panel" />) is not loaded.
 /// </summary>
-[HarmonyPatch(typeof(NInputManager), "ProcessShortcutKeyInput")]
-internal static class ModPanelInputManagerHotkeyPatch {
+[HarmonyPatch(typeof(NInputManager), "ProcessHotkeyInput")]
+internal static class ModPanelInputManagerProcessHotkeyInputPatch {
     [HarmonyPrefix]
     static bool Prefix(NInputManager __instance, InputEvent inputEvent) {
+        return !ModPanelInputManagerHotkeyPatchHelper.TryHandleModPanelHotkey(__instance, inputEvent);
+    }
+}
+
+[HarmonyPatch(typeof(NInputManager), "ProcessFkbInput")]
+internal static class ModPanelInputManagerProcessFkbInputPatch {
+    [HarmonyPrefix]
+    static bool Prefix(NInputManager __instance, InputEvent inputEvent) {
+        return !ModPanelInputManagerHotkeyPatchHelper.TryHandleModPanelHotkey(__instance, inputEvent);
+    }
+}
+
+file static class ModPanelInputManagerHotkeyPatchHelper {
+    internal static bool TryHandleModPanelHotkey(NInputManager instance, InputEvent inputEvent) {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Panel))
-            return true;
+            return false;
 
         if (inputEvent is not InputEventKey { Pressed: true, Echo: false } key)
-            return true;
+            return false;
 
-        var viewport = __instance.GetViewport();
+        var viewport = instance.GetViewport();
         if (viewport == null)
-            return true;
+            return false;
 
-        return !ModPanelHotkeys.TryHandle(key, viewport);
+        return ModPanelHotkeys.TryHandle(key, viewport);
     }
 }

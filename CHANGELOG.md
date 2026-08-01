@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **STS2 v0.110.1** — Bump beta compile refs and personal-compat target from **0.109.0** to **0.110.1**.
+
+### Fixed
+
+- **v0.110.1 API compatibility** — Multiplayer handshake (`PeerVersionInfo`), hotkey dispatch (`ProcessHotkeyInput` / `ProcessFkbInput`), controller detection (`InputType`), and lobby peer listing (`RunLobby.PlayerIds`).
+
 ## [0.32.0] - 2026-07-26
 
 ### Added

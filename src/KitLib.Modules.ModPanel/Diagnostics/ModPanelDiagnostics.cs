@@ -4,6 +4,7 @@ using KitLib.Abstractions.Modding;
 using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.UI;
+using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -65,7 +66,7 @@ internal static class ModPanelDiagnostics {
             stack?.SubmenusOpen ?? false,
             peek?.GetType().Name ?? "null",
             ActiveScreenContext.Instance.IsCurrent(submenu),
-            NControllerManager.Instance?.IsUsingController == true,
+            NControllerManager.Instance?.InputType == InputType.Controller,
             rowCount,
             null,
             focus?.GetPath().ToString(),

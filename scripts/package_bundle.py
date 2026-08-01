@@ -10,7 +10,7 @@ Layout:
     Semver.dll, Microsoft.Extensions.Primitives.dll
     mod_manifest.json
     lib/0.107.1/KitLib.Core.dll, modules/*.dll, compat-target.txt
-    lib/0.109.0/...
+    lib/0.110.1/...
 
 Usage:
   python scripts/package_bundle.py
@@ -290,7 +290,7 @@ def main() -> int:
     ap.add_argument(
         "--targets",
         default="",
-        help="Comma-separated compat targets (default: 0.107.1,0.109.0)",
+        help="Comma-separated compat targets (default: 0.107.1,0.110.1)",
     )
     args = ap.parse_args()
     load_dotenv(_REPO / ".env")
