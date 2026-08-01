@@ -5,6 +5,19 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.Patches;
 
+#if STS2_STABLE_PROFILE
+/// <summary>
+/// Hooks official shortcut dispatch before keycode-only matching
+/// (<see cref="NInputManager.ProcessShortcutKeyInput"/>).
+/// </summary>
+[HarmonyPatch(typeof(NInputManager), "ProcessShortcutKeyInput")]
+internal static class NInputManagerProcessShortcutKeyInputPatch {
+    [HarmonyPrefix]
+    static bool Prefix(NInputManager __instance, InputEvent inputEvent) {
+        return !NInputManagerHotkeyPatchHelper.TryHandleKitLibHotkey(__instance, inputEvent);
+    }
+}
+#else
 /// <summary>
 /// Hooks official shortcut dispatch before keycode-only matching
 /// (<see cref="NInputManager.ProcessHotkeyInput"/> / <c>ProcessFkbInput</c>).
@@ -24,6 +37,7 @@ internal static class NInputManagerProcessFkbInputPatch {
         return !NInputManagerHotkeyPatchHelper.TryHandleKitLibHotkey(__instance, inputEvent);
     }
 }
+#endif
 
 file static class NInputManagerHotkeyPatchHelper {
     internal static bool TryHandleKitLibHotkey(NInputManager instance, InputEvent inputEvent) {

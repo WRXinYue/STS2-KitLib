@@ -1,5 +1,6 @@
 using Godot;
 using KitLib.Abstractions.Host;
+using KitLib.Compat;
 using KitLib.Host;
 using KitLib.Integration;
 using KitLib.Modding;
@@ -130,7 +131,7 @@ public partial class ModPanelSubmenu : NSubmenu {
         if (!GodotObject.IsInstanceValid(this))
             return;
         this.UpdateControllerNavEnabled();
-        if (NControllerManager.Instance?.InputType != InputType.Controller)
+        if (!Sts2InputCompat.IsUsingController(NControllerManager.Instance))
             return;
         GetViewport()?.GuiReleaseFocus();
         ActiveScreenContext.Instance.FocusOnDefaultControl();

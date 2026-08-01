@@ -1,6 +1,7 @@
 using System.Linq;
 using Godot;
 using KitLib.Abstractions.Modding;
+using KitLib.Compat;
 using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.UI;
@@ -66,7 +67,7 @@ internal static class ModPanelDiagnostics {
             stack?.SubmenusOpen ?? false,
             peek?.GetType().Name ?? "null",
             ActiveScreenContext.Instance.IsCurrent(submenu),
-            NControllerManager.Instance?.InputType == InputType.Controller,
+            Sts2InputCompat.IsUsingController(NControllerManager.Instance),
             rowCount,
             null,
             focus?.GetPath().ToString(),

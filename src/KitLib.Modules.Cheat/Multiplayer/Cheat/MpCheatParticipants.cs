@@ -25,7 +25,12 @@ internal static class MpCheatParticipants {
         if (KitLibSyncBotOps.IsEnabled?.Invoke() == true)
             return remotePlayers;
 
-        var connected = run.RunLobby?.PlayerIds?.ToHashSet();
+        var connected =
+#if STS2_STABLE_PROFILE
+            run.RunLobby?.ConnectedPlayerIds;
+#else
+            run.RunLobby?.PlayerIds?.ToHashSet();
+#endif
         if (connected == null || connected.Count == 0)
             return remotePlayers;
 

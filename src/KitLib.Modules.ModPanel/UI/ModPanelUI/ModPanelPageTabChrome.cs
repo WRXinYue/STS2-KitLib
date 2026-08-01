@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib.Compat;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
@@ -161,7 +162,7 @@ public partial class ModPanelPageTabChrome : Control {
             ApplyScrollGutters();
             return;
         }
-        var usingController = NControllerManager.Instance?.InputType == InputType.Controller;
+        var usingController = Sts2InputCompat.IsUsingController(NControllerManager.Instance);
         _leftTrigger.Visible = usingController;
         _rightTrigger.Visible = usingController;
         if (usingController) {

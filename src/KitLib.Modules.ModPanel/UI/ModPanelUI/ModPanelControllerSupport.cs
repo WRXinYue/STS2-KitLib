@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using KitLib.Abstractions.Modding;
+using KitLib.Compat;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -79,13 +80,13 @@ public partial class ModPanelControllerSupport : Node {
         }
         if (NInputManager.Instance != null)
             NInputManager.Instance.Connect(NInputManager.SignalName.InputRebound, _refreshHintsCallable.Value);
-        _lastUsingController = NControllerManager.Instance?.InputType == InputType.Controller;
+        _lastUsingController = Sts2InputCompat.IsUsingController(NControllerManager.Instance);
         RefreshHints();
         _pageTabChrome?.RefreshTriggerIcons();
     }
 
     public override void _Process(double delta) {
-        var usingController = NControllerManager.Instance?.InputType == InputType.Controller;
+        var usingController = Sts2InputCompat.IsUsingController(NControllerManager.Instance);
         if (usingController != _lastUsingController) {
             _lastUsingController = usingController;
             RefreshHints();
@@ -199,7 +200,7 @@ public partial class ModPanelControllerSupport : Node {
             var current = ActiveScreenContext.Instance.GetCurrentScreen();
             return $"notCurrent(screen={current?.GetType().Name ?? "null"})";
         }
-        if (NControllerManager.Instance?.InputType != InputType.Controller)
+        if (!Sts2InputCompat.IsUsingController(NControllerManager.Instance))
             return "mouseMode(InputType!=Controller)";
         if (_sidebarRows.Count == 0 || _getSelectedModId == null || _selectMod == null)
             return "sidebarNotReady";
@@ -209,7 +210,7 @@ public partial class ModPanelControllerSupport : Node {
     public void RefreshHints() {
         if (_hintsRow == null || !GodotObject.IsInstanceValid(_hintsRow))
             return;
-        var usingController = NControllerManager.Instance?.InputType == InputType.Controller;
+        var usingController = Sts2InputCompat.IsUsingController(NControllerManager.Instance);
         _hintsRow.Visible = usingController;
         KitLog.Info(ModPanelDiagnosticLog.Scope, ModPanelDiagnosticLog.FormatControllerHints(
             usingController, _hintsRow.Visible, _pageTabChrome?.PageCount ?? 0));

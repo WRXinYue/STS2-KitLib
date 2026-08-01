@@ -5,6 +5,7 @@ using Godot;
 using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
 using KitLib.Abstractions.ModPanel;
+using KitLib.Compat;
 using KitLib.Host;
 using KitLib.Integration;
 using KitLib.Modding;
@@ -395,7 +396,7 @@ public static partial class ModPanelUI {
             var selectedRow = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
             if (selectedRow != null) {
                 shell.SetInitialFocusedControl(selectedRow.Host);
-                if (NControllerManager.Instance?.InputType == InputType.Controller)
+                if (Sts2InputCompat.IsUsingController(NControllerManager.Instance))
                     Callable.From(() => selectedRow.Host.TryGrabFocus()).CallDeferred();
             }
         }

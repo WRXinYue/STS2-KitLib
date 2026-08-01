@@ -4,19 +4,24 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 namespace KitLib.Settings;
 
 /// <summary>
-/// KitLib hotkey validation against live official keyboard bindings
-/// (<see cref="NInputManager.GetCurrentHotkey"/> / <c>ProcessHotkeyInput</c>).
+/// KitLib hotkey validation against live official keyboard bindings.
 /// </summary>
 internal static class OfficialGameInput {
     /// <summary>
     /// True when <paramref name="key"/> matches a bound official action keycode
-    /// (modifiers ignored, same as <c>ProcessHotkeyInput</c>).
+    /// (modifiers ignored, same as official shortcut dispatch).
     /// </summary>
     internal static bool UsesPlayerKeyboardShortcut(Key key) {
         var mgr = NInputManager.Instance;
         if (mgr == null)
             return false;
 
+#if STS2_STABLE_PROFILE
+        foreach (var input in NInputManager.remappableKeyboardInputs) {
+            if (mgr.GetShortcutKey(input) == key)
+                return true;
+        }
+#else
         foreach (var input in NInputManager.remappableMKbInputs) {
             if (mgr.GetMKbHotkey(input) == key)
                 return true;
@@ -26,6 +31,7 @@ internal static class OfficialGameInput {
             if (mgr.GetKbOnlyHotkey(input) == key)
                 return true;
         }
+#endif
 
         return false;
     }
