@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Dev 面板图标** — MDI 图标集改为在构建过程中生成，而不再只由 `make icons` 生成（而它没有任何依赖会触发）。此前 `KitLib.Panel` 根本没有打包图标集：构建始终成功，运行时每次图标查找却都记录 `icon '<name>' not found`。
+
 ## [0.32.1] - 2026-08-01
 
 ### Added
