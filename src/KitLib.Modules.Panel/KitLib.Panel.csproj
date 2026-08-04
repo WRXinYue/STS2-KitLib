@@ -26,17 +26,20 @@
     <ProjectReference Include="..\KitLib.Modules.User\KitLib.User.csproj" />
   </ItemGroup>
   <!--
-    Added from a target rather than statically: the ShakeIcons target in KitLib.Core.csproj
-    generates Icons\mdi-used.json, and a static item's Exists() condition is evaluated when
-    THIS project is loaded — before that target has run on a clean tree. A static item
-    therefore silently embedded nothing, which is exactly how this module shipped with no
-    icons at all. The warning makes the remaining hole (a dependency-less build, which
-    skips Core) loud instead of silent.
+    Added from a target rather than statically: Icons\mdi-used.json and Icons\MdiIcon.Generated.cs
+    are GENERATED, and a static item's Exists() condition is evaluated when THIS project is
+    LOADED — before anything has generated them on a clean tree. A static item therefore
+    silently embedded nothing, which is exactly how this module shipped with no icon set at
+    all while every runtime lookup logged "icon not found". The Warning below covers the
+    remaining hole: the generator can be skipped (no scripts\shake_icons.py, no python), and
+    that must be loud rather than another silently icon-less build.
   -->
   <!--
     This project GENERATES its own icon assets rather than waiting for another project to
     do it, and hooks AssignTargetPaths, which is the only anchor where both item kinds still
-    land. Two earlier attempts failed for opposite reasons, so do not "simplify" this:
+    land. Two earlier attempts failed for opposite reasons, so do not "simplify" this — in
+    particular, do not move the generation back into KitLib.Core: there is deliberately no
+    ShakeIcons target there, and the comment in KitLib.Core.csproj says why.
 
       - Generating in KitLib.Core and hooking PrepareForBuild: PrepareForBuild is ordered
         BEFORE ResolveReferences, and ResolveReferences is what builds the referenced Core.
