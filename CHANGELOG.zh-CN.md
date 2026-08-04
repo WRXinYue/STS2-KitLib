@@ -8,14 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **MCP `dev_hover` 目标** — `target` 除别名外还可传任意节点类型名（新增 `boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`），`target: "list"` 可列出当前屏幕上所有可聚焦类型。
-
 ### Added
 
 - **MCP `dev_add_relic`** — 按 model id 给本地玩家授予遗物，相当于 `dev_add_card` 的遗物版。传 `search` 可在无对局时列出 id 与稀有度。
-- **MCP `dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为：地图节点、卡牌奖励备选、篝火选项、遗物。不传 `index` 只列出当前屏幕上的可悬停项，`target: "none"` 取消悬停，`click` 可在聚焦后按下。
+- **MCP `dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为。`target` 可用别名（`map_node`、`reward_alternative`、`rest_option`、`relic`、`boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`）或任意节点类型名；`target: "list"` 列出当前屏幕上所有可聚焦类型，`"none"` 取消悬停，`click` 在聚焦后按下，不传 `index` 则只列出该目标的实例。
 
 ## [0.32.1] - 2026-08-01
 
