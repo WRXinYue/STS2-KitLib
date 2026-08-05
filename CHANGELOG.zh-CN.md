@@ -11,15 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Mod 测试房间传送** — 开发模式 **房间传送** 新增 **Mod 测试 — 篝火** 与 **Mod 测试 — 宝箱房** 入口，会额外生成与你相同角色的假玩家，便于在单人开发局中预览官方多人篝火与遗物手部 UI。
-- **MCP `dev_add_relic`** — 按 model id 给本地玩家授予遗物，相当于 `dev_add_card` 的遗物版。传 `search` 可在无对局时列出 id 与稀有度。
-- **MCP `dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为。`target` 可用别名（`map_node`、`reward_alternative`、`rest_option`、`relic`、`boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`）或任意节点类型名；`target: "list"` 列出当前屏幕上所有可聚焦类型，`"none"` 取消悬停，`click` 在聚焦后按下，不传 `index` 则只列出该目标的实例。
+- **MCP `dev_add_relic`** — 按 model id 给本地玩家授予遗物，相当于 `dev_add_card` 的遗物版。传 `search` 可在无对局时列出 id 与稀有度。 *[@Elnas32](https://github.com/Elnas32) · [PR #14](https://github.com/WRXinYue/STS2-KitLib/pull/14) · [37b6d19](https://github.com/WRXinYue/STS2-KitLib/commit/37b6d19)*
+- **MCP `dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为。`target` 可用别名（`map_node`、`reward_alternative`、`rest_option`、`relic`、`boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`）或任意节点类型名；`target: "list"` 列出当前屏幕上所有可聚焦类型，`"none"` 取消悬停，`click` 在聚焦后按下，不传 `index` 则只列出该目标的实例。 *[@Elnas32](https://github.com/Elnas32) · [PR #14](https://github.com/WRXinYue/STS2-KitLib/pull/14) · [2099602](https://github.com/WRXinYue/STS2-KitLib/commit/2099602)*
 
 ### Fixed
 
-- **卡牌浏览器 → 选牌界面** — 使用卡牌浏览器后，官方删牌/选牌等卡牌网格不会再出现卡牌偏小或间距错乱。感谢 OLC 反馈。
-- **v0.110.1 上的伪联机队友生成** — 注册模拟玩家时抛出 `NullReferenceException`，生成流程中途中断，队友虽然留在本局中却没有行动队列，因此它出的每张牌都会被丢弃并被强制结束回合。
-- **v0.110.1 上的战斗就绪状态读取** — 「准备进入敌方回合」的逐玩家检查恒为 `false`，导致已经就绪的模拟玩家被反复重新标记。
-- **Dev 面板图标** — MDI 图标集改为在构建过程中生成，而不再只由 `make icons` 生成（而它没有任何依赖会触发）。此前 `KitLib.Panel` 根本没有打包图标集：构建始终成功，运行时每次图标查找却都记录 `icon '<name>' not found`。
+- **卡牌浏览器 → 选牌界面** — 使用卡牌浏览器后，官方删牌/选牌等卡牌网格不会再出现卡牌偏小或间距错乱。感谢 [OLC](https://github.com/BAKAOLC) 反馈。
+- **v0.110.1 上的伪联机队友生成** — 注册模拟玩家时抛出 `NullReferenceException`，生成流程中途中断，队友虽然留在本局中却没有行动队列，因此它出的每张牌都会被丢弃并被强制结束回合。 *[@Elnas32](https://github.com/Elnas32) · [PR #8](https://github.com/WRXinYue/STS2-KitLib/pull/8) · [108b87c](https://github.com/WRXinYue/STS2-KitLib/commit/108b87c)*
+- **v0.110.1 上的战斗就绪状态读取** — 「准备进入敌方回合」的逐玩家检查恒为 `false`，导致已经就绪的模拟玩家被反复重新标记。 *[@Elnas32](https://github.com/Elnas32) · [PR #8](https://github.com/WRXinYue/STS2-KitLib/pull/8) · [108b87c](https://github.com/WRXinYue/STS2-KitLib/commit/108b87c)*
+- **Dev 面板图标** — MDI 图标集改为在构建过程中生成，而不再只由 `make icons` 生成（而它没有任何依赖会触发）。此前 `KitLib.Panel` 根本没有打包图标集：构建始终成功，运行时每次图标查找却都记录 `icon '<name>' not found`。 *[@Elnas32](https://github.com/Elnas32) · [PR #13](https://github.com/WRXinYue/STS2-KitLib/pull/13) · [b78a311](https://github.com/WRXinYue/STS2-KitLib/commit/b78a311)*
 
 ## [0.32.1] - 2026-08-01
 

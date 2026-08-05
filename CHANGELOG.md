@@ -11,15 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Mod test room teleports** — Dev Mode **Room Teleport** adds **Mod test — Rest site** and **Mod test — Treasure** entries that spawn extra fake players with your character so you can preview official multiplayer campfire and relic-hand UI in solo dev runs.
-- **MCP `dev_add_relic`** — Grant a relic to the local player by model id, the relic counterpart of `dev_add_card`. Pass `search` to list ids and rarities without a run.
-- **MCP `dev_hover`** — Focus a UI element so hover-only behaviour fires. `target` takes an alias (`map_node`, `reward_alternative`, `rest_option`, `relic`, `boss_icon`, `event_option`, `potion`, `card`, `creature`, `treasure_relic`) or any node type name; `target: "list"` reports every focusable type on screen, `"none"` unhovers, `click` presses after focusing, and omitting `index` lists that target's instances.
+- **MCP `dev_add_relic`** — Grant a relic to the local player by model id, the relic counterpart of `dev_add_card`. Pass `search` to list ids and rarities without a run. *[@Elnas32](https://github.com/Elnas32) · [PR #14](https://github.com/WRXinYue/STS2-KitLib/pull/14) · [37b6d19](https://github.com/WRXinYue/STS2-KitLib/commit/37b6d19)*
+- **MCP `dev_hover`** — Focus a UI element so hover-only behaviour fires. `target` takes an alias (`map_node`, `reward_alternative`, `rest_option`, `relic`, `boss_icon`, `event_option`, `potion`, `card`, `creature`, `treasure_relic`) or any node type name; `target: "list"` reports every focusable type on screen, `"none"` unhovers, `click` presses after focusing, and omitting `index` lists that target's instances. *[@Elnas32](https://github.com/Elnas32) · [PR #14](https://github.com/WRXinYue/STS2-KitLib/pull/14) · [2099602](https://github.com/WRXinYue/STS2-KitLib/commit/2099602)*
 
 ### Fixed
 
-- **Card browser → selection screens** — Opening the card browser no longer leaves official card pick/remove grids with shrunk or misaligned cards afterward. Thanks to OLC for the report.
-- **Pseudo co-op companion spawn on v0.110.1** — Registering a simulated peer threw `NullReferenceException` and aborted the spawn part-way, leaving the companion in the run with no action queue, so every card it played was dropped and its turn was force-ended.
-- **Combat ready-set lookup on v0.110.1** — The per-player "ready to begin enemy turn" check always reported `false`, so simulated peers were re-signalled after they were already ready.
-- **Dev panel icons** — The MDI icon set is generated as part of the build instead of only by `make icons`, which nothing depended on. `KitLib.Panel` shipped with no icon set at all: the build stayed green while every icon lookup logged `icon '<name>' not found` at runtime.
+- **Card browser → selection screens** — Opening the card browser no longer leaves official card pick/remove grids with shrunk or misaligned cards afterward. Thanks to [OLC](https://github.com/BAKAOLC) for the report.
+- **Pseudo co-op companion spawn on v0.110.1** — Registering a simulated peer threw `NullReferenceException` and aborted the spawn part-way, leaving the companion in the run with no action queue, so every card it played was dropped and its turn was force-ended. *[@Elnas32](https://github.com/Elnas32) · [PR #8](https://github.com/WRXinYue/STS2-KitLib/pull/8) · [108b87c](https://github.com/WRXinYue/STS2-KitLib/commit/108b87c)*
+- **Combat ready-set lookup on v0.110.1** — The per-player "ready to begin enemy turn" check always reported `false`, so simulated peers were re-signalled after they were already ready. *[@Elnas32](https://github.com/Elnas32) · [PR #8](https://github.com/WRXinYue/STS2-KitLib/pull/8) · [108b87c](https://github.com/WRXinYue/STS2-KitLib/commit/108b87c)*
+- **Dev panel icons** — The MDI icon set is generated as part of the build instead of only by `make icons`, which nothing depended on. `KitLib.Panel` shipped with no icon set at all: the build stayed green while every icon lookup logged `icon '<name>' not found` at runtime. *[@Elnas32](https://github.com/Elnas32) · [PR #13](https://github.com/WRXinYue/STS2-KitLib/pull/13) · [b78a311](https://github.com/WRXinYue/STS2-KitLib/commit/b78a311)*
 
 ## [0.32.1] - 2026-08-01
 
