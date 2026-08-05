@@ -13,10 +13,17 @@ internal static class MpUiDebugRestSiteReadyPatch {
         MpUiDebugPlayerService.ApplyPendingScenario(MpUiDebugScenario.RestSiteFourSame);
 }
 
+#if STS2_STABLE_PROFILE
+[HarmonyPatch(typeof(NRestSiteRoom), "_ExitTree")]
+internal static class MpUiDebugRestSiteExitPatch {
+    static void Postfix() => MpUiDebugPlayerService.ScheduleRestoreAfterScenarioRoom();
+}
+#else
 [HarmonyPatch(typeof(NRestSiteRoom), nameof(NRestSiteRoom.BeforeExitingRoom))]
 internal static class MpUiDebugRestSiteExitPatch {
     static void Postfix() => MpUiDebugPlayerService.ScheduleRestoreAfterScenarioRoom();
 }
+#endif
 
 [HarmonyPatch(typeof(NTreasureRoomRelicCollection), nameof(NTreasureRoomRelicCollection.Initialize))]
 internal static class MpUiDebugTreasureRelicInitPatch {
