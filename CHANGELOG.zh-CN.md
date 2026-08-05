@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Mod 测试房间传送** — 开发模式 **房间传送** 新增 **Mod 测试 — 篝火** 与 **Mod 测试 — 宝箱房** 入口，会额外生成与你相同角色的假玩家，便于在单人开发局中预览官方多人篝火与遗物手部 UI。
+- **MCP `dev_add_relic`** — 按 model id 给本地玩家授予遗物，相当于 `dev_add_card` 的遗物版。传 `search` 可在无对局时列出 id 与稀有度。
+- **MCP `dev_hover`** — 聚焦（悬停）UI 元素以触发只在悬停时发生的行为。`target` 可用别名（`map_node`、`reward_alternative`、`rest_option`、`relic`、`boss_icon`、`event_option`、`potion`、`card`、`creature`、`treasure_relic`）或任意节点类型名；`target: "list"` 列出当前屏幕上所有可聚焦类型，`"none"` 取消悬停，`click` 在聚焦后按下，不传 `index` 则只列出该目标的实例。
 
 ### Fixed
 

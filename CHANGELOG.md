@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Mod test room teleports** — Dev Mode **Room Teleport** adds **Mod test — Rest site** and **Mod test — Treasure** entries that spawn extra fake players with your character so you can preview official multiplayer campfire and relic-hand UI in solo dev runs.
+- **MCP `dev_add_relic`** — Grant a relic to the local player by model id, the relic counterpart of `dev_add_card`. Pass `search` to list ids and rarities without a run.
+- **MCP `dev_hover`** — Focus a UI element so hover-only behaviour fires. `target` takes an alias (`map_node`, `reward_alternative`, `rest_option`, `relic`, `boss_icon`, `event_option`, `potion`, `card`, `creature`, `treasure_relic`) or any node type name; `target: "list"` reports every focusable type on screen, `"none"` unhovers, `click` presses after focusing, and omitting `index` lists that target's instances.
 
 ### Fixed
 
