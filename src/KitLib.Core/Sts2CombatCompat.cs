@@ -82,9 +82,20 @@ internal static class Sts2CombatCompat {
     public static int GetCombatRoundNumber() =>
         CombatManager.Instance?.DebugOnlyGetState()?.RoundNumber ?? 0;
 
+    /// <remarks>
+    /// 0.110.0 moved the ready-set off <see cref="CombatManager"/> and onto the per-combat
+    /// <c>CombatTurnState</c>, reached through the manager's private <c>_turnState</c>.
+    /// The pre-0.110 field is still tried so the older compat variant keeps working.
+    /// </remarks>
     public static bool IsPlayerReadyToBeginEnemyTurn(CombatManager cm, Player player) {
-        var field = AccessTools.Field(typeof(CombatManager), "_playersReadyToBeginEnemyTurn");
-        if (field?.GetValue(cm) is not System.Collections.IEnumerable readyPlayers)
+        var turnState = AccessTools.Field(typeof(CombatManager), "_turnState")?.GetValue(cm);
+        object? readySource = turnState == null
+            ? null
+            : AccessTools.Property(turnState.GetType(), "PlayersReadyToBeginEnemyTurn")?.GetValue(turnState);
+
+        readySource ??= AccessTools.Field(typeof(CombatManager), "_playersReadyToBeginEnemyTurn")?.GetValue(cm);
+
+        if (readySource is not System.Collections.IEnumerable readyPlayers)
             return false;
 
         foreach (var entry in readyPlayers) {

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Card browser → selection screens** — Opening the card browser no longer leaves official card pick/remove grids with shrunk or misaligned cards afterward. Thanks to OLC for the report.
+- **Pseudo co-op companion spawn on v0.110.1** — Registering a simulated peer threw `NullReferenceException` and aborted the spawn part-way, leaving the companion in the run with no action queue, so every card it played was dropped and its turn was force-ended.
+- **Combat ready-set lookup on v0.110.1** — The per-player "ready to begin enemy turn" check always reported `false`, so simulated peers were re-signalled after they were already ready.
 
 ## [0.32.1] - 2026-08-01
 
