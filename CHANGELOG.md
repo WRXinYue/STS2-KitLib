@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Mod test room teleports** — Dev Mode **Room Teleport** adds **Mod test — Rest site** and **Mod test — Treasure** entries that spawn extra fake players with your character so you can preview official multiplayer campfire and relic-hand UI in solo dev runs.
 
+### Fixed
+
+- **Card browser → selection screens** — Opening the card browser no longer leaves official card pick/remove grids with shrunk or misaligned cards afterward. Thanks to OLC for the report.
+
 ## [0.32.1] - 2026-08-01
 
 ### Added

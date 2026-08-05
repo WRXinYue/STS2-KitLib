@@ -193,10 +193,21 @@ internal static partial class CardBrowserUI {
         CardBrowserPerf.Log("invalidateCache.total", total);
     }
 
+    /// <summary>
+    /// Pooled NGridCardHolder instances are shared with official NCardGrid. Clear browser-only
+    /// state before returning so scale patches do not leak into deck/combat selection screens.
+    /// </summary>
+    private static void PrepareGridHolderForPoolReturn(NGridCardHolder holder) {
+        if (holder.HasMeta(GridHolderMetaKey))
+            holder.RemoveMeta(GridHolderMetaKey);
+        holder.Scale = NCardHolder.smallScale;
+    }
+
     private static void ReleaseCardRows(State s) {
         foreach (var row in s.CardRows) {
             foreach (var holder in row) {
                 s.GridInput.Unwire(holder);
+                PrepareGridHolderForPoolReturn(holder);
                 holder.QueueFreeSafely();
             }
         }
@@ -219,6 +230,8 @@ internal static partial class CardBrowserUI {
             return null;
         }
 
+        if (holder.HasMeta(GridHolderMetaKey))
+            holder.RemoveMeta(GridHolderMetaKey);
         holder.SetMeta(GridHolderMetaKey, true);
         holder.Scale = holder.SmallScale;
         holder.MouseFilter = Control.MouseFilterEnum.Pass;
