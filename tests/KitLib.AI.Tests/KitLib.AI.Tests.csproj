@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\KitLib.Modules.AI\KitLib.AI.csproj" />
+    <ProjectReference Include="..\..\mods\KitAI\KitLib.AI.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="Exists('$(Sts2DataDir)\sts2.dll')">

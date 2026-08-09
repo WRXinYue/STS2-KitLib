@@ -46,10 +46,7 @@ def _mcp_description_bbcode(tools_rid: str) -> str:
 def _resolve_nexus_group_id(*, tool: str | None) -> str:
     if tool == "mcp":
         return os.environ.get("NEXUS_FILE_GROUP_ID_MCP", "").strip()
-    return (
-        os.environ.get("NEXUS_FILE_GROUP_ID", "").strip()
-        or os.environ.get("NEXUS_FILE_GROUP_ID_BETA", "").strip()
-    )
+    return os.environ.get("NEXUS_FILE_GROUP_ID", "").strip() or os.environ.get("NEXUS_FILE_GROUP_ID_BETA", "").strip()
 
 
 def _nexus_display_name(

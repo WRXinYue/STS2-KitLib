@@ -1,0 +1,14 @@
+{
+  "id": "KitAI",
+  "name": "KitLib AI",
+  "author": "WRXinYue",
+  "description": "Optional AI host / autoplay module for Slay the Spire 2. Requires KitLib and KitDevTools.",
+  "version": "0.33.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [
+    { "id": "KitLib", "min_version": "0.33.0" },
+    { "id": "KitDevTools", "min_version": "0.33.0" }
+  ],
+  "affects_gameplay": false
+}

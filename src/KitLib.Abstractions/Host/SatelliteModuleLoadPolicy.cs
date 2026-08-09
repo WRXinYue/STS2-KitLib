@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace KitLib.Abstractions.Host;
 
-/// <summary>Pure load policy for bundled KitLib satellite modules (settings + dependency rules).</summary>
+/// <summary>Pure load policy for KitLib satellite modules (settings + dependency rules).</summary>
 public static class SatelliteModuleLoadPolicy {
     public sealed record ModuleInfo(string Id, bool AlwaysOn, string[] Requires);
 
@@ -12,16 +12,27 @@ public static class SatelliteModuleLoadPolicy {
 
     public static readonly ModuleInfo[] Modules = [
         new(KitLibModuleIds.User, AlwaysOn: true, Requires: []),
+        // Load when present (KitModPanel product); missing is soft — not a broken KitLib install.
         new(KitLibModuleIds.ModPanel, AlwaysOn: true, Requires: []),
         new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
-        new(KitLibModuleIds.Ai, AlwaysOn: false, Requires: []),
-        new(KitLibModuleIds.Cheat, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
+        new(KitLibModuleIds.Ai, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
         new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
     ];
 
     static readonly HashSet<string> ToggleableModuleIds = new(
         Modules.Where(m => !m.AlwaysOn).Select(m => m.Id),
         StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Modules that must ship inside the KitLib product folder.</summary>
+    public static bool IsKitLibBundledRequired(string moduleId) =>
+        string.Equals(moduleId, KitLibModuleIds.User, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>KitLib.Cheat ships with KitDevTools but is not a user-toggleable satellite.</summary>
+    public static bool IsKnownSatellite(string moduleId) {
+        if (TryGetModule(moduleId, out _))
+            return true;
+        return string.Equals(moduleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>Fresh-install defaults: Panel on for PC; all optional modules on for Android (failed loads are skipped quietly).</summary>
     public static IReadOnlyDictionary<string, bool> GetDefaultToggles(bool? mobileDefaults = null) {
@@ -68,13 +79,15 @@ public static class SatelliteModuleLoadPolicy {
         toggles[moduleId] = enabled;
 
         if (!enabled && string.Equals(moduleId, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase)) {
-            toggles[KitLibModuleIds.Cheat] = false;
             toggles[KitLibModuleIds.Dev] = false;
+            toggles[KitLibModuleIds.Ai] = false;
             return;
         }
 
-        if (enabled && (string.Equals(moduleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase)))
+        if (enabled && string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase))
+            toggles[KitLibModuleIds.Panel] = true;
+
+        if (enabled && string.Equals(moduleId, KitLibModuleIds.Ai, StringComparison.OrdinalIgnoreCase))
             toggles[KitLibModuleIds.Panel] = true;
     }
 

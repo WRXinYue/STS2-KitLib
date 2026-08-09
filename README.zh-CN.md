@@ -2,9 +2,7 @@
 
 [English](./README.md) | **中文**
 
-KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局，在游戏里用左侧开发面板直接改卡牌、数值、敌人状态，看日志和战斗信息，也支持伪联机、双开 LAN 等联机调试；配合 Hook 与自动化，少重启就能验证自己的 mod。玩家侧则有更好用的 Mod 面板、进度保护、问题反馈导出，以及可选的辅助功能。
-
-本 mod 采用模块化结构：`KitLib` Core 负责加载，卫星模块可按需开关；某个可选模块加载失败时，不会拖垮核心，也不会影响依赖 KitLib 的其他 mod。
+KitLib 是面向《杀戮尖塔 2》的基础宿主库。按需安装配套产品：**KitModPanel**（模组列表/设置）、**KitDevTools**（侧栏、作弊、存档、日志）、**KitAI**（可选 AI 托管）。KitLib Core 从这些兄弟 mod 加载卫星模块；某个可选模块加载失败时，不应拖垮核心，也不应影响依赖 KitLib 的其他 mod。
 
 > 目前计划持续优化已有功能；为减轻可维护性和心智负担，会删掉一些不必要的功能，优先保证后续代码质量。
 
@@ -86,7 +84,7 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 
 ## 安装
 
-- **KitLib 本体**：通过 Steam 创意工坊或 Nexus 安装。
+- **KitLib**（必需宿主）以及 **KitModPanel** / **KitDevTools** / **KitAI**：Steam 创意工坊或 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus 的发布包。
 - **辅助工具**（`KitLib.Mcp` 等）：从 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) 或 Nexus 下载对应平台的可执行文件。
 
 ## 给 Mod 开发者

@@ -39,6 +39,7 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.bundle_build import build_bundle  # noqa: E402
 from lib.dotenv import load_dotenv  # noqa: E402
+from lib.mod_products import PRODUCTS, product_build_dir  # noqa: E402
 from lib.release_assets import mod_zip_path  # noqa: E402
 from lib.sts2_profiles import (  # noqa: E402
     VARIANT_TARGETS,
@@ -124,10 +125,15 @@ def _stage_variant(compat: str, profile: str, *, configuration: str) -> None:
         fail(f"Missing {core_src} after build for {compat} ({profile}).")
 
     shutil.copy2(core_src, variant_dir / CORE_DLL)
-    modules_src = BUILD_DIR / MODULES_SUBDIR
-    if modules_src.is_dir():
-        for module_dll in modules_src.glob("*.dll"):
-            shutil.copy2(module_dll, modules_dst / module_dll.name)
+    # KitLib product owns User only; other satellites ship in sibling product mods.
+    for dll_name in PRODUCTS["KitLib"].satellite_dlls:
+        src = product_build_dir("KitLib") / MODULES_SUBDIR / f"{dll_name}.dll"
+        if not src.is_file():
+            src = _REPO / "build" / dll_name / f"{dll_name}.dll"
+        if src.is_file():
+            shutil.copy2(src, modules_dst / f"{dll_name}.dll")
+        else:
+            print(f"[bundle] Warning: missing {dll_name}.dll for variant {compat}")
 
     (variant_dir / COMPAT_MARKER).write_text(compat + "\n", encoding="utf-8", newline="\n")
     print(f"[bundle] Staged variant {compat} ({profile})")
@@ -270,7 +276,12 @@ def _deploy_to_game() -> None:
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(STAGING_DIR, dest)
-    print(f"[bundle] Deployed to {dest}")
+    print(f"[bundle] Deployed KitLib multi-API pack to {dest}")
+    # Sibling products use the flat build outputs from the last variant build.
+    import deploy_modules as deploy  # noqa: E402
+
+    for product_id in ("KitModPanel", "KitDevTools", "KitAI"):
+        deploy._deploy_product(mods_root, product_id)
 
 
 def main() -> int:

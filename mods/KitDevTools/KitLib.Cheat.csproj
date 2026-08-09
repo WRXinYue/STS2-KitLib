@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
+  <PropertyGroup>
+    <ModId>KitLib.Cheat</ModId>
+    <KitLibProductId>KitDevTools</KitLibProductId>
+    <AssemblyName>KitLib.Cheat</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <KitLibSourceDir>src\Cheat</KitLibSourceDir>
+  </PropertyGroup>
+  <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
+  <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />
+  <ItemGroup>
+    <ProjectReference Include="..\KitLib\KitLib.User.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KitLib.AI</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KitLib.Panel</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KitLib.Dev</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

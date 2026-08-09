@@ -1,0 +1,27 @@
+using KitLib.Abstractions.Host;
+namespace KitLib.Abstractions.Host;
+
+/// <summary>
+/// Cheat/runtime hooks wired by KitDevTools implementation assemblies.
+/// Consumers (Core, AI, Panel) use this surface instead of referencing KitLib.Cheat.dll.
+/// </summary>
+public static class KitLibCheatApi {
+    public static Action? OpenCards { get; set; }
+    public static Action? OpenRelics { get; set; }
+    public static Action? OpenEnemies { get; set; }
+    public static Action? OpenPowers { get; set; }
+    public static Action? OpenPotions { get; set; }
+    public static Action? OpenEvents { get; set; }
+    public static Action? OpenRooms { get; set; }
+    public static Action? OpenConsole { get; set; }
+    public static Action? OpenPresets { get; set; }
+    public static Action? OpenCardTest { get; set; }
+    public static Action<double>? ProcessFrame { get; set; }
+    public static Action? EnsureRuntimeStatModifiers { get; set; }
+    public static Action? ClearRunState { get; set; }
+    public static Action<bool>? SetMultiplayerCheatOptIn { get; set; }
+    public static Func<bool>? CanUseMultiplayerCheats { get; set; }
+    public static Action? ResetSkipAnim { get; set; }
+    public static Func<bool>? IsSkipAnimSkipping { get; set; }
+    public static Func<bool>? IsMpHooksDisabledInMultiplayer { get; set; }
+}

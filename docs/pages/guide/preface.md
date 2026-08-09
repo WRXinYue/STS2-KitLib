@@ -49,7 +49,7 @@ This page points to community resources before diving into KitLib itself.
 ::: en
 **KitLib** is a **modular in-game toolkit** for STS2 — not a content-mod framework (use BaseLib / RitsuLib for cards, relics, etc.).
 
-- **Core host** (`KitLib.dll`) hot-loads **satellite modules** under `modules/` — dev rail, cheats, AI, logging, mod settings, MCP, and more.
+- **Core host** (`KitLib.dll`) loads **satellite modules** from KitLib and sibling products (`KitModPanel`, `KitDevTools`, `KitAI`) — mod settings, side rail, cheats, AI, logging, MCP, and more.
 - **Content-mod authors** reference NuGet **`STS2.KitLib.Abstractions`**, ship `kitlib.compat.toml`, and optionally register dev-rail tabs via **`DevPanelRegistry`**.
 
 Ready to install? **[Install →](/guide/install/)** · Panel overview: **[Rail panels →](/guide/panels/)**
@@ -58,7 +58,7 @@ Ready to install? **[Install →](/guide/install/)** · Panel overview: **[Rail 
 ::: zh-CN
 **KitLib** 是 STS2 的**模块化游戏内工具库** — 不是内容 mod 框架（卡牌/遗物等请用 BaseLib / RitsuLib）。
 
-- **Core 宿主**（`KitLib.dll`）热加载 `modules/` 下**卫星模块** — 开发侧栏、作弊、AI、日志、Mod 设置、MCP 等。
+- **Core 宿主**（`KitLib.dll`）从 KitLib 与兄弟产品（`KitModPanel`、`KitDevTools`、`KitAI`）加载**卫星模块** — Mod 设置、侧栏、作弊、AI、日志、MCP 等。
 - **内容 mod 作者** 引用 NuGet **`STS2.KitLib.Abstractions`**，可发布 `kitlib.compat.toml`，并通过 **`DevPanelRegistry`** 注册 dev 轨道标签。
 
 准备安装？**[安装 →](/guide/install/)** · 面板概览：**[轨道面板 →](/guide/panels/)**

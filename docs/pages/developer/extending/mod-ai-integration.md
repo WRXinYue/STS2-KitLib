@@ -75,7 +75,7 @@ CompanionBridge.RegisterStrategy(netId, overrideStrategy);
 ### DeckPlan 与角色包{lang="zh-CN"}
 
 ::: en
-`DeckPlanInferer` builds a weight vector (thin/thick, attack, block, exhaust, scaling, …) from deck + relics + ascension. Vanilla characters register `IDeckPlanContributor` packs under `src/KitLib.Modules.AI/AI/Characters/Vanilla/`.
+`DeckPlanInferer` builds a weight vector (thin/thick, attack, block, exhaust, scaling, …) from deck + relics + ascension. Vanilla characters register `IDeckPlanContributor` packs under `mods/KitAI/src/AI/Characters/Vanilla/`.
 
 Mods can adjust deck planning and card tags:
 
@@ -90,7 +90,7 @@ A10 regression seeds: `tools/ai-bench/` (fixed seed list + log parser). Algorith
 :::
 
 ::: zh-CN
-`DeckPlanInferer` 根据牌组 + 遗物 + 进阶生成权重向量（薄/厚、攻击、格挡、消耗、成长等）。原版角色在 `src/KitLib.Modules.AI/AI/Characters/Vanilla/` 注册 `IDeckPlanContributor`。
+`DeckPlanInferer` 根据牌组 + 遗物 + 进阶生成权重向量（薄/厚、攻击、格挡、消耗、成长等）。原版角色在 `mods/KitAI/src/AI/Characters/Vanilla/` 注册 `IDeckPlanContributor`。
 
 Mod 可调整牌组规划与卡牌标签：
 

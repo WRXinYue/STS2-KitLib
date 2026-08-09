@@ -1,4 +1,4 @@
-"""Build only KitLib mod-bundle projects (excludes MCP, tests, and other tools)."""
+"""Build KitLib mod-bundle projects (core + satellites + thin product loaders)."""
 
 from __future__ import annotations
 
@@ -10,20 +10,10 @@ _REPO = Path(__file__).resolve().parents[2]
 if str(_REPO / "scripts") not in sys.path:
     sys.path.insert(0, str(_REPO / "scripts"))
 
+from lib.mod_products import all_bundle_projects  # noqa: E402
 from lib.sts2_profiles import resolve_profile_dir  # noqa: E402
 
-# Keep in sync with package_modules.BUNDLE_DLLS + host entry/core/loader deps.
-MOD_BUNDLE_PROJECTS = [
-    "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
-    "src/KitLib.Core/KitLib.Core.csproj",
-    "src/KitLib.Loader/KitLib.Loader.csproj",
-    "src/KitLib.Modules.User/KitLib.User.csproj",
-    "src/KitLib.Modules.AI/KitLib.AI.csproj",
-    "src/KitLib.Modules.ModPanel/KitLib.ModPanel.csproj",
-    "src/KitLib.Modules.Panel/KitLib.Panel.csproj",
-    "src/KitLib.Modules.Cheat/KitLib.Cheat.csproj",
-    "src/KitLib.Modules.Dev/KitLib.Dev.csproj",
-]
+MOD_BUNDLE_PROJECTS = all_bundle_projects()
 
 
 def build_bundle(

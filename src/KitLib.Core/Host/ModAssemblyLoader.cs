@@ -12,6 +12,7 @@ namespace KitLib.Host;
 internal static class ModAssemblyLoader {
     static AssemblyLoadContext? _modContext;
     static string? _modDir;
+    static IReadOnlyList<string> _searchDirs = [];
     static bool _resolveHooked;
     static readonly HashSet<AssemblyLoadContext> _contextHooks = [];
 
@@ -19,9 +20,14 @@ internal static class ModAssemblyLoader {
         _modContext ??= AssemblyLoadContext.GetLoadContext(typeof(ModAssemblyLoader).Assembly)
                         ?? AssemblyLoadContext.Default;
 
-    internal static void EnsureResolveHook(string? modDir = null) {
+    internal static void EnsureResolveHook(string? modDir = null, IReadOnlyList<string>? searchDirs = null) {
         if (!string.IsNullOrEmpty(modDir))
             _modDir = modDir;
+        if (searchDirs is { Count: > 0 })
+            _searchDirs = searchDirs;
+        else if (!string.IsNullOrEmpty(_modDir) && _searchDirs.Count == 0)
+            _searchDirs = KitLibHostPaths.EnumerateModuleSearchDirectories(_modDir);
+
         if (_resolveHooked)
             return;
 
@@ -91,31 +97,40 @@ internal static class ModAssemblyLoader {
 
     static string? FindDependencyPath(AssemblyName name, AssemblyLoadContext? context = null) {
         var modDir = ResolveModDir(context);
-        if (string.IsNullOrEmpty(modDir))
-            return null;
-
         var simple = name.Name;
         if (string.IsNullOrEmpty(simple))
             return null;
 
-        if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(simple, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
-            var core = Path.Combine(modDir, KitLibHostPaths.CoreFileName);
-            if (File.Exists(core))
-                return Path.GetFullPath(core);
+        if (!string.IsNullOrEmpty(modDir)) {
+            if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(simple, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
+                var core = Path.Combine(modDir, KitLibHostPaths.CoreFileName);
+                if (File.Exists(core))
+                    return Path.GetFullPath(core);
 
-            var flat = Path.Combine(modDir, "KitLib.dll");
-            if (File.Exists(flat))
-                return Path.GetFullPath(flat);
+                var flat = Path.Combine(modDir, "KitLib.dll");
+                if (File.Exists(flat))
+                    return Path.GetFullPath(flat);
+            }
         }
 
-        foreach (var dir in new[] { Path.Combine(modDir, SatelliteModuleLoader.ModulesSubdir), modDir }) {
+        foreach (var dir in ResolveSearchDirectories(modDir)) {
             var path = Path.Combine(dir, simple + ".dll");
             if (File.Exists(path))
                 return Path.GetFullPath(path);
         }
 
         return null;
+    }
+
+    static IEnumerable<string> ResolveSearchDirectories(string? modDir) {
+        if (_searchDirs.Count > 0)
+            return _searchDirs;
+
+        if (!string.IsNullOrEmpty(modDir))
+            return KitLibHostPaths.EnumerateModuleSearchDirectories(modDir);
+
+        return [];
     }
 
     static string? ResolveModDir(AssemblyLoadContext? context) {
@@ -126,11 +141,26 @@ internal static class ModAssemblyLoader {
             return null;
 
         foreach (var asm in context.Assemblies) {
-            if (!string.Equals(asm.GetName().Name, "KitLib", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(asm.GetName().Name, "KitLib", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(asm.GetName().Name, "KitLib.Core", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var dir = Path.GetDirectoryName(asm.Location);
             if (!string.IsNullOrEmpty(dir)) {
+                // Core may live at mods/KitLib/; prefer that root for sibling discovery.
+                if (string.Equals(Path.GetFileName(dir), "KitLib", StringComparison.OrdinalIgnoreCase)
+                    || File.Exists(Path.Combine(dir, KitLibHostPaths.CoreFileName))
+                    || File.Exists(Path.Combine(dir, "KitLib.dll"))) {
+                    _modDir = dir;
+                    return dir;
+                }
+
+                var sibling = KitLibHostPaths.ResolveSiblingKitLibModDirectory(dir);
+                if (sibling is not null) {
+                    _modDir = sibling;
+                    return sibling;
+                }
+
                 _modDir = dir;
                 return dir;
             }

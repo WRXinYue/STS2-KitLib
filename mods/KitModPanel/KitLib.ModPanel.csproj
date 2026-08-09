@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
+  <PropertyGroup>
+    <ModId>KitLib.ModPanel</ModId>
+    <KitLibProductId>KitModPanel</KitLibProductId>
+    <AssemblyName>KitLib.ModPanel</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <KitLibSourceDir>src</KitLibSourceDir>
+  </PropertyGroup>
+  <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
+  <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>KitLib.Panel</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KitLib\KitLib.User.csproj" />
+  </ItemGroup>
+  <Target Name="ShakeAndEmbedIcons" BeforeTargets="AssignTargetPaths">
+    <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts\shake_icons.py&quot;"
+          WorkingDirectory="$(RepoRoot)"
+          Condition="Exists('$(RepoRoot)scripts\shake_icons.py')"
+          StandardOutputImportance="low" />
+    <Warning Condition="!Exists('$(KitLibSourceDir)\Icons\mdi-used.json')"
+             Text="Icons\mdi-used.json missing: $(ModId) will embed NO icons and every lookup warns at runtime. Run: $(KitLibPython) scripts/shake_icons.py" />
+    <ItemGroup>
+      <_ShakenIconSource Include="$(MSBuildProjectDirectory)\$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs"
+                         Condition="Exists('$(MSBuildProjectDirectory)\$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs')" />
+      <Compile Include="@(_ShakenIconSource)" Exclude="@(Compile)" />
+      <EmbeddedResource Include="$(KitLibSourceDir)\Icons\mdi-used.json" LogicalName="KitLib.ModPanel.Icons.mdi-used.json"
+                        Condition="Exists('$(KitLibSourceDir)\Icons\mdi-used.json')" />
+    </ItemGroup>
+  </Target>
+</Project>

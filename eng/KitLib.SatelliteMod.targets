@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
+    <KitLibProductId Condition="'$(KitLibProductId)' == ''">KitLib</KitLibProductId>
     <RepoBuildDir>$(RepoRoot)build\$(ModId)</RepoBuildDir>
     <PublishDir>$(RepoBuildDir)</PublishDir>
     <OutputPath>$(RepoBuildDir)\</OutputPath>
@@ -20,14 +21,21 @@
 
   <Target Name="StageSatelliteToBundle" AfterTargets="Build">
     <PropertyGroup>
-      <_KitLibBundleModules>$(RepoRoot)build\KitLib\modules</_KitLibBundleModules>
+      <_KitLibProductModules>$(RepoRoot)build\$(KitLibProductId)\modules</_KitLibProductModules>
     </PropertyGroup>
-    <MakeDir Directories="$(_KitLibBundleModules)" />
+    <MakeDir Directories="$(_KitLibProductModules)" />
     <Copy
       SourceFiles="$(TargetPath)"
-      DestinationFiles="$(_KitLibBundleModules)\$(AssemblyName).dll"
+      DestinationFiles="$(_KitLibProductModules)\$(AssemblyName).dll"
       SkipUnchangedFiles="true"
       Condition="Exists('$(TargetPath)')" />
+    <!-- Drop stale satellites left in KitLib/modules from the pre-split layout. -->
+    <ItemGroup Condition="'$(KitLibProductId)' == 'KitLib'">
+      <_StaleKitLibModule Include="$(RepoRoot)build\KitLib\modules\*.dll"
+                         Condition="Exists('$(RepoRoot)build\KitLib\modules')" />
+      <_StaleKitLibModule Remove="$(RepoRoot)build\KitLib\modules\KitLib.User.dll" />
+    </ItemGroup>
+    <Delete Files="@(_StaleKitLibModule)" TreatErrorsAsWarnings="true" />
   </Target>
 
   <Target Name="StripGodotSdkArtifacts" BeforeTargets="CoreCompile">

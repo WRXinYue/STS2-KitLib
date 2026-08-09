@@ -8,7 +8,6 @@ public sealed class SatelliteModuleLoadPolicyTests {
         var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles(mobileDefaults: false);
         Assert.True(defaults[KitLibModuleIds.Panel]);
         Assert.False(defaults[KitLibModuleIds.Ai]);
-        Assert.False(defaults[KitLibModuleIds.Cheat]);
         Assert.False(defaults[KitLibModuleIds.Dev]);
     }
 
@@ -17,7 +16,6 @@ public sealed class SatelliteModuleLoadPolicyTests {
         var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles(mobileDefaults: true);
         Assert.True(defaults[KitLibModuleIds.Panel]);
         Assert.True(defaults[KitLibModuleIds.Ai]);
-        Assert.True(defaults[KitLibModuleIds.Cheat]);
         Assert.True(defaults[KitLibModuleIds.Dev]);
     }
 
@@ -36,38 +34,36 @@ public sealed class SatelliteModuleLoadPolicyTests {
         var toggles = new Dictionary<string, bool> {
             [KitLibModuleIds.Panel] = true,
             [KitLibModuleIds.Ai] = true,
-            [KitLibModuleIds.Cheat] = false,
             [KitLibModuleIds.Dev] = false,
         };
         var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
         Assert.True(resolved[KitLibModuleIds.Panel]);
         Assert.True(resolved[KitLibModuleIds.Ai]);
-        Assert.False(resolved[KitLibModuleIds.Cheat]);
-    }
-
-    [Fact]
-    public void ResolveEnabled_skips_cheat_and_dev_when_panel_off() {
-        var toggles = new Dictionary<string, bool> {
-            [KitLibModuleIds.Panel] = false,
-            [KitLibModuleIds.Ai] = false,
-            [KitLibModuleIds.Cheat] = true,
-            [KitLibModuleIds.Dev] = true,
-        };
-        var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
-        Assert.False(resolved[KitLibModuleIds.Cheat]);
         Assert.False(resolved[KitLibModuleIds.Dev]);
     }
 
     [Fact]
-    public void ApplyDependencyRulesToToggles_enabling_cheat_enables_panel() {
+    public void ResolveEnabled_skips_ai_and_dev_when_panel_off() {
+        var toggles = new Dictionary<string, bool> {
+            [KitLibModuleIds.Panel] = false,
+            [KitLibModuleIds.Ai] = true,
+            [KitLibModuleIds.Dev] = true,
+        };
+        var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
+        Assert.False(resolved[KitLibModuleIds.Ai]);
+        Assert.False(resolved[KitLibModuleIds.Dev]);
+    }
+
+    [Fact]
+    public void ApplyDependencyRulesToToggles_enabling_ai_enables_panel() {
         var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase) {
             [KitLibModuleIds.Panel] = false,
-            [KitLibModuleIds.Cheat] = false,
+            [KitLibModuleIds.Ai] = false,
             [KitLibModuleIds.Dev] = false,
         };
-        SatelliteModuleLoadPolicy.ApplyDependencyRulesToToggles(toggles, KitLibModuleIds.Cheat, enabled: true);
+        SatelliteModuleLoadPolicy.ApplyDependencyRulesToToggles(toggles, KitLibModuleIds.Ai, enabled: true);
         Assert.True(toggles[KitLibModuleIds.Panel]);
-        Assert.True(toggles[KitLibModuleIds.Cheat]);
+        Assert.True(toggles[KitLibModuleIds.Ai]);
     }
 
     [Fact]
@@ -81,9 +77,31 @@ public sealed class SatelliteModuleLoadPolicyTests {
     [Fact]
     public void GetDependents_lists_modules_that_require_panel() {
         var dependents = SatelliteModuleLoadPolicy.GetDependents(KitLibModuleIds.Panel);
-        Assert.Contains(KitLibModuleIds.Cheat, dependents);
+        Assert.Contains(KitLibModuleIds.Ai, dependents);
         Assert.Contains(KitLibModuleIds.Dev, dependents);
-        Assert.DoesNotContain(KitLibModuleIds.Ai, dependents);
+    }
+
+    [Fact]
+    public void IsKnownSatellite_includes_cheat_dll() {
+        Assert.True(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.Cheat));
+        Assert.False(SatelliteModuleLoadPolicy.IsToggleable(KitLibModuleIds.Cheat));
+    }
+
+    [Fact]
+    public void ResolveEnabled_skips_ai_when_panel_off() {
+        var toggles = new Dictionary<string, bool> {
+            [KitLibModuleIds.Panel] = false,
+            [KitLibModuleIds.Ai] = true,
+            [KitLibModuleIds.Dev] = false,
+        };
+        var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
+        Assert.False(resolved[KitLibModuleIds.Ai]);
+    }
+
+    [Fact]
+    public void IsKitLibBundledRequired_only_user() {
+        Assert.True(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.User));
+        Assert.False(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.ModPanel));
     }
 
     [Fact]

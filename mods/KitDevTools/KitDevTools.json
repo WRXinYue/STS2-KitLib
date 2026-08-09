@@ -1,0 +1,14 @@
+{
+  "id": "KitDevTools",
+  "name": "KitLib Dev Tools",
+  "author": "WRXinYue",
+  "description": "In-game side rail, cheats, saves, and developer tools for Slay the Spire 2. Requires KitLib and KitModPanel.",
+  "version": "0.33.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [
+    { "id": "KitLib", "min_version": "0.33.0" },
+    { "id": "KitModPanel", "min_version": "0.33.0" }
+  ],
+  "affects_gameplay": false
+}

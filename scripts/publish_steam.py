@@ -104,10 +104,7 @@ def _resolve_change_note(
     version = read_kitlib_version(_REPO)
     if version:
         return f"[b] v{version} [/b]"
-    raise RuntimeError(
-        "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
-        "## [X.Y.Z] section, or pass --change-note."
-    )
+    raise RuntimeError("ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released " "## [X.Y.Z] section, or pass --change-note.")
 
 
 def _write_workshop_json(

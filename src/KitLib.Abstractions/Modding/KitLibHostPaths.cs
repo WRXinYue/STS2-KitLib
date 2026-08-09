@@ -1,6 +1,8 @@
+using KitLib.Abstractions.Host;
+
 namespace KitLib.Abstractions.Modding;
 
-/// <summary>On-disk layout for the KitLib host mod bundle.</summary>
+/// <summary>On-disk layout for the KitLib host mod bundle and sibling products.</summary>
 public static class KitLibHostPaths {
     public const string CoreFileName = "KitLib.Core.dll";
     public const string LibDirectoryName = "lib";
@@ -22,6 +24,89 @@ public static class KitLibHostPaths {
 
     public static string ResolveModulesDirectory(string modDir) =>
         Path.Combine(ResolveContentRoot(modDir), ModulesSubdir);
+
+    /// <summary>Game <c>mods/</c> directory that contains KitLib and sibling products.</summary>
+    public static string? ResolveModsRoot(string kitLibModDir) {
+        if (string.IsNullOrWhiteSpace(kitLibModDir))
+            return null;
+        var parent = Path.GetDirectoryName(Path.GetFullPath(kitLibModDir));
+        return string.IsNullOrEmpty(parent) ? null : parent;
+    }
+
+    /// <summary>
+    /// Directories searched for satellite DLLs: KitLib content root modules, then each
+    /// installed sibling product <c>modules/</c> (and product root for thin loaders).
+    /// </summary>
+    public static IReadOnlyList<string> EnumerateModuleSearchDirectories(string kitLibModDir) {
+        var dirs = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        void Add(string? dir) {
+            if (string.IsNullOrWhiteSpace(dir))
+                return;
+            var full = Path.GetFullPath(dir);
+            if (!Directory.Exists(full) || !seen.Add(full))
+                return;
+            dirs.Add(full);
+        }
+
+        Add(ResolveModulesDirectory(kitLibModDir));
+        Add(ResolveContentRoot(kitLibModDir));
+
+        var modsRoot = ResolveModsRoot(kitLibModDir);
+        if (modsRoot is null)
+            return dirs;
+
+        foreach (var productId in KitLibProductIds.All) {
+            if (string.Equals(productId, KitLibProductIds.KitLib, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var productDir = Path.Combine(modsRoot, productId);
+            if (!Directory.Exists(productDir))
+                continue;
+
+            Add(Path.Combine(productDir, ModulesSubdir));
+            Add(productDir);
+
+            var libRoot = Path.Combine(productDir, LibDirectoryName);
+            if (!Directory.Exists(libRoot))
+                continue;
+
+            foreach (var variantDir in Directory.EnumerateDirectories(libRoot)) {
+                var marker = Path.Combine(variantDir, CompatTargetMarkerName);
+                if (!File.Exists(marker))
+                    continue;
+                Add(Path.Combine(variantDir, ModulesSubdir));
+                Add(variantDir);
+            }
+        }
+
+        return dirs;
+    }
+
+    public static string? TryResolveSatelliteAssemblyPath(string kitLibModDir, string assemblyName) {
+        if (string.IsNullOrWhiteSpace(assemblyName))
+            return null;
+
+        var fileName = assemblyName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+            ? assemblyName
+            : assemblyName + ".dll";
+
+        foreach (var dir in EnumerateModuleSearchDirectories(kitLibModDir)) {
+            var path = Path.Combine(dir, fileName);
+            if (File.Exists(path))
+                return Path.GetFullPath(path);
+        }
+
+        return null;
+    }
+
+    public static bool IsSiblingProductInstalled(string kitLibModDir, string productId) {
+        var modsRoot = ResolveModsRoot(kitLibModDir);
+        if (modsRoot is null || string.IsNullOrWhiteSpace(productId))
+            return false;
+        return Directory.Exists(Path.Combine(modsRoot, productId));
+    }
 
     public static string? TryPickVariantDirectory(string modDir, Version? hostVersion) {
         var libRoot = Path.Combine(modDir, LibDirectoryName);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deploy KitLib as a single mods/KitLib/ bundle (satellite DLLs under modules/)."""
+"""Deploy KitLib family products to game mods/ (KitLib, KitModPanel, KitDevTools, KitAI)."""
 
 from __future__ import annotations
 
@@ -13,27 +13,20 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
+from lib.mod_products import (  # noqa: E402
+    MODULES_SUBDIR,
+    PRODUCT_ORDER,
+    PRODUCTS,
+    product_build_dir,
+)
 from lib.steam import read_sts2_dir_from_local_props  # noqa: E402
 
 _REPO = _SCRIPT_DIR.parent
-
-BUNDLE_ID = "KitLib"
-MODULES_SUBDIR = "modules"
-
-BUNDLE_DLLS = [
-    "KitLib.User",
-    "KitLib.ModPanel",
-    "KitLib.Panel",
-    "KitLib.Cheat",
-    "KitLib.Dev",
-    "KitLib.AI",
-]
 
 _SKIP_DEPLOY_SUFFIXES = {".pdb"}
 _SKIP_DEPLOY_NAME_SUFFIXES = (".deps.json", ".runtimeconfig.json")
 _SKIP_DEPLOY_NAMES: set[str] = {"GodotSharp.dll"}
 
-ENTRY_DLL = "KitLib.dll"
 CORE_DLL = "KitLib.Core.dll"
 ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
 ABSTRACTIONS_RUNTIME_DLLS = [
@@ -82,14 +75,14 @@ def _resolve_nuget_lib_dll(package_folder: str, dll_name: str) -> Path | None:
 
 
 def _resolve_abstractions_dll() -> Path:
-    candidate = _REPO / "build" / BUNDLE_ID / ABSTRACTIONS_DLL
+    candidate = product_build_dir("KitLib") / ABSTRACTIONS_DLL
     if candidate.is_file():
         return candidate
-    raise FileNotFoundError(f"Missing {ABSTRACTIONS_DLL} build output. Run dotnet build / make build-all first.")
+    raise FileNotFoundError(f"Missing {ABSTRACTIONS_DLL} build output. Run make build first.")
 
 
 def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
-    candidate = _REPO / "build" / BUNDLE_ID / dll_name
+    candidate = product_build_dir("KitLib") / dll_name
     if candidate.is_file():
         return candidate
     package_folder = dll_name[:-4].lower()
@@ -101,8 +94,8 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
     raise FileNotFoundError(f"Missing {dll_name}. Run dotnet restore (repo packages/ or global NuGet cache).")
 
 
-def _assert_core_bundle(bundle_dir: Path) -> None:
-    required = [ENTRY_DLL, CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+def _assert_kitlib_bundle(bundle_dir: Path) -> None:
+    required = ["KitLib.dll", CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
@@ -115,8 +108,8 @@ def _mods_root(game_root: Path) -> Path:
     return game_root / "mods"
 
 
-def _resolve_satellite_dll(mod_id: str) -> Path | None:
-    bundled = _REPO / "build" / BUNDLE_ID / MODULES_SUBDIR / f"{mod_id}.dll"
+def _resolve_satellite_dll(product_id: str, mod_id: str) -> Path | None:
+    bundled = product_build_dir(product_id) / MODULES_SUBDIR / f"{mod_id}.dll"
     if bundled.is_file():
         return bundled
     subdir = _REPO / "build" / mod_id / f"{mod_id}.dll"
@@ -125,7 +118,14 @@ def _resolve_satellite_dll(mod_id: str) -> Path | None:
     return None
 
 
-def _should_deploy_root_item(item: Path) -> bool:
+def _all_satellite_stems() -> set[str]:
+    stems: set[str] = set()
+    for product in PRODUCTS.values():
+        stems.update(product.satellite_dlls)
+    return stems
+
+
+def _should_deploy_root_item(item: Path, satellite_stems: set[str]) -> bool:
     if item.name in (MODULES_SUBDIR, "lib"):
         return False
     if item.name in _SKIP_DEPLOY_NAMES:
@@ -135,7 +135,7 @@ def _should_deploy_root_item(item: Path) -> bool:
         return False
     if item.suffix.lower() in _SKIP_DEPLOY_SUFFIXES:
         return False
-    if item.suffix.lower() == ".dll" and item.stem in BUNDLE_DLLS:
+    if item.suffix.lower() == ".dll" and item.stem in satellite_stems:
         return False
     return True
 
@@ -173,12 +173,18 @@ def _remove_stale_legacy_artifacts(bundle_dir: Path) -> None:
         except OSError:
             print(f"Warning: could not remove stale {legacy_manifest.name}", file=sys.stderr)
 
-    legacy_lib = bundle_dir / "lib"
-    if legacy_lib.is_dir():
-        try:
-            shutil.rmtree(legacy_lib)
-        except OSError:
-            print("Warning: could not remove stale lib/ directory", file=sys.stderr)
+    # Flat multi-product layout: remove legacy all-in-one modules leftover when splitting.
+    if bundle_dir.name == "KitLib":
+        modules = bundle_dir / MODULES_SUBDIR
+        if modules.is_dir():
+            keep = set(PRODUCTS["KitLib"].satellite_dlls)
+            for dll in modules.glob("*.dll"):
+                if dll.stem in keep:
+                    continue
+                try:
+                    dll.unlink()
+                except OSError:
+                    print(f"Warning: could not remove stale satellite {dll.name}", file=sys.stderr)
 
 
 def _try_reset_bundle_dir(dst: Path) -> bool:
@@ -198,10 +204,12 @@ def _try_reset_bundle_dir(dst: Path) -> bool:
         return False
 
 
-def _copy_core_bundle(src_dir: Path, dst: Path) -> list[Path]:
+def _copy_build_root(src_dir: Path, dst: Path, satellite_stems: set[str]) -> list[Path]:
     failed: list[Path] = []
+    if not src_dir.is_dir():
+        return failed
     for item in src_dir.iterdir():
-        if not _should_deploy_root_item(item):
+        if not _should_deploy_root_item(item, satellite_stems):
             continue
         target = dst / item.name
         if item.is_dir():
@@ -211,33 +219,47 @@ def _copy_core_bundle(src_dir: Path, dst: Path) -> list[Path]:
     return failed
 
 
-def _deploy_bundle(mods_root: Path) -> list[Path]:
-    dst = mods_root / BUNDLE_ID
+def _deploy_product(mods_root: Path, product_id: str) -> list[Path]:
+    product = PRODUCTS[product_id]
+    dst = mods_root / product.id
     _try_reset_bundle_dir(dst)
     modules_dst = dst / MODULES_SUBDIR
     modules_dst.mkdir(parents=True, exist_ok=True)
-
     failed: list[Path] = []
-    core_src = _REPO / "build" / BUNDLE_ID
-    if not core_src.is_dir() or not any(core_src.iterdir()):
-        raise FileNotFoundError(f"Missing Core build output under build/{BUNDLE_ID}/. Run make build first.")
+    satellite_stems = _all_satellite_stems()
+    build_dir = product_build_dir(product.id)
 
-    failed.extend(_copy_core_bundle(core_src, dst))
-
-    if not _copy_file_safe(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL):
-        failed.append(dst / ABSTRACTIONS_DLL)
-    for runtime_dll in ABSTRACTIONS_RUNTIME_DLLS:
-        target = dst / runtime_dll
-        if not _copy_file_safe(_resolve_abstractions_runtime_dll(runtime_dll), target):
-            failed.append(target)
-    _assert_core_bundle(dst)
-    _remove_stale_legacy_artifacts(dst)
+    if product.id == "KitLib":
+        if not build_dir.is_dir() or not any(build_dir.iterdir()):
+            raise FileNotFoundError(f"Missing Core build output under build/{product.id}/. Run make build first.")
+        failed.extend(_copy_build_root(build_dir, dst, satellite_stems))
+        if not _copy_file_safe(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL):
+            failed.append(dst / ABSTRACTIONS_DLL)
+        for runtime_dll in ABSTRACTIONS_RUNTIME_DLLS:
+            target = dst / runtime_dll
+            if not _copy_file_safe(_resolve_abstractions_runtime_dll(runtime_dll), target):
+                failed.append(target)
+        _assert_kitlib_bundle(dst)
+        _remove_stale_legacy_artifacts(dst)
+    else:
+        entry_src = build_dir / product.entry_dll
+        if not entry_src.is_file():
+            # Loader may output to build/<id>/ directly after build
+            alt = _REPO / "build" / product.id / product.entry_dll
+            if alt.is_file():
+                entry_src = alt
+        if entry_src.is_file():
+            if not _copy_file_safe(entry_src, dst / product.entry_dll):
+                failed.append(dst / product.entry_dll)
+        else:
+            print(f"Warning: missing product entry {product.entry_dll} for {product.id}", file=sys.stderr)
+        failed.extend(_copy_build_root(build_dir, dst, satellite_stems))
 
     copied = 0
-    for mod_id in BUNDLE_DLLS:
-        dll = _resolve_satellite_dll(mod_id)
+    for mod_id in product.satellite_dlls:
+        dll = _resolve_satellite_dll(product.id, mod_id)
         if dll is None:
-            print(f"Note: optional module DLL missing, skipped: {mod_id}.dll")
+            print(f"Note: optional module DLL missing, skipped: {mod_id}.dll ({product.id})")
             continue
         target = modules_dst / f"{mod_id}.dll"
         if _copy_file_safe(dll, target):
@@ -245,17 +267,23 @@ def _deploy_bundle(mods_root: Path) -> list[Path]:
         else:
             failed.append(target)
 
-    manifest = _REPO / "KitLib.json"
-    if manifest.is_file():
-        _copy_file_safe(manifest, dst / "mod_manifest.json")
+    if product.manifest_path.is_file():
+        _copy_file_safe(product.manifest_path, dst / "mod_manifest.json")
 
-    print(f"Deployed bundle -> {dst} ({copied} satellite DLL(s) in {MODULES_SUBDIR}/)")
+    print(f"Deployed {product.id} -> {dst} ({copied} satellite DLL(s) in {MODULES_SUBDIR}/)")
     return failed
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Deploy KitLib bundle to game mods/KitLib/.")
+    ap = argparse.ArgumentParser(description="Deploy KitLib product mods to game mods/.")
     ap.add_argument("--game-root", type=Path, default=None, help="STS2 install dir (default: local.props Sts2Dir)")
+    ap.add_argument(
+        "--product",
+        action="append",
+        dest="products",
+        choices=list(PRODUCT_ORDER),
+        help="Deploy only the given product (repeatable). Default: all.",
+    )
     args = ap.parse_args()
 
     game_root = args.game_root
@@ -268,7 +296,11 @@ def main() -> int:
     mods_root = _mods_root(game_root.resolve())
     mods_root.mkdir(parents=True, exist_ok=True)
 
-    failed = _deploy_bundle(mods_root)
+    products = tuple(args.products) if args.products else PRODUCT_ORDER
+    failed: list[Path] = []
+    for product_id in products:
+        failed.extend(_deploy_product(mods_root, product_id))
+
     if failed:
         names = ", ".join(path.name for path in failed)
         print(
@@ -276,7 +308,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    print(f"Done: single mod at {mods_root / BUNDLE_ID} (hot-load from {MODULES_SUBDIR}/)")
+    print(f"Done: deployed {', '.join(products)} under {mods_root}")
     return 0
 
 

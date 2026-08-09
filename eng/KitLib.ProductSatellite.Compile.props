@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <KitLibSourceDir Condition="'$(KitLibSourceDir)' == ''">$(MSBuildProjectDirectory)</KitLibSourceDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(KitLibSourceDir)\**\*.cs"
+               Exclude="$(KitLibSourceDir)\.godot\**\*.cs;$(KitLibSourceDir)\.no-godot\**\*.cs;$(KitLibSourceDir)\obj\**\*.cs;$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs" />
+  </ItemGroup>
+</Project>

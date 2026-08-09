@@ -53,7 +53,7 @@ public static class SettingsStore {
 
     public static void SetMultiplayerCheatOptIn(bool enabled) {
         Current.MultiplayerCheatOptIn = enabled;
-        KitLibCheatOps.SetMultiplayerCheatOptIn?.Invoke(enabled);
+        KitLibCheatApi.SetMultiplayerCheatOptIn?.Invoke(enabled);
         Save();
     }
 

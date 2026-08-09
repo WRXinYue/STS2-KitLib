@@ -1,7 +1,7 @@
 # KitLib — build pipeline
 #
 #   build   → artifacts under repo build/KitLib/  (CI-safe, no game writes)
-#   deploy  → copy build/KitLib/ into game mods/KitLib/ (other mods untouched)
+#   deploy  → copy products into game mods/ (KitLib, KitModPanel, KitDevTools, KitAI)
 #   sync    → build + deploy (default local dev loop)
 
 DOTNET ?= dotnet
@@ -53,7 +53,7 @@ DEPLOY_TO_GAME := -p:DeployToGame=true
 # Sts2Profile from local.props (make init) selects stable|beta ref channel (see Directory.Build.props).
 STS2_COMPILE_PROFILE ?= $(shell $(PYTHON) scripts/resolve_sts2_compile_profile.py)
 STS2_MSBUILD_PROFILE := -p:Sts2Profile=$(STS2_COMPILE_PROFILE)
-# Copy build/KitLib/ into mods/KitLib/ only — never republish into the game tree.
+# Copy product builds into game mods/ — never republish into the game tree.
 DEPLOY_COPY   := $(DOTNET) msbuild $(MOD_MAIN) -t:DeployRepoBuildToMods -p:DeployFromRepoBuild=true
 
 ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
@@ -87,7 +87,7 @@ help:
 	@echo "  init         detect STS2 + Godot, generate local.props + pre-commit hooks"
 	@echo "  icons        tree-shake MDI (mdi-used.json + MdiIcon.Generated.cs)"
 	@echo "  format       dotnet format KitLib.sln + black scripts/ (EditorConfig / pre-commit)"
-	@echo "  format-check dotnet format --verify-no-changes (uses eng/sts2-refs when Sts2Dir unset)"
+	@echo "  format-check dotnet format whitespace+style --verify-no-changes (uses eng/sts2-refs when Sts2Dir unset)"
 	@echo "  lint-scripts flake8 scripts/ (setup.cfg)"
 	@echo "  check        format-check + lint-scripts"
 	@echo "  test         dotnet test KitLib.ModPanel.Tests (sidebar planner + embed probe)"
@@ -95,7 +95,8 @@ help:
 	@echo "  hooks-run    pre-commit run --all-files"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build-flat + deploy full mods/KitLib/ bundle (Core + modules/)"
+	@echo "  sync         build-flat + deploy all products (KitLib, KitModPanel, KitDevTools, KitAI)"
+	@echo "  sync PRODUCT=X  deploy one product only"
 	@echo "  sync-full    sync + deploy tools/ (MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build-all    same as build-flat (current Sts2Profile)"
@@ -125,7 +126,7 @@ help:
 	@echo "  push-android build then adb push to Android mods dir (default: StS2LauncherMM/Mods)"
 	@echo "  push-android-wsdx233  push to game sandbox (run-as) + restart game"
 	@echo "  build        publish to build/KitLib/ only (no game)"
-	@echo "  deploy       copy build/KitLib/ into game mods/KitLib/ (no republish)"
+	@echo "  deploy       copy product builds into game mods/ (PRODUCT= optional)"
 	@echo "  compile      dotnet build to game mods (no .pck)"
 	@echo "  pck          dotnet publish to game mods + .pck"
 	@echo ""
@@ -167,7 +168,8 @@ format:
 
 format-check:
 	@test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs/beta (git lfs pull?). Run: make capture-sts2-ref" >&2; exit 1)
-	$(DOTNET) format KitLib.sln --verify-no-changes
+	$(DOTNET) format whitespace KitLib.sln --verify-no-changes
+	$(DOTNET) format style KitLib.sln --verify-no-changes
 
 lint-scripts:
 	$(UV) run flake8 scripts
@@ -241,7 +243,7 @@ sync-bundle:
 	$(PACKAGE_BUNDLE) --no-zip -c Release --deploy
 
 deploy:
-	$(PYTHON) scripts/deploy_modules.py
+	$(PYTHON) scripts/deploy_modules.py $(if $(PRODUCT),--product $(PRODUCT),)
 
 sync: build deploy
 

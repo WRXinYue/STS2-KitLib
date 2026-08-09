@@ -4,30 +4,31 @@ using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
 using KitLib.Diagnostics;
 using KitLib.Settings;
-using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib.Host;
 
 /// <summary>
-/// Loads optional KitLib satellite DLLs from <c>mods/KitLib/modules/</c>.
-/// Skips a module when it is missing, already initialized externally, has unmet
-/// prerequisites, or fails to load (conflict / init error).
+/// Loads KitLib satellite DLLs from the KitLib product and sibling product folders
+/// (KitModPanel / KitDevTools / KitAI). Skips modules that are missing, disabled,
+/// have unmet prerequisites, or fail to init.
 /// </summary>
 internal static class SatelliteModuleLoader {
-    internal const string ModulesSubdir = "modules";
+    internal const string ModulesSubdir = KitLibHostPaths.ModulesSubdir;
     private static Assembly? _devAssembly;
+
     sealed record ModuleSpec(
         string ModuleId,
         string AssemblyName,
         string? EntryTypeName,
-        string[] Requires);
+        string[] Requires,
+        bool SettingsControlled = true);
 
     static readonly ModuleSpec[] LoadOrder = [
         new(ModuleIds.User, "KitLib.User", "KitLib.User.ModuleEntry", []),
-        new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", []),
         new(ModuleIds.ModPanel, "KitLib.ModPanel", "KitLib.ModPanelMod.ModuleEntry", []),
         new(ModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
-        new(ModuleIds.Cheat, "KitLib.Cheat", "KitLib.Cheat.ModuleEntry", [ModuleIds.Panel]),
+        new(ModuleIds.Cheat, "KitLib.Cheat", "KitLib.Cheat.ModuleEntry", [], SettingsControlled: false),
+        new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", [ModuleIds.Panel]),
         new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Panel]),
     ];
 
@@ -38,8 +39,10 @@ internal static class SatelliteModuleLoader {
             return;
         }
 
-        ModAssemblyLoader.EnsureResolveHook(modDir);
-        MainFile.Logger.Info($"Satellite loader: modDir={modDir}");
+        var searchDirs = KitLibHostPaths.EnumerateModuleSearchDirectories(modDir);
+        ModAssemblyLoader.EnsureResolveHook(modDir, searchDirs);
+        MainFile.Logger.Info(
+            $"Satellite loader: modDir={modDir}; searchDirs={searchDirs.Count}.");
 
         KitLibStartupAudit.Measure("satellite.preload", () => PreloadBundledAssemblies(modDir));
 
@@ -100,15 +103,6 @@ internal static class SatelliteModuleLoader {
             KitLog.Warn(message);
     }
 
-    static bool IsAlwaysOnModule(string moduleId) {
-        foreach (var module in SatelliteModuleLoadPolicy.Modules) {
-            if (string.Equals(module.Id, moduleId, StringComparison.OrdinalIgnoreCase))
-                return module.AlwaysOn;
-        }
-
-        return false;
-    }
-
     static bool TryLoadModule(string modDir, ModuleSpec spec, IReadOnlyDictionary<string, bool> resolvedToggles) {
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
@@ -117,25 +111,25 @@ internal static class SatelliteModuleLoader {
         }
 
         if (ModuleCatalog.IsLoaded(spec.ModuleId)) {
-            KitLog.Info($"Module {spec.ModuleId} already active — skipping bundled load.");
+            KitLog.Info($"Module {spec.ModuleId} already active — skipping load.");
             return true;
-        }
-
-        if (IsExternallyInstalled(spec.ModuleId)) {
-            KitLog.Info($"Module {spec.ModuleId} installed as separate mod — skipping bundled load.");
-            return ModuleCatalog.IsLoaded(spec.ModuleId);
         }
 
         var dllExists = ModuleAssemblyExists(modDir, spec.AssemblyName);
         if (!dllExists) {
-            if (IsAlwaysOnModule(spec.ModuleId)) {
+            if (SatelliteModuleLoadPolicy.IsKitLibBundledRequired(spec.ModuleId)) {
                 MainFile.Logger.Error(
-                    $"Required KitLib module {spec.ModuleId} is missing ({spec.AssemblyName}.dll under {ModulesSubdir}/). " +
+                    $"Required KitLib module {spec.ModuleId} is missing ({spec.AssemblyName}.dll). " +
                     "Reinstall or repair KitLib, then restart the game.");
             }
-            else if (SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists: true)) {
-                KitLog.Warn(
-                    $"Module {spec.ModuleId} is enabled but {spec.AssemblyName}.dll is missing from {ModulesSubdir}/.");
+            else if (spec.SettingsControlled
+                     && SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists: true)) {
+                var productId = KitLibProductIds.TryGetProductIdForModule(spec.ModuleId);
+                KitLog.Info(
+                    productId is null
+                        ? $"Module {spec.ModuleId} is enabled but {spec.AssemblyName}.dll was not found."
+                        : $"Module {spec.ModuleId} is enabled but {spec.AssemblyName}.dll was not found " +
+                          $"(install product {productId}).");
             }
             else {
                 KitLog.Info($"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll).");
@@ -143,7 +137,13 @@ internal static class SatelliteModuleLoader {
             return false;
         }
 
-        if (!SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists)) {
+        if (!spec.SettingsControlled) {
+            if (!resolvedToggles.TryGetValue(ModuleIds.Panel, out var panelEnabled) || !panelEnabled) {
+                KitLog.Info($"Module {spec.ModuleId} skipped — Panel disabled in settings.");
+                return false;
+            }
+        }
+        else if (!SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists)) {
             KitLog.Info($"Module {spec.ModuleId} skipped — disabled in settings (restart required).");
             return false;
         }
@@ -203,9 +203,8 @@ internal static class SatelliteModuleLoader {
 
             InvokeModuleInitialize(spec.ModuleId, init);
 
-            if (spec.ModuleId == ModuleIds.Dev) {
+            if (spec.ModuleId == ModuleIds.Dev)
                 _devAssembly = assembly;
-            }
 
             if (!ModuleCatalog.IsLoaded(spec.ModuleId))
                 ModuleCatalog.Announce(spec.ModuleId);
@@ -282,7 +281,7 @@ internal static class SatelliteModuleLoader {
     }
 
     internal static bool IsSatelliteDllPresent(string moduleId) {
-        if (!SatelliteModuleLoadPolicy.TryGetModule(moduleId, out _))
+        if (!SatelliteModuleLoadPolicy.IsKnownSatellite(moduleId))
             return false;
         var modDir = ModPaths.ResolveModRoot(typeof(MainFile).Assembly);
         return !string.IsNullOrEmpty(modDir) && ModuleAssemblyExists(modDir, moduleId);
@@ -293,9 +292,8 @@ internal static class SatelliteModuleLoader {
 
     static Assembly? LoadAssembly(string modDir, string assemblyName, string moduleId) {
         var path = ResolveSatelliteAssemblyPath(modDir, assemblyName);
-        if (path is null) {
+        if (path is null)
             return null;
-        }
 
         try {
             return ModAssemblyLoader.LoadFromModPath(path);
@@ -307,36 +305,8 @@ internal static class SatelliteModuleLoader {
         }
     }
 
-    static bool IsExternallyInstalled(string moduleId) {
-        if (string.Equals(moduleId, ModuleIds.Core, StringComparison.OrdinalIgnoreCase))
-            return false;
-
-        foreach (var mod in EnumerateLoadedMods()) {
-            var id = mod.manifest?.id;
-            if (!string.Equals(id, moduleId, StringComparison.OrdinalIgnoreCase))
-                continue;
-            return true;
-        }
-
-        return false;
-    }
-
-    static IEnumerable<Mod> EnumerateLoadedMods() {
-        var method = typeof(ModManager).GetMethod(
-            "GetLoadedMods",
-            BindingFlags.Public | BindingFlags.Static,
-            binder: null,
-            types: Type.EmptyTypes,
-            modifiers: null);
-        if (method == null)
-            return [];
-        return (IEnumerable<Mod>)method.Invoke(null, null)!;
-    }
-
-    static string? ResolveSatelliteAssemblyPath(string modDir, string assemblyName) {
-        var path = Path.Combine(KitLibHostPaths.ResolveModulesDirectory(modDir), assemblyName + ".dll");
-        return File.Exists(path) ? path : null;
-    }
+    static string? ResolveSatelliteAssemblyPath(string modDir, string assemblyName) =>
+        KitLibHostPaths.TryResolveSatelliteAssemblyPath(modDir, assemblyName);
 
     static void AssociateSatelliteAssembly(Assembly assembly) {
         if (assembly == typeof(MainFile).Assembly)
@@ -344,5 +314,4 @@ internal static class SatelliteModuleLoader {
 
         ModAssemblyAssociation.Associate(MainFile.ModID, assembly);
     }
-
 }

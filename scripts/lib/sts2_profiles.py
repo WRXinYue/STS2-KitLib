@@ -100,16 +100,10 @@ def assert_capture_source_matches_profile(profile: ProfileName, source: Path) ->
     version = read_release_version(source)
     pinned = pinned_version(profile)
     if not version:
-        raise RuntimeError(
-            f"No release_info.json under {source}. "
-            "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder."
-        )
+        raise RuntimeError(f"No release_info.json under {source}. " "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder.")
     normalized = version.lstrip("vV").strip()
     if normalized != pinned:
-        raise RuntimeError(
-            f"Ref capture expects v{pinned}, but {source} reports {version!r}. "
-            "Switch Steam to the public-beta branch or pass --source explicitly."
-        )
+        raise RuntimeError(f"Ref capture expects v{pinned}, but {source} reports {version!r}. " "Switch Steam to the public-beta branch or pass --source explicitly.")
 
 
 def resolve_capture_source(
@@ -180,11 +174,7 @@ def resolve_profile_dir(profile: ProfileName = DEFAULT_PROFILE, *, repo_root: Pa
     if ref_is_valid(ref):
         return ref
 
-    raise RuntimeError(
-        f"No STS2 {profile} ref at {ref}. "
-        f"Run: make capture-sts2-ref PROFILE={profile} "
-        "(see eng/sts2-refs/README.md)."
-    )
+    raise RuntimeError(f"No STS2 {profile} ref at {ref}. " f"Run: make capture-sts2-ref PROFILE={profile} " "(see eng/sts2-refs/README.md).")
 
 
 def resolve_sts2_dll(game_root: Path) -> Path:
@@ -239,11 +229,7 @@ def capture_profile_ref(
 
 
 def format_profile_paths(repo_root: Path) -> dict[str, Path]:
-    return {
-        profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root))
-        for profile in _PINNED_VERSIONS
-        if ref_is_valid(ref_root(repo_root, profile))
-    }
+    return {profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root)) for profile in _PINNED_VERSIONS if ref_is_valid(ref_root(repo_root, profile))}
 
 
 def main(argv: list[str] | None = None) -> int:

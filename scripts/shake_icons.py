@@ -43,6 +43,7 @@ def _write_atomic(path: Path, text: str) -> None:
         if tmp.exists():
             tmp.unlink()
 
+
 # Exclude MdiIcon.Get(…) / MdiIcon.From(…) — otherwise [A-Za-z]+ backtracks to "Ge"/"Fro".
 USAGE_RE = re.compile(r"(?<![\w.])MdiIcon\.(?!(?:Get|From)\s*\()([A-Z][A-Za-z0-9]+)(?!\s*\()")
 DEF_RE = re.compile(r"(?:public\s+)?static\s+readonly\s+MdiIcon\s+([A-Z][A-Za-z0-9]+)\s*=\s*new\(\"([^\"]+)\"\)")
@@ -145,13 +146,13 @@ def scan_rail_tab_icon_keys(src_dir: Path) -> dict[str, str]:
 
 
 _ICON_BUNDLES = (
-    "KitLib.Modules.ModPanel",
-    "KitLib.Modules.Panel",
+    ("mods/KitModPanel/src", "KitLib.ModPanel"),
+    ("mods/KitDevTools/src/Panel", "KitLib.Panel"),
 )
 
 
-def _shake_bundle(repo_root: Path, full_json: Path, module_name: str) -> int:
-    module_dir = repo_root / "src" / module_name
+def _shake_bundle(repo_root: Path, full_json: Path, relative_dir: str, module_name: str) -> int:
+    module_dir = repo_root / relative_dir
     if not module_dir.is_dir():
         return 0
 
@@ -172,8 +173,13 @@ def _shake_bundle(repo_root: Path, full_json: Path, module_name: str) -> int:
     for kebab, label in from_labels.items():
         kebab_map.setdefault(kebab, label)
 
-    tab_scan_root = repo_root / "src" if module_name == "KitLib.Modules.Panel" else module_dir
-    tab_icon_labels = scan_rail_tab_icon_keys(tab_scan_root)
+    tab_icon_labels: dict[str, str] = {}
+    if module_name == "KitLib.Panel":
+        for tab_root in (repo_root / "mods" / "KitDevTools", repo_root / "mods" / "KitAI"):
+            if tab_root.is_dir():
+                tab_icon_labels.update(scan_rail_tab_icon_keys(tab_root))
+    else:
+        tab_icon_labels = scan_rail_tab_icon_keys(module_dir)
     for kebab, label in tab_icon_labels.items():
         kebab_map.setdefault(kebab, label)
 
@@ -266,8 +272,8 @@ def main() -> int:
         print(f"icons.json still missing at {full_json} after Ensure-IconifyMdi.", file=sys.stderr)
         return 1
 
-    for module_name in _ICON_BUNDLES:
-        code = _shake_bundle(repo_root, full_json, module_name)
+    for relative_dir, module_name in _ICON_BUNDLES:
+        code = _shake_bundle(repo_root, full_json, relative_dir, module_name)
         if code != 0:
             return code
     return 0

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using KitLib.Abstractions.Host;
 using KitLib.Host;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Rooms;
@@ -283,6 +284,6 @@ public static class KitLibState {
         EnemyCheats.Reset();
         GameplayModifiers.Reset();
         MapCheats.Reset();
-        KitLibCheatOps.ClearRunState?.Invoke();
+        KitLibCheatApi.ClearRunState?.Invoke();
     }
 }

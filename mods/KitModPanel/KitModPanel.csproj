@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ModId>KitModPanel</ModId>
+    <AssemblyName>KitModPanel</AssemblyName>
+    <RootNamespace>KitLib.ProductLoaders</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(RepoRoot)eng\KitLib.ProductLoader.props" />
+</Project>

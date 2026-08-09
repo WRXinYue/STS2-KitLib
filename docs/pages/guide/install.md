@@ -13,7 +13,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: en
 **Prerequisites:** Slay the Spire 2 on Steam.
 
-1. Download the latest **`KitLib-vX.X.X.zip`** from [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) or subscribe on Steam Workshop.
+1. Download the latest **`KitLib-vX.X.X.zip`** from [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) (Steam Workshop multi-item split may follow later).
 
 2. Locate your STS2 `mods` folder. On Windows the default path is:
 
@@ -21,44 +21,33 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
    C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\mods
    ```
 
-3. Extract the zip so that **`KitLib\`** is a direct subfolder of `mods\`:
+3. Extract the zip so these folders are **direct** children of `mods\`:
 
    ```text
    mods\
-   └── KitLib\
-       ├── mod_manifest.json
-       ├── KitLib.dll
-       ├── KitLib.Abstractions.dll
-       └── modules\
-           ├── KitLib.User.dll
-           ├── KitLib.ModPanel.dll
-           ├── KitLib.Panel.dll
-           ├── KitLib.Cheat.dll
-           ├── KitLib.Dev.dll
-           └── KitLib.AI.dll
+   ├── KitLib\            # required host library
+   ├── KitModPanel\       # main-menu mod list / settings
+   ├── KitDevTools\       # side rail, cheats, saves, logs
+   └── KitAI\             # optional AI host
    ```
 
-4. Launch the game. Configure satellites under **Main menu → Mods → KitLib** (module toggles, hotkeys, progress protection).
+4. Launch the game. Configure optional satellites under **Main menu → Mods → KitLib** (module toggles, hotkeys, progress protection).
 
-**Optional modules** — delete DLLs under `modules/` to disable features, or use **Mods → KitLib → Modules** toggles (**restart required**). Keep **`KitLib.User.dll`** and **`KitLib.ModPanel.dll`** for logs and mod settings.
+**Minimal install:** KitLib only (API host). **Typical player/dev:** KitLib + KitModPanel + KitDevTools. Add **KitAI** for AI host features.
 :::
 
 ::: zh-CN
 **前置条件：** Steam 版《杀戮尖塔 2》。
 
-1. 从 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) 下载最新 **`KitLib-vX.X.X.zip`**，或在 Steam 创意工坊订阅。
+1. 从 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) 下载最新 **`KitLib-vX.X.X.zip`**（创意工坊多条目拆分后续再做）。
 
-2. 找到 STS2 的 `mods` 目录，Windows 默认路径：
+2. 找到 STS2 的 `mods` 目录（Windows 默认见英文节）。
 
-   ```text
-   C:\Program Files (x86)\Steam\steamapps\common\Slay the Spire 2\mods
-   ```
+3. 解压后下列目录应为 `mods\` 的**直接**子目录：`KitLib`、`KitModPanel`、`KitDevTools`、`KitAI`。
 
-3. 解压后 **`KitLib\`** 应为 `mods\` 的直接子目录（结构见英文节）。
+4. 启动游戏，在 **主菜单 → Mods → KitLib** 配置可选模块、快捷键与进度保护。
 
-4. 启动游戏，在 **主菜单 → Mods → KitLib** 配置卫星模块、快捷键与进度保护。
-
-**可选模块** — 删除 `modules/` 下 DLL 或在 **Mods → KitLib → 模块** 选择档位（**需重启**）。请保留 **`KitLib.User.dll`** 与 **`KitLib.ModPanel.dll`**。
+**最小安装：** 仅 KitLib。**常用：** KitLib + KitModPanel + KitDevTools。需要 AI 托管时再装 **KitAI**。
 :::
 
 ## Build from source{lang="en"}
@@ -72,7 +61,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 git clone https://github.com/WRXinYue/STS2-KitLib.git
 cd STS2-KitLib
 make init    # detect STS2 path, write local.props
-make sync-full    # build + deploy to game mods/KitLib/
+make sync    # build + deploy all four products to game mods/
 ```
 
 `make init` only needs to run once. KitLib targets the **Steam public-beta** line; a startup banner may appear when your game version is outside the supported range.
@@ -87,10 +76,8 @@ See **[Contributing](/developer/dev/)** for Makefile targets and collaboration n
 git clone https://github.com/WRXinYue/STS2-KitLib.git
 cd STS2-KitLib
 make init
-make sync-full
+make sync    # 构建并部署四个产品到游戏 mods/
 ```
 
-`make init` 只需运行一次。KitLib 面向 **Steam public-beta**；游戏版本不在支持范围内时可能显示启动横幅。
-
-Makefile 与协作规范见 **[参与贡献](/developer/dev/)**。
+详见 **[参与贡献](/developer/dev/)**。
 :::
