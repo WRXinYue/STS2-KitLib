@@ -135,4 +135,44 @@ internal static class MpCheatPowerCoordinator {
             TargetPlayerNetId = target.NetId,
             ItemId = powerId,
         };
+
+    internal static Task<(bool Success, string Message)> TryAddWithResultAsync(
+        Player target, PowerModel power, int amount, PowerTarget targetKind) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildAddPayload(target, power, amount, targetKind);
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, PowerActions.TryValidateAddPower, requireSelfTarget: true, "PowerAdd");
+    }
+
+    internal static Task<(bool Success, string Message)> TryRemoveWithResultAsync(Player target, string powerId) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildTargetPayload(MpCheatItemKind.RemovePower, target, powerId);
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, PowerActions.TryValidateRemovePower, requireSelfTarget: true, "PowerRemove");
+    }
+
+    internal static Task<(bool Success, string Message)> TryClearWithResultAsync(Player target) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildTargetPayload(MpCheatItemKind.ClearPowers, target, "");
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, PowerActions.TryValidateClearPowers, requireSelfTarget: true, "PowerClear");
+    }
 }

@@ -19,7 +19,7 @@ internal static class MpCheatCardAddCoordinator {
     private static readonly object Gate = new();
     private static readonly Dictionary<ulong, PendingAdd> PendingByCommandId = new();
     private static readonly HashSet<ulong> ExecutedCommandIds = new();
-    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientAddCompletions = new();
+    private static readonly Dictionary<ulong, TaskCompletionSource<(bool Success, string Message)>> ClientAddCompletions = new();
     private static ulong _nextCommandId;
     private static ulong _nextClientRequestId;
 
@@ -45,6 +45,15 @@ internal static class MpCheatCardAddCoordinator {
             new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
+    /// <summary>Host initiates synced add-card; returns success + status text.</summary>
+    public static Task<(bool Success, string Message)> TryHostAddCardWithResultAsync(
+        RunState state,
+        Player targetPlayer,
+        CardModel card,
+        AddCardRequest request,
+        CardPreviewStyle? upgradePreviewStyle) =>
+        TryHostAddCardCoreAsync(state, targetPlayer, card, request, upgradePreviewStyle);
+
     /// <summary>Host initiates synced add-card; returns user-facing status text.</summary>
     public static async Task<string> TryHostAddCardAsync(
         RunState state,
@@ -63,27 +72,39 @@ internal static class MpCheatCardAddCoordinator {
         CardModel card,
         AddCardRequest request,
         CardPreviewStyle? upgradePreviewStyle) {
+        var (_, message) = await TryClientRequestAddCardWithResultAsync(
+            state, targetPlayer, card, request, upgradePreviewStyle);
+        return message;
+    }
+
+    public static async Task<(bool Success, string Message)> TryClientRequestAddCardWithResultAsync(
+        RunState state,
+        Player targetPlayer,
+        CardModel card,
+        AddCardRequest request,
+        CardPreviewStyle? upgradePreviewStyle) {
         if (MpCheatSession.IsHost)
-            return await TryHostAddCardAsync(state, targetPlayer, card, request, upgradePreviewStyle);
+            return await TryHostAddCardWithResultAsync(state, targetPlayer, card, request, upgradePreviewStyle);
 
         if (!MpCheatSession.CanUseMultiplayerCheats)
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.blocked",
                 "Multiplayer cheat inactive: {0}",
-                MpCheatSession.LastBlockReason ?? "unknown");
+                MpCheatSession.LastBlockReason ?? "unknown"));
 
         var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         if (localNetId == 0 || targetPlayer.NetId != localNetId)
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.cardAdd.clientSelfOnly",
-                "In multiplayer you can only add cards to your own character.");
+                "In multiplayer you can only add cards to your own character."));
 
         if (!TryValidateAdd(state, targetPlayer, card, request, out var localError))
-            return FormatError(localError);
+            return (false, FormatError(localError));
 
         var cardId = ((AbstractModel)card).Id.Entry;
         var clientRequestId = Interlocked.Increment(ref _nextClientRequestId);
-        var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<(bool Success, string Message)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         lock (Gate) {
             ClientAddCompletions[clientRequestId] = completion;
         }
@@ -100,9 +121,9 @@ internal static class MpCheatCardAddCoordinator {
             return await completion.Task.WaitAsync(cts.Token);
         }
         catch (OperationCanceledException) {
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.cardAdd.clientRequestTimeout",
-                "Host did not respond to add-card request in time.");
+                "Host did not respond to add-card request in time."));
         }
         finally {
             lock (Gate) {
@@ -118,7 +139,7 @@ internal static class MpCheatCardAddCoordinator {
 
     public static void OnClientAddCardResultReceived(MpCheatAddCardClientResultMessage result) {
         if (MpCheatSession.IsHost) return;
-        TaskCompletionSource<string>? completion;
+        TaskCompletionSource<(bool Success, string Message)>? completion;
         lock (Gate) {
             ClientAddCompletions.TryGetValue(result.ClientRequestId, out completion);
         }
@@ -129,7 +150,7 @@ internal static class MpCheatCardAddCoordinator {
         }
 
         KitLog.Info("MpCheat", $"AddCard client result id={result.ClientRequestId} ok={result.Success}.");
-        completion.TrySetResult(result.Message);
+        completion.TrySetResult((result.Success, result.Message));
     }
 
     private static async Task HandleClientAddCardRequestAsync(
@@ -435,7 +456,7 @@ internal static class MpCheatCardAddCoordinator {
             PendingByCommandId.Clear();
             ExecutedCommandIds.Clear();
             foreach (var tcs in ClientAddCompletions.Values)
-                tcs.TrySetResult(I18N.T("mpcheat.cardAdd.cancelled", "Add card cancelled (run ended)."));
+                tcs.TrySetResult((false, I18N.T("mpcheat.cardAdd.cancelled", "Add card cancelled (run ended).")));
             ClientAddCompletions.Clear();
         }
     }

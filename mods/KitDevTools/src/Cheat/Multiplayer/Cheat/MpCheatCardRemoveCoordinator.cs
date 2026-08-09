@@ -17,7 +17,7 @@ internal static class MpCheatCardRemoveCoordinator {
     private static readonly object Gate = new();
     private static readonly Dictionary<ulong, PendingRemove> PendingByCommandId = new();
     private static readonly HashSet<ulong> ExecutedCommandIds = new();
-    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientRemoveCompletions = new();
+    private static readonly Dictionary<ulong, TaskCompletionSource<(bool Success, string Message)>> ClientRemoveCompletions = new();
     private static ulong _nextCommandId;
     private static ulong _nextClientRequestId;
 
@@ -43,6 +43,14 @@ internal static class MpCheatCardRemoveCoordinator {
             new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 
+    public static async Task<(bool Success, string Message)> TryHostRemoveCardWithResultAsync(
+        RunState state,
+        Player targetPlayer,
+        CardModel card,
+        CardTarget target,
+        bool removeFromRunState) =>
+        await TryHostRemoveCardCoreAsync(state, targetPlayer, card, target, removeFromRunState);
+
     public static async Task<string> TryHostRemoveCardAsync(
         RunState state,
         Player targetPlayer,
@@ -59,26 +67,38 @@ internal static class MpCheatCardRemoveCoordinator {
         CardModel card,
         CardTarget target,
         bool removeFromRunState) {
+        var (_, message) = await TryClientRequestRemoveCardWithResultAsync(
+            state, targetPlayer, card, target, removeFromRunState);
+        return message;
+    }
+
+    public static async Task<(bool Success, string Message)> TryClientRequestRemoveCardWithResultAsync(
+        RunState state,
+        Player targetPlayer,
+        CardModel card,
+        CardTarget target,
+        bool removeFromRunState) {
         if (MpCheatSession.IsHost)
-            return await TryHostRemoveCardAsync(state, targetPlayer, card, target, removeFromRunState);
+            return await TryHostRemoveCardWithResultAsync(state, targetPlayer, card, target, removeFromRunState);
 
         if (!MpCheatSession.CanUseMultiplayerCheats)
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.blocked",
                 "Multiplayer cheat inactive: {0}",
-                MpCheatSession.LastBlockReason ?? "unknown");
+                MpCheatSession.LastBlockReason ?? "unknown"));
 
         var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         if (localNetId == 0 || targetPlayer.NetId != localNetId)
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.cardRemove.clientSelfOnly",
-                "In multiplayer you can only remove cards from your own character.");
+                "In multiplayer you can only remove cards from your own character."));
 
         if (!CardActions.TryBuildRemovePayload(targetPlayer, card, target, removeFromRunState, out var payload, out var error))
-            return FormatError(error);
+            return (false, FormatError(error));
 
         var clientRequestId = Interlocked.Increment(ref _nextClientRequestId);
-        var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<(bool Success, string Message)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         lock (Gate) {
             ClientRemoveCompletions[clientRequestId] = completion;
         }
@@ -95,9 +115,9 @@ internal static class MpCheatCardRemoveCoordinator {
             return await completion.Task.WaitAsync(cts.Token);
         }
         catch (OperationCanceledException) {
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.cardRemove.clientRequestTimeout",
-                "Host did not respond to remove-card request in time.");
+                "Host did not respond to remove-card request in time."));
         }
         finally {
             lock (Gate) {
@@ -113,7 +133,7 @@ internal static class MpCheatCardRemoveCoordinator {
 
     public static void OnClientRemoveCardResultReceived(MpCheatAddCardClientResultMessage result) {
         if (MpCheatSession.IsHost) return;
-        TaskCompletionSource<string>? completion;
+        TaskCompletionSource<(bool Success, string Message)>? completion;
         lock (Gate) {
             ClientRemoveCompletions.TryGetValue(result.ClientRequestId, out completion);
         }
@@ -124,7 +144,7 @@ internal static class MpCheatCardRemoveCoordinator {
         }
 
         KitLog.Info("MpCheat", $"RemoveCard client result id={result.ClientRequestId} ok={result.Success}.");
-        completion.TrySetResult(result.Message);
+        completion.TrySetResult((result.Success, result.Message));
     }
 
     private static async Task HandleClientRemoveCardRequestAsync(
@@ -376,7 +396,7 @@ internal static class MpCheatCardRemoveCoordinator {
             PendingByCommandId.Clear();
             ExecutedCommandIds.Clear();
             foreach (var tcs in ClientRemoveCompletions.Values)
-                tcs.TrySetResult(I18N.T("mpcheat.cardRemove.cancelled", "Remove card cancelled (run ended)."));
+                tcs.TrySetResult((false, I18N.T("mpcheat.cardRemove.cancelled", "Remove card cancelled (run ended).")));
             ClientRemoveCompletions.Clear();
         }
     }

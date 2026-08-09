@@ -7,6 +7,7 @@ using KitLib.Hooks;
 using KitLib.Icons;
 using KitLib.Modding;
 using KitLib.Multiplayer.Cheat;
+using KitLib.RunInventory;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -661,11 +662,13 @@ internal static class PotionSelectUI {
             }
 
             addBtn.Pressed += () => {
-                async System.Threading.Tasks.Task SyncAddPotionAsync() {
-                    var result = MpCheatSession.IsHost
-                        ? await MpCheatPotionCoordinator.TryHostAddPotionAsync(TargetPlayer(), potion)
-                        : await MpCheatPotionCoordinator.TryClientRequestAddPotionAsync(TargetPlayer(), potion);
-                    s.StatusLabel.Text = result;
+                async System.Threading.Tasks.Task AddPotionAsync() {
+                    var result = await RunInventoryBridge.TryAddPotion(
+                        ((AbstractModel)potion).Id.Entry ?? "",
+                        TargetPlayer().NetId);
+                    s.StatusLabel.Text = result.Ok
+                        ? string.Format(I18N.T("potionBrowser.added", "Added: {0}"), name)
+                        : (result.Error ?? "");
                     InvalidateCache(s);
                     RebuildGrid(s, s.SearchInput.Text ?? "");
                 }
@@ -674,12 +677,9 @@ internal static class PotionSelectUI {
                     s.StatusLabel.Text = MpCheatSession.IsHost
                         ? I18N.T("mpcheat.potionAdd.pending", "Syncing add potion…")
                         : I18N.T("mpcheat.potionAdd.clientPending", "Requesting host to sync add potion…");
-                    TaskHelper.RunSafely(SyncAddPotionAsync());
-                    return;
                 }
 
-                TaskHelper.RunSafely(PotionActions.AddPotion(TargetPlayer(), potion));
-                s.StatusLabel.Text = string.Format(I18N.T("potionBrowser.added", "Added: {0}"), name);
+                TaskHelper.RunSafely(AddPotionAsync());
             };
             container.AddChild(addBtn);
 
@@ -720,29 +720,25 @@ internal static class PotionSelectUI {
                 }
 
                 discardBtn.Pressed += () => {
-                    async System.Threading.Tasks.Task SyncDiscardAsync() {
-                        var result = MpCheatSession.IsHost
-                            ? await MpCheatPotionCoordinator.TryHostDiscardPotionAsync(s.Player, slotIndex)
-                            : await MpCheatPotionCoordinator.TryClientRequestDiscardPotionAsync(s.Player, slotIndex);
-                        s.StatusLabel.Text = result;
-                        ClearDetail(s);
-                        InvalidateCache(s);
-                        RebuildGrid(s, s.SearchInput.Text ?? "");
+                    async System.Threading.Tasks.Task DiscardAsync() {
+                        var result = await RunInventoryBridge.TryDiscardPotionAtSlot(slotIndex, s.Player.NetId);
+                        s.StatusLabel.Text = result.Ok
+                            ? string.Format(I18N.T("potionBrowser.discarded", "Discarded: {0}"), name)
+                            : (result.Error ?? "");
+                        if (result.Ok) {
+                            ClearDetail(s);
+                            InvalidateCache(s);
+                            RebuildGrid(s, s.SearchInput.Text ?? "");
+                        }
                     }
 
                     if (mpItemSync) {
                         s.StatusLabel.Text = MpCheatSession.IsHost
                             ? I18N.T("mpcheat.potionRemove.pending", "Syncing discard potion…")
                             : I18N.T("mpcheat.potionRemove.clientPending", "Requesting host to sync discard potion…");
-                        TaskHelper.RunSafely(SyncDiscardAsync());
-                        return;
                     }
 
-                    TaskHelper.RunSafely(PotionActions.DiscardPotion(ownedPotion));
-                    s.StatusLabel.Text = string.Format(I18N.T("potionBrowser.discarded", "Discarded: {0}"), name);
-                    ClearDetail(s);
-                    InvalidateCache(s);
-                    RebuildGrid(s, s.SearchInput.Text ?? "");
+                    TaskHelper.RunSafely(DiscardAsync());
                 };
                 container.AddChild(discardBtn);
             }

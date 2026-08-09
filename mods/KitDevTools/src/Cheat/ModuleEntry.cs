@@ -28,5 +28,8 @@ public static class ModuleEntry {
             if (MpCheatApplier.FrameCheatsAllowed)
                 CheatRunState.StatModifiers?.Update(delta);
         };
+        RunInventoryApiBridge.Wire();
+        PowerApiBridge.Wire();
+        RuntimeCheatApiBridge.Wire();
     }
 }

@@ -6,7 +6,7 @@ using KitLib.Actions;
 using KitLib.Icons;
 using KitLib.Modding;
 using KitLib.Multiplayer.Cheat;
-using MegaCrit.Sts2.Core.Commands;
+using KitLib.RunInventory;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Helpers;
@@ -447,11 +447,13 @@ internal static partial class RelicBrowserUI {
             }
 
             addBtn.Pressed += () => {
-                async System.Threading.Tasks.Task SyncAddRelicAsync() {
-                    var result = MpCheatSession.IsHost
-                        ? await MpCheatRelicCoordinator.TryHostAddRelicAsync(TargetPlayer(), relic)
-                        : await MpCheatRelicCoordinator.TryClientRequestAddRelicAsync(TargetPlayer(), relic);
-                    s.StatusLabel.Text = result;
+                async System.Threading.Tasks.Task AddRelicAsync() {
+                    var result = await RunInventoryBridge.TryAddRelic(
+                        ((AbstractModel)relic).Id.Entry ?? "",
+                        TargetPlayer().NetId);
+                    s.StatusLabel.Text = result.Ok
+                        ? string.Format(I18N.T("relicBrowser.added", "Added: {0}"), name)
+                        : (result.Error ?? "");
                     InvalidateRelicCache(s);
                     RebuildGrid(s, s.SearchInput.Text ?? "");
                 }
@@ -464,12 +466,9 @@ internal static partial class RelicBrowserUI {
                                 MpCheatParticipants.RemotePeerCount)
                             : I18N.T("mpcheat.relicAdd.pending", "Syncing add relic to all players…"))
                         : I18N.T("mpcheat.relicAdd.clientPending", "Requesting host to sync add relic…");
-                    TaskHelper.RunSafely(SyncAddRelicAsync());
-                    return;
                 }
 
-                TaskHelper.RunSafely(RelicActions.AddRelic(relic, TargetPlayer()));
-                s.StatusLabel.Text = string.Format(I18N.T("relicBrowser.added", "Added: {0}"), name);
+                TaskHelper.RunSafely(AddRelicAsync());
             };
             container.AddChild(addBtn);
         }
@@ -487,33 +486,25 @@ internal static partial class RelicBrowserUI {
             }
 
             removeBtn.Pressed += () => {
-                async System.Threading.Tasks.Task SyncRemoveRelicAsync() {
-                    var result = MpCheatSession.IsHost
-                        ? await MpCheatRelicCoordinator.TryHostRemoveRelicAsync(TargetPlayer(), relicId)
-                        : await MpCheatRelicCoordinator.TryClientRequestRemoveRelicAsync(TargetPlayer(), relicId);
-                    s.StatusLabel.Text = result;
-                    ClearRightPanel(s);
-                    InvalidateRelicCache(s);
-                    RebuildGrid(s, s.SearchInput.Text ?? "");
+                async System.Threading.Tasks.Task RemoveRelicAsync() {
+                    var result = await RunInventoryBridge.TryRemoveRelic(relicId, TargetPlayer().NetId);
+                    s.StatusLabel.Text = result.Ok
+                        ? string.Format(I18N.T("relicBrowser.removed", "Removed: {0}"), name)
+                        : (result.Error ?? "");
+                    if (result.Ok) {
+                        ClearRightPanel(s);
+                        InvalidateRelicCache(s);
+                        RebuildGrid(s, s.SearchInput.Text ?? "");
+                    }
                 }
 
                 if (mpItemSync) {
                     s.StatusLabel.Text = MpCheatSession.IsHost
                         ? I18N.T("mpcheat.relicRemove.pending", "Syncing remove relic…")
                         : I18N.T("mpcheat.relicRemove.clientPending", "Requesting host to sync remove relic…");
-                    TaskHelper.RunSafely(SyncRemoveRelicAsync());
-                    return;
                 }
 
-                var ownedRelic = TargetPlayer().Relics.FirstOrDefault(r => r == relic)
-                    ?? TargetPlayer().GetRelicById(((AbstractModel)relic).Id);
-                if (ownedRelic != null) {
-                    TaskHelper.RunSafely(RelicCmd.Remove(ownedRelic));
-                    s.StatusLabel.Text = string.Format(I18N.T("relicBrowser.removed", "Removed: {0}"), name);
-                    ClearRightPanel(s);
-                    InvalidateRelicCache(s);
-                    RebuildGrid(s, s.SearchInput.Text ?? "");
-                }
+                TaskHelper.RunSafely(RemoveRelicAsync());
             };
             container.AddChild(removeBtn);
         }

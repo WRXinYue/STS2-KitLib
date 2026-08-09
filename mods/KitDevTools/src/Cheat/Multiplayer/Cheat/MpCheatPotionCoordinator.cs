@@ -99,4 +99,30 @@ internal static class MpCheatPotionCoordinator {
             TargetPlayerNetId = target.NetId,
             SlotIndex = slotIndex,
         };
+
+    internal static Task<(bool Success, string Message)> TryAddWithResultAsync(Player target, PotionModel potion) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildPayload(MpCheatItemKind.AddPotion, target, potion);
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, PotionActions.TryValidateAddPotion, requireSelfTarget: true, "PotionAdd");
+    }
+
+    internal static Task<(bool Success, string Message)> TryDiscardWithResultAsync(Player target, int slotIndex) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildDiscardPayload(target, slotIndex);
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, PotionActions.TryValidateRemovePotion, requireSelfTarget: true, "PotionDiscard");
+    }
 }

@@ -1,8 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.Actions;
-using KitLib.Multiplayer.Cheat;
-using MegaCrit.Sts2.Core.Models;
+using KitLib.Abstractions.Host;
+using KitLib.RunInventory;
 
 namespace KitLib.Mcp.Tools;
 
@@ -38,14 +37,11 @@ internal sealed class DevRemoveCardTool : IMcpTool {
     """;
 
     public async Task<JsonNode> ExecuteAsync(JsonObject args) {
-        if (!DevCardMcpHelper.TryRequireRun(out var state, out var player, out var runError))
-            return runError!;
-
         var rawTarget = args.TryGetPropertyValue("target", out var targetNode)
             && targetNode?.GetValueKind() == System.Text.Json.JsonValueKind.String
             ? targetNode.GetValue<string>()
             : "hand";
-        if (!DevCardMcpHelper.TryParseTarget(rawTarget, out var target, out var targetError))
+        if (!DevCardMcpHelper.TryParseApiPile(rawTarget, out var pile, out var targetError))
             return DevCardMcpHelper.Fail(targetError);
 
         string? cardId = null;
@@ -67,25 +63,16 @@ internal sealed class DevRemoveCardTool : IMcpTool {
             permanent = permNode.GetValue<bool>();
         }
 
-        var cards = CardActions.GetCardsForTarget(player, target);
-        var card = DevCardMcpHelper.ResolveCardInPile(cards, cardId, pileIndex, out var resolveError);
-        if (card == null)
-            return DevCardMcpHelper.Fail(resolveError);
-
-        var removeFromRunState = target == CardTarget.Deck || (permanent && state.ContainsCard(card));
-        if (!CardActions.TryValidateRemove(state, player, card, target, removeFromRunState, out var validateError))
-            return DevCardMcpHelper.Fail(validateError);
-
-        if (MpCheatSession.InMultiplayerRun)
-            return DevCardMcpHelper.Fail("Multiplayer remove is not supported via MCP.");
-
-        await CardActions.ExecuteRemoveFromMpSync(state, player, card, target, removeFromRunState);
+        var result = await RunInventoryBridge.TryRemoveCard(new KitLibRemoveCardRequest(
+            pile, cardId, pileIndex, permanent));
+        if (!result.Ok)
+            return DevCardMcpHelper.Fail(result.Error ?? "Remove card failed.");
 
         return new JsonObject {
             ["ok"] = true,
-            ["cardId"] = ((AbstractModel)card).Id.Entry,
+            ["cardId"] = result.ItemId ?? cardId ?? "",
             ["target"] = rawTarget!.Trim().ToLowerInvariant(),
-            ["permanent"] = removeFromRunState,
+            ["permanent"] = permanent,
         };
     }
 }

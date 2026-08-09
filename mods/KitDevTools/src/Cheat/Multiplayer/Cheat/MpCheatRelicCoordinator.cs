@@ -99,4 +99,30 @@ internal static class MpCheatRelicCoordinator {
             TargetPlayerNetId = target.NetId,
             ItemId = relicId,
         };
+
+    internal static Task<(bool Success, string Message)> TryAddWithResultAsync(Player target, RelicModel relic) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildPayload(MpCheatItemKind.AddRelic, target, relic);
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, RelicActions.TryValidateAddRelic, requireSelfTarget: true, "RelicAdd");
+    }
+
+    internal static Task<(bool Success, string Message)> TryRemoveWithResultAsync(Player target, string relicId) {
+        if (!MpCheatSession.CanUseMultiplayerCheats)
+            return Task.FromResult((false, I18N.T(
+                "mpcheat.blocked",
+                "Multiplayer cheat inactive: {0}",
+                MpCheatSession.LastBlockReason ?? "unknown")));
+        var payload = BuildRemovePayload(target, relicId);
+        if (MpCheatSession.IsHost)
+            return TryHostFromPayloadCoreAsync(payload);
+        return MpCheatItemSyncCore.TryClientRequestWithResultAsync(
+            payload, RelicActions.TryValidateRemoveRelic, requireSelfTarget: true, "RelicRemove");
+    }
 }

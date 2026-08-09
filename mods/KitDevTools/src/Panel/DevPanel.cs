@@ -9,9 +9,11 @@ using KitLib.Icons;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Navigation;
 using KitLib.Panels;
+using KitLib.RunInventory;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -293,7 +295,9 @@ internal static class DevPanel {
             return true;
         }
 
-        TaskHelper.RunSafely(RelicActions.AddRelic(entry.relic.CanonicalInstance, player));
+        TaskHelper.RunSafely(RunInventoryBridge.TryAddRelic(
+            ((AbstractModel)entry.relic.CanonicalInstance).Id.Entry ?? "",
+            player.NetId));
         return true;
     }
 

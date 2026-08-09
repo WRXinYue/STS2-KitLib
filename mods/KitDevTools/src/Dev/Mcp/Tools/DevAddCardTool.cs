@@ -1,8 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.Actions;
-using KitLib.Multiplayer.Cheat;
-using MegaCrit.Sts2.Core.Models;
+using KitLib.Abstractions.Host;
+using KitLib.RunInventory;
 
 namespace KitLib.Mcp.Tools;
 
@@ -39,9 +38,6 @@ internal sealed class DevAddCardTool : IMcpTool {
     """;
 
     public async Task<JsonNode> ExecuteAsync(JsonObject args) {
-        if (!DevCardMcpHelper.TryRequireRun(out var state, out var player, out var runError))
-            return runError!;
-
         if (!args.TryGetPropertyValue("card_id", out var idNode)
             || idNode?.GetValueKind() != System.Text.Json.JsonValueKind.String
             || string.IsNullOrWhiteSpace(idNode.GetValue<string>())) {
@@ -49,22 +45,18 @@ internal sealed class DevAddCardTool : IMcpTool {
         }
 
         var cardId = idNode.GetValue<string>()!.Trim();
-        var card = CardActions.FindCardById(cardId);
-        if (card == null)
-            return DevCardMcpHelper.Fail($"Card not found: '{cardId}'.");
-
         var rawTarget = args.TryGetPropertyValue("target", out var targetNode)
             && targetNode?.GetValueKind() == System.Text.Json.JsonValueKind.String
             ? targetNode.GetValue<string>()
             : "hand";
-        if (!DevCardMcpHelper.TryParseTarget(rawTarget, out var target, out var targetError))
+        if (!DevCardMcpHelper.TryParseApiPile(rawTarget, out var pile, out var targetError))
             return DevCardMcpHelper.Fail(targetError);
 
         var rawDuration = args.TryGetPropertyValue("duration", out var durationNode)
             && durationNode?.GetValueKind() == System.Text.Json.JsonValueKind.String
             ? durationNode.GetValue<string>()
             : "perm";
-        if (!DevCardMcpHelper.TryParseDuration(rawDuration, out var duration, out var durationError))
+        if (!DevCardMcpHelper.TryParseApiDuration(rawDuration, out var duration, out var durationError))
             return DevCardMcpHelper.Fail(durationError);
 
         var upgradeLevels = 0;
@@ -73,28 +65,16 @@ internal sealed class DevAddCardTool : IMcpTool {
             upgradeLevels = System.Math.Max(0, upgradeNode.GetValue<int>());
         }
 
-        var request = new AddCardRequest {
-            Target = target,
-            Duration = duration,
-            UpgradeLevelsToApply = upgradeLevels,
-        };
-        if (!CardActions.TryValidateAdd(state, player, card, request, out var validateError))
-            return DevCardMcpHelper.Fail(validateError);
-
-        if (MpCheatSession.InMultiplayerRun)
-            return DevCardMcpHelper.Fail("Multiplayer add is not supported via MCP.");
-
-        await CardActions.Add(state, player, card)
-            .Target(target)
-            .Duration(duration)
-            .UpgradeLevels(upgradeLevels)
-            .RunAsync();
+        var result = await RunInventoryBridge.TryAddCard(new KitLibAddCardRequest(
+            cardId, pile, duration, upgradeLevels));
+        if (!result.Ok)
+            return DevCardMcpHelper.Fail(result.Error ?? "Add card failed.");
 
         return new JsonObject {
             ["ok"] = true,
-            ["cardId"] = ((AbstractModel)card).Id.Entry,
+            ["cardId"] = result.ItemId ?? cardId,
             ["target"] = rawTarget!.Trim().ToLowerInvariant(),
-            ["duration"] = duration == EffectDuration.Permanent ? "perm" : "temp",
+            ["duration"] = duration == KitLibCardDuration.Permanent ? "perm" : "temp",
             ["upgradeLevels"] = upgradeLevels,
         };
     }

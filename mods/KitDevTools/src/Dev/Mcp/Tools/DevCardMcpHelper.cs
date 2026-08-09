@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using KitLib.Abstractions.Host;
 using KitLib.Actions;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
@@ -13,6 +14,55 @@ internal static class DevCardMcpHelper {
         ["ok"] = false,
         ["error"] = error,
     };
+
+    public static bool TryParseApiPile(string? raw, out KitLibCardPile pile, out string error) {
+        pile = KitLibCardPile.Hand;
+        error = "";
+        switch ((raw ?? "hand").Trim().ToLowerInvariant()) {
+            case "deck":
+                pile = KitLibCardPile.Deck;
+                return true;
+            case "hand":
+                pile = KitLibCardPile.Hand;
+                return true;
+            case "draw":
+            case "draw_pile":
+                pile = KitLibCardPile.Draw;
+                return true;
+            case "discard":
+            case "discard_pile":
+                pile = KitLibCardPile.Discard;
+                return true;
+            case "exhaust":
+            case "exhaust_pile":
+                pile = KitLibCardPile.Exhaust;
+                return true;
+            default:
+                error = $"Unknown target '{raw}'. Use deck, hand, draw, discard, or exhaust.";
+                return false;
+        }
+    }
+
+    public static bool TryParseApiDuration(string? raw, out KitLibCardDuration duration, out string error) {
+        duration = KitLibCardDuration.Permanent;
+        error = "";
+        if (string.IsNullOrWhiteSpace(raw))
+            return true;
+
+        switch (raw.Trim().ToLowerInvariant()) {
+            case "perm":
+            case "permanent":
+                duration = KitLibCardDuration.Permanent;
+                return true;
+            case "temp":
+            case "temporary":
+                duration = KitLibCardDuration.Temporary;
+                return true;
+            default:
+                error = $"Unknown duration '{raw}'. Use perm or temp.";
+                return false;
+        }
+    }
 
     public static bool TryParseTarget(string? raw, out CardTarget target, out string error) {
         target = CardTarget.Hand;

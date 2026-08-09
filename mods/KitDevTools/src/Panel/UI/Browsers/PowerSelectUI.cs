@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using KitLib;
+using KitLib.Abstractions.Host;
 using KitLib.Actions;
 using KitLib.Hooks;
 using KitLib.Modding;
 using KitLib.Multiplayer.Cheat;
+using KitLib.RunInventory;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -381,18 +383,21 @@ internal static class PowerSelectUI {
             if (s.Selected == null) return;
             if (s.MpItemSync && !MpCheatSession.CanUseMultiplayerCheats) return;
             var target = TargetPlayer();
-            if (s.MpItemSync) {
-                TaskHelper.RunSafely(SyncApplyAsync());
-                return;
-            }
-            TaskHelper.RunSafely(PowerActions.AddPower(target, s.Selected, s.Amount, s.Target));
-            RefreshCurrentPowers(s);
+            TaskHelper.RunSafely(ApplyAsync());
 
-            async System.Threading.Tasks.Task SyncApplyAsync() {
-                var result = MpCheatSession.IsHost
-                    ? await MpCheatPowerCoordinator.TryHostAddPowerAsync(target, s.Selected!, s.Amount, s.Target)
-                    : await MpCheatPowerCoordinator.TryClientRequestAddPowerAsync(target, s.Selected!, s.Amount, s.Target);
-                KitLog.Info("MpCheat", $"Power apply: {result}");
+            async System.Threading.Tasks.Task ApplyAsync() {
+                var apiTarget = s.Target switch {
+                    PowerTarget.AllEnemies => KitLibPowerTarget.AllEnemies,
+                    PowerTarget.Allies => KitLibPowerTarget.Allies,
+                    _ => KitLibPowerTarget.Self,
+                };
+                var result = await PowerBridge.TryAddPower(new KitLibAddPowerRequest(
+                    ((AbstractModel)s.Selected!).Id.Entry ?? "",
+                    s.Amount,
+                    apiTarget,
+                    target.NetId));
+                if (!result.Ok)
+                    KitLog.Info("MpCheat", $"Power apply failed: {result.Error}");
                 RefreshCurrentPowers(s);
             }
         };
@@ -460,18 +465,12 @@ internal static class PowerSelectUI {
             if (s.MpItemSync && !MpCheatSession.CanUseMultiplayerCheats) return;
             var target = TargetPlayer();
             if (target.Creature == null) return;
-            if (s.MpItemSync) {
-                TaskHelper.RunSafely(SyncClearAsync());
-                return;
-            }
-            PowerActions.RemoveAllPowers(target.Creature);
-            RefreshCurrentPowers(s);
+            TaskHelper.RunSafely(ClearAsync());
 
-            async System.Threading.Tasks.Task SyncClearAsync() {
-                var result = MpCheatSession.IsHost
-                    ? await MpCheatPowerCoordinator.TryHostClearPowersAsync(target)
-                    : await MpCheatPowerCoordinator.TryClientRequestClearPowersAsync(target);
-                KitLog.Info("MpCheat", $"Power clear: {result}");
+            async System.Threading.Tasks.Task ClearAsync() {
+                var result = await PowerBridge.TryClearPowers(target.NetId);
+                if (!result.Ok)
+                    KitLog.Info("MpCheat", $"Power clear failed: {result.Error}");
                 RefreshCurrentPowers(s);
             }
         };
@@ -832,18 +831,12 @@ internal static class PowerSelectUI {
             removeBtn.Pressed += () => {
                 if (s.MpItemSync && !MpCheatSession.CanUseMultiplayerCheats) return;
                 var powerId = ((AbstractModel)captured).Id.Entry ?? "";
-                if (s.MpItemSync) {
-                    TaskHelper.RunSafely(SyncRemoveAsync());
-                    return;
-                }
-                PowerActions.RemovePower(player.Creature!, captured);
-                RefreshCurrentPowers(s);
+                TaskHelper.RunSafely(RemoveAsync());
 
-                async System.Threading.Tasks.Task SyncRemoveAsync() {
-                    var result = MpCheatSession.IsHost
-                        ? await MpCheatPowerCoordinator.TryHostRemovePowerAsync(player, powerId)
-                        : await MpCheatPowerCoordinator.TryClientRequestRemovePowerAsync(player, powerId);
-                    KitLog.Info("MpCheat", $"Power remove: {result}");
+                async System.Threading.Tasks.Task RemoveAsync() {
+                    var result = await PowerBridge.TryRemovePower(powerId, player.NetId);
+                    if (!result.Ok)
+                        KitLog.Info("MpCheat", $"Power remove failed: {result.Error}");
                     RefreshCurrentPowers(s);
                 }
             };

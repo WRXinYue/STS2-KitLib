@@ -18,7 +18,7 @@ internal static class MpCheatItemSyncCore {
     private static readonly object Gate = new();
     private static readonly Dictionary<ulong, PendingItem> PendingByCommandId = new();
     private static readonly HashSet<ulong> ExecutedCommandIds = new();
-    private static readonly Dictionary<ulong, TaskCompletionSource<string>> ClientCompletions = new();
+    private static readonly Dictionary<ulong, TaskCompletionSource<(bool Success, string Message)>> ClientCompletions = new();
     private static ulong _nextCommandId;
     private static ulong _nextClientRequestId;
 
@@ -70,29 +70,39 @@ internal static class MpCheatItemSyncCore {
         MpCheatItemValidateDelegate validate,
         bool requireSelfTarget,
         string logTag) {
+        var (_, message) = await TryClientRequestWithResultAsync(payload, validate, requireSelfTarget, logTag);
+        return message;
+    }
+
+    public static async Task<(bool Success, string Message)> TryClientRequestWithResultAsync(
+        MpCheatItemPayload payload,
+        MpCheatItemValidateDelegate validate,
+        bool requireSelfTarget,
+        string logTag) {
         if (MpCheatSession.IsHost)
-            return I18N.T("mpcheat.item.hostDirect", "Use host controls to apply this cheat.");
+            return (false, I18N.T("mpcheat.item.hostDirect", "Use host controls to apply this cheat."));
 
         if (!MpCheatSession.CanUseMultiplayerCheats)
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.blocked",
                 "Multiplayer cheat inactive: {0}",
-                MpCheatSession.LastBlockReason ?? "unknown");
+                MpCheatSession.LastBlockReason ?? "unknown"));
 
         var localNetId = RunManager.Instance?.NetService?.NetId ?? 0;
         if (localNetId == 0)
-            return FormatError("no local net id");
+            return (false, FormatError("no local net id"));
 
         if (requireSelfTarget && payload.TargetPlayerNetId != 0 && payload.TargetPlayerNetId != localNetId)
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.item.clientSelfOnly",
-                "In multiplayer you can only change your own character for this action.");
+                "In multiplayer you can only change your own character for this action."));
 
         if (!validate(payload, out var err))
-            return FormatError(err ?? "validation failed");
+            return (false, FormatError(err ?? "validation failed"));
 
         var clientRequestId = Interlocked.Increment(ref _nextClientRequestId);
-        var completion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var completion = new TaskCompletionSource<(bool Success, string Message)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         lock (Gate) {
             ClientCompletions[clientRequestId] = completion;
         }
@@ -109,9 +119,9 @@ internal static class MpCheatItemSyncCore {
             return await completion.Task.WaitAsync(cts.Token);
         }
         catch (OperationCanceledException) {
-            return I18N.T(
+            return (false, I18N.T(
                 "mpcheat.item.clientRequestTimeout",
-                "Host did not respond to item cheat request in time.");
+                "Host did not respond to item cheat request in time."));
         }
         finally {
             lock (Gate) {
@@ -127,7 +137,7 @@ internal static class MpCheatItemSyncCore {
 
     public static void OnClientItemResultReceived(MpCheatAddCardClientResultMessage result) {
         if (MpCheatSession.IsHost) return;
-        TaskCompletionSource<string>? completion;
+        TaskCompletionSource<(bool Success, string Message)>? completion;
         lock (Gate) {
             ClientCompletions.TryGetValue(result.ClientRequestId, out completion);
         }
@@ -137,7 +147,7 @@ internal static class MpCheatItemSyncCore {
             return;
         }
 
-        completion.TrySetResult(result.Message);
+        completion.TrySetResult((result.Success, result.Message));
     }
 
     public static void OnPrepareReceived(
@@ -202,7 +212,7 @@ internal static class MpCheatItemSyncCore {
             PendingByCommandId.Clear();
             ExecutedCommandIds.Clear();
             foreach (var tcs in ClientCompletions.Values)
-                tcs.TrySetResult(I18N.T("mpcheat.item.cancelled", "Item cheat cancelled (run ended)."));
+                tcs.TrySetResult((false, I18N.T("mpcheat.item.cancelled", "Item cheat cancelled (run ended).")));
             ClientCompletions.Clear();
         }
     }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using KitLib.Abstractions.Host;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -32,6 +33,28 @@ internal static class PotionActions {
         }
 
         await PotionCmd.Discard(ownedPotion);
+    }
+
+    /// <summary>Discards the potion in a belt slot (no UI). Used by <see cref="KitLib.Cheat.RunInventoryApiBridge"/>.</summary>
+    public static async Task<KitLibRunItemResult> DiscardPotionAtSlot(Player player, int slotIndex) {
+        if (slotIndex < 0 || slotIndex >= player.MaxPotionCount) {
+            return KitLibRunItemResult.Fail(
+                $"Potion slot {slotIndex} out of range (max {player.MaxPotionCount}).");
+        }
+
+        var owned = player.GetPotionAtSlotIndex(slotIndex);
+        if (owned == null)
+            return KitLibRunItemResult.Fail($"Potion slot {slotIndex} is empty.");
+
+        if (MpCheatSession.InMultiplayerRun) {
+            return KitLibRunItemResult.Fail(
+                "Cannot discard potion locally in multiplayer — use host potion sync.");
+        }
+
+        var id = ((AbstractModel)owned).Id.Entry;
+        await PotionCmd.Discard(owned);
+        MainFile.Logger.Info($"PotionActions: Discarded potion {id} from slot {slotIndex}");
+        return KitLibRunItemResult.Success(id);
     }
 
     public static string GetPotionDisplayName(PotionModel potion) {

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using KitLib.Abstractions.Host;
 using KitLib.Multiplayer.Cheat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -21,6 +22,26 @@ internal static class RelicActions {
 
         await RelicCmd.Obtain(relic.ToMutable(), player, -1);
         MainFile.Logger.Info($"RelicActions: Added relic {((AbstractModel)relic).Id.Entry}");
+    }
+
+    /// <summary>Removes one owned relic by model id (no UI). Used by <see cref="KitLib.Cheat.RunInventoryApiBridge"/>.</summary>
+    public static async Task<KitLibRunItemResult> RemoveRelicById(Player player, string relicId) {
+        var relic = FindRelicById(relicId);
+        if (relic == null)
+            return KitLibRunItemResult.Fail($"Relic not found: '{relicId}'.");
+
+        var owned = player.GetRelicById(((AbstractModel)relic).Id);
+        if (owned == null)
+            return KitLibRunItemResult.Fail($"Relic not owned: '{relicId}'.");
+
+        if (MpCheatSession.InMultiplayerRun) {
+            return KitLibRunItemResult.Fail(
+                "Cannot remove relic locally in multiplayer — use host relic sync.");
+        }
+
+        await RelicCmd.Remove(owned);
+        MainFile.Logger.Info($"RelicActions: Removed relic {((AbstractModel)relic).Id.Entry}");
+        return KitLibRunItemResult.Success(((AbstractModel)relic).Id.Entry);
     }
 
     public static async Task RemoveRelics(Player player) {

@@ -43,7 +43,9 @@ internal sealed class DevSetStatTool : IMcpTool {
             return Task.FromResult<JsonNode>(DevCheatMcpHelper.Fail("Missing or invalid value."));
         }
 
-        var stat = statNode.GetValue<string>()!.Trim().ToLowerInvariant().Replace('-', '_');
+        if (!DevCheatMcpHelper.TryParseStat(statNode.GetValue<string>(), out var stat, out var parseError))
+            return Task.FromResult<JsonNode>(DevCheatMcpHelper.Fail(parseError));
+
         var value = valueNode.GetValue<int>();
         bool? lockEnabled = null;
         if (args.TryGetPropertyValue("lock", out var lockNode)) {
@@ -55,7 +57,6 @@ internal sealed class DevSetStatTool : IMcpTool {
                 return Task.FromResult<JsonNode>(DevCheatMcpHelper.Fail("Invalid lock value. Use true/false."));
         }
 
-        var result = DevCheatMcpHelper.ApplyStat(stat, value, lockEnabled);
-        return Task.FromResult<JsonNode>(result!);
+        return Task.FromResult<JsonNode>(DevCheatMcpHelper.ApplyStat(stat, value, lockEnabled));
     }
 }

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using KitLib.Actions;
-using KitLib.Multiplayer.Cheat;
+using KitLib.RunInventory;
 using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.Mcp.Tools;
@@ -47,9 +47,6 @@ internal sealed class DevAddRelicTool : IMcpTool {
             return Search(searchNode.GetValue<string>() ?? string.Empty);
         }
 
-        if (!DevCardMcpHelper.TryRequireRun(out _, out var player, out var runError))
-            return runError!;
-
         if (!args.TryGetPropertyValue("relic_id", out var idNode)
             || idNode?.GetValueKind() != JsonValueKind.String
             || string.IsNullOrWhiteSpace(idNode.GetValue<string>())) {
@@ -57,21 +54,15 @@ internal sealed class DevAddRelicTool : IMcpTool {
         }
 
         var relicId = idNode.GetValue<string>()!.Trim();
-        var relic = RelicActions.FindRelicById(relicId);
-        if (relic == null)
-            return DevCardMcpHelper.Fail($"Relic not found: '{relicId}'. Pass 'search' to list ids.");
+        var result = await RunInventoryBridge.TryAddRelic(relicId);
+        if (!result.Ok)
+            return DevCardMcpHelper.Fail(result.Error ?? "Add relic failed.");
 
-        // Mirrors DevAddCardTool. RelicActions.AddRelic only WARNS in a multiplayer run and grants nothing,
-        // so refuse loudly here rather than reporting a success that did not happen.
-        if (MpCheatSession.InMultiplayerRun)
-            return DevCardMcpHelper.Fail("Multiplayer relic add is not supported via MCP.");
-
-        await RelicActions.AddRelic(relic, player);
-
+        var rarity = RelicActions.FindRelicById(result.ItemId ?? relicId)?.Rarity.ToString() ?? "";
         return new JsonObject {
             ["ok"] = true,
-            ["relicId"] = ((AbstractModel)relic).Id.Entry,
-            ["rarity"] = relic.Rarity.ToString(),
+            ["relicId"] = result.ItemId ?? relicId,
+            ["rarity"] = rarity,
         };
     }
 
