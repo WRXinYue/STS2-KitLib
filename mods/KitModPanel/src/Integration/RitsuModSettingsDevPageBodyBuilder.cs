@@ -52,37 +52,63 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
         }
     }
     private static object? CreateUiContext(Type contextType, Node ritsuSubmenu, string modId, object page) {
-        ConstructorInfo? chosen = null;
-        foreach (var c in contextType.GetConstructors(BindingFlags.Instance | BindingFlags.Public |
-                                                     BindingFlags.NonPublic)) {
-            var p = c.GetParameters();
-            if (p.Length == 1 && p[0].ParameterType.IsInstanceOfType(ritsuSubmenu)) {
-                chosen = c;
-                break;
-            }
-        }
-        if (chosen != null)
-            return chosen.Invoke(new object?[] { ritsuSubmenu });
         var pageId = page.GetType().GetProperty("Id")?.GetValue(page) as string ?? "";
         var pageModForKey = page.GetType().GetProperty("ModId")?.GetValue(page) as string;
         if (string.IsNullOrWhiteSpace(pageModForKey))
             pageModForKey = modId;
+        // Matches RitsuModSettingsSubmenu.CreatePageCacheKey / ModSettingsUiContext pageScopeId.
         var pageKey = $"{pageModForKey}::{pageId}";
+
+        // RitsuLib 0.5.x primary ctor: (submenu, string? pageScopeId = null, object? pageEnableGate = null).
+        // Older builds exposed 1-arg or 2-arg overloads; pick the best compatible ctor.
+        ConstructorInfo? chosen = null;
+        var bestScore = int.MinValue;
         foreach (var c in contextType.GetConstructors(BindingFlags.Instance | BindingFlags.Public |
                                                      BindingFlags.NonPublic)) {
             var p = c.GetParameters();
-            if (p.Length != 2)
+            if (p.Length == 0 || !p[0].ParameterType.IsInstanceOfType(ritsuSubmenu))
                 continue;
-            if (!p[0].ParameterType.IsInstanceOfType(ritsuSubmenu))
+            if (!CanFillUiContextArgs(p))
                 continue;
-            if (p[1].ParameterType != typeof(string))
+            var score = p.Length;
+            if (p.Length >= 2 && p[1].ParameterType == typeof(string))
+                score += 10;
+            if (score <= bestScore)
                 continue;
+            bestScore = score;
             chosen = c;
-            break;
         }
-        if (chosen != null)
-            return chosen.Invoke(new object?[] { ritsuSubmenu, pageKey });
-        throw new MissingMethodException(contextType.FullName, "ModSettingsUiContext(submenu[, pageKey])");
+        if (chosen == null)
+            throw new MissingMethodException(contextType.FullName,
+                "ModSettingsUiContext(submenu[, pageScopeId[, pageEnableGate]])");
+
+        var parameters = chosen.GetParameters();
+        var args = new object?[parameters.Length];
+        args[0] = ritsuSubmenu;
+        for (var i = 1; i < parameters.Length; i++) {
+            if (parameters[i].ParameterType == typeof(string))
+                args[i] = pageKey;
+            else if (parameters[i].HasDefaultValue)
+                args[i] = parameters[i].DefaultValue;
+            else
+                args[i] = null;
+        }
+        return chosen.Invoke(args);
+    }
+
+    private static bool CanFillUiContextArgs(ParameterInfo[] parameters) {
+        for (var i = 1; i < parameters.Length; i++) {
+            var p = parameters[i];
+            if (p.ParameterType == typeof(string))
+                continue;
+            if (p.HasDefaultValue)
+                continue;
+            // pageEnableGate and similar optional object tokens.
+            if (!p.ParameterType.IsValueType)
+                continue;
+            return false;
+        }
+        return true;
     }
     private static Control BuildPageRoot(object page, object context, Type contextType, Assembly asm) {
         var modId = page.GetType().GetProperty("ModId")?.GetValue(page) as string ?? "";

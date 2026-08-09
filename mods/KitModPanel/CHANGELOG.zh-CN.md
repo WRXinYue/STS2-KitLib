@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- 再次兼容 RitsuLib **0.5.x** 构建 Ritsu 设置页（`ModSettingsUiContext` 现为 `pageScopeId` / 可选 `pageEnableGate`）。
+
 ### Added
 
 - 首次作为独立产品发布：主菜单 **模组** 按钮、模组列表，以及 KitLib 原生 / Ritsu 设置界面。

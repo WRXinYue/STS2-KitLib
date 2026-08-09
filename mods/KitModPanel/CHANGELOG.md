@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Ritsu settings pages build again against RitsuLib **0.5.x** (`ModSettingsUiContext` now takes `pageScopeId` / optional `pageEnableGate`).
+
 ### Added
 
 - Initial standalone product release: main-menu **Mods** button, mod list, and KitLib-native / Ritsu settings surfaces.
