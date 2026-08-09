@@ -16,7 +16,7 @@ public static class KitLibProductIds {
     public static readonly IReadOnlyDictionary<string, string[]> ModulesByProduct =
         new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase) {
             [KitLib] = [],
-            [KitModPanel] = [KitLibModuleIds.ModPanel],
+            [KitModPanel] = [],
             [KitDevTools] = [KitLibModuleIds.Panel, KitLibModuleIds.Dev],
             [KitAI] = [KitLibModuleIds.Ai],
         };

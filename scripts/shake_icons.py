@@ -30,7 +30,7 @@ SKIP_NAMES = frozenset({"Name", "IsAvailable", "Texture"})
 def _write_atomic(path: Path, text: str) -> None:
     """Write via a unique temp file in the same directory, then rename over the target.
 
-    Both KitLib.Panel and KitLib.ModPanel now run this script from their own build, so two
+    Both KitLib.Panel and KitModPanel now run this script from their own build, so two
     copies can be in flight at once on a parallel build, each writing BOTH modules' files.
     A plain write_text lets one process read a half-written file; os.replace is atomic on
     Windows and POSIX, so a racing reader sees either the old file or the new one.
@@ -146,7 +146,7 @@ def scan_rail_tab_icon_keys(src_dir: Path) -> dict[str, str]:
 
 
 _ICON_BUNDLES = (
-    ("mods/KitModPanel/src", "KitLib.ModPanel"),
+    ("mods/KitModPanel/src", "KitModPanel"),
     ("mods/KitDevTools/src/Panel", "KitLib.Panel"),
 )
 

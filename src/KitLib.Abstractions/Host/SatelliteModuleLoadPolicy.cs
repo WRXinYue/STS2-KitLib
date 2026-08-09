@@ -11,8 +11,6 @@ public static class SatelliteModuleLoadPolicy {
     public const string ModulesSubdir = "modules";
 
     public static readonly ModuleInfo[] Modules = [
-        // Load when present (KitModPanel product); missing is soft — not a broken KitLib install.
-        new(KitLibModuleIds.ModPanel, AlwaysOn: true, Requires: []),
         new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
         new(KitLibModuleIds.Ai, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
         new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),

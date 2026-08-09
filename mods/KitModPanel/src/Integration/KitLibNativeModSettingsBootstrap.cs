@@ -105,7 +105,7 @@ internal static class KitLibNativeModSettingsBootstrap {
     }
 
     static Control BuildProgressGuardPage() {
-        var built = KitLibPanelUiOps.BuildProgressGuardModSettingsPage?.Invoke();
+        var built = KitLibPanelUiOps.BuildProgressGuardModSettingsPage?.Invoke(ModPanelUI.TryGetOverlayHost());
         if (built is Control control)
             return control;
         return CreateUnavailablePage(

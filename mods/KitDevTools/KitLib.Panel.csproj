@@ -24,7 +24,6 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KitModPanel\KitLib.ModPanel.csproj" />
     <ProjectReference Include="KitLib.Dev.csproj" />
     <ProjectReference Include="..\KitAI\KitLib.AI.csproj" />
   </ItemGroup>

@@ -126,7 +126,7 @@ def _all_satellite_stems() -> set[str]:
 
 
 def _should_deploy_root_item(item: Path, satellite_stems: set[str]) -> bool:
-    if item.name in (MODULES_SUBDIR, "lib"):
+    if item.name in (MODULES_SUBDIR, "lib", "obj"):
         return False
     if item.name in _SKIP_DEPLOY_NAMES:
         return False
@@ -224,7 +224,8 @@ def _deploy_product(mods_root: Path, product_id: str) -> list[Path]:
     dst = mods_root / product.id
     _try_reset_bundle_dir(dst)
     modules_dst = dst / MODULES_SUBDIR
-    modules_dst.mkdir(parents=True, exist_ok=True)
+    if product.satellite_dlls:
+        modules_dst.mkdir(parents=True, exist_ok=True)
     failed: list[Path] = []
     satellite_stems = _all_satellite_stems()
     build_dir = product_build_dir(product.id)
@@ -255,22 +256,31 @@ def _deploy_product(mods_root: Path, product_id: str) -> list[Path]:
             print(f"Warning: missing product entry {product.entry_dll} for {product.id}", file=sys.stderr)
         failed.extend(_copy_build_root(build_dir, dst, satellite_stems))
 
-    copied = 0
     for mod_id in product.satellite_dlls:
         dll = _resolve_satellite_dll(product.id, mod_id)
         if dll is None:
             print(f"Note: optional module DLL missing, skipped: {mod_id}.dll ({product.id})")
             continue
         target = modules_dst / f"{mod_id}.dll"
-        if _copy_file_safe(dll, target):
-            copied += 1
-        else:
+        if not _copy_file_safe(dll, target):
             failed.append(target)
 
     if product.manifest_path.is_file():
         _copy_file_safe(product.manifest_path, dst / "mod_manifest.json")
 
-    print(f"Deployed {product.id} -> {dst} ({copied} satellite DLL(s) in {MODULES_SUBDIR}/)")
+    if not product.satellite_dlls:
+        leftover_modules = dst / MODULES_SUBDIR
+        if leftover_modules.is_dir():
+            try:
+                shutil.rmtree(leftover_modules)
+            except OSError:
+                print(
+                    f"Warning: could not remove stale {leftover_modules} "
+                    f"(close the game and re-run deploy).",
+                    file=sys.stderr,
+                )
+
+    print(f"Deployed {product.id} -> {dst}")
     return failed
 
 

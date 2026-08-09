@@ -1,8 +1,8 @@
 using System;
 using Godot;
 using KitLib;
+using KitLib.Host;
 using KitLib.Icons;
-using KitLib.Integration;
 using KitLib.Panels;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
@@ -11,7 +11,7 @@ namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowSettingsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
-        KitLibHotkeySettingsUi.CancelCapture();
+        KitLibModPanelOps.CancelHotkeySettingsCapture?.Invoke();
         DiscardOverlayImmediate(globalUi, SettingsRootName);
 
         void FallbackClose() => DiscardOverlayImmediate(globalUi, SettingsRootName);
@@ -56,33 +56,39 @@ internal static partial class DevPanelUI {
         };
         inner.AddChild(skipAnimBtn);
 
-        var hotkeysBtn = CreatePlainButton(
-            I18N.T("hotkeys.openInRunPanel", "Keyboard shortcuts…"),
-            MdiIcon.ChevronRight);
-        hotkeysBtn.Pressed += () => {
-            if (dual.ExtSlot.Visible)
-                dual.CloseExtension(() => KitLibHotkeySettingsUi.CancelCapture());
-            else
-                dual.OpenExtension();
-        };
-        inner.AddChild(hotkeysBtn);
+        var hotkeySection = KitLibModPanelOps.BuildHotkeySettingsSection?.Invoke(true) as Control;
+        if (hotkeySection != null) {
+            var hotkeysBtn = CreatePlainButton(
+                I18N.T("hotkeys.openInRunPanel", "Keyboard shortcuts…"),
+                MdiIcon.ChevronRight);
+            hotkeysBtn.Pressed += () => {
+                if (dual.ExtSlot.Visible)
+                    dual.CloseExtension(() => KitLibModPanelOps.CancelHotkeySettingsCapture?.Invoke());
+                else
+                    dual.OpenExtension();
+            };
+            inner.AddChild(hotkeysBtn);
+        }
 
         inner.AddChild(CreateRailLayoutSection(globalUi, actions));
 
         scroll.AddChild(inner);
         dual.MainContent.AddChild(scroll);
 
-        AddBrowserNavTab(dual.ExtContent, I18N.T("settings.section.hotkeys", "Keyboard shortcuts"));
+        if (hotkeySection != null) {
+            AddBrowserNavTab(dual.ExtContent, I18N.T("settings.section.hotkeys", "Keyboard shortcuts"));
 
-        var extScroll = new ScrollContainer {
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-        };
-        extScroll.AddChild(KitLibHotkeySettingsUi.BuildSection(compact: true));
-        dual.ExtContent.AddChild(extScroll);
+            var extScroll = new ScrollContainer {
+                SizeFlagsVertical = Control.SizeFlags.ExpandFill,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            };
+            extScroll.AddChild(hotkeySection);
+            dual.ExtContent.AddChild(extScroll);
 
-        dual.Root.TreeExiting += () => KitLibHotkeySettingsUi.CancelCapture();
+            dual.Root.TreeExiting += () => KitLibModPanelOps.CancelHotkeySettingsCapture?.Invoke();
+        }
+
         dual.AttachToScene();
     }
 

@@ -20,10 +20,10 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void ResolveEnabled_keeps_modpanel_always_on() {
+    public void ResolveEnabled_does_not_include_product_entry_modpanel() {
         var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(
             SatelliteModuleLoadPolicy.GetDefaultToggles());
-        Assert.True(resolved[KitLibModuleIds.ModPanel]);
+        Assert.False(resolved.ContainsKey(KitLibModuleIds.ModPanel));
         Assert.True(resolved[KitLibModuleIds.Panel]);
         Assert.False(resolved[KitLibModuleIds.Ai]);
         Assert.False(resolved.ContainsKey(KitLibModuleIds.User));
@@ -83,11 +83,12 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void IsKnownSatellite_excludes_in_process_user_and_cheat() {
-        Assert.True(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.ModPanel));
+    public void IsKnownSatellite_excludes_product_entry_and_in_process_modules() {
+        Assert.False(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.ModPanel));
         Assert.False(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.User));
         Assert.False(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.Cheat));
         Assert.False(SatelliteModuleLoadPolicy.IsToggleable(KitLibModuleIds.Cheat));
+        Assert.True(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.Panel));
     }
 
     [Fact]

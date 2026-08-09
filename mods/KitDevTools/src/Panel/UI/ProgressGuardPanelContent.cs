@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Godot;
-using KitLib.Integration;
 using KitLib.Modding;
 using KitLib.Progress;
 using MegaCrit.Sts2.Core.Runs;
@@ -114,7 +113,6 @@ internal static class ProgressGuardPanelContent {
             FocusMode = Control.FocusModeEnum.All,
             Disabled = !canAct,
         };
-        ModSettingsRitsuFormDevTheme.ApplyActionButton(detailsBtn);
         if (canAct)
             detailsBtn.Pressed += () => ProgressGuardBackupDetailUI.Show(overlayHost!, backup, profileId);
         row.AddChild(detailsBtn);
@@ -124,7 +122,6 @@ internal static class ProgressGuardPanelContent {
             FocusMode = Control.FocusModeEnum.All,
             Disabled = !canAct,
         };
-        ModSettingsRitsuFormDevTheme.ApplyActionButton(restoreBtn);
         if (canAct)
             restoreBtn.Pressed += () => ProgressGuardUI.ShowRestoreConfirm(overlayHost!, backup, profileId);
         row.AddChild(restoreBtn);

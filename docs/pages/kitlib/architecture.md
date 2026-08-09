@@ -11,19 +11,15 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-KitLib is a **family of game mods**: `KitLib` (required host), `KitModPanel`, `KitDevTools`, and `KitAI`.
+KitLib is a **family of game mods**: `KitLib` (host), `KitModPanel`, `KitDevTools`, and `KitAI`.
 
-**Repo sources:** KitLib host code lives under `src/` (Core, Loader, Abstractions). Sibling products live under `mods/<Product>/`.
-
-**Game install:** each product is a folder under the game’s `mods/` (KitLib Core discovers sibling folders and loads satellite DLLs into one ALC).
+Host sources live under `src/`. Sibling products live under `mods/<Product>/`. Each product installs as its own folder under the game’s `mods/`.
 :::
 
 ::: zh-CN
-KitLib 是一组**游戏 mod**：`KitLib`（必装宿主）、`KitModPanel`、`KitDevTools`、`KitAI`。
+KitLib 是一组**游戏 mod**：`KitLib`（宿主）、`KitModPanel`、`KitDevTools`、`KitAI`。
 
-**仓库源码：** KitLib 宿主在 `src/`（Core、Loader、Abstractions）；兄弟产品在 `mods/<Product>/`。
-
-**游戏安装：** 每个产品对应游戏 `mods/` 下的一个目录；KitLib Core 发现兄弟目录并在同一 ALC 中加载卫星 DLL。
+宿主源码在 `src/`，兄弟产品在 `mods/<Product>/`。每个产品对应游戏 `mods/` 下的一个目录。
 :::
 
 ## Repository layout{lang="en"}
@@ -33,10 +29,10 @@ KitLib 是一组**游戏 mod**：`KitLib`（必装宿主）、`KitModPanel`、`K
 ::: en
 ```text
 KitLib.sln
-KitLib.json                    # KitLib product manifest
+KitLib.json
 mods/
   KitModPanel/
-    KitLib.ModPanel.csproj
+    KitModPanel.csproj
     src/
   KitDevTools/
     KitLib.Panel.csproj, KitLib.Dev.csproj
@@ -44,28 +40,28 @@ mods/
   KitAI/
     KitLib.AI.csproj
     src/
-eng/                           # MSBuild props/targets
-scripts/lib/mod_products.py    # product → satellite catalog
+eng/
+scripts/lib/mod_products.py
 src/
-  KitLib.Abstractions/         # NuGet contracts (+ KitLibCheatApi, KitLibProductIds)
-  KitLib.Core/                 # host, settings, User/, Cheat/
-  KitLib.Loader/               # KitLib.dll entry
+  KitLib.Abstractions/
+  KitLib.Core/
+  KitLib.Loader/
 ```
 :::
 
 ::: zh-CN
 ```text
 KitLib.sln
-KitLib.json                    # KitLib 产品清单
+KitLib.json
 mods/
-  KitModPanel/         # ModPanel 源码
-  KitDevTools/         # Panel + Dev 源码
-  KitAI/               # AI 源码
+  KitModPanel/
+  KitDevTools/
+  KitAI/
 eng/
 scripts/lib/mod_products.py
 src/
-  KitLib.Abstractions/   # + KitLibCheatApi
-  KitLib.Core/          # 宿主、User/、Cheat/
+  KitLib.Abstractions/
+  KitLib.Core/
   KitLib.Loader/
 ```
 :::
@@ -76,13 +72,12 @@ src/
 
 ::: en
 ```text
-mods/                          # game install layout (not repo sources)
-  KitLib/                      # host
+mods/
+  KitLib/
     mod_manifest.json
     KitLib.dll, KitLib.Core.dll, KitLib.Abstractions.dll, …
   KitModPanel/
     KitModPanel.dll
-    modules/KitLib.ModPanel.dll
   KitDevTools/
     KitDevTools.dll
     modules/KitLib.Panel.dll, KitLib.Dev.dll
@@ -91,19 +86,19 @@ mods/                          # game install layout (not repo sources)
     modules/KitLib.AI.dll
 ```
 
-Dependencies: KitModPanel → KitLib; KitDevTools → KitLib + KitModPanel; KitAI → KitLib + KitDevTools.
+Dependencies: KitModPanel → KitLib; KitDevTools → KitLib; KitAI → KitLib + KitDevTools.
 :::
 
 ::: zh-CN
 ```text
-mods/                          # 游戏安装布局（不是仓库源码）
-  KitLib/                      # 宿主
-  KitModPanel/                 # ModPanel
-  KitDevTools/                 # Panel + Dev
-  KitAI/                       # AI
+mods/
+  KitLib/
+  KitModPanel/
+  KitDevTools/
+  KitAI/
 ```
 
-依赖：KitModPanel → KitLib；KitDevTools → KitLib + KitModPanel；KitAI → KitLib + KitDevTools。
+依赖：KitModPanel → KitLib；KitDevTools → KitLib；KitAI → KitLib + KitDevTools。
 :::
 
 ## Dependency rules{lang="en"}
@@ -113,21 +108,21 @@ mods/                          # 游戏安装布局（不是仓库源码）
 ::: en
 | Assembly | References | Harmony |
 |----------|------------|---------|
-| `KitLib.Abstractions` | (none) | — |
-| `KitLib` (Core) | Abstractions, game | `KitLibHarmony` (scoped apply) |
-| Product satellites | Core + Abstractions (+ peers at compile time) | `KitLibHarmony.Apply(assembly, id)` in `ModuleEntry` |
+| `KitLib.Abstractions` | — | — |
+| `KitLib` (Core) | Abstractions, game | `KitLibHarmony` |
+| Product / satellites | Core + Abstractions | `KitLibHarmony.Apply(assembly, id)` in `ModuleEntry` |
 
-Cross-module internals use `InternalsVisibleTo` within the KitLib family and `KitLib*Ops` / `KitLibCheatApi` delegates on `KitLib.Host` / Abstractions where compile-time cycles must be avoided. Mutation APIs surface through the Core bridges under **[API](/api/)** (`RunInventoryBridge`, `PowerBridge`, `RuntimeCheatBridge`).
+Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi` delegates. Mutation APIs: **[API](/api/)**.
 :::
 
 ::: zh-CN
 | 程序集 | 引用 | Harmony |
 |--------|------|---------|
-| `KitLib.Abstractions` | （无） | — |
-| `KitLib`（Core） | Abstractions、游戏 | `KitLibHarmony`（分域 apply） |
-| 产品卫星 | Core + Abstractions（编译期可引用 peer） | `ModuleEntry` 里 `KitLibHarmony.Apply(assembly, id)` |
+| `KitLib.Abstractions` | — | — |
+| `KitLib`（Core） | Abstractions、游戏 | `KitLibHarmony` |
+| 产品 / 卫星 | Core + Abstractions | `ModuleEntry` 中 `KitLibHarmony.Apply` |
 
-跨模块内部通过 KitLib 家族内的 `InternalsVisibleTo`，以及 `KitLib.Host` / Abstractions 上的 `KitLib*Ops` / `KitLibCheatApi` 委托避免编译期环。突变 API 见 **[API](/api/)**（`RunInventoryBridge`、`PowerBridge`、`RuntimeCheatBridge`）。
+跨模块用 `InternalsVisibleTo` 与 `KitLib*Ops` / `KitLibCheatApi`。突变 API 见 **[API](/api/)**。
 :::
 
 ## Build{lang="en"}
@@ -135,21 +130,21 @@ Cross-module internals use `InternalsVisibleTo` within the KitLib family and `Ki
 ## 构建{lang="zh-CN"}
 
 ::: en
-- **KitLib host** (`src/`): `KitLib.Core`, `KitLib.Loader` → `build/KitLib/`
-- **Sibling satellites**: `mods/<Product>/` projects stage to `build/<ProductId>/modules/` via `KitLibProductId`
-- **Thin product loaders**: `mods/KitModPanel|KitDevTools|KitAI` → `build/<ProductId>/`
+- KitLib host → `build/KitLib/`
+- KitModPanel → `build/KitModPanel/KitModPanel.dll`
+- KitDevTools / KitAI → product entry + `build/<ProductId>/modules/`
 
 ```bash
-make sync         # build + deploy all four products to game mods/
-make sync PRODUCT=KitLib   # deploy one product only
-make zip-full     # package build/KitLib-vX.X.X.zip (four mod folders)
+make sync
+make sync PRODUCT=KitLib
+make zip-full
 ```
 :::
 
 ::: zh-CN
-- **KitLib 宿主**（`src/`）：Core、Loader → `build/KitLib/`
-- **兄弟产品卫星**：`mods/<Product>/` → `build/<ProductId>/modules/`（`KitLibProductId`）
-- **薄产品入口** → `mods/KitModPanel|KitDevTools|KitAI`
+- KitLib 宿主 → `build/KitLib/`
+- KitModPanel → `build/KitModPanel/KitModPanel.dll`
+- KitDevTools / KitAI → 产品入口 + `build/<ProductId>/modules/`
 
 ```bash
 make sync
@@ -163,19 +158,15 @@ make zip-full
 ## 运行时加载顺序{lang="zh-CN"}
 
 ::: en
-Host bootstrap inits **User** (always) and **Cheat** (when `AllowHighRiskModules`). Then `SatelliteModuleLoader` searches sibling product `modules/` folders and inits:
-
-1. ModPanel → 2. Panel → 3. AI (needs Panel) → 4. Dev (needs Panel)
-
-Sibling satellites load when their product folder is installed (DLL present); missing products soft-skip. No per-satellite settings toggles.
+1. KitLib host inits **User**, and **Cheat** when `AllowHighRiskModules`.
+2. Game loads **KitModPanel** when that product is enabled.
+3. `SatelliteModuleLoader` loads Panel → AI → Dev from sibling `modules/` folders.
 :::
 
 ::: zh-CN
-宿主启动时初始化 **User**（始终）与 **Cheat**（`AllowHighRiskModules` 时）。随后 `SatelliteModuleLoader` 搜索兄弟产品 `modules/` 并初始化：
-
-1. ModPanel → 2. Panel → 3. AI（需 Panel）→ 4. Dev（需 Panel）
-
-兄弟产品有安装目录（DLL 存在）才加载，缺失则软跳过。没有按卫星的设置开关。
+1. KitLib 宿主初始化 **User**；在 `AllowHighRiskModules` 时初始化 **Cheat**。
+2. 游戏启用 **KitModPanel** 时加载该产品。
+3. `SatelliteModuleLoader` 从兄弟产品 `modules/` 加载 Panel → AI → Dev。
 :::
 
 ## Content-mod authors{lang="en"}
@@ -183,9 +174,9 @@ Sibling satellites load when their product folder is installed (DLL present); mi
 ## 内容 mod 作者{lang="zh-CN"}
 
 ::: en
-NuGet **`STS2.KitLib.Abstractions`** for compile-time contracts. Runtime needs the **KitLib** product installed (`dependencies: [{ "id": "KitLib", ... }]`). Install KitModPanel / KitDevTools / KitAI only when your players need those features.
+Compile against NuGet **`STS2.KitLib.Abstractions`**. Runtime requires the **KitLib** product. Add KitModPanel / KitDevTools / KitAI only when needed.
 :::
 
 ::: zh-CN
-编译期用 NuGet **`STS2.KitLib.Abstractions`**。运行时需安装 **KitLib** 产品。仅在需要对应能力时再装 KitModPanel / KitDevTools / KitAI。
+编译期用 NuGet **`STS2.KitLib.Abstractions`**。运行时需要 **KitLib**。按需加装 KitModPanel / KitDevTools / KitAI。
 :::

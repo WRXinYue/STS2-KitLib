@@ -1,4 +1,5 @@
 using System;
+using Godot;
 using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.DevPerf;
@@ -124,7 +125,8 @@ public static class ModuleEntry {
         KitLibUserOps.OpenLogs = DevPanel.OpenLogs;
 
         TryWireDevPanelUiDelegates();
-        KitLibPanelUiOps.BuildProgressGuardModSettingsPage = () => ProgressGuardModSettingsPage.Build();
+        KitLibPanelUiOps.BuildProgressGuardModSettingsPage = host =>
+            ProgressGuardModSettingsPage.Build(host as Node);
         KitLibPanelUiOps.QueryModHarmonyPatchStats = ModHarmonyOwnerMatcher.TryGetStats;
         KitLibPanelUiOps.BuildModHarmonyDetailReport = ModHarmonyOwnerMatcher.BuildDetailReport;
     }

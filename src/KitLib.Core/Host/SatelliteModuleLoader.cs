@@ -7,9 +7,8 @@ using KitLib.Diagnostics;
 namespace KitLib.Host;
 
 /// <summary>
-/// Loads KitLib satellite DLLs from the KitLib product and sibling product folders
-/// (KitModPanel / KitDevTools / KitAI). Skips modules that are missing, have unmet
-/// prerequisites, or fail to init.
+/// Loads satellite DLLs from sibling product folders (KitDevTools / KitAI).
+/// Skips modules that are missing, have unmet prerequisites, or fail to init.
 /// </summary>
 internal static class SatelliteModuleLoader {
     internal const string ModulesSubdir = KitLibHostPaths.ModulesSubdir;
@@ -23,7 +22,6 @@ internal static class SatelliteModuleLoader {
         bool SettingsControlled = true);
 
     static readonly ModuleSpec[] LoadOrder = [
-        new(ModuleIds.ModPanel, "KitLib.ModPanel", "KitLib.ModPanelMod.ModuleEntry", []),
         new(ModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
         new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", [ModuleIds.Panel]),
         new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Panel]),

@@ -48,7 +48,7 @@ PRODUCTS: dict[str, ModProduct] = {
     "KitModPanel": ModProduct(
         id="KitModPanel",
         display_name="KitLib Mod Panel",
-        satellite_dlls=("KitLib.ModPanel",),
+        satellite_dlls=(),
         manifest_path=_REPO / "mods" / "KitModPanel" / "KitModPanel.json",
         entry_dll="KitModPanel.dll",
         loader_csproj="mods/KitModPanel/KitModPanel.csproj",
@@ -61,7 +61,7 @@ PRODUCTS: dict[str, ModProduct] = {
         manifest_path=_REPO / "mods" / "KitDevTools" / "KitDevTools.json",
         entry_dll="KitDevTools.dll",
         loader_csproj="mods/KitDevTools/KitDevTools.csproj",
-        dependency_ids=("KitLib", "KitModPanel"),
+        dependency_ids=("KitLib",),
     ),
     "KitAI": ModProduct(
         id="KitAI",
@@ -86,7 +86,6 @@ KITLIB_CORE_PROJECTS = [
 ]
 
 SATELLITE_PROJECTS = {
-    "KitLib.ModPanel": "mods/KitModPanel/KitLib.ModPanel.csproj",
     "KitLib.Panel": "mods/KitDevTools/KitLib.Panel.csproj",
     "KitLib.Dev": "mods/KitDevTools/KitLib.Dev.csproj",
     "KitLib.AI": "mods/KitAI/KitLib.AI.csproj",

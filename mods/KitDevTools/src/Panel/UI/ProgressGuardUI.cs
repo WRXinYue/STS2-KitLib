@@ -5,6 +5,7 @@ using System.Text;
 using Godot;
 using KitLib.Modding;
 using KitLib.Progress;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Saves;
 
 namespace KitLib.UI;
@@ -32,8 +33,7 @@ internal static class ProgressGuardUI {
                 MainFile.Logger.Info(I18N.T("progressGuard.restore.success",
                     "Progress restored from {0}.", directoryName));
                 ModCharacterProgressLossDetector.ClearPending();
-                if (ModPanelUI.TryGetHostMainMenu() is { } mainMenu && GodotObject.IsInstanceValid(mainMenu))
-                    mainMenu.RefreshButtons();
+                NGame.Instance?.MainMenu?.RefreshButtons();
                 HideAnywhere();
                 break;
             case ProgressRestoreResult.BlockedRunInProgress:

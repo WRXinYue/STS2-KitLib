@@ -70,7 +70,7 @@
 
     <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>KitLib.ModPanel</_Parameter1>
+      <_Parameter1>KitModPanel</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>KitLib.Panel</_Parameter1>

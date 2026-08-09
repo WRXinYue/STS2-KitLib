@@ -1,5 +1,5 @@
 using Godot;
-using KitLib.Integration;
+using KitLib.Host;
 using KitLib.Settings;
 
 namespace KitLib.Hotkeys;
@@ -13,10 +13,10 @@ internal static class KitLibHotkeyInput {
         if (@event is not InputEventKey key || !key.Pressed || key.Echo)
             return false;
 
-        if (KitLibHotkeySettingsSection.TryCaptureInputEvent(key, viewport))
+        if (KitLibModPanelOps.TryCaptureHotkeySettingsInput?.Invoke(key, viewport) == true)
             return true;
 
-        if (ModPanelHotkeys.TryHandle(key, viewport))
+        if (KitLibModPanelOps.TryHandleOpenModPanelHotkey?.Invoke(key, viewport) == true)
             return true;
 
         if (DevPanelHotkeys.TryHandle(key, viewport))

@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
@@ -6,8 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Abstractions", "src\KitLib.Abstractions\KitLib.Abstractions.csproj", "{C0000000-0000-0000-0000-000000000010}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Core", "src\KitLib.Core\KitLib.Core.csproj", "{A0000000-0000-0000-0000-000000000001}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.ModPanel", "mods\KitModPanel\KitLib.ModPanel.csproj", "{C0000000-0000-0000-0000-000000000016}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Panel", "mods\KitDevTools\KitLib.Panel.csproj", "{C0000000-0000-0000-0000-000000000011}"
 EndProject
@@ -109,26 +107,6 @@ Global
 		{A0000000-0000-0000-0000-000000000001}.Release|x64.Build.0 = Release|Any CPU
 		{A0000000-0000-0000-0000-000000000001}.Release|x86.ActiveCfg = Release|Any CPU
 		{A0000000-0000-0000-0000-000000000001}.Release|x86.Build.0 = Release|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Debug|x64.Build.0 = Debug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Debug|x86.Build.0 = Debug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportDebug|x64.ActiveCfg = ExportDebug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportDebug|x64.Build.0 = ExportDebug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportDebug|x86.ActiveCfg = ExportDebug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportDebug|x86.Build.0 = ExportDebug|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportRelease|x64.ActiveCfg = ExportRelease|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportRelease|x64.Build.0 = ExportRelease|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportRelease|x86.ActiveCfg = ExportRelease|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.ExportRelease|x86.Build.0 = ExportRelease|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Release|x64.ActiveCfg = Release|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Release|x64.Build.0 = Release|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Release|x86.ActiveCfg = Release|Any CPU
-		{C0000000-0000-0000-0000-000000000016}.Release|x86.Build.0 = Release|Any CPU
 		{C0000000-0000-0000-0000-000000000011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C0000000-0000-0000-0000-000000000011}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0000000-0000-0000-0000-000000000011}.Debug|x64.ActiveCfg = Debug|Any CPU
