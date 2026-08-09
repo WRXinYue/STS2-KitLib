@@ -6,7 +6,7 @@
     <AssemblyName>KitLib.User</AssemblyName>
     <RootNamespace>KitLib</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <KitLibSourceDir>src</KitLibSourceDir>
+    <KitLibSourceDir>$(MSBuildProjectDirectory)</KitLibSourceDir>
   </PropertyGroup>
   <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
   <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />

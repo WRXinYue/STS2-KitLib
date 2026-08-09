@@ -25,15 +25,15 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
    ```text
    mods\
-   ├── KitLib\            # required host library
+   ├── KitLib\            # required host + mutation APIs (Cheat satellite)
    ├── KitModPanel\       # main-menu mod list / settings
-   ├── KitDevTools\       # side rail, cheats, saves, logs
+   ├── KitDevTools\       # side rail UI, saves, logs, MCP
    └── KitAI\             # optional AI host
    ```
 
-4. Launch the game. Configure optional satellites under **Main menu → Mods → KitLib** (module toggles, hotkeys, progress protection).
+4. Launch the game. Optional: **Main menu → Mods → KitLib** for hotkeys and progress protection.
 
-**Minimal install:** KitLib only (API host). **Typical player/dev:** KitLib + KitModPanel + KitDevTools. Add **KitAI** for AI host features.
+**Minimal install:** KitLib only. **Typical player/dev:** KitLib + KitModPanel + KitDevTools. Add **KitAI** for AI host features. Install only the products you need — missing folders simply do not load.
 :::
 
 ::: zh-CN
@@ -45,9 +45,9 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 
 3. 解压后下列目录应为 `mods\` 的**直接**子目录：`KitLib`、`KitModPanel`、`KitDevTools`、`KitAI`。
 
-4. 启动游戏，在 **主菜单 → Mods → KitLib** 配置可选模块、快捷键与进度保护。
+4. 启动游戏。可选：在 **主菜单 → Mods → KitLib** 配置快捷键与进度保护。
 
-**最小安装：** 仅 KitLib。**常用：** KitLib + KitModPanel + KitDevTools。需要 AI 托管时再装 **KitAI**。
+**最小安装：** 仅 KitLib。**常用：** KitLib + KitModPanel + KitDevTools。需要 AI 托管时再装 **KitAI**。按需安装产品即可 — 缺少的目录不会加载。
 :::
 
 ## Build from source{lang="en"}
@@ -66,7 +66,7 @@ make sync    # build + deploy all four products to game mods/
 
 `make init` only needs to run once. KitLib targets the **Steam public-beta** line; a startup banner may appear when your game version is outside the supported range.
 
-See **[Contributing](/developer/dev/)** for Makefile targets and collaboration norms.
+See **[Contributing](/kitlib/contributing/)** for Makefile targets and collaboration norms.
 :::
 
 ::: zh-CN
@@ -79,5 +79,5 @@ make init
 make sync    # 构建并部署四个产品到游戏 mods/
 ```
 
-详见 **[参与贡献](/developer/dev/)**。
+详见 **[参与贡献](/kitlib/contributing/)**。
 :::

@@ -16,7 +16,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KitLib\KitLib.User.csproj" />
+    <ProjectReference Include="..\..\src\KitLib.Modules.User\KitLib.User.csproj" />
   </ItemGroup>
   <Target Name="ShakeAndEmbedIcons" BeforeTargets="AssignTargetPaths">
     <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts\shake_icons.py&quot;"

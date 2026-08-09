@@ -11,13 +11,13 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-**StrongStrategy** is the default solo autoplay pipeline (no LLM). Maintainer deep-dive: code under `src/AI/`, regression via `tools/ai-bench/`, mod hooks in [Mod AI integration](/developer/extending/mod-ai-integration). Full write-up in Chinese below.
+**StrongStrategy** is the default solo autoplay pipeline (no LLM). Maintainer deep-dive: code under `src/AI/`, regression via `tools/ai-bench/`, mod hooks in [Mod AI integration](/kitai/mod-ai-integration). Full write-up in Chinese below.
 :::
 
 ::: zh-CN
 DevMode **AI Host → AutoPlay** 默认使用 `StrongStrategy`（设置项 `AutoPlayStrategy: Strong`）。这是一套纯规则、无 LLM 的单机自动化决策管线，目标是在 A10 左右具备可玩的宏观路线与战斗表现。
 
-相关代码：`src/AI/` · 回归脚本：`tools/ai-bench/` · Mod 扩展说明：[Mod AI 集成](/developer/extending/mod-ai-integration)
+相关代码：`src/AI/` · 回归脚本：`tools/ai-bench/` · Mod 扩展说明：[Mod AI 集成](/kitai/mod-ai-integration)
 
 ---
 :::
@@ -71,7 +71,7 @@ flowchart TD
 4. `IDecisionMaker.DecideAsync` 返回 `GameAction`（含 `Type`、`TargetIndex`、`Reason`）。
 5. `Sts2ActionExecutor` 执行动作；`Reason` 写入日志，便于复盘。
 
-多人 hand-play 时 AutoPlay **自动关闭**；LAN / Pseudo Co-op 走独立队列，见 [LAN host-drive & AFK co-op](/developer/lan-host-drive-afk)。
+多人 hand-play 时 AutoPlay **自动关闭**；LAN / Pseudo Co-op 走独立队列，见 [LAN host-drive & AFK co-op](/kitai/lan-host-drive-afk)。
 
 ---
 :::

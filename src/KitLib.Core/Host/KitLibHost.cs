@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using KitLib.Abstractions.Modding;
 using KitLib.Diagnostics;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -54,6 +55,10 @@ public static class KitLibHost {
 
     /// <summary>Mod settings panel host; null when <c>KitLib.ModPanel</c> is not loaded.</summary>
     public static object? ModSettings { get; private set; }
+
+    /// <summary>Typed read of <see cref="ModSettings"/> when KitModPanel registered a host.</summary>
+    public static IModSettingsPanelHost? TryGetModSettingsPanelHost() =>
+        ModSettings as IModSettingsPanelHost;
 
     public static void RegisterModSettingsPanelHost(object host) {
         ArgumentNullException.ThrowIfNull(host);

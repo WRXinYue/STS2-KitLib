@@ -22,14 +22,6 @@ internal static class KitLibNativeModSettingsBootstrap {
         });
         KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
             ModId = modId,
-            PageId = "modules",
-            TitleKey = "modpanel.kitlib.page.modules",
-            Title = "Modules",
-            SortOrder = 3,
-            BuildBody = () => KitLibSatelliteModuleSettingsUi.BuildPage(),
-        });
-        KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
-            ModId = modId,
             PageId = "progressGuard",
             TitleKey = "modpanel.kitlib.page.progressGuard",
             Title = "Progress protection",
@@ -135,16 +127,8 @@ internal static class KitLibNativeModSettingsBootstrap {
     }
 
     internal static string ResolvePageTitle(KitLibModSettingsPageRegistration page) =>
-        string.IsNullOrWhiteSpace(page.TitleKey)
-            ? page.Title
-            : I18N.T(page.TitleKey, page.Title);
+        KitLibModSettingsRegistry.ResolveTitle(page, I18N.T);
 
-    static VBoxContainer CreatePageStack() {
-        var stack = new VBoxContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-        };
-        stack.AddThemeConstantOverride("separation", 8);
-        return stack;
-    }
+    static VBoxContainer CreatePageStack() =>
+        (VBoxContainer)KitLibModSettingsUiBuilders.CreatePageStack();
 }

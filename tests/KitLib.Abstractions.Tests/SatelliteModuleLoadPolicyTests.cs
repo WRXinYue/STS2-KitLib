@@ -99,8 +99,9 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void IsKitLibBundledRequired_only_user() {
+    public void IsKitLibBundledRequired_user_and_cheat() {
         Assert.True(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.User));
+        Assert.True(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.Cheat));
         Assert.False(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.ModPanel));
     }
 

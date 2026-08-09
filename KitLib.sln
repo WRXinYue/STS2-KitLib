@@ -11,9 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.ModPanel", "mods\Kit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Panel", "mods\KitDevTools\KitLib.Panel.csproj", "{C0000000-0000-0000-0000-000000000011}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.User", "mods\KitLib\KitLib.User.csproj", "{C0000000-0000-0000-0000-000000000012}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.User", "src\KitLib.Modules.User\KitLib.User.csproj", "{C0000000-0000-0000-0000-000000000012}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Cheat", "mods\KitDevTools\KitLib.Cheat.csproj", "{C0000000-0000-0000-0000-000000000013}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Cheat", "src\KitLib.Modules.Cheat\KitLib.Cheat.csproj", "{C0000000-0000-0000-0000-000000000013}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Dev", "mods\KitDevTools\KitLib.Dev.csproj", "{C0000000-0000-0000-0000-000000000014}"
 EndProject

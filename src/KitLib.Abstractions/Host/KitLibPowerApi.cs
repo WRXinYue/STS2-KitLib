@@ -17,7 +17,7 @@ public sealed record KitLibRemovePowerRequest(string PowerId, ulong? TargetPlaye
 public sealed record KitLibClearPowersRequest(ulong? TargetPlayerNetId = null);
 
 /// <summary>
-/// Combat power mutations wired by KitLib.Cheat. String ids only.
+/// Combat power mutations wired by KitLib.Cheat (ships with the KitLib product). String ids only.
 /// </summary>
 public static class KitLibPowerApi {
     public static Func<bool>? IsAvailable { get; set; }

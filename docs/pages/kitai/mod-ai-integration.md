@@ -86,7 +86,7 @@ CompanionBridge.RegisterCardTagProvider(myCardTagProvider);
 
 `ICardTagProvider` merges extra tags into `CardCatalog` for macro scoring. `IDeckPlanContributor.AdjustPlan` mutates `DeckPlan.Builder` before each macro decision.
 
-A10 regression seeds: `tools/ai-bench/` (fixed seed list + log parser). Algorithm details: **[AI algorithm](/developer/ai-algorithm)**.
+A10 regression seeds: `tools/ai-bench/` (fixed seed list + log parser). Algorithm details: **[AI algorithm](/kitai/ai-algorithm)**.
 :::
 
 ::: zh-CN
@@ -101,7 +101,7 @@ CompanionBridge.RegisterCardTagProvider(myCardTagProvider);
 
 `ICardTagProvider` 向 `CardCatalog` 合并额外标签供宏观评分；`IDeckPlanContributor.AdjustPlan` 在每次宏观决策前修改 `DeckPlan.Builder`。
 
-A10 回归种子：`tools/ai-bench/`（固定种子列表 + 日志解析）。算法细节见 **[AI 算法](/developer/ai-algorithm)**。
+A10 回归种子：`tools/ai-bench/`（固定种子列表 + 日志解析）。算法细节见 **[AI 算法](/kitai/ai-algorithm)**。
 :::
 
 ### Snapshot extensions{lang="en"}

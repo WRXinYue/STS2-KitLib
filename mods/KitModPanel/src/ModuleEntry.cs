@@ -10,8 +10,9 @@ public static class ModuleEntry {
         if (KitLibHost.IsModuleLoaded(KitLibModuleIds.ModPanel)) return;
         KitLibHost.AnnounceModule(KitLibModuleIds.ModPanel);
         KitLibHost.RegisterModSettingsPanelHost(new ModSettingsPanelHost());
+        KitLibModSettingsUiBuilders.WireApi();
         KitLibNativeModSettingsBootstrap.RegisterKitLibPages();
-        KitLibHost.NotifyPerfHudEnabledChanged = KitLibNativeModSettingsUi.RefreshBoolToggles;
+        KitLibHost.NotifyPerfHudEnabledChanged = KitLibModSettingsUiBuilders.RefreshBoolToggles;
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.ModPanel);
         MainFile.Logger.Info("KitLib.ModPanel module initialized.");
     }

@@ -91,7 +91,7 @@ KitLib is a foundation host library for Slay the Spire 2 mods. Install companion
 
 - Add `eng/KitLib.ContentMod.props` to your csproj (`KitLib.Abstractions.dll` at compile time).
 - At runtime, depend on KitLib core and the satellite modules your mod actually uses.
-- Extension API, logging, AI integration, etc.: [docs site](https://sts2-devmod.wrxinyue.org/) → Developer.
+- Extension API, logging, AI integration, etc.: [docs site](https://sts2-devmod.wrxinyue.org/) → **API** / **KitAI**.
 
 ## Acknowledgments
 

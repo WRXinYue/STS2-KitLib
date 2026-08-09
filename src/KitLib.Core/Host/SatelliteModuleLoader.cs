@@ -3,14 +3,13 @@ using KitLib.Abstractions.Compat;
 using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
 using KitLib.Diagnostics;
-using KitLib.Settings;
 
 namespace KitLib.Host;
 
 /// <summary>
 /// Loads KitLib satellite DLLs from the KitLib product and sibling product folders
-/// (KitModPanel / KitDevTools / KitAI). Skips modules that are missing, disabled,
-/// have unmet prerequisites, or fail to init.
+/// (KitModPanel / KitDevTools / KitAI). Skips modules that are missing, have unmet
+/// prerequisites, or fail to init.
 /// </summary>
 internal static class SatelliteModuleLoader {
     internal const string ModulesSubdir = KitLibHostPaths.ModulesSubdir;
@@ -46,11 +45,10 @@ internal static class SatelliteModuleLoader {
 
         KitLibStartupAudit.Measure("satellite.preload", () => PreloadBundledAssemblies(modDir));
 
-        var resolvedToggles = SettingsStore.GetResolvedSatelliteModulesEnabled();
         var loaded = new List<string>();
         foreach (var spec in LoadOrder) {
             MainFile.Logger.Info($"Satellite loader: trying {spec.ModuleId} ({spec.AssemblyName}.dll).");
-            if (TryLoadModule(modDir, spec, resolvedToggles))
+            if (TryLoadModule(modDir, spec))
                 loaded.Add(spec.ModuleId);
         }
 
@@ -103,7 +101,7 @@ internal static class SatelliteModuleLoader {
             KitLog.Warn(message);
     }
 
-    static bool TryLoadModule(string modDir, ModuleSpec spec, IReadOnlyDictionary<string, bool> resolvedToggles) {
+    static bool TryLoadModule(string modDir, ModuleSpec spec) {
         if (!Sts2RuntimeProfile.AllowHighRiskModules
             && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
             LogModuleSkip(spec.ModuleId, $"unsupported STS2 version {Sts2RuntimeProfile.RawVersion ?? "?"}.");
@@ -122,29 +120,13 @@ internal static class SatelliteModuleLoader {
                     $"Required KitLib module {spec.ModuleId} is missing ({spec.AssemblyName}.dll). " +
                     "Reinstall or repair KitLib, then restart the game.");
             }
-            else if (spec.SettingsControlled
-                     && SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists: true)) {
+            else {
                 var productId = KitLibProductIds.TryGetProductIdForModule(spec.ModuleId);
                 KitLog.Info(
                     productId is null
-                        ? $"Module {spec.ModuleId} is enabled but {spec.AssemblyName}.dll was not found."
-                        : $"Module {spec.ModuleId} is enabled but {spec.AssemblyName}.dll was not found " +
-                          $"(install product {productId}).");
+                        ? $"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll)."
+                        : $"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll) — install product {productId} to enable.");
             }
-            else {
-                KitLog.Info($"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll).");
-            }
-            return false;
-        }
-
-        if (!spec.SettingsControlled) {
-            if (!resolvedToggles.TryGetValue(ModuleIds.Panel, out var panelEnabled) || !panelEnabled) {
-                KitLog.Info($"Module {spec.ModuleId} skipped — Panel disabled in settings.");
-                return false;
-            }
-        }
-        else if (!SatelliteModuleLoadPolicy.ShouldLoad(spec.ModuleId, resolvedToggles, dllExists)) {
-            KitLog.Info($"Module {spec.ModuleId} skipped — disabled in settings (restart required).");
             return false;
         }
 

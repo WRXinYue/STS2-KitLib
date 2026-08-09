@@ -11,11 +11,11 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-This page is for contributors working on the **KitLib** repository. To install the released mod only, see **[Install](/guide/install/)**.
+This page is for contributors working on the **KitLib** repository. To install the released mod only, see **[Install](/kitlib/install/)**.
 :::
 
 ::: zh-CN
-本文面向 **KitLib** 仓库贡献者。若只需安装已发布 mod，请参阅 **[安装](/guide/install/)**。
+本文面向 **KitLib** 仓库贡献者。若只需安装已发布 mod，请参阅 **[安装](/kitlib/install/)**。
 :::
 
 ## Dev setup{lang="en"}
@@ -38,12 +38,13 @@ make init   # detect STS2 + Godot paths, write local.props
 | Target | Description |
 | --- | --- |
 | `make init` | Detect STS2 + Godot, write `local.props` |
-| `make build` | Artifacts under `build/KitLib/` |
-| `make sync-full` | Build + deploy to game `mods/KitLib/` |
+| `make build` | KitLib host artifacts under `build/KitLib/` |
+| `make sync` / `make sync-full` | Build + deploy products to the game `mods/` folder |
 | `make format` | `dotnet format KitLib.sln` |
 | `make docs` | Valaxy dev server (`docs/`) |
 | `make upload-all` | Release zip + GitHub / Nexus / Steam |
 
+Repo layout (host in `src/`, sibling products in `mods/`): **[Architecture](/kitlib/architecture/)**.
 :::
 
 ::: zh-CN
@@ -62,12 +63,13 @@ make init
 | 目标 | 说明 |
 | --- | --- |
 | `make init` | 检测 STS2、Godot，写入 `local.props` |
-| `make build` | 产物在 `build/KitLib/` |
-| `make sync-full` | 构建并部署到游戏 `mods/KitLib/` |
+| `make build` | KitLib 宿主产物在 `build/KitLib/` |
+| `make sync` / `make sync-full` | 构建并部署到游戏 `mods/` |
 | `make format` | `dotnet format KitLib.sln` |
 | `make docs` | Valaxy 开发服务器 |
 | `make upload-all` | 发布 zip + GitHub / Nexus / NuGet / Steam |
 
+仓库布局（宿主在 `src/`，兄弟产品在 `mods/`）：**[架构](/kitlib/architecture/)**。
 :::
 
 ## Code style (C#){lang="en"}
@@ -129,8 +131,6 @@ make docs-build  # static output → docs/dist/
 ```
 
 Markdown / Valaxy i18n: **[writing guide](https://oceanus.wrxinyue.org/guide/writing/markdown)**.
-
-Extension authors: **[STS2 version compatibility](/developer/extending/sts2-compat)**.
 :::
 
 ::: zh-CN
@@ -142,8 +142,6 @@ make docs-build
 ```
 
 Markdown / Valaxy 国际化：**[编写指南](https://oceanus.wrxinyue.org/guide/writing/markdown)**。
-
-扩展开发：**[STS2 版本兼容](/developer/extending/sts2-compat)**。
 :::
 
 ## Collaboration{lang="en"}

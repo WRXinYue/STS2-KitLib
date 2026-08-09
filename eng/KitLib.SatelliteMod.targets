@@ -34,6 +34,7 @@
       <_StaleKitLibModule Include="$(RepoRoot)build\KitLib\modules\*.dll"
                          Condition="Exists('$(RepoRoot)build\KitLib\modules')" />
       <_StaleKitLibModule Remove="$(RepoRoot)build\KitLib\modules\KitLib.User.dll" />
+      <_StaleKitLibModule Remove="$(RepoRoot)build\KitLib\modules\KitLib.Cheat.dll" />
     </ItemGroup>
     <Delete Files="@(_StaleKitLibModule)" TreatErrorsAsWarnings="true" />
   </Target>

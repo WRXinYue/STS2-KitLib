@@ -39,7 +39,7 @@ PRODUCTS: dict[str, ModProduct] = {
     "KitLib": ModProduct(
         id="KitLib",
         display_name="KitLib",
-        satellite_dlls=("KitLib.User",),
+        satellite_dlls=("KitLib.User", "KitLib.Cheat"),
         manifest_path=_REPO / "KitLib.json",
         entry_dll="KitLib.dll",
         loader_csproj=None,
@@ -57,7 +57,7 @@ PRODUCTS: dict[str, ModProduct] = {
     "KitDevTools": ModProduct(
         id="KitDevTools",
         display_name="KitLib Dev Tools",
-        satellite_dlls=("KitLib.Panel", "KitLib.Cheat", "KitLib.Dev"),
+        satellite_dlls=("KitLib.Panel", "KitLib.Dev"),
         manifest_path=_REPO / "mods" / "KitDevTools" / "KitDevTools.json",
         entry_dll="KitDevTools.dll",
         loader_csproj="mods/KitDevTools/KitDevTools.csproj",
@@ -83,14 +83,15 @@ KITLIB_CORE_PROJECTS = [
     "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
     "src/KitLib.Core/KitLib.Core.csproj",
     "src/KitLib.Loader/KitLib.Loader.csproj",
-    "mods/KitLib/KitLib.User.csproj",
+    "src/KitLib.Modules.User/KitLib.User.csproj",
+    "src/KitLib.Modules.Cheat/KitLib.Cheat.csproj",
 ]
 
 SATELLITE_PROJECTS = {
-    "KitLib.User": "mods/KitLib/KitLib.User.csproj",
+    "KitLib.User": "src/KitLib.Modules.User/KitLib.User.csproj",
+    "KitLib.Cheat": "src/KitLib.Modules.Cheat/KitLib.Cheat.csproj",
     "KitLib.ModPanel": "mods/KitModPanel/KitLib.ModPanel.csproj",
     "KitLib.Panel": "mods/KitDevTools/KitLib.Panel.csproj",
-    "KitLib.Cheat": "mods/KitDevTools/KitLib.Cheat.csproj",
     "KitLib.Dev": "mods/KitDevTools/KitLib.Dev.csproj",
     "KitLib.AI": "mods/KitAI/KitLib.AI.csproj",
 }
@@ -103,7 +104,7 @@ def all_bundle_projects() -> list[str]:
         if product.loader_csproj:
             projects.append(product.loader_csproj)
         for dll in product.satellite_dlls:
-            if dll == "KitLib.User":
+            if dll in ("KitLib.User", "KitLib.Cheat"):
                 continue  # already in KITLIB_CORE_PROJECTS
             projects.append(SATELLITE_PROJECTS[dll])
     return projects

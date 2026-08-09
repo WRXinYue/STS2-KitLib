@@ -14,44 +14,40 @@ features:
     en: >-
       KitLib serves mod authors and players: test runs, in-run editing, logs, and multiplayer debugging
       without leaving the game — plus a better Mod panel, progress protection, and feedback export.
-      Core loads optional satellite modules; a failed optional module should not break KitLib or mods that depend on it.
+      Core loads optional satellite products when installed; a failed optional product should not break KitLib or mods that depend on it.
     zh-CN: >-
       KitLib 面向 mod 开发者与玩家：局内测试、改内容、看日志、联机调试，以及更好用的 Mod 面板、
-      进度保护与问题反馈。Core 加载可选卫星模块；单个模块异常不应拖垮核心与依赖 KitLib 的其他 mod。
+      进度保护与问题反馈。按需安装的可选产品；单个产品异常不应拖垮核心与依赖 KitLib 的其他 mod。
 
   cards:
     - title:
-        en: Install & modules
-        zh-CN: 安装与模块
+        en: Install
+        zh-CN: 安装
       details:
         en: >-
-          Install from Steam Workshop or Nexus. In Mods → KitLib → Modules, toggle optional satellites
-          or toggle satellite modules (restart required). See /guide/install/
+          Install from Steam Workshop or Nexus. Add KitModPanel / KitDevTools / KitAI as needed.
+          See /kitlib/install/
         zh-CN: >-
-          从 Steam 创意工坊或 Nexus 安装。在 Mods → KitLib → 模块 单独开关卫星模块（需重启）。
-          详见 /guide/install/
+          从 Steam 创意工坊或 Nexus 安装。按需加装 KitModPanel / KitDevTools / KitAI。
+          详见 /kitlib/install/
     - title:
-        en: Dev rail & Dev Mode
-        zh-CN: 开发侧栏与 Dev Mode
+        en: KitAI
+        zh-CN: KitAI
       details:
         en: >-
-          In-run rail: browsers, cheats, saves, presets, logs, AI, hooks, scripts.
-          Title Dev Mode: test runs, pseudo co-op, diagnostics.
-          Also: browser dev viewer, mod feedback ZIP, progress guard, MCP.
-          See /guide/panels/ and /guide/title-dev-mode/
+          Rule-based AutoPlay, character strategies, and LAN co-op host-drive testing.
+          See /kitai/mod-ai-integration/
         zh-CN: >-
-          局内侧栏：浏览器、作弊、存档、预设、日志、AI、钩子、脚本等。
-          标题 Dev Mode：测试局、伪联机、诊断。
-          另含浏览器开发者控制台、Mod 反馈、进度保护、MCP。详见 /guide/panels/ 与 /guide/title-dev-mode/
+          规则 AutoPlay、角色策略与 LAN 联机主机代打测试。
+          详见 /kitai/mod-ai-integration/
     - title:
-        en: For mod developers
-        zh-CN: Mod 开发者
+        en: Extension API
+        zh-CN: 扩展 API
       details:
         en: >-
-          Add eng/KitLib.ContentMod.props to your csproj; depend on KitLib modules at runtime as needed.
-          Register rail tabs, logging, and AI hooks.
-          See /developer/extending/panel-registry/ and /developer/dev/
+          Cards, relics, potions, powers, cheats & run stats, mod settings pages, and logging.
+          See /api/
         zh-CN: >-
-          csproj 引用 eng/KitLib.ContentMod.props；运行时按需依赖卫星模块。
-          可注册侧栏、日志、AI 等扩展。详见 /developer/extending/panel-registry/ 与 /developer/dev/
+          卡牌、遗物、药水、Power、作弊与局内数值、Mod 设置页、日志。
+          详见 /api/
 ---

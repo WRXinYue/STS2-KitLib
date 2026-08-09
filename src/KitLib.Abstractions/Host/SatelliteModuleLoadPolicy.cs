@@ -25,9 +25,10 @@ public static class SatelliteModuleLoadPolicy {
 
     /// <summary>Modules that must ship inside the KitLib product folder.</summary>
     public static bool IsKitLibBundledRequired(string moduleId) =>
-        string.Equals(moduleId, KitLibModuleIds.User, StringComparison.OrdinalIgnoreCase);
+        string.Equals(moduleId, KitLibModuleIds.User, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(moduleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>KitLib.Cheat ships with KitDevTools but is not a user-toggleable satellite.</summary>
+    /// <summary>KitLib.Cheat ships with KitLib and is not a user-toggleable satellite.</summary>
     public static bool IsKnownSatellite(string moduleId) {
         if (TryGetModule(moduleId, out _))
             return true;

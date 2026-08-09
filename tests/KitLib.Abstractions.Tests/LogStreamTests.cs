@@ -66,3 +66,59 @@ public class LogStreamHubTests {
         Assert.Contains("ping", snapshot[0].Text, StringComparison.Ordinal);
     }
 }
+
+public class LogStreamFiltersTests {
+    [Fact]
+    public void ShouldShow_respects_minLevel_text_suppress_and_hidden_source() {
+        var entry = new LogStreamEntry {
+            Lvl = "info",
+            Text = "[my-mod] hello world",
+            Mod = "my-mod",
+        };
+
+        Assert.True(LogStreamFilters.ShouldShow(entry, null));
+
+        Assert.False(LogStreamFilters.ShouldShow(entry, new LogViewerFilterSnapshot { MinLevel = "warn" }));
+        Assert.False(LogStreamFilters.ShouldShow(entry, new LogViewerFilterSnapshot { TextFilter = "missing" }));
+        Assert.False(LogStreamFilters.ShouldShow(entry, new LogViewerFilterSnapshot {
+            SuppressRules = [new LogViewerFilterSnapshot.SuppressRule { Pattern = "hello", Enabled = true }],
+        }));
+        Assert.False(LogStreamFilters.ShouldShow(entry, new LogViewerFilterSnapshot {
+            HiddenSources = ["my-mod"],
+        }));
+    }
+
+    [Fact]
+    public void Session_boundary_always_visible() {
+        var entry = new LogStreamEntry {
+            Lvl = "info",
+            Text = KitLogMarkers.SessionBoundaryPrefix,
+            Boundary = true,
+        };
+        Assert.True(LogStreamFilters.ShouldShow(entry, new LogViewerFilterSnapshot { MinLevel = "error" }));
+    }
+
+    [Fact]
+    public void ParseSource_uses_mod_field_then_bracket_tag() {
+        var withMod = new LogStreamEntry { Text = "x", Mod = "Alpha" };
+        Assert.Equal("Alpha", LogStreamFilters.ParseSource(withMod, null));
+
+        var fromTag = new LogStreamEntry { Text = "[Beta] combat start" };
+        var filter = new LogViewerFilterSnapshot { LoadedModIds = ["Beta"] };
+        Assert.Equal("Beta", LogStreamFilters.ParseSource(fromTag, filter));
+    }
+
+    [Fact]
+    public void WhereVisible_filters_batch() {
+        var filter = new LogViewerFilterSnapshot { MinLevel = "warn" };
+        var entries = new[] {
+            new LogStreamEntry { Lvl = "info", Text = "a" },
+            new LogStreamEntry { Lvl = "warn", Text = "b" },
+            new LogStreamEntry { Lvl = "error", Text = "c" },
+        };
+        var visible = LogStreamFilters.WhereVisible(entries, filter);
+        Assert.Equal(2, visible.Count);
+        Assert.Equal("b", visible[0].Text);
+        Assert.Equal("c", visible[1].Text);
+    }
+}

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Godot;
 using KitLib;
 using KitLib.Host;
@@ -10,31 +8,10 @@ using KitLib.UI;
 namespace KitLib.Integration;
 
 internal static class KitLibNativeModSettingsUi {
-    static readonly List<(Func<bool> Get, CheckBox Box)> LiveBoolToggles = [];
+    internal static void RefreshBoolToggles() => KitLibModSettingsUiBuilders.RefreshBoolToggles();
 
-    internal static void RefreshBoolToggles() {
-        for (var i = LiveBoolToggles.Count - 1; i >= 0; i--) {
-            var (get, box) = LiveBoolToggles[i];
-            if (!GodotObject.IsInstanceValid(box)) {
-                LiveBoolToggles.RemoveAt(i);
-                continue;
-            }
-
-            box.SetPressedNoSignal(get());
-        }
-    }
-
-    internal static Control CreateBoolToggle(string title, string? description, Func<bool> get, Action<bool> set) {
-        var cb = new CheckBox {
-            ButtonPressed = get(),
-            FocusMode = Control.FocusModeEnum.All,
-        };
-        DevModeFormChrome.ApplyToggle(cb);
-        cb.Toggled += on => set(on);
-        LiveBoolToggles.Add((get, cb));
-        cb.TreeExiting += () => LiveBoolToggles.RemoveAll(entry => entry.Box == cb);
-        return DevModeFormChrome.CreateLabeledValueRow(title, description, cb);
-    }
+    internal static Control CreateBoolToggle(string title, string? description, Func<bool> get, Action<bool> set) =>
+        KitLibModSettingsUiBuilders.CreateBoolToggle(title, description, get, set);
 
     internal static Control CreateNormalRunModeRow() {
         var ob = new OptionButton {

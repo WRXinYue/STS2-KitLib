@@ -1,29 +1,30 @@
 nova:
   sidebar:
-    docs: User guide
-    api: Extension API
-    panels: Rail panels
+    docs: KitLib
+    api: API
+    panels: KitDevTools
     dev: Contributing
 
 nav:
-  home: Home
-  guide: User guide
+  kitlib: KitLib
+  kitai: KitAI
+  api: API
   contributing: Contributing
-  extending: Developer
   intro: Introduction
   install: Install
-  panels_overview: Rail panels
   changelog: Changelog
-  dev_panel: Dev panel
-  mod_runtime: Mod runtime
-  kitlib_log: KitLib logging
-  sts2_compat: STS2 compatibility
-  api_profiles: Compile refs (maintainers)
+  kitlib_log: Logging
+  mod_settings: Mod settings pages
+  cards: Cards
+  relics: Relics
+  potions: Potions
+  power: Powers
+  runtime_cheat: Cheats & run stats
 
 category:
-  guide: User guide
-  dev: Contributing
-  extending: Developer
+  kitlib: KitLib
+  kitai: KitAI
+  api: API
 
 hero:
   actions:

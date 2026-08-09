@@ -91,7 +91,7 @@ KitLib 是面向《杀戮尖塔 2》的基础宿主库。按需安装配套产�
 
 - 编译时在 csproj 引用 `eng/KitLib.ContentMod.props`（`KitLib.Abstractions.dll`）。
 - 运行时按 mod 实际用到的能力，依赖 KitLib 主体与对应卫星模块。
-- 扩展 API、日志、AI 接入等见 [文档站](https://sts2-devmod.wrxinyue.org/) 开发者章节。
+- 扩展 API、日志、AI 接入等见 [文档站](https://sts2-devmod.wrxinyue.org/) **API** / **KitAI** 章节。
 
 ## 致谢
 
