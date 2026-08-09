@@ -9,6 +9,7 @@ namespace KitLib;
 public static class KitLibHarmony {
     static readonly HashSet<string> Applied = new(StringComparer.OrdinalIgnoreCase);
     static readonly Dictionary<string, Harmony> Instances = new(StringComparer.OrdinalIgnoreCase);
+    static readonly HashSet<Type> GloballyPatchedTypes = [];
 
     public static bool IsApplied(string harmonyId) =>
         !string.IsNullOrWhiteSpace(harmonyId) && Applied.Contains(harmonyId);
@@ -26,6 +27,22 @@ public static class KitLibHarmony {
     public static void Apply(Assembly moduleAssembly, string harmonyId) =>
         Apply(moduleAssembly, harmonyId, requiredPatchTypes: null);
 
+    /// <summary>Applies only the given patch types (skips assembly-wide discovery).</summary>
+    public static void ApplyOnly(Assembly moduleAssembly, string harmonyId, params Type[] patchTypes) {
+        ArgumentNullException.ThrowIfNull(moduleAssembly);
+        if (string.IsNullOrWhiteSpace(harmonyId))
+            throw new ArgumentException("Harmony id is required.", nameof(harmonyId));
+        if (IsApplied(harmonyId))
+            return;
+
+        try {
+            ApplyCore(moduleAssembly, harmonyId, patchTypes, onlyRequired: true);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"KitLib Harmony apply failed for {harmonyId}: {ex.Message}");
+        }
+    }
+
     public static void Apply(Assembly moduleAssembly, string harmonyId, params Type[]? requiredPatchTypes) {
         ArgumentNullException.ThrowIfNull(moduleAssembly);
         if (string.IsNullOrWhiteSpace(harmonyId))
@@ -34,14 +51,18 @@ public static class KitLibHarmony {
             return;
 
         try {
-            ApplyCore(moduleAssembly, harmonyId, requiredPatchTypes);
+            ApplyCore(moduleAssembly, harmonyId, requiredPatchTypes, onlyRequired: false);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib Harmony apply failed for {harmonyId}: {ex.Message}");
         }
     }
 
-    static void ApplyCore(Assembly moduleAssembly, string harmonyId, Type[]? requiredPatchTypes) {
+    static void ApplyCore(
+        Assembly moduleAssembly,
+        string harmonyId,
+        Type[]? requiredPatchTypes,
+        bool onlyRequired) {
         var harmony = GetOrCreate(harmonyId);
         var appliedTypes = new List<string>();
         var skipped = new List<(string Type, string Reason)>();
@@ -53,6 +74,11 @@ public static class KitLibHarmony {
                     continue;
                 TryPatchType(harmony, type, appliedTypes, skipped, patchedTypes);
             }
+        }
+
+        if (onlyRequired) {
+            FinishApply(harmonyId, appliedTypes, skipped);
+            return;
         }
 
         var patchTypes = CollectPatchTypes(moduleAssembly);
@@ -73,6 +99,13 @@ public static class KitLibHarmony {
             TryPatchType(harmony, type, appliedTypes, skipped, patchedTypes);
         }
 
+        FinishApply(harmonyId, appliedTypes, skipped);
+    }
+
+    static void FinishApply(
+        string harmonyId,
+        List<string> appliedTypes,
+        List<(string Type, string Reason)> skipped) {
         if (appliedTypes.Count == 0) {
             MainFile.Logger.Warn(
                 $"KitLib Harmony applied no patches for {harmonyId} " +
@@ -94,7 +127,7 @@ public static class KitLibHarmony {
     static List<Type> CollectPatchTypes(Assembly assembly) {
         var patchTypes = new List<Type>();
         foreach (var type in TryEnumerateAssemblyTypes(assembly)) {
-            if (type == null)
+            if (type == null || GloballyPatchedTypes.Contains(type))
                 continue;
             try {
                 if (HasHarmonyPatch(type))
@@ -114,7 +147,7 @@ public static class KitLibHarmony {
         List<string> appliedTypes,
         List<(string Type, string Reason)> skipped,
         HashSet<Type> patchedTypes) {
-        if (!patchedTypes.Add(type))
+        if (!patchedTypes.Add(type) || !GloballyPatchedTypes.Add(type))
             return;
 
         try {
@@ -122,6 +155,7 @@ public static class KitLibHarmony {
             appliedTypes.Add(type.FullName ?? type.Name);
         }
         catch (Exception ex) {
+            GloballyPatchedTypes.Remove(type);
             skipped.Add((type.FullName ?? type.Name, ex.Message));
             MainFile.Logger.Warn($"KitLib Harmony skipped patch type {type.FullName}: {ex.Message}");
         }

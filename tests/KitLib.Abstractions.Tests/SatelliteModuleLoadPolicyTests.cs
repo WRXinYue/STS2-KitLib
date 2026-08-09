@@ -20,13 +20,14 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void ResolveEnabled_keeps_user_and_modpanel_always_on() {
+    public void ResolveEnabled_keeps_modpanel_always_on() {
         var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(
             SatelliteModuleLoadPolicy.GetDefaultToggles());
-        Assert.True(resolved[KitLibModuleIds.User]);
         Assert.True(resolved[KitLibModuleIds.ModPanel]);
         Assert.True(resolved[KitLibModuleIds.Panel]);
         Assert.False(resolved[KitLibModuleIds.Ai]);
+        Assert.False(resolved.ContainsKey(KitLibModuleIds.User));
+        Assert.False(resolved.ContainsKey(KitLibModuleIds.Cheat));
     }
 
     [Fact]
@@ -82,8 +83,10 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void IsKnownSatellite_includes_cheat_dll() {
-        Assert.True(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.Cheat));
+    public void IsKnownSatellite_excludes_in_process_user_and_cheat() {
+        Assert.True(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.ModPanel));
+        Assert.False(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.User));
+        Assert.False(SatelliteModuleLoadPolicy.IsKnownSatellite(KitLibModuleIds.Cheat));
         Assert.False(SatelliteModuleLoadPolicy.IsToggleable(KitLibModuleIds.Cheat));
     }
 
@@ -96,13 +99,6 @@ public sealed class SatelliteModuleLoadPolicyTests {
         };
         var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
         Assert.False(resolved[KitLibModuleIds.Ai]);
-    }
-
-    [Fact]
-    public void IsKitLibBundledRequired_user_and_cheat() {
-        Assert.True(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.User));
-        Assert.True(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.Cheat));
-        Assert.False(SatelliteModuleLoadPolicy.IsKitLibBundledRequired(KitLibModuleIds.ModPanel));
     }
 
     [Fact]

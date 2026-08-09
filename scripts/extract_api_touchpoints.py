@@ -267,12 +267,12 @@ def _ensure_manual_touchpoints(touchpoints: dict[str, Touchpoint]) -> None:
         member="SetUpNewSingleplayer",
         kind="method",
     )
-    manual.sources.add("src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs")
+    manual.sources.add("src/KitLib.Core/Cheat/Patches/RunStartPatch.cs")
     tp = touchpoints.setdefault(manual.id, manual)
     tp.type_name = manual.type_name
     tp.member = manual.member
     tp.kind = manual.kind
-    tp.sources.add("src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs")
+    tp.sources.add("src/KitLib.Core/Cheat/Patches/RunStartPatch.cs")
 
 
 def _ensure_manual_overrides(overrides: dict[str, dict[str, dict[str, str]]]) -> None:

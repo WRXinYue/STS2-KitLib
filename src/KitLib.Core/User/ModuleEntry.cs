@@ -2,6 +2,7 @@ using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
 using KitLib.Modding;
+using KitLib.Patches;
 using KitLib.Settings;
 
 namespace KitLib.User;
@@ -18,7 +19,13 @@ public static class ModuleEntry {
         LogCollector.Initialize();
         UserTabRegistration.Register();
 
-        KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.User);
+        KitLibHarmony.ApplyOnly(
+            typeof(ModuleEntry).Assembly,
+            KitLibModuleIds.User,
+            typeof(ModChangeGuardInitProfilePatch),
+            typeof(ModChangeGuardSaveProgressPatch),
+            typeof(ProgressLossDetectPatch),
+            typeof(ProgressLossLoadProgressPatch));
         MainFile.Logger.Info("KitLib.User module initialized.");
     }
 }

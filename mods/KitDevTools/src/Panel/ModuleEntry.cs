@@ -66,17 +66,8 @@ public static class ModuleEntry {
         }
     }
 
-    static bool IsCheatAssemblyAvailable() {
-        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat))
-            return true;
-
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-            if (string.Equals(assembly.GetName().Name, "KitLib.Cheat", StringComparison.OrdinalIgnoreCase))
-                return true;
-        }
-
-        return false;
-    }
+    static bool IsCheatAssemblyAvailable() =>
+        KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat);
 
     static void WireAiHudDelegates() {
         KitLibPanelOps.OnPanelAttach = ui => AiHudOverlayUI.Attach(ui);

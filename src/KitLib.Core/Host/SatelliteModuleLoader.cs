@@ -23,10 +23,8 @@ internal static class SatelliteModuleLoader {
         bool SettingsControlled = true);
 
     static readonly ModuleSpec[] LoadOrder = [
-        new(ModuleIds.User, "KitLib.User", "KitLib.User.ModuleEntry", []),
         new(ModuleIds.ModPanel, "KitLib.ModPanel", "KitLib.ModPanelMod.ModuleEntry", []),
         new(ModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
-        new(ModuleIds.Cheat, "KitLib.Cheat", "KitLib.Cheat.ModuleEntry", [], SettingsControlled: false),
         new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", [ModuleIds.Panel]),
         new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Panel]),
     ];
@@ -102,8 +100,7 @@ internal static class SatelliteModuleLoader {
     }
 
     static bool TryLoadModule(string modDir, ModuleSpec spec) {
-        if (!Sts2RuntimeProfile.AllowHighRiskModules
-            && (spec.ModuleId == ModuleIds.Cheat || spec.ModuleId == ModuleIds.Dev)) {
+        if (!Sts2RuntimeProfile.AllowHighRiskModules && spec.ModuleId == ModuleIds.Dev) {
             LogModuleSkip(spec.ModuleId, $"unsupported STS2 version {Sts2RuntimeProfile.RawVersion ?? "?"}.");
             return false;
         }
@@ -115,18 +112,11 @@ internal static class SatelliteModuleLoader {
 
         var dllExists = ModuleAssemblyExists(modDir, spec.AssemblyName);
         if (!dllExists) {
-            if (SatelliteModuleLoadPolicy.IsKitLibBundledRequired(spec.ModuleId)) {
-                MainFile.Logger.Error(
-                    $"Required KitLib module {spec.ModuleId} is missing ({spec.AssemblyName}.dll). " +
-                    "Reinstall or repair KitLib, then restart the game.");
-            }
-            else {
-                var productId = KitLibProductIds.TryGetProductIdForModule(spec.ModuleId);
-                KitLog.Info(
-                    productId is null
-                        ? $"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll)."
-                        : $"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll) — install product {productId} to enable.");
-            }
+            var productId = KitLibProductIds.TryGetProductIdForModule(spec.ModuleId);
+            KitLog.Info(
+                productId is null
+                    ? $"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll)."
+                    : $"Module {spec.ModuleId} not present ({spec.AssemblyName}.dll) — install product {productId} to enable.");
             return false;
         }
 

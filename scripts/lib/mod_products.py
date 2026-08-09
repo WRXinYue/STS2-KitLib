@@ -39,7 +39,7 @@ PRODUCTS: dict[str, ModProduct] = {
     "KitLib": ModProduct(
         id="KitLib",
         display_name="KitLib",
-        satellite_dlls=("KitLib.User", "KitLib.Cheat"),
+        satellite_dlls=(),
         manifest_path=_REPO / "KitLib.json",
         entry_dll="KitLib.dll",
         loader_csproj=None,
@@ -83,13 +83,9 @@ KITLIB_CORE_PROJECTS = [
     "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
     "src/KitLib.Core/KitLib.Core.csproj",
     "src/KitLib.Loader/KitLib.Loader.csproj",
-    "src/KitLib.Modules.User/KitLib.User.csproj",
-    "src/KitLib.Modules.Cheat/KitLib.Cheat.csproj",
 ]
 
 SATELLITE_PROJECTS = {
-    "KitLib.User": "src/KitLib.Modules.User/KitLib.User.csproj",
-    "KitLib.Cheat": "src/KitLib.Modules.Cheat/KitLib.Cheat.csproj",
     "KitLib.ModPanel": "mods/KitModPanel/KitLib.ModPanel.csproj",
     "KitLib.Panel": "mods/KitDevTools/KitLib.Panel.csproj",
     "KitLib.Dev": "mods/KitDevTools/KitLib.Dev.csproj",
@@ -104,8 +100,6 @@ def all_bundle_projects() -> list[str]:
         if product.loader_csproj:
             projects.append(product.loader_csproj)
         for dll in product.satellite_dlls:
-            if dll in ("KitLib.User", "KitLib.Cheat"):
-                continue  # already in KITLIB_CORE_PROJECTS
             projects.append(SATELLITE_PROJECTS[dll])
     return projects
 

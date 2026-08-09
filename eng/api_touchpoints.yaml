@@ -17,7 +17,7 @@ touchpoints:
     member: PullNextEncounter
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/EnemyOverridePatch.cs
+      - src/KitLib.Core/Cheat/Patches/EnemyOverridePatch.cs
 
   - id: ActionExecutor.AfterActionFinished
     type: ActionExecutor
@@ -53,7 +53,7 @@ touchpoints:
     member: SetupForPlayer
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/ArchaicToothSetupCompatPatch.cs
+      - src/KitLib.Core/Cheat/Patches/ArchaicToothSetupCompatPatch.cs
 
   - id: AssetLoadingSession.FinalizeLoading
     type: AssetLoadingSession
@@ -67,14 +67,14 @@ touchpoints:
     member: RollForUpgrade
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: CardRarityOdds.Roll
     type: CardRarityOdds
     member: Roll
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: CombatManager._playersReadyToBeginEnemyTurn
     type: CombatManager
@@ -95,7 +95,7 @@ touchpoints:
     member: SetUpCombat
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CombatCheckpointPatch.cs
+      - src/KitLib.Core/Cheat/Patches/CombatCheckpointPatch.cs
       - src/KitLib.Modules.Dev/Patches/HookPatches.cs
 
   - id: CombatStateSynchronizer.CheckSyncCompleted
@@ -131,28 +131,28 @@ touchpoints:
     member: DamageBlockInternal
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: Creature.GainBlockInternal
     type: Creature
     member: GainBlockInternal
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: Creature.LoseBlockInternal
     type: Creature
     member: LoseBlockInternal
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: Creature.LoseHpInternal
     type: Creature
     member: LoseHpInternal
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
       - src/KitLib.Modules.Dev/Patches/HookPatches.cs
 
   - id: Creature.TakeTurn
@@ -160,7 +160,7 @@ touchpoints:
     member: TakeTurn
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: EndPlayerTurnAction.ExecuteAction
     type: EndPlayerTurnAction
@@ -195,14 +195,14 @@ touchpoints:
     member: ShouldAllowFreeTravel
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/Map/MapFreeTravelPatch.cs
+      - src/KitLib.Core/Cheat/Patches/Map/MapFreeTravelPatch.cs
 
   - id: Hook.ShouldClearBlock
     type: Hook
     member: ShouldClearBlock
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: MapSelectionSynchronizer.PlayerVotedForMapCoord
     type: MapSelectionSynchronizer
@@ -230,7 +230,7 @@ touchpoints:
     member: OnTryPurchaseWrapper
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: ModManager.GetGameplayRelevantModNameList
     type: ModManager
@@ -287,7 +287,7 @@ touchpoints:
     member: StartNewSingleplayerRun
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
+      - src/KitLib.Core/Cheat/Patches/RunStartPatch.cs
 
   - id: NGlobalUi._Ready
     type: NGlobalUi
@@ -344,7 +344,7 @@ touchpoints:
     member: OnRelease
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/Map/MapPointDevJumpPatch.cs
+      - src/KitLib.Core/Cheat/Patches/Map/MapPointDevJumpPatch.cs
 
   - id: NMapPoint.OnUnfocus
     type: NMapPoint
@@ -380,8 +380,8 @@ touchpoints:
     member: RecalculateTravelability
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Map/MapScreenReflection.cs
-      - src/KitLib.Modules.Cheat/Patches/Map/MapTravelabilityRewritePatch.cs
+      - src/KitLib.Core/Cheat/Map/MapScreenReflection.cs
+      - src/KitLib.Core/Cheat/Patches/Map/MapTravelabilityRewritePatch.cs
 
   - id: NMapScreen._mapPointDictionary
     type: NMapScreen
@@ -395,7 +395,7 @@ touchpoints:
     member: _paths
     kind: field
     sources:
-      - src/KitLib.Modules.Cheat/Map/MapScreenReflection.cs
+      - src/KitLib.Core/Cheat/Map/MapScreenReflection.cs
 
   - id: NMultiplayerPlayerStateContainer._nodes
     type: NMultiplayerPlayerStateContainer
@@ -416,14 +416,14 @@ touchpoints:
     member: GrowPotionHolders
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: NPotionContainer._holders
     type: NPotionContainer
     member: _holders
     kind: field
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: NRelicCollection.OnSubmenuClosed
     type: NRelicCollection
@@ -467,7 +467,7 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
-      - src/KitLib.Modules.Cheat/Multiplayer/Cheat/Patches/MpCheatLifecyclePatch.cs
+      - src/KitLib.Core/Cheat/Multiplayer/Cheat/Patches/MpCheatLifecyclePatch.cs
       - src/KitLib.Modules.Panel/Patches/DevPerfTransitionPatches.cs
 
   - id: NSceneContainer.SetCurrentScene
@@ -503,21 +503,21 @@ touchpoints:
     member: GainGold
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: PlayerCombatState.LoseEnergy
     type: PlayerCombatState
     member: LoseEnergy
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: PlayerCombatState.LoseStars
     type: PlayerCombatState
     member: LoseStars
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: PotionModel.OnUseWrapper
     type: PotionModel
@@ -531,14 +531,14 @@ touchpoints:
     member: Roll
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: ProgressSaveManager.LoadProgress
     type: ProgressSaveManager
     member: LoadProgress
     kind: method
     sources:
-      - src/KitLib.Modules.User/Patches/ProgressLossPromptPatch.cs
+      - src/KitLib.Core/User/Patches/ProgressLossPromptPatch.cs
 
   - id: ReadyToBeginEnemyTurnAction.ExecuteAction
     type: ReadyToBeginEnemyTurnAction
@@ -566,7 +566,7 @@ touchpoints:
     member: CreateRoom
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/Map/MapRoomRewritePatch.cs
+      - src/KitLib.Core/Cheat/Patches/Map/MapRoomRewritePatch.cs
 
   - id: RunManager.EnterAct
     type: RunManager
@@ -589,7 +589,7 @@ touchpoints:
     sources:
       - src/KitLib.Modules.AI/AI/Sts2/Patches/AiPlayRunPatches.cs
       - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
-      - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
+      - src/KitLib.Core/Cheat/Patches/RunStartPatch.cs
       - src/KitLib.Modules.Panel/Patches/DevPerfTransitionPatches.cs
 
   - id: RunManager.OnEnded
@@ -598,28 +598,28 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib.Modules.AI/AI/Sts2/Patches/AiPlayRunPatches.cs
-      - src/KitLib.Modules.Cheat/Multiplayer/Cheat/Patches/MpCheatLifecyclePatch.cs
+      - src/KitLib.Core/Cheat/Multiplayer/Cheat/Patches/MpCheatLifecyclePatch.cs
 
   - id: RunManager.SetUpNewSingleplayer
     type: MegaCrit.Sts2.Core.Runs.RunManager
     member: SetUpNewSingleplayer
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
+      - src/KitLib.Core/Cheat/Patches/RunStartPatch.cs
 
   - id: RunManager.SetUpSavedSinglePlayer
     type: RunManager
     member: SetUpSavedSingleplayer
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/SaveSlotManager.cs
+      - src/KitLib.Core/Cheat/SaveSlotManager.cs
 
   - id: RunManager.ShouldSave
     type: RunManager
     member: ShouldSave
     kind: property
     sources:
-      - src/KitLib.Modules.Cheat/SaveSlotManager.cs
+      - src/KitLib.Core/Cheat/SaveSlotManager.cs
 
   - id: RunManager.ToSave
     type: RunManager
@@ -647,22 +647,22 @@ touchpoints:
     member: InitProfileId
     kind: method
     sources:
-      - src/KitLib.Modules.User/Patches/ModChangeGuardPatch.cs
+      - src/KitLib.Core/User/Patches/ModChangeGuardPatch.cs
 
   - id: SaveManager.InitProgressData
     type: SaveManager
     member: InitProgressData
     kind: method
     sources:
-      - src/KitLib.Modules.User/Patches/ProgressLossPromptPatch.cs
+      - src/KitLib.Core/User/Patches/ProgressLossPromptPatch.cs
 
   - id: SaveManager.SaveProgressFile
     type: SaveManager
     member: SaveProgressFile
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
-      - src/KitLib.Modules.User/Patches/ModChangeGuardPatch.cs
+      - src/KitLib.Core/Cheat/Patches/RunStartPatch.cs
+      - src/KitLib.Core/User/Patches/ModChangeGuardPatch.cs
 
   - id: StartRunLobby.IsAboutToBeginGame
     type: StartRunLobby
@@ -683,24 +683,24 @@ touchpoints:
     member: Roll
     kind: method
     sources:
-      - src/KitLib.Modules.Cheat/Patches/CheatPatches.cs
+      - src/KitLib.Core/Cheat/Patches/CheatPatches.cs
 
   - id: dynamic:src/KitLib.Core/Patches/MultiplayerCompatPatch.cs
     dynamic: true
     sources:
       - src/KitLib.Core/Patches/MultiplayerCompatPatch.cs
 
-  - id: dynamic:src/KitLib.Modules.Cheat/Patches/InstantModeUnlockPatch.cs
+  - id: dynamic:src/KitLib.Core/Cheat/Patches/InstantModeUnlockPatch.cs
     dynamic: true
     sources:
-      - src/KitLib.Modules.Cheat/Patches/InstantModeUnlockPatch.cs
+      - src/KitLib.Core/Cheat/Patches/InstantModeUnlockPatch.cs
 
-  - id: dynamic:src/KitLib.Modules.Cheat/Patches/Map/MapRoomRewritePatch.cs
+  - id: dynamic:src/KitLib.Core/Cheat/Patches/Map/MapRoomRewritePatch.cs
     dynamic: true
     sources:
-      - src/KitLib.Modules.Cheat/Patches/Map/MapRoomRewritePatch.cs
+      - src/KitLib.Core/Cheat/Patches/Map/MapRoomRewritePatch.cs
 
-  - id: dynamic:src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
+  - id: dynamic:src/KitLib.Core/Cheat/Patches/RunStartPatch.cs
     dynamic: true
     sources:
-      - src/KitLib.Modules.Cheat/Patches/RunStartPatch.cs
+      - src/KitLib.Core/Cheat/Patches/RunStartPatch.cs

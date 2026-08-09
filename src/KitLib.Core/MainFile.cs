@@ -1,5 +1,6 @@
 using KitLib.Diagnostics;
 using KitLib.Host;
+using KitLib.Patches;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
 
@@ -19,7 +20,12 @@ public class MainFile {
         KitLibStartupAudit.Measure("dataPaths", DataPaths.EnsurePinnedOnMainThread);
         LegacyInstancesDirCleanup.ScheduleOnStartup();
         KitLibStartupAudit.Measure("settings", SettingsStore.Load);
-        KitLibStartupAudit.Measure("coreHarmony", () => KitLibHarmony.Apply(typeof(MainFile).Assembly, ModID));
+        // Scoped apply: User/Cheat patches live in this assembly after the host merge.
+        KitLibStartupAudit.Measure("coreHarmony", () => KitLibHarmony.ApplyOnly(
+            typeof(MainFile).Assembly,
+            ModID,
+            typeof(MultiplayerModSyncPatch),
+            typeof(JoinFlowCompatPatch)));
         KitLibStartupAudit.Measure("hostBootstrap", KitLibHost.Bootstrap);
         KitLibStartupAudit.Measure("i18n", I18N.Initialize);
         Logger.Info("KitLib Core initialized.");

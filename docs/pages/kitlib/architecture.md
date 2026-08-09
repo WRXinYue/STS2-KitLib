@@ -13,7 +13,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: en
 KitLib is a **family of game mods**: `KitLib` (required host), `KitModPanel`, `KitDevTools`, and `KitAI`.
 
-**Repo sources:** KitLib host code lives under `src/` (Core, Loader, Abstractions, User, Cheat). Sibling products live under `mods/<Product>/`.
+**Repo sources:** KitLib host code lives under `src/` (Core, Loader, Abstractions). Sibling products live under `mods/<Product>/`.
 
 **Game install:** each product is a folder under the game’s `mods/` (KitLib Core discovers sibling folders and loads satellite DLLs into one ALC).
 :::
@@ -21,7 +21,7 @@ KitLib is a **family of game mods**: `KitLib` (required host), `KitModPanel`, `K
 ::: zh-CN
 KitLib 是一组**游戏 mod**：`KitLib`（必装宿主）、`KitModPanel`、`KitDevTools`、`KitAI`。
 
-**仓库源码：** KitLib 宿主在 `src/`（Core、Loader、Abstractions、User、Cheat）；兄弟产品在 `mods/<Product>/`。
+**仓库源码：** KitLib 宿主在 `src/`（Core、Loader、Abstractions）；兄弟产品在 `mods/<Product>/`。
 
 **游戏安装：** 每个产品对应游戏 `mods/` 下的一个目录；KitLib Core 发现兄弟目录并在同一 ALC 中加载卫星 DLL。
 :::
@@ -48,10 +48,8 @@ eng/                           # MSBuild props/targets
 scripts/lib/mod_products.py    # product → satellite catalog
 src/
   KitLib.Abstractions/         # NuGet contracts (+ KitLibCheatApi, KitLibProductIds)
-  KitLib.Core/                 # host, settings, satellite loader
+  KitLib.Core/                 # host, settings, User/, Cheat/
   KitLib.Loader/               # KitLib.dll entry
-  KitLib.Modules.User/         # User satellite (logs, progress)
-  KitLib.Modules.Cheat/        # Cheat satellite (mutation APIs)
 ```
 :::
 
@@ -67,10 +65,8 @@ eng/
 scripts/lib/mod_products.py
 src/
   KitLib.Abstractions/   # + KitLibCheatApi
-  KitLib.Core/
+  KitLib.Core/          # 宿主、User/、Cheat/
   KitLib.Loader/
-  KitLib.Modules.User/
-  KitLib.Modules.Cheat/
 ```
 :::
 
@@ -81,10 +77,9 @@ src/
 ::: en
 ```text
 mods/                          # game install layout (not repo sources)
-  KitLib/                      # host + User + Cheat
+  KitLib/                      # host
     mod_manifest.json
     KitLib.dll, KitLib.Core.dll, KitLib.Abstractions.dll, …
-    modules/KitLib.User.dll, KitLib.Cheat.dll
   KitModPanel/
     KitModPanel.dll
     modules/KitLib.ModPanel.dll
@@ -102,7 +97,7 @@ Dependencies: KitModPanel → KitLib; KitDevTools → KitLib + KitModPanel; KitA
 ::: zh-CN
 ```text
 mods/                          # 游戏安装布局（不是仓库源码）
-  KitLib/                      # 宿主 + User + Cheat
+  KitLib/                      # 宿主
   KitModPanel/                 # ModPanel
   KitDevTools/                 # Panel + Dev
   KitAI/                       # AI
@@ -119,8 +114,8 @@ mods/                          # 游戏安装布局（不是仓库源码）
 | Assembly | References | Harmony |
 |----------|------------|---------|
 | `KitLib.Abstractions` | (none) | — |
-| `KitLib` (Core) | Abstractions, game | `MultiplayerCompatPatch` |
-| Satellites | Core + Abstractions (+ peers at compile time) | `KitLibHarmony.Apply(assembly, id)` in `ModuleEntry` |
+| `KitLib` (Core) | Abstractions, game | `KitLibHarmony` (scoped apply) |
+| Product satellites | Core + Abstractions (+ peers at compile time) | `KitLibHarmony.Apply(assembly, id)` in `ModuleEntry` |
 
 Cross-module internals use `InternalsVisibleTo` within the KitLib family and `KitLib*Ops` / `KitLibCheatApi` delegates on `KitLib.Host` / Abstractions where compile-time cycles must be avoided. Mutation APIs surface through the Core bridges under **[API](/api/)** (`RunInventoryBridge`, `PowerBridge`, `RuntimeCheatBridge`).
 :::
@@ -129,8 +124,8 @@ Cross-module internals use `InternalsVisibleTo` within the KitLib family and `Ki
 | 程序集 | 引用 | Harmony |
 |--------|------|---------|
 | `KitLib.Abstractions` | （无） | — |
-| `KitLib`（Core） | Abstractions、游戏 | `MultiplayerCompatPatch` |
-| 卫星模块 | Core + Abstractions（编译期可引用 peer） | `ModuleEntry` 里 `KitLibHarmony.Apply(assembly, id)` |
+| `KitLib`（Core） | Abstractions、游戏 | `KitLibHarmony`（分域 apply） |
+| 产品卫星 | Core + Abstractions（编译期可引用 peer） | `ModuleEntry` 里 `KitLibHarmony.Apply(assembly, id)` |
 
 跨模块内部通过 KitLib 家族内的 `InternalsVisibleTo`，以及 `KitLib.Host` / Abstractions 上的 `KitLib*Ops` / `KitLibCheatApi` 委托避免编译期环。突变 API 见 **[API](/api/)**（`RunInventoryBridge`、`PowerBridge`、`RuntimeCheatBridge`）。
 :::
@@ -140,7 +135,7 @@ Cross-module internals use `InternalsVisibleTo` within the KitLib family and `Ki
 ## 构建{lang="zh-CN"}
 
 ::: en
-- **KitLib host** (`src/`): `KitLib.Core`, `KitLib.Loader`, `KitLib.Modules.User`, `KitLib.Modules.Cheat` → `build/KitLib/` (+ `modules/`)
+- **KitLib host** (`src/`): `KitLib.Core`, `KitLib.Loader` → `build/KitLib/`
 - **Sibling satellites**: `mods/<Product>/` projects stage to `build/<ProductId>/modules/` via `KitLibProductId`
 - **Thin product loaders**: `mods/KitModPanel|KitDevTools|KitAI` → `build/<ProductId>/`
 
@@ -152,7 +147,7 @@ make zip-full     # package build/KitLib-vX.X.X.zip (four mod folders)
 :::
 
 ::: zh-CN
-- **KitLib 宿主**（`src/`）：Core、Loader、Modules.User、Modules.Cheat → `build/KitLib/`（含 `modules/`）
+- **KitLib 宿主**（`src/`）：Core、Loader → `build/KitLib/`
 - **兄弟产品卫星**：`mods/<Product>/` → `build/<ProductId>/modules/`（`KitLibProductId`）
 - **薄产品入口** → `mods/KitModPanel|KitDevTools|KitAI`
 
@@ -168,19 +163,19 @@ make zip-full
 ## 运行时加载顺序{lang="zh-CN"}
 
 ::: en
-`SatelliteModuleLoader` searches `KitLib/modules` plus sibling product `modules/` folders, then inits in order:
+Host bootstrap inits **User** (always) and **Cheat** (when `AllowHighRiskModules`). Then `SatelliteModuleLoader` searches sibling product `modules/` folders and inits:
 
-1. User → 2. ModPanel → 3. Panel → 4. Cheat (always when present) → 5. AI (needs Panel) → 6. Dev (needs Panel)
+1. ModPanel → 2. Panel → 3. AI (needs Panel) → 4. Dev (needs Panel)
 
-`KitLib.User` and `KitLib.Cheat` ship with KitLib. Sibling satellites load when their product folder is installed (DLL present); missing products soft-skip. No per-satellite settings toggles.
+Sibling satellites load when their product folder is installed (DLL present); missing products soft-skip. No per-satellite settings toggles.
 :::
 
 ::: zh-CN
-`SatelliteModuleLoader` 搜索 `KitLib/modules` 与兄弟产品的 `modules/`，初始化顺序：
+宿主启动时初始化 **User**（始终）与 **Cheat**（`AllowHighRiskModules` 时）。随后 `SatelliteModuleLoader` 搜索兄弟产品 `modules/` 并初始化：
 
-1. User → 2. ModPanel → 3. Panel → 4. Cheat（有 DLL 即加载）→ 5. AI（需 Panel）→ 6. Dev（需 Panel）
+1. ModPanel → 2. Panel → 3. AI（需 Panel）→ 4. Dev（需 Panel）
 
-`KitLib.User` 与 `KitLib.Cheat` 随 KitLib 提供；兄弟产品有安装目录（DLL 存在）才加载，缺失则软跳过。没有按卫星的设置开关。
+兄弟产品有安装目录（DLL 存在）才加载，缺失则软跳过。没有按卫星的设置开关。
 :::
 
 ## Content-mod authors{lang="en"}

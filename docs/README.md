@@ -18,7 +18,7 @@ make docs-build  # static output → docs/dist/
 
 ## Repo vs game install
 
-- **Repo:** KitLib host sources under `src/` (`Core`, `Loader`, `Modules.User`, `Modules.Cheat`); sibling products under `mods/KitModPanel|KitDevTools|KitAI`.
+- **Repo:** KitLib host sources under `src/` (`Core`, `Loader`); sibling products under `mods/KitModPanel|KitDevTools|KitAI`.
 - **Game:** `make sync` deploys four folders into the game’s `mods/` (`KitLib`, `KitModPanel`, `KitDevTools`, `KitAI`).
 
 Details: [Architecture](pages/kitlib/architecture.md).

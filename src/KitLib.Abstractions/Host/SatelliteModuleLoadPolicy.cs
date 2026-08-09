@@ -11,7 +11,6 @@ public static class SatelliteModuleLoadPolicy {
     public const string ModulesSubdir = "modules";
 
     public static readonly ModuleInfo[] Modules = [
-        new(KitLibModuleIds.User, AlwaysOn: true, Requires: []),
         // Load when present (KitModPanel product); missing is soft — not a broken KitLib install.
         new(KitLibModuleIds.ModPanel, AlwaysOn: true, Requires: []),
         new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
@@ -23,17 +22,8 @@ public static class SatelliteModuleLoadPolicy {
         Modules.Where(m => !m.AlwaysOn).Select(m => m.Id),
         StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Modules that must ship inside the KitLib product folder.</summary>
-    public static bool IsKitLibBundledRequired(string moduleId) =>
-        string.Equals(moduleId, KitLibModuleIds.User, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(moduleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>KitLib.Cheat ships with KitLib and is not a user-toggleable satellite.</summary>
-    public static bool IsKnownSatellite(string moduleId) {
-        if (TryGetModule(moduleId, out _))
-            return true;
-        return string.Equals(moduleId, KitLibModuleIds.Cheat, StringComparison.OrdinalIgnoreCase);
-    }
+    /// <summary>Whether <paramref name="moduleId"/> is a loadable product satellite DLL.</summary>
+    public static bool IsKnownSatellite(string moduleId) => TryGetModule(moduleId, out _);
 
     /// <summary>Fresh-install defaults: Panel on for PC; all optional modules on for Android (failed loads are skipped quietly).</summary>
     public static IReadOnlyDictionary<string, bool> GetDefaultToggles(bool? mobileDefaults = null) {

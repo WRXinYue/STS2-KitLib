@@ -16,9 +16,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\KitLib.Modules.Cheat\KitLib.Cheat.csproj" />
     <ProjectReference Include="..\KitAI\KitLib.AI.csproj" />
-    <ProjectReference Include="..\..\src\KitLib.Modules.User\KitLib.User.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(KitLibSourceDir)\Data\harmony-patch-registry.json" LogicalName="KitLib.Data.harmony-patch-registry.json" />

@@ -15,7 +15,7 @@ public static class KitLibProductIds {
     /// <summary>Satellite module ids shipped under each product (excludes Core/Loader).</summary>
     public static readonly IReadOnlyDictionary<string, string[]> ModulesByProduct =
         new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase) {
-            [KitLib] = [KitLibModuleIds.User, KitLibModuleIds.Cheat],
+            [KitLib] = [],
             [KitModPanel] = [KitLibModuleIds.ModPanel],
             [KitDevTools] = [KitLibModuleIds.Panel, KitLibModuleIds.Dev],
             [KitAI] = [KitLibModuleIds.Ai],

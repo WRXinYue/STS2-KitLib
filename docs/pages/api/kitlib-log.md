@@ -53,7 +53,7 @@ public class Main {
 - Bracket tags in the message for sub-areas (`[Combat]`, `[Save]`).
 - Gate expensive work with `Logger.WillLog(LogLevel.Debug)`.
 
-With **KitLib.User**, lines are captured via `Log.LogCallback`, shown in the in-game viewer, written to `user://logs/godot.log`, and streamed to the browser console.
+With KitLib installed, lines are captured via `Log.LogCallback`, shown in the in-game viewer, written to `user://logs/godot.log`, and streamed to the browser console.
 :::
 
 ::: zh-CN
@@ -74,7 +74,7 @@ public class Main {
 - 消息内用方括号标签区分子模块（`[Combat]`、`[Save]`）。
 - 高开销逻辑用 `Logger.WillLog(LogLevel.Debug)` 门控。
 
-安装 **KitLib.User** 后，经 `Log.LogCallback` 采集，进入游戏内查看器、`user://logs/godot.log` 与浏览器控制台。
+安装 KitLib 后，经 `Log.LogCallback` 采集，进入游戏内查看器、`user://logs/godot.log` 与浏览器控制台。
 :::
 
 ## Listen & replay (tooling){lang="en"}

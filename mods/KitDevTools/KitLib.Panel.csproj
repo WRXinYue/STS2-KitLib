@@ -20,16 +20,11 @@
       <_Parameter1>KitLib.Dev</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>KitLib.Cheat</_Parameter1>
-    </AssemblyAttribute>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>KitLib.AI</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KitModPanel\KitLib.ModPanel.csproj" />
-    <ProjectReference Include="..\..\src\KitLib.Modules.User\KitLib.User.csproj" />
-    <ProjectReference Include="..\..\src\KitLib.Modules.Cheat\KitLib.Cheat.csproj" />
     <ProjectReference Include="KitLib.Dev.csproj" />
     <ProjectReference Include="..\KitAI\KitLib.AI.csproj" />
   </ItemGroup>

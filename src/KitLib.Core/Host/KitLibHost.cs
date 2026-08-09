@@ -33,11 +33,25 @@ public static class KitLibHost {
         _bootstrapped = true;
         KitLog.Info("KitLib host bootstrap starting.");
         ModuleCatalog.Announce(ModuleIds.Core);
-        KitLog.Info("KitLib core module announced; loading bundled satellites.");
+        KitLibStartupAudit.Measure("bundled.userCheat", InitializeBundledHostModules);
+        KitLog.Info("KitLib core module announced; loading optional product satellites.");
         SatelliteModuleLoader.LoadBundledModules();
         if (!ModuleCatalog.IsLoaded(ModuleIds.Panel))
             KitLog.Warn("Hotkeys require KitLib.Panel — module not loaded (check Settings → satellite profile).");
         KitLog.Info("KitLib Core host ready.");
+    }
+
+    /// <summary>User + Cheat ship inside KitLib.Core (no satellite DLLs).</summary>
+    static void InitializeBundledHostModules() {
+        KitLib.User.ModuleEntry.Initialize();
+        if (!Sts2RuntimeProfile.AllowHighRiskModules) {
+            KitLog.Info(
+                $"Module {ModuleIds.Cheat} skipped — unsupported STS2 version " +
+                $"{Sts2RuntimeProfile.RawVersion ?? "?"}.");
+            return;
+        }
+
+        KitLib.Cheat.ModuleEntry.Initialize();
     }
 
     public static void AnnounceModule(string moduleId) => ModuleCatalog.Announce(moduleId);

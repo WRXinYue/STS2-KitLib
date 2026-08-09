@@ -3,7 +3,7 @@ namespace KitLib.Abstractions.Host;
 
 /// <summary>
 /// Cheat/runtime hooks wired by KitDevTools implementation assemblies.
-/// Consumers (Core, AI, Panel) use this surface instead of referencing KitLib.Cheat.dll.
+/// Consumers (Core, AI, Panel) use this surface instead of reaching into cheat implementation types.
 /// </summary>
 public static class KitLibCheatApi {
     public static Action? OpenCards { get; set; }

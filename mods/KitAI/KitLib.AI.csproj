@@ -22,10 +22,6 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\KitLib.Modules.User\KitLib.User.csproj" />
-    <ProjectReference Include="..\..\src\KitLib.Modules.Cheat\KitLib.Cheat.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="$(KitLibSourceDir)\AI\Data\*.json" LogicalName="KitLib.AI.%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
