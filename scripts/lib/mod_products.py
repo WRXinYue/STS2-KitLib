@@ -70,7 +70,7 @@ PRODUCTS: dict[str, ModProduct] = {
         manifest_path=_REPO / "mods" / "KitAI" / "KitAI.json",
         entry_dll="KitAI.dll",
         loader_csproj="mods/KitAI/KitAI.csproj",
-        dependency_ids=("KitLib", "KitDevTools"),
+        dependency_ids=("KitLib",),
     ),
 }
 

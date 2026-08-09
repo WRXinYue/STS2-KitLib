@@ -44,27 +44,27 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void ResolveEnabled_skips_ai_and_dev_when_panel_off() {
+    public void ResolveEnabled_skips_dev_when_panel_off_but_keeps_ai() {
         var toggles = new Dictionary<string, bool> {
             [KitLibModuleIds.Panel] = false,
             [KitLibModuleIds.Ai] = true,
             [KitLibModuleIds.Dev] = true,
         };
         var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
-        Assert.False(resolved[KitLibModuleIds.Ai]);
+        Assert.True(resolved[KitLibModuleIds.Ai]);
         Assert.False(resolved[KitLibModuleIds.Dev]);
     }
 
     [Fact]
-    public void ApplyDependencyRulesToToggles_enabling_ai_enables_panel() {
+    public void ApplyDependencyRulesToToggles_enabling_dev_enables_panel() {
         var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase) {
             [KitLibModuleIds.Panel] = false,
             [KitLibModuleIds.Ai] = false,
             [KitLibModuleIds.Dev] = false,
         };
-        SatelliteModuleLoadPolicy.ApplyDependencyRulesToToggles(toggles, KitLibModuleIds.Ai, enabled: true);
+        SatelliteModuleLoadPolicy.ApplyDependencyRulesToToggles(toggles, KitLibModuleIds.Dev, enabled: true);
         Assert.True(toggles[KitLibModuleIds.Panel]);
-        Assert.True(toggles[KitLibModuleIds.Ai]);
+        Assert.True(toggles[KitLibModuleIds.Dev]);
     }
 
     [Fact]
@@ -76,9 +76,9 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void GetDependents_lists_modules_that_require_panel() {
+    public void GetDependents_lists_dev_for_panel() {
         var dependents = SatelliteModuleLoadPolicy.GetDependents(KitLibModuleIds.Panel);
-        Assert.Contains(KitLibModuleIds.Ai, dependents);
+        Assert.DoesNotContain(KitLibModuleIds.Ai, dependents);
         Assert.Contains(KitLibModuleIds.Dev, dependents);
     }
 
@@ -92,14 +92,14 @@ public sealed class SatelliteModuleLoadPolicyTests {
     }
 
     [Fact]
-    public void ResolveEnabled_skips_ai_when_panel_off() {
+    public void ResolveEnabled_keeps_ai_when_panel_off() {
         var toggles = new Dictionary<string, bool> {
             [KitLibModuleIds.Panel] = false,
             [KitLibModuleIds.Ai] = true,
             [KitLibModuleIds.Dev] = false,
         };
         var resolved = SatelliteModuleLoadPolicy.ResolveEnabled(toggles);
-        Assert.False(resolved[KitLibModuleIds.Ai]);
+        Assert.True(resolved[KitLibModuleIds.Ai]);
     }
 
     [Fact]

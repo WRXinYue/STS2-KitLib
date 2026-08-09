@@ -23,7 +23,7 @@ internal static class SatelliteModuleLoader {
 
     static readonly ModuleSpec[] LoadOrder = [
         new(ModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
-        new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", [ModuleIds.Panel]),
+        new(ModuleIds.Ai, "KitLib.AI", "KitLib.AI.ModuleEntry", []),
         new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Panel]),
     ];
 

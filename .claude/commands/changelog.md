@@ -10,7 +10,10 @@ Steps:
    ```
    (On Windows PowerShell, use: `git log "$(git describe --tags --abbrev=0)..HEAD" --oneline`.)
 
-2. Read `CHANGELOG.md` and `CHANGELOG.zh-CN.md` for format and what is already under `## [Unreleased]`.
+2. Decide which changelog(s) apply:
+   - **KitLib (host):** root `CHANGELOG.md` + `CHANGELOG.zh-CN.md`
+   - **KitModPanel / KitDevTools / KitAI:** `mods/<Product>/CHANGELOG.md` + `CHANGELOG.zh-CN.md`
+   - Skip products that the commits did not affect.
 
 3. Categorize new player-facing changes under `## [Unreleased]`:
    - **Added** — new features visible to the player
@@ -24,6 +27,6 @@ Steps:
    - For **Fixed**, describe the symptom in gameplay terms — not patch class names, overloads, or long internal API detail.
    - One short line is enough unless a single clause clarifies an edge case.
 
-5. Edit only `CHANGELOG.md` and `CHANGELOG.zh-CN.md` as needed. Do not create other changelog files unless the repo already uses them.
+5. Edit only the relevant changelog pairs as needed. Do not invent entries for unaffected products.
 
 When editing an already-released section (e.g. wording polish for a shipped version), use the same player-facing rules and still **do not commit** from this command.

@@ -86,7 +86,7 @@ mods/
     modules/KitLib.AI.dll
 ```
 
-Dependencies: KitModPanel → KitLib; KitDevTools → KitLib; KitAI → KitLib + KitDevTools.
+Dependencies: KitModPanel → KitLib; KitDevTools → KitLib; KitAI → KitLib (KitDevTools optional for AI Host UI).
 :::
 
 ::: zh-CN
@@ -98,7 +98,7 @@ mods/
   KitAI/
 ```
 
-依赖：KitModPanel → KitLib；KitDevTools → KitLib；KitAI → KitLib + KitDevTools。
+依赖：KitModPanel → KitLib；KitDevTools → KitLib；KitAI → KitLib（KitDevTools 可选，用于 AI Host 面板）。
 :::
 
 ## Dependency rules{lang="en"}

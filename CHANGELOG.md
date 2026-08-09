@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Product versions** — Sibling products (`KitModPanel`, `KitDevTools`, `KitAI`) now version independently from KitLib (dev builds at **0.0.1**; first release planned as **0.1.0**). Their changelogs live under `mods/<Product>/CHANGELOG.md` (and `.zh-CN.md`). Root changelogs remain KitLib-only.
+
 ## [0.33.0] - 2026-08-06
 
 ### Added

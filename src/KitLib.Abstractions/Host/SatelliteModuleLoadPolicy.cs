@@ -12,7 +12,7 @@ public static class SatelliteModuleLoadPolicy {
 
     public static readonly ModuleInfo[] Modules = [
         new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
-        new(KitLibModuleIds.Ai, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
+        new(KitLibModuleIds.Ai, AlwaysOn: false, Requires: []),
         new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
     ];
 
@@ -69,14 +69,10 @@ public static class SatelliteModuleLoadPolicy {
 
         if (!enabled && string.Equals(moduleId, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase)) {
             toggles[KitLibModuleIds.Dev] = false;
-            toggles[KitLibModuleIds.Ai] = false;
             return;
         }
 
         if (enabled && string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase))
-            toggles[KitLibModuleIds.Panel] = true;
-
-        if (enabled && string.Equals(moduleId, KitLibModuleIds.Ai, StringComparison.OrdinalIgnoreCase))
             toggles[KitLibModuleIds.Panel] = true;
     }
 

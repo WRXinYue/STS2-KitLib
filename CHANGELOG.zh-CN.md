@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **产品版本** — 兄弟产品（`KitModPanel`、`KitDevTools`、`KitAI`）与 KitLib 独立版本（开发中为 **0.0.1**，首发计划 **0.1.0**）。各自变更见 `mods/<Product>/CHANGELOG.md`（及 `.zh-CN.md`）。根目录 changelog 仅记录 KitLib。
+
 ## [0.33.0] - 2026-08-06
 
 ### Added
