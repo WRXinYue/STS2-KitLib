@@ -102,6 +102,8 @@ internal static partial class CardBrowserUI {
         /// <summary>Session-scoped input host for pooled grid holders (wire on create, unwire on release).</summary>
         public readonly GridInputHost GridInput;
 
+        internal CardBrowserDragController? DragController;
+
         // Selection
         public CardModel? SelectedCard;
         public NGridCardHolder? SelectedHolder;
@@ -577,7 +579,6 @@ internal static partial class CardBrowserUI {
         content.AddChild(s.StatusLabel);
         CardBrowserPerf.Log("open.buildGridShell", phase);
 
-        // ── Wire up ──
         s.SearchInput.TextChanged += text => {
             CardBrowserFilterPersistence.LastSearchText = text ?? "";
             RebuildGrid(s, text ?? "");
@@ -585,6 +586,7 @@ internal static partial class CardBrowserUI {
 
         phase = CardBrowserPerf.Start();
         dual.AttachToScene();
+        s.DragController = CardBrowserDragController.Attach(dual.Root, s);
         RaiseHoverTipsLayer();
         dual.Root.TreeExiting += () => {
             RestoreHoverTipsLayer();

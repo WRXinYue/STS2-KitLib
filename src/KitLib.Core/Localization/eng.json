@@ -966,6 +966,7 @@
   "cardBrowser.viewUpgrades": "Upgrades",
   "cardBrowser.showHidden": "Hidden",
   "cardBrowser.maxUpgrade": "Already at max upgrade level.",
+  "cardBrowser.dropHand": "Add to Hand",
   "cardBrowser.sortType": "Type",
   "cardBrowser.sortRarity": "Rarity",
   "cardBrowser.sortCost": "Cost",

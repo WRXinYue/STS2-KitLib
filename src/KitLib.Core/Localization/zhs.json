@@ -885,6 +885,7 @@
   "cardBrowser.addTarget": "目标: {0}",
   "cardBrowser.addDuration": "持续: {0}",
   "cardBrowser.addCard": "添加卡牌",
+  "cardBrowser.dropHand": "加入手牌",
   "cardBrowser.addedCard": "已添加: {0}",
   "cardBrowser.editMpWarning": "联机：下方属性修改仅本机生效，可能导致 StateDivergence 断线。改牌组请用同步加牌/删牌。",
   "cardBrowser.editMpSync": "联机：下方修改会同步到所有玩家（请在手牌/牌组等分页操作）。",

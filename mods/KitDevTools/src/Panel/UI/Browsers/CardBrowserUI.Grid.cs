@@ -256,14 +256,53 @@ internal static partial class CardBrowserUI {
             Unwire(holder);
             holder.Pressed += OnPressed;
             holder.GuiInput += evt => OnGuiInput(holder, evt);
+            if (holder.CardNode is Control cardNode)
+                cardNode.GuiInput += evt => OnGuiInput(holder, evt);
         }
 
         public void Unwire(NGridCardHolder holder) {
             DisconnectAll(holder, NCardHolder.SignalName.Pressed);
             DisconnectAll(holder, Control.SignalName.GuiInput);
+            if (holder.CardNode is Control cardNode)
+                DisconnectAll(cardNode, Control.SignalName.GuiInput);
+        }
+
+        private void OnGuiInput(NGridCardHolder holder, InputEvent evt) {
+            if (!GodotObject.IsInstanceValid(_s.GridContent))
+                return;
+
+            if (evt is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left) {
+                if (mb.Pressed) {
+                    _s.DragController?.NotifyPointerDown(holder, holder.GetGlobalMousePosition());
+                    return;
+                }
+
+                if (!mb.DoubleClick || _pickerCallback == null)
+                    return;
+
+                var dblCard = holder.CardModel;
+                if (dblCard == null)
+                    return;
+
+                _pickerCallback(dblCard.CanonicalInstance);
+                holder.AcceptEvent();
+                return;
+            }
+
+            if (evt is InputEventMouseMotion && _s.DragController != null && Input.IsMouseButtonPressed(MouseButton.Left))
+                _s.DragController.NotifyPointerMove(holder);
         }
 
         private void OnPressed(NCardHolder h) {
+            if (h is NGridCardHolder pressedHolder)
+                _s.DragController?.NotifyPointerDown(pressedHolder, pressedHolder.GetGlobalMousePosition());
+
+            if (_s.DragController?.ShouldSuppressClick() == true)
+                return;
+
+            if (_s.DragController?.IsDragging == true)
+                return;
+
             if (h is not NGridCardHolder holder)
                 return;
             if (!GodotObject.IsInstanceValid(_s.GridContent) || !GodotObject.IsInstanceValid(_s.RightContent))
@@ -278,22 +317,6 @@ internal static partial class CardBrowserUI {
             _s.SelectedHolder = holder;
             holder.Modulate = ColCardPickSelected;
             ShowRightPanel(_s, card);
-        }
-
-        private void OnGuiInput(NGridCardHolder holder, InputEvent evt) {
-            if (!GodotObject.IsInstanceValid(_s.GridContent))
-                return;
-            if (evt is not InputEventMouseButton mb || !mb.Pressed || mb.ButtonIndex != MouseButton.Left)
-                return;
-            if (!mb.DoubleClick || _pickerCallback == null)
-                return;
-
-            var card = holder.CardModel;
-            if (card == null)
-                return;
-
-            _pickerCallback(card.CanonicalInstance);
-            holder.AcceptEvent();
         }
 
         private static void DisconnectAll(GodotObject obj, StringName signal) {
