@@ -4,9 +4,10 @@ using KitLib.Settings;
 
 namespace KitLib.UI.Diagnostics;
 
-/// <summary>Structured card browser timing logs; opt-in via Mod panel → Performance.</summary>
+/// <summary>Structured panel timing logs; opt-in via Mod panel → Performance.</summary>
 internal static class CardBrowserPerf {
     public const string Prefix = "[CardBrowserPerf]";
+    public const string RailPrefix = "[RailSwitchPerf]";
 
     public static bool IsEnabled => SettingsStore.Current.CardBrowserPerfLoggingEnabled;
 
@@ -21,5 +22,17 @@ internal static class CardBrowserPerf {
             msg += $" {detail}";
         MainFile.Logger.Info(msg);
         DevPerfEventLog.LogDetail(msg);
+    }
+
+    public static void LogRail(string phase, Stopwatch sw, string? detail = null) {
+        if (!IsEnabled)
+            return;
+
+        var msg = $"{RailPrefix} {phase} elapsedMs={sw.ElapsedMilliseconds}";
+        if (!string.IsNullOrWhiteSpace(detail))
+            msg += $" {detail}";
+        MainFile.Logger.Info(msg);
+        DevPerfEventLog.LogDetail(msg);
+        DevPerfEventLog.LogTransition($"RailSwitch.{phase}", sw.ElapsedMilliseconds);
     }
 }

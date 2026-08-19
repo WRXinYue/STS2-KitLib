@@ -18,14 +18,10 @@ internal static partial class DevPanelUI {
     }
 
     private static void SetupRailTransition(NGlobalUi globalUi, Control root) {
-        _browserOverlayCount++;
-        PinRail();
-        ReconcileBrowserRail(globalUi);
+        AcquireOverlayRailPin(globalUi, root);
         MonsterIntentOverlayUI.SyncState(globalUi);
         root.TreeExiting += () => {
-            _browserOverlayCount = Math.Max(0, _browserOverlayCount - 1);
-            UnpinRail();
-            ReconcileBrowserRail(globalUi);
+            ReleaseOverlayRailPin(globalUi, root);
             MonsterIntentOverlayUI.SyncState(globalUi);
             if (root.Name == LogCollector.LogViewerRootName) {
                 Callable.From(() => {

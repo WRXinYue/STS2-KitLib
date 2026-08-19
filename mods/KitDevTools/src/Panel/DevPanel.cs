@@ -95,6 +95,25 @@ internal static class DevPanel {
 
     // ──────── Panel Openers (used by satellite tab registration) ────────
 
+    internal static void SyncActivePanelFromRailTab(string tabId) {
+        KitLibState.ActivePanel = tabId switch {
+            "devmode.cards" => ActivePanel.Cards,
+            "devmode.relics" => ActivePanel.Relics,
+            "devmode.enemies" => ActivePanel.Enemies,
+            "devmode.powers" => ActivePanel.Powers,
+            "devmode.potions" => ActivePanel.Potions,
+            "devmode.events" => ActivePanel.Events,
+            "devmode.rooms" => ActivePanel.Rooms,
+            "devmode.console" => ActivePanel.Console,
+            "devmode.presets" => ActivePanel.Presets,
+            "devmode.hooks" => ActivePanel.Hooks,
+            "devmode.logs" => ActivePanel.Logs,
+            "devmode.enemyIntent" => ActivePanel.EnemyIntent,
+            "devmode.cardtest" => ActivePanel.CardTest,
+            _ => KitLibState.ActivePanel,
+        };
+    }
+
     internal static void OpenCards() {
         if (!TryDismissCurrent()) return;
         KitLibState.ActivePanel = ActivePanel.Cards;

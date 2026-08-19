@@ -90,9 +90,9 @@ internal static class KitLibNativeModSettingsBootstrap {
             () => SettingsStore.Current.PerfHudTraceToFile,
             SettingsStore.SetPerfHudTraceToFile));
         stack.AddChild(KitLibNativeModSettingsUi.CreateBoolToggle(
-            I18N.T("cardBrowser.perfLogging", "Card browser perf logging"),
+            I18N.T("cardBrowser.perfLogging", "Card browser / rail switch perf logging"),
             I18N.T("cardBrowser.perfLogging.desc",
-                "Log [CardBrowserPerf] open, grid, and filter timings to the main log while using the Dev Mode card browser."),
+                "Log [CardBrowserPerf] and [RailSwitchPerf] timings to the main log while using Dev Mode panels."),
             () => SettingsStore.Current.CardBrowserPerfLoggingEnabled,
             SettingsStore.SetCardBrowserPerfLoggingEnabled));
         return stack;

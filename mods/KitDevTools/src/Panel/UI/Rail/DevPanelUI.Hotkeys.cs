@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KitLib;
 using KitLib.Panels;
 using KitLib.Settings;
+using KitLib.UI.Diagnostics;
 
 namespace KitLib.UI;
 
@@ -140,7 +142,15 @@ internal static partial class DevPanelUI {
                 if (_railIndicator != null)
                     _railIndicator.Visible = false;
             }
-            captured.OnActivate(globalUi);
+            var onActivate = CardBrowserPerf.Start();
+            if (TryRevealRailTab(globalUi, tabId)) {
+                DevPanel.SyncActivePanelFromRailTab(tabId);
+                CardBrowserPerf.LogRail("onActivate", onActivate, $"tab={tabId} revealed");
+            }
+            else {
+                captured.OnActivate(globalUi);
+                CardBrowserPerf.LogRail("onActivate", onActivate, $"tab={tabId}");
+            }
             ((Node)globalUi).GetViewport()?.GuiReleaseFocus();
         }, () => IsRailTabPanelVisible(globalUi, tabId));
     }

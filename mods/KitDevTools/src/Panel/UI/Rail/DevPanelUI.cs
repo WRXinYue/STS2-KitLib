@@ -8,6 +8,7 @@ using KitLib.Icons;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 using KitLib.Settings;
+using KitLib.UI.Diagnostics;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.UI;
@@ -149,24 +150,9 @@ internal static partial class DevPanelUI {
         _railGlobalUi = globalUi;
         _onRefreshPanel = actions.OnRefreshPanel;
         _activeOverlayId = null;
-        _controller.Attach(closeAllPanels: () => {
-            HoldBrowserRail(globalUi);
-            CloseOverlay(globalUi);
-            var parent = (Node)globalUi;
-            foreach (var child in parent.GetChildren()) {
-                if (child is Control ctrl) {
-                    string name = ctrl.Name.ToString();
-                    if (name.StartsWith("KitLib", StringComparison.Ordinal)
-                        && !_keepNodes.Contains(name)) {
-                        if (!TryAnimateBrowserOverlayClose(parent, ctrl)) {
-                            parent.RemoveChild(ctrl);
-                            ctrl.QueueFree();
-                        }
-                    }
-                }
-            }
-            Callable.From(() => ReleaseBrowserRail(globalUi)).CallDeferred();
-        });
+        _controller.Attach(
+            hideAllPanels: () => HideAllSessionOverlays(globalUi),
+            destroyAllPanels: () => DestroyAllSessionOverlays(globalUi));
         _browserOverlayCount = 0;
         _browserRailHoldCount = 0;
         _railStyle = null;
@@ -419,6 +405,7 @@ internal static partial class DevPanelUI {
         _railGlobalUi = null;
         _activeOverlayId = null;
         ResetRailHotkeyState();
+        DestroyAllSessionOverlays(globalUi);
         _controller.Detach();
         _browserOverlayCount = 0;
         _browserRailHoldCount = 0;

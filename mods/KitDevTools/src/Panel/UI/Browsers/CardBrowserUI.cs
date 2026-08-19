@@ -118,6 +118,10 @@ internal static partial class CardBrowserUI {
 
     // ──────── Picker state (set by ShowPicker / Show, cleared on Remove) ────────
 
+    private const string BrowserModeMetaKey = "dm_card_browser_mode";
+    private const string ModeBrowse = "browse";
+    private const string ModePicker = "picker";
+
     private static Action<CardModel>? _pickerCallback;
     private static Action<VBoxContainer>? _pickerPersistentBuilder;
     // Always points at the current state's FilteredCards so callers can read the live filtered list.
@@ -137,17 +141,19 @@ internal static partial class CardBrowserUI {
     /// </summary>
     internal static void ShowPicker(NGlobalUi globalUi, RunState runState, Player player,
         Action<CardModel> onCardPicked, Action<VBoxContainer>? buildPersistentContent = null) {
-        // Show calls Remove internally which would clear the callbacks, so set them after.
         Show(globalUi, runState, player);
         _pickerCallback = onCardPicked;
         _pickerPersistentBuilder = buildPersistentContent;
+        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        root?.SetMeta(BrowserModeMetaKey, ModePicker);
     }
 
     public static void Show(NGlobalUi globalUi, RunState runState, Player player) {
         var openTotal = CardBrowserPerf.Start();
 
+        // Cards / Card Test share this root — never session-reveal; always rebuild so modes cannot leak.
         var phase = CardBrowserPerf.Start();
-        Remove(globalUi);
+        DevPanelUI.DestroySessionOverlay(globalUi, RootName);
         CardBrowserPerf.Log("open.remove", phase);
 
         phase = CardBrowserPerf.Start();
@@ -586,6 +592,7 @@ internal static partial class CardBrowserUI {
 
         phase = CardBrowserPerf.Start();
         dual.AttachToScene();
+        dual.Root.SetMeta(BrowserModeMetaKey, ModeBrowse);
         s.DragController = CardBrowserDragController.Attach(dual.Root, s);
         RaiseHoverTipsLayer();
         dual.Root.TreeExiting += () => {
@@ -614,13 +621,11 @@ internal static partial class CardBrowserUI {
         _pickerPersistentBuilder = null;
         _pickerGetFilteredCards = null;
         RestoreHoverTipsLayer();
-        var parent = (Node)globalUi;
-        var node = parent.GetNodeOrNull<Control>(RootName);
-        if (node != null) {
-            parent.RemoveChild(node);
-            node.QueueFree();
-        }
+        DevPanelUI.DestroySessionOverlay(globalUi, RootName);
     }
+
+    /// <summary>Card browser is not session-cached (shared with Card Test).</summary>
+    internal static bool TryReveal(NGlobalUi globalUi) => false;
 
     internal static readonly string NodeName = RootName;
 

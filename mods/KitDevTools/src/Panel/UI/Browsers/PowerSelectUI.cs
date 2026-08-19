@@ -84,16 +84,39 @@ internal static class PowerSelectUI {
 
     private static Player EffectivePlayer(State s) => s.TargetRef?.Value ?? s.Player;
 
+    private static readonly Dictionary<ulong, State> StatesByRoot = new();
+
     // ─────────────────────────────── Public API ───────────────────────────────
 
+    internal static bool TryReveal(NGlobalUi globalUi) {
+        if (!RunContext.TryGetRunAndPlayer(out _, out var player) || player == null)
+            return false;
+        return TryReveal(globalUi, player);
+    }
+
+    internal static bool TryReveal(NGlobalUi globalUi, Player player) {
+        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        if (root == null || !DevPanelUI.IsSessionCached(root))
+            return false;
+        if (!StatesByRoot.TryGetValue(root.GetInstanceId(), out var s))
+            return false;
+
+        s.Player = player;
+        s.TargetRef = null;
+        RefreshCurrentPowers(s);
+        RefreshAutoApplyList(s);
+        DevPanelUI.RevealSessionOverlay(globalUi, root);
+        return true;
+    }
+
     public static void Show(NGlobalUi globalUi, Player player) {
-        Remove(globalUi);
+        if (TryReveal(globalUi, player))
+            return;
+
+        DevPanelUI.DestroySessionOverlay(globalUi, RootName);
 
         var s = new State { Player = player, MpItemSync = MpCheatSession.InMultiplayerRun };
-        s.AllPowers = PowerActions.GetAllPowers()
-            .OrderBy(p => p.Type)
-            .ThenBy(p => PowerActions.GetPowerDisplayName(p))
-            .ToList();
+        s.AllPowers = BrowserCatalogDiskCache.TryLoadSortedPowers() ?? BuildSortedPowers();
 
         var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
             GlobalUi = globalUi,
@@ -154,11 +177,27 @@ internal static class PowerSelectUI {
         UpdateGridColumns(s);
 
         dual.AttachToScene();
+        TrackState(dual.Root, s);
         search.GrabFocus();
     }
 
     public static void Remove(NGlobalUi globalUi)
-        => ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
+        => DevPanelUI.DestroySessionOverlay(globalUi, RootName);
+
+    private static List<PowerModel> BuildSortedPowers() {
+        var list = PowerActions.GetAllPowers()
+            .OrderBy(p => p.Type)
+            .ThenBy(p => PowerActions.GetPowerDisplayName(p))
+            .ToList();
+        BrowserCatalogDiskCache.SaveSortedPowers(list);
+        return list;
+    }
+
+    private static void TrackState(Control root, State state) {
+        ulong id = root.GetInstanceId();
+        StatesByRoot[id] = state;
+        root.TreeExiting += () => StatesByRoot.Remove(id);
+    }
 
     // ─────────────────────────────── Nav bar ───────────────────────────────
 

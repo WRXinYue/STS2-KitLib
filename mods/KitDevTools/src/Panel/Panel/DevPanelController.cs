@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using KitLib.UI;
+using KitLib.UI.Diagnostics;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.Panels;
@@ -20,17 +22,19 @@ namespace KitLib.Panels;
 /// </summary>
 internal sealed class DevPanelController {
     private string? _activeTabId;
-    private Action? _closeAllPanels;
+    private Action? _hideAllPanels;
+    private Action? _destroyAllPanels;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
 
     /// <summary>
     /// Binds the controller to a rail session.
-    /// <paramref name="closeAllPanels"/> performs the Godot-side close work
-    /// (animations, QueueFree, rail hold/release) without touching tab state.
+    /// <paramref name="hideAllPanels"/> hides cached browser overlays when switching tabs.
+    /// <paramref name="destroyAllPanels"/> frees all overlays on full close / detach.
     /// </summary>
-    public void Attach(Action closeAllPanels) {
-        _closeAllPanels = closeAllPanels;
+    public void Attach(Action hideAllPanels, Action destroyAllPanels) {
+        _hideAllPanels = hideAllPanels;
+        _destroyAllPanels = destroyAllPanels;
         Reset();
     }
 
@@ -40,7 +44,8 @@ internal sealed class DevPanelController {
     /// <summary>Unbinds the controller when the rail is detached.</summary>
     public void Detach() {
         Reset();
-        _closeAllPanels = null;
+        _hideAllPanels = null;
+        _destroyAllPanels = null;
     }
 
     // ── Core operations ───────────────────────────────────────────────────
@@ -52,16 +57,27 @@ internal sealed class DevPanelController {
     /// pass <paramref name="isPanelVisible"/> so the panel can be reopened.
     /// </summary>
     public void SwitchTo(string tabId, Action openPanel, Func<bool>? isPanelVisible = null) {
+        var total = CardBrowserPerf.Start();
         if (_activeTabId == tabId) {
+            var vis = CardBrowserPerf.Start();
             bool visible = isPanelVisible?.Invoke() ?? true;
-            if (visible)
+            CardBrowserPerf.LogRail("visibleCheck", vis, $"tab={tabId} visible={visible}");
+            if (visible) {
+                CardBrowserPerf.LogRail("skipSameTab", total, $"tab={tabId}");
                 return;
+            }
             Reset();
         }
 
+        var from = _activeTabId ?? "none";
         _activeTabId = tabId;
-        _closeAllPanels?.Invoke();
+        var close = CardBrowserPerf.Start();
+        _hideAllPanels?.Invoke();
+        CardBrowserPerf.LogRail("closeAll", close, $"from={from} to={tabId}");
+        var open = CardBrowserPerf.Start();
         openPanel();
+        CardBrowserPerf.LogRail("openPanel", open, $"tab={tabId}");
+        CardBrowserPerf.LogRail("total", total, $"from={from} to={tabId}");
     }
 
     /// <summary>
@@ -71,13 +87,11 @@ internal sealed class DevPanelController {
     public void Deactivate() => Reset();
 
     /// <summary>
-    /// Closes all open panels visually without touching <c>_activeTabId</c>.
-    /// Used by <see cref="DevPanelUI.CloseAllOverlays"/>, which is called from
-    /// <c>TryDismissCurrent</c> during panel switching. At that point
-    /// <c>_activeTabId</c> already holds the incoming tab's ID, so clearing
-    /// it here would destroy the duplicate-click guard on the very next click.
+    /// Hides cached browser overlays without freeing them or clearing <c>_activeTabId</c>.
+    /// Used by <see cref="DevPanelUI.CloseAllOverlays"/> / <c>TryDismissCurrent</c> while
+    /// switching tabs so session-cached panels survive.
     /// </summary>
-    public void CloseVisuals() => _closeAllPanels?.Invoke();
+    public void CloseVisuals() => _hideAllPanels?.Invoke();
 
     /// <summary>
     /// Deactivates the current tab AND closes all open panels.
@@ -85,7 +99,7 @@ internal sealed class DevPanelController {
     /// </summary>
     public void CloseAll() {
         Deactivate();
-        _closeAllPanels?.Invoke();
+        _destroyAllPanels?.Invoke();
     }
 
     // ── Private ───────────────────────────────────────────────────────────

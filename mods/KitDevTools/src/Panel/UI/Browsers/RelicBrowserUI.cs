@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using KitLib;
 using KitLib.Actions;
 using KitLib.Icons;
 using KitLib.Modding;
@@ -75,8 +76,29 @@ internal static partial class RelicBrowserUI {
 
     // ──────── Public API ────────
 
+    internal static bool TryReveal(NGlobalUi globalUi) {
+        if (!RunContext.TryGetRunAndPlayer(out _, out var player) || player == null)
+            return false;
+
+        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        if (root == null || !DevPanelUI.IsSessionCached(root))
+            return false;
+        if (!StatesByRoot.TryGetValue(root.GetInstanceId(), out var s))
+            return false;
+
+        if (!IsAllSource) {
+            InvalidateRelicCache(s);
+            RebuildGrid(s, s.SearchInput.Text ?? "");
+        }
+        DevPanelUI.RevealSessionOverlay(globalUi, root);
+        return true;
+    }
+
     public static void Show(NGlobalUi globalUi, RunState runState, Player player) {
-        Remove(globalUi);
+        if (TryReveal(globalUi))
+            return;
+
+        DevPanelUI.DestroySessionOverlay(globalUi, RootName);
 
         var s = new State(globalUi, runState, player);
 
@@ -199,7 +221,7 @@ internal static partial class RelicBrowserUI {
         RefreshSortButton(s);
 
         // ── Rarity filter chips ──
-        InvalidateRelicCache(s);
+        s.CachedAllRelics = BrowserCatalogDiskCache.TryLoadSortedRelics() ?? BuildSortedRelics(s);
         s.AvailableRarities = DiscoverRarities(s.CachedAllRelics);
 
         if (s.AvailableRarities.Count > 0) {
@@ -277,16 +299,30 @@ internal static partial class RelicBrowserUI {
         dual.AttachToScene();
 
         RebuildGrid(s, "");
+        TrackState(dual.Root, s);
         Callable.From(() => UpdateGridColumns(s)).CallDeferred();
     }
 
     public static void Remove(NGlobalUi globalUi) {
-        var parent = (Node)globalUi;
-        var node = parent.GetNodeOrNull<Control>(RootName);
-        if (node != null) {
-            parent.RemoveChild(node);
-            node.QueueFree();
-        }
+        DevPanelUI.DestroySessionOverlay(globalUi, RootName);
+    }
+
+    private static readonly Dictionary<ulong, State> StatesByRoot = new();
+
+    private static List<RelicModel> BuildSortedRelics(State s) {
+        var list = GetRelics(s)
+            .OrderBy(r => r.Rarity)
+            .ThenBy(GetRelicDisplayName)
+            .ToList();
+        if (IsAllSource)
+            BrowserCatalogDiskCache.SaveSortedRelics(list);
+        return list;
+    }
+
+    private static void TrackState(Control root, State state) {
+        ulong id = root.GetInstanceId();
+        StatesByRoot[id] = state;
+        root.TreeExiting += () => StatesByRoot.Remove(id);
     }
 
     internal static readonly string NodeName = RootName;

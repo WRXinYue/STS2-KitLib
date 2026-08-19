@@ -31,6 +31,7 @@ internal static partial class DevPanelUI {
     internal static bool IsRailTabPanelVisible(NGlobalUi globalUi, string tabId) {
         if (!BrowserOverlayRootByTabId.TryGetValue(tabId, out var rootName))
             return true;
-        return ((Node)globalUi).GetNodeOrNull<Control>(rootName) != null;
+        var node = ((Node)globalUi).GetNodeOrNull<Control>(rootName);
+        return node != null && node.Visible;
     }
 }

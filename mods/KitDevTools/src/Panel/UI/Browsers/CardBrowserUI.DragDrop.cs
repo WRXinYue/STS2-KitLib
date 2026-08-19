@@ -57,7 +57,7 @@ internal static partial class CardBrowserUI {
                 I18N.T("topbar.card.discardPile", "Discard"),
                 new Color(0.85f, 0.45f, 0.20f, 0.28f));
             _zoneBottom = CreateZoneStrip(
-                I18N.T("cardBrowser.dropHand", "Add to Hand"),
+                I18N.T("cardBrowser.dropHand", "Hand"),
                 new Color(0.25f, 0.65f, 0.35f, 0.28f));
         }
 
