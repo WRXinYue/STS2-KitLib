@@ -6,6 +6,7 @@ using HarmonyLib;
 using KitLib.Actions;
 using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
@@ -94,7 +95,7 @@ internal static class MpUiDebugPlayerService {
 
         MpUiDebugState.HasSpawnedDebugPlayers = false;
         MpUiDebugState.PendingMapVoteCleanup = true;
-        PseudoCoopActionQueue.RemoveQueuesForMissingPlayers(state);
+        CombatActionQueue.RemoveQueuesForMissingPlayers(state);
         PseudoCoopMultiplayerUiRefresh.RefreshAfterDebugPlayersRemoved(state);
         TryReinitializeSoloMapVotes();
     }

@@ -1,5 +1,6 @@
 using System.Linq;
 using HarmonyLib;
+using KitLib.Multiplayer.Play;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -38,11 +39,11 @@ internal static class PseudoCoopCombatReady {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetHostDrivenCombatPeers()) {
+        foreach (var peer in HostDrivenPeers.GetHostDrivenCombatPeers()) {
             if (peer.Creature.IsDead) continue;
             if (HasPlayableCard(peer)) continue;
-            if (PseudoCoopActionQueue.HasPendingCombatActions(peer.NetId)) continue;
-            MpAiTeammateCombatActions.SignalEndTurnForHostDrivenPeer(peer);
+            if (CombatActionQueue.HasPendingCombatActions(peer.NetId)) continue;
+            NetCombatCommands.SignalEndTurnForHostDrivenPeer(peer);
         }
     }
 
@@ -56,10 +57,10 @@ internal static class PseudoCoopCombatReady {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
+        foreach (var peer in HostDrivenPeers.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
-            if (SimulatedPeerRegistry.IsLiveEnetPeer(peer.NetId)) continue;
-            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(peer)) continue;
+            if (HostDrivenPeers.IsLiveEnetPeer(peer.NetId)) continue;
+            if (HostDrivenPeers.ShouldHostEnqueueCombatAction(peer)) continue;
             if (cm.IsPlayerReadyToEndTurn(peer)) continue;
 
             cm.SetReadyToEndTurn(peer, canBackOut: false);
@@ -73,15 +74,15 @@ internal static class PseudoCoopCombatReady {
 
         if (RunManager.Instance?.ActionQueueSynchronizer == null) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
+        foreach (var peer in HostDrivenPeers.GetRemoteCombatAssistTargets()) {
             if (peer.Creature.IsDead) continue;
             if (Sts2CombatCompat.IsPlayerReadyToBeginEnemyTurn(cm, peer)) continue;
-            if (PseudoCoopActionQueue.HasQueuedReadyToBeginEnemyTurn(peer.NetId)) continue;
+            if (CombatActionQueue.HasQueuedReadyToBeginEnemyTurn(peer.NetId)) continue;
 
             // Live ENet AFK client enqueues after host Ready + phase-1 checkpoint (see #11).
-            if (SimulatedPeerRegistry.IsLiveEnetPeer(peer.NetId)) continue;
+            if (HostDrivenPeers.IsLiveEnetPeer(peer.NetId)) continue;
 
-            MpAiTeammateCombatActions.SignalReadyToBeginEnemyTurn(peer);
+            NetCombatCommands.SignalReadyToBeginEnemyTurn(peer);
         }
     }
 }

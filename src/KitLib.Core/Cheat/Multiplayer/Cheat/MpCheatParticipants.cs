@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using KitLib.Host;
+using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.Cheat;
@@ -22,7 +22,7 @@ internal static class MpCheatParticipants {
             .Where(id => id != hostNetId)
             .ToHashSet();
 
-        if (KitLibSyncBotOps.IsEnabled?.Invoke() == true)
+        if (MpCheatSyncBot.IsEnabled)
             return remotePlayers;
 
         var connected =

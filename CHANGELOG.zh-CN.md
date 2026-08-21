@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **NetPlay API** — 主机战斗入队、action queue 补齐、以及 SyncBot 的 MpCheat ACK 改由 Core 提供。KitAI 只调用这些 API，不再承载联机测试驾驶。
 - **作弊侧栏页签** — Cards、Cheats、Card Test 等局内作弊侧栏入口改由 KitDevTools Panel 注册。Core 仍运行作弊补丁与 API，但不再登记 `devmode.*` 作弊页签。
 - **产品版本** — 兄弟产品（`KitModPanel`、`KitDevTools`、`KitAI`）与 KitLib 独立版本（开发中为 **0.0.1**，首发计划 **0.1.0**）。各自变更见 `mods/<Product>/CHANGELOG.md`（及 `.zh-CN.md`）。根目录 changelog 仅记录 KitLib。
 

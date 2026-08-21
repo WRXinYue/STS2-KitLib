@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using KitLib.AI.Core;
+using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
@@ -61,9 +63,9 @@ internal static class CompanionSpawnService {
             SpvCompanionRegistry.Register(netId);
             SpvCompanionSession.OnCompanionSpawned();
 
-            PseudoCoopMultiplayerUiRefresh.TryRefreshAfterPlayerJoined(state);
+            KitLibPseudoCoopOps.RefreshUiAfterPlayerJoined?.Invoke(state);
             SpvCompanionCombatJoin.TryJoinActiveCombat(companion);
-            PseudoCoopActionQueue.EnsureQueueForPlayer(companion);
+            CombatActionQueue.EnsureQueueForPlayer(companion);
             run.MapSelectionSynchronizer?.OnLocationChanged(state.MapLocation);
 
             if (request.Strategy is IDecisionMaker strategy)
@@ -116,12 +118,12 @@ internal static class CompanionSpawnService {
             state.AddPlayerDebug(companion, -1);
 
             MpCheatSyncBot.RefreshSimulatedPeers();
-            SimulatedPeerRegistry.Refresh();
+            HostDrivenPeers.Refresh();
 
             run.MapSelectionSynchronizer?.OnLocationChanged(state.MapLocation);
             PseudoCoopLobbyRoster.RegisterSimulatedPeer(netId);
-            PseudoCoopActionQueue.EnsureQueueForPlayer(companion);
-            PseudoCoopMultiplayerUiRefresh.TryRefreshAfterPlayerJoined(state);
+            CombatActionQueue.EnsureQueueForPlayer(companion);
+            KitLibPseudoCoopOps.RefreshUiAfterPlayerJoined?.Invoke(state);
 
             if (request.Strategy is IDecisionMaker strategy)
                 CompanionRegistry.Register(netId, strategy);
@@ -147,7 +149,7 @@ internal static class CompanionSpawnService {
             AiSessionSettings.SyncBotEnabled = true;
 
         MpCheatSession.TryArmSession("companion_spawn", allowWhileDeferredUi: true);
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
     }
 
     internal static bool TryDismissViaBridge(ulong netId) {
@@ -172,7 +174,7 @@ internal static class CompanionSpawnService {
         }
 
         PseudoCoopLobbyRoster.UnregisterSimulatedPeer(netId);
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
         KitLog.Info("Companion", $"Dismissed MP companion netId={netId}.");
         return true;
     }
@@ -192,7 +194,7 @@ internal static class CompanionSpawnService {
                 p.NetId,
                 p.Character!.Id,
                 SpvCompanionRegistry.IsAiDriven(p.NetId)
-                    || SimulatedPeerRegistry.IsHostDrivenPeer(p.NetId),
+                    || HostDrivenPeers.IsHostDrivenPeer(p.NetId),
                 p.Creature.IsAlive))
             .ToList();
     }

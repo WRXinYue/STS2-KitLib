@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using KitLib.Multiplayer.Play;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
@@ -56,7 +57,7 @@ internal static class PseudoCoopMapVoteMirror {
                 source = accepting;
             }
 
-            var peers = SimulatedPeerRegistry.GetMapMirrorTargets().ToList();
+            var peers = HostDrivenPeers.GetMapMirrorTargets().ToList();
             if (peers.Count == 0) {
                 KitLog.Warn("PseudoCoop",
                     $"No simulated peers to mirror {destination.coord} "

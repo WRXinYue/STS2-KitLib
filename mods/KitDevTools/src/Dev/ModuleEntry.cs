@@ -3,7 +3,9 @@ using KitLib.Abstractions.Host;
 using KitLib.EnemyIntent;
 using KitLib.Host;
 using KitLib.Interop;
+using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Dev;
 
@@ -15,6 +17,10 @@ public static class ModuleEntry {
         KitLibHost.AnnounceModule(KitLibModuleIds.Dev);
         KitLibPanelUiOps.QueryModHarmonyPatchStats = ModHarmonyOwnerMatcher.TryGetStats;
         KitLibPanelUiOps.BuildModHarmonyDetailReport = ModHarmonyOwnerMatcher.BuildDetailReport;
+        KitLibPseudoCoopOps.RefreshUiAfterPlayerJoined = state => {
+            if (state is RunState run)
+                PseudoCoopMultiplayerUiRefresh.TryRefreshAfterPlayerJoined(run);
+        };
         WireEnemyIntentHost();
     }
 

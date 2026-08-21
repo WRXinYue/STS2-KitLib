@@ -1,6 +1,8 @@
 using HarmonyLib;
 using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
+using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.Cheat.Patches;
@@ -14,6 +16,9 @@ internal static class MpCheatRunLifecyclePatch {
     [HarmonyPatch(nameof(RunManager.OnEnded))]
     static void OnEnded() {
         MpCheatSync.OnRunEnded();
+        HostDrivenPeers.OnRunEnded();
+        PseudoCoopLobbyRoster.OnRunEnded();
+        KitLibNetPlayOps.OnRunEnded?.Invoke();
         KitLibSyncBotOps.OnRunEnded?.Invoke();
         KitLibState.OnRunEnded();
     }

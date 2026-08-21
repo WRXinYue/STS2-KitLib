@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Cheat sidebar tabs** — Cards, Cheats, Card Test, Save/Load, and the other cheat rail entries are registered by this product, not by KitLib Core.
+- **Pseudo-coop harness** — SyncBot phantom spawn, lobby host, and simulated-peer combat/map patches live here and call Core NetPlay APIs. KitAI no longer owns that test driving.
 - **Panel switching** — Revisiting already-opened Dev panels is much snappier.
 - **Hand drop zone** — Bottom drop label is now **Hand**.
 - **AI Host tab removed** — AI controls no longer appear on the Dev side rail; use KitAI when a dedicated AI panel is available.

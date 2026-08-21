@@ -15,3 +15,4 @@
 ### Changed
 
 - **开发面板** — 不再在 KitDevTools 侧栏注册 AI Host；后续由 KitAI 独立面板承载。
+- **联机测试驾驶** — SyncBot 大厅/幻影战斗补丁迁到 KitDevTools。KitAI 只保留决策循环，出牌入队改调 Core NetPlay API。

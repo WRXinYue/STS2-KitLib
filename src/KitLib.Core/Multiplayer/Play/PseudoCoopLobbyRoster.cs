@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Reflection;
 using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Multiplayer.Game.Lobby;
 using MegaCrit.Sts2.Core.Runs;
@@ -62,10 +62,7 @@ internal static class PseudoCoopLobbyRoster {
 
         // A phantom peer reports the local build, so the lobby's own mod/version diffing
         // sees a peer identical to the host rather than one with an empty handshake.
-        lobby.Players.Add(new RunLobbyPlayer {
-            id = netId,
-            versionInfo = PeerVersionInfo.LocalDefault(),
-        });
+        lobby.Players.Add(CreateSimulatedLobbyPlayer(netId));
         KitLog.Info("PseudoCoop", $"RunLobby connected roster +{netId} (now {lobby.Players.Count}).");
     }
 
@@ -88,6 +85,17 @@ internal static class PseudoCoopLobbyRoster {
 
         foreach (var netId in phantoms)
             UnregisterSimulatedPeer(netId);
+    }
+
+    static RunLobbyPlayer CreateSimulatedLobbyPlayer(ulong netId) {
+        object boxed = new RunLobbyPlayer { id = netId };
+        var versionField = typeof(RunLobbyPlayer).GetField("versionInfo");
+        if (versionField != null) {
+            var localDefault = versionField.FieldType.GetMethod("LocalDefault", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (localDefault != null)
+                versionField.SetValue(boxed, localDefault.Invoke(null, null));
+        }
+        return (RunLobbyPlayer)boxed;
     }
 #endif
 }

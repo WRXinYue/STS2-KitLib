@@ -6,6 +6,7 @@ using KitLib.AI.AutoPlay.Strategies;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Combat;
@@ -55,10 +56,10 @@ internal static class SpvCompanionAiHost {
 
         foreach (var player in SpvCompanionRegistry.GetCombatTargets()) {
             if (player.Creature.IsDead) continue;
-            PseudoCoopActionQueue.ClearStaleInFlight(player.NetId);
+            CombatActionQueue.ClearStaleInFlight(player.NetId);
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
-            if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) continue;
-            if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
+            if (CombatActionQueue.HasQueuedEndTurn(player.NetId)) continue;
+            if (CombatActionQueue.HasPendingCombatActions(player.NetId)) continue;
             if (cm.IsExecutingCardOrPotionEffect(player)) continue;
 
             if (!HasPlayableCard(player)) {

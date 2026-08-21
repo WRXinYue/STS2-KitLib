@@ -1,6 +1,7 @@
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2.Helpers;
 using KitLib.AI.Sts2.Snapshots;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Nodes.Rewards;
@@ -31,8 +32,8 @@ internal static class SpvCompanionLocalUiGuard {
             case GamePhase.Shop:
             case GamePhase.RestSite:
             case GamePhase.TreasureRoom:
-                return !PseudoCoopActionQueue.HasQueuedActions(companion.NetId)
-                    && !PseudoCoopActionQueue.HasInFlightAction(companion.NetId);
+                return !CombatActionQueue.HasQueuedActions(companion.NetId)
+                    && !CombatActionQueue.HasInFlightAction(companion.NetId);
         }
 
         return false;

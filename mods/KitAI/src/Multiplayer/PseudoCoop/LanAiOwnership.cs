@@ -1,4 +1,5 @@
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -15,7 +16,7 @@ internal static class LanAiOwnership {
         MpCheatSession.IsHost
         && MpCheatSession.InMultiplayerRun
         && AiSessionSettings.MpAiTeammateDriveLiveEnet
-        && SimulatedPeerRegistry.HasLiveEnetTeammate();
+        && HostDrivenPeers.HasLiveEnetTeammate();
 
     /// <summary>Companion targets phantom peers; live LAN uses per-instance LanLocal instead.</summary>
     public static bool ShouldRunCompanionHost =>

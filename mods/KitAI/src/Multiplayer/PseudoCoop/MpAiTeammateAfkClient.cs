@@ -1,7 +1,5 @@
-using KitLib.AI.AutoPlay;
+using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
-using KitLib.Multiplayer.SyncBot;
-using KitLib.Settings;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 
@@ -27,7 +25,7 @@ internal static class MpAiTeammateAfkClient {
 
         AiSessionSettings.MpAiTeammateAfkClient = enabled;
 
-        if (enabled) AiPlayModule.Instance.StopLoop();
+        if (enabled) KitLibHost.StopAiPlayLoop?.Invoke();
         KitLog.Info("MpAiTeammate",
             $"AFK client {(enabled ? "enabled" : "disabled")} pid={KitLibInstance.ProcessId}");
     }

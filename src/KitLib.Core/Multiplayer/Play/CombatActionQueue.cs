@@ -1,6 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -8,10 +6,10 @@ using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace KitLib.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.Play;
 
-/// <summary>Phantom players join mid-run after <see cref="ActionQueueSet"/> was built with one queue.</summary>
-internal static class PseudoCoopActionQueue {
+/// <summary>Extra per-player combat queues when a peer joins after <see cref="ActionQueueSet"/> was built.</summary>
+internal static class CombatActionQueue {
     static readonly Dictionary<ulong, int> InFlightCounts = [];
 
     static readonly FieldInfo QueuesField =
@@ -56,7 +54,7 @@ internal static class PseudoCoopActionQueue {
         ActionsField.SetValue(queue, new List<GameAction>());
         queues.Add(queue);
 
-        KitLog.Info("PseudoCoop", $"Action queue added for netId={player.NetId}.");
+        KitLog.Info("NetPlay", $"Action queue added for netId={player.NetId}.");
     }
 
     internal static bool HasQueuedActions(ulong netId) {

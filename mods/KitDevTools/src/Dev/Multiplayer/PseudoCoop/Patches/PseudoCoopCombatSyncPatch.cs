@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
@@ -34,13 +35,13 @@ internal static class PseudoCoopCombatSyncPatch {
         var injected = false;
 
         // Prefer simulated roster; fall back to all remote run peers (phantom may be in RunLobby ids).
-        var peerIds = SimulatedPeerRegistry.GetSimulatedPeerNetIds();
+        var peerIds = HostDrivenPeers.GetSimulatedPeerNetIds();
         if (peerIds.Count == 0)
-            peerIds = SimulatedPeerRegistry.GetRemoteRunNetIds();
+            peerIds = HostDrivenPeers.GetRemoteRunNetIds();
 
         foreach (var netId in peerIds) {
             if (syncData.ContainsKey(netId)) continue;
-            if (SimulatedPeerRegistry.IsLiveEnetPeer(netId)) continue;
+            if (HostDrivenPeers.IsLiveEnetPeer(netId)) continue;
 
             var player = state.GetPlayer(netId);
             syncData[netId] = player.ToSerializable();

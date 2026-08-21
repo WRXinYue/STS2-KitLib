@@ -59,14 +59,7 @@ internal static class MultiplayerCompatRules {
             }
         }
 #else
-        ref var versionInfo = ref message.versionInfo;
-        if (CanNormalizeModelIdHash() && versionInfo.idDatabaseHash != ModelIdSerializationCache.Hash) {
-            versionInfo.idDatabaseHash = ModelIdSerializationCache.Hash;
-            if (!_loggedHashNormalization) {
-                _loggedHashNormalization = true;
-                MainFile.Logger.Warn("Normalized multiplayer ModelDb hash for KitLib compatibility.");
-            }
-        }
+        // Beta handshake payload is not on InitialGameInfoMessage; PeerVersionInfo patches handle it.
 #endif
     }
 
@@ -94,12 +87,7 @@ internal static class MultiplayerCompatRules {
         otherField.SetValue(message, FilterIgnoredModSignatures(other, out var removedOther));
         LogModFilter(removedGameplay + removedOther);
 #else
-        ref var versionInfo = ref message.versionInfo;
-        versionInfo.gameplayAffectingMods =
-            FilterIgnoredModSignatures(versionInfo.gameplayAffectingMods, out var removedGameplay);
-        versionInfo.otherMods =
-            FilterIgnoredModSignatures(versionInfo.otherMods, out var removedOther);
-        LogModFilter(removedGameplay + removedOther);
+        // Beta handshake payload is not on InitialGameInfoMessage.
 #endif
     }
 

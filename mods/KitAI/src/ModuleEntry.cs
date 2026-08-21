@@ -6,9 +6,9 @@ using KitLib.AI.Planning;
 using KitLib.AI.UI;
 using KitLib.Companion;
 using KitLib.Host;
-using KitLib.Multiplayer.Cheat;
-using KitLib.Multiplayer.SyncBot;
+using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Panels;
+using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.AI;
@@ -29,12 +29,10 @@ public static class ModuleEntry {
             DeckPlanContributorHub.Register((IDeckPlanContributor)contributor);
         KitLibHost.StopAiPlayLoop = () => AiPlayModule.Instance.StopLoop();
         KitLibHost.OnCompanionRunEnded = CompanionRegistry.ClearOnRunEnd;
-
-        KitLibSyncBotOps.IsEnabled = () => MpCheatSyncBot.IsEnabled;
-        KitLibSyncBotOps.OnRunEnded = MpCheatSyncBot.OnRunEnded;
-        KitLibSyncBotOps.InjectPrepareAcks = message => {
-            if (message is MpCheatCommandMessage cmd)
-                MpCheatSyncBot.InjectPrepareAcks(cmd);
+        KitLibNetPlayOps.OnCombatActionFinished = netId => MpAiTeammateHost.NotifyCombatActionFinished(netId);
+        KitLibNetPlayOps.OnRunEnded = () => {
+            MpAiTeammateHost.OnRunEnded();
+            SpvCompanionAiHost.OnRunEnded();
         };
 
         AiPlayInitializer.Initialize();

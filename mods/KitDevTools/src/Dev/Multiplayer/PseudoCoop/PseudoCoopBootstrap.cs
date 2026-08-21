@@ -1,4 +1,5 @@
-using KitLib.AI.AutoPlay;
+using KitLib.Host;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
 
@@ -13,13 +14,12 @@ internal static class PseudoCoopBootstrap {
         SettingsStore.Current.SyncBotAutoEndTurn = true;
         AiSessionSettings.MpAiTeammateEnabled = true;
         AiSessionSettings.MpAiTeammateDriveLiveEnet = false;
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
-        AiPlayModule.Instance.StopLoop();
+        KitLibHost.StopAiPlayLoop?.Invoke();
         KitLog.Info("PseudoCoop", $"Preset applied (hand-play host + AI teammate + SyncBot).");
     }
 
-    /// <summary>LAN dual-instance: host drives live ENet teammates via action queue; no phantom/SyncBot ACK.</summary>
     public static void ApplyLanHostPreset() {
         AiSessionSettings.AutoPlayEnabled = false;
         AiSessionSettings.SyncBotEnabled = false;
@@ -27,9 +27,9 @@ internal static class PseudoCoopBootstrap {
         SettingsStore.Current.SyncBotAutoEndTurn = true;
         AiSessionSettings.MpAiTeammateEnabled = true;
         AiSessionSettings.MpAiTeammateDriveLiveEnet = true;
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
-        AiPlayModule.Instance.StopLoop();
+        KitLibHost.StopAiPlayLoop?.Invoke();
         KitLog.Info("PseudoCoop", $"LAN host preset applied (AI drives live ENet teammates — enable AFK on client).");
     }
 
@@ -38,10 +38,9 @@ internal static class PseudoCoopBootstrap {
         ApplyPreset();
     }
 
-    /// <summary>LAN dual-instance client: AFK combat; host mirrors map votes when LAN preset is on.</summary>
     public static void ApplyLanClientPreset() {
-        MpAiTeammateAfkClient.SetSessionEnabled(true);
-        AiPlayModule.Instance.StopLoop();
+        AiSessionSettings.MpAiTeammateAfkClient = true;
+        KitLibHost.StopAiPlayLoop?.Invoke();
         KitLog.Info("PseudoCoop", $"LAN client AFK preset applied.");
     }
 }

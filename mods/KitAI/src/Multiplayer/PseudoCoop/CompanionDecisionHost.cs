@@ -7,6 +7,7 @@ using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.Companion;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -67,7 +68,7 @@ internal static class CompanionDecisionHost {
             return;
         }
 
-        foreach (var player in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
+        foreach (var player in HostDrivenPeers.GetMpAiTeammateTargets()) {
             if (!ShouldRunNonCombatFor(player, phase)) continue;
 
             _tickRunning = true;

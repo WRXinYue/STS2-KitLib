@@ -1,4 +1,5 @@
 using HarmonyLib;
+using KitLib.Multiplayer.Play;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
@@ -38,7 +39,7 @@ internal static class PseudoCoopActReadyPatch {
         if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return;
         if (!LocalContext.IsMe(player)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetMapMirrorTargets()) {
+        foreach (var peer in HostDrivenPeers.GetMapMirrorTargets()) {
             __instance.OnPlayerReady(peer);
             KitLog.Info("PseudoCoop", $"Auto act-ready vote netId={peer.NetId}.");
         }
@@ -50,7 +51,7 @@ internal static class PseudoCoopActReadyPatch {
         if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return;
         if (!LocalContext.IsMe(player)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetMapMirrorTargets()) {
+        foreach (var peer in HostDrivenPeers.GetMapMirrorTargets()) {
             __instance.OnPlayerReady(peer, actIndex);
             KitLog.Info("PseudoCoop", $"Auto act-ready vote netId={peer.NetId}.");
         }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using KitLib.Host;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Helpers;
@@ -52,7 +53,11 @@ internal static class PseudoCoopLobbyHost {
             if (mainMenu == null)
                 return Task.FromResult((false, "Main menu is not active. Return to the title screen and try again."));
 
+#if STS2_STABLE_PROFILE
             var netService = new NetHostGameService();
+#else
+            var netService = new NetHostGameService(PeerVersionInfo.LocalDefault());
+#endif
             var hostError = netService.StartENetHost(HostPort, MaxPlayers);
             if (hostError.HasValue)
                 return Task.FromResult((false, $"ENet host failed: {hostError.Value}"));
@@ -96,7 +101,7 @@ internal static class PseudoCoopLobbyHost {
         AiSessionSettings.MpAiTeammateEnabled = options.MpAiTeammateEnabled;
         AiSessionSettings.PseudoCoopAutoPresetOnLaunch = options.AutoPresetOnLaunch;
         PseudoCoopBootstrap.TryAutoPresetOnLaunch();
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
         MpCheatSyncBot.RefreshSimulatedPeers();
     }
 }

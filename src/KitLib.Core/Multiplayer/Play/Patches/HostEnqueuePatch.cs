@@ -7,14 +7,14 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace KitLib.Multiplayer.PseudoCoop.Patches;
+namespace KitLib.Multiplayer.Play.Patches;
 
 /// <summary>
 /// Host RequestEnqueue uses host NetId as actionOwnerId; host-driven peers need message.playerId = action.OwnerId
 /// so both peers execute EndPlayerTurnAction / PlayCardAction for the correct player.
 /// </summary>
 [HarmonyPatch(typeof(ActionQueueSynchronizer), nameof(ActionQueueSynchronizer.RequestEnqueue))]
-internal static class PseudoCoopHostEnqueuePatch {
+internal static class HostEnqueuePatch {
     static readonly MethodInfo EnqueueActionMethod =
         AccessTools.Method(typeof(ActionQueueSynchronizer), "EnqueueAction")!;
 
@@ -25,7 +25,7 @@ internal static class PseudoCoopHostEnqueuePatch {
 
         var hostNetId = RunManager.Instance.NetService.NetId;
         if (action.OwnerId == hostNetId) return true;
-        if (!SimulatedPeerRegistry.IsHostDrivenPeer(action.OwnerId)) return true;
+        if (!HostDrivenPeers.IsHostDrivenPeer(action.OwnerId)) return true;
 
         if (action.ActionType == GameActionType.CombatPlayPhaseOnly
             && __instance.CombatState == ActionSynchronizerCombatState.NotPlayPhase

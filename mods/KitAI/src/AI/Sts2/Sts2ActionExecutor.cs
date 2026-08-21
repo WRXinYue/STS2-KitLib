@@ -11,6 +11,7 @@ using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2.Helpers;
 using KitLib.AI.Sts2.Mcp;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Singleplayer.Companion;
 using MegaCrit.Sts2.Core.Combat;
@@ -134,15 +135,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
         if (!card.CanPlayTargeting(target))
             return ActionResult.Fail($"Card [{card.Title}] cannot be played.");
 
-        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
-            PseudoCoopActionQueue.EnsureQueueForPlayer(player);
-            var playAction = new MegaCrit.Sts2.Core.GameActions.PlayCardAction(
-                player,
-                NetCombatCard.FromModel(card),
-                card.Id,
-                target?.CombatId);
-            RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(playAction);
-            PseudoCoopActionQueue.MarkInFlight(player.NetId);
+        if (NetCombatCommands.TryEnqueuePlayCard(player, card, target)) {
             MpAiTeammateHost.NotifyCardQueued(player.NetId, card.Id);
             return ActionResult.Ok($"Queued play [{card.Title}] netId={player.NetId}");
         }
@@ -189,8 +182,8 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
             return ActionResult.Ok($"Companion ready to end turn netId={player.NetId}.");
         }
 
-        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
-            MpAiTeammateCombatActions.SignalEndTurn(player);
+        if (HostDrivenPeers.ShouldHostEnqueueCombatAction(player)) {
+            NetCombatCommands.SignalEndTurn(player);
             return ActionResult.Ok($"Queued end turn netId={player.NetId}.");
         }
 

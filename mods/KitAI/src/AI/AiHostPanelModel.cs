@@ -6,6 +6,7 @@ using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.Companion;
 using KitLib.Host;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
@@ -62,7 +63,7 @@ internal static class AiHostPanelModel {
                 AiSessionSettings.MpAiTeammateEnabled
                     ? I18N.T("ai.status.on", "on")
                     : I18N.T("ai.status.off", "off")));
-            var targets = SimulatedPeerRegistry.GetMpAiTeammateTargets().Count();
+            var targets = HostDrivenPeers.GetMpAiTeammateTargets().Count();
             if (targets > 0)
                 lines.Add(I18N.T("ai.status.aiPeers", "AI-driven peers: {0}", targets));
         }
@@ -126,9 +127,9 @@ internal static class AiHostPanelModel {
                 tips.Add(I18N.T("ai.rec.noAutoplayMp", "Turn off Solo AI Host in multiplayer; hand-play locally and use Host AI Teammate for remotes."));
             if (!AiSessionSettings.MpAiTeammateEnabled)
                 tips.Add(I18N.T("ai.rec.enableTeammate", "Enable Host AI Teammate for phantom or connected peers."));
-            if (SimulatedPeerRegistry.HasLiveEnetTeammate() && !AiSessionSettings.MpAiTeammateDriveLiveEnet)
+            if (HostDrivenPeers.HasLiveEnetTeammate() && !AiSessionSettings.MpAiTeammateDriveLiveEnet)
                 tips.Add(I18N.T("ai.rec.driveEnet", "Real client connected: enable AI Drives Live ENet Teammates + LAN preset."));
-            if (!SimulatedPeerRegistry.HasLiveEnetTeammate() && !AiSessionSettings.SyncBotEnabled
+            if (!HostDrivenPeers.HasLiveEnetTeammate() && !AiSessionSettings.SyncBotEnabled
                 && CompanionBridge.ListCompanions().Count == 0)
                 tips.Add(I18N.T("ai.rec.syncbot", "Solo host testing: enable SyncBot or spawn a phantom player."));
         }

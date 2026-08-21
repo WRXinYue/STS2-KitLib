@@ -1,17 +1,14 @@
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections;
+using System.Reflection;
 using KitLib.Multiplayer.Cheat;
-using KitLib.Multiplayer.SyncBot;
-using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;
-using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace KitLib.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.Play;
 
-/// <summary>Unified roster for SyncBot ACKs vs in-process teammate simulation.</summary>
-internal static class SimulatedPeerRegistry {
+/// <summary>Which run peers the host must enqueue combat for, versus local play.</summary>
+internal static class HostDrivenPeers {
     static HashSet<ulong> _simulatedPeerNetIds = [];
 
     public static bool IsHostMultiplayer =>
@@ -21,18 +18,25 @@ internal static class SimulatedPeerRegistry {
         IsHostMultiplayer
         && (AiSessionSettings.SyncBotEnabled || AiSessionSettings.MpAiTeammateEnabled);
 
-    /// <summary>
-    /// True when <paramref name="netId"/> has an active ENet transport peer on this host.
-    /// Phantom companions use the same default net id as fastmp join (<see cref="MpCheatSyncBot.PhantomPlayerNetId"/>);
-    /// distinguish by <see cref="NetHostGameService.ConnectedPeers"/>, not by net id alone.
-    /// </summary>
     public static bool IsLiveEnetPeer(ulong netId) {
         if (netId == 0) return false;
-        if (RunManager.Instance?.NetService is not NetHostGameService host) return false;
-        return host.ConnectedPeers.Any(p => p.peerId == netId);
+        var net = RunManager.Instance?.NetService;
+        if (net is null) return false;
+        object? peers = net.GetType().GetProperty("ConnectedPeers")?.GetValue(net);
+        if (peers is not IEnumerable enumerable)
+            return false;
+
+        foreach (var item in enumerable) {
+            if (item is null) continue;
+            var type = item.GetType();
+            var id = type.GetField("peerId")?.GetValue(item) ?? type.GetProperty("peerId")?.GetValue(item);
+            if (id is ulong u && u == netId)
+                return true;
+        }
+
+        return false;
     }
 
-    /// <summary>Run players that need in-process votes/choices (phantom 1001, etc.).</summary>
     public static IEnumerable<Player> GetPeersNeedingSimulation() {
         var run = RunManager.Instance;
         var state = run?.DebugOnlyGetState();
@@ -42,7 +46,6 @@ internal static class SimulatedPeerRegistry {
         return state.Players.Where(p => p.NetId != hostNetId && !IsLiveEnetPeer(p.NetId));
     }
 
-    /// <summary>Remote peers in the run (non-host).</summary>
     public static HashSet<ulong> GetRemoteRunNetIds() {
         var run = RunManager.Instance;
         var hostNetId = run?.NetService?.NetId ?? 0;
@@ -55,7 +58,6 @@ internal static class SimulatedPeerRegistry {
             .ToHashSet();
     }
 
-    /// <summary>All remote run peers — used for MpCheat prepare ACK injection when SyncBot is on.</summary>
     public static HashSet<ulong> GetAckPeerNetIds() {
         if (!AiSessionSettings.SyncBotEnabled
             || !IsHostMultiplayer
@@ -64,7 +66,6 @@ internal static class SimulatedPeerRegistry {
         return GetSimulatedPeerNetIds();
     }
 
-    /// <summary>Net ids for auto-vote / combat sync injection.</summary>
     public static HashSet<ulong> GetSimulatedPeerNetIds() {
         if (!IsRegistryActive) return [];
         return GetPeersNeedingSimulation().Select(p => p.NetId).ToHashSet();
@@ -80,7 +81,6 @@ internal static class SimulatedPeerRegistry {
     public static bool DriveLiveEnetEnabled =>
         AiSessionSettings.MpAiTeammateDriveLiveEnet;
 
-    /// <summary>Phantom/offline simulated peers, or live ENet when LAN host-drive is on.</summary>
     public static bool IsHostDrivenPeer(ulong netId) {
         if (netId == 0 || !MpCheatSession.InMultiplayerRun) return false;
         var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
@@ -93,7 +93,6 @@ internal static class SimulatedPeerRegistry {
             && IsLiveEnetPeer(netId);
     }
 
-    /// <summary>Host AI teammate targets: simulated peers and optional live ENet clients.</summary>
     public static IEnumerable<Player> GetMpAiTeammateTargets() {
         var state = RunManager.Instance?.DebugOnlyGetState();
         var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
@@ -106,7 +105,6 @@ internal static class SimulatedPeerRegistry {
     public static bool IsMpAiTeammateTarget(ulong netId) =>
         GetMpAiTeammateTargets().Any(p => p.NetId == netId);
 
-    /// <summary>Remote peers in LAN host-drive or phantom assist (independent of AI poll toggle).</summary>
     public static IEnumerable<Player> GetHostDrivenCombatPeers() {
         var state = RunManager.Instance?.DebugOnlyGetState();
         var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
@@ -115,11 +113,10 @@ internal static class SimulatedPeerRegistry {
         return state.Players.Where(p => {
             if (p.NetId == hostNetId) return false;
             if (IsLiveEnetPeer(p.NetId)) return DriveLiveEnetEnabled;
-            return !IsLiveEnetPeer(p.NetId);
+            return true;
         });
     }
 
-    /// <summary>Owner-routed combat enqueue for LAN live peers (does not require AI poll on).</summary>
     public static bool ShouldHostRouteCombatEnqueue(Player player) {
         if (!MpCheatSession.InMultiplayerRun) return false;
         if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return false;
@@ -128,7 +125,6 @@ internal static class SimulatedPeerRegistry {
         return DriveLiveEnetEnabled && IsLiveEnetPeer(player.NetId);
     }
 
-    /// <summary>Host must enqueue combat actions for host-driven peers (never CardCmd.AutoPlay).</summary>
     public static bool ShouldHostEnqueueCombatAction(Player player) {
         if (!MpCheatSession.InMultiplayerRun) return false;
         if (RunManager.Instance?.NetService?.Type != NetGameType.Host) return false;
@@ -151,7 +147,6 @@ internal static class SimulatedPeerRegistry {
         return GetPeersNeedingSimulation().ToList();
     }
 
-    /// <summary>Peers that receive mirrored host map / act-ready votes.</summary>
     public static IEnumerable<Player> GetMapMirrorTargets() {
         if (!IsRegistryActive) return [];
         if (DriveLiveEnetEnabled && AiSessionSettings.MpAiTeammateEnabled && IsHostMultiplayer)

@@ -1,5 +1,6 @@
 using KitLib.Diagnostics;
 using KitLib.Host;
+using KitLib.Multiplayer.Play.Patches;
 using KitLib.Patches;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Modding;
@@ -25,7 +26,9 @@ public class MainFile {
             typeof(MainFile).Assembly,
             ModID,
             typeof(MultiplayerModSyncPatch),
-            typeof(JoinFlowCompatPatch)));
+            typeof(JoinFlowCompatPatch),
+            typeof(HostEnqueuePatch),
+            typeof(CombatActionFlightPatch)));
         KitLibStartupAudit.Measure("hostBootstrap", KitLibHost.Bootstrap);
         KitLibStartupAudit.Measure("i18n", I18N.Initialize);
         Logger.Info("KitLib Core initialized.");

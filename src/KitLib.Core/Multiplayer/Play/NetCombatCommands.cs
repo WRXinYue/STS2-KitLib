@@ -1,11 +1,30 @@
 using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
 
-namespace KitLib.Multiplayer.PseudoCoop;
+namespace KitLib.Multiplayer.Play;
 
-internal static class MpAiTeammateCombatActions {
+internal static class NetCombatCommands {
+    internal static bool TryEnqueuePlayCard(Player player, CardModel card, Creature? target) {
+        if (!HostDrivenPeers.ShouldHostEnqueueCombatAction(player))
+            return false;
+
+        CombatActionQueue.EnsureQueueForPlayer(player);
+        var playAction = new PlayCardAction(
+            player,
+            NetCombatCard.FromModel(card),
+            card.Id,
+            target?.CombatId);
+        RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(playAction);
+        CombatActionQueue.MarkInFlight(player.NetId);
+        return true;
+    }
+
     public static void SignalEndTurn(Player player) {
         if (!CanSignalEndTurn(player)) return;
         EnqueueOrSetReadyForAiTarget(player);
@@ -16,20 +35,19 @@ internal static class MpAiTeammateCombatActions {
         EnqueueOrSetReady(player);
     }
 
-    /// <summary>After host AI is toggled off: clear stale in-flight, then end turn if the queue is idle.</summary>
     public static void ForceSignalEndTurnForHostDrivenPeer(Player player) {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
         if (cm.IsPlayerReadyToEndTurn(player)) return;
-        if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) return;
-        if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) return;
+        if (CombatActionQueue.HasQueuedEndTurn(player.NetId)) return;
+        if (CombatActionQueue.HasPendingCombatActions(player.NetId)) return;
 
         EnqueueOrSetReady(player);
     }
 
     public static void EnqueueEndTurn(Player player) {
-        if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) {
-            KitLog.Debug("MpAiTeammate", $"End turn already queued netId={player.NetId}.");
+        if (CombatActionQueue.HasQueuedEndTurn(player.NetId)) {
+            KitLog.Debug("NetCombat", $"End turn already queued netId={player.NetId}.");
             return;
         }
 
@@ -38,35 +56,35 @@ internal static class MpAiTeammateCombatActions {
         var round = CombatManager.Instance?.DebugOnlyGetState()?.RoundNumber ?? 1;
         var action = new EndPlayerTurnAction(player, round);
         RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(action);
-        KitLog.Info("MpAiTeammate", $"Enqueued end turn netId={player.NetId} round={round}.");
+        KitLog.Info("NetCombat", $"Enqueued end turn netId={player.NetId} round={round}.");
     }
 
     public static void SignalReadyToBeginEnemyTurn(Player player) {
         var cm = CombatManager.Instance;
         if (cm is not { IsInProgress: true }) return;
         if (Sts2CombatCompat.IsPlayerReadyToBeginEnemyTurn(cm, player)) return;
-        if (PseudoCoopActionQueue.HasQueuedReadyToBeginEnemyTurn(player.NetId)) return;
+        if (CombatActionQueue.HasQueuedReadyToBeginEnemyTurn(player.NetId)) return;
 
-        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player)) {
+        if (HostDrivenPeers.ShouldHostEnqueueCombatAction(player)) {
             var action = new ReadyToBeginEnemyTurnAction(player);
             RunManager.Instance!.ActionQueueSynchronizer.RequestEnqueue(action);
-            KitLog.Info("MpAiTeammate", $"Enqueued ready-to-begin-enemy-turn netId={player.NetId}.");
+            KitLog.Info("NetCombat", $"Enqueued ready-to-begin-enemy-turn netId={player.NetId}.");
             return;
         }
 
         cm.SetReadyToBeginEnemyTurn(player);
-        KitLog.Info("MpAiTeammate", $"Ready-to-begin-enemy-turn netId={player.NetId}.");
+        KitLog.Info("NetCombat", $"Ready-to-begin-enemy-turn netId={player.NetId}.");
     }
 
     static void EnqueueOrSetReady(Player player) {
-        if (SimulatedPeerRegistry.ShouldHostRouteCombatEnqueue(player))
+        if (HostDrivenPeers.ShouldHostRouteCombatEnqueue(player))
             EnqueueEndTurn(player);
         else
             CombatManager.Instance!.SetReadyToEndTurn(player, canBackOut: false);
     }
 
     static void EnqueueOrSetReadyForAiTarget(Player player) {
-        if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player))
+        if (HostDrivenPeers.ShouldHostEnqueueCombatAction(player))
             EnqueueEndTurn(player);
         else
             CombatManager.Instance!.SetReadyToEndTurn(player, canBackOut: false);
@@ -76,8 +94,8 @@ internal static class MpAiTeammateCombatActions {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return false;
         if (cm.IsPlayerReadyToEndTurn(player)) return false;
-        if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) return false;
-        if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) return false;
+        if (CombatActionQueue.HasPendingCombatActions(player.NetId)) return false;
+        if (CombatActionQueue.HasQueuedEndTurn(player.NetId)) return false;
         return true;
     }
 }

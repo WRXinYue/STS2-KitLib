@@ -1,17 +1,14 @@
-using System.Collections.Generic;
-using KitLib.Companion;
+using System;
 using KitLib.Multiplayer.Cheat;
-using KitLib.Multiplayer.PseudoCoop;
-using KitLib.Settings;
-using KitLib.Singleplayer.Companion;
-using MegaCrit.Sts2.Core.Entities.Models;
+using KitLib.Multiplayer.Play;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Multiplayer.SyncBot;
 
-/// <summary>Host-only dev helper: simulate remote MpCheat ACKs and default player choices in-process.</summary>
+/// <summary>Host-only: inject remote MpCheat ACKs in-process when SyncBot is on.</summary>
 internal static class MpCheatSyncBot {
     internal const ulong PhantomPlayerNetId = 1001;
 
@@ -20,36 +17,34 @@ internal static class MpCheatSyncBot {
         && MpCheatSession.IsHost
         && MpCheatSession.CanUseMultiplayerCheats;
 
-    public static void RefreshSimulatedPeers() => SimulatedPeerRegistry.Refresh();
+    public static void RefreshSimulatedPeers() => HostDrivenPeers.Refresh();
 
-    public static bool IsSimulatedPeer(ulong netId) => SimulatedPeerRegistry.IsSimulatedPeer(netId);
+    public static bool IsSimulatedPeer(ulong netId) => HostDrivenPeers.IsSimulatedPeer(netId);
 
     public static bool ShouldSimulatePlayer(Player player) {
         if (player == null) return false;
-        if (!IsEnabled && !MpAiTeammateHost.IsEnabled) return false;
+        if (!IsEnabled && !AiSessionSettings.MpAiTeammateEnabled) return false;
+        if (!MpCheatSession.IsHost) return false;
         var hostNetId = RunManager.Instance?.NetService?.NetId ?? 0;
-        return player.NetId != hostNetId && SimulatedPeerRegistry.IsHostDrivenPeer(player.NetId);
+        return player.NetId != hostNetId && HostDrivenPeers.IsHostDrivenPeer(player.NetId);
     }
 
-    public static void OnRunEnded() {
-        MpPendingPlayerChoice.Clear();
-        SpvCompanionAiHost.OnRunEnded();
-        PseudoCoopLobbyRoster.OnRunEnded();
-        SimulatedPeerRegistry.OnRunEnded();
-        MpAiTeammateHost.OnRunEnded();
-        CompanionBridge.OnRunEnded();
+    public static NetPlayerChoiceResult DefaultIndexChoice() {
+        var result = new NetPlayerChoiceResult { indexes = [0] };
+        var typeField = typeof(NetPlayerChoiceResult).GetField("type");
+        if (typeField != null) {
+            var index = Enum.GetValues(typeField.FieldType).GetValue(0);
+            if (index != null)
+                typeField.SetValue(result, index);
+        }
+        return result;
     }
-
-    public static NetPlayerChoiceResult DefaultIndexChoice() => new() {
-        type = PlayerChoiceType.Index,
-        indexes = [0],
-    };
 
     public static void InjectPrepareAcks(MpCheatCommandMessage message) {
         if (!IsEnabled || !IsPrepareKind(message.Kind)) return;
 
         RefreshSimulatedPeers();
-        var ackPeers = SimulatedPeerRegistry.GetAckPeerNetIds();
+        var ackPeers = HostDrivenPeers.GetAckPeerNetIds();
         foreach (var peerId in ackPeers) {
             var ack = new MpCheatAddCardAckMessage {
                 CommandId = message.CommandId,

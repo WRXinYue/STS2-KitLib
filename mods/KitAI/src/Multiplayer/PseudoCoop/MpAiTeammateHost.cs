@@ -6,6 +6,7 @@ using KitLib.AI.AutoPlay.Strategies;
 using KitLib.AI.Core;
 using KitLib.AI.Core.Schema;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
@@ -34,7 +35,7 @@ internal static class MpAiTeammateHost {
         AiDecisionGate.Reset();
         _loops.Clear();
         _enqueueStreak.Clear();
-        PseudoCoopActionQueue.ClearInFlightAll();
+        CombatActionQueue.ClearInFlightAll();
         CompanionDecisionHost.OnRunEnded();
         LanLocalDecisionHost.OnRunEnded();
         AiDecisionLog.Clear();
@@ -63,10 +64,10 @@ internal static class MpAiTeammateHost {
         var cm = CombatManager.Instance;
         if (cm == null || !Sts2CombatCompat.IsCombatPlayPhase(cm)) return;
 
-        foreach (var peer in SimulatedPeerRegistry.GetHostDrivenCombatPeers()) {
+        foreach (var peer in HostDrivenPeers.GetHostDrivenCombatPeers()) {
             if (peer.Creature.IsDead) continue;
-            PseudoCoopActionQueue.ClearStaleInFlight(peer.NetId);
-            MpAiTeammateCombatActions.ForceSignalEndTurnForHostDrivenPeer(peer);
+            CombatActionQueue.ClearStaleInFlight(peer.NetId);
+            NetCombatCommands.ForceSignalEndTurnForHostDrivenPeer(peer);
         }
 
         KitLog.Info("MpAiTeammate", $"Host AI disabled — flushed stale in-flight and signaled end turn for host-driven peers.");
@@ -94,25 +95,25 @@ internal static class MpAiTeammateHost {
             return;
         }
 
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
 
-        foreach (var player in SimulatedPeerRegistry.GetMpAiTeammateTargets()) {
+        foreach (var player in HostDrivenPeers.GetMpAiTeammateTargets()) {
             if (LanAiOwnership.IsLocalPlayer(player)) continue;
             if (player.Creature.IsDead) continue;
-            PseudoCoopActionQueue.ClearStaleInFlight(player.NetId);
+            CombatActionQueue.ClearStaleInFlight(player.NetId);
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
-            if (PseudoCoopActionQueue.HasQueuedEndTurn(player.NetId)) continue;
-            if (PseudoCoopActionQueue.HasPendingCombatActions(player.NetId)) continue;
+            if (CombatActionQueue.HasQueuedEndTurn(player.NetId)) continue;
+            if (CombatActionQueue.HasPendingCombatActions(player.NetId)) continue;
 
             if (HasExcessiveEnqueueStreak(player.NetId)) {
                 KitLog.Warn("MpAiTeammate", $"Repeated play enqueue without progress netId={player.NetId}; ending turn.");
                 ResetPlayStreak(player.NetId);
-                MpAiTeammateCombatActions.SignalEndTurn(player);
+                NetCombatCommands.SignalEndTurn(player);
                 continue;
             }
 
             if (!HasPlayableCard(player)) {
-                MpAiTeammateCombatActions.SignalEndTurn(player);
+                NetCombatCommands.SignalEndTurn(player);
                 continue;
             }
 

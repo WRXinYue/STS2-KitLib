@@ -2,6 +2,7 @@ using System.Linq;
 using HarmonyLib;
 using KitLib;
 using KitLib.Multiplayer.Cheat;
+using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Multiplayer.SyncBot;
 using KitLib.Settings;
@@ -32,19 +33,19 @@ internal static class CombatSyncBotPatch {
         var state = RunManager.Instance?.DebugOnlyGetState();
         if (state == null) return;
 
-        SimulatedPeerRegistry.Refresh();
+        HostDrivenPeers.Refresh();
 
-        foreach (var player in SimulatedPeerRegistry.GetRemoteCombatAssistTargets()) {
+        foreach (var player in HostDrivenPeers.GetRemoteCombatAssistTargets()) {
             if (cm.IsPlayerReadyToEndTurn(player)) continue;
             if (player.PlayerCombatState == null || player.Creature.IsDead) continue;
-            if (SimulatedPeerRegistry.IsLiveEnetPeer(player.NetId)) continue;
+            if (HostDrivenPeers.IsLiveEnetPeer(player.NetId)) continue;
 
             if (AiSessionSettings.MpAiTeammateEnabled
                 && player.PlayerCombatState.Hand?.Cards.Any(c => c.CanPlay(out _, out _)) == true)
                 continue;
 
-            if (SimulatedPeerRegistry.ShouldHostEnqueueCombatAction(player))
-                MpAiTeammateCombatActions.SignalEndTurn(player);
+            if (HostDrivenPeers.ShouldHostEnqueueCombatAction(player))
+                NetCombatCommands.SignalEndTurn(player);
             else
                 cm.SetReadyToEndTurn(player, canBackOut: false);
         }
