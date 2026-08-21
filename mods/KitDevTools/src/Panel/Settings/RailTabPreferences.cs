@@ -16,7 +16,6 @@ internal static class RailTabPreferences {
     public const string PrimaryKey = "Primary";
     public const string UtilityKey = "Utility";
     public const string SettingsTabId = "devmode.settings";
-    public const string AiHostTabId = "devmode.ai";
     public const string LogsTabId = "devmode.logs";
 
     public static readonly string[] DefaultHiddenTabIds = [];
@@ -38,7 +37,7 @@ internal static class RailTabPreferences {
                 continue;
             if (hidden.Contains(id) && id != SettingsTabId)
                 continue;
-            if (KitLibState.DualInstanceMinimalRail && id is not AiHostTabId and not LogsTabId)
+            if (KitLibState.DualInstanceMinimalRail && id is not LogsTabId)
                 continue;
             result.Add(tab);
         }
@@ -137,8 +136,8 @@ internal static class RailTabPreferences {
 
     private static bool IsAvailableInCurrentMode(IDevPanelTab tab) {
         if (KitLibState.CheatsInRun || KitLibCheatApi.CanUseMultiplayerCheats?.Invoke() == true) return true;
-        // AI Host is Cheat-kind but must stay visible in DevPanel / LAN minimal-rail sessions.
-        if (tab.Id is AiHostTabId or LogsTabId) return true;
+        // Logs stay visible in DevPanel / LAN minimal-rail sessions.
+        if (tab.Id is LogsTabId) return true;
         return tab.Kind == DevPanelTabKind.Developer;
     }
 }

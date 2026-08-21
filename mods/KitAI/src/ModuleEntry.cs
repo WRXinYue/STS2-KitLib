@@ -3,10 +3,13 @@ using KitLib.Abstractions.Host;
 using KitLib.AI.AutoPlay;
 using KitLib.AI.Core;
 using KitLib.AI.Planning;
+using KitLib.AI.UI;
 using KitLib.Companion;
 using KitLib.Host;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.SyncBot;
+using KitLib.Panels;
+using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
 namespace KitLib.AI;
 
@@ -35,9 +38,16 @@ public static class ModuleEntry {
         };
 
         AiPlayInitializer.Initialize();
-        AiTabRegistration.Register();
+        WireAiHudDelegates();
 
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.Ai);
         MainFile.Logger.Info("KitLib.AI module initialized.");
+    }
+
+    static void WireAiHudDelegates() {
+        KitLibPanelOps.OnPanelAttach = ui => AiHudOverlayUI.Attach((NGlobalUi)ui);
+        KitLibPanelOps.OnPanelSync = ui => AiHudOverlayUI.SyncState((NGlobalUi)ui);
+        KitLibPanelOps.OnPanelDetach = ui => AiHudOverlayUI.Detach((NGlobalUi)ui);
+        KitLibHost.SyncAiHudOverlay = () => AiHudOverlayUI.SyncState();
     }
 }

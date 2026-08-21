@@ -18,3 +18,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Panel switching** — Revisiting already-opened Dev panels is much snappier.
 - **Hand drop zone** — Bottom drop label is now **Hand**.
+- **AI Host tab removed** — AI controls no longer appear on the Dev side rail; use KitAI when a dedicated AI panel is available.

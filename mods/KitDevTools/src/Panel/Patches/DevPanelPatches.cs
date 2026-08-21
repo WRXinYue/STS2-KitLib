@@ -90,7 +90,7 @@ public static class GlobalUiReadyPatch {
         EnsureProcessNodeOnly(globalUi);
     }
 
-    /// <summary>Dual-instance LAN: AI Host rail only (no context pane / warmup).</summary>
+    /// <summary>Dual-instance LAN: Logs rail only (no context pane / warmup).</summary>
     public static void TryAttachDualInstanceMinimal(NGlobalUi? globalUi) {
         if (!KitLibState.IsActive) return;
         if (KitLibState.PseudoCoopDeferHeavyUi) {

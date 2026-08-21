@@ -10,4 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial standalone product release: AI host / AutoPlay and related multiplayer companion helpers.
-- Requires KitLib. KitDevTools is optional (recommended for the in-run AI Host panel).
+- Requires KitLib. KitDevTools is optional.
+
+### Changed
+
+- **Dev panel** — AI Host is no longer registered on the KitDevTools side rail; a dedicated KitAI panel will replace it.

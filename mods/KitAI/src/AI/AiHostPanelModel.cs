@@ -106,7 +106,7 @@ internal static class AiHostPanelModel {
             tips.Add(I18N.T("ai.rec.normalRun", "Title screen → Dev Mode → set Normal run to Toolkit or Cheat Mode."));
 
         if (KitLibState.DualInstanceMinimalRail)
-            tips.Add(I18N.T("ai.rec.minimalRail", "Dual-instance rail shows AI Host + Logs; use a full Dev run for all panels."));
+            tips.Add(I18N.T("ai.rec.minimalRail", "Dual-instance rail shows Logs only; use a full Dev run for all panels."));
 
         if (MultiplayerRunProbe.InMultiplayerRun && LanLocalDecisionHost.IsEnabled)
             tips.Add(I18N.T(

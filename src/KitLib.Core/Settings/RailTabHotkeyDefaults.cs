@@ -23,7 +23,6 @@ internal static class RailTabHotkeyDefaults {
             ["devmode.presets"] = Tab(Key.B),
             ["devmode.cardtest"] = Tab(Key.Y),
             ["devmode.save"] = Tab(Key.Q),
-            ["devmode.ai"] = Tab(Key.A),
             ["devmode.enemyIntent"] = Tab(Key.N),
             ["devmode.hooks"] = Tab(Key.G),
             ["devmode.settings"] = Tab(Key.Comma),

@@ -31,7 +31,6 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon Plus = new("plus");
     public static readonly MdiIcon PuzzleOutline = new("puzzle-outline");
     public static readonly MdiIcon Refresh = new("refresh");
-    public static readonly MdiIcon Robot = new("robot");
     public static readonly MdiIcon Skull = new("skull");
     public static readonly MdiIcon SpeedometerMedium = new("speedometer-medium");
     public static readonly MdiIcon Star = new("star");

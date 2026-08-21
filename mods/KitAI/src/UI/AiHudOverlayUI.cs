@@ -1,14 +1,14 @@
 using System.Text.Json.Nodes;
 using Godot;
-using KitLib.AI;
 using KitLib.AI.AutoPlay;
 using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Settings;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace KitLib.UI;
+namespace KitLib.AI.UI;
 
 /// <summary>In-game AI hosting HUD — sim-derived telemetry at top-left.</summary>
 internal static partial class AiHudOverlayUI {

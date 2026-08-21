@@ -29,8 +29,6 @@ public static class ModuleEntry {
             PseudoCoopBootstrap.ApplyPreset();
             return true;
         };
-        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
-            WireAiHudDelegates();
         KitLibHost.SyncPerfHudOverlay = () => {
             KitLibRootServices.EnsureRootServicesNode();
             DevPerfOverlayUI.SyncVisibility();
@@ -69,13 +67,6 @@ public static class ModuleEntry {
 
     static bool IsCheatAssemblyAvailable() =>
         KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat);
-
-    static void WireAiHudDelegates() {
-        KitLibPanelOps.OnPanelAttach = ui => AiHudOverlayUI.Attach(ui);
-        KitLibPanelOps.OnPanelSync = ui => AiHudOverlayUI.SyncState(ui);
-        KitLibPanelOps.OnPanelDetach = ui => AiHudOverlayUI.Detach(ui);
-        KitLibHost.SyncAiHudOverlay = () => AiHudOverlayUI.SyncState();
-    }
 
     static void WirePseudoCoopDelegates() {
         KitLibPseudoCoopOps.EnsureGlobalUiProcessNode = globalUi =>
@@ -142,9 +133,6 @@ public static class ModuleEntry {
 
             KitLibPanelUiOps.ShowSettingsOverlay = ui =>
                 DevPanelUI.ShowSettingsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
-            if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Ai))
-                KitLibPanelUiOps.ShowAiOverlay = ui =>
-                    DevPanelUI.ShowAiOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib.Panel: dev panel UI delegates unavailable ({ex.Message}).");
