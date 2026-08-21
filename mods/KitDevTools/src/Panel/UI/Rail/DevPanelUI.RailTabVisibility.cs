@@ -14,6 +14,7 @@ internal static partial class DevPanelUI {
         ["devmode.events"] = "KitLibEventSelect",
         ["devmode.rooms"] = "KitLibRoomSelect",
         ["devmode.console"] = "KitLibConsole",
+        ["devmode.autoslay"] = "KitLibAutoSlay",
         ["devmode.cheats"] = "KitLibCheats",
         ["devmode.enemyIntent"] = "KitLibEnemyIntent",
         ["devmode.presets"] = "KitLibPresets",

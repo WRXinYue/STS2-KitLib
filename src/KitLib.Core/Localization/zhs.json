@@ -694,6 +694,7 @@
   "panel.console": "命令手册",
   "panel.presets": "预设",
   "panel.cardtest": "卡牌测试",
+  "panel.autoslay": "AutoSlay",
   "panel.section.runtime": "运行时状态",
   "panel.section.mapRewrite": "地图改写",
 
@@ -1344,5 +1345,17 @@
   "cardtest.mpWarning": "⚠ 多人模式下不可用。",
   "cardtest.notInCombat": "进入战斗以启用注入 / 打牌。",
   "cardtest.notInRun": "开始游戏以浏览卡牌。",
-  "cardtest.addToQueue": "加入队列"
+  "cardtest.addToQueue": "加入队列",
+
+  "autoslay.title": "AutoSlay",
+  "autoslay.hint": "官方冒烟机器人：从主菜单打到第 49 层。仅单人可用。",
+  "autoslay.seed": "种子",
+  "autoslay.seedPlaceholder": "留空则随机种子",
+  "autoslay.start": "开始",
+  "autoslay.stop": "停止",
+  "autoslay.status.idle": "空闲",
+  "autoslay.status.running": "运行中，种子 {0}",
+  "autoslay.alreadyRunning": "已在运行。",
+  "autoslay.mpWarning": "多人模式下不可用。",
+  "autoslay.started": "已用种子 {0} 启动"
 }

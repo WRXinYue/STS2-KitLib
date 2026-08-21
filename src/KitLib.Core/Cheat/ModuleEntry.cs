@@ -11,7 +11,6 @@ public static class ModuleEntry {
         KitLibHost.AnnounceModule(KitLibModuleIds.Cheat);
         MpCheatSync.Initialize();
         WireCheatDelegates();
-        CheatTabRegistration.Register();
 
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.Cheat);
         MainFile.Logger.Info("KitLib.Cheat module initialized.");

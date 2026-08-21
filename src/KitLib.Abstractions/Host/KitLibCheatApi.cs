@@ -2,20 +2,9 @@ using KitLib.Abstractions.Host;
 namespace KitLib.Abstractions.Host;
 
 /// <summary>
-/// Cheat/runtime hooks wired by KitDevTools implementation assemblies.
-/// Consumers (Core, AI, Panel) use this surface instead of reaching into cheat implementation types.
+/// Cheat runtime hooks. Panel UI is owned by KitDevTools; this surface is for patches and APIs.
 /// </summary>
 public static class KitLibCheatApi {
-    public static Action? OpenCards { get; set; }
-    public static Action? OpenRelics { get; set; }
-    public static Action? OpenEnemies { get; set; }
-    public static Action? OpenPowers { get; set; }
-    public static Action? OpenPotions { get; set; }
-    public static Action? OpenEvents { get; set; }
-    public static Action? OpenRooms { get; set; }
-    public static Action? OpenConsole { get; set; }
-    public static Action? OpenPresets { get; set; }
-    public static Action? OpenCardTest { get; set; }
     public static Action<double>? ProcessFrame { get; set; }
     public static Action? EnsureRuntimeStatModifiers { get; set; }
     public static Action? ClearRunState { get; set; }

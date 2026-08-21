@@ -694,6 +694,7 @@
   "panel.console": "Commands",
   "panel.presets": "Presets",
   "panel.cardtest": "Card Test",
+  "panel.autoslay": "AutoSlay",
   "panel.section.runtime": "Runtime Stats",
   "panel.section.mapRewrite": "Map Rewrite",
 
@@ -1312,5 +1313,17 @@
   "cardtest.mpWarning": "⚠ Not available in multiplayer.",
   "cardtest.notInCombat": "Enter combat to enable inject / play.",
   "cardtest.notInRun": "Start a run to browse cards.",
-  "cardtest.addToQueue": "Add to Queue"
+  "cardtest.addToQueue": "Add to Queue",
+
+  "autoslay.title": "AutoSlay",
+  "autoslay.hint": "Official smoke bot: main menu through floor 49. Single-player only.",
+  "autoslay.seed": "Seed",
+  "autoslay.seedPlaceholder": "Leave empty for a random seed",
+  "autoslay.start": "Start",
+  "autoslay.stop": "Stop",
+  "autoslay.status.idle": "Idle",
+  "autoslay.status.running": "Running seed {0}",
+  "autoslay.alreadyRunning": "Already running.",
+  "autoslay.mpWarning": "Not available in multiplayer.",
+  "autoslay.started": "Started with seed {0}"
 }

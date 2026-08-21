@@ -23,6 +23,7 @@ public static class ModuleEntry {
 
         SettingsStore.Load();
         WirePanelDelegates();
+        RegisterRailTabs();
         WirePseudoCoopDelegates();
         KitLibHost.TryEnsurePseudoCoopPresetHandler = () => {
             if (!Companion.CompanionBridge.IsAvailable) return false;
@@ -50,7 +51,8 @@ public static class ModuleEntry {
             typeof(MpUiDebugTreasureRelicPickedPatch),
             typeof(MpUiDebugTreasureTreeExitPatch),
             typeof(MpUiDebugMapOpenPatch),
-            typeof(MpUiDebugMapVotesRefreshPatch));
+            typeof(MpUiDebugMapVotesRefreshPatch),
+            typeof(AutoSlayQuitGamePatch));
 
         KitLibHost.AnnounceModule(KitLibModuleIds.Panel);
         MainFile.Logger.Info("KitLib.Panel module initialized.");
@@ -67,6 +69,12 @@ public static class ModuleEntry {
 
     static bool IsCheatAssemblyAvailable() =>
         KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat);
+
+    static void RegisterRailTabs() {
+        PanelTabRegistration.RegisterAutoSlay();
+        if (IsCheatAssemblyAvailable())
+            PanelTabRegistration.RegisterCheatTabs();
+    }
 
     static void WirePseudoCoopDelegates() {
         KitLibPseudoCoopOps.EnsureGlobalUiProcessNode = globalUi =>
@@ -88,16 +96,6 @@ public static class ModuleEntry {
         KitLibPanelOps.TryDismissCurrent = ui => DevPanel.TryDismissCurrent();
 
         if (IsCheatAssemblyAvailable()) {
-            KitLibCheatApi.OpenCards = DevPanel.OpenCards;
-            KitLibCheatApi.OpenRelics = DevPanel.OpenRelics;
-            KitLibCheatApi.OpenEnemies = DevPanel.OpenEnemies;
-            KitLibCheatApi.OpenPowers = DevPanel.OpenPowers;
-            KitLibCheatApi.OpenPotions = DevPanel.OpenPotions;
-            KitLibCheatApi.OpenEvents = DevPanel.OpenEvents;
-            KitLibCheatApi.OpenRooms = DevPanel.OpenRooms;
-            KitLibCheatApi.OpenConsole = DevPanel.OpenConsole;
-            KitLibCheatApi.OpenPresets = DevPanel.OpenPresets;
-            KitLibCheatApi.OpenCardTest = DevPanel.OpenCardTest;
             KitLibCheatApi.ResetSkipAnim = SkipAnimControl.Reset;
             KitLibCheatApi.IsSkipAnimSkipping = () => SkipAnimControl.IsSkipping;
             KitLibCheatApi.IsMpHooksDisabledInMultiplayer = () => MpCheatUi.IsHooksDisabledInMultiplayer;

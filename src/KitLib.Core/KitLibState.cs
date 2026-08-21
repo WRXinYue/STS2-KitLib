@@ -32,6 +32,7 @@ public enum ActivePanel {
     Console,
     Presets,
     CardTest,
+    AutoSlay,
     Hooks,
     Logs,
     Feedback,
