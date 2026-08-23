@@ -1,17 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using Godot;
 using HarmonyLib;
 using KitLib;
 using KitLib.Actions;
 using KitLib.Compat;
+using KitLib.Feedback;
+using KitLib.Replay;
 using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
+using MegaCrit.Sts2.Core.Saves;
 
 namespace KitLib.UI;
 
@@ -78,11 +82,11 @@ internal static class DevMainMenuUI {
         var container = _buttonsContainer;
         var template = _buttonTemplate;
 
-        AddButton(container, template, I18N.T("devmenu.newTest", "New Test"), () => { Hide(); actions.OnNewTest(); });
-        AddButton(container, template, I18N.T("devmenu.newTestWithSeed", "New Test (Seed)"), () => {
+        AddButton((Control)container, template, I18N.T("devmenu.newTest", "New Test"), () => { Hide(); actions.OnNewTest(); });
+        AddButton((Control)container, template, I18N.T("devmenu.newTestWithSeed", "New Test (Seed)"), () => {
             ShowSeedInputOverlay(mainMenu, actions.OnNewTest);
         });
-        var autoSlayBtn = AddButton(container, template, I18N.T("devmenu.autoslay", "AutoSlay"), () => {
+        var autoSlayBtn = AddButton((Control)container, template, I18N.T("devmenu.autoslay", "AutoSlay"), () => {
             ShowAutoSlaySeedOverlay(mainMenu);
         });
         if (AutoSlayRunner.IsBlockedByMultiplayer || AutoSlayRunner.IsRunning)
@@ -100,17 +104,29 @@ internal static class DevMainMenuUI {
         if (!anySlot)
             loadBtn.SetEnabled(false);
 
-        AddButton(container, template, I18N.T("devmenu.pseudocoop", "Pseudo Co-op Test (Host)"), () => {
+        AddButton((Control)container, template, I18N.T("devmenu.loadFeedback", "Load Feedback ZIP"), () => {
+            OpenFeedbackZipPicker(mainMenu);
+        });
+
+        AddButton((Control)container, template, I18N.T("devmenu.replay", "Play Official Replay"), () => {
+            OpenCombatReplayPicker(mainMenu);
+        });
+
+        AddButton((Control)container, template, I18N.T("devmenu.runReplay", "Play DevTools Replay"), () => {
+            OpenRunReplayPicker(mainMenu);
+        });
+
+        AddButton((Control)container, template, I18N.T("devmenu.pseudocoop", "Pseudo Co-op Test (Host)"), () => {
             DevMainMenuPseudoCoopUI.Show(mainMenu, Hide);
         });
 
-        AddButton(container, template, I18N.T("devmenu.unlockAll", "Unlock All Progress"), () => {
+        AddButton((Control)container, template, I18N.T("devmenu.unlockAll", "Unlock All Progress"), () => {
             ShowUnlockAllConfirm(mainMenu);
         });
 
-        AddButton(container, template, I18N.T("devmenu.diagnostics", "Diagnostics"), ShowDiagnosticsMenu);
+        AddButton((Control)container, template, I18N.T("devmenu.diagnostics", "Diagnostics"), ShowDiagnosticsMenu);
 
-        AddButton(container, template, I18N.T("devmenu.back", "Back"), Hide);
+        AddButton((Control)container, template, I18N.T("devmenu.back", "Back"), Hide);
         FinishMenuBuild(DevMenuLevel.Root);
     }
 
@@ -123,11 +139,11 @@ internal static class DevMainMenuUI {
         var container = _buttonsContainer;
         var template = _buttonTemplate;
 
-        AddButton(container, template, I18N.T("devmenu.logs", "Logs"), () => {
+        AddButton((Control)container, template, I18N.T("devmenu.logs", "Logs"), () => {
             LogViewerUI.ShowOnMainMenu(mainMenu);
         });
 
-        AddButton(container, template, I18N.T("devmenu.back", "Back"), ShowRootMenu);
+        AddButton((Control)container, template, I18N.T("devmenu.back", "Back"), ShowRootMenu);
         FinishMenuBuild(DevMenuLevel.Diagnostics);
     }
 
@@ -235,6 +251,8 @@ internal static class DevMainMenuUI {
         var root = attachRoot ?? (Engine.GetMainLoop() as SceneTree)?.Root;
         DevMainMenuOverlay.RemoveAnywhere(SeedOverlayName);
         DevMainMenuOverlay.RemoveAnywhere(UnlockAllOverlayName);
+        DevMainMenuOverlay.RemoveAnywhere(FeedbackOverlayName);
+        CombatReplayBarUI.Hide();
     }
 
     private static void RestoreStockButtons() {
@@ -426,6 +444,252 @@ internal static class DevMainMenuUI {
 
     private const string SeedOverlayName = "KitLibSeedInput";
     private const string UnlockAllOverlayName = "KitLibUnlockAllConfirm";
+    private const string FeedbackOverlayName = "KitLibFeedbackImport";
+
+    private static void OpenFeedbackZipPicker(NMainMenu mainMenu) {
+        var reports = FeedbackReportBuilder.ReportsDirectory;
+        var dlg = new FileDialog {
+            FileMode = FileDialog.FileModeEnum.OpenFile,
+            Access = FileDialog.AccessEnum.Filesystem,
+            UseNativeDialog = true,
+            Title = I18N.T("devmenu.loadFeedback", "Load Feedback ZIP"),
+            CurrentDir = Directory.Exists(reports) ? reports : OS.GetUserDataDir()
+        };
+        dlg.AddFilter("*.zip", I18N.T("devmenu.loadFeedback.filter", "Feedback ZIP"));
+        mainMenu.AddChild(dlg);
+        dlg.FileSelected += path => {
+            dlg.QueueFree();
+            if (!FeedbackImport.TryImport(path, out var imported, out var error)) {
+                ShowFeedbackImportMessage(mainMenu, error);
+                return;
+            }
+            ShowFeedbackImportConfirm(mainMenu, imported);
+        };
+        dlg.Canceled += () => dlg.QueueFree();
+        dlg.PopupCentered();
+    }
+
+    private static void ShowFeedbackImportConfirm(NMainMenu mainMenu, FeedbackImport.Result imported) {
+        var body = I18N.T("devmenu.loadFeedback.confirmBody",
+            "Enter this run from the ZIP. Your live save slot is not overwritten.\n\nRun save: {0}\nCombat replay (.mcr): {1}\nCombat checkpoint: {2}{3}",
+            Path.GetFileName(imported.RunSavePath),
+            imported.ReplayMcrPath != null
+                ? I18N.T("devmenu.loadFeedback.yes", "Yes")
+                : I18N.T("devmenu.loadFeedback.no", "No"),
+            imported.HasCheckpoint
+                ? I18N.T("devmenu.loadFeedback.yes", "Yes")
+                : I18N.T("devmenu.loadFeedback.no", "No"),
+            imported.CompatibilityNote);
+
+        ShowFeedbackImportOverlay(
+            mainMenu,
+            I18N.T("devmenu.loadFeedback.confirmTitle", "Load Feedback Run?"),
+            body,
+            confirmText: I18N.T("devmenu.loadFeedback.enter", "Enter run"),
+            onConfirm: () => {
+                Hide();
+                if (!SaveSlotManager.LoadFromFile(imported.RunSavePath)) {
+                    MainFile.Logger.Warn("Feedback import: failed to load run save.");
+                    ShowFeedbackImportMessage(mainMenu,
+                        I18N.T("devmenu.loadFeedback.err.loadFailed", "Failed to load the run save."));
+                }
+            },
+            extraText: imported.ReplayMcrPath == null
+                ? null
+                : I18N.T("devmenu.loadFeedback.playReplay", "Play official replay"),
+            onExtra: imported.ReplayMcrPath == null
+                ? null
+                : () => StartCombatReplay(mainMenu, imported.ReplayMcrPath!));
+    }
+
+    private static void OpenCombatReplayPicker(NMainMenu mainMenu) {
+        var dlg = new FileDialog {
+            FileMode = FileDialog.FileModeEnum.OpenFile,
+            Access = FileDialog.AccessEnum.Filesystem,
+            UseNativeDialog = true,
+            Title = I18N.T("devmenu.replay", "Play Official Replay"),
+            CurrentDir = DefaultReplayDirectory()
+        };
+        dlg.AddFilter("*.mcr", I18N.T("devmenu.replay.filter", "Official replay"));
+        mainMenu.AddChild(dlg);
+        dlg.FileSelected += path => {
+            dlg.QueueFree();
+            StartCombatReplay(mainMenu, path);
+        };
+        dlg.Canceled += () => dlg.QueueFree();
+        dlg.PopupCentered();
+    }
+
+    private static void OpenRunReplayPicker(NMainMenu mainMenu) {
+        var dlg = new FileDialog {
+            FileMode = FileDialog.FileModeEnum.OpenFile,
+            Access = FileDialog.AccessEnum.Filesystem,
+            UseNativeDialog = true,
+            Title = I18N.T("devmenu.runReplay", "Play DevTools Replay"),
+            CurrentDir = CombatReplayPlayback.DefaultRunLogsDirectory(),
+        };
+        dlg.AddFilter("*" + CombatReplayPlayback.RunReplayExtension, I18N.T("devmenu.runReplay.filter", "DevTools replay"));
+        dlg.AddFilter("*" + CombatReplayPlayback.LegacyRunReplayExtension, I18N.T("devmenu.runReplay.filterLegacy", "DevTools replay (legacy)"));
+        mainMenu.AddChild(dlg);
+        dlg.FileSelected += path => {
+            dlg.QueueFree();
+            StartRunReplay(mainMenu, path);
+        };
+        dlg.Canceled += () => dlg.QueueFree();
+        dlg.PopupCentered();
+    }
+
+    private static string DefaultReplayDirectory() {
+        try {
+            var rel = SaveManager.Instance.GetProfileScopedPath("replays");
+            var abs = ProjectSettings.GlobalizePath(rel);
+            if (Directory.Exists(abs))
+                return abs;
+        }
+        catch (Exception) {
+        }
+        return OS.GetUserDataDir();
+    }
+
+    private static void StartCombatReplay(NMainMenu mainMenu, string path) {
+        var tree = mainMenu.GetTree();
+        if (!CombatReplayPlayback.TryPlay(path, tree, out var error)) {
+            ShowFeedbackImportOverlay(
+                mainMenu,
+                I18N.T("devmenu.replay", "Play Official Replay"),
+                error,
+                confirmText: null,
+                onConfirm: null);
+            return;
+        }
+        Hide();
+        CombatReplayBarUI.Show(tree);
+    }
+
+    private static void StartRunReplay(NMainMenu mainMenu, string path) {
+        var tree = mainMenu.GetTree();
+        if (!CombatReplayPlayback.TryPlay(path, tree, out var error)) {
+            ShowFeedbackImportOverlay(
+                mainMenu,
+                I18N.T("devmenu.runReplay", "Play DevTools Replay"),
+                error,
+                confirmText: null,
+                onConfirm: null);
+            return;
+        }
+        Hide();
+        CombatReplayBarUI.Show(tree);
+    }
+
+    private static void ShowFeedbackImportMessage(NMainMenu mainMenu, string error) {
+        ShowFeedbackImportOverlay(
+            mainMenu,
+            I18N.T("devmenu.loadFeedback", "Load Feedback ZIP"),
+            error,
+            confirmText: null,
+            onConfirm: null);
+    }
+
+    private static void ShowFeedbackImportOverlay(
+        NMainMenu mainMenu,
+        string titleText,
+        string bodyText,
+        string? confirmText,
+        Action? onConfirm,
+        string? extraText = null,
+        Action? onExtra = null) {
+        var root = mainMenu.GetTree().Root;
+        root.GetNodeOrNull<Control>(FeedbackOverlayName)?.QueueFree();
+
+        var overlay = new Control {
+            Name = FeedbackOverlayName,
+            MouseFilter = Control.MouseFilterEnum.Stop,
+            ZIndex = 2000,
+        };
+        overlay.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+
+        var backdrop = new ColorRect {
+            Color = new Color(0, 0, 0, 0.75f),
+            MouseFilter = Control.MouseFilterEnum.Stop,
+        };
+        backdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        overlay.AddChild(backdrop);
+
+        var wrapper = new CenterContainer();
+        wrapper.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        overlay.AddChild(wrapper);
+
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(extraText == null ? 480 : 560, 0) };
+        panel.AddThemeStyleboxOverride("panel", CreateOverlayPanelStyle());
+        wrapper.AddChild(panel);
+
+        var vbox = new VBoxContainer();
+        vbox.AddThemeConstantOverride("separation", 14);
+
+        var title = new Label {
+            Text = titleText,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        title.AddThemeFontSizeOverride("font_size", 16);
+        title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
+        vbox.AddChild(title);
+
+        var body = new Label {
+            Text = bodyText,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart
+        };
+        body.AddThemeFontSizeOverride("font_size", 12);
+        body.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        vbox.AddChild(body);
+
+        var btnRow = new HBoxContainer();
+        btnRow.AddThemeConstantOverride("separation", 10);
+
+        var closeBtn = new Button {
+            Text = confirmText == null
+                ? I18N.T("devmenu.loadFeedback.ok", "OK")
+                : I18N.T("restart.cancel", "Cancel"),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            FocusMode = Control.FocusModeEnum.None,
+        };
+        closeBtn.Pressed += () => overlay.QueueFree();
+        btnRow.AddChild(closeBtn);
+
+        if (confirmText != null && onConfirm != null) {
+            var confirmBtn = new Button {
+                Text = confirmText,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            confirmBtn.Pressed += () => {
+                overlay.QueueFree();
+                onConfirm();
+            };
+            btnRow.AddChild(confirmBtn);
+        }
+
+        if (extraText != null && onExtra != null) {
+            var extraBtn = new Button {
+                Text = extraText,
+                SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            extraBtn.Pressed += () => {
+                overlay.QueueFree();
+                onExtra();
+            };
+            btnRow.AddChild(extraBtn);
+        }
+
+        vbox.AddChild(btnRow);
+        panel.AddChild(vbox);
+        root.AddChild(overlay);
+        backdrop.GuiInput += e => {
+            if (e is InputEventMouseButton { Pressed: true })
+                overlay.QueueFree();
+        };
+    }
 
     private static void ShowUnlockAllConfirm(NMainMenu mainMenu) {
         var root = mainMenu.GetTree().Root;

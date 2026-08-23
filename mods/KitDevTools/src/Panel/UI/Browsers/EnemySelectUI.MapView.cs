@@ -44,7 +44,7 @@ internal static partial class EnemySelectUI {
 
     static void ShowMapUnavailable(MainBrowserState state, string message) {
         if (_mapDetailHost != null)
-            ClearDetailHost(_mapDetailHost);
+            ClearDetailHost((VBoxContainer)_mapDetailHost);
         state.ContentHost.AddChild(new Label {
             Text = message,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,

@@ -10,6 +10,7 @@ using KitLib.Multiplayer.LanTest;
 using KitLib.Multiplayer.PseudoCoop;
 using KitLib.Panels;
 using KitLib.Patches;
+using KitLib.Replay;
 using KitLib.Settings;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes;
@@ -23,6 +24,7 @@ public static class ModuleEntry {
 
         SettingsStore.Load();
         WirePanelDelegates();
+        DevToolsModSettingsPage.Register();
         RegisterRailTabs();
         WirePseudoCoopDelegates();
         KitLibHost.TryEnsurePseudoCoopPresetHandler = () => {
@@ -109,6 +111,9 @@ public static class ModuleEntry {
         KitLibDevOps.OpenHooks = DevPanel.OpenHooks;
         KitLibDevOps.OpenEnemyIntent = DevPanel.OpenEnemyIntent;
         KitLibDevOps.OpenLogExport = DevPanel.OpenLogExport;
+
+        CombatReplayPlayback.ShowHud = CombatReplayBarUI.Show;
+        CombatReplayPlayback.HideHud = CombatReplayBarUI.Hide;
 
         KitLibUserOps.OpenLogs = DevPanel.OpenLogs;
 

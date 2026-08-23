@@ -15,6 +15,7 @@
   <Import Project="$(RepoRoot)eng/KitLib.PersonalCompat.props" Condition="'$(KitLibPersonalCompat)' == 'true' and Exists('$(RepoRoot)eng/KitLib.PersonalCompat.props')" />
   <PropertyGroup>
     <DefineConstants Condition="'$(Sts2Profile)' == 'stable'">$(DefineConstants);STS2_STABLE_PROFILE</DefineConstants>
+    <DefineConstants Condition="'$(Sts2NetHostVersioned)' == 'true'">$(DefineConstants);STS2_NET_HOST_VERSIONED</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Sts2Dir)' != ''">
     <Sts2DataDir>$(Sts2Dir)/data_sts2_windows_x86_64</Sts2DataDir>

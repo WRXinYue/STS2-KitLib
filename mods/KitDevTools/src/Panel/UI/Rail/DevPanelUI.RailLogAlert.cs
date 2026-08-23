@@ -35,7 +35,7 @@ internal static partial class DevPanelUI {
             return;
 
         StopLogsButtonAlertBlink();
-        StartLogsButtonAlertBlink(btn, severity.Value);
+        StartLogsButtonAlertBlink((Button)btn, severity.Value);
     }
 
     internal static void StopLogAlertBlink() => StopLogsButtonAlertBlink();

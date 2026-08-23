@@ -10,6 +10,10 @@ using KitLib.Combat;
 using KitLib.CombatStats;
 using KitLib.Interop;
 using KitLib.Modding;
+using MegaCrit.Sts2.Core.Logging;
+using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.Saves;
+using MegaCrit.Sts2.Core.Saves.Managers;
 
 namespace KitLib.Feedback;
 
@@ -22,6 +26,8 @@ internal static class FeedbackReportBuilder {
     private const string ReportsDir = "devmode-reports";
     private const int MaxExtraImageBytes = 8 * 1024 * 1024;
 
+    internal static string ReportsDirectory => Path.Combine(OS.GetUserDataDir(), ReportsDir);
+
     private static readonly JsonSerializerOptions MetaJson = new() {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -31,7 +37,6 @@ internal static class FeedbackReportBuilder {
 
     public readonly record struct BuildRequest(
         string LogFilePath,
-        bool PrivacyMode,
         string? Description = null,
         string? Category = null,
         string? Mood = null,
@@ -44,8 +49,7 @@ internal static class FeedbackReportBuilder {
             .ToList();
 
     public static string Build(BuildRequest req) {
-        var userDataDir = OS.GetUserDataDir();
-        var reportsPath = Path.Combine(userDataDir, ReportsDir);
+        var reportsPath = ReportsDirectory;
         Directory.CreateDirectory(reportsPath);
 
         var ts = DateTime.Now.ToString("yyyyMMdd-HHmmss");
@@ -55,9 +59,9 @@ internal static class FeedbackReportBuilder {
         using var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: false);
 
         var checkpointDir = CombatCheckpointStore.TryGetExportDirectory();
-        WriteEntry(archive, "report-meta.json", BuildReportMeta(req, checkpointDir), req, userDataDir);
-        WriteEntry(archive, "harmony-patches.txt", BuildHarmonyDump(), req, userDataDir);
-        WriteEntry(archive, "combat-stats.json", BuildCombatStatsJson(), req, userDataDir);
+        WriteEntry(archive, "report-meta.json", BuildReportMeta(req, checkpointDir));
+        WriteEntry(archive, "harmony-patches.txt", BuildHarmonyDump());
+        WriteEntry(archive, "combat-stats.json", BuildCombatStatsJson());
 
         if (req.ScreenshotPng is { Length: > 0 })
             WriteBinary(archive, "screenshot.png", req.ScreenshotPng);
@@ -65,13 +69,15 @@ internal static class FeedbackReportBuilder {
         WriteExtraImages(archive, req.ExtraImages);
 
         if (checkpointDir != null)
-            WriteCheckpointDir(archive, checkpointDir, req, userDataDir);
+            WriteCheckpointDir(archive, checkpointDir);
+
+        WriteOfficialGameFiles(archive);
 
         if (!File.Exists(req.LogFilePath))
             throw new FileNotFoundException("Game log file not found.", req.LogFilePath);
 
         var logName = Path.GetFileName(req.LogFilePath);
-        WriteEntry(archive, logName, ReadLogFile(req.LogFilePath), req, userDataDir);
+        WriteEntry(archive, logName, ReadLogFile(req.LogFilePath));
 
         return zipPath;
     }
@@ -110,7 +116,6 @@ internal static class FeedbackReportBuilder {
             description = req.Description ?? "",
             category = string.IsNullOrWhiteSpace(req.Category) ? "other" : req.Category,
             mood = string.IsNullOrWhiteSpace(req.Mood) ? "none" : req.Mood,
-            privacyMode = req.PrivacyMode,
             screenshot = req.ScreenshotPng is { Length: > 0 },
             extraImages = extra.Select(b => b.FileName).ToList(),
             combatCheckpoint = checkpointDir != null,
@@ -172,15 +177,112 @@ internal static class FeedbackReportBuilder {
         }
     }
 
-    private static void WriteCheckpointDir(
-        ZipArchive archive, string dir, BuildRequest req, string userDataDir) {
+    /// <summary>
+    /// Flush official <c>replays/latest.mcr</c> while still on the game thread.
+    /// Dev / pseudo-coop runs skip the write via <c>DevCombatReplaySkipPatch</c>.
+    /// </summary>
+    internal static void FlushOfficialReplay() {
+        try {
+            var rm = RunManager.Instance;
+            if (rm is { IsInProgress: true } && rm.CombatReplayWriter.IsRecordingReplay)
+                rm.WriteReplay(stopRecording: false);
+        }
+        catch (Exception ex) {
+            KitLog.Warn("Feedback", $"Official replay flush failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Same save set as <c>GetLogsConsoleCmd.ZipFeedbackLogs</c>: current profile, settings,
+    /// progress, run, prefs, <c>latest.mcr</c>, newest history, recent <c>.corrupt</c>, and
+    /// <c>release_info.json</c>. JSON is passed through <see cref="LogSanitizer"/>.
+    /// </summary>
+    private static void WriteOfficialGameFiles(ZipArchive archive) {
+        try {
+            var accountBase = ProjectSettings.GlobalizePath(UserDataPathProvider.GetAccountScopedBasePath(""));
+            if (string.IsNullOrEmpty(accountBase))
+                return;
+
+            int profileId;
+            try {
+                profileId = SaveManager.Instance.CurrentProfileId;
+            }
+            catch (Exception) {
+                return;
+            }
+
+            var relatives = new List<string> {
+                ProfileSaveManager.GetProfileSavePath(),
+                "settings.save",
+                ProgressSaveManager.GetProgressPathForProfile(profileId),
+                RunSaveManager.GetRunSavePath(profileId, "current_run.save"),
+                RunSaveManager.GetRunSavePath(profileId, "current_run_mp.save"),
+                PrefsSaveManager.GetPrefsPath(profileId),
+                Path.Combine(UserDataPathProvider.GetProfileDir(profileId), "replays/latest.mcr"),
+            };
+
+            var historyDir = Path.Combine(accountBase, RunHistorySaveManager.GetHistoryPath(profileId));
+            if (Directory.Exists(historyDir)) {
+                var newest = Directory.EnumerateFiles(historyDir, "*", SearchOption.TopDirectoryOnly)
+                    .OrderByDescending(File.GetLastWriteTime)
+                    .FirstOrDefault();
+                if (newest != null)
+                    relatives.Add(Path.GetRelativePath(accountBase, newest));
+            }
+
+            if (Directory.Exists(accountBase)) {
+                foreach (var file in Directory.EnumerateFiles(accountBase, "*", SearchOption.AllDirectories)) {
+                    if (file.EndsWith(".corrupt", StringComparison.Ordinal)
+                        && DateTimeOffset.Now - File.GetLastWriteTime(file) < TimeSpan.FromDays(1))
+                        relatives.Add(Path.GetRelativePath(accountBase, file));
+                }
+            }
+
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var rel in relatives) {
+                if (string.IsNullOrWhiteSpace(rel) || !seen.Add(rel))
+                    continue;
+                var abs = Path.Combine(accountBase, rel);
+                if (!File.Exists(abs))
+                    continue;
+                WriteDiskFile(archive, abs, "saves/" + rel.Replace('\\', '/'));
+            }
+
+            var releaseInfo = Path.Combine(OS.GetExecutablePath().GetBaseDir(), "release_info.json");
+            if (File.Exists(releaseInfo))
+                WriteDiskFile(archive, releaseInfo, "release_info.json");
+        }
+        catch (Exception ex) {
+            KitLog.Warn("Feedback", $"Official save pack failed: {ex.Message}");
+        }
+    }
+
+    private static void WriteDiskFile(ZipArchive archive, string absPath, string zipName) {
+        zipName = zipName.Replace('\\', '/');
+        try {
+            if (Path.GetExtension(absPath).Equals(".json", StringComparison.OrdinalIgnoreCase)) {
+                WriteEntry(archive, zipName, File.ReadAllText(absPath));
+                return;
+            }
+
+            using var src = new FileStream(absPath, FileMode.Open, System.IO.FileAccess.Read, FileShare.ReadWrite);
+            var entry = archive.CreateEntry(zipName, CompressionLevel.Optimal);
+            using var dest = entry.Open();
+            src.CopyTo(dest);
+        }
+        catch (Exception ex) {
+            KitLog.Warn("Feedback", $"Could not pack '{zipName}': {ex.Message}");
+        }
+    }
+
+    private static void WriteCheckpointDir(ZipArchive archive, string dir) {
         foreach (var file in Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories)) {
             var rel = Path.GetRelativePath(dir, file).Replace('\\', '/');
             var zipName = "combat-checkpoint/" + rel;
             var ext = Path.GetExtension(file);
-            if (req.PrivacyMode && (ext.Equals(".json", StringComparison.OrdinalIgnoreCase)
-                || ext.Equals(".txt", StringComparison.OrdinalIgnoreCase))) {
-                WriteEntry(archive, zipName, File.ReadAllText(file), req, userDataDir);
+            if (ext.Equals(".json", StringComparison.OrdinalIgnoreCase)
+                || ext.Equals(".txt", StringComparison.OrdinalIgnoreCase)) {
+                WriteEntry(archive, zipName, File.ReadAllText(file));
             }
             else {
                 WriteBinary(archive, zipName, File.ReadAllBytes(file));
@@ -211,19 +313,8 @@ internal static class FeedbackReportBuilder {
         }
     }
 
-    private static string Redact(string text, string userDataDir) {
-        var fwd = userDataDir.Replace('\\', '/');
-        var bwd = userDataDir.Replace('/', '\\');
-        text = text.Replace(fwd, "<user-data>", StringComparison.OrdinalIgnoreCase);
-        if (bwd != fwd)
-            text = text.Replace(bwd, "<user-data>", StringComparison.OrdinalIgnoreCase);
-        return text;
-    }
-
-    private static void WriteEntry(ZipArchive archive, string name, string content,
-        BuildRequest req, string userDataDir) {
-        if (req.PrivacyMode)
-            content = Redact(content, userDataDir);
+    private static void WriteEntry(ZipArchive archive, string name, string content) {
+        content = LogSanitizer.Sanitize(content);
 
         var entry = archive.CreateEntry(name, CompressionLevel.Optimal);
         using var writer = new StreamWriter(entry.Open(), Encoding.UTF8);

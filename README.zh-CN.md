@@ -96,6 +96,7 @@ KitLib 是面向《杀戮尖塔 2》的基础宿主库。按需安装配套产�
 ## 致谢
 
 - [STS2-KaylaMod](https://github.com/mugongzi520/STS2-KaylaMod)
+- [RunReplays](https://github.com/boardengineer/RunReplays)
 
 ## 许可证
 

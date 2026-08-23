@@ -7,6 +7,7 @@ using KitLib;
 using KitLib.Feedback;
 using KitLib.Icons;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.UI;
 
@@ -83,12 +84,18 @@ internal static class FeedbackReportUI {
         }
 
         var logFiles = FeedbackReportBuilder.ScanLogFiles();
-        var logOption = BuildLogDropdown(logFiles, compact);
-        var logRow = new VBoxContainer();
-        logRow.AddThemeConstantOverride("separation", 4);
-        logRow.AddChild(MakeFieldLabel(I18N.T("log.export.log.label", "Game log file")));
-        logRow.AddChild(logOption);
-        vbox.AddChild(logRow);
+        var defaultLogIdx = ResolveDefaultLogIndex(logFiles);
+        bool inRun = RunManager.Instance?.IsInProgress == true;
+        OptionButton? logOption = null;
+
+        if (!inRun) {
+            logOption = BuildLogDropdown(logFiles, compact);
+            var logRow = new VBoxContainer();
+            logRow.AddThemeConstantOverride("separation", 4);
+            logRow.AddChild(MakeFieldLabel(I18N.T("log.export.log.label", "Game log file")));
+            logRow.AddChild(logOption);
+            vbox.AddChild(logRow);
+        }
 
         if (logFiles.Count == 0) {
             var noLogHint = new Label {
@@ -104,24 +111,14 @@ internal static class FeedbackReportUI {
         string categoryId = Categories[0].Id;
         var categoryGroup = new ButtonGroup();
         var categoryRow = new HFlowContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        categoryRow.AddThemeConstantOverride("h_separation", 10);
-        categoryRow.AddThemeConstantOverride("v_separation", 4);
+        categoryRow.AddThemeConstantOverride("h_separation", 8);
+        categoryRow.AddThemeConstantOverride("v_separation", 6);
         foreach (var cat in Categories) {
-            var btn = new Button {
-                Text = FormatCategoryLabel(cat),
-                Icon = CategoryIcon(cat).Texture(16, cat.IconColor),
-                ToggleMode = true,
-                ButtonGroup = categoryGroup,
-                ButtonPressed = cat.Id == categoryId,
-                Flat = true,
-                FocusMode = Control.FocusModeEnum.None,
-                IconAlignment = HorizontalAlignment.Left,
-                Alignment = HorizontalAlignment.Left
-            };
-            btn.AddThemeFontSizeOverride("font_size", 12);
-            btn.AddThemeColorOverride("font_color", Colors.White);
-            btn.AddThemeColorOverride("font_pressed_color", Colors.White);
-            btn.AddThemeColorOverride("font_hover_color", Colors.White);
+            var btn = DevPanelUI.CreateFilterChip(FormatCategoryLabel(cat), cat.Id == categoryId);
+            btn.ButtonGroup = categoryGroup;
+            btn.Icon = CategoryIcon(cat).Texture(16, cat.IconColor);
+            btn.IconAlignment = HorizontalAlignment.Left;
+            btn.Alignment = HorizontalAlignment.Left;
             btn.AddThemeConstantOverride("h_separation", 6);
             var captured = cat.Id;
             btn.Pressed += () => categoryId = captured;
@@ -197,23 +194,6 @@ internal static class FeedbackReportUI {
         addBtn.Pressed += () => OpenImagePicker(vbox, extra, extraLabel);
         pasteBtn.Pressed += () => TryPasteClipboardImage(extra, extraLabel);
 
-        var privacyToggle = new CheckButton {
-            Text = I18N.T("log.export.privacy.label", "Privacy mode"),
-            ButtonPressed = true,
-            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
-            FocusMode = Control.FocusModeEnum.None
-        };
-        privacyToggle.AddThemeFontSizeOverride("font_size", 11);
-        vbox.AddChild(privacyToggle);
-
-        var privacyHint = new Label {
-            Text = I18N.T("log.export.privacy.hint", "Replaces your file system path with <user-data>"),
-            AutowrapMode = TextServer.AutowrapMode.WordSmart
-        };
-        privacyHint.AddThemeFontSizeOverride("font_size", 10);
-        privacyHint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
-        vbox.AddChild(privacyHint);
-
         vbox.AddChild(MakeContentsCard());
 
         var statusLabel = new Label {
@@ -230,12 +210,11 @@ internal static class FeedbackReportUI {
         vbox.AddChild(exportBtn);
 
         exportBtn.Pressed += () => {
-            if (logFiles.Count == 0 || logOption.Selected < 0 || logOption.Selected >= logFiles.Count)
+            int logIdx = inRun ? defaultLogIdx : logOption!.Selected;
+            if (logFiles.Count == 0 || logIdx < 0 || logIdx >= logFiles.Count)
                 return;
-
             var reqBase = new FeedbackReportBuilder.BuildRequest(
-                LogFilePath: logFiles[logOption.Selected].AbsPath,
-                PrivacyMode: privacyToggle.ButtonPressed,
+                LogFilePath: logFiles[logIdx].AbsPath,
                 Description: description.Text?.Trim(),
                 Category: categoryId,
                 Mood: moodId,
@@ -260,10 +239,10 @@ internal static class FeedbackReportUI {
         int idx = ResolveDefaultLogIndex(logs);
         var req = new FeedbackReportBuilder.BuildRequest(
             LogFilePath: logs[idx].AbsPath,
-            PrivacyMode: true,
             Category: "bug",
             ScreenshotPng: screenshotPng);
 
+        FeedbackReportBuilder.FlushOfficialReplay();
         return await Task.Run(() => {
             try {
                 return ((string?)FeedbackReportBuilder.Build(req), (string?)null);
@@ -290,6 +269,7 @@ internal static class FeedbackReportUI {
 
         req = req with { ScreenshotPng = shot };
 
+        FeedbackReportBuilder.FlushOfficialReplay();
         string? zipPath = null;
         string? errorMsg = null;
         await Task.Run(() => {
@@ -487,6 +467,7 @@ internal static class FeedbackReportUI {
             "screenshot.png — " + I18N.T("log.export.contents.screenshot", "Game screenshot (if enabled)"),
             "attachments/ — " + I18N.T("log.export.contents.attachments", "Extra images"),
             "combat-checkpoint/ — " + I18N.T("log.export.contents.checkpoint", "Last combat snapshot, if any"),
+            "saves/ — " + I18N.T("log.export.contents.saves", "Official profile saves, current run, and latest.mcr replay"),
             "harmony-patches.txt — " + I18N.T("log.export.contents.harmony", "Full Harmony patch dump"),
             "combat-stats.json — " + I18N.T("log.export.contents.combatStats", "Combat stats"),
             "godot.log — " + I18N.T("log.export.contents.gamelog", "Game log file"),

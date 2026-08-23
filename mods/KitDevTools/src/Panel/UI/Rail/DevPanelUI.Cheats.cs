@@ -11,6 +11,7 @@ using KitLib.Map;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Panels;
 using KitLib.Presets;
+using KitLib.Replay;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -21,6 +22,8 @@ namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     internal static void ShowCheatsOverlay(NGlobalUi globalUi, DevPanelActions actions) {
+        if (ReplayInputGuard.BlocksCheats)
+            return;
         KitLibCheatApi.EnsureRuntimeStatModifiers?.Invoke();
         var existing = ((Node)globalUi).GetNodeOrNull<Control>(CheatsRootName);
         if (existing != null) {

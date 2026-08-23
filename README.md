@@ -96,6 +96,7 @@ KitLib is a foundation host library for Slay the Spire 2 mods. Install companion
 ## Acknowledgments
 
 - [STS2-KaylaMod](https://github.com/mugongzi520/STS2-KaylaMod)
+- [RunReplays](https://github.com/boardengineer/RunReplays)
 
 ## License
 

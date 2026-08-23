@@ -5,6 +5,7 @@ using KitLib;
 using KitLib.Actions;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Presets;
+using KitLib.Replay;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -401,6 +402,8 @@ internal static partial class CardBrowserUI {
     };
 
     private static async Task ExecuteDropAsync(State s, CardModel card, CardBrowserDropZone zone) {
+        if (ReplayInputGuard.BlocksCheats)
+            return;
         var target = TargetForDropZone(zone);
         if (IsLibrarySource) {
             await AddCardAsync(s, card, target);

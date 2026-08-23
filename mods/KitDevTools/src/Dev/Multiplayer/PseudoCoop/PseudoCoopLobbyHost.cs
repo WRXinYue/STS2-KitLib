@@ -53,10 +53,10 @@ internal static class PseudoCoopLobbyHost {
             if (mainMenu == null)
                 return Task.FromResult((false, "Main menu is not active. Return to the title screen and try again."));
 
-#if STS2_STABLE_PROFILE
-            var netService = new NetHostGameService();
-#else
+#if STS2_NET_HOST_VERSIONED
             var netService = new NetHostGameService(PeerVersionInfo.LocalDefault());
+#else
+            var netService = new NetHostGameService();
 #endif
             var hostError = netService.StartENetHost(HostPort, MaxPlayers);
             if (hostError.HasValue)

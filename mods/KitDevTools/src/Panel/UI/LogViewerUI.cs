@@ -1086,7 +1086,7 @@ internal static class LogViewerUI {
             CustomMinimumSize = new Vector2(64, 26),
             Icon = MdiIcon.Delete.Texture(14, KitLibTheme.Subtle)
         };
-        ApplySmallFlatButton(_clearBtn);
+        ApplySmallFlatButton((Button)_clearBtn);
         row.AddChild(_clearBtn);
 
         var closeBtn = new Button {

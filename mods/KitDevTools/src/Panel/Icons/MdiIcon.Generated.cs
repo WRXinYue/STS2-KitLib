@@ -18,6 +18,7 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon Delete = new("delete");
     public static readonly MdiIcon DiamondStone = new("diamond-stone");
     public static readonly MdiIcon DragVertical = new("drag-vertical");
+    public static readonly MdiIcon ExitToApp = new("exit-to-app");
     public static readonly MdiIcon FilterVariant = new("filter-variant");
     public static readonly MdiIcon Flash = new("flash");
     public static readonly MdiIcon FlaskOutline = new("flask-outline");
@@ -28,9 +29,14 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon Map = new("map");
     public static readonly MdiIcon MapMarker = new("map-marker");
     public static readonly MdiIcon Minus = new("minus");
+    public static readonly MdiIcon Pause = new("pause");
+    public static readonly MdiIcon Play = new("play");
     public static readonly MdiIcon Plus = new("plus");
     public static readonly MdiIcon PuzzleOutline = new("puzzle-outline");
     public static readonly MdiIcon Refresh = new("refresh");
+    public static readonly MdiIcon SkipBackward = new("skip-backward");
+    public static readonly MdiIcon SkipNext = new("skip-next");
+    public static readonly MdiIcon SkipPrevious = new("skip-previous");
     public static readonly MdiIcon Skull = new("skull");
     public static readonly MdiIcon SpeedometerMedium = new("speedometer-medium");
     public static readonly MdiIcon Star = new("star");

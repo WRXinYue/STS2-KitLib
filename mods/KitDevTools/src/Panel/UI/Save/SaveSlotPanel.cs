@@ -652,7 +652,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         _nameInput.AddThemeFontSizeOverride("font_size", 14);
-        ApplyThemedLineEdit(_nameInput);
+        ApplyThemedLineEdit((LineEdit)_nameInput);
         footerRow.AddChild(_nameInput);
 
         _confirmBtn = new Button {
@@ -663,7 +663,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         };
         _confirmBtn.AddThemeFontSizeOverride("font_size", 15);
         _confirmBtn.Pressed += OnConfirmPressed;
-        ApplyPrimaryButton(_confirmBtn);
+        ApplyPrimaryButton((Button)_confirmBtn);
         footerRow.AddChild(_confirmBtn);
 
         _deleteBtn = new Button {
@@ -673,7 +673,7 @@ internal sealed partial class SaveSlotPanel : Control, ISaveSlotDialogRoot {
         };
         _deleteBtn.AddThemeFontSizeOverride("font_size", 13);
         _deleteBtn.Pressed += OnDeletePressed;
-        ApplyDangerButton(_deleteBtn);
+        ApplyDangerButton((Button)_deleteBtn);
         footerRow.AddChild(_deleteBtn);
 
         _detailContainer.AddChild(footerRow);

@@ -9,13 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **AutoSlay** — DevMode title-screen menu starts the official AutoSlay smoke bot with an optional seed. It is no longer a Dev side-rail tab. Single-player only; Steam release builds cannot use `--autoslay`, so this calls `AutoSlayer.Start` directly and skips the bot's process quit when the run ends.
+- **AutoSlay** — DevMode title-screen menu; optional seed; single-player only.
 - Initial standalone product release: in-run side rail, browsers, cheats, saves, logs, and related developer tools.
 - KitModPanel is optional: Progress Guard and related settings register through KitLib host APIs when ModPanel is present.
 - **Card browser drag-and-drop** — Drag a card outside the panel: top → draw pile, right → discard, bottom → hand.
 - **Hover to open** — Hovering a side-rail icon opens that panel (no click required).
 - **Mod test room teleports** — Room browser **Mod test — Rest site** and **Mod test — Treasure** spawn extra fake players to preview official multiplayer UI in solo dev runs.
-- **Log export screenshots** — The log ZIP can include a game screenshot (KitLib UI hidden), extra images, a short description, official-style category chips (`Bug - this is a bug`), reaction tags, and the last combat snapshot.
+- **Log export screenshots** — Log ZIP can include screenshots, description, category chips, combat snapshot, `latest.mcr`, and profile/run saves.
+- **Load Feedback ZIP** — Open a log-export ZIP from DevMode; preview contents and enter the run without overwriting your live save slot.
+- **Official replay** — Play official `.mcr` files from DevMode with bottom dock (timeline, play/pause, step, speed, restart, exit).
+- **DevTools replay** — Play recorded full runs (`.replay`) with room timeline, live pace, and input lock; one file per run under `KitLib/run-replays`. Files persist across launches. Loading a save of that run continues the same log; loading an earlier save of the same run rewinds past later actions.
+- **Relic picker replay** — Record and replay overlay relic picks as `ChooseRelic {index}`.
+- **Clickable room timeline** — Click a past room to restart and fast-forward; first segment is starting bonus, not first combat.
+- **Live replay** — Defaults to real-player pace. Can switch to game speed.
+- **ReplayCore version** — Run replay files declare an engine format version, independent of the mod version. A file from a newer or unsupported core cannot be played.
+- **DevTools replay retention** — Keeps the newest 5 DevTools `.replay` files by default; older files are deleted. Count is typed on the KitDevTools Mod settings page.
 
 ### Changed
 
@@ -28,3 +36,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Mod test — Rest site** — Leaving the preview room restores your solo layout on stable game builds.
+- **DevTools replay** — Starting bonus (Neow) and event screens stay visible during playback; content lays out above the replay dock. Player card plays, map travel, and cheat edits are blocked while a replay is running.

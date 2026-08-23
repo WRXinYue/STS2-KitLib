@@ -272,7 +272,7 @@ internal sealed class DevHoverTool : IMcpTool {
 
         var name = _focused.GetType().Name;
         if (GodotObject.IsInstanceValid(_focused))
-            Invoke(_focused, "OnUnfocus");
+            Invoke((Node)_focused, "OnUnfocus");
 
         _focused = null;
         return name;

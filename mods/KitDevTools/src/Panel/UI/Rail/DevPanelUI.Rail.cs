@@ -35,8 +35,8 @@ internal static partial class DevPanelUI {
             _controller.CloseAll();
 
         ClearRailButtons();
-        PopulatePrimaryRailButtons(globalUi, _railVBox, _railButtons);
-        PopulateUtilityRailButtons(globalUi, _railVBox, _railButtons);
+        PopulatePrimaryRailButtons(globalUi, (VBoxContainer)_railVBox, _railButtons);
+        PopulateUtilityRailButtons(globalUi, (VBoxContainer)_railVBox, _railButtons);
 
         if (activeId != null) {
             int idx = IndexOfRailButton(activeId);

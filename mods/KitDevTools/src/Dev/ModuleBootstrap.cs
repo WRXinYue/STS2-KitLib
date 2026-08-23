@@ -11,6 +11,8 @@ using KitLib.Host;
 using KitLib.Interop;
 using KitLib.Mcp;
 using KitLib.Patches;
+using KitLib.Replay;
+using KitLib.Replay.Patches;
 
 namespace KitLib.Dev;
 
@@ -49,6 +51,8 @@ internal static class ModuleBootstrap {
         SafeStep("ScriptShufflePatch", () => {
             ScriptShufflePatch.TryApply(harmony);
         });
+        SafeStep("CrystalSphereReplay", () => CrystalSphereManualPatcher.Apply());
+        SafeStep("CardRewardButtonReplay", () => CardRewardButtonPatcher.Apply());
     }
 
     internal static void Complete() {
@@ -78,6 +82,7 @@ internal static class ModuleBootstrap {
 
             Callable.From(StartDeferredMcpBridge).CallDeferred();
             WireDevViewerOps();
+            WireRunReplayRetention();
 
             _completed = true;
             KitLibBootstrapGate.EnterInteractive();
@@ -86,6 +91,10 @@ internal static class ModuleBootstrap {
         finally {
             _completing = false;
         }
+    }
+
+    static void WireRunReplayRetention() {
+        RunReplayRetention.Prune();
     }
 
     static void WireDevViewerOps() {

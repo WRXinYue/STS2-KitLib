@@ -115,20 +115,20 @@ internal static partial class EnemyIntentUI {
         if (!KitLibState.IsActive
             || CombatManager.Instance?.IsInProgress != true
             || CombatManager.Instance.DebugOnlyGetState() is not { } state) {
-            ClearPreviewList(_browserPreviewList);
+            ClearPreviewList((VBoxContainer)_browserPreviewList);
             _browserStatus.Text = I18N.T("enemyIntent.empty", "No active enemies.");
             return;
         }
 
         var entries = MonsterIntentOps.CaptureCurrent(state);
         if (entries.Count == 0) {
-            ClearPreviewList(_browserPreviewList);
+            ClearPreviewList((VBoxContainer)_browserPreviewList);
             _browserStatus.Text = I18N.T("enemyIntent.empty", "No active enemies.");
             return;
         }
 
         _browserStatus.Text = I18N.T("enemyIntent.status.live", "Live — {0} enemies", entries.Count);
-        IntentEditorRows.Sync(_browserPreviewList, entries, preserveSelection);
+        IntentEditorRows.Sync((VBoxContainer)_browserPreviewList, entries, preserveSelection);
     }
 
     private static void ClearPreviewList(VBoxContainer list) {
