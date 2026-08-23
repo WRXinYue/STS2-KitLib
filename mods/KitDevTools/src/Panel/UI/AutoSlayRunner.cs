@@ -44,7 +44,7 @@ internal static class AutoSlayRunner {
         LastSeed = resolved;
         _instance = new AutoSlayer();
         _instance.Start(resolved);
-        MainFile.Logger.Info($"AutoSlay started from DevMode seed={resolved}");
+        MainFile.Logger.Info($"AutoSlay started from main menu seed={resolved}");
         message = I18N.T("autoslay.started", "Started with seed {0}", resolved);
         return true;
     }

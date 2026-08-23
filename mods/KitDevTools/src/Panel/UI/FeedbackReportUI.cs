@@ -14,6 +14,49 @@ namespace KitLib.UI;
 /// Log export form — shown in the log viewer slide-out extension panel.
 /// </summary>
 internal static class FeedbackReportUI {
+    static readonly (string Id, string Glyph, string Key, string Fallback)[] Moods = [
+        ("none", "–", "log.export.mood.none", "None"),
+        ("exclamation", "❗", "log.export.mood.exclamation", "Alert"),
+        ("skull", "💀", "log.export.mood.skull", "Skull"),
+        ("thumb_down", "👎", "log.export.mood.thumbDown", "Down"),
+        ("sad", "😢", "log.export.mood.sad", "Sad"),
+        ("question", "❓", "log.export.mood.question", "Question"),
+        ("heart", "❤", "log.export.mood.heart", "Heart"),
+        ("thumb_up", "👍", "log.export.mood.thumbUp", "Up"),
+        ("happy", "☺", "log.export.mood.happy", "Happy"),
+    ];
+
+    static readonly FeedbackCategory[] Categories = [
+        new("bug", "Bug", "log.export.category.bug.desc", "This is a bug", new Color(0.45f, 0.85f, 0.72f)),
+        new("bug_maybe", "bug?", "log.export.category.bugMaybe.desc", "Maybe a bug", new Color(1f, 0.62f, 0.22f)),
+        new("balance", "Balance", "log.export.category.balance.desc", "Numbers or strength feel off", new Color(0.75f, 0.82f, 0.95f)),
+        new("feedback", "Feedback", "log.export.category.feedback.desc", "Suggestion or idea", new Color(0.95f, 0.84f, 0.45f)),
+        new("translation", "Translation", "log.export.category.translation.desc", "Wrong or missing text", new Color(0.72f, 0.78f, 0.98f)),
+        new("ui", "UI", "log.export.category.ui.desc", "Layout or visuals look wrong", new Color(0.65f, 0.88f, 0.95f)),
+        new("multiplayer", "Multiplayer", "log.export.category.multiplayer.desc", "Online play issue", new Color(0.85f, 0.7f, 0.95f)),
+    ];
+
+    readonly record struct FeedbackCategory(
+        string Id,
+        string Title,
+        string DescKey,
+        string DescFallback,
+        Color IconColor);
+
+    static string FormatCategoryLabel(FeedbackCategory cat) =>
+        $"{cat.Title} - {I18N.T(cat.DescKey, cat.DescFallback)}";
+
+    static MdiIcon CategoryIcon(FeedbackCategory cat) => cat.Id switch {
+        "bug" => MdiIcon.From("bug"),
+        "bug_maybe" => MdiIcon.From("alert"),
+        "balance" => MdiIcon.From("scale-balance"),
+        "feedback" => MdiIcon.From("comment-quote-outline"),
+        "translation" => MdiIcon.From("translate"),
+        "ui" => MdiIcon.From("monitor-screenshot"),
+        "multiplayer" => MdiIcon.From("account-group"),
+        _ => MdiIcon.From("help-circle-outline"),
+    };
+
     internal static void BuildContent(VBoxContainer vbox, bool compact = false) {
         vbox.AddThemeConstantOverride("separation", compact ? 8 : 10);
 
@@ -23,7 +66,7 @@ internal static class FeedbackReportUI {
             titleBox.AddChild(DevPanelUI.CreatePanelTitle(I18N.T("log.export.title", "Log Export")));
             var subtitle = new Label {
                 Text = I18N.T("log.export.subtitle",
-                    "Export selected game log and diagnostics as a ZIP package."),
+                    "Describe the issue, attach a screenshot, and export a ZIP for mod authors."),
                 AutowrapMode = TextServer.AutowrapMode.WordSmart
             };
             subtitle.AddThemeFontSizeOverride("font_size", 11);
@@ -56,6 +99,103 @@ internal static class FeedbackReportUI {
             noLogHint.AddThemeColorOverride("font_color", new Color(1f, 0.55f, 0.45f));
             vbox.AddChild(noLogHint);
         }
+
+        vbox.AddChild(MakeFieldLabel(I18N.T("log.export.category.label", "Category")));
+        string categoryId = Categories[0].Id;
+        var categoryGroup = new ButtonGroup();
+        var categoryRow = new HFlowContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        categoryRow.AddThemeConstantOverride("h_separation", 10);
+        categoryRow.AddThemeConstantOverride("v_separation", 4);
+        foreach (var cat in Categories) {
+            var btn = new Button {
+                Text = FormatCategoryLabel(cat),
+                Icon = CategoryIcon(cat).Texture(16, cat.IconColor),
+                ToggleMode = true,
+                ButtonGroup = categoryGroup,
+                ButtonPressed = cat.Id == categoryId,
+                Flat = true,
+                FocusMode = Control.FocusModeEnum.None,
+                IconAlignment = HorizontalAlignment.Left,
+                Alignment = HorizontalAlignment.Left
+            };
+            btn.AddThemeFontSizeOverride("font_size", 12);
+            btn.AddThemeColorOverride("font_color", Colors.White);
+            btn.AddThemeColorOverride("font_pressed_color", Colors.White);
+            btn.AddThemeColorOverride("font_hover_color", Colors.White);
+            btn.AddThemeConstantOverride("h_separation", 6);
+            var captured = cat.Id;
+            btn.Pressed += () => categoryId = captured;
+            categoryRow.AddChild(btn);
+        }
+        vbox.AddChild(categoryRow);
+
+        vbox.AddChild(MakeFieldLabel(I18N.T("log.export.mood.label", "Reaction")));
+        var moodRow = new HBoxContainer();
+        moodRow.AddThemeConstantOverride("separation", 4);
+        var moodButtons = new List<Button>();
+        string moodId = "none";
+        foreach (var mood in Moods) {
+            var btn = new Button {
+                Text = mood.Glyph,
+                TooltipText = I18N.T(mood.Key, mood.Fallback),
+                ToggleMode = true,
+                ButtonPressed = mood.Id == "none",
+                CustomMinimumSize = new Vector2(32, 28),
+                FocusMode = Control.FocusModeEnum.None,
+                Flat = true
+            };
+            btn.AddThemeFontSizeOverride("font_size", 14);
+            var captured = mood.Id;
+            btn.Pressed += () => {
+                moodId = captured;
+                foreach (var other in moodButtons)
+                    other.ButtonPressed = other == btn;
+            };
+            moodButtons.Add(btn);
+            moodRow.AddChild(btn);
+        }
+        vbox.AddChild(moodRow);
+
+        vbox.AddChild(MakeFieldLabel(I18N.T("log.export.description.label", "What happened")));
+        var description = new TextEdit {
+            CustomMinimumSize = new Vector2(0, compact ? 64 : 88),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            WrapMode = TextEdit.LineWrappingMode.Boundary,
+            PlaceholderText = I18N.T(
+                "log.export.description.placeholder",
+                "Steps to reproduce, expected vs actual…")
+        };
+        description.AddThemeFontSizeOverride("font_size", 11);
+        vbox.AddChild(description);
+
+        var screenshotToggle = new CheckButton {
+            Text = I18N.T("log.export.screenshot.label", "Include screenshot"),
+            ButtonPressed = true,
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin,
+            FocusMode = Control.FocusModeEnum.None
+        };
+        screenshotToggle.AddThemeFontSizeOverride("font_size", 11);
+        vbox.AddChild(screenshotToggle);
+
+        var extra = new List<FeedbackReportBuilder.NamedBlob>();
+        var extraLabel = new Label {
+            Text = ExtraCountText(0),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart
+        };
+        extraLabel.AddThemeFontSizeOverride("font_size", 10);
+        extraLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+
+        var extraRow = new HBoxContainer();
+        extraRow.AddThemeConstantOverride("separation", 6);
+        var addBtn = SmallActionButton(I18N.T("log.export.images.add", "Add images"), MdiIcon.FolderOpen);
+        var pasteBtn = SmallActionButton(I18N.T("log.export.images.paste", "Paste"), MdiIcon.ContentCopy);
+        extraRow.AddChild(addBtn);
+        extraRow.AddChild(pasteBtn);
+        vbox.AddChild(extraRow);
+        vbox.AddChild(extraLabel);
+
+        addBtn.Pressed += () => OpenImagePicker(vbox, extra, extraLabel);
+        pasteBtn.Pressed += () => TryPasteClipboardImage(extra, extraLabel);
 
         var privacyToggle = new CheckButton {
             Text = I18N.T("log.export.privacy.label", "Privacy mode"),
@@ -93,16 +233,152 @@ internal static class FeedbackReportUI {
             if (logFiles.Count == 0 || logOption.Selected < 0 || logOption.Selected >= logFiles.Count)
                 return;
 
-            exportBtn.Disabled = true;
-            exportBtn.Text = I18N.T("log.export.exporting", "Generating…");
-            statusLabel.Visible = false;
-
-            var req = new FeedbackReportBuilder.BuildRequest(
+            var reqBase = new FeedbackReportBuilder.BuildRequest(
                 LogFilePath: logFiles[logOption.Selected].AbsPath,
-                PrivacyMode: privacyToggle.ButtonPressed);
+                PrivacyMode: privacyToggle.ButtonPressed,
+                Description: description.Text?.Trim(),
+                Category: categoryId,
+                Mood: moodId,
+                ExtraImages: extra.Count == 0 ? null : extra.ToArray());
 
-            TaskHelper.RunSafely(RunExport(req, exportBtn, statusLabel, logFiles.Count == 0));
+            TaskHelper.RunSafely(RunFormExport(
+                reqBase,
+                screenshotToggle.ButtonPressed,
+                exportBtn,
+                statusLabel,
+                logFiles.Count == 0));
         };
+    }
+
+    internal static async Task<(string? ZipPath, string? Error)> ExportDefaultZipAsync(
+        byte[]? screenshotPng = null) {
+        LogCollector.RefreshFileSnapshot();
+        var logs = FeedbackReportBuilder.ScanLogFiles();
+        if (logs.Count == 0)
+            return (null, null);
+
+        int idx = ResolveDefaultLogIndex(logs);
+        var req = new FeedbackReportBuilder.BuildRequest(
+            LogFilePath: logs[idx].AbsPath,
+            PrivacyMode: true,
+            Category: "bug",
+            ScreenshotPng: screenshotPng);
+
+        return await Task.Run(() => {
+            try {
+                return ((string?)FeedbackReportBuilder.Build(req), (string?)null);
+            }
+            catch (Exception ex) {
+                return ((string?)null, ex.Message);
+            }
+        });
+    }
+
+    static async Task RunFormExport(
+        FeedbackReportBuilder.BuildRequest req,
+        bool includeScreenshot,
+        Button btn,
+        Label statusLabel,
+        bool noLogs) {
+        btn.Disabled = true;
+        btn.Text = I18N.T("log.export.exporting", "Generating…");
+        statusLabel.Visible = false;
+
+        byte[]? shot = null;
+        if (includeScreenshot)
+            shot = await FeedbackScreenshotCapture.TryCapturePngAsync();
+
+        req = req with { ScreenshotPng = shot };
+
+        string? zipPath = null;
+        string? errorMsg = null;
+        await Task.Run(() => {
+            try {
+                zipPath = FeedbackReportBuilder.Build(req);
+            }
+            catch (Exception ex) {
+                errorMsg = ex.Message;
+            }
+        });
+
+        if (!GodotObject.IsInstanceValid(btn))
+            return;
+
+        btn.Disabled = noLogs;
+        btn.Text = I18N.T("log.export.zip", "Export ZIP");
+        statusLabel.Visible = true;
+
+        if (zipPath != null) {
+            statusLabel.Text = I18N.T("log.export.success", "Saved: {0}", zipPath);
+            statusLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.95f, 0.60f));
+            OS.ShellShowInFileManager(Path.GetDirectoryName(zipPath) ?? zipPath);
+        }
+        else {
+            statusLabel.Text = I18N.T("log.export.error", "Export failed: {0}", errorMsg ?? "unknown error");
+            statusLabel.AddThemeColorOverride("font_color", new Color(1f, 0.42f, 0.42f));
+            KitLog.Warn("Feedback", $"Export failed: {errorMsg}");
+        }
+    }
+
+    static void OpenImagePicker(
+        Control host,
+        List<FeedbackReportBuilder.NamedBlob> extra,
+        Label extraLabel) {
+        if (!GodotObject.IsInstanceValid(host) || !host.IsInsideTree())
+            return;
+
+        var dlg = new FileDialog {
+            FileMode = FileDialog.FileModeEnum.OpenFiles,
+            Access = FileDialog.AccessEnum.Filesystem,
+            UseNativeDialog = true,
+            Title = I18N.T("log.export.images.add", "Add images"),
+            CurrentDir = OS.GetSystemDir(OS.SystemDir.Pictures)
+        };
+        dlg.AddFilter("*.png,*.jpg,*.jpeg,*.webp", I18N.T("log.export.images.filter", "Images"));
+        host.AddChild(dlg);
+        dlg.FilesSelected += paths => {
+            foreach (var path in paths) {
+                var blob = FeedbackReportBuilder.TryReadImageFile(path);
+                if (blob != null)
+                    extra.Add(blob.Value);
+            }
+            extraLabel.Text = ExtraCountText(extra.Count);
+            dlg.QueueFree();
+        };
+        dlg.Canceled += () => dlg.QueueFree();
+        dlg.PopupCentered();
+    }
+
+    static void TryPasteClipboardImage(
+        List<FeedbackReportBuilder.NamedBlob> extra,
+        Label extraLabel) {
+        if (!DisplayServer.ClipboardHasImage())
+            return;
+        var img = DisplayServer.ClipboardGetImage();
+        if (img == null)
+            return;
+        var bytes = img.SavePngToBuffer();
+        if (bytes == null || bytes.Length == 0)
+            return;
+        extra.Add(new FeedbackReportBuilder.NamedBlob($"clipboard-{extra.Count + 1}.png", bytes));
+        extraLabel.Text = ExtraCountText(extra.Count);
+    }
+
+    static string ExtraCountText(int count) =>
+        count == 0
+            ? I18N.T("log.export.images.none", "No extra images")
+            : I18N.T("log.export.images.count", "{0} extra image(s)", count);
+
+    static Button SmallActionButton(string text, MdiIcon icon) {
+        var btn = new Button {
+            Text = text,
+            Icon = icon.Texture(14, Colors.White),
+            CustomMinimumSize = new Vector2(0, 28),
+            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            FocusMode = Control.FocusModeEnum.None
+        };
+        btn.AddThemeFontSizeOverride("font_size", 11);
+        return btn;
     }
 
     private static OptionButton BuildLogDropdown(
@@ -135,62 +411,6 @@ internal static class FeedbackReportUI {
         }
 
         return 0;
-    }
-
-    internal static Task<(string? ZipPath, string? Error)> ExportDefaultZipAsync() {
-        LogCollector.RefreshFileSnapshot();
-        var logs = FeedbackReportBuilder.ScanLogFiles();
-        if (logs.Count == 0)
-            return Task.FromResult<(string?, string?)>((null, null));
-
-        int idx = ResolveDefaultLogIndex(logs);
-        var req = new FeedbackReportBuilder.BuildRequest(
-            LogFilePath: logs[idx].AbsPath,
-            PrivacyMode: true);
-
-        return Task.Run(() => {
-            try {
-                return ((string?)FeedbackReportBuilder.Build(req), (string?)null);
-            }
-            catch (Exception ex) {
-                return ((string?)null, ex.Message);
-            }
-        });
-    }
-
-    private static async Task RunExport(
-        FeedbackReportBuilder.BuildRequest req,
-        Button btn,
-        Label statusLabel,
-        bool noLogs) {
-        string? zipPath = null;
-        string? errorMsg = null;
-
-        await Task.Run(() => {
-            try {
-                zipPath = FeedbackReportBuilder.Build(req);
-            }
-            catch (Exception ex) {
-                errorMsg = ex.Message;
-            }
-        });
-
-        if (!GodotObject.IsInstanceValid(btn)) return;
-
-        btn.Disabled = noLogs;
-        btn.Text = I18N.T("log.export.zip", "Export ZIP");
-        statusLabel.Visible = true;
-
-        if (zipPath != null) {
-            statusLabel.Text = I18N.T("log.export.success", "Saved: {0}", zipPath);
-            statusLabel.AddThemeColorOverride("font_color", new Color(0.55f, 0.95f, 0.60f));
-            OS.ShellShowInFileManager(Path.GetDirectoryName(zipPath) ?? zipPath);
-        }
-        else {
-            statusLabel.Text = I18N.T("log.export.error", "Export failed: {0}", errorMsg ?? "unknown error");
-            statusLabel.AddThemeColorOverride("font_color", new Color(1f, 0.42f, 0.42f));
-            KitLog.Warn("Feedback", $"Export failed: {errorMsg}");
-        }
     }
 
     private static Label MakeFieldLabel(string text) {
@@ -263,6 +483,10 @@ internal static class FeedbackReportUI {
         inner.AddChild(head);
 
         foreach (var item in new[] {
+            "report-meta.json — " + I18N.T("log.export.contents.meta", "Description, category, loaded mods"),
+            "screenshot.png — " + I18N.T("log.export.contents.screenshot", "Game screenshot (if enabled)"),
+            "attachments/ — " + I18N.T("log.export.contents.attachments", "Extra images"),
+            "combat-checkpoint/ — " + I18N.T("log.export.contents.checkpoint", "Last combat snapshot, if any"),
             "harmony-patches.txt — " + I18N.T("log.export.contents.harmony", "Full Harmony patch dump"),
             "combat-stats.json — " + I18N.T("log.export.contents.combatStats", "Combat stats"),
             "godot.log — " + I18N.T("log.export.contents.gamelog", "Game log file"),

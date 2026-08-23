@@ -6,18 +6,6 @@ using KitLib.Host;
 namespace KitLib.PanelMod;
 
 internal static class PanelTabRegistration {
-    internal static void RegisterAutoSlay() {
-        RegisterTab(
-            "devmode.autoslay",
-            "speedometer-medium",
-            "panel.autoslay",
-            "AutoSlay",
-            860,
-            KitLibTabGroup.Primary,
-            KitLibTabKind.Developer,
-            () => DevPanel.OpenAutoSlay());
-    }
-
     internal static void RegisterCheatTabs() {
         RegisterTab("devmode.cards", "cards", "panel.cards", "Cards", 100, KitLibTabGroup.Primary, KitLibTabKind.Cheat, () => DevPanel.OpenCards());
         RegisterTab("devmode.relics", "diamond-stone", "panel.relics", "Relics", 200, KitLibTabGroup.Primary, KitLibTabKind.Cheat, () => DevPanel.OpenRelics());

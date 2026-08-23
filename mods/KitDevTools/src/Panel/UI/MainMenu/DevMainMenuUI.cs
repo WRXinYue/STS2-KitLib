@@ -82,6 +82,11 @@ internal static class DevMainMenuUI {
         AddButton(container, template, I18N.T("devmenu.newTestWithSeed", "New Test (Seed)"), () => {
             ShowSeedInputOverlay(mainMenu, actions.OnNewTest);
         });
+        var autoSlayBtn = AddButton(container, template, I18N.T("devmenu.autoslay", "AutoSlay"), () => {
+            ShowAutoSlaySeedOverlay(mainMenu);
+        });
+        if (AutoSlayRunner.IsBlockedByMultiplayer || AutoSlayRunner.IsRunning)
+            autoSlayBtn.SetEnabled(false);
 
         bool anySlot = SaveSlotManager.GetAllSlotIds().Count > 0;
 
@@ -522,7 +527,44 @@ internal static class DevMainMenuUI {
         BorderColor = new Color(0.35f, 0.35f, 0.45f, 0.7f),
     };
 
+    private static void ShowAutoSlaySeedOverlay(NMainMenu mainMenu) {
+        ShowSeedInputOverlay(
+            mainMenu,
+            I18N.T("autoslay.title", "AutoSlay"),
+            I18N.T("restart.seed.label", "Seed (leave empty for random):"),
+            I18N.T("autoslay.seedPlaceholder", "Leave empty for a random seed"),
+            seed => {
+                Hide();
+                Callable.From(() => {
+                    if (!AutoSlayRunner.TryStart(seed, out var message))
+                        MainFile.Logger.Warn($"AutoSlay did not start: {message}");
+                }).CallDeferred();
+            });
+    }
+
     private static void ShowSeedInputOverlay(NMainMenu mainMenu, Action onNewTest) {
+        ShowSeedInputOverlay(
+            mainMenu,
+            I18N.T("restart.title", "Restart with Seed"),
+            I18N.T("restart.seed.label", "Seed (leave empty for random):"),
+            I18N.T("restart.seed.placeholder", "e.g. DEADBEEF"),
+            seed => {
+                if (!string.IsNullOrEmpty(seed)) {
+                    KitLibState.PendingRestartSeed = SeedHelper.CanonicalizeSeed(seed);
+                    KitLog.Info($"MainMenu seed input: '{KitLibState.PendingRestartSeed}'.");
+                }
+
+                Hide();
+                onNewTest();
+            });
+    }
+
+    private static void ShowSeedInputOverlay(
+        NMainMenu mainMenu,
+        string titleText,
+        string seedLabelText,
+        string placeholder,
+        Action<string> onConfirm) {
         var root = mainMenu.GetTree().Root;
         root.GetNodeOrNull<Control>(SeedOverlayName)?.QueueFree();
 
@@ -551,20 +593,20 @@ internal static class DevMainMenuUI {
         var vbox = new VBoxContainer();
         vbox.AddThemeConstantOverride("separation", 14);
 
-        var title = new Label { Text = I18N.T("restart.title", "Restart with Seed"), HorizontalAlignment = HorizontalAlignment.Center };
+        var title = new Label { Text = titleText, HorizontalAlignment = HorizontalAlignment.Center };
         title.AddThemeFontSizeOverride("font_size", 16);
         title.AddThemeColorOverride("font_color", KitLibTheme.Accent);
         vbox.AddChild(title);
 
         vbox.AddChild(new ColorRect { Color = KitLibTheme.Separator, CustomMinimumSize = new Vector2(0, 1), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
 
-        var seedLbl = new Label { Text = I18N.T("restart.seed.label", "Seed (leave empty for random):") };
+        var seedLbl = new Label { Text = seedLabelText };
         seedLbl.AddThemeFontSizeOverride("font_size", 12);
         seedLbl.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         vbox.AddChild(seedLbl);
 
         var seedInput = new LineEdit {
-            PlaceholderText = I18N.T("restart.seed.placeholder", "e.g. DEADBEEF"),
+            PlaceholderText = placeholder,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         seedInput.AddThemeFontSizeOverride("font_size", 14);
@@ -587,15 +629,9 @@ internal static class DevMainMenuUI {
             FocusMode = Control.FocusModeEnum.None,
         };
         startBtn.Pressed += () => {
-            var seed = seedInput.Text?.Trim();
-            if (!string.IsNullOrEmpty(seed)) {
-                KitLibState.PendingRestartSeed = SeedHelper.CanonicalizeSeed(seed);
-                KitLog.Info($"MainMenu seed input: '{KitLibState.PendingRestartSeed}'.");
-            }
-
+            var seed = seedInput.Text?.Trim() ?? "";
             overlay.QueueFree();
-            Hide();
-            onNewTest();
+            onConfirm(seed);
         };
         btnRow.AddChild(startBtn);
 

@@ -22,7 +22,6 @@ internal static class RailTabHotkeyDefaults {
             ["devmode.cheats"] = Tab(Key.H),
             ["devmode.presets"] = Tab(Key.B),
             ["devmode.cardtest"] = Tab(Key.Y),
-            ["devmode.autoslay"] = Tab(Key.A),
             ["devmode.save"] = Tab(Key.Q),
             ["devmode.enemyIntent"] = Tab(Key.N),
             ["devmode.hooks"] = Tab(Key.G),

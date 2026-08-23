@@ -12,6 +12,7 @@ internal static class CombatCheckpointStore {
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
 
     private static string SessionDir => Path.Combine(DataPaths.SnapshotsDir, "combat_session");
+    private static string LastCombatDir => Path.Combine(DataPaths.SnapshotsDir, "combat_last");
     private static string IndexPath => Path.Combine(SessionDir, "index.json");
     private static string NodesDir => Path.Combine(SessionDir, "nodes");
 
@@ -34,14 +35,8 @@ internal static class CombatCheckpointStore {
         _index = null;
         _combatStartSaved = false;
 
-        if (Directory.Exists(SessionDir)) {
-            try {
-                Directory.Delete(SessionDir, recursive: true);
-            }
-            catch (Exception ex) {
-                MainFile.Logger.Warn($"CombatCheckpointStore: ResetSession cleanup failed: {ex.Message}");
-            }
-        }
+        if (Directory.Exists(SessionDir))
+            TryDeleteDir(SessionDir, "ResetSession");
 
         Directory.CreateDirectory(NodesDir);
         _index = new CombatCheckpointIndex {
@@ -51,16 +46,21 @@ internal static class CombatCheckpointStore {
     }
 
     internal static void EndCombat() {
+        ArchiveLastCombat();
         _index = null;
         _combatStartSaved = false;
-        if (!Directory.Exists(SessionDir))
-            return;
-        try {
-            Directory.Delete(SessionDir, recursive: true);
-        }
-        catch (Exception ex) {
-            MainFile.Logger.Warn($"CombatCheckpointStore: EndCombat cleanup failed: {ex.Message}");
-        }
+        TryDeleteDir(SessionDir, "EndCombat");
+    }
+
+    /// <summary>
+    /// Directory to pack into a feedback ZIP: live session while in combat, otherwise last finished combat.
+    /// </summary>
+    internal static string? TryGetExportDirectory() {
+        if (HasExportableDir(SessionDir))
+            return SessionDir;
+        if (HasExportableDir(LastCombatDir))
+            return LastCombatDir;
+        return null;
     }
 
     internal static bool HasNode(CombatCheckpointKind kind) {
@@ -199,6 +199,41 @@ internal static class CombatCheckpointStore {
 
     private static string NodeCombatPath(string nodeId) =>
         Path.Combine(NodesDir, $"{nodeId}.combat.bin");
+
+    private static void ArchiveLastCombat() {
+        if (!HasExportableDir(SessionDir))
+            return;
+
+        TryDeleteDir(LastCombatDir, "ArchiveLastCombat");
+        try {
+            CopyDirectory(SessionDir, LastCombatDir);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"CombatCheckpointStore: archive last combat failed: {ex.Message}");
+        }
+    }
+
+    private static bool HasExportableDir(string dir) =>
+        Directory.Exists(dir) && File.Exists(Path.Combine(dir, "index.json"));
+
+    private static void TryDeleteDir(string dir, string context) {
+        if (!Directory.Exists(dir))
+            return;
+        try {
+            Directory.Delete(dir, recursive: true);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"CombatCheckpointStore: {context} cleanup failed: {ex.Message}");
+        }
+    }
+
+    private static void CopyDirectory(string source, string dest) {
+        Directory.CreateDirectory(dest);
+        foreach (var file in Directory.EnumerateFiles(source))
+            File.Copy(file, Path.Combine(dest, Path.GetFileName(file)), overwrite: true);
+        foreach (var sub in Directory.EnumerateDirectories(source))
+            CopyDirectory(sub, Path.Combine(dest, Path.GetFileName(sub)));
+    }
 
     private static void PersistIndex() {
         if (_index == null)

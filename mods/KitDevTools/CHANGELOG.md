@@ -9,12 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **AutoSlay panel** — DevMode rail tab starts and stops the official AutoSlay smoke bot with an optional seed. Single-player only; Steam release builds cannot use `--autoslay`, so this panel calls `AutoSlayer.Start` directly and skips the bot's process quit when the run ends.
+- **AutoSlay** — DevMode title-screen menu starts the official AutoSlay smoke bot with an optional seed. It is no longer a Dev side-rail tab. Single-player only; Steam release builds cannot use `--autoslay`, so this calls `AutoSlayer.Start` directly and skips the bot's process quit when the run ends.
 - Initial standalone product release: in-run side rail, browsers, cheats, saves, logs, and related developer tools.
 - KitModPanel is optional: Progress Guard and related settings register through KitLib host APIs when ModPanel is present.
 - **Card browser drag-and-drop** — Drag a card outside the panel: top → draw pile, right → discard, bottom → hand.
 - **Hover to open** — Hovering a side-rail icon opens that panel (no click required).
 - **Mod test room teleports** — Room browser **Mod test — Rest site** and **Mod test — Treasure** spawn extra fake players to preview official multiplayer UI in solo dev runs.
+- **Log export screenshots** — The log ZIP can include a game screenshot (KitLib UI hidden), extra images, a short description, official-style category chips (`Bug - this is a bug`), reaction tags, and the last combat snapshot.
 
 ### Changed
 

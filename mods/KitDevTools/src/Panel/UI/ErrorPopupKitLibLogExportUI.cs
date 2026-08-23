@@ -115,7 +115,8 @@ internal static class ErrorPopupKitLibLogExportUI {
         btn.SetEnabled(false);
         btn.SetText(I18N.T("log.export.exporting", "Generating…"));
 
-        var (zipPath, error) = await FeedbackReportUI.ExportDefaultZipAsync();
+        var shot = await FeedbackScreenshotCapture.TryCapturePngAsync();
+        var (zipPath, error) = await FeedbackReportUI.ExportDefaultZipAsync(shot);
 
         if (!GodotObject.IsInstanceValid(btn))
             return;

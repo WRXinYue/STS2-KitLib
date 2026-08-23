@@ -71,7 +71,6 @@ public static class ModuleEntry {
         KitLibHost.IsModuleLoaded(KitLibModuleIds.Cheat);
 
     static void RegisterRailTabs() {
-        PanelTabRegistration.RegisterAutoSlay();
         if (IsCheatAssemblyAvailable())
             PanelTabRegistration.RegisterCheatTabs();
     }
