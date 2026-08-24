@@ -28,7 +28,9 @@ public class MainFile {
             typeof(MultiplayerModSyncPatch),
             typeof(JoinFlowCompatPatch),
             typeof(HostEnqueuePatch),
-            typeof(CombatActionFlightPatch)));
+            typeof(CombatActionFlightPatch),
+            typeof(MainMenuCornerButtonReadyPatch),
+            typeof(MainMenuCornerButtonSubmenuPatch)));
         KitLibStartupAudit.Measure("hostBootstrap", KitLibHost.Bootstrap);
         KitLibStartupAudit.Measure("i18n", I18N.Initialize);
         Logger.Info("KitLib Core initialized.");

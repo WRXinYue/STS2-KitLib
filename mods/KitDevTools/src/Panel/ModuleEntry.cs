@@ -25,6 +25,7 @@ public static class ModuleEntry {
         SettingsStore.Load();
         WirePanelDelegates();
         DevToolsModSettingsPage.Register();
+        DevToolsMainMenuCornerButtonRegistration.Register();
         RegisterRailTabs();
         WirePseudoCoopDelegates();
         KitLibHost.TryEnsurePseudoCoopPresetHandler = () => {
