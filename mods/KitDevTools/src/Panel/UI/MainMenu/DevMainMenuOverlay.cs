@@ -11,8 +11,10 @@ internal static class DevMainMenuOverlay {
         float panelWidth,
         Action onClose,
         int contentSeparation = 10,
-        int zIndex = 2000) {
-        var (root, content, _) = CreateWithPanel(attachRoot, rootName, panelWidth, onClose, contentSeparation, zIndex);
+        int zIndex = 2000,
+        bool dimBackdrop = true) {
+        var (root, content, _) = CreateWithPanel(
+            attachRoot, rootName, panelWidth, onClose, contentSeparation, zIndex, dimBackdrop);
         return (root, content);
     }
 
@@ -22,31 +24,34 @@ internal static class DevMainMenuOverlay {
         float panelWidth,
         Action onClose,
         int contentSeparation = 10,
-        int zIndex = 2000) {
+        int zIndex = 2000,
+        bool dimBackdrop = true) {
         Remove(attachRoot, rootName);
 
         var root = new Control {
             Name = rootName,
-            MouseFilter = Control.MouseFilterEnum.Stop,
-            ZIndex = zIndex,
+            MouseFilter = dimBackdrop ? Control.MouseFilterEnum.Stop : Control.MouseFilterEnum.Ignore,
+            ZIndex = dimBackdrop ? zIndex : 0,
         };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
-        var backdrop = new ColorRect {
-            Color = new Color(0, 0, 0, 0.75f),
-            MouseFilter = Control.MouseFilterEnum.Stop,
-        };
-        backdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         void CloseOverlay() {
             onClose();
             DevMainMenuUI.NotifyOverlayClosed();
         }
 
-        backdrop.GuiInput += e => {
-            if (e is InputEventMouseButton { Pressed: true })
-                Callable.From(CloseOverlay).CallDeferred();
-        };
-        root.AddChild(backdrop);
+        if (dimBackdrop) {
+            var backdrop = new ColorRect {
+                Color = new Color(0, 0, 0, 0.75f),
+                MouseFilter = Control.MouseFilterEnum.Stop,
+            };
+            backdrop.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+            backdrop.GuiInput += e => {
+                if (e is InputEventMouseButton { Pressed: true })
+                    Callable.From(CloseOverlay).CallDeferred();
+            };
+            root.AddChild(backdrop);
+        }
 
         var panel = DevPanelUI.CreateMainMenuModalPanel(panelWidth);
         panel.MouseFilter = Control.MouseFilterEnum.Stop;

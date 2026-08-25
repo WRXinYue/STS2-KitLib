@@ -105,6 +105,9 @@ internal static class MainMenuCornerButtonHost {
         Control patchNotesButton,
         ref float lastSlotTop,
         ref float lastOffsetRight) {
+        if (IsFlyRowActive())
+            return false;
+
         float slotTop = HostSlotTop(mainMenu, patchNotesButton);
         float offsetRight = patchNotesButton.OffsetRight;
         if (Mathf.IsEqualApprox(slotTop, lastSlotTop) && Mathf.IsEqualApprox(offsetRight, lastOffsetRight))
@@ -161,7 +164,8 @@ internal static class MainMenuCornerButtonHost {
         IReadOnlyList<KitLibMainMenuCornerButtonRegistration> registrations) {
         var rows = host.GetChildren()
             .OfType<Control>()
-            .Where(child => !child.IsQueuedForDeletion())
+            .Where(child => !child.IsQueuedForDeletion() &&
+                child.Name.ToString().StartsWith("KitLibCorner_", StringComparison.Ordinal))
             .ToArray();
         if (rows.Length != registrations.Count)
             return false;
@@ -286,7 +290,7 @@ internal static class MainMenuCornerButtonHost {
     }
 
     static void SyncPlacement(NMainMenu mainMenu, Control host, Control patchNotesButton) {
-        if (IsFlyTweenRunning())
+        if (IsFlyRowActive())
             return;
 
         float slotTop = HostSlotTop(mainMenu, patchNotesButton);
@@ -464,7 +468,6 @@ internal static class MainMenuCornerButtonHost {
         KitLibMainMenuCornerButtonRegistration? occupied,
         bool transformOccupied) {
         var occupiedKey = occupied == null ? null : RegistrationKey(occupied);
-        bool hideSiblings = occupied != null || IsFlyRowActive();
         float y = 0f;
         foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons()) {
             var row = host.GetNodeOrNull<Control>(BuildButtonNodeName(registration));
@@ -477,8 +480,10 @@ internal static class MainMenuCornerButtonHost {
             bool isSelf = occupiedKey != null &&
                 string.Equals(key, occupiedKey, StringComparison.OrdinalIgnoreCase);
             bool flyRow = IsFlyRow(row);
-            bool visible = flyRow || (hideSiblings ? isSelf : TryEvaluateButtonVisibility(mainMenu, key));
-            bool showActiveIcon = (transformOccupied && isSelf) || (flyRow && _flyOccupiedKey != null);
+            bool visible = occupied == null
+                ? TryEvaluateButtonVisibility(mainMenu, key)
+                : isSelf || flyRow;
+            bool showActiveIcon = transformOccupied && isSelf;
 
             row.Visible = visible;
             row.ZIndex = flyRow ? 1 : 0;
@@ -488,12 +493,11 @@ internal static class MainMenuCornerButtonHost {
             }
 
             if (row.GetNodeOrNull<Control>("Info") is { } label)
-                label.Visible = visible && !showActiveIcon;
+                label.Visible = visible && occupied == null;
 
             ApplyRowIcon(row, registration, active: showActiveIcon);
 
-            bool tweenOwnsLayout = flyRow && (IsFlyTweenRunning() || _flyOccupiedKey != null);
-            if (!tweenOwnsLayout)
+            if (!flyRow)
                 LayoutRect(row, 0f, y, RowWidth, MainMenuCornerIconButton.ButtonSize);
 
             y += MainMenuCornerIconButton.ButtonSize + ButtonGap;
@@ -520,24 +524,31 @@ internal static class MainMenuCornerButtonHost {
         if (string.Equals(nextKey, _flyOccupiedKey, StringComparison.OrdinalIgnoreCase))
             return;
 
+        var previousRow = _flyRow;
+        float restY = _flyStackY;
         _flyOccupiedKey = nextKey;
         _flyTween?.Kill();
         _flyTween = null;
 
         if (nextKey != null && occupied != null) {
             var row = host.GetNodeOrNull<Control>(BuildButtonNodeName(occupied));
-            if (row == null || !GodotObject.IsInstanceValid(row))
+            if (row == null || !GodotObject.IsInstanceValid(row)) {
+                ClearFlyRow();
                 return;
+            }
+
             _flyRow = row;
             _flyStackY = StackOffsetY(nextKey);
-            StartRowFly(row, patchNotesButton.OffsetTop - HostSlotTop(mainMenu, patchNotesButton), clearRowOnFinish: false);
+            StartRowFly(row, patchNotesButton.OffsetTop - host.OffsetTop, clearRowOnFinish: false);
             return;
         }
 
-        if (_flyRow != null && GodotObject.IsInstanceValid(_flyRow))
-            StartRowFly(_flyRow, _flyStackY, clearRowOnFinish: true);
+        if (previousRow != null && GodotObject.IsInstanceValid(previousRow)) {
+            _flyRow = previousRow;
+            StartRowFly(previousRow, restY, clearRowOnFinish: true);
+        }
         else
-            _flyRow = null;
+            ClearFlyRow();
     }
 
     static float StackOffsetY(string key) {
@@ -571,8 +582,15 @@ internal static class MainMenuCornerButtonHost {
     }
 
     static void ClearFlyRow() {
+        if (_flyRow != null && GodotObject.IsInstanceValid(_flyRow)) {
+            LayoutRect(_flyRow, 0f, _flyStackY, RowWidth, MainMenuCornerIconButton.ButtonSize);
+            _flyRow.ZIndex = 0;
+        }
+
         _flyRow = null;
         _flyTween = null;
+        _flyOccupiedKey = null;
+        _flyStackY = 0f;
     }
 
     static bool IsFlyRow(Control row) =>

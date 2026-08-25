@@ -188,7 +188,8 @@ internal static class DevMainMenuUI {
             _menuContent != null && GodotObject.IsInstanceValid(_menuContent))
             return;
 
-        var (root, content) = DevMainMenuOverlay.Create(mainMenu, RootOverlayName, RootOverlayWidth, Hide);
+        var (root, content) = DevMainMenuOverlay.Create(
+            mainMenu, RootOverlayName, RootOverlayWidth, Hide, dimBackdrop: false);
         _overlayRoot = root;
         _menuContent = content;
     }
