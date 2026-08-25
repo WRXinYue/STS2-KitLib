@@ -108,6 +108,7 @@
 
   <ItemGroup>
     <None Include="$(RepoRoot)KitLib.json" CopyToPublishDirectory="PreserveNewest" TargetPath="mod_manifest.json" />
+    <None Include="$(RepoRoot)assets\mod_image.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" TargetPath="mod_image.png" />
   </ItemGroup>
 
   <Target Name="CopyRitsuLibModToGame" DependsOnTargets="CheckLocalProps">

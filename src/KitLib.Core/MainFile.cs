@@ -1,8 +1,10 @@
+using KitLib.Abstractions.Modding;
 using KitLib.Diagnostics;
 using KitLib.Host;
 using KitLib.Multiplayer.Play.Patches;
 using KitLib.Patches;
 using KitLib.Settings;
+using KitLib.UI;
 using MegaCrit.Sts2.Core.Modding;
 
 namespace KitLib;
@@ -30,8 +32,13 @@ public class MainFile {
             typeof(HostEnqueuePatch),
             typeof(CombatActionFlightPatch),
             typeof(MainMenuCornerButtonReadyPatch),
-            typeof(MainMenuCornerButtonSubmenuPatch)));
-        KitLibStartupAudit.Measure("hostBootstrap", KitLibHost.Bootstrap);
+            typeof(MainMenuCornerButtonSubmenuPatch),
+            typeof(MainMenuCornerButtonRefreshPatch)));
+        KitLibStartupAudit.Measure("hostBootstrap", () => {
+            KitLibMainMenuCornerButtonRegistry.RequestRefresh = MainMenuCornerButtonHost.RefreshActiveMainMenu;
+            KitLibHost.Bootstrap();
+            KitLibMainMenuCornerButtonRegistry.RequestRefresh?.Invoke();
+        });
         KitLibStartupAudit.Measure("i18n", I18N.Initialize);
         Logger.Info("KitLib Core initialized.");
         KitLibStartupAudit.LogCoreOnlyReportIfNeeded();

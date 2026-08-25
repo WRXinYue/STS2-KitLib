@@ -26,9 +26,12 @@ internal sealed partial class MainMenuCornerButtonVisibilitySync : Node {
         }
 
         if (_mainMenu.GetNodeOrNull<Control>("%PatchNotesButton") is { } patchNotesButton &&
-            IsInstanceValid(patchNotesButton))
+            IsInstanceValid(patchNotesButton)) {
+            MainMenuCornerButtonHost.SyncVisibility(_mainMenu);
             MainMenuCornerButtonHost.TrySyncPlacementIfLayoutChanged(
                 _mainMenu, _host, patchNotesButton, ref _lastSlotTop, ref _lastOffsetRight);
+            return;
+        }
 
         MainMenuCornerButtonHost.SyncVisibility(_mainMenu);
     }

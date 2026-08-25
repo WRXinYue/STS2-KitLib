@@ -5,4 +5,7 @@
     <RootNamespace>KitLib.ProductLoaders</RootNamespace>
   </PropertyGroup>
   <Import Project="$(RepoRoot)eng\KitLib.ProductLoader.props" />
+  <ItemGroup>
+    <None Include="src\Panel\Assets\mod_image.png" CopyToOutputDirectory="PreserveNewest" Link="mod_image.png" />
+  </ItemGroup>
 </Project>

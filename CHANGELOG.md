@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Main-menu corner buttons** — Optional `ActiveIconPath` swaps the icon and flies it to the vanilla patch-notes slot. Opening one overlay hides the others, including RitsuLib's settings shortcut. Mods attach overlay nodes through `OnMenuReady` instead of Harmony-patching the main menu.
+
 ### Changed
 
 - **NetPlay APIs** — Core owns host combat enqueue, action-queue repair, and SyncBot MpCheat ACKs. KitAI calls these instead of owning the multiplayer test harness.

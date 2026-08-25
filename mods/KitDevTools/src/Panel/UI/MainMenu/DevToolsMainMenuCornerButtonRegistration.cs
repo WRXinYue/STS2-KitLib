@@ -1,6 +1,8 @@
 using Godot;
+using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
@@ -14,7 +16,7 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
             Tooltip = "Dev Mode",
             TooltipKey = "menu.developerMode",
             SortOrder = 0,
-            IsVisible = _ => !DevMainMenuUI.IsVisible,
+            IsOpen = _ => DevMainMenuUI.IsVisible,
             OnPressed = OpenDevMenu,
         });
     }

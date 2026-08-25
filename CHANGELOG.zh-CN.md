@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **主菜单角标按钮** — 可选 `ActiveIconPath` 会换图标并飞到原版更新日志槽位。打开其中一个覆盖层时，其余角标会隐藏，包括 RitsuLib 设置入口。模组通过 `OnMenuReady` 挂覆盖层节点，不必再 Harmony 补丁主菜单。
+
 ### Changed
 
 - **NetPlay API** — 主机战斗入队、action queue 补齐、以及 SyncBot 的 MpCheat ACK 改由 Core 提供。KitAI 只调用这些 API，不再承载联机测试驾驶。

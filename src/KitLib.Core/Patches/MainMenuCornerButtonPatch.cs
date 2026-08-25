@@ -1,4 +1,5 @@
 using System;
+using Godot;
 using HarmonyLib;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
@@ -10,8 +11,15 @@ internal static class MainMenuCornerButtonReadyPatch {
     [HarmonyPostfix]
     [HarmonyPriority(Priority.Last)]
     static void Postfix(NMainMenu __instance) {
+        Attach(__instance);
+        Callable.From(() => Attach(__instance)).CallDeferred();
+    }
+
+    static void Attach(NMainMenu mainMenu) {
         try {
-            MainMenuCornerButtonHost.EnsureAttached(__instance);
+            if (!GodotObject.IsInstanceValid(mainMenu))
+                return;
+            MainMenuCornerButtonHost.EnsureAttached(mainMenu);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to attach: {ex.Message}");
@@ -29,6 +37,20 @@ internal static class MainMenuCornerButtonSubmenuPatch {
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to sync: {ex.Message}");
+        }
+    }
+}
+
+[HarmonyPatch(typeof(NMainMenu), nameof(NMainMenu.RefreshButtons))]
+internal static class MainMenuCornerButtonRefreshPatch {
+    [HarmonyPostfix]
+    [HarmonyPriority(Priority.Last)]
+    static void Postfix(NMainMenu __instance) {
+        try {
+            MainMenuCornerButtonHost.EnsureAttached(__instance);
+        }
+        catch (Exception ex) {
+            MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to refresh: {ex.Message}");
         }
     }
 }

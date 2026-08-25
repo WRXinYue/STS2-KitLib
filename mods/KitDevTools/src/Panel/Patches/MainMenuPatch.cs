@@ -2,6 +2,7 @@ using System;
 using Godot;
 using HarmonyLib;
 using KitLib;
+using KitLib.Abstractions.Modding;
 using KitLib.Host;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
@@ -42,6 +43,8 @@ public static class MainMenuPatch {
 
         if (ProgressLossPromptUI.TryShowStartupPrompt(__instance))
             return;
+
+        KitLibMainMenuCornerButtonRegistry.RequestRefresh?.Invoke();
 
         if (!KitLibState.AutoProceedToCharSelect)
             return;

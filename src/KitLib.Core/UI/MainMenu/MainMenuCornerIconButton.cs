@@ -8,10 +8,12 @@ internal sealed partial class MainMenuCornerIconButton : NButton {
     const int CornerRadius = 10;
     const int BorderWidth = 2;
     static readonly Color FrameBorder = new(0.91f, 0.86f, 0.75f, 1f);
+    static readonly Color FrameFill = new(0.08f, 0.07f, 0.06f, 0.92f);
 
     public static MainMenuCornerIconButton Create(Texture2D? icon, string tooltip) {
         var button = new MainMenuCornerIconButton {
             CustomMinimumSize = new(ButtonSize, ButtonSize),
+            Size = new(ButtonSize, ButtonSize),
             FocusMode = FocusModeEnum.All,
             MouseFilter = MouseFilterEnum.Stop,
             PivotOffset = new(ButtonSize / 2f, ButtonSize / 2f),
@@ -19,6 +21,16 @@ internal sealed partial class MainMenuCornerIconButton : NButton {
         };
         button.AddChild(CreateFramedIcon(icon, button.PivotOffset));
         return button;
+    }
+
+    internal void SetIconTexture(Texture2D? texture) {
+        if (GetNodeOrNull<TextureRect>("IconFrame/Icon") is not { } icon)
+            return;
+        icon.Texture = texture;
+    }
+
+    public override void _Ready() {
+        ConnectSignals();
     }
 
     static Control CreateFramedIcon(Texture2D? iconTexture, Vector2 pivotOffset) {
@@ -33,7 +45,7 @@ internal sealed partial class MainMenuCornerIconButton : NButton {
         };
 
         var style = new StyleBoxFlat {
-            BgColor = Colors.Transparent,
+            BgColor = FrameFill,
             BorderColor = FrameBorder,
             BorderWidthTop = BorderWidth,
             BorderWidthBottom = BorderWidth,
