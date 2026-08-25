@@ -26,6 +26,7 @@ internal static class MainMenuCornerButtonHost {
     static readonly Color InfoLabelGold = new(0.937f, 0.784f, 0.317f, 1f);
     static Tween? _flyTween;
     static string? _flyOccupiedKey;
+    static bool _ritsuSuppressedByOccupancy;
 
     static float RowWidth => InfoLabelWidth + LabelIconGap + MainMenuCornerIconButton.ButtonSize;
 
@@ -79,6 +80,8 @@ internal static class MainMenuCornerButtonHost {
 
         if (FindHost(mainMenu) is not { } host || !GodotObject.IsInstanceValid(host))
             return;
+
+        RebuildButtonsIfNeeded(mainMenu, host);
 
         var occupied = FindOccupiedRegistration(mainMenu);
         bool transformOccupied = WantsIconTransform(occupied);
@@ -438,8 +441,15 @@ internal static class MainMenuCornerButtonHost {
     static void SuppressSiblingShortcuts(NMainMenu mainMenu, bool occupied) {
         if (mainMenu.GetNodeOrNull<Control>(RitsuLibGroupNodeName) is { } ritsuGroup &&
             GodotObject.IsInstanceValid(ritsuGroup)) {
-            if (occupied)
+            if (occupied) {
+                if (ritsuGroup.Visible)
+                    _ritsuSuppressedByOccupancy = true;
                 ritsuGroup.Visible = false;
+            }
+            else if (_ritsuSuppressedByOccupancy) {
+                ritsuGroup.Visible = true;
+                _ritsuSuppressedByOccupancy = false;
+            }
         }
 
         var patchNotesButton = FindPatchNotesButton(mainMenu);
