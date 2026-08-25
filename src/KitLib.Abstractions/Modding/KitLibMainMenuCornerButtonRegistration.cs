@@ -18,9 +18,9 @@ public sealed class KitLibMainMenuCornerButtonRegistration {
     public string? IconPath { get; init; }
 
     /// <summary>
-    /// Optional icon used while this overlay is open. When set, Core swaps to this texture and
-    /// flies the icon to the vanilla patch-notes slot (LustTravel convention). When unset, the
-    /// idle icon stays and does not move.
+    /// Optional icon used while this overlay is open. When unset, Core keeps the idle icon.
+    /// Opening any overlay still flies that button to the vanilla patch-notes slot and hides
+    /// sibling shortcuts.
     /// </summary>
     public string? ActiveIconPath { get; init; }
 

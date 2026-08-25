@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **主菜单角标按钮** — 可选 `ActiveIconPath` 会换图标并飞到原版更新日志槽位。打开其中一个覆盖层时，其余角标会隐藏，包括 RitsuLib 设置入口。模组通过 `OnMenuReady` 挂覆盖层节点，不必再 Harmony 补丁主菜单。
+- **主菜单角标按钮** — 打开覆盖层时该图标飞到原版更新日志槽位，并隐藏其余角标（包括 RitsuLib 设置入口）。可选 `ActiveIconPath` 在打开时更换贴图。模组通过 `OnMenuReady` 挂覆盖层节点，不必再 Harmony 补丁主菜单。
 
 ### Changed
 

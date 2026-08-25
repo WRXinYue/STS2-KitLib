@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Title-screen Dev Mode** — Opening Dev Mode hides other main-menu corner shortcuts, including RitsuLib's settings icon.
+- **Title-screen Dev Mode** — Opens a KitDevTools panel instead of replacing official main-menu text buttons. The corner icon flies to the patch-notes slot while it is open; click it again, Back, or the dimmed backdrop to close.
 - **Cheat sidebar tabs** — Cards, Cheats, Card Test, Save/Load, and the other cheat rail entries are registered by this product, not by KitLib Core.
 - **Pseudo-coop harness** — SyncBot phantom spawn, lobby host, and simulated-peer combat/map patches live here and call Core NetPlay APIs. KitAI no longer owns that test driving.
 - **Panel switching** — Revisiting already-opened Dev panels is much snappier.

@@ -26,6 +26,8 @@ internal static class MainMenuCornerButtonHost {
     static readonly Color InfoLabelGold = new(0.937f, 0.784f, 0.317f, 1f);
     static Tween? _flyTween;
     static string? _flyOccupiedKey;
+    static Control? _flyRow;
+    static float _flyStackY;
     static bool _ritsuSuppressedByOccupancy;
 
     static float RowWidth => InfoLabelWidth + LabelIconGap + MainMenuCornerIconButton.ButtonSize;
@@ -45,8 +47,8 @@ internal static class MainMenuCornerButtonHost {
         var host = EnsureHost(mainMenu, patchNotesButton);
         RebuildButtonsIfNeeded(mainMenu, host);
         EnsureVisibilitySynchronizer(host, mainMenu);
-        SyncVisibility(mainMenu);
         SyncPlacement(mainMenu, host, patchNotesButton);
+        SyncVisibility(mainMenu);
     }
 
     public static void RefreshActiveMainMenu() {
@@ -81,13 +83,15 @@ internal static class MainMenuCornerButtonHost {
         if (FindHost(mainMenu) is not { } host || !GodotObject.IsInstanceValid(host))
             return;
 
-        RebuildButtonsIfNeeded(mainMenu, host);
+        if (!IsFlyRowActive())
+            RebuildButtonsIfNeeded(mainMenu, host);
 
         var occupied = FindOccupiedRegistration(mainMenu);
         bool transformOccupied = WantsIconTransform(occupied);
         bool menuSurface = IsMainMenuShortcutSurfaceOpen(mainMenu);
         bool hasButtons = EnumerateIconButtons(host).Any();
-        host.Visible = hasButtons && (transformOccupied || (menuSurface && occupied == null));
+        host.Visible = hasButtons && (occupied != null || menuSurface);
+        host.ClipContents = false;
 
         SuppressSiblingShortcuts(mainMenu, occupied != null);
 
@@ -101,10 +105,7 @@ internal static class MainMenuCornerButtonHost {
         Control patchNotesButton,
         ref float lastSlotTop,
         ref float lastOffsetRight) {
-        if (IsFlyTweenRunning())
-            return false;
-
-        float slotTop = ResolveHostSlotTop(mainMenu, patchNotesButton);
+        float slotTop = HostSlotTop(mainMenu, patchNotesButton);
         float offsetRight = patchNotesButton.OffsetRight;
         if (Mathf.IsEqualApprox(slotTop, lastSlotTop) && Mathf.IsEqualApprox(offsetRight, lastOffsetRight))
             return false;
@@ -288,12 +289,9 @@ internal static class MainMenuCornerButtonHost {
         if (IsFlyTweenRunning())
             return;
 
-        float slotTop = ResolveHostSlotTop(mainMenu, patchNotesButton);
-        bool transformOccupied = WantsIconTransform(FindOccupiedRegistration(mainMenu));
+        float slotTop = HostSlotTop(mainMenu, patchNotesButton);
         float width = Math.Max(host.CustomMinimumSize.X, RowWidth);
-        float height = transformOccupied
-            ? MainMenuCornerIconButton.ButtonSize
-            : Math.Max(host.CustomMinimumSize.Y, MainMenuCornerIconButton.ButtonSize);
+        float height = Math.Max(host.CustomMinimumSize.Y, MainMenuCornerIconButton.ButtonSize);
 
         host.AnchorLeft = patchNotesButton.AnchorLeft;
         host.AnchorTop = patchNotesButton.AnchorTop;
@@ -312,11 +310,6 @@ internal static class MainMenuCornerButtonHost {
 
     static float HostSlotTop(NMainMenu mainMenu, Control patchNotesButton) =>
         ResolveVerticalAnchor(mainMenu, patchNotesButton).OffsetBottom + GapBelowAnchor;
-
-    static float ResolveHostSlotTop(NMainMenu mainMenu, Control patchNotesButton) =>
-        WantsIconTransform(FindOccupiedRegistration(mainMenu))
-            ? patchNotesButton.OffsetTop
-            : HostSlotTop(mainMenu, patchNotesButton);
 
     static Control ResolveVerticalAnchor(NMainMenu mainMenu, Control patchNotesButton) {
         Control anchor = patchNotesButton;
@@ -435,8 +428,7 @@ internal static class MainMenuCornerButtonHost {
     }
 
     static bool WantsIconTransform(KitLibMainMenuCornerButtonRegistration? registration) =>
-        registration != null &&
-        !string.IsNullOrWhiteSpace(KitLibMainMenuCornerButtonRegistry.ResolveActiveIconPath(registration));
+        registration != null;
 
     static void SuppressSiblingShortcuts(NMainMenu mainMenu, bool occupied) {
         if (mainMenu.GetNodeOrNull<Control>(RitsuLibGroupNodeName) is { } ritsuGroup &&
@@ -472,37 +464,39 @@ internal static class MainMenuCornerButtonHost {
         KitLibMainMenuCornerButtonRegistration? occupied,
         bool transformOccupied) {
         var occupiedKey = occupied == null ? null : RegistrationKey(occupied);
+        bool hideSiblings = occupied != null || IsFlyRowActive();
         float y = 0f;
         foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons()) {
             var row = host.GetNodeOrNull<Control>(BuildButtonNodeName(registration));
-            if (row == null || !GodotObject.IsInstanceValid(row))
+            if (row == null || !GodotObject.IsInstanceValid(row)) {
+                y += MainMenuCornerIconButton.ButtonSize + ButtonGap;
                 continue;
+            }
 
             var key = RegistrationKey(registration);
             bool isSelf = occupiedKey != null &&
                 string.Equals(key, occupiedKey, StringComparison.OrdinalIgnoreCase);
-            bool visible = transformOccupied
-                ? isSelf
-                : occupied == null && TryEvaluateButtonVisibility(mainMenu, key);
+            bool flyRow = IsFlyRow(row);
+            bool visible = flyRow || (hideSiblings ? isSelf : TryEvaluateButtonVisibility(mainMenu, key));
+            bool showActiveIcon = (transformOccupied && isSelf) || (flyRow && _flyOccupiedKey != null);
 
             row.Visible = visible;
+            row.ZIndex = flyRow ? 1 : 0;
             if (row.GetNodeOrNull<MainMenuCornerIconButton>("Icon") is { } button) {
                 button.Visible = visible;
                 button.SetEnabled(visible);
             }
 
             if (row.GetNodeOrNull<Control>("Info") is { } label)
-                label.Visible = visible && !transformOccupied;
+                label.Visible = visible && !showActiveIcon;
 
-            if (transformOccupied && isSelf) {
-                LayoutRect(row, 0f, 0f, RowWidth, MainMenuCornerIconButton.ButtonSize);
-                ApplyRowIcon(row, registration, active: true);
-            }
-            else {
+            ApplyRowIcon(row, registration, active: showActiveIcon);
+
+            bool tweenOwnsLayout = flyRow && (IsFlyTweenRunning() || _flyOccupiedKey != null);
+            if (!tweenOwnsLayout)
                 LayoutRect(row, 0f, y, RowWidth, MainMenuCornerIconButton.ButtonSize);
-                ApplyRowIcon(row, registration, active: false);
-                y += MainMenuCornerIconButton.ButtonSize + ButtonGap;
-            }
+
+            y += MainMenuCornerIconButton.ButtonSize + ButtonGap;
         }
     }
 
@@ -527,23 +521,65 @@ internal static class MainMenuCornerButtonHost {
             return;
 
         _flyOccupiedKey = nextKey;
-        float targetTop = nextKey != null ? patchNotesButton.OffsetTop : HostSlotTop(mainMenu, patchNotesButton);
-        float height = nextKey != null
-            ? MainMenuCornerIconButton.ButtonSize
-            : Math.Max(host.CustomMinimumSize.Y, MainMenuCornerIconButton.ButtonSize);
-        if (Mathf.IsEqualApprox(host.OffsetTop, targetTop)) {
-            host.OffsetBottom = targetTop + height;
+        _flyTween?.Kill();
+        _flyTween = null;
+
+        if (nextKey != null && occupied != null) {
+            var row = host.GetNodeOrNull<Control>(BuildButtonNodeName(occupied));
+            if (row == null || !GodotObject.IsInstanceValid(row))
+                return;
+            _flyRow = row;
+            _flyStackY = StackOffsetY(nextKey);
+            StartRowFly(row, patchNotesButton.OffsetTop - HostSlotTop(mainMenu, patchNotesButton), clearRowOnFinish: false);
             return;
         }
 
-        _flyTween?.Kill();
-        _flyTween = host.CreateTween()
+        if (_flyRow != null && GodotObject.IsInstanceValid(_flyRow))
+            StartRowFly(_flyRow, _flyStackY, clearRowOnFinish: true);
+        else
+            _flyRow = null;
+    }
+
+    static float StackOffsetY(string key) {
+        float y = 0f;
+        foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons()) {
+            if (string.Equals(RegistrationKey(registration), key, StringComparison.OrdinalIgnoreCase))
+                return y;
+            y += MainMenuCornerIconButton.ButtonSize + ButtonGap;
+        }
+
+        return 0f;
+    }
+
+    static void StartRowFly(Control row, float targetTop, bool clearRowOnFinish) {
+        float height = MainMenuCornerIconButton.ButtonSize;
+        if (Mathf.IsEqualApprox(row.OffsetTop, targetTop)) {
+            LayoutRect(row, 0f, targetTop, RowWidth, height);
+            if (clearRowOnFinish)
+                ClearFlyRow();
+            return;
+        }
+
+        _flyTween = row.CreateTween()
             .SetEase(Tween.EaseType.Out)
             .SetTrans(Tween.TransitionType.Cubic);
         _flyTween.SetParallel();
-        _flyTween.TweenProperty(host, "offset_top", targetTop, ToggleFlyDuration);
-        _flyTween.TweenProperty(host, "offset_bottom", targetTop + height, ToggleFlyDuration);
+        _flyTween.TweenProperty(row, "offset_top", targetTop, ToggleFlyDuration);
+        _flyTween.TweenProperty(row, "offset_bottom", targetTop + height, ToggleFlyDuration);
+        if (clearRowOnFinish)
+            _flyTween.Connect(Tween.SignalName.Finished, Callable.From(ClearFlyRow), (uint)GodotObject.ConnectFlags.OneShot);
     }
+
+    static void ClearFlyRow() {
+        _flyRow = null;
+        _flyTween = null;
+    }
+
+    static bool IsFlyRow(Control row) =>
+        _flyRow != null && GodotObject.IsInstanceValid(_flyRow) && row == _flyRow;
+
+    static bool IsFlyRowActive() =>
+        _flyRow != null && GodotObject.IsInstanceValid(_flyRow);
 
     static bool IsFlyTweenRunning() =>
         _flyTween != null && GodotObject.IsInstanceValid(_flyTween) && _flyTween.IsRunning();

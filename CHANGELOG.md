@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Main-menu corner buttons** — Optional `ActiveIconPath` swaps the icon and flies it to the vanilla patch-notes slot. Opening one overlay hides the others, including RitsuLib's settings shortcut. Mods attach overlay nodes through `OnMenuReady` instead of Harmony-patching the main menu.
+- **Main-menu corner buttons** — Opening an overlay flies **that** icon to the vanilla patch-notes slot. Sibling KitLib icons stay in place and hide; RitsuLib's settings shortcut is also hidden. Optional `ActiveIconPath` swaps the texture while open. Mods attach overlay nodes through `OnMenuReady` instead of Harmony-patching the main menu.
 
 ### Changed
 

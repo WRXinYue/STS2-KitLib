@@ -25,6 +25,11 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
         if (mainMenuObj is not NMainMenu mainMenu || !GodotObject.IsInstanceValid(mainMenu))
             return;
 
+        if (DevMainMenuUI.IsVisible) {
+            DevMainMenuUI.Hide();
+            return;
+        }
+
         DevMainMenuUI.Show(mainMenu, new DevMainMenuActions {
             OnNewTest = () => {
                 KitLibState.InDevRun = true;

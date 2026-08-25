@@ -161,7 +161,7 @@ public sealed class KitLibMainMenuCornerButtonRegistryTests {
     }
 
     [Fact]
-    public void ResolveActiveIconPath_is_optional_transform() {
+    public void ResolveActiveIconPath_is_optional() {
         var idle = new KitLibMainMenuCornerButtonRegistration {
             ModId = "MyMod",
             ButtonId = "action",
