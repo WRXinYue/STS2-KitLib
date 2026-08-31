@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-08-31
+
 ### Fixed
 
 - Ritsu settings pages build again against RitsuLib **0.5.x** (`ModSettingsUiContext` now takes `pageScopeId` / optional `pageEnableGate`).
+- **CJK on Wine/Linux** — ModPanel UI uses STS2 locale fonts so Chinese text renders correctly outside Windows.
 
 ### Added
 

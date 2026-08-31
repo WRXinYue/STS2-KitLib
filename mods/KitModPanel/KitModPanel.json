@@ -7,7 +7,7 @@
   "has_pck": false,
   "has_dll": true,
   "dependencies": [
-    { "id": "KitLib", "min_version": "0.33.0" }
+    { "id": "KitLib", "min_version": "0.40.0" }
   ],
   "affects_gameplay": false
 }

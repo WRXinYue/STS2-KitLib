@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-08-31
+
 ### Added
 
 - **主菜单角标按钮** — 打开覆盖层时**只有被点的那个图标**飞到原版更新日志槽位，其余 KitLib 角标留在原位并隐藏；RitsuLib 设置入口也会隐藏。可选 `ActiveIconPath` 在打开时更换贴图。模组通过 `OnMenuReady` 挂覆盖层节点，不必再 Harmony 补丁主菜单。
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **卫星模块按 API 隔离** — 兄弟产品（KitDevTools、KitAI）只加载与 KitLib 已选变体相同的 `lib/<api>`。不再在 stable 上误载 beta 卫星（或反过来），避免 Harmony 补丁 JIT 失败后打断原版方法、连累其他 mod。
 - **Harmony API 不匹配** — KitLib 补丁若仍抛出 `MissingMethodException` / `MissingFieldException` / `TypeLoadException`（游戏 API 变了），原版方法保留自身返回值，不再整段中止。该 KitLib 功能本次调用失效；原版与其他 mod 继续。
+- **内容 mod 变体加载** — Workshop 根加载器在挑选 `lib/<api>` DLL 时不再因同名类型冲突而选错实现。
 
 ## [0.33.0] - 2026-08-06
 

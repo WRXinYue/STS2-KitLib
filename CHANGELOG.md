@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-08-31
+
 ### Added
 
 - **Main-menu corner buttons** — Opening an overlay flies **that** icon to the vanilla patch-notes slot. Sibling KitLib icons stay in place and hide; RitsuLib's settings shortcut is also hidden. Optional `ActiveIconPath` swaps the texture while open. Mods attach overlay nodes through `OnMenuReady` instead of Harmony-patching the main menu.
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Satellite API isolation** — Sibling products (KitDevTools, KitAI) load the `lib/<api>` matching KitLib's picked variant. A beta satellite is no longer chosen on stable (or the reverse), which previously Harmony-patched vanilla methods that then JIT-failed and aborted those methods for every mod.
 - **Harmony API mismatch** — If a KitLib patch still throws `MissingMethodException` / `MissingFieldException` / `TypeLoadException` (game API changed), the original game method keeps its result instead of aborting. That KitLib feature no-ops for that call; vanilla and other mods continue.
+- **Content-mod variant loading** — Same-named types in the Workshop-root loader no longer collide when picking `lib/<api>` DLLs.
 
 ## [0.33.0] - 2026-08-06
 
