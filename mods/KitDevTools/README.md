@@ -2,7 +2,11 @@
 
 **English** | [中文](./README.zh-CN.md)
 
-In-game developer tools for Slay the Spire 2. Requires KitLib.
+In-game developer tools for Slay the Spire 2. Requires [KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669).
+
+[Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)
+
+> **Note:** Split out of KitLib in **0.40.0**. Subscribe separately; KitLib ≥0.40.0 no longer ships these tools.
 
 ## Title screen (Dev Mode)
 

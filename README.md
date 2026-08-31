@@ -8,15 +8,17 @@ KitLib is for both mod authors and players. Authors can start a test run, edit c
 
 The layout is modular: KitLib Core loads first; satellite modules can be toggled. If an optional module fails to load, it should not take down the core or block other mods that depend on KitLib.
 
-[Docs](https://sts2-devmod.wrxinyue.org/) · [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) · Steam Workshop / Nexus
+[Docs](https://sts2-devmod.wrxinyue.org/) · [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) · [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669) / Nexus
+
+> **Note:** From KitLib **0.40.0**, Mod Panel, Dev Tools, and AI are separate mods. Subscribe to each companion you need; KitLib alone no longer includes them.
 
 ## Products
 
 Install companions as needed:
 
-- **KitLib** (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
-- **[KitModPanel](./mods/KitModPanel/README.md)** — main-menu mod list and per-mod settings.
-- **[KitDevTools](./mods/KitDevTools/README.md)** — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
+- **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
+- **[KitModPanel](./mods/KitModPanel/README.md)** ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
+- **[KitDevTools](./mods/KitDevTools/README.md)** ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
 - **[KitAI](./mods/KitAI/README.md)** — optional AI host / autoplay.
 
 ## Host
@@ -40,7 +42,7 @@ At compile time, import `eng/KitLib.ContentMod.props` (`KitLib.Abstractions.dll`
 
 ## Install
 
-- **KitLib** (required) plus **KitModPanel** / **KitDevTools** / **KitAI** from Steam Workshop or the release zip on [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus.
+- **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** (required) plus **[KitModPanel](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)** / **[KitDevTools](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)** / **KitAI** from Steam Workshop or the release zip on [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus.
 - **Auxiliary tools** (`KitLib.Mcp`, etc.) — same Releases / Nexus page, per-platform binaries.
 
 ## Acknowledgments

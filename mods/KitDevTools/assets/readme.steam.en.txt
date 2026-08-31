@@ -1,4 +1,10 @@
-In-game developer tools for Slay the Spire 2. Requires KitLib.
+In-game developer tools for Slay the Spire 2. Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url].
+
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Steam Workshop[/url]
+
+[quote]
+[b]Note:[/b] Split out of KitLib in [b]0.40.0[/b]. Subscribe separately; KitLib ≥0.40.0 no longer ships these tools.
+[/quote]
 
 [h3]Title screen (Dev Mode)[/h3]
 

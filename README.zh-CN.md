@@ -8,15 +8,17 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 
 本 mod 采用模块化结构：KitLib Core 负责加载，卫星模块可按需开关；某个可选模块加载失败时，不会拖垮核心，也不会影响依赖 KitLib 的其他 mod。
 
-[文档](https://sts2-devmod.wrxinyue.org/) · [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) · Steam 创意工坊 / Nexus
+[文档](https://sts2-devmod.wrxinyue.org/) · [Releases](https://github.com/WRXinYue/STS2-KitLib/releases) · [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669) / Nexus
+
+> **注意：** KitLib **0.40.0** 起，模组面板、开发工具和 AI 已拆成独立 mod。请按需订阅对应物品；只订阅 KitLib 不再包含这些功能。
 
 ## 组成
 
 按需安装配套产品：
 
-- **KitLib**（本仓库宿主）— 先加载，再提供其他 mod 在初始化时调用的 API；同时负责设置、进度保护、主题和快捷键。
-- **[KitModPanel](./mods/KitModPanel/README.zh-CN.md)** — 主菜单模组列表与各模组设置页。
-- **[KitDevTools](./mods/KitDevTools/README.zh-CN.md)** — 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
+- **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)**（本仓库宿主）— 先加载，再提供其他 mod 在初始化时调用的 API；同时负责设置、进度保护、主题和快捷键。
+- **[KitModPanel](./mods/KitModPanel/README.zh-CN.md)**（[创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)）— 主菜单模组列表与各模组设置页；装有 STS2-RitsuLib 时一并显示其设置页。
+- **[KitDevTools](./mods/KitDevTools/README.zh-CN.md)**（[创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)）— 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
 - **[KitAI](./mods/KitAI/README.zh-CN.md)** — 可选的 AI 托管 / 自动游玩。
 
 ## 宿主
@@ -40,7 +42,7 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 
 ## 安装
 
-- **KitLib**（必需）以及 **KitModPanel** / **KitDevTools** / **KitAI**：Steam 创意工坊，或 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus 的发布包。
+- **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)**（必需）以及 **[KitModPanel](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)** / **[KitDevTools](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)** / **KitAI**：Steam 创意工坊，或 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus 的发布包。
 - **辅助工具**（`KitLib.Mcp` 等）：同一 Releases / Nexus 页下载对应平台可执行文件。
 
 ## 致谢

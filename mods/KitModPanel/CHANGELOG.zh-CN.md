@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **README / Steam 工坊说明** — 补上可选 STS2-RitsuLib 设置页承载、可选 KitDevTools 的 Harmony 与进度保护页，以及面向玩家的列表与设置功能说明。
+
 ## [0.0.1] - 2026-08-31
 
 ### Fixed

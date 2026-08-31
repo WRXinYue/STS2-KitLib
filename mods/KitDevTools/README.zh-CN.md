@@ -2,7 +2,11 @@
 
 [English](./README.md) | **中文**
 
-《杀戮尖塔 2》游戏内开发工具。需要 KitLib。
+《杀戮尖塔 2》游戏内开发工具。需要 [KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)。
+
+[Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)
+
+> **注意：** KitLib **0.40.0** 起本工具已拆成独立 mod。请单独订阅；仅订阅 KitLib ≥0.40.0 不再包含这些功能。
 
 ## 标题画面（Dev Mode）
 

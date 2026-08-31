@@ -1,4 +1,10 @@
-《杀戮尖塔 2》游戏内开发工具。需要 KitLib。
+《杀戮尖塔 2》游戏内开发工具。需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url]。
+
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Steam 创意工坊[/url]
+
+[quote]
+[b]注意：[/b] KitLib [b]0.40.0[/b] 起本工具已拆成独立 mod。请单独订阅；仅订阅 KitLib ≥0.40.0 不再包含这些功能。
+[/quote]
 
 [h3]标题画面（Dev Mode）[/h3]
 

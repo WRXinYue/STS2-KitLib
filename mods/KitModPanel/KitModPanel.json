@@ -2,7 +2,7 @@
   "id": "KitModPanel",
   "name": "KitModPanel [模组面板]",
   "author": "WRXinYue",
-  "description": "Main-menu mod list and settings panel for Slay the Spire 2. Requires KitLib.",
+  "description": "Main-menu mod list and settings. Requires KitLib. Shows STS2-RitsuLib settings pages when RitsuLib is installed.",
   "version": "0.0.1",
   "has_pck": false,
   "has_dll": true,
