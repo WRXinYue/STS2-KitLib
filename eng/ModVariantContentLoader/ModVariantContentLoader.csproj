@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ModVariantModId Condition="'$(ModVariantModId)' == ''">ModVariantContentLoader</ModVariantModId>
-    <AssemblyName>$(ModVariantModId)</AssemblyName>
+    <!-- File on disk is still $(ModVariantModId).dll; identity must not match lib/<api>/$(ModVariantModId).dll. -->
+    <AssemblyName>$(ModVariantModId).Loader</AssemblyName>
     <RootNamespace>KitLib.ModVariantLoader.ContentEntry</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <IsPackable>false</IsPackable>

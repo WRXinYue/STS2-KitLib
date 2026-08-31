@@ -118,8 +118,23 @@ public static class StartRunActOverride {
 
         // Use the active replay/save seed if available, otherwise the forced seed.
         string? activeSeed = ReplayEngine.ActiveSeed;
-        if (activeSeed == null && !ForcedSeedPatch.Enabled) return;
+        if (activeSeed == null && !ForcedSeedPatch.Enabled)
+            return;
 
+        OverrideActsForForcedSeed(ref acts, ref seed, activeSeed, gameMode, ascensionLevel, mode);
+    }
+
+    // Separate method so Prefix can JIT on 0.107.1. Beta-only Rng/hash tokens in
+    // this Prefix body throw MissingMethodException at JIT and KitLib fail-soft
+    // then returns a null Task from StartNewSingleplayerRun.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    static void OverrideActsForForcedSeed(
+        ref System.Collections.Generic.IReadOnlyList<ActModel> acts,
+        ref string seed,
+        string? activeSeed,
+        MegaCrit.Sts2.Core.Runs.GameMode gameMode,
+        int ascensionLevel,
+        string mode) {
         string useSeed = activeSeed ?? ForcedSeedPatch.ForcedSeed;
         ReplayEngine.ActiveSeed = null;
         seed = useSeed;

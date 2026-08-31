@@ -47,7 +47,7 @@
       <Output TaskParameter="TargetOutputs" ItemName="_BuiltModLoaderDll" />
     </MSBuild>
     <PropertyGroup>
-      <_ModVariantContentLoaderDll>$([MSBuild]::NormalizePath('$(ModVariantContentLoaderProject)\..\bin\$(Configuration)\$(ModVariantModId)\$(ModVariantModId).dll'))</_ModVariantContentLoaderDll>
+      <_ModVariantContentLoaderDll>$([MSBuild]::NormalizePath('$(ModVariantContentLoaderProject)\..\bin\$(Configuration)\$(ModVariantModId)\$(ModVariantModId).Loader.dll'))</_ModVariantContentLoaderDll>
     </PropertyGroup>
     <ItemGroup Condition="'@(_BuiltModLoaderDll)' == '' and Exists('$(_ModVariantContentLoaderDll)')">
       <_BuiltModLoaderDll Include="$(_ModVariantContentLoaderDll)" />

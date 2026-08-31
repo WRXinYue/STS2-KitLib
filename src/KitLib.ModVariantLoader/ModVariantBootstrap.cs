@@ -33,7 +33,8 @@ public static class ModVariantBootstrap {
     /// Layout is <c>lib/&lt;api&gt;/&lt;ModId&gt;.dll</c> plus <c>compat-target.txt</c>, matching KitLib.
     /// </summary>
     public static void Initialize(ModVariantBootstrapOptions? options) {
-        var hostAssembly = Assembly.GetCallingAssembly();
+        var calling = Assembly.GetCallingAssembly();
+        var hostAssembly = options?.HostAssembly ?? calling;
         EnsureHostDependencies(hostAssembly);
         KitLibAssemblyResolver.EnsureHooked(hostAssembly);
 
@@ -101,9 +102,10 @@ public static class ModVariantBootstrap {
             return;
         }
 
-        var alc = AssemblyLoadContext.GetLoadContext(hostAssembly) ?? AssemblyLoadContext.Default;
         try {
-            var realAsm = alc.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
+            var parent = AssemblyLoadContext.GetLoadContext(hostAssembly) ?? AssemblyLoadContext.Default;
+            var fullPath = Path.GetFullPath(dllPath);
+            var realAsm = parent.LoadFromAssemblyPath(fullPath);
             ModVariantRegistry.Register(realAsm);
             EnsureReflectionBridgePatch(harmonyId);
             AssociateVariantAssemblyWithGame(modId, realAsm, logPrefix);
@@ -441,15 +443,15 @@ public static class ModVariantBootstrap {
         }
         catch (ReflectionTypeLoadException ex) {
             LogError(logPrefix, $"ReflectionTypeLoadException while scanning {realAsm.FullName}: {ex}");
-            if (ex.Types is null)
-                return;
-            foreach (var t in ex.Types.Where(static x => x is not null))
-                TryInvokeInitializerOnType(t!, logPrefix);
-
+            if (ex.Types is not null) {
+                foreach (var t in ex.Types.Where(static x => x is not null))
+                    TryInvokeInitializerOnType(t!, logPrefix);
+            }
             return;
         }
 
-        if (types.Any(t => TryInvokeInitializerOnType(t, logPrefix)))
+        var found = types.Any(t => TryInvokeInitializerOnType(t, logPrefix));
+        if (found)
             return;
 
         LogError(logPrefix, $"No type with {nameof(ModInitializerAttribute)} found in {realAsm.FullName}.");
