@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using Godot;
+using KitLib.Abstractions.Modding;
 using KitLib.Modding;
 using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Modding;
@@ -19,15 +20,15 @@ internal static class ModPanelModBanner {
                 continue;
             var id = m.manifest?.id;
             if (string.Equals(id, modId, StringComparison.OrdinalIgnoreCase))
-                return m.path;
+                return KitLibHostPaths.ResolveModFolder(m.path);
         }
         foreach (var m in ModManager.Mods) {
             if (string.IsNullOrWhiteSpace(m.path))
                 continue;
-            var trimmed = m.path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var trimmed = KitLibHostPaths.ResolveModFolder(m.path);
             var folder = Path.GetFileName(trimmed);
             if (string.Equals(folder, modId, StringComparison.OrdinalIgnoreCase))
-                return m.path;
+                return trimmed;
         }
         return TryResolveModDirectoryFromDisk(modId);
     }
@@ -37,7 +38,7 @@ internal static class ModPanelModBanner {
         foreach (var m in ModManager.Mods) {
             if (string.IsNullOrWhiteSpace(m.path))
                 continue;
-            var trimmed = m.path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var trimmed = KitLibHostPaths.ResolveModFolder(m.path);
             var parent = Path.GetDirectoryName(trimmed);
             if (!string.IsNullOrWhiteSpace(parent))
                 modsRoot = parent;
@@ -106,7 +107,11 @@ internal static class ModPanelModBanner {
             if (tex != null)
                 return tex;
         }
-        return null;
+
+        var dir = !string.IsNullOrWhiteSpace(mod?.path)
+            ? KitLibHostPaths.ResolveModFolder(mod.path)
+            : TryResolveModDirectory(string.IsNullOrWhiteSpace(id) ? modId : id);
+        return TryLoadModImageFromDirectory(dir);
     }
     internal static string FormatVersionBadgeText(string raw) {
         var t = raw.Trim();
@@ -116,6 +121,23 @@ internal static class ModPanelModBanner {
             t = t[1..].TrimStart();
         return $"V{t}".ToUpperInvariant();
     }
+    private static Texture2D? TryLoadModImageFromDirectory(string? dir) {
+        if (string.IsNullOrWhiteSpace(dir))
+            return null;
+        var file = Path.Combine(dir, "mod_image.png");
+        if (!File.Exists(file))
+            return null;
+        try {
+            var image = Image.LoadFromFile(file);
+            if (image == null || image.GetWidth() <= 0)
+                return null;
+            return ImageTexture.CreateFromImage(image);
+        }
+        catch {
+            return null;
+        }
+    }
+
     private static Texture2D? TryLoadVanillaModImageRes(string manifestId) {
         var path = $"res://{manifestId}/mod_image.png";
         try {

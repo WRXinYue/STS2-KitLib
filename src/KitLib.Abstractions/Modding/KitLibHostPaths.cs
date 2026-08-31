@@ -25,11 +25,39 @@ public static class KitLibHostPaths {
     public static string ResolveModulesDirectory(string modDir) =>
         Path.Combine(ResolveContentRoot(modDir), ModulesSubdir);
 
+    /// <summary>
+    /// Walk from a DLL directory up to the Workshop/mod folder (past <c>modules/</c>
+    /// and <c>lib/&lt;api&gt;/</c>).
+    /// </summary>
+    public static string ResolveModFolder(string directory) {
+        if (string.IsNullOrWhiteSpace(directory))
+            return directory;
+
+        var dir = Path.GetFullPath(directory);
+        if (string.Equals(Path.GetFileName(dir), ModulesSubdir, StringComparison.OrdinalIgnoreCase)) {
+            var parent = Path.GetDirectoryName(dir);
+            if (!string.IsNullOrEmpty(parent))
+                dir = parent;
+        }
+
+        if (File.Exists(Path.Combine(dir, CompatTargetMarkerName))) {
+            var apiParent = Path.GetDirectoryName(dir);
+            if (!string.IsNullOrEmpty(apiParent) &&
+                string.Equals(Path.GetFileName(apiParent), LibDirectoryName, StringComparison.OrdinalIgnoreCase)) {
+                var modRoot = Path.GetDirectoryName(apiParent);
+                if (!string.IsNullOrEmpty(modRoot))
+                    return modRoot;
+            }
+        }
+
+        return dir;
+    }
+
     /// <summary>Game <c>mods/</c> directory that contains KitLib and sibling products.</summary>
     public static string? ResolveModsRoot(string kitLibModDir) {
         if (string.IsNullOrWhiteSpace(kitLibModDir))
             return null;
-        var parent = Path.GetDirectoryName(Path.GetFullPath(kitLibModDir));
+        var parent = Path.GetDirectoryName(ResolveModFolder(kitLibModDir));
         return string.IsNullOrEmpty(parent) ? null : parent;
     }
 
@@ -40,6 +68,7 @@ public static class KitLibHostPaths {
     public static IReadOnlyList<string> EnumerateModuleSearchDirectories(string kitLibModDir) {
         var dirs = new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        kitLibModDir = ResolveModFolder(kitLibModDir);
 
         void Add(string? dir) {
             if (string.IsNullOrWhiteSpace(dir))
@@ -108,7 +137,14 @@ public static class KitLibHostPaths {
         return Directory.Exists(Path.Combine(modsRoot, productId));
     }
 
-    public static string? TryPickVariantDirectory(string modDir, Version? hostVersion) {
+    /// <param name="requiredFileName">
+    /// File that must exist in a variant directory. KitLib uses <see cref="CoreFileName"/>;
+    /// content mods pass <c>&lt;ModId&gt;.dll</c>. Empty skips the file check.
+    /// </param>
+    public static string? TryPickVariantDirectory(
+        string modDir,
+        Version? hostVersion,
+        string requiredFileName = CoreFileName) {
         var libRoot = Path.Combine(modDir, LibDirectoryName);
         if (!Directory.Exists(libRoot))
             return null;
@@ -123,8 +159,8 @@ public static class KitLibHostPaths {
             if (string.IsNullOrWhiteSpace(label))
                 continue;
 
-            var core = Path.Combine(dir, CoreFileName);
-            if (!File.Exists(core))
+            if (!string.IsNullOrEmpty(requiredFileName) &&
+                !File.Exists(Path.Combine(dir, requiredFileName)))
                 continue;
 
             bundled.Add(label);
@@ -141,10 +177,11 @@ public static class KitLibHostPaths {
         if (string.IsNullOrWhiteSpace(hostModDir))
             return null;
 
-        if (string.Equals(Path.GetFileName(hostModDir), "KitLib", StringComparison.OrdinalIgnoreCase))
-            return Path.GetFullPath(hostModDir);
+        var folder = ResolveModFolder(hostModDir);
+        if (string.Equals(Path.GetFileName(folder), "KitLib", StringComparison.OrdinalIgnoreCase))
+            return folder;
 
-        var sibling = Path.GetFullPath(Path.Combine(hostModDir, "..", "KitLib"));
+        var sibling = Path.GetFullPath(Path.Combine(folder, "..", "KitLib"));
         return Directory.Exists(sibling) ? sibling : null;
     }
 }

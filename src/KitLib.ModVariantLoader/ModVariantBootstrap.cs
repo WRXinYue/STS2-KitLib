@@ -1,10 +1,8 @@
 using System.Collections;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Security.Cryptography;
 using System.Text.Json;
 using HarmonyLib;
-using KitLib.Abstractions.Compat;
 using KitLib.Abstractions.Modding;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
@@ -16,7 +14,7 @@ public static class ModVariantBootstrap {
     private static bool _reflectionBridgePatched;
 
     public const string ModVariantLoaderAssemblyName = "KitLib.ModVariantLoader";
-    public const string KitLibCoreFileName = ModVariantLayout.KitLibHostCoreFileName;
+    public const string KitLibCoreFileName = KitLibHostPaths.CoreFileName;
     public const string KitLibModFolderName = "KitLib";
     const string ModManifestFileName = "mod_manifest.json";
 
@@ -29,6 +27,11 @@ public static class ModVariantBootstrap {
 
     public static void Initialize() => Initialize(null);
 
+    /// <summary>
+    /// Picks and loads the implementation DLL for the running STS2 version.
+    /// Thin Workshop entry is KitLib's shared <c>eng/ModVariantContentLoader</c> (no per-mod loader project).
+    /// Layout is <c>lib/&lt;api&gt;/&lt;ModId&gt;.dll</c> plus <c>compat-target.txt</c>, matching KitLib.
+    /// </summary>
     public static void Initialize(ModVariantBootstrapOptions? options) {
         var hostAssembly = Assembly.GetCallingAssembly();
         EnsureHostDependencies(hostAssembly);
@@ -50,35 +53,41 @@ public static class ModVariantBootstrap {
             message => LogInfo(logPrefix, message),
             message => LogWarn(logPrefix, message));
 
-        var implementationFile = options.ImplementationAssemblyFileName?.Trim();
-        if (!string.IsNullOrEmpty(implementationFile)) {
-            var flatPath = Path.Combine(loaderDir, implementationFile);
+        var implFile = string.IsNullOrWhiteSpace(options.ImplementationAssemblyFileName)
+            ? ModVariantLayout.ImplementationFileName(modId)
+            : Path.GetFileName(options.ImplementationAssemblyFileName.Trim());
+
+        var libRoot = Path.Combine(loaderDir, ModVariantLayout.LibDirectoryName);
+        if (Directory.Exists(libRoot)) {
+            var hostNumeric = Sts2HostVersion.Numeric;
+            var hostLabel = Sts2HostVersion.ReleaseLabel;
+            var variantDir = KitLibHostPaths.TryPickVariantDirectory(loaderDir, hostNumeric, implFile);
+            if (variantDir is null) {
+                LogError(
+                    logPrefix,
+                    $"No compatible variant under {libRoot} (host={(hostLabel ?? hostNumeric?.ToString()) ?? "unknown"}).");
+                return;
+            }
+
+            var dllPath = Path.Combine(variantDir, implFile);
+            LogInfo(
+                logPrefix,
+                $"Host version label={hostLabel ?? "<none>"} numeric={hostNumeric?.ToString() ?? "<none>"}; picked {Path.GetFileName(variantDir)}.");
+            LoadAndInitializeImplementation(hostAssembly, modId, dllPath, logPrefix, harmonyId);
+            return;
+        }
+
+        var flatPath = Path.Combine(loaderDir, implFile);
+        if (File.Exists(flatPath) &&
+            !string.Equals(
+                Path.GetFullPath(flatPath),
+                Path.GetFullPath(hostAssembly.Location),
+                StringComparison.OrdinalIgnoreCase)) {
             LoadAndInitializeImplementation(hostAssembly, modId, flatPath, logPrefix, harmonyId);
             return;
         }
 
-        var manifestName = options.VariantManifestFileName ?? ModVariantLayout.ManifestFileName(modId);
-        var libRoot = Path.Combine(loaderDir, ModVariantLayout.LibDirectoryName);
-        if (!Directory.Exists(libRoot)) {
-            LogError(logPrefix, $"Missing lib directory: {libRoot}");
-            return;
-        }
-
-        var hostNumeric = Sts2HostVersion.Numeric;
-        var hostLabel = Sts2HostVersion.ReleaseLabel;
-        var picked = PickVariant(loaderDir, libRoot, manifestName, modId, logPrefix, hostNumeric);
-        if (picked is null) {
-            LogError(
-                logPrefix,
-                $"No compatible variant under {libRoot} (host={(hostLabel ?? hostNumeric?.ToString()) ?? "unknown"}).");
-            return;
-        }
-
-        LogInfo(
-            logPrefix,
-            $"Host version label={hostLabel ?? "<none>"} numeric={hostNumeric?.ToString() ?? "<none>"}; picked variant {picked.CompatTarget}.");
-
-        LoadAndInitializeImplementation(hostAssembly, modId, picked.DllPath, logPrefix, harmonyId);
+        LogError(logPrefix, $"Missing lib directory: {libRoot}");
     }
 
     static void LoadAndInitializeImplementation(
@@ -186,18 +195,27 @@ public static class ModVariantBootstrap {
                 string.Equals(simpleName, ModVariantLoaderAssemblyName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var path = Path.Combine(kitLibDir, fileName);
-            if (!File.Exists(path))
+            var path = FindHostDependencyPath(fileName, kitLibDir, hostDir);
+            if (path is null)
                 throw new FileNotFoundException(
-                    $"Missing {fileName} under KitLib install folder ({kitLibDir}). Update KitLib to 0.24+.",
-                    path);
+                    $"Missing {fileName} under KitLib ({kitLibDir}) or the content mod folder ({hostDir}). Update KitLib.");
 
             alc.LoadFromAssemblyPath(path);
         }
 
         if (FindLoaded(alc, ModVariantLoaderAssemblyName) is null)
             throw new FileNotFoundException(
-                $"KitLib.ModVariantLoader failed to load from KitLib install folder ({kitLibDir}).");
+                $"KitLib.ModVariantLoader failed to load from KitLib ({kitLibDir}) or {hostDir}.");
+    }
+
+    static string? FindHostDependencyPath(string fileName, string kitLibDir, string hostDir) {
+        foreach (var dir in new[] { kitLibDir, hostDir }) {
+            var path = Path.Combine(dir, fileName);
+            if (File.Exists(path))
+                return Path.GetFullPath(path);
+        }
+
+        return null;
     }
 
     private static string ResolveKitLibInstallDirectory(string hostDir, bool hostIsKitLibLoader) {
@@ -288,7 +306,13 @@ public static class ModVariantBootstrap {
         if (hostIsKitLibLoader)
             return;
 
-        var corePath = Path.Combine(kitLibDir, KitLibCoreFileName);
+        var corePath = KitLibHostPaths.ResolveCorePath(kitLibDir);
+        if (!File.Exists(corePath)) {
+            var picked = KitLibHostPaths.TryPickVariantDirectory(kitLibDir, Sts2HostVersion.Numeric);
+            if (picked is not null)
+                corePath = Path.Combine(picked, KitLibHostPaths.CoreFileName);
+        }
+
         if (File.Exists(corePath)) {
             if (FindLoaded(alc, "KitLib.Core") is null)
                 alc.LoadFromAssemblyPath(Path.GetFullPath(corePath));
@@ -449,136 +473,9 @@ public static class ModVariantBootstrap {
         return true;
     }
 
-    private static VariantCandidate? PickVariant(
-        string loaderDir,
-        string libRoot,
-        string manifestName,
-        string modId,
-        string logPrefix,
-        Version? host) {
-        var variants = LoadVariantManifest(loaderDir, libRoot, manifestName, modId, logPrefix);
-        if (variants.Count == 0)
-            return null;
-
-        variants.Sort(static (a, b) => a.Version.CompareTo(b.Version));
-
-        if (host is null) {
-            LogInfo(logPrefix, "Host numeric version unknown; using newest bundled variant.");
-            return variants[^1];
-        }
-
-        var candidates = variants.Where(x => x.Version <= host).ToList();
-        if (candidates.Count > 0)
-            return candidates[^1];
-
-        LogInfo(
-            logPrefix,
-            $"No bundled variant <= host {host}; using newest bundled variant as best-effort fallback.");
-        return variants[^1];
-    }
-
-    private static List<VariantCandidate> LoadVariantManifest(
-        string loaderDir,
-        string libRoot,
-        string manifestName,
-        string modId,
-        string logPrefix) {
-        var manifestPath = Path.Combine(loaderDir, manifestName);
-        if (!File.Exists(manifestPath)) {
-            LogError(logPrefix, $"Missing variant manifest: {manifestPath}");
-            return [];
-        }
-
-        ModVariantManifestFile manifest;
-        try {
-            manifest = ModVariantManifestIO.Read(manifestPath);
-        }
-        catch (Exception ex) {
-            LogError(logPrefix, $"Failed to read variant manifest {manifestPath}: {ex}");
-            return [];
-        }
-
-        if (manifest.Variants.Count == 0) {
-            LogError(logPrefix, $"Variant manifest contains no variants: {manifestPath}");
-            return [];
-        }
-
-        var libRootFull = Path.GetFullPath(libRoot);
-
-        return manifest.Variants
-            .Select(entry => TryCreateVariantCandidate(loaderDir, libRootFull, entry, modId, logPrefix))
-            .OfType<VariantCandidate>()
-            .ToList();
-    }
-
-    private static VariantCandidate? TryCreateVariantCandidate(
-        string loaderDir,
-        string libRootFull,
-        ModVariantEntry entry,
-        string modId,
-        string logPrefix) {
-        var compatTarget = entry.CompatTarget?.Trim();
-        if (string.IsNullOrWhiteSpace(compatTarget) ||
-            !Sts2GameVersion.TryParseCore(compatTarget, out var version)) {
-            LogError(logPrefix, $"Ignoring invalid variant target '{entry.CompatTarget}'.");
-            return null;
-        }
-
-        var relativeFile = string.IsNullOrWhiteSpace(entry.File)
-            ? ModVariantLayout.VariantRelativePath(modId, compatTarget)
-            : entry.File.Trim().Replace('\\', '/');
-        var expectedFile = ModVariantLayout.VariantRelativePath(modId, compatTarget);
-        if (!string.Equals(relativeFile, expectedFile, StringComparison.OrdinalIgnoreCase)) {
-            LogError(logPrefix, $"Ignoring variant with unexpected file path: {relativeFile}");
-            return null;
-        }
-
-        var dllPath = Path.GetFullPath(Path.Combine(loaderDir, relativeFile.Replace('/', Path.DirectorySeparatorChar)));
-        if (!IsUnderDirectory(dllPath, libRootFull)) {
-            LogError(logPrefix, $"Ignoring variant outside lib directory: {relativeFile}");
-            return null;
-        }
-
-        if (!File.Exists(dllPath)) {
-            LogError(logPrefix, $"Ignoring missing variant file: {dllPath}");
-            return null;
-        }
-
-        var fileName = Path.GetFileName(dllPath);
-        if (!ModVariantLayout.TryParseVariantFileName(modId, fileName, out var parsedTarget) ||
-            !string.Equals(parsedTarget, compatTarget, StringComparison.OrdinalIgnoreCase)) {
-            LogError(logPrefix, $"Ignoring variant with mismatched file name: {fileName}");
-            return null;
-        }
-
-        if (MatchesExpectedHash(dllPath, entry.Sha256))
-            return new(compatTarget, version, dllPath);
-
-        LogError(logPrefix, $"Ignoring variant with mismatched hash: {dllPath}");
-        return null;
-    }
-
-    private static bool IsUnderDirectory(string path, string root) {
-        var normalizedRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
-                             Path.DirectorySeparatorChar;
-        var normalizedPath = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
-                               Path.DirectorySeparatorChar;
-        return normalizedPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool MatchesExpectedHash(string path, string? expectedSha256) {
-        if (string.IsNullOrWhiteSpace(expectedSha256))
-            return false;
-
-        var actual = ModVariantManifestIO.ComputeSha256Hex(path);
-        return string.Equals(actual, expectedSha256.Trim(), StringComparison.OrdinalIgnoreCase);
-    }
-
     private static void LogInfo(string prefix, string message) => Log.Info($"[{prefix}] {message}");
 
     private static void LogWarn(string prefix, string message) => Log.Warn($"[{prefix}] {message}");
 
     private static void LogError(string prefix, string message) => Log.Error($"[{prefix}] {message}");
-
-    private sealed record VariantCandidate(string CompatTarget, Version Version, string DllPath);
 }

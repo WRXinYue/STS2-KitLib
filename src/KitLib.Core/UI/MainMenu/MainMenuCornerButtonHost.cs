@@ -662,7 +662,7 @@ internal static class MainMenuCornerButtonHost {
     static Texture2D? TryLoadFileTexture(string modId) {
         try {
             var kitLibDir = ModPaths.ResolveModRoot(typeof(MainFile).Assembly);
-            var modsRoot = Path.GetDirectoryName(kitLibDir);
+            var modsRoot = KitLibHostPaths.ResolveModsRoot(kitLibDir);
             if (string.IsNullOrEmpty(modsRoot))
                 return null;
 

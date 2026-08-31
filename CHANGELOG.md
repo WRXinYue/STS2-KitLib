@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NetPlay APIs** — Core owns host combat enqueue, action-queue repair, and SyncBot MpCheat ACKs. KitAI calls these instead of owning the multiplayer test harness.
 - **Cheat rail tabs** — Cards, Cheats, Card Test, and the other in-run cheat sidebar entries are registered by KitDevTools Panel. Core still runs cheat patches and APIs, but no longer lists `devmode.*` cheat tabs.
 - **Product versions** — Sibling products (`KitModPanel`, `KitDevTools`, `KitAI`) now version independently from KitLib (dev builds at **0.0.1**; first release planned as **0.1.0**). Their changelogs live under `mods/<Product>/CHANGELOG.md` (and `.zh-CN.md`). Root changelogs remain KitLib-only.
+- **Content-mod variant packs** — `ModVariantBootstrap.Initialize()` picks `lib/<api>/<ModId>.dll` with `compat-target.txt`, the same layout as KitLib. The Workshop-root DLL is KitLib's shared `eng/ModVariantContentLoader` (no second csproj in the content mod). KitLib ships `KitLib.ModVariantLoader.dll` in the host folder.
+- **KitDevTools / KitAI multi-API packs** — `package_bundle` stages `lib/<api>/modules/` so one install works on stable and beta.
 
 ## [0.33.0] - 2026-08-06
 

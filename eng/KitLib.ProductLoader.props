@@ -32,5 +32,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>mod_manifest.json</TargetPath>
     </None>
+    <None Include="$(MSBuildProjectDirectory)\mod_image.png" Condition="Exists('$(MSBuildProjectDirectory)\mod_image.png')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

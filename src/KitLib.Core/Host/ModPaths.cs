@@ -6,7 +6,7 @@ namespace KitLib.Host;
 internal static class ModPaths {
     internal static string ResolveModRoot(Assembly assembly) {
         var dir = Path.GetDirectoryName(assembly.Location);
-        return string.IsNullOrEmpty(dir) ? "" : dir;
+        return string.IsNullOrEmpty(dir) ? "" : KitLibHostPaths.ResolveModFolder(dir);
     }
 
     internal static string ResolveContentRoot(Assembly assembly) {

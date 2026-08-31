@@ -4,10 +4,7 @@
     <ModVariantBundleDir Condition="'$(ModVariantBundleDir)' == ''">$(RepoBuildDir)</ModVariantBundleDir>
     <_KitLibRepoRoot Condition="'$(KitLibRepoRoot)' != ''">$([System.IO.Path]::GetFullPath('$(KitLibRepoRoot)'))</_KitLibRepoRoot>
     <_KitLibRepoRoot Condition="'$(_KitLibRepoRoot)' == '' and '$(RepoRoot)' != ''">$([System.IO.Path]::GetFullPath('$(RepoRoot)'))</_KitLibRepoRoot>
-    <ModVariantLoaderProject Condition="'$(ModVariantLoaderProject)' == '' and '$(_KitLibRepoRoot)' != ''">$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.ModVariantLoader', 'KitLib.ModVariantLoader.csproj'))</ModVariantLoaderProject>
-    <ModVariantLoaderProjectDir>$([System.IO.Path]::GetDirectoryName('$(ModVariantLoaderProject)'))</ModVariantLoaderProjectDir>
-    <ModVariantLoaderAssemblyName Condition="'$(ModVariantLoaderAssemblyName)' == ''">KitLib.ModVariantLoader.dll</ModVariantLoaderAssemblyName>
-    <ModVariantLoaderOutputDll Condition="'$(ModVariantLoaderOutputDll)' == ''">$(ModVariantLoaderProjectDir)\bin\$(Configuration)\net9.0\$(ModVariantLoaderAssemblyName)</ModVariantLoaderOutputDll>
+    <ModVariantContentLoaderProject Condition="'$(ModVariantContentLoaderProject)' == '' and '$(_KitLibRepoRoot)' != ''">$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'eng', 'ModVariantContentLoader', 'ModVariantContentLoader.csproj'))</ModVariantContentLoaderProject>
     <ModVariantStableCompatTarget Condition="'$(ModVariantStableCompatTarget)' == ''">$(KitLibSts2RefsStableVersion)</ModVariantStableCompatTarget>
     <ModVariantBetaCompatTarget Condition="'$(ModVariantBetaCompatTarget)' == ''">$(KitLibSts2RefsBetaVersion)</ModVariantBetaCompatTarget>
     <ModVariantBundleComposeProject Condition="'$(ModVariantBundleComposeProject)' == '' and '$(_KitLibRepoRoot)' != ''">$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'tools', 'ModVariantBundleCompose', 'ModVariantBundleCompose.csproj'))</ModVariantBundleComposeProject>
@@ -18,7 +15,7 @@
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
   </PropertyGroup>
 
-  <Target Name="StageKitLibSharedBundleDeps" BeforeTargets="ComposeModVariantBundle">
+  <Target Name="StageKitLibSharedBundleDeps" BeforeTargets="ComposeModVariantBundle" Condition="'$(ModVariantStageKitLibHostDeps)' != 'false'">
     <PropertyGroup>
       <_KitLibAbstractionsProject>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.Abstractions', 'KitLib.Abstractions.csproj'))</_KitLibAbstractionsProject>
       <_KitLibModVariantLoaderProject>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.ModVariantLoader', 'KitLib.ModVariantLoader.csproj'))</_KitLibModVariantLoaderProject>
@@ -35,12 +32,34 @@
     <Copy SourceFiles="$(_KitLibModVariantLoaderDll)" DestinationFolder="$(ModVariantBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_KitLibModVariantLoaderDll)')" />
   </Target>
 
-  <Target Name="ComposeModVariantBundle">
-    <Error Condition="'$(ModVariantModId)' == ''" Text="ComposeModVariantBundle requires ModId or ModVariantModId on the project." />
-    <Error Condition="'$(ModVariantLoaderProject)' == ''" Text="ComposeModVariantBundle requires ModVariantLoaderProject (thin loader .csproj)." />
-    <Error Condition="'$(ModVariantBundleDir)' == ''" Text="ComposeModVariantBundle requires ModVariantBundleDir or RepoBuildDir." />
+  <!-- Workshop-root <ModId>.dll: shared thin loader. Content mods do not ship a second csproj. -->
+  <Target Name="StageModVariantContentLoader">
+    <Error Condition="'$(ModVariantModId)' == ''" Text="StageModVariantContentLoader requires ModId or ModVariantModId on the project." />
+    <Error Condition="'$(ModVariantContentLoaderProject)' == '' or !Exists('$(ModVariantContentLoaderProject)')" Text="Set KitLibRepoRoot so eng/ModVariantContentLoader can be found." />
+    <Error Condition="'$(ModVariantBundleDir)' == ''" Text="StageModVariantContentLoader requires ModVariantBundleDir or RepoBuildDir." />
 
     <MakeDir Directories="$(ModVariantBundleDir)" />
+    <MSBuild
+      Projects="$(ModVariantContentLoaderProject)"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);Sts2Dir=$(Sts2Dir);Sts2ApiSignatureRoot=$(Sts2ApiSignatureRoot);Sts2ApiCompat=$(Sts2ApiCompat);ModVariantModId=$(ModVariantModId)"
+      BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_BuiltModLoaderDll" />
+    </MSBuild>
+    <PropertyGroup>
+      <_ModVariantContentLoaderDll>$([MSBuild]::NormalizePath('$(ModVariantContentLoaderProject)\..\bin\$(Configuration)\$(ModVariantModId)\$(ModVariantModId).dll'))</_ModVariantContentLoaderDll>
+    </PropertyGroup>
+    <ItemGroup Condition="'@(_BuiltModLoaderDll)' == '' and Exists('$(_ModVariantContentLoaderDll)')">
+      <_BuiltModLoaderDll Include="$(_ModVariantContentLoaderDll)" />
+    </ItemGroup>
+    <Error Condition="'@(_BuiltModLoaderDll)' == ''" Text="Content loader build did not produce an output DLL for $(ModVariantContentLoaderProject)." />
+    <Copy SourceFiles="@(_BuiltModLoaderDll)" DestinationFiles="$(ModVariantBundleDir)\$(ModVariantModId).dll" SkipUnchangedFiles="false" />
+  </Target>
+
+  <Target Name="ComposeModVariantBundle" DependsOnTargets="StageModVariantContentLoader">
+    <Error Condition="'$(ModVariantModId)' == ''" Text="ComposeModVariantBundle requires ModId or ModVariantModId on the project." />
+    <Error Condition="'$(ModVariantBundleDir)' == ''" Text="ComposeModVariantBundle requires ModVariantBundleDir or RepoBuildDir." />
+
     <MakeDir Directories="$(ModVariantBundleDir)\lib" />
 
     <MSBuild
@@ -50,17 +69,6 @@
       BuildInParallel="false"
       Condition="'$(ModVariantBundleComposeProject)' != '' and !Exists('$(ModVariantComposeToolDll)')" />
     <Error Condition="!Exists('$(ModVariantComposeToolDll)')" Text="Missing ModVariantBundleCompose tool at $(ModVariantComposeToolDll). Set KitLibRepoRoot to the KitLib repo." />
-
-    <MSBuild
-      Projects="$(ModVariantLoaderProject)"
-      Targets="Build"
-      Properties="Configuration=$(Configuration);Sts2Dir=$(Sts2Dir)"
-      BuildInParallel="false">
-      <Output TaskParameter="TargetOutputs" ItemName="_BuiltModLoaderDll" />
-    </MSBuild>
-    <Error Condition="'@(_BuiltModLoaderDll)' == ''" Text="Loader build did not produce an output DLL for $(ModVariantLoaderProject)." />
-
-    <Copy SourceFiles="@(_BuiltModLoaderDll)" DestinationFiles="$(ModVariantBundleDir)\$(ModVariantModId).dll" SkipUnchangedFiles="false" />
 
     <PropertyGroup>
       <_ModVariantManifestRequireArgs Condition="'$(RequireAllVariants)' == 'true'">--require $(ModVariantStableCompatTarget) --require $(ModVariantBetaCompatTarget)</_ModVariantManifestRequireArgs>
@@ -74,6 +82,11 @@
       DestinationFiles="$(ModVariantBundleDir)\mod_manifest.json"
       SkipUnchangedFiles="true"
       Condition="!Exists('$(ModVariantBundleDir)\mod_manifest.json')" />
+    <Copy
+      SourceFiles="$(MSBuildProjectDirectory)\mod_image.png"
+      DestinationFolder="$(ModVariantBundleDir)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(MSBuildProjectDirectory)\mod_image.png')" />
 
     <Message Text="Composed mod variant bundle at $(ModVariantBundleDir)" Importance="high" />
   </Target>

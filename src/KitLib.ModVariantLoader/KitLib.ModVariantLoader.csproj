@@ -9,6 +9,10 @@
     <ModVariantBundleComposeDll>$(RepoRoot)tools\ModVariantBundleCompose\bin\$(Configuration)\net9.0\ModVariantBundleCompose.dll</ModVariantBundleComposeDll>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <GenerateDependencyFile>false</GenerateDependencyFile>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</RepoRoot>
+    <RepoBuildDir>$(RepoRoot)build\KitLib\</RepoBuildDir>
+    <OutputPath>$(RepoBuildDir)</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
 

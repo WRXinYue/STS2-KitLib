@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <ModVariantModId Condition="'$(ModVariantModId)' == ''">ModVariantContentLoader</ModVariantModId>
+    <AssemblyName>$(ModVariantModId)</AssemblyName>
+    <RootNamespace>KitLib.ModVariantLoader.ContentEntry</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildThisFileDirectory)bin\$(Configuration)\$(ModVariantModId)\</OutputPath>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    <Sts2ApiCompat Condition="'$(Sts2ApiCompat)' == ''">$(KitLibSts2RefsStableVersion)</Sts2ApiCompat>
+    <Sts2ApiSignatureDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureRoot)\$(Sts2ApiCompat)</Sts2ApiSignatureDir>
+    <Sts2DataDir Condition="'$(Sts2ApiSignatureRoot)' != ''">$(Sts2ApiSignatureDir)</Sts2DataDir>
+  </PropertyGroup>
+
+  <Target Name="ValidateSts2ApiSignatures" BeforeTargets="ResolveAssemblyReferences">
+    <Error
+      Condition="'$(Sts2ApiSignatureRoot)' != '' and !Exists('$(Sts2ApiSignatureRoot)')"
+      Text="Sts2ApiSignatureRoot is set but the directory does not exist: '$(Sts2ApiSignatureRoot)'." />
+    <Error
+      Condition="'$(Sts2ApiSignatureRoot)' != '' and Exists('$(Sts2ApiSignatureRoot)') and !Exists('$(Sts2ApiSignatureDir)\sts2.dll')"
+      Text="Sts2ApiSignatureRoot is set but missing expected file: '$(Sts2ApiSignatureDir)\sts2.dll'." />
+  </Target>
+
+  <Target Name="ValidateSts2GameInstall" BeforeTargets="ResolveAssemblyReferences">
+    <Error
+      Condition="!Exists('$(Sts2DataDir)\sts2.dll')"
+      Text="Could not find sts2.dll under '$(Sts2DataDir)'. Set Sts2Dir or Sts2ApiSignatureRoot." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False" />
+    <ProjectReference Include="..\..\src\KitLib.ModVariantLoader\KitLib.ModVariantLoader.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

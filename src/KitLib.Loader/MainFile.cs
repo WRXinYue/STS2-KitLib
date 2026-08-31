@@ -18,6 +18,7 @@ public static class MainFile {
         "Microsoft.Extensions.Primitives.dll",
         "Semver.dll",
         "KitLib.Abstractions.dll",
+        "KitLib.ModVariantLoader.dll",
     ];
 
     public static void Initialize() {

@@ -144,6 +144,7 @@
     <Copy SourceFiles="$(RepoBuildDir)\Semver.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Semver.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\Microsoft.Extensions.Primitives.dll')" />
     <Copy SourceFiles="$(RepoBuildDir)\mod_manifest.json" DestinationFiles="$(ModsDir)\mod_manifest.json" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_manifest.json')" />
+    <Copy SourceFiles="$(RepoBuildDir)\mod_image.png" DestinationFolder="$(ModsDir)\" SkipUnchangedFiles="true" Condition="Exists('$(RepoBuildDir)\mod_image.png')" />
     <ItemGroup>
       <_KitLibModuleDlls Include="$(RepoBuildDir)\modules\*.dll" />
     </ItemGroup>

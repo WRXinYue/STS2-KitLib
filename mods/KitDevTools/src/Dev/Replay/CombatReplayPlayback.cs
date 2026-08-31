@@ -605,7 +605,11 @@ internal static class CombatReplayPlayback {
             CaptureRooms(runState);
             Changed?.Invoke();
 
+#if STS2_STABLE_PROFILE
+            rm.SetUpReplay(runState, replay);
+#else
             rm.SetUpReplay(runState, replay, runState.Players[0].NetId);
+#endif
             rm.CombatStateSynchronizer.IsDisabled = true;
             AccessTools.Property(typeof(RunManager), "ShouldSave")?.SetValue(rm, false);
 

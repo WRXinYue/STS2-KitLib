@@ -83,6 +83,7 @@ KITLIB_CORE_PROJECTS = [
     "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
     "src/KitLib.Core/KitLib.Core.csproj",
     "src/KitLib.Loader/KitLib.Loader.csproj",
+    "src/KitLib.ModVariantLoader/KitLib.ModVariantLoader.csproj",
 ]
 
 SATELLITE_PROJECTS = {

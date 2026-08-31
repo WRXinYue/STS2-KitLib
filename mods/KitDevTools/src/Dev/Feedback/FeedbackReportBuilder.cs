@@ -212,7 +212,11 @@ internal static class FeedbackReportBuilder {
             }
 
             var relatives = new List<string> {
+#if STS2_STABLE_PROFILE
+                ProfileSaveManager.ProfilePath,
+#else
                 ProfileSaveManager.GetProfileSavePath(),
+#endif
                 "settings.save",
                 ProgressSaveManager.GetProgressPathForProfile(profileId),
                 RunSaveManager.GetRunSavePath(profileId, "current_run.save"),

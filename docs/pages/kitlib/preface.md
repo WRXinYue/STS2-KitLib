@@ -47,21 +47,19 @@ This page points to community resources before diving into KitLib itself.
 ## KitLib 是什么{lang="zh-CN"}
 
 ::: en
-**KitLib** is a **modular in-game toolkit** for STS2 — not a content-mod framework (use BaseLib / RitsuLib for cards, relics, etc.).
+**KitLib** is a **foundation library and host** for STS2. Other mods declare it in the manifest, reference **`STS2.KitLib.Abstractions`**, and call the **[Extension API](/api/)** — the same pattern as RitsuLib / BaseLib.
 
-- **KitLib**: host, logging, progress helpers, mutation APIs.
-- **Also available**: `KitModPanel`, `KitDevTools`, `KitAI`.
-- Content mods use NuGet **`STS2.KitLib.Abstractions`** and the **[Extension API](/api/)**.
+- **KitLib**: host, logging, progress helpers, mutation APIs, corner-button registry.
+- **Sibling mods** (own READMEs under `mods/`): `KitModPanel`, `KitDevTools`, `KitAI`.
 
 Ready to install? **[Install →](/kitlib/install/)** · **[Extension API →](/api/)** · **[Architecture →](/kitlib/architecture/)**
 :::
 
 ::: zh-CN
-**KitLib** 是 STS2 的**模块化游戏内工具库**，不是内容 mod 框架（卡牌/遗物等请用 BaseLib / RitsuLib）。
+**KitLib** 是 STS2 的**基础库和宿主**。其他 mod 在清单里声明它、引用 **`STS2.KitLib.Abstractions`**、调用 **[扩展 API](/api/)** — 与 RitsuLib / BaseLib 相同。
 
-- **KitLib**：宿主、日志、进度辅助、突变 API。
-- **另可安装**：`KitModPanel`、`KitDevTools`、`KitAI`。
-- 内容 mod 使用 NuGet **`STS2.KitLib.Abstractions`** 与 **[扩展 API](/api/)**。
+- **KitLib**：宿主、日志、进度辅助、突变 API、角标注册。
+- **兄弟产品**（各自 README 在 `mods/`）：`KitModPanel`、`KitDevTools`、`KitAI`。
 
 准备安装？**[安装 →](/kitlib/install/)** · **[扩展 API →](/api/)** · **[架构 →](/kitlib/architecture/)**
 :::

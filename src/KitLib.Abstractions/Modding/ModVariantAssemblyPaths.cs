@@ -1,8 +1,6 @@
-using KitLib.Abstractions.Compat;
-
 namespace KitLib.Abstractions.Modding;
 
-/// <summary>Shared disk layout helpers for variant bundles (content mods and optional profile builds).</summary>
+/// <summary>Resolves a bundled implementation DLL under <c>lib/&lt;api&gt;/</c>.</summary>
 public static class ModVariantAssemblyPaths {
     public static string? ResolveBundledAssemblyPath(
         string modRoot,
@@ -11,36 +9,18 @@ public static class ModVariantAssemblyPaths {
         if (string.IsNullOrWhiteSpace(modRoot) || string.IsNullOrWhiteSpace(assemblyName))
             return null;
 
-        var libDir = Path.Combine(modRoot, ModVariantLayout.LibDirectoryName);
-        if (!Directory.Exists(libDir))
+        var fileName = assemblyName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+            ? assemblyName
+            : assemblyName + ".dll";
+
+        var variantDir = KitLibHostPaths.TryPickVariantDirectory(modRoot, hostVersion, fileName);
+        if (variantDir is null)
             return null;
 
-        var bundled = new List<string>();
-        foreach (var file in Directory.EnumerateFiles(libDir, $"{assemblyName}_*.dll")) {
-            var fileName = Path.GetFileName(file);
-            if (ModVariantLayout.TryParseVariantFileName(assemblyName, fileName, out var target))
-                bundled.Add(target);
-        }
-
-        if (bundled.Count == 0)
-            return null;
-
-        var picked = ModVariantPicker.PickCompatTarget(bundled, hostVersion);
-        if (picked is null)
-            return null;
-
-        var path = Path.Combine(libDir, ModVariantLayout.VariantFileName(assemblyName, picked));
+        var path = Path.Combine(variantDir, fileName);
         return File.Exists(path) ? Path.GetFullPath(path) : null;
     }
 
-    public static string? ResolveSiblingKitLibModDirectory(string hostModDir) {
-        if (string.IsNullOrWhiteSpace(hostModDir))
-            return null;
-
-        if (string.Equals(Path.GetFileName(hostModDir), "KitLib", StringComparison.OrdinalIgnoreCase))
-            return Path.GetFullPath(hostModDir);
-
-        var sibling = Path.GetFullPath(Path.Combine(hostModDir, "..", "KitLib"));
-        return Directory.Exists(sibling) ? sibling : null;
-    }
+    public static string? ResolveSiblingKitLibModDirectory(string hostModDir) =>
+        KitLibHostPaths.ResolveSiblingKitLibModDirectory(hostModDir);
 }

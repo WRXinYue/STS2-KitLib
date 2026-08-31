@@ -4,11 +4,45 @@ if (!TryParseArgs(args, out var bundleRoot, out var modId, out var requiredCompa
     return PrintUsage(1);
 
 var libRoot = Path.Combine(bundleRoot, ModVariantLayout.LibDirectoryName);
-var manifest = ModVariantManifestIO.CreateFromFlatLibDirectory(libRoot, modId);
+if (!Directory.Exists(libRoot)) {
+    Console.Error.WriteLine($"Missing lib directory: {libRoot}");
+    return 1;
+}
+
+var implFile = ModVariantLayout.ImplementationFileName(modId);
+var present = new List<string>();
+foreach (var dir in Directory.EnumerateDirectories(libRoot).OrderBy(static p => p, StringComparer.OrdinalIgnoreCase)) {
+    var marker = Path.Combine(dir, ModVariantLayout.CompatTargetMarkerName);
+    if (!File.Exists(marker))
+        continue;
+
+    var label = File.ReadAllText(marker).Trim();
+    if (string.IsNullOrWhiteSpace(label))
+        continue;
+
+    var folderName = Path.GetFileName(dir);
+    if (!string.Equals(folderName, label, StringComparison.OrdinalIgnoreCase)) {
+        Console.Error.WriteLine($"Variant folder '{folderName}' does not match {ModVariantLayout.CompatTargetMarkerName} ({label}).");
+        return 1;
+    }
+
+    var dll = Path.Combine(dir, implFile);
+    if (!File.Exists(dll)) {
+        Console.Error.WriteLine($"Missing {implFile} under {dir}.");
+        return 1;
+    }
+
+    present.Add(label);
+}
+
+if (present.Count == 0) {
+    Console.Error.WriteLine($"No lib/<api>/{implFile} variants found under {libRoot}.");
+    return 1;
+}
 
 if (requiredCompatTargets.Count > 0) {
-    var present = manifest.Variants.Select(entry => entry.CompatTarget).ToHashSet(StringComparer.OrdinalIgnoreCase);
-    var missing = requiredCompatTargets.Where(target => !present.Contains(target)).OrderBy(static x => x).ToList();
+    var presentSet = present.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var missing = requiredCompatTargets.Where(target => !presentSet.Contains(target)).OrderBy(static x => x).ToList();
     if (missing.Count > 0) {
         Console.Error.WriteLine(
             $"Release bundle missing variant(s): {string.Join(", ", missing)}. Build all API profiles before compose.");
@@ -16,9 +50,7 @@ if (requiredCompatTargets.Count > 0) {
     }
 }
 
-var manifestPath = Path.Combine(bundleRoot, ModVariantLayout.ManifestFileName(modId));
-ModVariantManifestIO.Write(manifestPath, manifest);
-Console.WriteLine($"Wrote {manifestPath}");
+Console.WriteLine($"OK: {present.Count} variant(s) for {modId} ({string.Join(", ", present)}).");
 return 0;
 
 static bool TryParseArgs(
@@ -32,22 +64,22 @@ static bool TryParseArgs(
 
     for (var index = 0; index < args.Length; index++) {
         switch (args[index]) {
-        case "--bundle-root":
-            if (!TryReadValue(args, ref index, out bundleRoot))
+            case "--bundle-root":
+                if (!TryReadValue(args, ref index, out bundleRoot))
+                    return false;
+                break;
+            case "--mod-id":
+                if (!TryReadValue(args, ref index, out modId))
+                    return false;
+                break;
+            case "--require":
+                if (!TryReadValue(args, ref index, out var compatTarget))
+                    return false;
+                requiredCompatTargets.Add(compatTarget);
+                break;
+            default:
+                Console.Error.WriteLine($"Unknown argument: {args[index]}");
                 return false;
-            break;
-        case "--mod-id":
-            if (!TryReadValue(args, ref index, out modId))
-                return false;
-            break;
-        case "--require":
-            if (!TryReadValue(args, ref index, out var compatTarget))
-                return false;
-            requiredCompatTargets.Add(compatTarget);
-            break;
-        default:
-            Console.Error.WriteLine($"Unknown argument: {args[index]}");
-            return false;
         }
     }
 

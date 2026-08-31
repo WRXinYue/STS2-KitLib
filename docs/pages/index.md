@@ -8,16 +8,15 @@ features:
     en: Overview
     zh-CN: 概览
   subtitle:
-    en: In-game toolkit for Slay the Spire 2
-    zh-CN: 《杀戮尖塔 2》游戏内工具库
+    en: Foundation library and host for Slay the Spire 2
+    zh-CN: 《杀戮尖塔 2》基础库与宿主
   text:
     en: >-
-      KitLib serves mod authors and players: test runs, in-run editing, logs, and multiplayer debugging
-      without leaving the game — plus a better Mod panel, progress protection, and feedback export.
-      Core loads optional satellite products when installed; a failed optional product should not break KitLib or mods that depend on it.
+      KitLib is a foundation library: declare it in your mod manifest, reference KitLib.Abstractions, and call its APIs.
+      Sibling products (KitModPanel, KitDevTools, KitAI) add in-game UI. A failed sibling should not break KitLib or mods that depend on it.
     zh-CN: >-
-      KitLib 面向 mod 开发者与玩家：局内测试、改内容、看日志、联机调试，以及更好用的 Mod 面板、
-      进度保护与问题反馈。按需安装的可选产品；单个产品异常不应拖垮核心与依赖 KitLib 的其他 mod。
+      KitLib 是基础库：在清单中声明、引用 KitLib.Abstractions、调用公开 API。
+      兄弟产品（KitModPanel、KitDevTools、KitAI）提供游戏内 UI。某个兄弟产品异常不应拖垮核心与依赖 KitLib 的其他 mod。
 
   cards:
     - title:

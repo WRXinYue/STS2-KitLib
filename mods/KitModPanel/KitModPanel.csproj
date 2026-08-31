@@ -18,6 +18,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>mod_manifest.json</TargetPath>
     </None>
+    <None Include="mod_image.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <Target Name="ForceModOutputPath" BeforeTargets="CoreCompile">
     <PropertyGroup>

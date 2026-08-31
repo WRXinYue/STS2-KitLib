@@ -48,4 +48,7 @@
       Condition="'$(KitLibCoreDllPath)' == '' or !Exists('$(KitLibCoreDllPath)')"
       Text="KitLib.Core.dll not found (checked $(_KitLibCoreBundleDll) and $(_KitLibCoreBinDll)). Run make build." />
   </Target>
+  <!-- Dual-API packs: EnableModVariantBundle=true stages lib/<api>/<ModId>.dll + compat-target.txt
+       and builds KitLib's shared Workshop-root loader (eng/ModVariantContentLoader). -->
+  <Import Project="$(MSBuildThisFileDirectory)STS2.KitLib.ModVariantLoader.targets" Condition="'$(EnableModVariantBundle)' == 'true'" />
 </Project>

@@ -382,7 +382,8 @@ public static partial class ModPanelUI {
             }
             else if (rowEntry != null) {
                 ApplySidebarTextsFromEntry(rowEntry.Value, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
-                ApplyPreviewState(null, true, modIcon, previewPlaceholder, previewCaption);
+                var tex = ModPanelModBanner.TryLoadModIcon(null, id);
+                ApplyPreviewState(tex, false, modIcon, previewPlaceholder, previewCaption);
             }
             else {
                 ApplySidebarTexts(null, id, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);

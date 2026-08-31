@@ -6,11 +6,14 @@ Inspired by LustTravel2's package_bundle.py.
 Layout:
   build/KitLib-release/
     KitLib.dll
-    KitLib.Abstractions.dll
+    KitLib.Abstractions.dll, KitLib.ModVariantLoader.dll
     Semver.dll, Microsoft.Extensions.Primitives.dll
     mod_manifest.json
     lib/0.107.1/KitLib.Core.dll, modules/*.dll, compat-target.txt
     lib/0.110.1/...
+  build/KitDevTools-release/ and build/KitAI-release/:
+    <Product>.dll, mod_manifest.json
+    lib/<api>/modules/*.dll, compat-target.txt
 
 Usage:
   python scripts/package_bundle.py
@@ -51,10 +54,13 @@ BUNDLE_ID = "KitLib"
 STAGING_DIR = _REPO / "build" / f"{BUNDLE_ID}-release"
 BUILD_DIR = _REPO / "build" / BUNDLE_ID
 LOADER_PROJECT = _REPO / "src" / "KitLib.Loader" / "KitLib.Loader.csproj"
+VARIANT_LOADER_PROJECT = _REPO / "src" / "KitLib.ModVariantLoader" / "KitLib.ModVariantLoader.csproj"
 MANIFEST_SRC = _REPO / "KitLib.json"
 COMPAT_MARKER = "compat-target.txt"
 CORE_DLL = "KitLib.Core.dll"
+VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 MODULES_SUBDIR = "modules"
+SIBLING_VARIANT_PRODUCTS = ("KitDevTools", "KitAI")
 SHARED_ROOT_FILES = [
     "KitLib.Abstractions.dll",
     "Semver.dll",
@@ -63,7 +69,9 @@ SHARED_ROOT_FILES = [
 _ZIP_ROOT_FILES = [
     "KitLib.dll",
     *SHARED_ROOT_FILES,
+    VARIANT_LOADER_DLL,
     "mod_manifest.json",
+    "mod_image.png",
 ]
 
 
@@ -100,10 +108,47 @@ def _read_mods_dir() -> Path | None:
     return mods if mods.is_dir() else sts2_dir / "mods"
 
 
+def _sibling_staging(product_id: str) -> Path:
+    return _REPO / "build" / f"{product_id}-release"
+
+
+def _resolve_mod_image(product_id: str) -> Path | None:
+    candidates = [
+        _REPO / "mods" / product_id / "mod_image.png",
+        _REPO / "mods" / product_id / "src" / "Panel" / "Assets" / "mod_image.png",
+    ]
+    if product_id == "KitLib":
+        candidates.append(_REPO / "assets" / "mod_image.png")
+    for src in candidates:
+        if src.is_file():
+            return src
+    return None
+
+
+def _copy_mod_image(product_id: str, dest: Path) -> None:
+    src = _resolve_mod_image(product_id)
+    if src is None:
+        return
+    shutil.copy2(src, dest / "mod_image.png")
+
+
+def _resolve_satellite_dll(product_id: str, dll_name: str) -> Path | None:
+    bundled = product_build_dir(product_id) / MODULES_SUBDIR / f"{dll_name}.dll"
+    if bundled.is_file():
+        return bundled
+    alt = _REPO / "build" / dll_name / f"{dll_name}.dll"
+    return alt if alt.is_file() else None
+
+
 def _clear_staging() -> None:
     if STAGING_DIR.exists():
         shutil.rmtree(STAGING_DIR)
     STAGING_DIR.mkdir(parents=True)
+    for product_id in SIBLING_VARIANT_PRODUCTS:
+        dest = _sibling_staging(product_id)
+        if dest.exists():
+            shutil.rmtree(dest)
+        dest.mkdir(parents=True)
 
 
 def _stage_variant(compat: str, profile: str, *, configuration: str) -> None:
@@ -137,6 +182,38 @@ def _stage_variant(compat: str, profile: str, *, configuration: str) -> None:
 
     (variant_dir / COMPAT_MARKER).write_text(compat + "\n", encoding="utf-8", newline="\n")
     print(f"[bundle] Staged variant {compat} ({profile})")
+    _stage_sibling_variant(compat)
+
+
+def _stage_sibling_variant(compat: str) -> None:
+    for product_id in SIBLING_VARIANT_PRODUCTS:
+        product = PRODUCTS[product_id]
+        variant_dir = _sibling_staging(product_id) / "lib" / compat
+        modules_dst = variant_dir / MODULES_SUBDIR
+        variant_dir.mkdir(parents=True)
+        modules_dst.mkdir(parents=True)
+        for dll_name in product.satellite_dlls:
+            src = _resolve_satellite_dll(product_id, dll_name)
+            if src is None:
+                print(f"[bundle] Warning: missing {dll_name}.dll for {product_id} variant {compat}")
+                continue
+            shutil.copy2(src, modules_dst / f"{dll_name}.dll")
+        (variant_dir / COMPAT_MARKER).write_text(compat + "\n", encoding="utf-8", newline="\n")
+        print(f"[bundle] Staged {product_id} variant {compat}")
+
+
+def _stage_sibling_roots() -> None:
+    for product_id in SIBLING_VARIANT_PRODUCTS:
+        product = PRODUCTS[product_id]
+        staging = _sibling_staging(product_id)
+        build_dir = product_build_dir(product_id)
+        entry = build_dir / product.entry_dll
+        if not entry.is_file():
+            fail(f"Missing {entry} for {product_id}.")
+        shutil.copy2(entry, staging / product.entry_dll)
+        if product.manifest_path.is_file():
+            shutil.copy2(product.manifest_path, staging / "mod_manifest.json")
+        _copy_mod_image(product_id, staging)
 
 
 def _stage_shared_root(*, configuration: str) -> None:
@@ -150,6 +227,7 @@ def _stage_shared_root(*, configuration: str) -> None:
 
     if MANIFEST_SRC.is_file():
         shutil.copy2(MANIFEST_SRC, STAGING_DIR / "mod_manifest.json")
+    _copy_mod_image("KitLib", STAGING_DIR)
 
 
 def _build_loader(*, configuration: str, profile: str) -> None:
@@ -171,9 +249,35 @@ def _build_loader(*, configuration: str, profile: str) -> None:
         fail(f"Loader build did not produce {loader_out}")
     shutil.copy2(loader_out, STAGING_DIR / "KitLib.dll")
 
+    _dotnet(
+        [
+            "build",
+            str(VARIANT_LOADER_PROJECT),
+            "-c",
+            configuration,
+            "-v:q",
+            f"-p:Sts2Dir={sts2_dir}",
+            f"-p:Sts2Profile={profile}",
+            "-p:KitLibPersonalCompat=true",
+        ]
+    )
+    variant_src = BUILD_DIR / VARIANT_LOADER_DLL
+    if not variant_src.is_file():
+        variant_src = (
+            _REPO / "src" / "KitLib.ModVariantLoader" / "bin" / configuration / "net9.0" / VARIANT_LOADER_DLL
+        )
+    if not variant_src.is_file():
+        fail(f"ModVariantLoader build did not produce {variant_src}")
+    shutil.copy2(variant_src, STAGING_DIR / VARIANT_LOADER_DLL)
+
 
 def _assert_staging(staging: Path) -> None:
-    required = [staging / "KitLib.dll", staging / "mod_manifest.json", staging / "lib"]
+    required = [
+        staging / "KitLib.dll",
+        staging / "mod_manifest.json",
+        staging / "lib",
+        staging / VARIANT_LOADER_DLL,
+    ]
     missing = [str(path.relative_to(_REPO)) for path in required if not path.exists()]
     if missing:
         fail(f"Staging incomplete: {', '.join(missing)}")
@@ -199,6 +303,7 @@ def build_bundle_tree(
 
     _stage_shared_root(configuration=configuration)
     _build_loader(configuration=configuration, profile=targets[-1][1])
+    _stage_sibling_roots()
 
     print(f"[bundle] Staging ready: {STAGING_DIR}")
     return STAGING_DIR
@@ -277,11 +382,16 @@ def _deploy_to_game() -> None:
         shutil.rmtree(dest)
     shutil.copytree(STAGING_DIR, dest)
     print(f"[bundle] Deployed KitLib multi-API pack to {dest}")
-    # Sibling products use the flat build outputs from the last variant build.
+    for product_id in SIBLING_VARIANT_PRODUCTS:
+        src = _sibling_staging(product_id)
+        sibling_dest = mods_root / product_id
+        if sibling_dest.exists():
+            shutil.rmtree(sibling_dest)
+        shutil.copytree(src, sibling_dest)
+        print(f"[bundle] Deployed {product_id} multi-API pack to {sibling_dest}")
     import deploy_modules as deploy  # noqa: E402
 
-    for product_id in ("KitModPanel", "KitDevTools", "KitAI"):
-        deploy._deploy_product(mods_root, product_id)
+    deploy._deploy_product(mods_root, "KitModPanel")
 
 
 def main() -> int:

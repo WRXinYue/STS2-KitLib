@@ -1,0 +1,9 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)..'))" />
+  <PropertyGroup>
+    <_ModVariantModId Condition="'$(ModVariantModId)' != ''">$(ModVariantModId)</_ModVariantModId>
+    <_ModVariantModId Condition="'$(_ModVariantModId)' == ''">ModVariantContentLoader</_ModVariantModId>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(_ModVariantModId)\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)obj\$(_ModVariantModId)\</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+</Project>
