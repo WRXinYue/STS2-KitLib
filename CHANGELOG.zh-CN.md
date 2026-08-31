@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **内容 mod 变体包** — `ModVariantBootstrap.Initialize()` 按 `lib/<api>/<ModId>.dll` 与 `compat-target.txt` 选择实现，布局与 KitLib 相同。Workshop 根 DLL 由 KitLib 共享的 `eng/ModVariantContentLoader` 生成，内容 mod 不必再挂第二份 csproj。宿主目录会带上 `KitLib.ModVariantLoader.dll`。
 - **KitDevTools / KitAI 多 API 包** — `package_bundle` 写入 `lib/<api>/modules/`，一份安装可同时用于 stable 与 beta。
 
+### Fixed
+
+- **卫星模块按 API 隔离** — 兄弟产品（KitDevTools、KitAI）只加载与 KitLib 已选变体相同的 `lib/<api>`。不再在 stable 上误载 beta 卫星（或反过来），避免 Harmony 补丁 JIT 失败后打断原版方法、连累其他 mod。
+- **Harmony API 不匹配** — KitLib 补丁若仍抛出 `MissingMethodException` / `MissingFieldException` / `TypeLoadException`（游戏 API 变了），原版方法保留自身返回值，不再整段中止。该 KitLib 功能本次调用失效；原版与其他 mod 继续。
+
 ## [0.33.0] - 2026-08-06
 
 ### Added

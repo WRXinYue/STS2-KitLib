@@ -2,6 +2,10 @@ using KitLib.Abstractions.Modding;
 
 namespace KitLib.Abstractions.Tests;
 
+[CollectionDefinition("KitLibHostPaths", DisableParallelization = true)]
+public sealed class KitLibHostPathsCollection;
+
+[Collection("KitLibHostPaths")]
 public sealed class ModVariantLayoutTests {
     [Fact]
     public void VariantRelativeImplementationPath_UsesApiDirectory() {
@@ -39,6 +43,53 @@ public sealed class ModVariantLayoutTests {
     }
 
     [Fact]
+    public void TryResolveSatelliteAssemblyPath_PrefersSiblingVariantMatchingActiveKitLib() {
+        var mods = Path.Combine(Path.GetTempPath(), "kitlib-sat-search-" + Guid.NewGuid().ToString("N"));
+        var kitLib = Path.Combine(mods, "KitLib");
+        var kitDev = Path.Combine(mods, "KitDevTools");
+        var previous = KitLibHostPaths.ActiveVariantRoot;
+        try {
+            WriteProductVariant(kitLib, "0.107.1", "KitLib.Core.dll");
+            WriteProductVariant(kitLib, "0.110.1", "KitLib.Core.dll");
+            WriteSatelliteVariant(kitDev, "0.107.1", "KitLib.Dev.dll", "stable-dev");
+            WriteSatelliteVariant(kitDev, "0.110.1", "KitLib.Dev.dll", "beta-dev");
+
+            var stableRoot = Path.Combine(kitLib, ModVariantLayout.LibDirectoryName, "0.107.1");
+            KitLibHostPaths.SetActiveVariantRoot(stableRoot);
+
+            var picked = KitLibHostPaths.TryResolveSatelliteAssemblyPath(stableRoot, "KitLib.Dev");
+            Assert.NotNull(picked);
+            Assert.Equal("0.107.1", Path.GetFileName(Path.GetDirectoryName(Path.GetDirectoryName(picked))));
+            Assert.Equal("stable-dev", File.ReadAllText(picked));
+        }
+        finally {
+            KitLibHostPaths.SetActiveVariantRoot(previous);
+            Directory.Delete(mods, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void TryResolveSatelliteAssemblyPath_DoesNotLoadMismatchedSiblingVariant() {
+        var mods = Path.Combine(Path.GetTempPath(), "kitlib-sat-skip-" + Guid.NewGuid().ToString("N"));
+        var kitLib = Path.Combine(mods, "KitLib");
+        var kitDev = Path.Combine(mods, "KitDevTools");
+        var previous = KitLibHostPaths.ActiveVariantRoot;
+        try {
+            WriteProductVariant(kitLib, "0.107.1", "KitLib.Core.dll");
+            WriteSatelliteVariant(kitDev, "0.110.1", "KitLib.Dev.dll", "beta-only");
+
+            var stableRoot = Path.Combine(kitLib, ModVariantLayout.LibDirectoryName, "0.107.1");
+            KitLibHostPaths.SetActiveVariantRoot(stableRoot);
+
+            Assert.Null(KitLibHostPaths.TryResolveSatelliteAssemblyPath(stableRoot, "KitLib.Dev"));
+        }
+        finally {
+            KitLibHostPaths.SetActiveVariantRoot(previous);
+            Directory.Delete(mods, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ResolveModFolder_WalksUpFromVariantAndModules() {
         var mods = Path.Combine(Path.GetTempPath(), "kitlib-mod-folder-" + Guid.NewGuid().ToString("N"));
         var kitLib = Path.Combine(mods, "KitLib");
@@ -68,5 +119,21 @@ public sealed class ModVariantLayoutTests {
         Directory.CreateDirectory(dir);
         File.WriteAllText(Path.Combine(dir, ModVariantLayout.CompatTargetMarkerName), compat + "\n");
         File.WriteAllText(Path.Combine(dir, "ExampleMod.dll"), "example");
+    }
+
+    static void WriteProductVariant(string modRoot, string compat, string fileName) {
+        var dir = Path.Combine(modRoot, ModVariantLayout.LibDirectoryName, compat);
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, ModVariantLayout.CompatTargetMarkerName), compat + "\n");
+        File.WriteAllText(Path.Combine(dir, fileName), "core");
+    }
+
+    static void WriteSatelliteVariant(string productRoot, string compat, string fileName, string contents) {
+        var modules = Path.Combine(productRoot, ModVariantLayout.LibDirectoryName, compat, KitLibHostPaths.ModulesSubdir);
+        Directory.CreateDirectory(modules);
+        File.WriteAllText(
+            Path.Combine(productRoot, ModVariantLayout.LibDirectoryName, compat, ModVariantLayout.CompatTargetMarkerName),
+            compat + "\n");
+        File.WriteAllText(Path.Combine(modules, fileName), contents);
     }
 }

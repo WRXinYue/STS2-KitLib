@@ -63,7 +63,8 @@ public static class KitLibHostPaths {
 
     /// <summary>
     /// Directories searched for satellite DLLs: KitLib content root modules, then each
-    /// installed sibling product <c>modules/</c> (and product root for thin loaders).
+    /// installed sibling product. When a KitLib <c>lib/&lt;api&gt;</c> variant is active,
+    /// sibling products use that same API folder before unversioned fallbacks.
     /// </summary>
     public static IReadOnlyList<string> EnumerateModuleSearchDirectories(string kitLibModDir) {
         var dirs = new List<string>();
@@ -94,23 +95,61 @@ public static class KitLibHostPaths {
             if (!Directory.Exists(productDir))
                 continue;
 
-            Add(Path.Combine(productDir, ModulesSubdir));
-            Add(productDir);
-
-            var libRoot = Path.Combine(productDir, LibDirectoryName);
-            if (!Directory.Exists(libRoot))
-                continue;
-
-            foreach (var variantDir in Directory.EnumerateDirectories(libRoot)) {
-                var marker = Path.Combine(variantDir, CompatTargetMarkerName);
-                if (!File.Exists(marker))
-                    continue;
-                Add(Path.Combine(variantDir, ModulesSubdir));
-                Add(variantDir);
-            }
+            AddSiblingProductDirectories(productDir, Add);
         }
 
         return dirs;
+    }
+
+    /// <summary>
+    /// Prefer the sibling <c>lib/&lt;api&gt;</c> that matches the already-picked KitLib
+    /// variant. Loading a beta satellite onto a stable game (or the reverse) applies
+    /// Harmony patches that JIT-fail and abort vanilla methods used by other mods.
+    /// </summary>
+    static void AddSiblingProductDirectories(string productDir, Action<string?> add) {
+        var pickedApi = TryGetActiveCompatTarget();
+        if (pickedApi != null) {
+            var variantDir = Path.Combine(productDir, LibDirectoryName, pickedApi);
+            if (File.Exists(Path.Combine(variantDir, CompatTargetMarkerName))) {
+                add(Path.Combine(variantDir, ModulesSubdir));
+                add(variantDir);
+            }
+
+            add(Path.Combine(productDir, ModulesSubdir));
+            add(productDir);
+            return;
+        }
+
+        add(Path.Combine(productDir, ModulesSubdir));
+        add(productDir);
+
+        var libRoot = Path.Combine(productDir, LibDirectoryName);
+        if (!Directory.Exists(libRoot))
+            return;
+
+        foreach (var variantDir in Directory.EnumerateDirectories(libRoot)) {
+            var marker = Path.Combine(variantDir, CompatTargetMarkerName);
+            if (!File.Exists(marker))
+                continue;
+            add(Path.Combine(variantDir, ModulesSubdir));
+            add(variantDir);
+        }
+    }
+
+    static string? TryGetActiveCompatTarget() {
+        var root = ActiveVariantRoot;
+        if (string.IsNullOrEmpty(root))
+            return null;
+
+        var marker = Path.Combine(root, CompatTargetMarkerName);
+        if (File.Exists(marker)) {
+            var label = File.ReadAllText(marker).Trim();
+            if (!string.IsNullOrWhiteSpace(label))
+                return label;
+        }
+
+        var folder = Path.GetFileName(root);
+        return string.IsNullOrWhiteSpace(folder) ? null : folder;
     }
 
     public static string? TryResolveSatelliteAssemblyPath(string kitLibModDir, string assemblyName) {

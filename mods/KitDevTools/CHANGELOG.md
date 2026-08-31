@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Embark on STS2 0.107.1** — A beta-built pseudo-coop postfix on `StartRunLobby.IsAboutToBeginGame` called `Players` as `List<StartRunLobbyPlayer>`. On stable that getter is `List<LobbyPlayer>`, so JIT threw `MissingMethodException` and Harmony aborted vanilla embark. The postfix now uses reflection and never fails the original method.
+
 ### Added
 
 - **AutoSlay** — DevMode title-screen menu; optional seed; single-player only.

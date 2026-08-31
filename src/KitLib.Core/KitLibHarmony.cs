@@ -10,6 +10,8 @@ public static class KitLibHarmony {
     static readonly HashSet<string> Applied = new(StringComparer.OrdinalIgnoreCase);
     static readonly Dictionary<string, Harmony> Instances = new(StringComparer.OrdinalIgnoreCase);
     static readonly HashSet<Type> GloballyPatchedTypes = [];
+    static readonly HashSet<MethodBase> ApiMismatchFailSoftAttached = [];
+    static readonly HarmonyMethod ApiMismatchFailSoft = CreateApiMismatchFailSoft();
 
     public static bool IsApplied(string harmonyId) =>
         !string.IsNullOrWhiteSpace(harmonyId) && Applied.Contains(harmonyId);
@@ -86,6 +88,7 @@ public static class KitLibHarmony {
             try {
                 harmony.PatchAll(moduleAssembly);
                 Applied.Add(harmonyId);
+                AttachApiMismatchFailSoft(harmony);
                 MainFile.Logger.Info($"KitLib Harmony patches applied: {harmonyId} (PatchAll).");
                 return;
             }
@@ -114,6 +117,7 @@ public static class KitLibHarmony {
         }
 
         Applied.Add(harmonyId);
+        AttachApiMismatchFailSoft(GetOrCreate(harmonyId));
 
         MainFile.Logger.Info(
             $"KitLib Harmony patches applied: {harmonyId} ({appliedTypes.Count} types, {skipped.Count} skipped).");
@@ -122,6 +126,64 @@ public static class KitLibHarmony {
                 $"KitLib Harmony {harmonyId}: {skipped.Count} patch type(s) skipped — search godot.log for " +
                 "'Harmony skipped patch type' or module health errors.");
         }
+    }
+
+    static HarmonyMethod CreateApiMismatchFailSoft() {
+        var method = typeof(KitLibHarmony).GetMethod(
+            nameof(SwallowIncompatibleApiException),
+            BindingFlags.NonPublic | BindingFlags.Static,
+            binder: null,
+            types: [typeof(Exception)],
+            modifiers: null)
+            ?? throw new InvalidOperationException("KitLib Harmony API fail-soft method is missing.");
+        return new HarmonyMethod(method) { priority = Priority.Last };
+    }
+
+    static void AttachApiMismatchFailSoft(Harmony harmony) {
+        foreach (var method in harmony.GetPatchedMethods()) {
+            if (method == null || !ApiMismatchFailSoftAttached.Add(method))
+                continue;
+            try {
+                harmony.Patch(method, finalizer: ApiMismatchFailSoft);
+            }
+            catch (Exception ex) {
+                ApiMismatchFailSoftAttached.Remove(method);
+                MainFile.Logger.Debug(
+                    $"KitLib Harmony could not attach API fail-soft to {method.DeclaringType?.Name}.{method.Name}: {ex.Message}");
+            }
+        }
+    }
+
+    // Harmony postfix/prefix exceptions abort the original game method, which takes
+    // down vanilla and other mods sharing that call. Version-mismatch JIT failures
+    // are swallowed so the original result stands; the KitLib feature no-ops.
+    static Exception? SwallowIncompatibleApiException(Exception? __exception) {
+        if (__exception is null || !IsIncompatibleApiException(__exception))
+            return __exception;
+
+        var inner = UnwrapIncompatibleApiException(__exception);
+        MainFile.Logger.Warn(
+            $"KitLib Harmony ignored {inner.GetType().Name} on a patched game method ({inner.Message}). " +
+            "Vanilla continues; this KitLib feature is disabled for this call.");
+        return null;
+    }
+
+    static bool IsIncompatibleApiException(Exception? exception) {
+        for (var ex = exception; ex != null; ex = ex.InnerException) {
+            if (ex is MissingMethodException or MissingFieldException or TypeLoadException)
+                return true;
+        }
+
+        return false;
+    }
+
+    static Exception UnwrapIncompatibleApiException(Exception exception) {
+        for (var ex = exception; ex != null; ex = ex.InnerException) {
+            if (ex is MissingMethodException or MissingFieldException or TypeLoadException)
+                return ex;
+        }
+
+        return exception;
     }
 
     static List<Type> CollectPatchTypes(Assembly assembly) {

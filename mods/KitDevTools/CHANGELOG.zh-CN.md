@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **STS2 0.107.1 出发** — 按 beta 编译的伪联机 postfix 把 `StartRunLobby.Players` 当成 `List<StartRunLobbyPlayer>`。正式版该属性是 `List<LobbyPlayer>`，JIT 抛 `MissingMethodException`，Harmony 中断原版出发。postfix 改为反射读取，且不再让原方法失败。
+
 ### Added
 
 - **AutoSlay** — 开发模式标题屏菜单启动官方冒烟机器人，可选种子；仅单人。
