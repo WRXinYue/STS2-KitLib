@@ -38,9 +38,9 @@
     </ItemGroup>
   </Target>
   <Target Name="ShakeAndEmbedIcons" BeforeTargets="AssignTargetPaths">
-    <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts\shake_icons.py&quot;"
+    <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts/shake_icons.py&quot;"
           WorkingDirectory="$(RepoRoot)"
-          Condition="Exists('$(RepoRoot)scripts\shake_icons.py')"
+          Condition="Exists('$(RepoRoot)scripts/shake_icons.py')"
           StandardOutputImportance="low" />
     <Warning Condition="!Exists('$(KitLibSourceDir)\Icons\mdi-used.json')"
              Text="Icons\mdi-used.json missing: $(ModId) will embed NO icons and every lookup warns at runtime. Run: $(KitLibPython) scripts/shake_icons.py" />
