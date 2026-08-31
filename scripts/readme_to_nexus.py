@@ -26,13 +26,35 @@ if str(_SCRIPTS_DIR) not in sys.path:
 from md_to_nexus import convert_markdown  # noqa: E402
 
 _LANG_SWITCH_RE = re.compile(r"^\s*(\*\*[^\*]+\*\*\s*\||\[[^\]]+\]\([^)]*\)\s*\|)")
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+_GITHUB_BLOB_BASE = "https://github.com/WRXinYue/STS2-KitLib/blob/main/"
+
+
+def rewrite_relative_md_links(text: str) -> str:
+    """Point repo-relative Markdown links at GitHub so Steam/Nexus BBCode URLs work."""
+
+    def repl(m: re.Match[str]) -> str:
+        label, url = m.group(1), m.group(2).strip()
+        if url.startswith("#") or re.match(r"^[a-z][a-z0-9+.-]*:", url, re.I):
+            return m.group(0)
+        path, _, frag = url.partition("#")
+        path = path.lstrip("./")
+        if not path:
+            return m.group(0)
+        abs_url = _GITHUB_BLOB_BASE + path
+        if frag:
+            abs_url += "#" + frag
+        return f"[{label}]({abs_url})"
+
+    return _MD_LINK_RE.sub(repl, text)
 
 
 def preprocess(text: str, strip_images: bool = False) -> str:
     """Strip the title heading and language-switcher line from a README.
 
     Also demotes all h2 (##) headings to h3 (###) so they render as [b]
-    rather than [heading] in Nexus BBCode.
+    rather than [heading] in Nexus BBCode, and rewrites repo-relative
+    links to GitHub blob URLs (Steam/Nexus cannot resolve ./mods/...).
 
     If strip_images is True, image lines (![...](...)]) are removed —
     use this for all files after the first to avoid duplicate images.
@@ -67,7 +89,7 @@ def preprocess(text: str, strip_images: bool = False) -> str:
     while out and not out[0].strip():
         out.pop(0)
 
-    return "\n".join(out)
+    return rewrite_relative_md_links("\n".join(out))
 
 
 def build(files: list[Path], separator: str = "\n\n[line]\n\n") -> str:

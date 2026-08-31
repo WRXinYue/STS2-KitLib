@@ -1,0 +1,13 @@
+{
+  "title": "KitModPanel",
+  "visibility": "public",
+  "tags": [
+    "Tools & APIs",
+    "Utility",
+    "QoL",
+    "Extensions",
+    "english",
+    "schinese"
+  ],
+  "dependencies": [3747619669]
+}

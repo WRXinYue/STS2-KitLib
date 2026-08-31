@@ -1,0 +1,14 @@
+{
+  "title": "KitLib",
+  "visibility": "public",
+  "tags": [
+    "Tools & APIs",
+    "Utility",
+    "QoL",
+    "Extensions",
+    "english",
+    "schinese"
+  ],
+  "dependencies": [],
+  "contentDescriptors": []
+}

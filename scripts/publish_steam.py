@@ -14,8 +14,10 @@ Usage:
 
 Workspace: build/dist/workshop/
 
-workshop.json omits description on first sync; later syncs preserve a local copy only.
-Steam listing text is not updated by sync/upload — edit it on the Workshop page.
+Tags, title, visibility, and dependencies come from workshop.json (repo root).
+sync copies that template into the workspace and only fills changeNote
+(and optional minBranch/maxBranch). Description is not uploaded — edit the
+listing on Steam Workshop.
 Optional local drafts (manual paste on Steam Workshop):
   assets/readme.steam.en.txt
   assets/readme.steam.zh-CN.txt
@@ -119,14 +121,13 @@ def _write_workshop_json(
         prefer_unreleased=prefer_unreleased,
     )
     resolved_note = base_note
-    workshop: dict[str, object] = {
-        "title": "KitLib",
-        "visibility": "public",
-        "changeNote": resolved_note,
-        "tags": ["Tools & APIs", "Utility", "QoL"],
-        "dependencies": [],
-        "contentDescriptors": [],
-    }
+    template = _REPO / "workshop.json"
+    if not template.is_file():
+        raise RuntimeError("Missing workshop.json at repo root.")
+    workshop = json.loads(template.read_text(encoding="utf-8-sig"))
+    if not str(workshop.get("title") or "").strip():
+        workshop["title"] = "KitLib"
+    workshop["changeNote"] = resolved_note
     if branch_targeting:
         min_branch, max_branch = STEAM_BRANCH
         workshop["minBranch"] = min_branch
