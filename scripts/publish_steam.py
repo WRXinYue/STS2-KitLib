@@ -37,7 +37,7 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 _REPO = _SCRIPT_DIR.parent
 _DIST = _REPO / "build" / "dist"
 _PREVIEW_CANDIDATES = (
-    _REPO / "assets" / "devmode.png",
+    _REPO / "assets" / "mod_image.png",
     _REPO / "assets" / "workshop-image.png",
 )
 
@@ -90,7 +90,7 @@ def _resolve_preview_image() -> Path:
     for candidate in _PREVIEW_CANDIDATES:
         if candidate.is_file():
             return candidate
-    raise RuntimeError("Missing workshop preview image. Add assets/devmode.png or assets/workshop-image.png.")
+    raise RuntimeError("Missing workshop preview image. Add assets/mod_image.png or assets/workshop-image.png.")
 
 
 def _resolve_change_note(

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Ritsu settings pages build again against RitsuLib **0.5.x** (`ModSettingsUiContext` now takes `pageScopeId` / optional `pageEnableGate`).
-- **CJK on Wine/Linux** — ModPanel UI uses STS2 locale fonts so Chinese text renders correctly outside Windows.
+- **CJK on Wine/Linux** — ModPanel UI uses STS2 locale fonts so Chinese text renders correctly outside Windows. Thanks to [Somiona](https://github.com/Somiona) for the report.
 
 ### Added
 

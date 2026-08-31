@@ -12,7 +12,7 @@
 ### Fixed
 
 - 再次兼容 RitsuLib **0.5.x** 构建 Ritsu 设置页（`ModSettingsUiContext` 现为 `pageScopeId` / 可选 `pageEnableGate`）。
-- **Wine/Linux 中文显示** — ModPanel UI 使用 STS2 区域字体，非 Windows 环境下中文可正常渲染。
+- **Wine/Linux 中文显示** — ModPanel UI 使用 STS2 区域字体，非 Windows 环境下中文可正常渲染。感谢 [Somiona](https://github.com/Somiona) 反馈。
 
 ### Added
 
