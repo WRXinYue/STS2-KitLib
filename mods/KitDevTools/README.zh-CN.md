@@ -2,7 +2,7 @@
 
 [English](./README.md) | **中文**
 
-《杀戮尖塔 2》游戏内开发工具。需要 [KitLib](../../README.zh-CN.md)。
+《杀戮尖塔 2》游戏内开发工具。需要 KitLib。
 
 ## 标题画面（Dev Mode）
 

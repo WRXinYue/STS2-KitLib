@@ -53,6 +53,9 @@ public static class ModRuntime {
 
     public static IModLoadSettings LoadSettings => Sts2ModLoadSettings.Default;
 
+    /// <summary>Official install folder for <paramref name="modId"/>, or null if not scanned.</summary>
+    public static string? TryGetInstallDirectory(string modId) => Registry.TryGetInstallDirectory(modId);
+
     /// <summary>Loaded mods with manifest <c>id</c>, sorted by display name for settings UI lists.</summary>
     public static IReadOnlyList<KitLibModInfo> GetOrderedLoadedMods() {
         var s = Catalog.GetSnapshot();

@@ -43,50 +43,66 @@ _PREVIEW_CANDIDATES = (
 
 WORKSHOP_DIR = _DIST / "workshop"
 STEAM_BRANCH = ("public-beta", "public-beta")
+DEFAULT_WORKSHOP_PRODUCT = "KitLib"
 
 if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
+from lib.mod_products import PRODUCTS  # noqa: E402
 from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
 from lib.steam_changelog import get_change_note, read_kitlib_version  # noqa: E402
-from lib.steam_readme import STEAM_DESCRIPTION_MAX  # noqa: E402
+from lib.steam_readme import STEAM_DESCRIPTION_MAX, steam_readme_paths  # noqa: E402
+
+WORKSHOP_BUNDLE_PRODUCTS = frozenset(PRODUCTS)
 
 
-def _run_build() -> None:
-    subprocess.run(
-        [
-            sys.executable,
-            str(_SCRIPT_DIR / "package_bundle.py"),
-            "--no-zip",
-            "-c",
-            "Release",
-        ],
-        cwd=_REPO,
-        check=True,
-    )
+def _normalize_product(product: str | None) -> str:
+    value = (product or DEFAULT_WORKSHOP_PRODUCT).strip()
+    if value not in PRODUCTS:
+        raise RuntimeError(f"Unknown product {value!r}. Expected one of: {', '.join(PRODUCTS)}")
+    if value not in WORKSHOP_BUNDLE_PRODUCTS:
+        raise RuntimeError(
+            f"Workshop sync does not support {value!r} yet. "
+            f"Use one of: {', '.join(sorted(WORKSHOP_BUNDLE_PRODUCTS))}."
+        )
+    return value
 
 
-def _stage_bundle(skip_build: bool) -> Path:
-    staging = _REPO / "build" / "steam-stage"
+def _bundle_cmd(*, skip_build: bool, product: str) -> list[str]:
     cmd = [
         sys.executable,
         str(_SCRIPT_DIR / "package_bundle.py"),
         "--stage-dir",
-        str(staging),
+        str(_REPO / "build" / "steam-stage"),
         "-c",
         "Release",
         "--no-zip",
+        "--product",
+        product,
     ]
     if skip_build:
         cmd.append("--skip-build")
-    subprocess.run(cmd, cwd=_REPO, check=True)
-    bundle = staging / "KitLib"
+    return cmd
+
+
+def _stage_bundle(*, skip_build: bool, product: str) -> Path:
+    subprocess.run(_bundle_cmd(skip_build=skip_build, product=product), cwd=_REPO, check=True)
+    bundle = _REPO / "build" / "steam-stage" / product
     if not bundle.is_dir():
         raise RuntimeError(f"Expected staged bundle at {bundle}")
     return bundle
 
 
-def _resolve_preview_image() -> Path:
+def _resolve_preview_image(product: str = DEFAULT_WORKSHOP_PRODUCT) -> Path:
+    if product != DEFAULT_WORKSHOP_PRODUCT:
+        candidates = (
+            _REPO / "mods" / product / "mod_image.png",
+            _REPO / "mods" / product / "src" / "Panel" / "Assets" / "mod_image.png",
+        )
+        for candidate in candidates:
+            if candidate.is_file():
+                return candidate
+        raise RuntimeError(f"Missing workshop preview image for {product}.")
     for candidate in _PREVIEW_CANDIDATES:
         if candidate.is_file():
             return candidate
@@ -97,36 +113,72 @@ def _resolve_change_note(
     change_note: str | None,
     *,
     prefer_unreleased: bool,
+    product: str = DEFAULT_WORKSHOP_PRODUCT,
 ) -> str:
     if change_note and change_note.strip():
         return change_note.strip()
-    note = get_change_note(_REPO, prefer_unreleased=prefer_unreleased)
+    if product == DEFAULT_WORKSHOP_PRODUCT:
+        changelog_en = _REPO / "CHANGELOG.md"
+        changelog_zh = _REPO / "CHANGELOG.zh-CN.md"
+        version = read_kitlib_version(_REPO)
+    else:
+        changelog_en = _REPO / "mods" / product / "CHANGELOG.md"
+        changelog_zh = _REPO / "mods" / product / "CHANGELOG.zh-CN.md"
+        version = ""
+        manifest = PRODUCTS[product].manifest_path
+        if manifest.is_file():
+            version = str(json.loads(manifest.read_text(encoding="utf-8")).get("version") or "").strip()
+    note = get_change_note(
+        _REPO,
+        changelog_en=changelog_en,
+        changelog_zh=changelog_zh,
+        prefer_unreleased=prefer_unreleased,
+        version=version or None,
+    )
     if note:
         return note
-    version = read_kitlib_version(_REPO)
     if version:
         return f"[b] v{version} [/b]"
-    raise RuntimeError("ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released " "## [X.Y.Z] section, or pass --change-note.")
+    raise RuntimeError(
+        "ChangeNote is empty. Add content under CHANGELOG [Unreleased] or a released "
+        "## [X.Y.Z] section, or pass --change-note."
+    )
+
+
+def _workshop_template(product: str) -> Path:
+    if product == DEFAULT_WORKSHOP_PRODUCT:
+        return _REPO / "workshop.json"
+    path = _REPO / "mods" / product / "workshop.json"
+    if not path.is_file():
+        raise RuntimeError(f"Missing workshop.json for {product}: {path}")
+    return path
+
+
+def _readme_draft_paths(product: str) -> tuple[Path, Path]:
+    _, _, out_en, out_zh = steam_readme_paths(_REPO, product)
+    return out_en, out_zh
 
 
 def _write_workshop_json(
     workspace: Path,
     change_note: str | None,
     *,
+    product: str = DEFAULT_WORKSHOP_PRODUCT,
     prefer_unreleased: bool = False,
     branch_targeting: bool = False,
 ) -> None:
     base_note = _resolve_change_note(
         change_note,
         prefer_unreleased=prefer_unreleased,
+        product=product,
     )
     resolved_note = base_note
-    template = _REPO / "workshop.json"
+    template = _workshop_template(product)
     if not template.is_file():
-        raise RuntimeError("Missing workshop.json at repo root.")
+        raise RuntimeError(f"Missing workshop.json for {product}.")
     workshop = json.loads(template.read_text(encoding="utf-8-sig"))
     if not str(workshop.get("title") or "").strip():
-        workshop["title"] = "KitLib"
+        workshop["title"] = product
     workshop["changeNote"] = resolved_note
     if branch_targeting:
         min_branch, max_branch = STEAM_BRANCH
@@ -137,8 +189,7 @@ def _write_workshop_json(
         encoding="utf-8",
     )
     (workspace / "changeNote.preview.txt").write_text(resolved_note + "\n", encoding="utf-8")
-    draft_en = _REPO / "assets" / "readme.steam.en.txt"
-    draft_zh = _REPO / "assets" / "readme.steam.zh-CN.txt"
+    draft_en, draft_zh = _readme_draft_paths(product)
     preview_parts: list[str] = []
     for path in (draft_en, draft_zh):
         if path.is_file() and path.read_text(encoding="utf-8").strip():
@@ -152,19 +203,45 @@ def _write_workshop_json(
     if preview_parts:
         description_preview = "\n\n".join(preview_parts)
     else:
-        description_preview = "(omitted from upload — edit listing on Steam Workshop; " "optional drafts: assets/readme.steam.en.txt, assets/readme.steam.zh-CN.txt)"
+        description_preview = (
+            "(omitted from upload — edit listing on Steam Workshop; "
+            f"optional drafts: {draft_en.relative_to(_REPO)}, {draft_zh.relative_to(_REPO)}; "
+            "regenerate with: make readme-steam PRODUCT="
+            f"{product})"
+        )
     (workspace / "description.preview.txt").write_text(description_preview + "\n", encoding="utf-8")
 
 
-def _workshop_id() -> str:
-    value = os.environ.get("STS2_WORKSHOP_ID", "").strip()
+def _workshop_id_env_key(product: str) -> str:
+    if product == DEFAULT_WORKSHOP_PRODUCT:
+        return "STS2_WORKSHOP_ID"
+    return f"STS2_WORKSHOP_ID_{product.upper()}"
+
+
+def _workshop_id(product: str = DEFAULT_WORKSHOP_PRODUCT) -> str:
+    key = _workshop_id_env_key(product)
+    value = os.environ.get(key, "").strip()
     if value:
         return value
-    raise RuntimeError("STS2_WORKSHOP_ID is not set in release.env / .env.")
+    raise RuntimeError(
+        f"{key} is not set in release.env / .env. "
+        f"Add the Steam Workshop item id for {product}."
+    )
 
 
-def _sync_mod_id_file(workspace: Path) -> None:
-    workshop_id = _workshop_id()
+def _sync_mod_id_file(workspace: Path, *, product: str = DEFAULT_WORKSHOP_PRODUCT) -> None:
+    key = _workshop_id_env_key(product)
+    try:
+        workshop_id = _workshop_id(product)
+    except RuntimeError:
+        print(
+            f"WARN: {key} is not set; ModUploader may create a new Workshop item for {product}.",
+            file=sys.stderr,
+        )
+        mod_id_file = workspace / "mod_id.txt"
+        if mod_id_file.is_file():
+            mod_id_file.unlink()
+        return
     (workspace / "mod_id.txt").write_text(workshop_id + "\n", encoding="utf-8")
 
 
@@ -183,27 +260,29 @@ def sync_workspace(
     skip_build: bool,
     change_note: str | None,
     *,
+    product: str = DEFAULT_WORKSHOP_PRODUCT,
     prefer_unreleased: bool = False,
     branch_targeting: bool = False,
 ) -> Path:
+    product = _normalize_product(product)
     workspace = WORKSHOP_DIR
     content = workspace / "content"
-    if not skip_build:
-        _run_build()
-    bundle = _stage_bundle(skip_build=True)
+    bundle = _stage_bundle(skip_build=skip_build, product=product)
 
     if content.exists():
         shutil.rmtree(content)
     shutil.copytree(bundle, content)
 
-    shutil.copy2(_resolve_preview_image(), workspace / "image.png")
+    shutil.copy2(_resolve_preview_image(product), workspace / "image.png")
     _write_workshop_json(
         workspace,
         change_note,
+        product=product,
         prefer_unreleased=prefer_unreleased,
         branch_targeting=branch_targeting,
     )
-    _sync_mod_id_file(workspace)
+    _sync_mod_id_file(workspace, product=product)
+    (workspace / "product.txt").write_text(product + "\n", encoding="utf-8")
 
     file_count = sum(1 for p in content.rglob("*") if p.is_file())
     print(f"Workshop synced -> {workspace.relative_to(_REPO)} ({file_count} files)")
@@ -233,27 +312,38 @@ def _resolve_uploader() -> Path:
     return Path(os.path.expandvars(raw)).expanduser().resolve()
 
 
-def _persist_workshop_id(mod_id: str) -> None:
+def _persist_workshop_id(mod_id: str, *, product: str = DEFAULT_WORKSHOP_PRODUCT) -> None:
     mod_id = mod_id.strip()
     if not mod_id:
         return
 
-    current = os.environ.get("STS2_WORKSHOP_ID", "").strip()
+    key = _workshop_id_env_key(product)
+    current = os.environ.get(key, "").strip()
     if current == mod_id:
         return
 
-    os.environ["STS2_WORKSHOP_ID"] = mod_id
+    os.environ[key] = mod_id
 
     release_path = _REPO / "release.env"
     dotenv_path = _REPO / ".env"
-    if upsert_env_key(release_path, "STS2_WORKSHOP_ID", mod_id):
-        print(f"Updated {release_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
-    if dotenv_path.is_file() and upsert_env_key(dotenv_path, "STS2_WORKSHOP_ID", mod_id):
-        print(f"Updated {dotenv_path.relative_to(_REPO)}: STS2_WORKSHOP_ID={mod_id}")
+    if upsert_env_key(release_path, key, mod_id):
+        print(f"Updated {release_path.relative_to(_REPO)}: {key}={mod_id}")
+    if dotenv_path.is_file() and upsert_env_key(dotenv_path, key, mod_id):
+        print(f"Updated {dotenv_path.relative_to(_REPO)}: {key}={mod_id}")
+
+
+def _read_synced_product(workspace: Path) -> str:
+    path = workspace / "product.txt"
+    if path.is_file():
+        value = path.read_text(encoding="utf-8").strip()
+        if value in PRODUCTS:
+            return value
+    return DEFAULT_WORKSHOP_PRODUCT
 
 
 def upload_workspace(dry_run: bool, *, branch_targeting: bool = False) -> int:
     workspace = WORKSHOP_DIR
+    product = _read_synced_product(workspace)
     for name in ("workshop.json", "image.png"):
         if not (workspace / name).is_file():
             print(
@@ -284,7 +374,7 @@ def upload_workspace(dry_run: bool, *, branch_targeting: bool = False) -> int:
     if mod_id_file.is_file():
         mod_id = mod_id_file.read_text(encoding="utf-8").strip()
         if mod_id:
-            _persist_workshop_id(mod_id)
+            _persist_workshop_id(mod_id, product=product)
 
     return 0
 
@@ -308,6 +398,11 @@ def main() -> int:
 
     sync_ap = sub.add_parser("sync", help="Build and stage build/dist/workshop/")
     sync_ap.add_argument("--skip-build", action="store_true", help="Use existing build/ artifacts")
+    sync_ap.add_argument(
+        "--product",
+        default=DEFAULT_WORKSHOP_PRODUCT,
+        help="Product to build and stage (default: KitLib)",
+    )
     sync_ap.add_argument(
         "--change-note",
         default="",
@@ -353,6 +448,7 @@ def main() -> int:
         sync_workspace(
             args.skip_build,
             args.change_note or None,
+            product=args.product,
             prefer_unreleased=args.unreleased,
             branch_targeting=branch_targeting,
         )

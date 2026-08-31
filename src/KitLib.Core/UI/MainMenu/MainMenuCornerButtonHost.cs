@@ -663,11 +663,14 @@ internal static class MainMenuCornerButtonHost {
     static Texture2D? TryLoadFileTexture(string modId) {
         try {
             var kitLibDir = ModPaths.ResolveModRoot(typeof(MainFile).Assembly);
-            var modsRoot = KitLibHostPaths.ResolveModsRoot(kitLibDir);
-            if (string.IsNullOrEmpty(modsRoot))
+            if (string.IsNullOrEmpty(kitLibDir))
                 return null;
 
-            var file = Path.Combine(modsRoot, modId, "mod_image.png");
+            var productDir = KitLibHostPaths.TryResolveProductDirectory(kitLibDir, modId);
+            if (string.IsNullOrEmpty(productDir))
+                return null;
+
+            var file = Path.Combine(productDir, "mod_image.png");
             if (!File.Exists(file))
                 return null;
 

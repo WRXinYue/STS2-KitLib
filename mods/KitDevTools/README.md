@@ -2,7 +2,7 @@
 
 **English** | [中文](./README.zh-CN.md)
 
-In-game developer tools for Slay the Spire 2. Requires [KitLib](../../README.md).
+In-game developer tools for Slay the Spire 2. Requires KitLib.
 
 ## Title screen (Dev Mode)
 

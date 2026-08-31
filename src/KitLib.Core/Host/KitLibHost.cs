@@ -32,6 +32,7 @@ public static class KitLibHost {
         if (_bootstrapped) return;
         _bootstrapped = true;
         KitLog.Info("KitLib host bootstrap starting.");
+        Sts2ModInstallPaths.Register();
         ModuleCatalog.Announce(ModuleIds.Core);
         KitLibStartupAudit.Measure("bundled.userCheat", InitializeBundledHostModules);
         KitLog.Info("KitLib core module announced; loading optional product satellites.");

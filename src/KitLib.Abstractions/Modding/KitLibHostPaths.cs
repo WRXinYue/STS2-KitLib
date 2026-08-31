@@ -12,6 +12,14 @@ public static class KitLibHostPaths {
     /// <summary>When set, satellite modules and content resolve under this variant directory.</summary>
     public static string? ActiveVariantRoot { get; private set; }
 
+    /// <summary>
+    /// Core registers this from <c>ModManager.Mods</c>. Not for content mods.
+    /// </summary>
+    internal static Func<string, string?>? GameModDirectoryResolver { get; set; }
+
+    /// <summary>Test hook: extra <c>mods/</c> roots (named product folders) besides KitLib's parent.</summary>
+    internal static IReadOnlyList<string>? AdditionalModsSearchRoots { get; set; }
+
     public static void SetActiveVariantRoot(string? variantRoot) {
         ActiveVariantRoot = string.IsNullOrWhiteSpace(variantRoot) ? null : Path.GetFullPath(variantRoot);
     }
@@ -83,22 +91,85 @@ public static class KitLibHostPaths {
         Add(ResolveModulesDirectory(kitLibModDir));
         Add(ResolveContentRoot(kitLibModDir));
 
-        var modsRoot = ResolveModsRoot(kitLibModDir);
-        if (modsRoot is null)
-            return dirs;
-
         foreach (var productId in KitLibProductIds.All) {
             if (string.Equals(productId, KitLibProductIds.KitLib, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var productDir = Path.Combine(modsRoot, productId);
-            if (!Directory.Exists(productDir))
+            var productDir = TryResolveProductDirectory(kitLibModDir, productId);
+            if (productDir is null)
                 continue;
 
             AddSiblingProductDirectories(productDir, Add);
         }
 
         return dirs;
+    }
+
+    /// <summary>
+    /// Locate an installed product by official <c>Mod.manifest.id</c> and <c>Mod.path</c>
+    /// (<see cref="ModManager"/>), then named folders under local <c>mods/</c>.
+    /// Workshop items live in numeric Steam folders, not <c>mods/KitDevTools</c>.
+    /// </summary>
+    public static string? TryResolveProductDirectory(string kitLibModDir, string productId) {
+        if (string.IsNullOrWhiteSpace(productId))
+            return null;
+
+        var fromGame = GameModDirectoryResolver?.Invoke(productId);
+        if (!string.IsNullOrWhiteSpace(fromGame) && Directory.Exists(fromGame))
+            return Path.GetFullPath(fromGame);
+
+        foreach (var modsRoot in EnumerateNamedModsRoots(kitLibModDir)) {
+            var candidate = Path.Combine(modsRoot, productId);
+            if (Directory.Exists(candidate))
+                return Path.GetFullPath(candidate);
+        }
+
+        return null;
+    }
+
+    static IEnumerable<string> EnumerateNamedModsRoots(string kitLibModDir) {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var roots = new List<string>();
+
+        void AddRoot(string? dir) {
+            if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir))
+                return;
+            var full = Path.GetFullPath(dir);
+            if (seen.Add(full))
+                roots.Add(full);
+        }
+
+        AddRoot(ResolveModsRoot(kitLibModDir));
+        foreach (var official in EnumerateOfficialGameModsRoots())
+            AddRoot(official);
+        if (AdditionalModsSearchRoots != null) {
+            foreach (var extra in AdditionalModsSearchRoots)
+                AddRoot(extra);
+        }
+
+        return roots;
+    }
+
+    /// <summary>
+    /// Official scan roots from <c>ModManager.Initialize</c>: <c>mods/</c> and
+    /// <c>mods_STEAMTEST/</c> next to the game executable.
+    /// </summary>
+    static IEnumerable<string> EnumerateOfficialGameModsRoots() {
+        string? exeDir = null;
+        try {
+            var process = Environment.ProcessPath;
+            if (!string.IsNullOrWhiteSpace(process))
+                exeDir = Path.GetDirectoryName(process);
+        }
+        catch (Exception) {
+            exeDir = null;
+        }
+
+        if (string.IsNullOrEmpty(exeDir))
+            yield break;
+
+        yield return Path.Combine(exeDir, "mods");
+        yield return Path.Combine(exeDir, "mods_STEAMTEST");
     }
 
     /// <summary>
@@ -169,12 +240,8 @@ public static class KitLibHostPaths {
         return null;
     }
 
-    public static bool IsSiblingProductInstalled(string kitLibModDir, string productId) {
-        var modsRoot = ResolveModsRoot(kitLibModDir);
-        if (modsRoot is null || string.IsNullOrWhiteSpace(productId))
-            return false;
-        return Directory.Exists(Path.Combine(modsRoot, productId));
-    }
+    public static bool IsSiblingProductInstalled(string kitLibModDir, string productId) =>
+        TryResolveProductDirectory(kitLibModDir, productId) is not null;
 
     /// <param name="requiredFileName">
     /// File that must exist in a variant directory. KitLib uses <see cref="CoreFileName"/>;

@@ -19,6 +19,22 @@ STEAM_README_EN = "readme.steam.en.txt"
 STEAM_README_ZH = "readme.steam.zh-CN.txt"
 
 
+def steam_readme_paths(repo_root: Path, product_id: str) -> tuple[Path, Path, Path, Path]:
+    """Return (readme_en, readme_zh, out_en, out_zh) for a product."""
+    if product_id == "KitLib":
+        base = repo_root
+        assets = repo_root / "assets"
+    else:
+        base = repo_root / "mods" / product_id
+        assets = base / "assets"
+    return (
+        base / "README.md",
+        base / "README.zh-CN.md",
+        assets / STEAM_README_EN,
+        assets / STEAM_README_ZH,
+    )
+
+
 def build_steam_readme(path: Path) -> str:
     raw = path.read_text(encoding="utf-8")
     cleaned = preprocess(raw, strip_images=False)

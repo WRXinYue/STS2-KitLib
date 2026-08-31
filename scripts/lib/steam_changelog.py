@@ -116,10 +116,11 @@ def get_change_note(
     changelog_en: Path | None = None,
     changelog_zh: Path | None = None,
     prefer_unreleased: bool = False,
+    version: str | None = None,
 ) -> str:
     en_path = changelog_en or (repo_root / "CHANGELOG.md")
     zh_path = changelog_zh or (repo_root / "CHANGELOG.zh-CN.md")
-    version = read_kitlib_version(repo_root)
+    resolved_version = version if version is not None else read_kitlib_version(repo_root)
 
     if prefer_unreleased:
         en = extract_changelog_section(en_path, unreleased=True)
@@ -131,7 +132,7 @@ def get_change_note(
             en = extract_changelog_section(en_path, unreleased=True)
             zh = extract_changelog_section(zh_path, unreleased=True)
 
-    raw = build_change_note(version, en, zh)
+    raw = build_change_note(resolved_version, en, zh)
     if not raw:
         return ""
     return format_change_note(raw)

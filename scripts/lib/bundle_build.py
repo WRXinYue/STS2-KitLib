@@ -10,10 +10,8 @@ _REPO = Path(__file__).resolve().parents[2]
 if str(_REPO / "scripts") not in sys.path:
     sys.path.insert(0, str(_REPO / "scripts"))
 
-from lib.mod_products import all_bundle_projects  # noqa: E402
+from lib.mod_products import bundle_projects_for  # noqa: E402
 from lib.sts2_profiles import resolve_profile_dir  # noqa: E402
-
-MOD_BUNDLE_PROJECTS = all_bundle_projects()
 
 
 def build_bundle(
@@ -22,12 +20,13 @@ def build_bundle(
     sts2_profile: str | None = None,
     sts2_dir: str | None = None,
     kitlib_personal_compat: bool = False,
+    product_id: str | None = None,
 ) -> None:
     resolved_dir = sts2_dir
     if sts2_profile and not resolved_dir:
         resolved_dir = str(resolve_profile_dir(sts2_profile, repo_root=_REPO))
 
-    for project in MOD_BUNDLE_PROJECTS:
+    for project in bundle_projects_for(product_id):
         cmd = [
             "dotnet",
             "build",

@@ -94,14 +94,49 @@ SATELLITE_PROJECTS = {
 
 
 def all_bundle_projects() -> list[str]:
-    projects = list(KITLIB_CORE_PROJECTS)
-    for product_id in PRODUCT_ORDER:
+    return bundle_projects_for(None)
+
+
+def bundle_projects_for(product_id: str | None) -> list[str]:
+    if product_id is None:
+        projects: list[str] = list(KITLIB_CORE_PROJECTS)
+        for pid in PRODUCT_ORDER:
+            product = PRODUCTS[pid]
+            if product.loader_csproj:
+                projects.append(product.loader_csproj)
+            for dll in product.satellite_dlls:
+                projects.append(SATELLITE_PROJECTS[dll])
+        return projects
+
+    if product_id not in PRODUCTS:
+        raise ValueError(f"Unknown product: {product_id}")
+
+    if product_id == "KitLib":
+        return list(KITLIB_CORE_PROJECTS)
+
+    if product_id == "KitModPanel":
         product = PRODUCTS[product_id]
-        if product.loader_csproj:
-            projects.append(product.loader_csproj)
-        for dll in product.satellite_dlls:
-            projects.append(SATELLITE_PROJECTS[dll])
-    return projects
+        return [
+            "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
+            "src/KitLib.Core/KitLib.Core.csproj",
+            product.loader_csproj,
+        ]
+
+    product = PRODUCTS[product_id]
+    projects = list(KITLIB_CORE_PROJECTS)
+    if product.loader_csproj:
+        projects.append(product.loader_csproj)
+    for dll in product.satellite_dlls:
+        projects.append(SATELLITE_PROJECTS[dll])
+
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for project in projects:
+        if project in seen:
+            continue
+        seen.add(project)
+        ordered.append(project)
+    return ordered
 
 
 def product_build_dir(product_id: str) -> Path:

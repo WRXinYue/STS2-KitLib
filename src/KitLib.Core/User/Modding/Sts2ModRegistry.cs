@@ -40,6 +40,8 @@ public sealed class Sts2ModRegistry : IModRegistry {
         return null;
     }
 
+    public string? TryGetInstallDirectory(string modId) => Sts2ModInstallPaths.TryResolve(modId);
+
     internal static KitLibModEntry? Map(Mod mod, ModSettings? settings) {
         var man = mod.manifest;
         if (man is null || string.IsNullOrEmpty(man.id))

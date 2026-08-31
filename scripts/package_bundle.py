@@ -61,6 +61,7 @@ CORE_DLL = "KitLib.Core.dll"
 VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 MODULES_SUBDIR = "modules"
 SIBLING_VARIANT_PRODUCTS = ("KitDevTools", "KitAI")
+FLAT_PRODUCTS = ("KitModPanel",)
 SHARED_ROOT_FILES = [
     "KitLib.Abstractions.dll",
     "Semver.dll",
@@ -112,6 +113,10 @@ def _sibling_staging(product_id: str) -> Path:
     return _REPO / "build" / f"{product_id}-release"
 
 
+def _flat_staging(product_id: str) -> Path:
+    return _REPO / "build" / f"{product_id}-release"
+
+
 def _resolve_mod_image(product_id: str) -> Path | None:
     candidates = [
         _REPO / "mods" / product_id / "mod_image.png",
@@ -140,80 +145,112 @@ def _resolve_satellite_dll(product_id: str, dll_name: str) -> Path | None:
     return alt if alt.is_file() else None
 
 
-def _clear_staging() -> None:
+def _clear_staging(*, product_id: str | None = None) -> None:
+    if product_id in FLAT_PRODUCTS:
+        dest = _flat_staging(product_id)
+        if dest.exists():
+            shutil.rmtree(dest)
+        return
     if STAGING_DIR.exists():
         shutil.rmtree(STAGING_DIR)
     STAGING_DIR.mkdir(parents=True)
-    for product_id in SIBLING_VARIANT_PRODUCTS:
-        dest = _sibling_staging(product_id)
+    sibling_ids = SIBLING_VARIANT_PRODUCTS
+    if product_id in SIBLING_VARIANT_PRODUCTS:
+        sibling_ids = (product_id,)
+    elif product_id == "KitLib":
+        sibling_ids = ()
+    elif product_id in FLAT_PRODUCTS:
+        sibling_ids = ()
+    for product in sibling_ids:
+        dest = _sibling_staging(product)
         if dest.exists():
             shutil.rmtree(dest)
         dest.mkdir(parents=True)
 
 
-def _stage_variant(compat: str, profile: str, *, configuration: str) -> None:
+def _stage_variant(
+    compat: str,
+    profile: str,
+    *,
+    configuration: str,
+    product_id: str | None = None,
+) -> None:
     sts2_dir = resolve_profile_dir(profile, repo_root=_REPO)
     build_bundle(
         configuration=configuration,
         sts2_profile=profile,
         sts2_dir=str(sts2_dir),
         kitlib_personal_compat=True,
+        product_id=product_id,
     )
 
-    variant_dir = STAGING_DIR / "lib" / compat
-    modules_dst = variant_dir / MODULES_SUBDIR
-    variant_dir.mkdir(parents=True)
-    modules_dst.mkdir(parents=True)
+    if product_id not in SIBLING_VARIANT_PRODUCTS:
+        variant_dir = STAGING_DIR / "lib" / compat
+        modules_dst = variant_dir / MODULES_SUBDIR
+        variant_dir.mkdir(parents=True)
+        modules_dst.mkdir(parents=True)
 
-    core_src = BUILD_DIR / CORE_DLL
-    if not core_src.is_file():
-        fail(f"Missing {core_src} after build for {compat} ({profile}).")
+        core_src = BUILD_DIR / CORE_DLL
+        if not core_src.is_file():
+            fail(f"Missing {core_src} after build for {compat} ({profile}).")
 
-    shutil.copy2(core_src, variant_dir / CORE_DLL)
-    # KitLib product owns User only; other satellites ship in sibling product mods.
-    for dll_name in PRODUCTS["KitLib"].satellite_dlls:
-        src = product_build_dir("KitLib") / MODULES_SUBDIR / f"{dll_name}.dll"
-        if not src.is_file():
-            src = _REPO / "build" / dll_name / f"{dll_name}.dll"
-        if src.is_file():
-            shutil.copy2(src, modules_dst / f"{dll_name}.dll")
-        else:
-            print(f"[bundle] Warning: missing {dll_name}.dll for variant {compat}")
+        shutil.copy2(core_src, variant_dir / CORE_DLL)
+        # KitLib product owns User only; other satellites ship in sibling product mods.
+        for dll_name in PRODUCTS["KitLib"].satellite_dlls:
+            src = product_build_dir("KitLib") / MODULES_SUBDIR / f"{dll_name}.dll"
+            if not src.is_file():
+                src = _REPO / "build" / dll_name / f"{dll_name}.dll"
+            if src.is_file():
+                shutil.copy2(src, modules_dst / f"{dll_name}.dll")
+            else:
+                print(f"[bundle] Warning: missing {dll_name}.dll for variant {compat}")
 
-    (variant_dir / COMPAT_MARKER).write_text(compat + "\n", encoding="utf-8", newline="\n")
-    print(f"[bundle] Staged variant {compat} ({profile})")
-    _stage_sibling_variant(compat)
+        (variant_dir / COMPAT_MARKER).write_text(compat + "\n", encoding="utf-8", newline="\n")
+        print(f"[bundle] Staged variant {compat} ({profile})")
+
+    if product_id is None:
+        _stage_sibling_variant(compat)
+    elif product_id in SIBLING_VARIANT_PRODUCTS:
+        _stage_sibling_variant(compat, product_id=product_id)
 
 
-def _stage_sibling_variant(compat: str) -> None:
-    for product_id in SIBLING_VARIANT_PRODUCTS:
-        product = PRODUCTS[product_id]
-        variant_dir = _sibling_staging(product_id) / "lib" / compat
+def _stage_sibling_variant(compat: str, *, product_id: str | None = None) -> None:
+    product_ids = SIBLING_VARIANT_PRODUCTS
+    if product_id in SIBLING_VARIANT_PRODUCTS:
+        product_ids = (product_id,)
+    for pid in product_ids:
+        product = PRODUCTS[pid]
+        variant_dir = _sibling_staging(pid) / "lib" / compat
         modules_dst = variant_dir / MODULES_SUBDIR
         variant_dir.mkdir(parents=True)
         modules_dst.mkdir(parents=True)
         for dll_name in product.satellite_dlls:
-            src = _resolve_satellite_dll(product_id, dll_name)
+            src = _resolve_satellite_dll(pid, dll_name)
             if src is None:
-                print(f"[bundle] Warning: missing {dll_name}.dll for {product_id} variant {compat}")
+                print(f"[bundle] Warning: missing {dll_name}.dll for {pid} variant {compat}")
                 continue
             shutil.copy2(src, modules_dst / f"{dll_name}.dll")
         (variant_dir / COMPAT_MARKER).write_text(compat + "\n", encoding="utf-8", newline="\n")
-        print(f"[bundle] Staged {product_id} variant {compat}")
+        print(f"[bundle] Staged {pid} variant {compat}")
 
 
-def _stage_sibling_roots() -> None:
-    for product_id in SIBLING_VARIANT_PRODUCTS:
-        product = PRODUCTS[product_id]
-        staging = _sibling_staging(product_id)
-        build_dir = product_build_dir(product_id)
+def _stage_sibling_roots(*, product_id: str | None = None) -> None:
+    product_ids = SIBLING_VARIANT_PRODUCTS
+    if product_id in SIBLING_VARIANT_PRODUCTS:
+        product_ids = (product_id,)
+    elif product_id == "KitLib":
+        return
+    for pid in product_ids:
+        product = PRODUCTS[pid]
+        staging = _sibling_staging(pid)
+        build_dir = product_build_dir(pid)
         entry = build_dir / product.entry_dll
         if not entry.is_file():
-            fail(f"Missing {entry} for {product_id}.")
+            fail(f"Missing {entry} for {pid}.")
         shutil.copy2(entry, staging / product.entry_dll)
         if product.manifest_path.is_file():
             shutil.copy2(product.manifest_path, staging / "mod_manifest.json")
-        _copy_mod_image(product_id, staging)
+        _copy_mod_image(pid, staging)
 
 
 def _stage_shared_root(*, configuration: str) -> None:
@@ -271,13 +308,55 @@ def _build_loader(*, configuration: str, profile: str) -> None:
     shutil.copy2(variant_src, STAGING_DIR / VARIANT_LOADER_DLL)
 
 
-def _assert_staging(staging: Path) -> None:
-    required = [
-        staging / "KitLib.dll",
-        staging / "mod_manifest.json",
-        staging / "lib",
-        staging / VARIANT_LOADER_DLL,
-    ]
+def _stage_flat_product(product_id: str, *, configuration: str, profile: str) -> Path:
+    product = PRODUCTS[product_id]
+    staging = _flat_staging(product_id)
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir(parents=True)
+
+    sts2_dir = resolve_profile_dir(profile, repo_root=_REPO)
+    build_bundle(
+        configuration=configuration,
+        sts2_profile=profile,
+        sts2_dir=str(sts2_dir),
+        kitlib_personal_compat=True,
+        product_id=product_id,
+    )
+
+    build_dir = product_build_dir(product_id)
+    entry = build_dir / product.entry_dll
+    if not entry.is_file():
+        fail(f"Missing {entry} for {product_id}.")
+    shutil.copy2(entry, staging / product.entry_dll)
+    if product.manifest_path.is_file():
+        shutil.copy2(product.manifest_path, staging / "mod_manifest.json")
+    _copy_mod_image(product_id, staging)
+    print(f"[bundle] Staged flat product {product_id}")
+    return staging
+
+
+def _assert_staging(staging: Path, *, product_id: str | None = None) -> None:
+    bundle_product = product_id or BUNDLE_ID
+    product = PRODUCTS.get(bundle_product)
+    if bundle_product in FLAT_PRODUCTS and product is not None:
+        required = [
+            staging / product.entry_dll,
+            staging / "mod_manifest.json",
+        ]
+    elif bundle_product in SIBLING_VARIANT_PRODUCTS and product is not None:
+        required = [
+            staging / product.entry_dll,
+            staging / "mod_manifest.json",
+            staging / "lib",
+        ]
+    else:
+        required = [
+            staging / "KitLib.dll",
+            staging / "mod_manifest.json",
+            staging / "lib",
+            staging / VARIANT_LOADER_DLL,
+        ]
     missing = [str(path.relative_to(_REPO)) for path in required if not path.exists()]
     if missing:
         fail(f"Staging incomplete: {', '.join(missing)}")
@@ -288,25 +367,45 @@ def build_bundle_tree(
     configuration: str = "Release",
     skip_build: bool = False,
     targets: list[tuple[str, str]] | None = None,
+    product_id: str | None = None,
 ) -> Path:
+    if product_id is not None and product_id not in PRODUCTS:
+        fail(f"Unknown product: {product_id}")
+
     if skip_build:
-        _assert_staging(STAGING_DIR)
+        if product_id in FLAT_PRODUCTS:
+            staging = _flat_staging(product_id)
+            _assert_staging(staging, product_id=product_id)
+            return staging
+        if product_id in SIBLING_VARIANT_PRODUCTS:
+            _assert_staging(_sibling_staging(product_id), product_id=product_id)
+            return _sibling_staging(product_id)
+        _assert_staging(STAGING_DIR, product_id=product_id)
         return STAGING_DIR
 
     targets = targets or VARIANT_TARGETS
     for compat, _profile in targets:
         resolve_profile_dir(variant_profile(compat), repo_root=_REPO)
 
-    _clear_staging()
+    _clear_staging(product_id=product_id)
+
+    if product_id in FLAT_PRODUCTS:
+        profile = targets[-1][1]
+        return _stage_flat_product(product_id, configuration=configuration, profile=profile)
+
     for compat, profile in targets:
-        _stage_variant(compat, profile, configuration=configuration)
+        _stage_variant(compat, profile, configuration=configuration, product_id=product_id)
 
-    _stage_shared_root(configuration=configuration)
-    _build_loader(configuration=configuration, profile=targets[-1][1])
-    _stage_sibling_roots()
+    if product_id in (None, "KitLib"):
+        _stage_shared_root(configuration=configuration)
+        _build_loader(configuration=configuration, profile=targets[-1][1])
+    _stage_sibling_roots(product_id=product_id)
 
-    print(f"[bundle] Staging ready: {STAGING_DIR}")
-    return STAGING_DIR
+    staging = STAGING_DIR if product_id in (None, "KitLib") else _sibling_staging(product_id)
+    if product_id in FLAT_PRODUCTS:
+        staging = _flat_staging(product_id)
+    print(f"[bundle] Staging ready: {staging}")
+    return staging
 
 
 def _iter_zip_entries(staging: Path) -> list[tuple[Path, str]]:
@@ -363,12 +462,19 @@ def package_zip(staging: Path, *, version: str = "") -> Path:
     return zip_path
 
 
-def _copy_staging_to(stage_root: Path) -> Path:
-    bundle_dir = stage_root / BUNDLE_ID
+def _copy_staging_to(stage_root: Path, *, product_id: str | None = None) -> Path:
+    bundle_id = product_id or BUNDLE_ID
+    if bundle_id == BUNDLE_ID:
+        source = STAGING_DIR
+    elif bundle_id in FLAT_PRODUCTS:
+        source = _flat_staging(bundle_id)
+    else:
+        source = _sibling_staging(bundle_id)
+    bundle_dir = stage_root / bundle_id
     if stage_root.exists():
         shutil.rmtree(stage_root)
     stage_root.mkdir(parents=True)
-    shutil.copytree(STAGING_DIR, bundle_dir)
+    shutil.copytree(source, bundle_dir)
     print(f"[bundle] Staged bundle: {bundle_dir}")
     return bundle_dir
 
@@ -413,8 +519,17 @@ def main() -> int:
         default="",
         help="Comma-separated compat targets (default: 0.107.1,0.110.1)",
     )
+    ap.add_argument(
+        "--product",
+        default="",
+        help="Build/stage one product only (KitLib, KitModPanel, KitDevTools, KitAI). Default: all products.",
+    )
     args = ap.parse_args()
     load_dotenv(_REPO / ".env")
+
+    product_id = args.product.strip() or None
+    if product_id is not None and product_id not in PRODUCTS:
+        fail(f"Unknown product: {product_id}")
 
     targets = VARIANT_TARGETS
     if args.targets.strip():
@@ -424,7 +539,7 @@ def main() -> int:
     try:
         if args.zip_only:
             staging = STAGING_DIR
-            _assert_staging(staging)
+            _assert_staging(staging, product_id=product_id)
             package_zip(staging, version=args.version)
             return 0
 
@@ -432,10 +547,11 @@ def main() -> int:
             configuration=args.configuration,
             skip_build=args.skip_build,
             targets=targets,
+            product_id=product_id,
         )
 
         if args.stage_dir is not None:
-            _copy_staging_to(args.stage_dir.resolve())
+            _copy_staging_to(args.stage_dir.resolve(), product_id=product_id)
 
         if args.deploy:
             _deploy_to_game()
