@@ -74,6 +74,7 @@ internal static class DevModeFormChrome {
         };
         l.AddThemeFontSizeOverride("font_size", 17);
         l.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(l);
         return l;
     }
     public static Label CreateDescriptionLabel(string text) {
@@ -84,6 +85,7 @@ internal static class DevModeFormChrome {
         };
         l.AddThemeFontSizeOverride("font_size", 13);
         l.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+        KitLibLocaleFonts.ApplyControl(l);
         return l;
     }
     public static Label CreateSliderValueCaption() {
@@ -94,6 +96,7 @@ internal static class DevModeFormChrome {
         };
         l.AddThemeFontSizeOverride("font_size", 14);
         l.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+        KitLibLocaleFonts.ApplyControl(l);
         return l;
     }
     public static HBoxContainer CreateSliderTrackRow(HSlider track, Label valueCaption) {
@@ -178,6 +181,7 @@ internal static class DevModeFormChrome {
         cb.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         cb.AddThemeColorOverride("font_pressed_color", KitLibTheme.Accent);
         cb.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(cb);
         var noFocus = new StyleBoxEmpty();
         cb.AddThemeStyleboxOverride("focus", noFocus);
         cb.AddThemeStyleboxOverride("hover", noFocus);
@@ -263,6 +267,7 @@ internal static class DevModeFormChrome {
         ob.AddThemeStyleboxOverride("focus", RoundedField(true));
         ob.AddThemeFontSizeOverride("font_size", 14);
         ob.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(ob);
         WireRoundedFieldFocusMotion(ob);
     }
     public static void ApplyLineEdit(LineEdit le) {
@@ -280,6 +285,7 @@ internal static class DevModeFormChrome {
         le.AddThemeFontSizeOverride("font_size", 14);
         le.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         le.AddThemeColorOverride("caret_color", FieldCaretColor());
+        KitLibLocaleFonts.ApplyControl(le);
         WireRoundedFieldFocusMotion(le);
     }
     public static void ApplyTextEdit(TextEdit te) {
@@ -290,12 +296,14 @@ internal static class DevModeFormChrome {
         te.AddThemeFontSizeOverride("font_size", 14);
         te.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         te.AddThemeColorOverride("caret_color", FieldCaretColor());
+        KitLibLocaleFonts.ApplyControl(te);
         WireRoundedFieldFocusMotion(te);
     }
     public static void ApplyMiniIconButton(Button b) {
         b.Flat = true;
         b.AddThemeFontSizeOverride("font_size", 18);
         b.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(b);
         b.AddThemeStyleboxOverride("normal", RoundedField(false));
         b.AddThemeStyleboxOverride("hover", RoundedField(true));
         b.AddThemeStyleboxOverride("pressed", RoundedField(true));
@@ -304,6 +312,7 @@ internal static class DevModeFormChrome {
         b.Flat = true;
         b.AddThemeFontSizeOverride("font_size", 15);
         b.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(b);
         var box = new StyleBoxFlat {
             BgColor = KitLibTheme.AccentAlpha,
             BorderColor = KitLibTheme.Accent,

@@ -75,6 +75,7 @@ internal static class ModHarmonyDetailPopup {
         };
         title.AddThemeFontSizeOverride("font_size", 18);
         title.AddThemeColorOverride("font_color", ModPanelUiPalette.LabelPrimary);
+        KitLibLocaleFonts.ApplyControl(title);
         vbox.AddChild(title);
 
         var statsRow = new HBoxContainer();
@@ -101,6 +102,7 @@ internal static class ModHarmonyDetailPopup {
         };
         body.AddThemeFontSizeOverride("font_size", 11);
         body.AddThemeColorOverride("font_color", ModPanelUiPalette.RichTextBody);
+        KitLibLocaleFonts.ApplyControl(body);
         vbox.AddChild(body);
 
         var btnRow = new HBoxContainer();
@@ -113,12 +115,14 @@ internal static class ModHarmonyDetailPopup {
             if (!string.IsNullOrEmpty(body.Text))
                 DisplayServer.ClipboardSet(body.Text);
         };
+        KitLibLocaleFonts.ApplyControl(copyBtn);
         btnRow.AddChild(copyBtn);
         var closeBtn = new Button {
             Text = I18N.T("modpanel.harmony.popup.close", "Close"),
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
         };
         closeBtn.Pressed += () => overlay.QueueFree();
+        KitLibLocaleFonts.ApplyControl(closeBtn);
         btnRow.AddChild(closeBtn);
         vbox.AddChild(btnRow);
 
@@ -140,6 +144,7 @@ internal static class ModHarmonyDetailPopup {
                 FontColor = ModPanelUiPalette.RichTextSecondary,
             },
         };
+        KitLibLocaleFonts.ApplyControl(label);
         var chip = new PanelContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             TooltipText = text,

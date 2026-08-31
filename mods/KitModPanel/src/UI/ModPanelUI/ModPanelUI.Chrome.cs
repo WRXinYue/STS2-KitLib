@@ -164,7 +164,7 @@ public static partial class ModPanelUI {
                 CustomMinimumSize = new Vector2(12f, 12f),
             });
         }
-        row.AddChild(new Label {
+        var sourceLabel = new Label {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Text = label,
             VerticalAlignment = VerticalAlignment.Center,
@@ -172,7 +172,9 @@ public static partial class ModPanelUI {
                 FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
                 FontColor = textColor,
             },
-        });
+        };
+        KitLibLocaleFonts.ApplyControl(sourceLabel);
+        row.AddChild(sourceLabel);
         var canOpen = !string.IsNullOrWhiteSpace(installPath) && System.IO.Directory.Exists(installPath);
         var chip = WrapGithubShield(row, tint, canOpen ? installPath : label);
         if (!canOpen)
@@ -207,6 +209,7 @@ public static partial class ModPanelUI {
                 FontColor = ModPanelUiPalette.SidebarModActiveAccent,
             },
         };
+        KitLibLocaleFonts.ApplyControl(label);
         return WrapGithubShield(label, ModPanelUiPalette.SidebarModActiveAccent, badge);
     }
 
@@ -224,6 +227,7 @@ public static partial class ModPanelUI {
                 FontColor = ModPanelUiPalette.RichTextSecondary,
             },
         };
+        KitLibLocaleFonts.ApplyControl(text);
         return WrapGithubShield(text, ModPanelUiPalette.RichTextSecondary, label);
     }
 
@@ -242,6 +246,7 @@ public static partial class ModPanelUI {
                 FontColor = statusColor,
             },
         };
+        KitLibLocaleFonts.ApplyControl(label);
         return WrapGithubShield(label, statusColor, statusText);
     }
 
@@ -280,6 +285,7 @@ public static partial class ModPanelUI {
                 FontColor = ModPanelUiPalette.RichTextSecondary,
             },
         };
+        KitLibLocaleFonts.ApplyControl(label);
         return WrapGithubShield(label, ModPanelUiPalette.RichTextSecondary, tooltip ?? text);
     }
 
@@ -405,15 +411,9 @@ public static partial class ModPanelUI {
         label.SetTextAutoSize(text);
         return label;
     }
-    /// <summary>MegaRichTextLabel asserts font overrides at ready; shell is not under a themed menu root.</summary>
-    internal static void ApplyMegaRichTextFontOverrides(MegaRichTextLabel label) {
-        var f = ThemeDB.FallbackFont;
-        label.AddThemeFontOverride("normal_font", f);
-        label.AddThemeFontOverride("bold_font", f);
-        label.AddThemeFontOverride("italics_font", f);
-        label.AddThemeFontOverride("bold_italics_font", f);
-        label.AddThemeFontOverride("mono_font", f);
-    }
+    /// <summary>MegaRichTextLabel asserts font overrides at ready; then swap in locale fonts (CJK, etc.).</summary>
+    internal static void ApplyMegaRichTextFontOverrides(MegaRichTextLabel label) =>
+        KitLibLocaleFonts.ApplyMegaRichText(label);
     internal static void ApplyDevModeTabButtonStyle(Button b, bool selected) {
         var accent = ModPanelUiPalette.SidebarModActiveAccent;
         var selectedFill = new Color(accent.R, accent.G, accent.B, 0.20f);
@@ -447,6 +447,7 @@ public static partial class ModPanelUI {
         b.AddThemeStyleboxOverride("disabled", flat);
         b.AddThemeFontSizeOverride("font_size", 13);
         b.AddThemeColorOverride("font_color", selected ? KitLibTheme.TextPrimary : KitLibTheme.TextSecondary);
+        KitLibLocaleFonts.ApplyControl(b);
     }
     internal static Button CreateDevModePageTab(string pageId, string label, bool selected, Action onSelect) {
         var b = new Button {
@@ -524,6 +525,7 @@ public static partial class ModPanelUI {
         };
         title.AddThemeFontSizeOverride("font_size", 13);
         title.AddThemeColorOverride("font_color", accent);
+        KitLibLocaleFonts.ApplyControl(title);
         headerRow.AddChild(title);
         var collapseBtn = new Button {
             Name = "ModPanelScopeCollapse",
@@ -543,6 +545,7 @@ public static partial class ModPanelUI {
         };
         body.AddThemeFontSizeOverride("font_size", 11);
         body.AddThemeColorOverride("font_color", ModPanelUiPalette.RichTextBody);
+        KitLibLocaleFonts.ApplyControl(body);
         expandedStack.AddChild(body);
         var collapsedBtn = new Button {
             Name = "ModPanelScopeCollapsed",
@@ -559,6 +562,7 @@ public static partial class ModPanelUI {
         };
         collapsedBtn.AddThemeFontSizeOverride("font_size", 11);
         collapsedBtn.AddThemeColorOverride("font_color", ModPanelUiPalette.RichTextMuted);
+        KitLibLocaleFonts.ApplyControl(collapsedBtn);
         ApplyCollapsedScopeStripButton(collapsedBtn);
         root.AddChild(collapsedBtn);
         void ApplyChromeT(float t) {

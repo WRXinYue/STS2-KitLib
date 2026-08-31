@@ -51,6 +51,7 @@ public partial class ModPanelSubmenu : NSubmenu {
         ThemeManager.OnThemeChanged += OnKitLibThemeChanged;
         RitsuModSettingsEmbedHost.Ensure();
         if (!_uiBuilt) {
+            Theme = KitLibLocaleFonts.CreateOverlayTheme();
             ModPanelUI.BuildInto(this);
             _uiBuilt = true;
         }

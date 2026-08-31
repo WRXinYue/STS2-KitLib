@@ -188,6 +188,7 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
         };
         header.AddThemeFontSizeOverride("font_size", 20);
         header.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(header);
         var descText = descObj != null ? ResolveRitsuUiText(contextType, descObj) : null;
         Label? descLabel = null;
         if (!string.IsNullOrWhiteSpace(descText)) {
@@ -199,6 +200,7 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
             };
             descLabel.AddThemeFontSizeOverride("font_size", 14);
             descLabel.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+            KitLibLocaleFonts.ApplyControl(descLabel);
         }
         var content = new VBoxContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -259,6 +261,7 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
         };
         label.AddThemeFontSizeOverride("font_size", 22);
         label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(label);
         RegisterTitleRefresh(context, contextType, titleObj, asm, label);
         return label;
     }
@@ -271,6 +274,7 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
         };
         label.AddThemeFontSizeOverride("font_size", 14);
         label.AddThemeColorOverride("font_color", KitLibTheme.TextSecondary);
+        KitLibLocaleFonts.ApplyControl(label);
         RegisterDescriptionRefresh(context, contextType, descObj, label);
         return label;
     }

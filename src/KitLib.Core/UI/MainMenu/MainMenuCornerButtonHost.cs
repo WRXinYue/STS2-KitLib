@@ -255,6 +255,7 @@ internal static class MainMenuCornerButtonHost {
                 ThemeConstants.Label.Font,
                 ResourceLoader.Load<Font>(InfoLabelFontPath));
         }
+        KitLibLocaleFonts.ApplyMegaLabel(label);
         label.AddThemeFontSizeOverride(ThemeConstants.Label.FontSize, 15);
         label.AddThemeColorOverride(ThemeConstants.Label.FontColor, InfoLabelGold);
         label.AddThemeColorOverride(ThemeConstants.Label.FontShadowColor, new(0f, 0f, 0f, 0.5f));

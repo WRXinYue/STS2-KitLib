@@ -49,6 +49,9 @@ internal static class ModSettingsRitsuFormDevTheme {
             case MegaRichTextLabel rtl:
                 ModPanelUI.ApplyMegaRichTextFontOverrides(rtl);
                 break;
+            case Label l:
+                KitLibLocaleFonts.ApplyControl(l);
+                break;
         }
         foreach (var child in node.GetChildren())
             ApplyRecursive(child);
@@ -63,6 +66,7 @@ internal static class ModSettingsRitsuFormDevTheme {
         le.AddThemeColorOverride("font_placeholder_color", KitLibTheme.Subtle);
         le.AddThemeColorOverride("caret_color", DevModeFormChrome.RoundedFieldCaretColor());
         le.AddThemeFontSizeOverride("font_size", 14);
+        KitLibLocaleFonts.ApplyControl(le);
         DevModeFormChrome.WireRoundedFieldFocusMotion(le);
     }
     private static void StyleTextEdit(TextEdit te) {
@@ -72,6 +76,7 @@ internal static class ModSettingsRitsuFormDevTheme {
         te.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         te.AddThemeColorOverride("caret_color", DevModeFormChrome.RoundedFieldCaretColor());
         te.AddThemeFontSizeOverride("font_size", 14);
+        KitLibLocaleFonts.ApplyControl(te);
         DevModeFormChrome.WireRoundedFieldFocusMotion(te);
     }
     private static void StyleOptionButtonLike(Control ob) {
@@ -91,6 +96,7 @@ internal static class ModSettingsRitsuFormDevTheme {
         ob.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
         ob.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         ob.AddThemeFontSizeOverride("font_size", 14);
+        KitLibLocaleFonts.ApplyControl(ob);
         DevModeFormChrome.WireRoundedFieldFocusMotion(ob);
     }
     private static StyleBoxFlat MiniButtonBox(bool hover, bool pressed) {
@@ -170,12 +176,14 @@ internal static class ModSettingsRitsuFormDevTheme {
         b.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
         b.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         b.AddThemeColorOverride("font_disabled_color", KitLibTheme.Subtle);
+        KitLibLocaleFonts.ApplyControl(b);
     }
     private static void StyleCheckBoxOnlyColors(CheckBox cb) {
         cb.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         cb.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
         cb.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
         cb.AddThemeFontSizeOverride("font_size", 14);
+        KitLibLocaleFonts.ApplyControl(cb);
         DevModeFormChrome.ApplyCheckboxIconContrast(cb);
     }
     private static void StyleSlider(Slider s) => DevModeFormChrome.ApplySliderStyle(s);

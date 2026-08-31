@@ -2,6 +2,7 @@ using System;
 using Godot;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Assets;
+using MegaCrit.Sts2.Core.Localization.Fonts;
 using MegaCrit.Sts2.Core.Nodes.Screens.Settings;
 
 namespace KitLib.UI;
@@ -57,6 +58,7 @@ internal sealed partial class ModPanelSettingsEntryButton : NSettingsButton {
         label.AddThemeConstantOverride("outline_size", 12);
         label.AddThemeConstantOverride("shadow_outline_size", 0);
         label.AddThemeFontOverride("font", ModPanelSettingsEntryResources.ButtonFont);
+        KitLibLocaleFonts.ApplyMegaLabel(label, FontType.Bold);
         label.AddThemeFontSizeOverride("font_size", 28);
         label.MinFontSize = 16;
         label.MaxFontSize = 28;
@@ -70,6 +72,7 @@ internal sealed partial class ModPanelSettingsEntryButton : NSettingsButton {
     public override void _Ready() {
         ConnectSignals();
         _buttonLabel = GetNode<MegaLabel>("Label");
+        KitLibLocaleFonts.ApplyMegaLabel(_buttonLabel, FontType.Bold);
         if (_text != null)
             _buttonLabel.SetTextAutoSize(_text);
 

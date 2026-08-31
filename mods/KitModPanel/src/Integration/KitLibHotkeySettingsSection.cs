@@ -129,6 +129,7 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         };
         label.AddThemeFontSizeOverride("font_size", compact ? 11 : 13);
         label.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
+        KitLibLocaleFonts.ApplyControl(label);
         return label;
     }
 
@@ -235,6 +236,7 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         };
         label.AddThemeFontSizeOverride("font_size", 12);
         label.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(label);
         row.AddChild(label);
 
         var bindBtn = CreateBindingButton(actionId);
@@ -273,6 +275,7 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         };
         title.AddThemeFontSizeOverride("font_size", 12);
         title.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(title);
         row.AddChild(title);
 
         var check = new CheckBox {
@@ -280,6 +283,7 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
             FocusMode = FocusModeEnum.All,
         };
         check.Toggled += on => set(on);
+        KitLibLocaleFonts.ApplyControl(check);
         row.AddChild(check);
         return row;
     }
@@ -342,5 +346,6 @@ internal partial class KitLibHotkeySettingsSection : VBoxContainer {
         btn.AddThemeColorOverride("font_color", KitLibTheme.TextPrimary);
         btn.AddThemeColorOverride("font_hover_color", KitLibTheme.TextPrimary);
         btn.AddThemeColorOverride("font_pressed_color", KitLibTheme.TextPrimary);
+        KitLibLocaleFonts.ApplyControl(btn);
     }
 }

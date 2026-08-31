@@ -290,6 +290,7 @@ public static partial class ModPanelUI {
                 FontColor = new Color(0.95f, 0.78f, 0.42f, 0.98f),
             },
         };
+        KitLibLocaleFonts.ApplyControl(pendingRestartBanner);
         listHeader.AddChild(pendingRestartBanner);
         var readOnlyBanner = new Label {
             Name = "ModPanelInRunReadOnlyBanner",
@@ -304,6 +305,7 @@ public static partial class ModPanelUI {
             Text = I18N.T("modpanel.inRun.readOnlyHint",
                 "Mod enable/disable and module toggles are read-only during a run. Return to the main menu to change them."),
         };
+        KitLibLocaleFonts.ApplyControl(readOnlyBanner);
         listHeader.AddChild(readOnlyBanner);
         var scroll = SidebarModListScrollBuilder.Create(out var scrollInner);
         scrollInner.AddThemeConstantOverride("separation", 0);
@@ -485,6 +487,7 @@ public static partial class ModPanelUI {
                         FontColor = ResolveSidebarModTitleColor(captured.LoadStatus),
                     },
                 };
+                KitLibLocaleFonts.ApplyControl(titleLbl);
                 rowContent.AddChild(titleLbl);
                 var versionChip = CreateSidebarModListVersionChip(captured.Version);
                 if (versionChip != null)
