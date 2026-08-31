@@ -2,6 +2,7 @@
 # profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.
 
 profiles:
+  stable: "0.107.1"
   beta: "0.110.1"
 
 touchpoints:
@@ -80,6 +81,9 @@ touchpoints:
     type: CombatManager
     member: _playersReadyToBeginEnemyTurn
     kind: field
+    profiles:
+      beta:
+        skip: true
     sources:
       - src/KitLib.Core/Sts2CombatCompat.cs
 
@@ -300,8 +304,12 @@ touchpoints:
     type: NInputManager
     member: ProcessHotkeyInput
     kind: method
+    profiles:
+      stable:
+        skip: true
     sources:
-      - src/KitLib.Modules.Panel/Patches/NInputManagerHotkeyPatch.cs
+      - mods/KitDevTools/src/Panel/Patches/NInputManagerHotkeyPatch.cs
+      - mods/KitModPanel/src/Patches/ModPanelInputManagerHotkeyPatch.cs
 
   - id: NMainMenu.MainMenuButtonFocused
     type: NMainMenu
@@ -551,8 +559,11 @@ touchpoints:
     type: RunLobby
     member: _connectedPlayerIds
     kind: field
+    profiles:
+      beta:
+        skip: true
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopLobbyRoster.cs
+      - src/KitLib.Core/Multiplayer/Play/PseudoCoopLobbyRoster.cs
 
   - id: RunManager.ActionQueueSynchronizer
     type: RunManager

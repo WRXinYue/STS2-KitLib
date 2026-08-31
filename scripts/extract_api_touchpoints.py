@@ -162,7 +162,7 @@ def _parse_yaml_simple(path: Path) -> dict:
     profiles: dict[str, str] = {}
     overrides: dict[str, dict[str, dict[str, str]]] = {}
     current_id: str | None = None
-    in_profiles_block = False
+    current_profile: str | None = None
     in_touchpoint_profiles = False
 
     for raw in text.splitlines():
@@ -175,28 +175,31 @@ def _parse_yaml_simple(path: Path) -> dict:
                 profiles["beta"] = stripped.split(":", 1)[1].strip().strip('"')
         elif stripped.startswith("- id:"):
             current_id = stripped.split(":", 1)[1].strip()
+            current_profile = None
             overrides.setdefault(current_id, {})
             in_touchpoint_profiles = False
         elif current_id and stripped == "profiles:":
             in_touchpoint_profiles = True
+            current_profile = None
         elif current_id and in_touchpoint_profiles and stripped.startswith("stable:"):
+            current_profile = "stable"
             if "member:" in stripped:
                 member = stripped.split("member:", 1)[1].strip()
                 overrides[current_id].setdefault("stable", {})["member"] = member
-            elif stripped.endswith("stable:"):
-                in_profiles_block = True
-            elif stripped == "skip: true":
+            elif "skip: true" in stripped:
                 overrides[current_id].setdefault("stable", {})["skip"] = "true"
         elif current_id and in_touchpoint_profiles and stripped.startswith("beta:"):
+            current_profile = "beta"
             if "member:" in stripped:
                 member = stripped.split("member:", 1)[1].strip()
                 overrides[current_id].setdefault("beta", {})["member"] = member
-            elif stripped == "skip: true":
+            elif "skip: true" in stripped:
                 overrides[current_id].setdefault("beta", {})["skip"] = "true"
-        elif stripped.startswith("member:") and current_id and in_touchpoint_profiles and in_profiles_block:
+        elif current_id and in_touchpoint_profiles and current_profile and stripped == "skip: true":
+            overrides[current_id].setdefault(current_profile, {})["skip"] = "true"
+        elif current_id and in_touchpoint_profiles and current_profile and stripped.startswith("member:"):
             member = stripped.split(":", 1)[1].strip()
-            overrides[current_id].setdefault("stable", {})["member"] = member
-            in_profiles_block = False
+            overrides[current_id].setdefault(current_profile, {})["member"] = member
 
     return {"profiles": profiles, "overrides": overrides}
 
@@ -220,6 +223,7 @@ def _write_manifest(
         "# profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.",
         "",
         "profiles:",
+        f'  stable: "{profile_versions.get("stable", "0.107.1")}"',
         f'  beta: "{profile_versions.get("beta", "0.110.1")}"',
         "",
         "touchpoints:",
@@ -243,7 +247,7 @@ def _write_manifest(
         ov = overrides.get(tp.id, {})
         if ov:
             lines.append("    profiles:")
-            for profile in profile_versions:
+            for profile in ("stable", "beta"):
                 if profile not in ov:
                     continue
                 prof = ov[profile]
@@ -275,8 +279,19 @@ def _ensure_manual_touchpoints(touchpoints: dict[str, Touchpoint]) -> None:
     tp.sources.add("src/KitLib.Core/Cheat/Patches/RunStartPatch.cs")
 
 
+def _skip_profile(overrides: dict[str, dict[str, dict[str, str]]], tp_id: str, profile: str) -> None:
+    overrides.setdefault(tp_id, {}).setdefault(profile, {})["skip"] = "true"
+
+
 def _ensure_manual_overrides(overrides: dict[str, dict[str, dict[str, str]]]) -> None:
     overrides.pop("CombatManager.IsPlayPhase", None)
+    # 0.107.1 vs 0.110.1: these members exist on one pin only (see Slay the Spire 2/v*).
+    _skip_profile(overrides, "NInputManager.ProcessHotkeyInput", "stable")
+    _skip_profile(overrides, "NInputManager.ProcessFkbInput", "stable")
+    _skip_profile(overrides, "NInputManager.ProcessShortcutKeyInput", "beta")
+    _skip_profile(overrides, "CombatManager._playersReadyToBeginEnemyTurn", "beta")
+    _skip_profile(overrides, "CombatManager._turnState", "stable")
+    _skip_profile(overrides, "RunLobby._connectedPlayerIds", "beta")
     run = overrides.get("RunManager.SetUpNewSingleplayer")
     if run:
         run.pop("stable", None)
@@ -305,7 +320,9 @@ def main() -> int:
 
     existing = _parse_yaml_simple(args.manifest)
     overrides: dict[str, dict[str, dict[str, str]]] = existing.get("overrides", {})
-    profile_versions = existing.get("profiles") or {"beta": "0.110.1"}
+    profile_versions = existing.get("profiles") or {}
+    profile_versions.setdefault("stable", "0.107.1")
+    profile_versions.setdefault("beta", "0.110.1")
 
     touchpoints: dict[str, Touchpoint] = {}
     for cs in sorted(src_root.rglob("*.cs")):
