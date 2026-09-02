@@ -10,7 +10,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-Two layers for **KitLib-native** mod settings (shown in **Main menu → Mods → your mod** when **KitModPanel** is installed):
+Two layers for **KitLib-native** mod settings (shown in **Main menu corner KitModPanel → your mod** when **KitModPanel** is installed):
 
 | Layer | API | Role |
 | --- | --- | --- |
@@ -29,7 +29,7 @@ Two layers for **KitLib-native** mod settings (shown in **Main menu → Mods →
 :::
 
 ::: zh-CN
-**KitLib 原生** mod 设置分两层（安装 **KitModPanel** 后在 **主菜单 → Mods → 你的 mod** 显示）：
+**KitLib 原生** mod 设置分两层（安装 **KitModPanel** 后在 **主菜单侧边 KitModPanel [模组面板] → 你的 mod** 显示）：
 
 | 层 | API | 作用 |
 | --- | --- | --- |

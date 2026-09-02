@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **README / Steam listing** — Documents optional STS2-RitsuLib settings hosting, optional KitDevTools Harmony and Progress protection pages, and the player-facing list and settings features.
+- **Open from the main-menu corner** — A **KitModPanel [模组面板]** side shortcut is registered with KitLib instead of inserting a **Mods** title into the official Continue / Settings list.
 
 ## [0.0.1] - 2026-08-31
 

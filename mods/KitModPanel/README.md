@@ -18,7 +18,7 @@ Disable **KitModPanel** in the game's mod list to turn the Mods UI off completel
 
 ## Open
 
-- Main menu **Mods** overlay
+- Main menu corner **KitModPanel [模组面板]** shortcut (official title list unchanged)
 - Settings → General → KitLib entry
 - Configurable hotkey (KitLib → Hotkeys)
 

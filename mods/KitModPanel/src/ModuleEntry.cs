@@ -16,6 +16,7 @@ public static class ModuleEntry {
         KitLibModSettingsUiBuilders.WireApi();
         WirePanelOps();
         KitLibNativeModSettingsBootstrap.RegisterKitLibPages();
+        ModPanelMainMenuCornerButtonRegistration.Register();
         KitLibHost.NotifyPerfHudEnabledChanged = KitLibModSettingsUiBuilders.RefreshBoolToggles;
         KitLibHarmony.Apply(typeof(ModuleEntry).Assembly, KitLibModuleIds.ModPanel);
         KitLib.MainFile.Logger.Info("KitModPanel product initialized.");

@@ -44,7 +44,7 @@ internal static class ModPanelSettingsEntryLine {
         line.Visible = true;
 
         if (line.GetNodeOrNull<MegaRichTextLabel>("ContentRow/Label") is { } label)
-            label.SetTextAutoSize(I18N.T("modpanel.settings.entry.title", "Mods (KitLib)"));
+            label.SetTextAutoSize(I18N.T("modpanel.settings.entry.title", "Mod Panel"));
 
         if (line.GetNodeOrNull<ModPanelSettingsEntryButton>($"ContentRow/{ButtonNodeName}") is { } button)
             button.Enable();
@@ -71,7 +71,7 @@ internal static class ModPanelSettingsEntryLine {
         label.AddThemeFontSizeOverride("normal_font_size", fontSize);
         label.MinFontSize = 18;
         label.MaxFontSize = fontSize;
-        label.SetTextAutoSize(I18N.T("modpanel.settings.entry.title", "Mods (KitLib)"));
+        label.SetTextAutoSize(I18N.T("modpanel.settings.entry.title", "Mod Panel"));
         ModPanelUI.ApplyMegaRichTextFontOverrides(label);
         return label;
     }

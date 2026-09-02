@@ -11,7 +11,7 @@
 
 ### Changed
 
-- **README / Steam 工坊说明** — 补上可选 STS2-RitsuLib 设置页承载、可选 KitDevTools 的 Harmony 与进度保护页，以及面向玩家的列表与设置功能说明。
+- **从主菜单侧边打开** — 通过 KitLib 注册 **KitModPanel [模组面板]** 角标，不再往官方 Continue / Settings 标题列表里插入 **模组** 按钮。
 
 ## [0.0.1] - 2026-08-31
 
