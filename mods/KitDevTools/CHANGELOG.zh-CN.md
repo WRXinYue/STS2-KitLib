@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 ### Changed
 
 - **MCP 对局工具** — `get_game_state`、`combat_action`、`map_action` 与选牌工具在未安装 KitAI 时也可使用，改由 KitLib 驱动对局。

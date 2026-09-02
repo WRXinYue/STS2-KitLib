@@ -3,7 +3,7 @@
   "name": "KitDevTools [开发工具]",
   "author": "WRXinYue",
   "description": "In-game side rail, cheats, saves, and developer tools for Slay the Spire 2. Requires KitLib.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [

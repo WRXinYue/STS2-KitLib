@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 ### Changed
 
 - **MCP match tools** — `get_game_state`, `combat_action`, `map_action`, and card-selection tools work without KitAI. They drive the run through KitLib.

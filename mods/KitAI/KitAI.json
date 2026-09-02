@@ -3,7 +3,7 @@
   "name": "KitAI [AI]",
   "author": "WRXinYue",
   "description": "Optional AI host / autoplay module for Slay the Spire 2. Requires KitLib. KitDevTools is optional for the in-game AI Host panel.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [

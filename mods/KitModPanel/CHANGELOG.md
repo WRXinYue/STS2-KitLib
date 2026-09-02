@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 ### Changed
 
 - **README / Steam listing** — Documents optional STS2-RitsuLib settings hosting, optional KitDevTools Harmony and Progress protection pages, and the player-facing list and settings features.

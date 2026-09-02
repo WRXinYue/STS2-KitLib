@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 ### Changed
 
 - **AutoPlay / companions** — Card plays and map/reward clicks go through KitLib's shared player actions (the same path DevTools MCP uses). KitAI still decides what to do.

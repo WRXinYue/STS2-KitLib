@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-03
+
 ### Changed
 
 - **AutoPlay / 同伴** — 出牌与地图/奖励点击改走 KitLib 共用的玩家操作（与 DevTools MCP 同一条路径）。KitAI 仍负责决定做什么。
