@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using KitLib.AI.Knowledge;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
@@ -68,12 +67,13 @@ internal static class MonsterIntentReader {
         return entries;
     }
 
-    /// <summary>Intent chain for AI snapshot (current + up to 3 predicted enemy turns).</summary>
+    /// <summary>Intent chain for snapshots (current + predicted enemy turns). Pressure scoring stays in KitAI.</summary>
     internal static JsonArray CaptureIntentSteps(
         Creature enemy,
         IReadOnlyList<Creature> targets,
-        KitLib.AI.Combat.Simulation.CombatState pressureState,
-        int maxSteps = KitLib.AI.Combat.Simulation.ThreatModel.LineFutureHorizonTurns + 2) {
+        object? pressureState = null,
+        int maxSteps = 6) {
+        _ = pressureState;
         var arr = new JsonArray();
         if (enemy.Monster is not { } monster)
             return arr;
@@ -95,21 +95,11 @@ internal static class MonsterIntentReader {
             foreach (var intent in step.Intents)
                 intentTypes.Add(intent.IntentType.ToString());
 
-            string? monsterId = null;
-            try { monsterId = enemy.ModelId.Entry; } catch { }
-            var effects = MoveEffectIndex.MergeWithRuntimeIntents(monsterId, step.MoveId, step.Intents);
-            int nonDamage = KitLib.AI.Combat.Simulation.MoveEffectPressure.FromEffects(
-                pressureState,
-                monsterId,
-                step.MoveId,
-                effects);
-
             arr.Add(new JsonObject {
                 ["moveId"] = step.MoveId,
                 ["intentDamage"] = damage,
                 ["isUncertain"] = step.IsUncertain,
                 ["intentTypes"] = intentTypes,
-                ["nonDamageThreat"] = nonDamage,
             });
         }
 

@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.AI;
+using KitLib.Host;
 
 namespace KitLib.Mcp.Tools;
 
@@ -18,12 +18,13 @@ internal sealed class GameStateTool : IMcpTool {
     """;
 
     public Task<JsonNode> ExecuteAsync(JsonObject args) {
-        var snapshot = AiPlayServices.StateProvider.TakeSnapshot();
-        if (snapshot.Count == 0) {
+        var snapshot = KitLibGameOps.Snapshot();
+        if (snapshot is not { Count: > 0 }) {
             return Task.FromResult<JsonNode>(new JsonObject {
                 ["error"] = "No active run.",
             });
         }
+
         return Task.FromResult<JsonNode>(snapshot);
     }
 }

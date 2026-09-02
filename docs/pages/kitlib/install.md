@@ -13,7 +13,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: en
 **Prerequisites:** Slay the Spire 2 on Steam.
 
-1. Download the latest **`KitLib-vX.X.X.zip`** from [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) (Steam Workshop multi-item split may follow later).
+1. Download the latest release zips from [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases): **`KitLib-vX.X.X.zip`** (required) plus **`KitModPanel-vX.X.X.zip`**, **`KitDevTools-vX.X.X.zip`**, and **`KitAI-vX.X.X.zip`** as needed. You can also subscribe on Steam Workshop (separate items per product).
 
 2. Locate your STS2 `mods` folder. On Windows the default path is:
 
@@ -39,7 +39,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: zh-CN
 **前置条件：** Steam 版《杀戮尖塔 2》。
 
-1. 从 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) 下载最新 **`KitLib-vX.X.X.zip`**（创意工坊多条目拆分后续再做）。
+1. 从 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) 下载最新发布包：**`KitLib-vX.X.X.zip`**（必需），以及按需的 **`KitModPanel-vX.X.X.zip`**、**`KitDevTools-vX.X.X.zip`**、**`KitAI-vX.X.X.zip`**。也可在 Steam 创意工坊分别订阅各产品。
 
 2. 找到 STS2 的 `mods` 目录（Windows 默认见英文节）。
 

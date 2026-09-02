@@ -2,7 +2,6 @@ using Godot;
 using HarmonyLib;
 using KitLib;
 using KitLib.Abstractions.Host;
-using KitLib.AI.Combat.Simulation;
 using KitLib.CombatStats;
 using KitLib.Diagnostics;
 using KitLib.EnemyIntent;
@@ -76,7 +75,7 @@ internal static class ModuleBootstrap {
             SafeStep("MonsterIntentOverrides", () => MonsterIntentOverrides.Initialize());
 
             KitLibHost.CaptureMonsterIntentSteps = (enemy, targets, pressure) =>
-                MonsterIntentReader.CaptureIntentSteps(enemy, targets, (CombatState)pressure);
+                MonsterIntentReader.CaptureIntentSteps(enemy, targets, pressure);
 
             SafeStep("DevTabRegistration", () => DevTabRegistration.Register());
 

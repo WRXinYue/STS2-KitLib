@@ -1,10 +1,7 @@
 using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.AI;
 using KitLib.AI.Core.Schema;
-using KitLib.AI.Sts2.Mcp;
-using KitLib.AI.Sts2.Snapshots;
 using KitLib.Host;
 
 namespace KitLib.Mcp.Tools;
@@ -50,11 +47,14 @@ internal sealed class CombatActionTool : IMcpTool {
         var cardIndex = args["card_index"]?.GetValue<int>() ?? 0;
         var targetIndex = args["target_index"]?.GetValue<int>() ?? -1;
 
-        McpPlayContext.Clear();
+        SelectionHint? hint = null;
         if (actionStr == "play_card") {
-            McpPlayContext.SelectionCardId = args["selection_card_id"]?.GetValue<string>()?.Trim();
+            var cardId = args["selection_card_id"]?.GetValue<string>()?.Trim();
+            int? selectionIndex = null;
             if (args.TryGetPropertyValue("selection_index", out var selectionIndexNode))
-                McpPlayContext.SelectionIndex = selectionIndexNode?.GetValue<int>();
+                selectionIndex = selectionIndexNode?.GetValue<int>();
+            if (!string.IsNullOrWhiteSpace(cardId) || selectionIndex.HasValue)
+                hint = new SelectionHint { CardId = cardId, CardIndex = selectionIndex };
         }
 
         var gameAction = actionStr switch {
@@ -80,27 +80,32 @@ internal sealed class CombatActionTool : IMcpTool {
         if (gameAction == null)
             return new JsonObject { ["error"] = $"Unknown action: {actionStr}" };
 
-        ActionResult result;
-        try {
-            result = await AiPlayServices.ActionExecutor.ExecuteAsync(gameAction);
-        }
-        finally {
-            McpPlayContext.Clear();
-        }
+        var result = await KitLibGameOps.Execute(gameAction, hint);
 
         var response = new JsonObject {
             ["success"] = result.Success,
             ["message"] = result.Message,
         };
 
-        McpCombatActionExtensions.ApplyPendingSelection(response, actionStr, result);
+        if (actionStr == "play_card" && !result.Success) {
+            var selection = KitLibGameOps.SelectionState();
+            if (result.Message == "pending_selection" || selection["active"]?.GetValue<bool>() == true) {
+                response["pendingSelection"] = true;
+                response["selectionState"] = selection;
+                if (result.Message == "pending_selection") {
+                    response["message"] =
+                        "Card play awaiting selection. Call selection_action, then get_game_state to verify.";
+                }
+            }
+        }
 
         if (actionStr == "play_card" && result.Success) {
-            if (result.Message?.Contains("Queued play", StringComparison.OrdinalIgnoreCase) == true) {
+            if (result.Message?.Contains("Queued play", StringComparison.OrdinalIgnoreCase) == true)
                 response["queued"] = true;
-            }
-            else if (RunContext.TryGetRunAndPlayer(out _, out var player)) {
-                response["afterState"] = GameSnapshot.CaptureCombatAfterState(player);
+            else {
+                var after = KitLibGameOps.CaptureCombatAfterState();
+                if (after != null)
+                    response["afterState"] = after;
             }
         }
 

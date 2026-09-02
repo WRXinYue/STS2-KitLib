@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **MCP 对局工具** — `get_game_state`、`combat_action`、`map_action` 与选牌工具在未安装 KitAI 时也可使用，改由 KitLib 驱动对局。
+- **MCP `dev_dump_monster_mechanics`** — 已移除。怪物 mechanics 导出属于 KitAI，不属于 DevTools。
+
+### Fixed
+
+- **不安装 KitAI 也能启动** — 只装 KitDevTools、不装 KitAI 时，游戏不再在启动阶段崩溃。感谢 初葉夜澜 反馈。
+
 ## [0.0.1] - 2026-08-31
 
 ### Fixed

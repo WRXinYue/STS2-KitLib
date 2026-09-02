@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.AI;
 using KitLib.AI.Core.Schema;
+using KitLib.Host;
 
 namespace KitLib.Mcp.Tools;
 
@@ -55,13 +55,11 @@ internal sealed class MapActionTool : IMcpTool {
         if (actionType == null)
             return new JsonObject { ["error"] = $"Unknown action: {actionStr}" };
 
-        var gameAction = new GameAction {
+        var result = await KitLibGameOps.Execute(new GameAction {
             Type = actionType.Value,
             TargetIndex = targetIndex,
             Reason = "MCP tool call",
-        };
-
-        var result = await AiPlayServices.ActionExecutor.ExecuteAsync(gameAction);
+        });
         return new JsonObject {
             ["success"] = result.Success,
             ["message"] = result.Message,

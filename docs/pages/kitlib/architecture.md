@@ -112,7 +112,7 @@ mods/
 | `KitLib` (Core) | Abstractions, game | `KitLibHarmony` |
 | Product / satellites | Core + Abstractions | `KitLibHarmony.Apply(assembly, id)` in `ModuleEntry` |
 
-Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi` delegates. Mutation APIs: **[API](/api/)**.
+Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi` delegates. Public APIs (game I/O and mutations): **[API](/api/)**.
 :::
 
 ::: zh-CN
@@ -122,7 +122,7 @@ Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi
 | `KitLib`（Core） | Abstractions、游戏 | `KitLibHarmony` |
 | 产品 / 卫星 | Core + Abstractions | `ModuleEntry` 中 `KitLibHarmony.Apply` |
 
-跨模块用 `InternalsVisibleTo` 与 `KitLib*Ops` / `KitLibCheatApi`。突变 API 见 **[API](/api/)**。
+跨模块用 `InternalsVisibleTo` 与 `KitLib*Ops` / `KitLibCheatApi`。对外 API（游戏 I/O 与突变）见 **[API](/api/)**。
 :::
 
 ## Build{lang="en"}
@@ -137,7 +137,7 @@ Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi
 ```bash
 make sync
 make sync PRODUCT=KitLib
-make zip-full
+make zip-full    # build/KitLib-vX.Y.Z.zip, KitModPanel-vX.Y.Z.zip, ...
 ```
 :::
 
@@ -149,7 +149,7 @@ make zip-full
 ```bash
 make sync
 make sync PRODUCT=KitLib
-make zip-full
+make zip-full    # build/KitLib-vX.Y.Z.zip, KitModPanel-vX.Y.Z.zip, ...
 ```
 :::
 

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
+
+from lib.mod_products import PRODUCT_ORDER, PRODUCTS
 
 RELEASE_PROFILES = ("beta",)
 
@@ -17,14 +20,30 @@ def tools_rid(cli_value: str = "") -> str:
     return "win-x64" if os.name == "nt" else "linux-x64"
 
 
+def read_product_version(repo_root: Path, product_id: str) -> str:
+    if product_id not in PRODUCTS:
+        raise ValueError(f"Unknown product: {product_id}")
+    manifest = PRODUCTS[product_id].manifest_path
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    return str(data["version"])
+
+
+def product_zip_name(product_id: str, version: str) -> str:
+    return f"{product_id}-v{version}.zip"
+
+
+def product_zip_path(repo_root: Path, product_id: str, version: str) -> Path:
+    return repo_root / "build" / product_zip_name(product_id, version)
+
+
 def mod_zip_name(version: str, profile: str = "beta") -> str:
     _ = profile
-    return f"KitLib-v{version}.zip"
+    return product_zip_name("KitLib", version)
 
 
 def mod_zip_path(repo_root: Path, version: str, profile: str = "beta") -> Path:
     _ = profile
-    return repo_root / "build" / mod_zip_name(version)
+    return product_zip_path(repo_root, "KitLib", version)
 
 
 def mcp_zip_name(version: str, rid: str) -> str:
@@ -45,10 +64,17 @@ def mcp_exe_path(repo_root: Path, rid: str) -> Path:
     return _tool_publish_dir(repo_root, resolved) / name
 
 
+def all_product_zip_paths(repo_root: Path) -> list[Path]:
+    return [
+        product_zip_path(repo_root, product_id, read_product_version(repo_root, product_id))
+        for product_id in PRODUCT_ORDER
+    ]
+
+
 def github_release_assets(repo_root: Path, version: str, rid: str = "") -> list[Path]:
-    """Mod zip plus self-contained MCP executable (not tool zip)."""
+    """Per-product mod zips plus self-contained MCP executable (not tool zip)."""
     resolved_rid = tools_rid(rid)
     return [
-        mod_zip_path(repo_root, version),
+        *all_product_zip_paths(repo_root),
         mcp_exe_path(repo_root, resolved_rid),
     ]

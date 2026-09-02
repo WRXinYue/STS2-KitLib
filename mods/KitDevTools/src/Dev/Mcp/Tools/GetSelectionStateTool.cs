@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.AI.Sts2.Mcp;
+using KitLib.Host;
 
 namespace KitLib.Mcp.Tools;
 
@@ -17,6 +17,7 @@ internal sealed class GetSelectionStateTool : IMcpTool {
     }
     """;
 
-    public Task<JsonNode> ExecuteAsync(JsonObject args) =>
-        Task.FromResult<JsonNode>(McpCardSelectionHelper.CaptureState());
+    public Task<JsonNode> ExecuteAsync(JsonObject args) {
+        return Task.FromResult<JsonNode>(KitLibGameOps.SelectionState());
+    }
 }

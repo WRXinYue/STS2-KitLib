@@ -16,9 +16,6 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KitAI\KitLib.AI.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="$(KitLibSourceDir)\Data\harmony-patch-registry.json" LogicalName="KitLib.Data.harmony-patch-registry.json" />
     <EmbeddedResource Include="$(KitLibSourceDir)\CombatStats\viewer-shell.html" LogicalName="KitLib.CombatStats.viewer-shell.html"
                       Condition="Exists('$(KitLibSourceDir)\CombatStats\viewer-shell.html')" />

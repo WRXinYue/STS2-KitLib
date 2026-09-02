@@ -1,10 +1,8 @@
 using System;
 using System.Threading.Tasks;
 using Godot;
-using KitLib;
 using KitLib.Abstractions.Host;
-using KitLib.AI.Sts2.Mcp;
-using KitLib.Host;
+using KitLib.AI.Core.Schema;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
@@ -13,28 +11,29 @@ using MegaCrit.Sts2.Core.Nodes.Combat;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace KitLib.AI.Sts2.Helpers;
+namespace KitLib.Game;
 
-/// <summary>Waits for <see cref="CardModel.TryManualPlay"/> to finish via the action queue.</summary>
-internal static class Sts2CombatPlayHelper {
-    public static async Task<ManualPlayOutcome> WaitForManualPlayAsync(CardModel card, TimeSpan timeout) {
+internal static class CombatPlayWait {
+    public static async Task<ManualPlayOutcome> WaitForManualPlayAsync(
+        CardModel card,
+        SelectionHint? hint,
+        TimeSpan timeout) {
         if (NGame.Instance == null)
             return ManualPlayOutcome.Failed;
 
         var deadline = DateTime.UtcNow + timeout;
-        var autoSelect = !string.IsNullOrWhiteSpace(McpPlayContext.SelectionCardId)
-                         || McpPlayContext.SelectionIndex.HasValue;
+        var autoSelect = !string.IsNullOrWhiteSpace(hint?.CardId) || hint?.CardIndex != null;
         var autoSelectAttempted = false;
 
         while (DateTime.UtcNow < deadline) {
             await NGame.Instance.ToSignal(NGame.Instance.GetTree(), SceneTree.SignalName.ProcessFrame);
 
-            if (McpCardSelectionHelper.IsActive()) {
+            if (CardSelectionUi.IsActive()) {
                 if (autoSelect && !autoSelectAttempted) {
                     autoSelectAttempted = true;
-                    await McpCardSelectionHelper.TryAutoPickAsync(
-                        McpPlayContext.SelectionCardId,
-                        McpPlayContext.SelectionIndex,
+                    await CardSelectionUi.TryAutoPickAsync(
+                        hint?.CardId,
+                        hint?.CardIndex,
                         TimeSpan.FromSeconds(1));
                 }
                 continue;
@@ -46,7 +45,7 @@ internal static class Sts2CombatPlayHelper {
             }
         }
 
-        if (McpCardSelectionHelper.IsActive())
+        if (CardSelectionUi.IsActive())
             return ManualPlayOutcome.PendingSelection;
 
         return IsPlayStable(card, out _, out _) && !HasBlockingOverlay()
@@ -72,7 +71,7 @@ internal static class Sts2CombatPlayHelper {
 
     static bool IsPlayStable(CardModel card, out bool inHand, out bool settled) {
         inHand = IsCardInHand(card);
-        settled = Sts2WaitHelper.ArePlayerDrivenActionsSettled();
+        settled = GameWait.ArePlayerDrivenActionsSettled();
 
         if (!CombatManager.Instance.IsInProgress)
             return true;
@@ -87,7 +86,7 @@ internal static class Sts2CombatPlayHelper {
     }
 
     static bool IsCardInHand(CardModel card) {
-        if (RunContext.TryGetRunAndPlayer(out _, out var player)) {
+        if (RunContext.TryGetRunAndPlayer(out _, out var player) && player != null) {
             var hand = player.PlayerCombatState?.Hand?.Cards;
             if (hand != null) {
                 foreach (var c in hand) {

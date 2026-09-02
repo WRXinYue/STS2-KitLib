@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Godot;
-using KitLib.AI.Sts2.Helpers;
-using KitLib.AI.Sts2.Snapshots;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes;
@@ -16,9 +14,9 @@ using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardSelection;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace KitLib.AI.Sts2.Mcp;
+namespace KitLib.Game;
 
-internal static class McpCardSelectionHelper {
+internal static class CardSelectionUi {
     const int ScreenReadyDelayMs = 400;
 
     public static bool IsActive() =>
@@ -48,9 +46,9 @@ internal static class McpCardSelectionHelper {
             _ => screen.GetType().Name,
         };
 
-        var options = VisibleHolders(UIHelper.FindAll<NCardHolder>(screen));
-        var confirm = UIHelper.FindFirst<NConfirmButton>(screen) as NClickableControl
-                      ?? UIHelper.FindFirst<NProceedButton>(screen);
+        var options = VisibleHolders(GameUi.FindAll<NCardHolder>(screen));
+        var confirm = GameUi.FindFirst<NConfirmButton>(screen) as NClickableControl
+                      ?? GameUi.FindFirst<NProceedButton>(screen);
 
         return new JsonObject {
             ["active"] = true,
@@ -77,7 +75,7 @@ internal static class McpCardSelectionHelper {
         if (screen == null)
             return Fail("No card selection screen is open.");
 
-        var holders = VisibleHolders(UIHelper.FindAll<NCardHolder>(screen));
+        var holders = VisibleHolders(GameUi.FindAll<NCardHolder>(screen));
         if (holders.Count == 0)
             return Fail("Selection screen has no visible cards.");
 
@@ -91,10 +89,10 @@ internal static class McpCardSelectionHelper {
         }
 
         if (confirm) {
-            var confirmBtn = UIHelper.FindFirst<NConfirmButton>(screen) as NClickableControl
-                             ?? UIHelper.FindFirst<NProceedButton>(screen);
+            var confirmBtn = GameUi.FindFirst<NConfirmButton>(screen) as NClickableControl
+                             ?? GameUi.FindFirst<NProceedButton>(screen);
             if (confirmBtn is { IsEnabled: true })
-                await UIHelper.Click(confirmBtn);
+                await GameUi.Click(confirmBtn);
         }
 
         await Task.Delay(50);
@@ -149,7 +147,7 @@ internal static class McpCardSelectionHelper {
         if (confirm) {
             var confirmBtn = hand.GetNodeOrNull<NConfirmButton>("%SelectModeConfirmButton");
             if (confirmBtn is { IsEnabled: true })
-                await UIHelper.Click(confirmBtn);
+                await GameUi.Click(confirmBtn);
         }
 
         await Task.Delay(50);
@@ -203,11 +201,8 @@ internal static class McpCardSelectionHelper {
 
     static JsonArray SerializeHolders(IReadOnlyList<NCardHolder> holders) {
         var arr = new JsonArray();
-        for (var i = 0; i < holders.Count; i++) {
-            var card = holders[i].CardModel!;
-            var entry = SnapshotCardJson.FromCard(card, i);
-            arr.Add(entry);
-        }
+        for (var i = 0; i < holders.Count; i++)
+            arr.Add(LeanCardJson.FromCard(holders[i].CardModel!, i));
         return arr;
     }
 
@@ -223,11 +218,11 @@ internal static class McpCardSelectionHelper {
             or NCardGridSelectionScreen)
             return top;
 
-        return UIHelper.FindFirst<NChooseACardSelectionScreen>(top)
-               ?? UIHelper.FindFirst<NCombatPileCardSelectScreen>(top)
-               ?? UIHelper.FindFirst<NSimpleCardSelectScreen>(top)
-               ?? UIHelper.FindFirst<NDeckCardSelectScreen>(top)
-               ?? UIHelper.FindFirst<NCardGridSelectionScreen>(top) as Node;
+        return GameUi.FindFirst<NChooseACardSelectionScreen>(top)
+               ?? GameUi.FindFirst<NCombatPileCardSelectScreen>(top)
+               ?? GameUi.FindFirst<NSimpleCardSelectScreen>(top)
+               ?? GameUi.FindFirst<NDeckCardSelectScreen>(top)
+               ?? GameUi.FindFirst<NCardGridSelectionScreen>(top) as Node;
     }
 
     static JsonObject Fail(string error) => new() {

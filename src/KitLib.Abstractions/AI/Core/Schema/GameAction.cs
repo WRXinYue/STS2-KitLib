@@ -8,6 +8,12 @@ public sealed record GameAction {
     public string? Reason { get; init; }
 }
 
+/// <summary>Optional card-picker choice applied while a play is resolving.</summary>
+public sealed record SelectionHint {
+    public string? CardId { get; init; }
+    public int? CardIndex { get; init; }
+}
+
 public enum ActionType {
     Wait,
     PlayCard,

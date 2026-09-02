@@ -12,6 +12,14 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: en
 Public surfaces for content mods live in **KitLib.Abstractions** / **KitLib.Core**. Install only the products you need — missing product DLLs soft-skip.
 
+### Drive the current run
+
+Player-facing I/O (lean snapshot + click the same UI a human would). Lives in **KitLib Core**; KitAI is optional.
+
+| Page | What it does |
+| --- | --- |
+| **[Game ops](/api/game-ops/)** | Snapshot, play cards, map/rewards/shop — `KitLibGameOps` |
+
 ### Modify the current run
 
 Cheat-style mutations during a run (string ids; no STS2 model types on the public surface).
@@ -34,6 +42,14 @@ Cheat-style mutations during a run (string ids; no STS2 model types on the publi
 
 ::: zh-CN
 内容 mod 的公共接口在 **KitLib.Abstractions** / **KitLib.Core**。按需安装产品即可 — 缺少产品 DLL 时软跳过。
+
+### 驱动当前一局
+
+玩家向 I/O（lean 快照 + 点人类会点的同一套 UI）。在 **KitLib Core**；KitAI 可选。
+
+| 页面 | 做什么 |
+| --- | --- |
+| **[游戏操作](/api/game-ops/)** | 快照、出牌、地图/奖励/商店 — `KitLibGameOps` |
 
 ### 修改当前一局
 

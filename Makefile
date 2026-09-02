@@ -115,7 +115,7 @@ help:
 	@echo "  bundle            multi-API bundle → build/KitLib-release/ (release / Workshop / zip)"
 	@echo "  sync-bundle       bundle + deploy to game mods/KitLib/"
 	@echo "  zip-release  bundle + package build/KitLib-vX.X.X.zip (multi-API)"
-	@echo "  zip-full     build-all + package build/KitLib-vX.X.X.zip (local profile only)"
+	@echo "  zip-full     bundle + package build/<Product>-vX.Y.Z.zip for each mod"
 	@echo "  sync-launch  sync + launch game"
 	@echo "  launch       launch STS2 (Vulkan on Windows; Steam on macOS/Linux)"
 	@echo "  launch-mp-host  fastmp host instance (Vulkan)"
@@ -337,8 +337,8 @@ docs-build:
 zip-release: bundle
 	$(PACKAGE_BUNDLE) --zip-only
 
-zip-full: build-all
-	$(PACKAGE_MODULES) --skip-build
+zip-full:
+	$(PACKAGE_BUNDLE) --zip-all -c Release
 
 zip: zip-release
 

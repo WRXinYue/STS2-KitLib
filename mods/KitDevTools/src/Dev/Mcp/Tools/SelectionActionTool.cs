@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.AI.Sts2.Mcp;
+using KitLib.Host;
 
 namespace KitLib.Mcp.Tools;
 
@@ -35,6 +35,7 @@ internal sealed class SelectionActionTool : IMcpTool {
     }
     """;
 
-    public async Task<JsonNode> ExecuteAsync(JsonObject args) =>
-        await McpCardSelectionHelper.PickAsync(args);
+    public async Task<JsonNode> ExecuteAsync(JsonObject args) {
+        return await KitLibGameOps.PickSelection(args);
+    }
 }

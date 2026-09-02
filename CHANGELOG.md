@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Game ops API** — Content mods can read a lean run snapshot and drive player UI (play cards, pick map nodes, collect rewards, …) through `KitLibGameOps`. KitAI is not required.
+
 ## [0.40.0] - 2026-08-31
 
 ### Added

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package KitLib family products into a release zip (four mods/ folders)."""
+"""Legacy flat-layout staging helper (prefer package_bundle.py --zip-all for release zips)."""
 
 from __future__ import annotations
 

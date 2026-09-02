@@ -48,4 +48,5 @@ public static class ModuleEntry {
         KitLibPanelOps.OnPanelDetach = ui => AiHudOverlayUI.Detach((NGlobalUi)ui);
         KitLibHost.SyncAiHudOverlay = () => AiHudOverlayUI.SyncState();
     }
+
 }

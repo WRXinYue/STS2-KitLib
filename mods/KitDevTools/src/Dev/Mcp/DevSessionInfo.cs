@@ -1,20 +1,17 @@
 using System.Text.Json.Nodes;
 using Godot;
-using KitLib.AI;
-using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
 using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
+using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Mcp;
 
 internal static class DevSessionInfo {
     public static JsonObject Capture() {
-        var provider = AiPlayServices.StateProvider;
-        var runActive = provider.IsRunActive;
-        var phase = ResolvePhase(provider, runActive);
+        var run = RunManager.Instance;
+        var runActive = run?.IsInProgress == true;
 
         var prompts = new JsonArray();
         if (KitLibPanelOps.IsProgressLossPromptVisible?.Invoke() == true)
@@ -22,15 +19,15 @@ internal static class DevSessionInfo {
 
         return new JsonObject {
             ["runActive"] = runActive,
-            ["phase"] = phase,
+            ["phase"] = ResolvePhase(runActive),
             ["inDevRun"] = KitLibState.InDevRun,
             ["blockingPrompts"] = prompts,
         };
     }
 
-    private static string ResolvePhase(IGameStateProvider provider, bool runActive) {
+    static string ResolvePhase(bool runActive) {
         if (runActive)
-            return provider.CurrentPhase.ToString();
+            return "Run";
 
         var mainMenu = NGame.Instance?.MainMenu;
         if (mainMenu != null && GodotObject.IsInstanceValid(mainMenu)) {
@@ -39,10 +36,10 @@ internal static class DevSessionInfo {
             return "MainMenu";
         }
 
-        return GamePhase.None.ToString();
+        return "None";
     }
 
-    private static bool IsCharacterSelectOpen(NMainMenu mainMenu) {
+    static bool IsCharacterSelectOpen(NMainMenu mainMenu) {
         var charSelect = mainMenu.SubmenuStack?.GetSubmenuType<NCharacterSelectScreen>();
         return charSelect != null && charSelect.IsVisibleInTree() && charSelect.Visible;
     }

@@ -5,15 +5,14 @@ using MegaCrit.Sts2.Core.Nodes.Rewards;
 using MegaCrit.Sts2.Core.Nodes.Screens;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 
-namespace KitLib.AI.Sts2.Helpers;
+namespace KitLib.Game;
 
-/// <summary>State waits for <see cref="NRewardsScreen"/> — aligned with official handler flow.</summary>
-internal static class RewardScreenHelper {
+internal static class RewardClaimWait {
     public static Task<bool> WaitForClaimAsync(
         NRewardsScreen screen,
         NRewardButton button,
         TimeSpan timeout) =>
-        Sts2WaitHelper.Until(() => IsClaimFinished(screen, button), timeout);
+        GameWait.Until(() => IsClaimFinished(screen, button), timeout);
 
     static bool IsClaimFinished(NRewardsScreen screen, NRewardButton button) {
         var top = NOverlayStack.Instance?.Peek();

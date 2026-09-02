@@ -1,0 +1,40 @@
+using System.Linq;
+using MegaCrit.Sts2.Core.Combat;
+using MegaCrit.Sts2.Core.Entities.Creatures;
+using MegaCrit.Sts2.Core.Models;
+
+using LiveCombatState = MegaCrit.Sts2.Core.Combat.ICombatState;
+
+namespace KitLib.Game;
+
+internal static class CombatTargetResolver {
+    public static Creature? ResolveEnemy(LiveCombatState combatState, CardModel card, int combatIndex) {
+        var preferred = FindEnemyByCombatIndex(combatState, combatIndex);
+        if (preferred != null && card.IsValidTarget(preferred))
+            return preferred;
+
+        return combatState.HittableEnemies.FirstOrDefault(card.IsValidTarget);
+    }
+
+    public static Creature? ResolveHittableEnemy(LiveCombatState combatState, int combatIndex) {
+        var preferred = FindEnemyByCombatIndex(combatState, combatIndex);
+        if (preferred != null && combatState.HittableEnemies.Contains(preferred))
+            return preferred;
+
+        return combatState.HittableEnemies.FirstOrDefault(e => e.IsAlive);
+    }
+
+    public static Creature? FindEnemyByCombatIndex(LiveCombatState combatState, int combatIndex) {
+        if (combatIndex < 0)
+            return null;
+
+        int slot = 0;
+        foreach (var enemy in combatState.Enemies) {
+            if (slot == combatIndex)
+                return enemy.IsAlive ? enemy : null;
+            slot++;
+        }
+
+        return null;
+    }
+}

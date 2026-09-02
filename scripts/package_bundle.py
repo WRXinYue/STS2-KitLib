@@ -42,8 +42,8 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.bundle_build import build_bundle  # noqa: E402
 from lib.dotenv import load_dotenv  # noqa: E402
-from lib.mod_products import PRODUCTS, product_build_dir  # noqa: E402
-from lib.release_assets import mod_zip_path  # noqa: E402
+from lib.mod_products import PRODUCT_ORDER, PRODUCTS, product_build_dir  # noqa: E402
+from lib.release_assets import product_zip_path, read_product_version  # noqa: E402
 from lib.sts2_profiles import (  # noqa: E402
     VARIANT_TARGETS,
     resolve_profile_dir,
@@ -433,14 +433,33 @@ def _iter_zip_entries(staging: Path) -> list[tuple[Path, str]]:
     return entries
 
 
-def package_zip(staging: Path, *, version: str = "") -> Path:
-    _assert_staging(staging)
-    entries = _iter_zip_entries(staging)
-    if not entries:
-        fail("No files to package.")
+def _staging_path(product_id: str) -> Path:
+    if product_id == BUNDLE_ID:
+        return STAGING_DIR
+    if product_id in FLAT_PRODUCTS:
+        return _flat_staging(product_id)
+    return _sibling_staging(product_id)
 
-    version = version.strip() or _read_version()
-    zip_path = mod_zip_path(_REPO, version)
+
+def _iter_product_zip_entries(staging: Path, product_id: str) -> list[tuple[Path, str]]:
+    if product_id == BUNDLE_ID:
+        return _iter_zip_entries(staging)
+
+    entries: list[tuple[Path, str]] = []
+    for path in sorted(p for p in staging.rglob("*") if p.is_file()):
+        arc = path.relative_to(staging).as_posix()
+        entries.append((path, f"{product_id}/{arc}"))
+    return entries
+
+
+def package_product_zip(staging: Path, product_id: str, *, version: str = "") -> Path:
+    _assert_staging(staging, product_id=product_id)
+    entries = _iter_product_zip_entries(staging, product_id)
+    if not entries:
+        fail(f"No files to package for {product_id}.")
+
+    version = version.strip() or read_product_version(_REPO, product_id)
+    zip_path = product_zip_path(_REPO, product_id, version)
     zip_path.parent.mkdir(parents=True, exist_ok=True)
 
     fd, tmp = tempfile.mkstemp(prefix="zip-", suffix=".tmp", dir=zip_path.parent)
@@ -460,6 +479,18 @@ def package_zip(staging: Path, *, version: str = "") -> Path:
 
     print(f"[bundle] Packaged {zip_path.name} ({len(entries)} files)")
     return zip_path
+
+
+def package_zip(staging: Path, *, version: str = "") -> Path:
+    return package_product_zip(staging, BUNDLE_ID, version=version)
+
+
+def package_all_product_zips() -> list[Path]:
+    zips: list[Path] = []
+    for product_id in PRODUCT_ORDER:
+        staging = _staging_path(product_id)
+        zips.append(package_product_zip(staging, product_id))
+    return zips
 
 
 def _copy_staging_to(stage_root: Path, *, product_id: str | None = None) -> Path:
@@ -511,7 +542,8 @@ def main() -> int:
         default=None,
         help="Copy mods/KitLib/ tree to STAGE-DIR/KitLib/ (no zip).",
     )
-    ap.add_argument("--zip-only", action="store_true", help="Zip existing build/KitLib-release/")
+    ap.add_argument("--zip-only", action="store_true", help="Zip existing build/*-release/ staging (KitLib only unless --zip-all)")
+    ap.add_argument("--zip-all", action="store_true", help="Zip every product into build/<Product>-vX.Y.Z.zip")
     ap.add_argument("--no-zip", action="store_true", help="Build staging only; do not write release zip")
     ap.add_argument("--version", default="", help="Override version for zip name (default: KitLib.json)")
     ap.add_argument(
@@ -537,6 +569,12 @@ def main() -> int:
         targets = [(label, variant_profile(label)) for label in labels]
 
     try:
+        if args.zip_all and args.zip_only:
+            for product_id in PRODUCT_ORDER:
+                _assert_staging(_staging_path(product_id), product_id=product_id)
+            package_all_product_zips()
+            return 0
+
         if args.zip_only:
             staging = STAGING_DIR
             _assert_staging(staging, product_id=product_id)
@@ -556,7 +594,9 @@ def main() -> int:
         if args.deploy:
             _deploy_to_game()
 
-        if not args.no_zip and args.stage_dir is None:
+        if args.zip_all:
+            package_all_product_zips()
+        elif not args.no_zip and args.stage_dir is None:
             package_zip(staging, version=args.version)
     except RuntimeError as ex:
         fail(str(ex))

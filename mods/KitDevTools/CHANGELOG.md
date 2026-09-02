@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **MCP match tools** — `get_game_state`, `combat_action`, `map_action`, and card-selection tools work without KitAI. They drive the run through KitLib.
+- **MCP `dev_dump_monster_mechanics`** — Removed. Monster mechanic dumps belong with KitAI, not DevTools.
+
+### Fixed
+
+- **Launch without KitAI** — Installing KitDevTools without KitAI no longer crashes the game at startup. Thanks to 初葉夜澜 for the report.
+
 ## [0.0.1] - 2026-08-31
 
 ### Fixed

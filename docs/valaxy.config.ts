@@ -86,6 +86,7 @@ export default defineValaxyConfig<ThemeConfig>({
         link: '/api/',
         subNav: [
           { text: { en: 'Overview', 'zh-CN': '概览' }, link: '/api/' },
+          { locale: 'nav.game_ops', link: '/api/game-ops' },
           { locale: 'nav.cards', link: '/api/cards' },
           { locale: 'nav.relics', link: '/api/relics' },
           { locale: 'nav.potions', link: '/api/potions' },
