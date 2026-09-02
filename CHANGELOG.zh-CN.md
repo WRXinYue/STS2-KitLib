@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.41.0] - 2026-09-03
+
 ### Added
 
 - **游戏操作 API** — 内容 mod 可通过 `KitLibGameOps` 读取 lean 局面并驱动玩家 UI（出牌、选图、领奖励等）。不需要安装 KitAI。
