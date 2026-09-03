@@ -117,6 +117,28 @@ public sealed class ModVariantLayoutTests {
     }
 
     [Fact]
+    public void TryResolveCoreAssemblyPath_UsesVariantAndNeverKitLibLoader() {
+        var kitLib = Path.Combine(Path.GetTempPath(), "kitlib-core-path-" + Guid.NewGuid().ToString("N"));
+        var previous = KitLibHostPaths.ActiveVariantRoot;
+        try {
+            Directory.CreateDirectory(kitLib);
+            File.WriteAllText(Path.Combine(kitLib, "KitLib.dll"), "loader");
+            WriteProductVariant(kitLib, "0.107.1", "KitLib.Core.dll");
+
+            KitLibHostPaths.SetActiveVariantRoot(null);
+            var picked = KitLibHostPaths.TryResolveCoreAssemblyPath(kitLib, new Version(0, 107, 1));
+            Assert.NotNull(picked);
+            Assert.Equal("KitLib.Core.dll", Path.GetFileName(picked));
+            Assert.Equal("0.107.1", Path.GetFileName(Path.GetDirectoryName(picked)));
+            Assert.EndsWith(Path.Combine("0.107.1", "KitLib.Core.dll"), picked, StringComparison.OrdinalIgnoreCase);
+        }
+        finally {
+            KitLibHostPaths.SetActiveVariantRoot(previous);
+            Directory.Delete(kitLib, recursive: true);
+        }
+    }
+
+    [Fact]
     public void ResolveModFolder_WalksUpFromVariantAndModules() {
         var mods = Path.Combine(Path.GetTempPath(), "kitlib-mod-folder-" + Guid.NewGuid().ToString("N"));
         var kitLib = Path.Combine(mods, "KitLib");

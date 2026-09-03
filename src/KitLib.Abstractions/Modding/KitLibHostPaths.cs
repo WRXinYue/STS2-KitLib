@@ -24,11 +24,33 @@ public static class KitLibHostPaths {
         ActiveVariantRoot = string.IsNullOrWhiteSpace(variantRoot) ? null : Path.GetFullPath(variantRoot);
     }
 
-    public static string ResolveContentRoot(string modDir) =>
-        ActiveVariantRoot ?? modDir;
+    public static string ResolveContentRoot(string modDir) {
+        if (!string.IsNullOrEmpty(ActiveVariantRoot))
+            return ActiveVariantRoot;
 
-    public static string ResolveCorePath(string modDir) =>
-        Path.Combine(ResolveContentRoot(modDir), CoreFileName);
+        var folder = ResolveModFolder(modDir);
+        return TryPickVariantDirectory(folder, hostVersion: null) ?? folder;
+    }
+
+    /// <summary>
+    /// <c>lib/&lt;api&gt;/KitLib.Core.dll</c> for this install. Does not fall back to
+    /// <c>KitLib.dll</c> or a root-level Core DLL.
+    /// </summary>
+    public static string? TryResolveCoreAssemblyPath(string kitLibModDir, Version? hostVersion = null) {
+        var folder = ResolveModFolder(kitLibModDir);
+        if (!string.IsNullOrEmpty(ActiveVariantRoot)) {
+            var active = Path.Combine(ActiveVariantRoot, CoreFileName);
+            if (File.Exists(active))
+                return Path.GetFullPath(active);
+        }
+
+        var picked = TryPickVariantDirectory(folder, hostVersion);
+        if (picked is null)
+            return null;
+
+        var core = Path.Combine(picked, CoreFileName);
+        return File.Exists(core) ? Path.GetFullPath(core) : null;
+    }
 
     public static string ResolveModulesDirectory(string modDir) =>
         Path.Combine(ResolveContentRoot(modDir), ModulesSubdir);
@@ -179,32 +201,22 @@ public static class KitLibHostPaths {
     /// </summary>
     static void AddSiblingProductDirectories(string productDir, Action<string?> add) {
         var pickedApi = TryGetActiveCompatTarget();
-        if (pickedApi != null) {
-            var variantDir = Path.Combine(productDir, LibDirectoryName, pickedApi);
-            if (File.Exists(Path.Combine(variantDir, CompatTargetMarkerName))) {
-                add(Path.Combine(variantDir, ModulesSubdir));
-                add(variantDir);
-            }
-
-            add(Path.Combine(productDir, ModulesSubdir));
-            add(productDir);
-            return;
+        if (pickedApi is null) {
+            var kitLibDir = ResolveSiblingKitLibModDirectory(productDir) ?? ResolveModFolder(productDir);
+            var picked = TryPickVariantDirectory(kitLibDir, hostVersion: null);
+            if (picked is not null)
+                pickedApi = Path.GetFileName(picked);
         }
 
-        add(Path.Combine(productDir, ModulesSubdir));
-        add(productDir);
-
-        var libRoot = Path.Combine(productDir, LibDirectoryName);
-        if (!Directory.Exists(libRoot))
+        if (pickedApi is null)
             return;
 
-        foreach (var variantDir in Directory.EnumerateDirectories(libRoot)) {
-            var marker = Path.Combine(variantDir, CompatTargetMarkerName);
-            if (!File.Exists(marker))
-                continue;
-            add(Path.Combine(variantDir, ModulesSubdir));
-            add(variantDir);
-        }
+        var variantDir = Path.Combine(productDir, LibDirectoryName, pickedApi);
+        if (!File.Exists(Path.Combine(variantDir, CompatTargetMarkerName)))
+            return;
+
+        add(Path.Combine(variantDir, ModulesSubdir));
+        add(variantDir);
     }
 
     static string? TryGetActiveCompatTarget() {

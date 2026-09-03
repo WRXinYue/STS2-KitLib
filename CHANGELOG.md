@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-09-03
+
+### Fixed
+
+- **Variant loading** — Resolving `KitLib.Core` no longer falls back to root `KitLib.dll` (`FileLoadException`), so Core and content mods (including KitModPanel) initialize on stable 0.107.1.
+- **Mod dependency preload** — KitLib and content-mod thin loaders preload `KitLib.Abstractions` / `KitLib.ModVariantLoader` before JIT so STS2’s mod ALC can bind host DLLs from the mod folder.
+
 ## [0.41.0] - 2026-09-03
 
 ### Added

@@ -61,11 +61,19 @@ internal static class ModAssemblyLoader {
 
     static Assembly? OnModContextResolving(AssemblyLoadContext context, AssemblyName name) {
         HookContext(context);
+        var simple = name.Name;
+        if (string.IsNullOrEmpty(simple))
+            return null;
+
+        var existing = FindLoaded(simple);
+        if (existing != null)
+            return existing;
+
         var path = FindDependencyPath(name, context);
         if (path == null)
             return null;
 
-        return PreloadIntoContext(context, path);
+        return LoadMatching(context, path, simple);
     }
 
     static Assembly? Resolve(string? requestedName) {
@@ -86,9 +94,14 @@ internal static class ModAssemblyLoader {
             if (path == null)
                 continue;
             try {
-                return PreloadIntoContext(context, path);
+                var loaded = LoadMatching(context, path, simple);
+                if (loaded != null)
+                    return loaded;
             }
             catch (FileNotFoundException) {
+            }
+            catch (FileLoadException) {
+                return FindLoaded(simple);
             }
         }
 
@@ -102,15 +115,13 @@ internal static class ModAssemblyLoader {
             return null;
 
         if (!string.IsNullOrEmpty(modDir)) {
-            if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(simple, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
-                var core = Path.Combine(modDir, KitLibHostPaths.CoreFileName);
-                if (File.Exists(core))
-                    return Path.GetFullPath(core);
+            if (string.Equals(simple, "KitLib.Core", StringComparison.OrdinalIgnoreCase))
+                return KitLibHostPaths.TryResolveCoreAssemblyPath(modDir);
 
-                var flat = Path.Combine(modDir, "KitLib.dll");
-                if (File.Exists(flat))
-                    return Path.GetFullPath(flat);
+            if (string.Equals(simple, "KitLib", StringComparison.OrdinalIgnoreCase)) {
+                var loader = Path.Combine(KitLibHostPaths.ResolveModFolder(modDir), "KitLib.dll");
+                if (File.Exists(loader))
+                    return Path.GetFullPath(loader);
             }
         }
 
@@ -146,27 +157,36 @@ internal static class ModAssemblyLoader {
                 continue;
 
             var dir = Path.GetDirectoryName(asm.Location);
-            if (!string.IsNullOrEmpty(dir)) {
-                // Core may live at mods/KitLib/; prefer that root for sibling discovery.
-                if (string.Equals(Path.GetFileName(dir), "KitLib", StringComparison.OrdinalIgnoreCase)
-                    || File.Exists(Path.Combine(dir, KitLibHostPaths.CoreFileName))
-                    || File.Exists(Path.Combine(dir, "KitLib.dll"))) {
-                    _modDir = dir;
-                    return dir;
-                }
+            if (string.IsNullOrEmpty(dir))
+                continue;
 
-                var sibling = KitLibHostPaths.ResolveSiblingKitLibModDirectory(dir);
-                if (sibling is not null) {
-                    _modDir = sibling;
-                    return sibling;
-                }
-
-                _modDir = dir;
-                return dir;
+            var folder = KitLibHostPaths.ResolveModFolder(dir);
+            if (string.Equals(Path.GetFileName(folder), "KitLib", StringComparison.OrdinalIgnoreCase)
+                || File.Exists(Path.Combine(folder, "KitLib.dll"))) {
+                _modDir = folder;
+                return folder;
             }
+
+            var sibling = KitLibHostPaths.ResolveSiblingKitLibModDirectory(folder);
+            if (sibling is not null) {
+                _modDir = sibling;
+                return sibling;
+            }
+
+            _modDir = folder;
+            return folder;
         }
 
         return null;
+    }
+
+    static Assembly? LoadMatching(AssemblyLoadContext context, string path, string requestedSimple) {
+        var fileSimple = AssemblyName.GetAssemblyName(path).Name;
+        if (string.IsNullOrEmpty(fileSimple)
+            || !string.Equals(fileSimple, requestedSimple, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return PreloadIntoContext(context, path);
     }
 
     static Assembly PreloadIntoContext(AssemblyLoadContext context, string path) {

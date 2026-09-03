@@ -65,7 +65,6 @@ MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
 	src/KitLib.Modules.Cheat/KitLib.Cheat.csproj \
 	src/KitLib.Modules.Dev/KitLib.Dev.csproj src/KitLib.Modules.AI/KitLib.AI.csproj \
 	src/KitLib.Modules.Panel/KitLib.Panel.csproj
-PACKAGE_MODULES := $(PYTHON) scripts/package_modules.py
 PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
 STEAM_PRODUCT := $(if $(PRODUCT),$(PRODUCT),KitLib)
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,) $(if $(SKIP_BUILD),--skip-build,)
@@ -96,12 +95,12 @@ help:
 	@echo "  hooks-run    pre-commit run --all-files"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build-flat + deploy all products (KitLib, KitModPanel, KitDevTools, KitAI)"
+	@echo "  sync         build + deploy all products (KitLib, KitModPanel, KitDevTools, KitAI)"
 	@echo "  sync PRODUCT=X  deploy one product only"
 	@echo "  sync-full    sync + deploy tools/ (MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
-	@echo "  build-all    same as build-flat (current Sts2Profile)"
-	@echo "  build-flat   dotnet build against pinned STS2 ref (flat KitLib.dll)"
+	@echo "  build-all    same as build (current Sts2Profile)"
+	@echo "  build-flat   deprecated alias for build (KitLib.dll + lib/<api>/KitLib.Core.dll)"
 	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib|KitModPanel|KitDevTools|KitAI)"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against sts2.dll"
@@ -195,7 +194,7 @@ deps:
 	$(DOTNET) restore $(MOD_MAIN)
 
 build: build-flat
-	@echo "KitLib flat bundle for profile $(STS2_COMPILE_PROFILE)"
+	@echo "KitLib variant bundle for profile $(STS2_COMPILE_PROFILE)"
 
 build-flat:
 	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile $(STS2_COMPILE_PROFILE)

@@ -14,10 +14,24 @@ internal static class SmokeModPaths {
 
     public static string Manifest => Path.Combine(ModDir, "mod_manifest.json");
 
-    public static string KitLibDll =>
-        Environment.GetEnvironmentVariable("KITLIB_DLL") is { Length: > 0 } fromEnv
-            ? Path.GetFullPath(fromEnv)
-            : Path.Combine(RepoRoot, "build", "KitLib", "KitLib.Core.dll");
+    public static string KitLibDll {
+        get {
+            if (Environment.GetEnvironmentVariable("KITLIB_DLL") is { Length: > 0 } fromEnv)
+                return Path.GetFullPath(fromEnv);
+
+            var root = Path.Combine(RepoRoot, "build", "KitLib");
+            var lib = Path.Combine(root, "lib");
+            if (Directory.Exists(lib)) {
+                foreach (var dir in Directory.EnumerateDirectories(lib)) {
+                    var core = Path.Combine(dir, "KitLib.Core.dll");
+                    if (File.Exists(core))
+                        return core;
+                }
+            }
+
+            return Path.Combine(root, "lib", StableCompatTarget, "KitLib.Core.dll");
+        }
+    }
 
     public static string AbstractionsDll {
         get {

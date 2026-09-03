@@ -42,10 +42,13 @@ internal static class SmokeModTestHost {
             && File.Exists(SmokeModPaths.AbstractionsDll))
             return Alc.LoadFromAssemblyPath(SmokeModPaths.AbstractionsDll);
 
-        if ((string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(simpleName, "KitLib.Core", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(simpleName, "KitLib.Core", StringComparison.OrdinalIgnoreCase)
             && File.Exists(SmokeModPaths.KitLibDll))
             return Alc.LoadFromAssemblyPath(SmokeModPaths.KitLibDll);
+
+        var loader = Path.Combine(SmokeModPaths.RepoRoot, "build", "KitLib", "KitLib.dll");
+        if (string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase) && File.Exists(loader))
+            return Alc.LoadFromAssemblyPath(loader);
 
         var sts2Candidate = Path.Combine(SmokeModPaths.Sts2DataDir, $"{simpleName}.dll");
         if (File.Exists(sts2Candidate))

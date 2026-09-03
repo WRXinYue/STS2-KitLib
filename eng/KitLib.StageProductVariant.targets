@@ -1,0 +1,24 @@
+<Project>
+  <!-- After building a product implementation DLL, stage it under lib/compat then
+       replace the Workshop-root ModId.dll with KitLib's shared content loader. -->
+  <PropertyGroup>
+    <ModVariantModId Condition="'$(ModVariantModId)' == ''">$(ModId)</ModVariantModId>
+    <ModVariantBundleDir Condition="'$(ModVariantBundleDir)' == ''">$(RepoBuildDir)</ModVariantBundleDir>
+    <ModVariantStageKitLibHostDeps>false</ModVariantStageKitLibHostDeps>
+  </PropertyGroup>
+
+  <Import Project="$(MSBuildThisFileDirectory)STS2.KitLib.ModVariantLoader.targets" />
+
+  <Target Name="StageProductImplementationIntoLib" AfterTargets="Build">
+    <PropertyGroup>
+      <_ProductCompatTarget>$(KitLibSts2PinnedVersion)</_ProductCompatTarget>
+      <_ProductVariantDir>$(RepoBuildDir)\lib\$(_ProductCompatTarget)</_ProductVariantDir>
+    </PropertyGroup>
+    <Error Condition="'$(_ProductCompatTarget)' == ''" Text="KitLibSts2PinnedVersion is empty; cannot stage lib/compat/." />
+    <MakeDir Directories="$(_ProductVariantDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(_ProductVariantDir)" SkipUnchangedFiles="true" />
+    <WriteLinesToFile File="$(_ProductVariantDir)\compat-target.txt" Lines="$(_ProductCompatTarget)" Overwrite="true" />
+  </Target>
+
+  <Target Name="StageProductVariantLoader" AfterTargets="StageProductImplementationIntoLib" DependsOnTargets="StageModVariantContentLoader" />
+</Project>

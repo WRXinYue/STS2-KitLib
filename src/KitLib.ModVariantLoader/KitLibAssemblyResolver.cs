@@ -51,6 +51,12 @@ internal static class KitLibAssemblyResolver {
         if (existing != null)
             return existing;
 
+        foreach (var alc in AssemblyLoadContext.All) {
+            existing = FindLoadedInContext(alc, simple);
+            if (existing != null)
+                return existing;
+        }
+
         var path = FindDependencyPath(simple);
         if (path is null)
             return null;
@@ -67,22 +73,13 @@ internal static class KitLibAssemblyResolver {
     }
 
     static string? FindDependencyPath(string simpleName) {
-        if (string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(simpleName, "KitLib.Core", StringComparison.OrdinalIgnoreCase)) {
-            var core = KitLibHostPaths.ResolveCorePath(_kitLibModDir!);
-            if (File.Exists(core))
-                return Path.GetFullPath(core);
+        if (string.Equals(simpleName, "KitLib.Core", StringComparison.OrdinalIgnoreCase))
+            return KitLibHostPaths.TryResolveCoreAssemblyPath(_kitLibModDir!);
 
-            var picked = KitLibHostPaths.TryPickVariantDirectory(_kitLibModDir!, Sts2HostVersion.Numeric);
-            if (picked is not null) {
-                var variantCore = Path.Combine(picked, KitLibHostPaths.CoreFileName);
-                if (File.Exists(variantCore))
-                    return Path.GetFullPath(variantCore);
-            }
-
-            var flat = Path.Combine(_kitLibModDir!, "KitLib.dll");
-            if (File.Exists(flat))
-                return Path.GetFullPath(flat);
+        if (string.Equals(simpleName, "KitLib", StringComparison.OrdinalIgnoreCase)) {
+            var loader = Path.Combine(KitLibHostPaths.ResolveModFolder(_kitLibModDir!), "KitLib.dll");
+            if (File.Exists(loader))
+                return Path.GetFullPath(loader);
         }
 
         foreach (var dir in KitLibHostPaths.EnumerateModuleSearchDirectories(_kitLibModDir!)) {

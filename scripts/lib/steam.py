@@ -140,17 +140,36 @@ def resolve_sts2_dir() -> Path | None:
     return None
 
 
-def read_sts2_dir_from_local_props(repo_root: Path) -> Path | None:
+def _read_local_props_text(repo_root: Path) -> str | None:
     props = repo_root / "local.props"
     if not props.is_file():
         return None
-    text = props.read_text(encoding="utf-8", errors="replace")
+    return props.read_text(encoding="utf-8", errors="replace")
+
+
+def read_sts2_dir_from_local_props(repo_root: Path) -> Path | None:
+    text = _read_local_props_text(repo_root)
+    if not text:
+        return None
     m = re.search(r"<Sts2Dir>([^<]+)</Sts2Dir>", text)
     if not m:
         return None
     p = Path(m.group(1).strip()).expanduser()
     if _sts2_game_root_valid(p):
         return p.resolve()
+    return None
+
+
+def read_sts2_profile_from_local_props(repo_root: Path) -> str | None:
+    text = _read_local_props_text(repo_root)
+    if not text:
+        return None
+    m = re.search(r"<Sts2Profile>([^<]+)</Sts2Profile>", text)
+    if not m:
+        return None
+    profile = m.group(1).strip().lower()
+    if profile in ("stable", "beta"):
+        return profile
     return None
 
 

@@ -10,8 +10,10 @@
     <PublishDir>$(RepoBuildDir)</PublishDir>
     <OutputPath>$(RepoBuildDir)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <ModVariantBundleDir>$(RepoRoot)build\$(ModId)</ModVariantBundleDir>
   </PropertyGroup>
   <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />
+  <Import Project="$(RepoRoot)eng\KitLib.StageProductVariant.targets" />
   <ItemGroup>
     <Compile Include="MainFile.cs" />
     <None Include="KitModPanel.json" Condition="Exists('KitModPanel.json')">

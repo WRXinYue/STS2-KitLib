@@ -7,6 +7,7 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputPath>$(MSBuildThisFileDirectory)bin\$(Configuration)\$(ModVariantModId)\</OutputPath>
     <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
@@ -31,6 +32,8 @@
   </Target>
 
   <ItemGroup>
+    <Compile Include="MainFile.cs" />
+    <Compile Include="HostDependencyPreloader.cs" />
     <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False" />
     <ProjectReference Include="..\..\src\KitLib.ModVariantLoader\KitLib.ModVariantLoader.csproj">
       <Private>false</Private>

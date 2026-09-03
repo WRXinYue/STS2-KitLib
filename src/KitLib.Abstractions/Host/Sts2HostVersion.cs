@@ -1,18 +1,18 @@
-using System.Text.Json;
 using KitLib.Abstractions.Compat;
 using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Saves;
 
-namespace KitLib.ModVariantLoader;
+namespace KitLib.Abstractions.Host;
 
-internal static class Sts2HostVersion {
-    private static readonly Lazy<HostVersionSnapshot> Lazy = new(Resolve);
+/// <summary>Running STS2 version from <c>ReleaseInfo</c>, else the sts2 assembly version.</summary>
+public static class Sts2HostVersion {
+    static readonly Lazy<HostVersionSnapshot> Lazy = new(Resolve);
 
-    internal static Version? Numeric => Lazy.Value.Numeric;
+    public static Version? Numeric => Lazy.Value.Numeric;
 
-    internal static string? ReleaseLabel => Lazy.Value.ReleaseLabel;
+    public static string? ReleaseLabel => Lazy.Value.ReleaseLabel;
 
-    private static HostVersionSnapshot Resolve() {
+    static HostVersionSnapshot Resolve() {
         string? fallbackLabel = null;
 
         try {
@@ -31,10 +31,10 @@ internal static class Sts2HostVersion {
         return new(null, fallbackLabel);
     }
 
-    private static bool IsAllZero(Version v) =>
+    static bool IsAllZero(Version v) =>
         v.Major == 0 && v is { Minor: 0, Build: 0, Revision: 0 };
 
-    private static bool TryCaptureVersionLabel(
+    static bool TryCaptureVersionLabel(
         string? label,
         ref string? fallbackLabel,
         out HostVersionSnapshot snapshot) {
@@ -50,5 +50,5 @@ internal static class Sts2HostVersion {
         return true;
     }
 
-    private readonly record struct HostVersionSnapshot(Version? Numeric, string? ReleaseLabel);
+    readonly record struct HostVersionSnapshot(Version? Numeric, string? ReleaseLabel);
 }

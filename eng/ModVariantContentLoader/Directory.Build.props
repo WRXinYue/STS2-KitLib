@@ -5,5 +5,7 @@
     <_ModVariantModId Condition="'$(_ModVariantModId)' == ''">ModVariantContentLoader</_ModVariantModId>
     <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(_ModVariantModId)\</BaseIntermediateOutputPath>
     <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)obj\$(_ModVariantModId)\</MSBuildProjectExtensionsPath>
+    <!-- Per-mod-id obj folders; SDK DefaultItemExcludes only covers this project's BaseIntermediateOutputPath. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj\**</DefaultItemExcludes>
   </PropertyGroup>
 </Project>

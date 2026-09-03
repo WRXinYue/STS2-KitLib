@@ -41,6 +41,11 @@
     <MakeDir Directories="$(ModVariantBundleDir)" />
     <MSBuild
       Projects="$(ModVariantContentLoaderProject)"
+      Targets="Restore"
+      Properties="Configuration=$(Configuration);Sts2Dir=$(Sts2Dir);Sts2ApiSignatureRoot=$(Sts2ApiSignatureRoot);Sts2ApiCompat=$(Sts2ApiCompat);ModVariantModId=$(ModVariantModId)"
+      BuildInParallel="false" />
+    <MSBuild
+      Projects="$(ModVariantContentLoaderProject)"
       Targets="Build"
       Properties="Configuration=$(Configuration);Sts2Dir=$(Sts2Dir);Sts2ApiSignatureRoot=$(Sts2ApiSignatureRoot);Sts2ApiCompat=$(Sts2ApiCompat);ModVariantModId=$(ModVariantModId)"
       BuildInParallel="false">

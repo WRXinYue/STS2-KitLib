@@ -9,7 +9,12 @@ import shutil
 import sys
 from pathlib import Path
 
-from lib.steam import _sts2_game_root_valid, read_sts2_dir_from_local_props, resolve_sts2_dir
+from lib.steam import (
+    _sts2_game_root_valid,
+    read_sts2_dir_from_local_props,
+    read_sts2_profile_from_local_props,
+    resolve_sts2_dir,
+)
 
 ProfileName = str  # "stable" | "beta"
 
@@ -73,6 +78,25 @@ def read_sts2_profile_env() -> ProfileName | None:
     return None
 
 
+def normalize_release_version(version: str) -> str:
+    return version.lstrip("vV").strip()
+
+
+def infer_profile_from_release_version(version: str) -> ProfileName | None:
+    normalized = normalize_release_version(version)
+    for profile, pinned in _PINNED_VERSIONS.items():
+        if normalized == pinned:
+            return profile  # type: ignore[return-value]
+    return None
+
+
+def infer_profile_from_sts2_dir(sts2_dir: Path) -> ProfileName | None:
+    version = read_release_version(sts2_dir)
+    if not version:
+        return None
+    return infer_profile_from_release_version(version)
+
+
 def _file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -90,8 +114,39 @@ def resolve_compile_profile(
     env = read_sts2_profile_env()
     if env:
         return env
-    _ = repo_root, sts2_dir, allow_game_inference
+
+    root = repo_root or Path(__file__).resolve().parents[2]
+    game_dir = sts2_dir
+    if game_dir is None:
+        game_dir = read_sts2_dir_from_local_props(root) or resolve_sts2_dir()
+
+    if allow_game_inference and game_dir is not None:
+        inferred = infer_profile_from_sts2_dir(game_dir)
+        if inferred:
+            return inferred
+
+    from_props = read_sts2_profile_from_local_props(root)
+    if from_props:
+        return from_props  # type: ignore[return-value]
+
     return DEFAULT_PROFILE
+
+
+def resolve_deploy_compat_target(*, game_root: Path, repo_root: Path | None = None) -> str:
+    """Map the installed game's release_info.json to lib/<api>/ for deploy."""
+    version = read_release_version(game_root)
+    if version:
+        normalized = normalize_release_version(version)
+        for pinned in _PINNED_VERSIONS.values():
+            if normalized == pinned:
+                return pinned
+        print(
+            f"Warning: game reports v{normalized}, which is not a known KitLib compat target "
+            f"({', '.join(_PINNED_VERSIONS.values())}); falling back to compile profile.",
+            file=sys.stderr,
+        )
+
+    return pinned_version(resolve_compile_profile(repo_root=repo_root, sts2_dir=game_root))
 
 
 def assert_capture_source_matches_profile(profile: ProfileName, source: Path) -> None:

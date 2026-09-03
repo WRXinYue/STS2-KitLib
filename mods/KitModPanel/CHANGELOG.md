@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-03
+
+### Fixed
+
+- **Variant loading** — Workshop entry no longer shares the `KitModPanel` assembly name with `lib/<api>/KitModPanel.dll`, which previously failed to bind `KitLib.Core`.
+
 ## [0.1.0] - 2026-09-03
 
 ### Changed

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.42.0] - 2026-09-03
+
+### Fixed
+
+- **变体加载** — 解析 `KitLib.Core` 不再回退到根目录 `KitLib.dll`（`FileLoadException`），正式版 0.107.1 上 Core 与内容模组（含 KitModPanel）可以正常初始化。
+- **Mod 依赖预加载** — KitLib 与内容模组薄入口在 JIT 前预加载 `KitLib.Abstractions` / `KitLib.ModVariantLoader`，修复 STS2 模组 ALC 不探测同目录导致的初始化失败。
+
 ## [0.41.0] - 2026-09-03
 
 ### Added

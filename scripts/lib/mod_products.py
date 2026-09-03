@@ -34,6 +34,9 @@ class ModProduct:
     dependency_ids: tuple[str, ...]
     """mod_manifest dependency ids (informational; JSON is source of truth)."""
 
+    variant_implementation: bool = False
+    """Implementation DLL lives at lib/<api>/<entry_dll> (shared content loader at root)."""
+
 
 PRODUCTS: dict[str, ModProduct] = {
     "KitLib": ModProduct(
@@ -53,6 +56,7 @@ PRODUCTS: dict[str, ModProduct] = {
         entry_dll="KitModPanel.dll",
         loader_csproj="mods/KitModPanel/KitModPanel.csproj",
         dependency_ids=("KitLib",),
+        variant_implementation=True,
     ),
     "KitDevTools": ModProduct(
         id="KitDevTools",

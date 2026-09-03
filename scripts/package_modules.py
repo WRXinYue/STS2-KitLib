@@ -30,7 +30,6 @@ ABSTRACTIONS_RUNTIME_DLLS = [
 _SKIP_PACKAGE_NAMES = {"GodotSharp.dll"}
 _SKIP_PACKAGE_ROOT_NAMES = {
     "kitlib-variants.manifest",
-    "lib",
     MODULES_SUBDIR,
 }
 _SKIP_PACKAGE_SUFFIXES = {".pdb"}
@@ -103,11 +102,20 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
     raise FileNotFoundError(f"Missing {dll_name}. Run dotnet restore.")
 
 
+def _has_variant_core(bundle_dir: Path) -> bool:
+    lib = bundle_dir / "lib"
+    if not lib.is_dir():
+        return False
+    return any((child / CORE_DLL).is_file() for child in lib.iterdir() if child.is_dir())
+
+
 def _assert_kitlib_bundle(bundle_dir: Path) -> None:
-    required = ["KitLib.dll", CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+    required = ["KitLib.dll", ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
+    if not _has_variant_core(bundle_dir):
+        raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing lib/<api>/{CORE_DLL}.")
 
 
 def _read_version() -> str:

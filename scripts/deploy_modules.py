@@ -20,6 +20,11 @@ from lib.mod_products import (  # noqa: E402
     product_build_dir,
 )
 from lib.steam import read_sts2_dir_from_local_props  # noqa: E402
+from lib.sts2_profiles import (  # noqa: E402
+    pinned_version,
+    resolve_compile_profile,
+    resolve_deploy_compat_target,
+)
 
 _REPO = _SCRIPT_DIR.parent
 
@@ -94,11 +99,22 @@ def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
     raise FileNotFoundError(f"Missing {dll_name}. Run dotnet restore (repo packages/ or global NuGet cache).")
 
 
+def _has_variant_core(bundle_dir: Path) -> bool:
+    lib = bundle_dir / "lib"
+    if not lib.is_dir():
+        return False
+    return any((child / CORE_DLL).is_file() for child in lib.iterdir() if child.is_dir())
+
+
 def _assert_kitlib_bundle(bundle_dir: Path) -> None:
-    required = ["KitLib.dll", CORE_DLL, ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
+    required = ["KitLib.dll", ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
     missing = [name for name in required if not (bundle_dir / name).is_file()]
     if missing:
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
+    if not _has_variant_core(bundle_dir):
+        raise FileNotFoundError(
+            f"KitLib bundle incomplete under {bundle_dir}: missing lib/<api>/{CORE_DLL}."
+        )
 
 
 def _mods_root(game_root: Path) -> Path:
@@ -126,7 +142,7 @@ def _all_satellite_stems() -> set[str]:
 
 
 def _should_deploy_root_item(item: Path, satellite_stems: set[str]) -> bool:
-    if item.name in (MODULES_SUBDIR, "lib", "obj"):
+    if item.name in (MODULES_SUBDIR, "obj"):
         return False
     if item.name in _SKIP_DEPLOY_NAMES:
         return False
@@ -136,6 +152,8 @@ def _should_deploy_root_item(item: Path, satellite_stems: set[str]) -> bool:
     if item.suffix.lower() in _SKIP_DEPLOY_SUFFIXES:
         return False
     if item.suffix.lower() == ".dll" and item.stem in satellite_stems:
+        return False
+    if item.name == CORE_DLL:
         return False
     return True
 
@@ -219,12 +237,13 @@ def _copy_build_root(src_dir: Path, dst: Path, satellite_stems: set[str]) -> lis
     return failed
 
 
-def _deploy_product(mods_root: Path, product_id: str) -> list[Path]:
+def _deploy_product(mods_root: Path, product_id: str, compat_target: str) -> list[Path]:
     product = PRODUCTS[product_id]
     dst = mods_root / product.id
     _try_reset_bundle_dir(dst)
     modules_dst = dst / MODULES_SUBDIR
     if product.satellite_dlls:
+        modules_dst = dst / "lib" / compat_target / MODULES_SUBDIR
         modules_dst.mkdir(parents=True, exist_ok=True)
     failed: list[Path] = []
     satellite_stems = _all_satellite_stems()
@@ -265,6 +284,9 @@ def _deploy_product(mods_root: Path, product_id: str) -> list[Path]:
         if not _copy_file_safe(dll, target):
             failed.append(target)
 
+    if product.satellite_dlls:
+        (modules_dst.parent / "compat-target.txt").write_text(compat_target + "\n", encoding="utf-8")
+
     if product.manifest_path.is_file():
         _copy_file_safe(product.manifest_path, dst / "mod_manifest.json")
 
@@ -303,13 +325,24 @@ def main() -> int:
         print("Sts2Dir not set. Run make init or pass --game-root.", file=sys.stderr)
         return 1
 
-    mods_root = _mods_root(game_root.resolve())
+    game_root = game_root.resolve()
+    mods_root = _mods_root(game_root)
     mods_root.mkdir(parents=True, exist_ok=True)
+
+    compat_target = resolve_deploy_compat_target(game_root=game_root, repo_root=_REPO)
+    compile_target = pinned_version(resolve_compile_profile(repo_root=_REPO, sts2_dir=game_root))
+    if compat_target != compile_target:
+        print(
+            f"Warning: last build used profile {compile_target} but game is v{compat_target}; "
+            f"run make sync again so binaries match the installed game.",
+            file=sys.stderr,
+        )
+    print(f"Deploy compat target: lib/{compat_target}/ (game v{compat_target})")
 
     products = tuple(args.products) if args.products else PRODUCT_ORDER
     failed: list[Path] = []
     for product_id in products:
-        failed.extend(_deploy_product(mods_root, product_id))
+        failed.extend(_deploy_product(mods_root, product_id, compat_target))
 
     if failed:
         names = ", ".join(path.name for path in failed)

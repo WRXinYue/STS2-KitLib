@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
 using HarmonyLib;
+using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
@@ -75,16 +76,6 @@ public static class ModVariantBootstrap {
                 logPrefix,
                 $"Host version label={hostLabel ?? "<none>"} numeric={hostNumeric?.ToString() ?? "<none>"}; picked {Path.GetFileName(variantDir)}.");
             LoadAndInitializeImplementation(hostAssembly, modId, dllPath, logPrefix, harmonyId);
-            return;
-        }
-
-        var flatPath = Path.Combine(loaderDir, implFile);
-        if (File.Exists(flatPath) &&
-            !string.Equals(
-                Path.GetFullPath(flatPath),
-                Path.GetFullPath(hostAssembly.Location),
-                StringComparison.OrdinalIgnoreCase)) {
-            LoadAndInitializeImplementation(hostAssembly, modId, flatPath, logPrefix, harmonyId);
             return;
         }
 
@@ -308,22 +299,11 @@ public static class ModVariantBootstrap {
         if (hostIsKitLibLoader)
             return;
 
-        var corePath = KitLibHostPaths.ResolveCorePath(kitLibDir);
-        if (!File.Exists(corePath)) {
-            var picked = KitLibHostPaths.TryPickVariantDirectory(kitLibDir, Sts2HostVersion.Numeric);
-            if (picked is not null)
-                corePath = Path.Combine(picked, KitLibHostPaths.CoreFileName);
-        }
-
-        if (File.Exists(corePath)) {
+        var corePath = KitLibHostPaths.TryResolveCoreAssemblyPath(kitLibDir, Sts2HostVersion.Numeric);
+        if (corePath is not null && File.Exists(corePath)) {
             if (FindLoaded(alc, "KitLib.Core") is null)
-                alc.LoadFromAssemblyPath(Path.GetFullPath(corePath));
-            return;
+                alc.LoadFromAssemblyPath(corePath);
         }
-
-        var legacyPath = Path.Combine(kitLibDir, "KitLib.dll");
-        if (File.Exists(legacyPath) && FindLoaded(alc, KitLibModFolderName) is null)
-            alc.LoadFromAssemblyPath(Path.GetFullPath(legacyPath));
     }
 
     private static Assembly? FindLoaded(AssemblyLoadContext alc, string simpleName) {

@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-03
+
+### Fixed
+
+- **变体加载** — 工坊入口不再与 `lib/<api>/KitModPanel.dll` 同名，避免绑定 `KitLib.Core` 失败。
+
 ## [0.1.0] - 2026-09-03
 
 ### Changed

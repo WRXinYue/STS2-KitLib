@@ -4,11 +4,11 @@
     <KitLibBundleDir>$(RepoRoot)build/KitLib/</KitLibBundleDir>
     <_KitLibAbstractionsBundleDll>$(KitLibBundleDir)KitLib.Abstractions.dll</_KitLibAbstractionsBundleDll>
     <_KitLibAbstractionsBinDll>$(RepoRoot)src/KitLib.Abstractions/bin/$(Configuration)/net9.0/KitLib.Abstractions.dll</_KitLibAbstractionsBinDll>
-    <_KitLibCoreBundleDll>$(KitLibBundleDir)KitLib.Core.dll</_KitLibCoreBundleDll>
+    <_KitLibCoreVariantDll>$(KitLibBundleDir)lib\$(KitLibSts2PinnedVersion)\KitLib.Core.dll</_KitLibCoreVariantDll>
     <_KitLibCoreBinDll>$(RepoRoot)src/KitLib.Core/bin/$(Configuration)/net9.0/KitLib.Core.dll</_KitLibCoreBinDll>
     <KitLibAbstractionsDllPath>$(_KitLibAbstractionsBundleDll)</KitLibAbstractionsDllPath>
     <KitLibAbstractionsDllPath Condition="!Exists('$(KitLibAbstractionsDllPath)')">$(_KitLibAbstractionsBinDll)</KitLibAbstractionsDllPath>
-    <KitLibCoreDllPath>$(_KitLibCoreBundleDll)</KitLibCoreDllPath>
+    <KitLibCoreDllPath>$(_KitLibCoreVariantDll)</KitLibCoreDllPath>
     <KitLibCoreDllPath Condition="!Exists('$(KitLibCoreDllPath)')">$(_KitLibCoreBinDll)</KitLibCoreDllPath>
   </PropertyGroup>
 
@@ -23,11 +23,11 @@
       Projects="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj"
       Targets="Build"
       Properties="Configuration=$(Configuration);Sts2Profile=$(_CoreBuildProfile);Sts2Dir=$(_ContentModSts2Dir);DeployToGame=false"
-      Condition="!Exists('$(_KitLibCoreBundleDll)') and !Exists('$(_KitLibCoreBinDll)')" />
+      Condition="!Exists('$(_KitLibCoreVariantDll)') and !Exists('$(_KitLibCoreBinDll)')" />
     <PropertyGroup>
       <KitLibAbstractionsDllPath Condition="Exists('$(_KitLibAbstractionsBundleDll)')">$(_KitLibAbstractionsBundleDll)</KitLibAbstractionsDllPath>
       <KitLibAbstractionsDllPath Condition="'$(KitLibAbstractionsDllPath)' == '' and Exists('$(_KitLibAbstractionsBinDll)')">$(_KitLibAbstractionsBinDll)</KitLibAbstractionsDllPath>
-      <KitLibCoreDllPath Condition="Exists('$(_KitLibCoreBundleDll)')">$(_KitLibCoreBundleDll)</KitLibCoreDllPath>
+      <KitLibCoreDllPath Condition="Exists('$(_KitLibCoreVariantDll)')">$(_KitLibCoreVariantDll)</KitLibCoreDllPath>
       <KitLibCoreDllPath Condition="'$(KitLibCoreDllPath)' == '' and Exists('$(_KitLibCoreBinDll)')">$(_KitLibCoreBinDll)</KitLibCoreDllPath>
     </PropertyGroup>
     <ItemGroup>
@@ -46,7 +46,7 @@
       Text="KitLib.Abstractions.dll not found (checked $(_KitLibAbstractionsBundleDll) and $(_KitLibAbstractionsBinDll)). Run make build." />
     <Error
       Condition="'$(KitLibCoreDllPath)' == '' or !Exists('$(KitLibCoreDllPath)')"
-      Text="KitLib.Core.dll not found (checked $(_KitLibCoreBundleDll) and $(_KitLibCoreBinDll)). Run make build." />
+      Text="KitLib.Core.dll not found (checked $(_KitLibCoreVariantDll) and $(_KitLibCoreBinDll)). Run make build." />
   </Target>
   <!-- Dual-API packs: EnableModVariantBundle=true stages lib/<api>/<ModId>.dll + compat-target.txt
        and builds KitLib's shared Workshop-root loader (eng/ModVariantContentLoader). -->
