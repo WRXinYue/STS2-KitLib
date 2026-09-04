@@ -1,0 +1,4 @@
+<Project>
+  <!-- Presence of this file disables ILRepack.Lib.MSBuild.Task's Release AfterBuild merge
+       of $(OutputPath)*.dll. Fat Core is packed in IlRepackNuGetDeps, then moved to lib/<api>/. -->
+</Project>

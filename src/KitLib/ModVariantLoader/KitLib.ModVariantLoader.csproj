@@ -29,6 +29,8 @@
     </Reference>
   </ItemGroup>
 
+  <!-- Drop this target (and stop shipping the DLL) once MpLib / LustTravel2 / other
+       published packs no longer JIT-reference KitLib.ModVariantLoader from the Workshop root. -->
   <Target Name="StageModVariantLoaderForLegacyContent" AfterTargets="Build">
     <MakeDir Directories="$(RepoBuildDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(RepoBuildDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetPath)')" />

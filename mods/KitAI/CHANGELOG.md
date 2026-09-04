@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-05
+
+### Changed
+
+- **AI plugins** — Character strategies, move modifiers, and snapshot contributors now live in KitAI. Mods that extend AutoPlay or companions must reference KitAI. Card/map action types (`GameAction`, `GamePhase`) stay in KitLib.
+
 ## [0.1.0] - 2026-09-03
 
 ### Changed

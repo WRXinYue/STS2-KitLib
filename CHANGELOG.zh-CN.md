@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-09-05
+
+### Changed
+
+- **宿主布局** — 工坊根目录 `KitLib.dll` 只负责按游戏版本选实现，真正的库在 `lib/<api>/`。按本版 KitLib 重打的内容 mod 用同一套入口，启动时不再依赖 `KitLib.ModVariantLoader`。该 DLL 仍会随包提供，已发布的旧内容包可以继续用。
+
+### Fixed
+
+- **内容 mod 无法启动** — 以前因缺少 KitLib 旁路 DLL 在启动时崩溃的内容 mod（Android / PC 上较常见）可以按这套布局初始化。
+
 ## [0.42.0] - 2026-09-03
 
 ### Fixed

@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-05
+
+### Changed
+
+- **AI 插件** — 角色策略、出牌修正、快照扩展改在 KitAI。扩展 AutoPlay / 同伴的内容 mod 需要引用 KitAI。出牌/地图等操作类型（`GameAction`、`GamePhase`）仍在 KitLib。
+
 ## [0.1.0] - 2026-09-03
 
 ### Changed

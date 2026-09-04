@@ -93,7 +93,7 @@ mods/
     modules/KitLib.AI.dll
 ```
 
-`KitLib.dll` is a zero-dependency picker. Each `lib/<api>/` folder is a complete implementation unit (fat Core + Abstractions facade). Content-mod Workshop roots use the same picker shape (`eng/ModVariantContentLoader`) and do not reference `KitLib.ModVariantLoader`. KitLib may still ship `KitLib.ModVariantLoader.dll` for already-published content packs.
+`KitLib.dll` is a zero-dependency picker. Each `lib/<api>/` folder is a complete implementation unit (fat Core + Abstractions facade). Content-mod Workshop roots use the same picker shape (`eng/ModVariantContentLoader`) and do not reference `KitLib.ModVariantLoader`. KitLib still ships `KitLib.ModVariantLoader.dll` for already-published packs that JIT-load it; stop staging it after those workshop items republish with the shared picker.
 :::
 
 ::: zh-CN
@@ -113,7 +113,7 @@ mods/
     modules/KitLib.AI.dll
 ```
 
-`KitLib.dll` 只做版本选择。每个 `lib/<api>/` 目录是一套完整实现（合并后的 Core + Abstractions 门面）。内容 mod 的 Workshop 根 DLL 同样是零依赖 picker（`eng/ModVariantContentLoader`），不引用 `KitLib.ModVariantLoader`。KitLib 仍可能带上该 DLL，供已经发布的旧内容包解析。
+`KitLib.dll` 只做版本选择。每个 `lib/<api>/` 目录是一套完整实现（合并后的 Core + Abstractions 门面）。内容 mod 的 Workshop 根 DLL 同样是零依赖 picker（`eng/ModVariantContentLoader`），不引用 `KitLib.ModVariantLoader`。KitLib 仍会带上该 DLL，给会 JIT 加载它的旧工坊包；那些物品改用共享 picker 并重新发布后即可停止打包。
 
 依赖：KitModPanel → KitLib；KitDevTools → KitLib；KitAI → KitLib（KitDevTools 可选，用于 AI Host 面板）。
 :::

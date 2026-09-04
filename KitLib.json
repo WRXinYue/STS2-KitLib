@@ -3,7 +3,7 @@
   "name": "KitLib",
   "author": "WRXinYue",
   "description": "Foundation library and host for Slay the Spire 2 mods. Pair with KitModPanel, KitDevTools, and KitAI for UI and tooling.",
-  "version": "0.42.0",
+  "version": "0.43.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [],

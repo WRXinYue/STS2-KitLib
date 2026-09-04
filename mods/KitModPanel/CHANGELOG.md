@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-05
+
+### Fixed
+
+- **Won't start with current KitLib** — The Workshop file is KitLib's shared version picker, so the panel loads `lib/<api>/KitModPanel.dll` instead of dying when the game does not probe extra DLLs.
+
 ## [0.1.1] - 2026-09-03
 
 ### Fixed

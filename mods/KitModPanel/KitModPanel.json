@@ -3,11 +3,11 @@
   "name": "KitModPanel [模组面板]",
   "author": "WRXinYue",
   "description": "Main-menu mod list and settings. Requires KitLib. Shows STS2-RitsuLib settings pages when RitsuLib is installed.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [
-    { "id": "KitLib", "min_version": "0.40.0" }
+    { "id": "KitLib", "min_version": "0.43.0" }
   ],
   "affects_gameplay": false
 }

@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.43.0] - 2026-09-05
+
+### Changed
+
+- **Host layout** — Workshop `KitLib.dll` only picks the matching game version. The library itself lives under `lib/<api>/`. Content mods that rebuild against this KitLib use the same picker and no longer depend on `KitLib.ModVariantLoader` to start. That DLL is still shipped so already-published packs keep working.
+
+### Fixed
+
+- **Content mods failing to start** — Mods that crashed on launch with a missing KitLib sidecar DLL (common on Android and PC) can initialize with this layout.
+
 ## [0.42.0] - 2026-09-03
 
 ### Fixed
