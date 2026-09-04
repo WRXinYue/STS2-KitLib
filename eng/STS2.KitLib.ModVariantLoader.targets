@@ -17,18 +17,15 @@
 
   <Target Name="StageKitLibSharedBundleDeps" BeforeTargets="ComposeModVariantBundle" Condition="'$(ModVariantStageKitLibHostDeps)' != 'false'">
     <PropertyGroup>
-      <_KitLibAbstractionsProject>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.Abstractions', 'KitLib.Abstractions.csproj'))</_KitLibAbstractionsProject>
-      <_KitLibModVariantLoaderProject>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.ModVariantLoader', 'KitLib.ModVariantLoader.csproj'))</_KitLibModVariantLoaderProject>
-      <_KitLibAbstractionsDll>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.Abstractions', 'bin', '$(Configuration)', 'net9.0', 'KitLib.Abstractions.dll'))</_KitLibAbstractionsDll>
-      <_KitLibModVariantLoaderDll>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib.ModVariantLoader', 'bin', '$(Configuration)', 'net9.0', 'KitLib.ModVariantLoader.dll'))</_KitLibModVariantLoaderDll>
+      <_KitLibModVariantLoaderProject>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib', 'ModVariantLoader', 'KitLib.ModVariantLoader.csproj'))</_KitLibModVariantLoaderProject>
+      <_KitLibModVariantLoaderDll>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib', 'ModVariantLoader', 'bin', '$(Configuration)', 'net9.0', 'KitLib.ModVariantLoader.dll'))</_KitLibModVariantLoaderDll>
     </PropertyGroup>
     <MSBuild
-      Projects="$(_KitLibAbstractionsProject);$(_KitLibModVariantLoaderProject)"
+      Projects="$(_KitLibModVariantLoaderProject)"
       Targets="Build"
       Properties="Configuration=$(Configuration)"
       BuildInParallel="true" />
     <MakeDir Directories="$(ModVariantBundleDir)" />
-    <Copy SourceFiles="$(_KitLibAbstractionsDll)" DestinationFolder="$(ModVariantBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_KitLibAbstractionsDll)')" />
     <Copy SourceFiles="$(_KitLibModVariantLoaderDll)" DestinationFolder="$(ModVariantBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_KitLibModVariantLoaderDll)')" />
   </Target>
 

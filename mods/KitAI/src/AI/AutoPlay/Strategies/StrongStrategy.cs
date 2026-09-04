@@ -5,7 +5,7 @@ using KitLib.AI.AutoPlay.Scoring;
 using KitLib.AI.Combat;
 using KitLib.AI.Combat.Simulation;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 
 namespace KitLib.AI.AutoPlay.Strategies;
 

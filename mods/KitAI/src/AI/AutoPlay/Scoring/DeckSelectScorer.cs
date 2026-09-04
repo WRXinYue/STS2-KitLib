@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
+using KitLib.Game;
 
 namespace KitLib.AI.AutoPlay.Scoring;
 

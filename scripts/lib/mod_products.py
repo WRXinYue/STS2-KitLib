@@ -84,10 +84,10 @@ PRODUCT_ORDER = ("KitLib", "KitModPanel", "KitDevTools", "KitAI")
 SATELLITE_TO_PRODUCT: dict[str, str] = {dll: product.id for product in PRODUCTS.values() for dll in product.satellite_dlls}
 
 KITLIB_CORE_PROJECTS = [
-    "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
-    "src/KitLib.Core/KitLib.Core.csproj",
-    "src/KitLib.Loader/KitLib.Loader.csproj",
-    "src/KitLib.ModVariantLoader/KitLib.ModVariantLoader.csproj",
+    "src/KitLib/Abstractions/KitLib.Abstractions.csproj",
+    "src/KitLib/Core/KitLib.Core.csproj",
+    "src/KitLib/Loader/KitLib.Loader.csproj",
+    "src/KitLib/ModVariantLoader/KitLib.ModVariantLoader.csproj",
 ]
 
 SATELLITE_PROJECTS = {
@@ -121,8 +121,8 @@ def bundle_projects_for(product_id: str | None) -> list[str]:
     if product_id == "KitModPanel":
         product = PRODUCTS[product_id]
         return [
-            "src/KitLib.Abstractions/KitLib.Abstractions.csproj",
-            "src/KitLib.Core/KitLib.Core.csproj",
+            "src/KitLib/Abstractions/KitLib.Abstractions.csproj",
+            "src/KitLib/Core/KitLib.Core.csproj",
             product.loader_csproj,
         ]
 

@@ -1,4 +1,4 @@
-using KitLib.Abstractions.ModPanel;
+using KitModPanel;
 
 namespace KitLib.ModPanel.Tests;
 

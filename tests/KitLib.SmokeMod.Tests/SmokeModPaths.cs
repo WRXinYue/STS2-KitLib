@@ -35,11 +35,17 @@ internal static class SmokeModPaths {
 
     public static string AbstractionsDll {
         get {
-            var bundle = Path.Combine(RepoRoot, "build", "KitLib", "KitLib.Abstractions.dll");
-            if (File.Exists(bundle))
-                return bundle;
+            var compile = Path.Combine(
+                RepoRoot, "src", "KitLib", "Abstractions", "bin", "Debug", "net9.0", "KitLib.Abstractions.dll");
+            if (File.Exists(compile))
+                return compile;
 
-            return Path.Combine(RepoRoot, "src", "KitLib.Abstractions", "bin", "Debug", "net9.0", "KitLib.Abstractions.dll");
+            compile = Path.Combine(
+                RepoRoot, "src", "KitLib", "Abstractions", "bin", "Release", "net9.0", "KitLib.Abstractions.dll");
+            if (File.Exists(compile))
+                return compile;
+
+            return Path.Combine(RepoRoot, "src", "KitLib", "Abstractions", "bin", "Debug", "net9.0", "KitLib.Abstractions.dll");
         }
     }
 

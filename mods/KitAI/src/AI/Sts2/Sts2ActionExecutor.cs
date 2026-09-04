@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2.Helpers;
+using KitLib.Game;
 using KitLib.Host;
 using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
@@ -131,7 +131,7 @@ public sealed class Sts2ActionExecutor : IGameActionExecutor {
             case TargetType.AnyEnemy: {
                     if (combatState.HittableEnemies.Any() == false)
                         return null;
-                    return CombatTargetResolver.ResolveEnemy((CombatState)combatState, card, targetIndex);
+                    return KitLib.AI.Sts2.Helpers.CombatTargetResolver.ResolveEnemy((CombatState)combatState, card, targetIndex);
                 }
             case TargetType.AnyAlly: {
                     var allies = combatState.PlayerCreatures.Where(c => c.IsAlive);

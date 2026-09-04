@@ -8,7 +8,7 @@
     <IsPackable>false</IsPackable>
     <RollForward>LatestMajor</RollForward>
     <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</RepoRoot>
-    <KitLibAbstractionsProject>$(RepoRoot)src\KitLib.Abstractions\KitLib.Abstractions.csproj</KitLibAbstractionsProject>
+    <KitLibAbstractionsProject>$(RepoRoot)src\KitLib\Abstractions\KitLib.Abstractions.csproj</KitLibAbstractionsProject>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using KitLib.AI.AutoPlay.Scoring;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 
 namespace KitLib.AI.AutoPlay.Strategies;
 

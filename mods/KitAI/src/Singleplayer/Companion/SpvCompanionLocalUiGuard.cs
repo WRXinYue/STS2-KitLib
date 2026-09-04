@@ -1,6 +1,6 @@
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2.Helpers;
 using KitLib.AI.Sts2.Snapshots;
+using KitLib.Game;
 using KitLib.Multiplayer.Play;
 using KitLib.Multiplayer.PseudoCoop;
 using MegaCrit.Sts2.Core.Entities.Players;

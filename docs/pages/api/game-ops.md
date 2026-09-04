@@ -15,7 +15,7 @@ Read a **lean** run snapshot and drive **player UI** (play a card, pick a map no
 | | |
 | --- | --- |
 | **Entry point** | `KitLib.Host.KitLibGameOps` |
-| **Types** | `KitLib.AI.Core.Schema` (`GameAction`, `ActionType`, `SelectionHint`, `ActionResult`, `GamePhase`) |
+| **Types** | `KitLib.Game` (`GameAction`, `ActionType`, `SelectionHint`, `ActionResult`, `GamePhase`) |
 | **Result** | `ActionResult` (`Success`, `Message`) |
 
 This is **not** a cheat API. It clicks the same screens a player would. For adding cards or toggling cheats, use [Cards](/api/cards/) / [Cheats](/api/runtime-cheat/).
@@ -29,7 +29,7 @@ Lean snapshots omit AI knowledge (`mechanicFlags`, `MonsterMechanicIndex`, scori
 | | |
 | --- | --- |
 | **调用入口** | `KitLib.Host.KitLibGameOps` |
-| **类型** | `KitLib.AI.Core.Schema`（`GameAction`、`ActionType`、`SelectionHint`、`ActionResult`、`GamePhase`） |
+| **类型** | `KitLib.Game`（`GameAction`、`ActionType`、`SelectionHint`、`ActionResult`、`GamePhase`） |
 | **返回值** | `ActionResult`（`Success`、`Message`） |
 
 这**不是**作弊 API，走的是玩家会点的同一套界面。加牌或开关作弊请用 [卡牌](/api/cards/) / [作弊](/api/runtime-cheat/)。
@@ -45,7 +45,7 @@ Lean 快照不含 AI 知识库（`mechanicFlags`、`MonsterMechanicIndex`、打�
 Call from the **Godot main thread** (or use `Execute` / `PickSelection`, which marshal onto it). `Snapshot()` and `SelectionState()` are synchronous and do **not** marshal.
 
 ```csharp
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 using KitLib.Host;
 
 var snap = KitLibGameOps.Snapshot();
@@ -69,7 +69,7 @@ if (!result.Success) {
 在 **Godot 主线程**调用（或使用会切到主线程的 `Execute` / `PickSelection`）。`Snapshot()` 与 `SelectionState()` 是同步的，**不会**切线程。
 
 ```csharp
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 using KitLib.Host;
 
 var snap = KitLibGameOps.Snapshot();

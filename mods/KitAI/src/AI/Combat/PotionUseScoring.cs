@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.AI.Combat.Simulation;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
+using KitLib.Game;
 
 namespace KitLib.AI.Combat;
 

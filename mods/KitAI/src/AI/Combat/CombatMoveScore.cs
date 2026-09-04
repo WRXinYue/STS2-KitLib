@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 
 namespace KitLib.AI.Combat;
 

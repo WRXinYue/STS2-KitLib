@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 using KitLib.Host;
 
 namespace KitLib.Mcp.Tools;

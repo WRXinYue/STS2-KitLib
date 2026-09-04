@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using KitLib.Actions;
 using KitLib.AI.Combat.Simulation;
 using KitLib.AI.Sts2.Snapshots;
+using KitLib.Game;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
@@ -47,7 +48,7 @@ public static class MapPathPlanner {
         if (map == null || map.GetRowCount() == 0)
             return null;
 
-        var snapshot = GameSnapshot.Capture(state, player, Core.Schema.GamePhase.MapSelection);
+        var snapshot = GameSnapshot.Capture(state, player, GamePhase.MapSelection);
         var ctx = MapRouteContext.FromSnapshot(snapshot);
         var survivalIndex = MapSurvivalIndex.Build(map);
 

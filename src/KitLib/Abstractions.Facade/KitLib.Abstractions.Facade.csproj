@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>KitLib.Abstractions</AssemblyName>
+    <RootNamespace>KitLib</RootNamespace>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <GodotProjectDir>$(MSBuildThisFileDirectory).no-godot</GodotProjectDir>
+    <RepoRoot Condition="'$(RepoRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..\'))</RepoRoot>
+    <_AbstractionsDll>$(RepoRoot)src\KitLib\Abstractions\bin\$(Configuration)\net9.0\KitLib.Abstractions.dll</_AbstractionsDll>
+    <_GeneratedForwards>$(MSBuildThisFileDirectory)obj\$(Configuration)\TypeForwards.g.cs</_GeneratedForwards>
+    <_FacadeGenProject>$(RepoRoot)tools\AbstractionsFacadeGen\AbstractionsFacadeGen.csproj</_FacadeGenProject>
+    <_FacadeGenDll>$(RepoRoot)tools\AbstractionsFacadeGen\bin\$(Configuration)\net9.0\AbstractionsFacadeGen.dll</_FacadeGenDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\KitLib.Core.csproj">
+      <Private>false</Private>
+      <ExcludeAssets>analyzers;build;buildtransitive</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\Abstractions\KitLib.Abstractions.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(_GeneratedForwards)" Condition="Exists('$(_GeneratedForwards)')" />
+  </ItemGroup>
+
+  <Target Name="GenerateAbstractionsTypeForwards" BeforeTargets="CoreCompile">
+    <MSBuild Projects="$(_FacadeGenProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration)" />
+    <Error Condition="!Exists('$(_AbstractionsDll)')" Text="Build KitLib.Abstractions before the runtime facade." />
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_GeneratedForwards)'))" />
+    <Exec
+      Command="dotnet exec --roll-forward LatestMajor &quot;$(_FacadeGenDll)&quot; &quot;$(_AbstractionsDll)&quot; &quot;$(_GeneratedForwards)&quot; --search &quot;$([System.IO.Path]::GetDirectoryName('$(_AbstractionsDll)'))&quot; --search &quot;$(Sts2DataDir)&quot;"
+      WorkingDirectory="$(MSBuildThisFileDirectory)" />
+    <ItemGroup>
+      <Compile Include="$(_GeneratedForwards)" KeepDuplicates="false" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="StageFacadeIntoVariantLib" AfterTargets="Build">
+    <PropertyGroup>
+      <_CoreVariantDir>$(RepoRoot)build\KitLib\lib\$(KitLibSts2PinnedVersion)</_CoreVariantDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(_CoreVariantDir)" />
+    <ItemGroup>
+      <_VariantDirs Include="$(_CoreVariantDir)" />
+      <_VariantDirs Include="$(RepoRoot)build\KitLib\lib\*" />
+    </ItemGroup>
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="%(_VariantDirs.Identity)" SkipUnchangedFiles="true" Condition="Exists('$(TargetPath)') and Exists('%(_VariantDirs.Identity)')" />
+  </Target>
+</Project>

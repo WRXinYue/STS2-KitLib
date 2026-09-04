@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""Build a multi-API KitLib variant pack (loader + lib/<api>/Core + modules).
-
-Inspired by LustTravel2's package_bundle.py.
+"""Build a multi-API KitLib variant pack (loader + complete lib/<api>/ units).
 
 Layout:
   build/KitLib-release/
     KitLib.dll
-    KitLib.Abstractions.dll, KitLib.ModVariantLoader.dll
-    Semver.dll, Microsoft.Extensions.Primitives.dll
+    KitLib.ModVariantLoader.dll  # legacy content-mod thin loaders only
     mod_manifest.json
-    lib/0.107.1/KitLib.Core.dll, modules/*.dll, compat-target.txt
+    lib/0.107.1/KitLib.Core.dll, KitLib.Abstractions.dll (facade), compat-target.txt
     lib/0.110.1/...
   build/KitModPanel-release/, KitDevTools-release/, KitAI-release/:
     <Product>.dll, mod_manifest.json
@@ -53,23 +50,15 @@ from lib.sts2_profiles import (  # noqa: E402
 BUNDLE_ID = "KitLib"
 STAGING_DIR = _REPO / "build" / f"{BUNDLE_ID}-release"
 BUILD_DIR = _REPO / "build" / BUNDLE_ID
-LOADER_PROJECT = _REPO / "src" / "KitLib.Loader" / "KitLib.Loader.csproj"
-VARIANT_LOADER_PROJECT = _REPO / "src" / "KitLib.ModVariantLoader" / "KitLib.ModVariantLoader.csproj"
+LOADER_PROJECT = _REPO / "src" / "KitLib" / "Loader" / "KitLib.Loader.csproj"
 MANIFEST_SRC = _REPO / "KitLib.json"
 COMPAT_MARKER = "compat-target.txt"
 CORE_DLL = "KitLib.Core.dll"
-VARIANT_LOADER_DLL = "KitLib.ModVariantLoader.dll"
 MODULES_SUBDIR = "modules"
 SIBLING_VARIANT_PRODUCTS = ("KitModPanel", "KitDevTools", "KitAI")
-SHARED_ROOT_FILES = [
-    "KitLib.Abstractions.dll",
-    "Semver.dll",
-    "Microsoft.Extensions.Primitives.dll",
-]
 _ZIP_ROOT_FILES = [
     "KitLib.dll",
-    *SHARED_ROOT_FILES,
-    VARIANT_LOADER_DLL,
+    "KitLib.ModVariantLoader.dll",
     "mod_manifest.json",
     "mod_image.png",
 ]
@@ -179,11 +168,17 @@ def _stage_variant(
         variant_dir.mkdir(parents=True)
         modules_dst.mkdir(parents=True)
 
-        core_src = BUILD_DIR / "lib" / compat / CORE_DLL
+        src_variant = BUILD_DIR / "lib" / compat
+        if not src_variant.is_dir():
+            fail(f"Missing {src_variant} after build for {compat} ({profile}).")
+        core_src = src_variant / CORE_DLL
         if not core_src.is_file():
             fail(f"Missing {core_src} after build for {compat} ({profile}).")
+        facade_src = src_variant / "KitLib.Abstractions.dll"
+        if not facade_src.is_file():
+            fail(f"Missing facade {facade_src} after build for {compat} ({profile}).")
 
-        shutil.copy2(core_src, variant_dir / CORE_DLL)
+        shutil.copytree(src_variant, variant_dir, dirs_exist_ok=True)
         # KitLib product owns User only; other satellites ship in sibling product mods.
         for dll_name in PRODUCTS["KitLib"].satellite_dlls:
             src = product_build_dir("KitLib") / MODULES_SUBDIR / f"{dll_name}.dll"
@@ -249,14 +244,6 @@ def _stage_sibling_roots(*, product_id: str | None = None) -> None:
 
 
 def _stage_shared_root(*, configuration: str) -> None:
-    for name in SHARED_ROOT_FILES:
-        src = BUILD_DIR / name
-        if not src.is_file():
-            src = _REPO / "src" / "KitLib.Abstractions" / "bin" / configuration / "net9.0" / name
-        if not src.is_file():
-            fail(f"Missing shared DLL {name}. Run dotnet restore and retry.")
-        shutil.copy2(src, STAGING_DIR / name)
-
     if MANIFEST_SRC.is_file():
         shutil.copy2(MANIFEST_SRC, STAGING_DIR / "mod_manifest.json")
     _copy_mod_image("KitLib", STAGING_DIR)
@@ -280,27 +267,9 @@ def _build_loader(*, configuration: str, profile: str) -> None:
     if not loader_out.is_file():
         fail(f"Loader build did not produce {loader_out}")
     shutil.copy2(loader_out, STAGING_DIR / "KitLib.dll")
-
-    _dotnet(
-        [
-            "build",
-            str(VARIANT_LOADER_PROJECT),
-            "-c",
-            configuration,
-            "-v:q",
-            f"-p:Sts2Dir={sts2_dir}",
-            f"-p:Sts2Profile={profile}",
-            "-p:KitLibPersonalCompat=true",
-        ]
-    )
-    variant_src = BUILD_DIR / VARIANT_LOADER_DLL
-    if not variant_src.is_file():
-        variant_src = (
-            _REPO / "src" / "KitLib.ModVariantLoader" / "bin" / configuration / "net9.0" / VARIANT_LOADER_DLL
-        )
-    if not variant_src.is_file():
-        fail(f"ModVariantLoader build did not produce {variant_src}")
-    shutil.copy2(variant_src, STAGING_DIR / VARIANT_LOADER_DLL)
+    mvl_out = BUILD_DIR / "KitLib.ModVariantLoader.dll"
+    if mvl_out.is_file():
+        shutil.copy2(mvl_out, STAGING_DIR / "KitLib.ModVariantLoader.dll")
 
 
 def _assert_staging(staging: Path, *, product_id: str | None = None) -> None:
@@ -317,7 +286,6 @@ def _assert_staging(staging: Path, *, product_id: str | None = None) -> None:
             staging / "KitLib.dll",
             staging / "mod_manifest.json",
             staging / "lib",
-            staging / VARIANT_LOADER_DLL,
         ]
     missing = [str(path.relative_to(_REPO)) for path in required if not path.exists()]
     if missing:
@@ -371,17 +339,9 @@ def _iter_zip_entries(staging: Path) -> list[tuple[Path, str]]:
     if not lib_root.is_dir():
         return entries
 
-    for lib_dir in sorted(p for p in lib_root.iterdir() if p.is_dir()):
-        for rel_name in (CORE_DLL, COMPAT_MARKER):
-            path = lib_dir / rel_name
-            if path.is_file():
-                arc = path.relative_to(staging).as_posix()
-                entries.append((path, f"{BUNDLE_ID}/{arc}"))
-        modules = lib_dir / MODULES_SUBDIR
-        if modules.is_dir():
-            for module_dll in sorted(modules.glob("*.dll")):
-                arc = module_dll.relative_to(staging).as_posix()
-                entries.append((module_dll, f"{BUNDLE_ID}/{arc}"))
+    for path in sorted(p for p in lib_root.rglob("*") if p.is_file()):
+        arc = path.relative_to(staging).as_posix()
+        entries.append((path, f"{BUNDLE_ID}/{arc}"))
     return entries
 
 

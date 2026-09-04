@@ -15,7 +15,7 @@ endif
 UV ?= uv
 VERSION := $(shell $(PYTHON) -c "import json;print(json.load(open('KitLib.json',encoding='utf-8'))['version'])")
 
-MOD_MAIN := src/KitLib.Core/KitLib.Core.csproj
+MOD_MAIN := src/KitLib/Core/KitLib.Core.csproj
 SMOKE_MOD_PROJECT := samples/KitLibSmokeMod/KitLibSmokeMod.csproj
 SMOKE_MOD_TESTS := tests/KitLib.SmokeMod.Tests/KitLib.SmokeMod.Tests.csproj
 MCP_PROJECT := tools/KitLib.Mcp/KitLib.Mcp.csproj

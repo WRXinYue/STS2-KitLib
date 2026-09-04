@@ -111,11 +111,11 @@ Scripts under `scripts/` use **Black** ([`pyproject.toml`](/pyproject.toml)) and
 ## 本地化{lang="zh-CN"}
 
 ::: en
-User-visible strings live in [`src/KitLib.Core/Localization/eng.json`](/src/KitLib.Core/Localization/eng.json) and [`zhs.json`](/src/KitLib.Core/Localization/zhs.json). Add keys to both files using `dot.separated.lowercase`.
+User-visible strings live in [`src/KitLib/Core/Localization/eng.json`](/src/KitLib/Core/Localization/eng.json) and [`zhs.json`](/src/KitLib/Core/Localization/zhs.json). Add keys to both files using `dot.separated.lowercase`.
 :::
 
 ::: zh-CN
-用户可见字符串位于 [`eng.json`](/src/KitLib.Core/Localization/eng.json) 与 [`zhs.json`](/src/KitLib.Core/Localization/zhs.json)。新键需双语，格式 `dot.separated.lowercase`。
+用户可见字符串位于 [`eng.json`](/src/KitLib/Core/Localization/eng.json) 与 [`zhs.json`](/src/KitLib/Core/Localization/zhs.json)。新键需双语，格式 `dot.separated.lowercase`。
 :::
 
 ## Docs site{lang="en"}

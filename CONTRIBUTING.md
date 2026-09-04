@@ -22,4 +22,4 @@
 
 ### Localization
 
-- New user-visible strings: add keys to [`src/KitLib.Core/Localization/eng.json`](src/KitLib.Core/Localization/eng.json) and [`src/KitLib.Core/Localization/zhs.json`](src/KitLib.Core/Localization/zhs.json).
+- New user-visible strings: add keys to [`src/KitLib/Core/Localization/eng.json`](src/KitLib/Core/Localization/eng.json) and [`src/KitLib/Core/Localization/zhs.json`](src/KitLib/Core/Localization/zhs.json).

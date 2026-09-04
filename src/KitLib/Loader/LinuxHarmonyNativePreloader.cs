@@ -1,0 +1,91 @@
+using System.Runtime.InteropServices;
+
+namespace KitLib;
+
+internal static class LinuxHarmonyNativePreloader {
+    const int RtldNow = 2;
+    const int RtldGlobal = 0x100;
+    const int DlopenFlags = RtldNow | RtldGlobal;
+
+    static readonly object SyncRoot = new();
+    static readonly List<IntPtr> Handles = [];
+    static bool _attempted;
+
+    static readonly string[] CandidateLibraries = [
+        "libgcc_s.so.1",
+        "libunwind.so.8",
+        "libunwind.so",
+    ];
+
+    public static void EnsureLoaded(Action<string> info, Action<string> warn) {
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(warn);
+
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return;
+
+        lock (SyncRoot) {
+            if (_attempted)
+                return;
+
+            _attempted = true;
+            TryLoadLinuxNativeLibraries(info, warn);
+        }
+    }
+
+#pragma warning disable CA2101
+#pragma warning disable SYSLIB1054
+    [DllImport("libdl.so.2", EntryPoint = "dlopen", CharSet = CharSet.Ansi)]
+    static extern IntPtr Dlopen(string filename, int flags);
+
+    [DllImport("libdl.so.2", EntryPoint = "dlerror")]
+    static extern IntPtr Dlerror();
+#pragma warning restore SYSLIB1054
+#pragma warning restore CA2101
+
+    static void TryLoadLinuxNativeLibraries(Action<string> info, Action<string> warn) {
+        var loaded = new List<string>();
+        var failures = new List<string>();
+
+        try {
+            foreach (var library in CandidateLibraries) {
+                var handle = Dlopen(library, DlopenFlags);
+                if (handle != IntPtr.Zero) {
+                    Handles.Add(handle);
+                    loaded.Add(library);
+                    continue;
+                }
+
+                failures.Add($"{library}: {GetLastDlError()}");
+            }
+        }
+        catch (DllNotFoundException ex) {
+            warn($"Linux Harmony native preload skipped: libdl.so.2 is unavailable ({ex.Message}).");
+            return;
+        }
+        catch (EntryPointNotFoundException ex) {
+            warn($"Linux Harmony native preload skipped: libdl.so.2 is missing dlopen/dlerror ({ex.Message}).");
+            return;
+        }
+        catch (Exception ex) {
+            warn($"Linux Harmony native preload failed unexpectedly: {ex.Message}");
+            return;
+        }
+
+        if (loaded.Count > 0) {
+            info($"Linux Harmony native preload loaded with RTLD_GLOBAL: {string.Join(", ", loaded)}.");
+            return;
+        }
+
+        warn(
+            "Linux Harmony native preload could not load libgcc/libunwind candidates; Harmony may still work if the host already exports unwind symbols. "
+            + $"Tried: {string.Join("; ", failures)}");
+    }
+
+    static string GetLastDlError() {
+        var error = Dlerror();
+        return error == IntPtr.Zero
+            ? "unknown dlopen error"
+            : Marshal.PtrToStringAnsi(error) ?? "unknown dlopen error";
+    }
+}

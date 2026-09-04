@@ -13,13 +13,13 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ::: en
 KitLib exposes a **soft-dependency** AI platform for content mods. KitLib owns the loop, snapshot capture, action execution, and vanilla combat scoring; your mod bridge supplies character semantics (snapshot extensions, strategy rules, score tweaks).
 
-**Requires:** KitLib loaded at runtime. Reference `KitLib.dll` or **`STS2.KitLib.Abstractions`** at compile time only (do not bundle KitLib in your mod).
+**Requires:** KitLib and **KitAI** loaded at runtime. Reference **`KitLib.AI`** (the KitAI module) for `IDecisionMaker` / `IAiMoveModifier` / `IAiSnapshotContributor` / `DeckPlan` types. Host game I/O types (`GameAction`, `GamePhase`, `ActionResult`) live in **`STS2.KitLib.Abstractions`** (`KitLib.Game`). Do not bundle KitLib or KitAI in your mod zip.
 :::
 
 ::: zh-CN
 KitLib 为内容 mod 提供**软依赖**的 AI 平台：KitLib 负责循环、快照采集、动作执行与原版战斗评分；你的 mod 桥接层提供角色语义（快照扩展、策略规则、分数修正）。
 
-**需要：** 运行时加载 KitLib。编译期引用 `KitLib.dll` 或 **`STS2.KitLib.Abstractions`** 即可（不要把 KitLib 打进自己的 mod 包）。
+**需要：** 运行时加载 KitLib 与 **KitAI**。`IDecisionMaker` / `IAiMoveModifier` / `IAiSnapshotContributor` / `DeckPlan` 等编译期引用 **`KitLib.AI`**。宿主游戏 I/O 类型（`GameAction`、`GamePhase`、`ActionResult`）在 **`STS2.KitLib.Abstractions`**（`KitLib.Game`）。不要把 KitLib 或 KitAI 打进自己的 mod 包。
 :::
 
 ### Registration (mod init){lang="en"}

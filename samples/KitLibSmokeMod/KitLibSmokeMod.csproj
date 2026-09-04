@@ -12,7 +12,7 @@
 
   <!-- Build order only: smoke mod must not reference Core types in its output assembly. -->
   <ItemGroup>
-    <ProjectReference Include="$(RepoRoot)src/KitLib.Core/KitLib.Core.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="$(RepoRoot)src/KitLib/Core/KitLib.Core.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

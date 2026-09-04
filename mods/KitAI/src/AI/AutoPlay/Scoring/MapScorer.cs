@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Nodes;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Planning;
 using KitLib.AI.Sts2;
+using KitLib.Game;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Runs;
 

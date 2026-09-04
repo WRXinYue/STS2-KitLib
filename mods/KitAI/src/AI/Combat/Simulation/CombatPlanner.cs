@@ -5,8 +5,8 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.AI.AutoPlay.Scoring;
 using KitLib.AI.Combat;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
+using KitLib.Game;
 
 namespace KitLib.AI.Combat.Simulation;
 

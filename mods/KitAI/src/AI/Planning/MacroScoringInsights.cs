@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
+using KitLib.Game;
 
 namespace KitLib.AI.Planning;
 

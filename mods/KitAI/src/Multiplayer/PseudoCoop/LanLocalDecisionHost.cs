@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using KitLib.AI;
 using KitLib.AI.AutoPlay;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Entities.Players;

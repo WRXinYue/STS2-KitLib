@@ -3,10 +3,10 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using KitLib.AI.Combat;
 using KitLib.AI.Combat.Simulation;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
 using KitLib.AI.Sts2;
+using KitLib.Game;
 
 namespace KitLib.AI;
 

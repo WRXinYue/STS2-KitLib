@@ -1,5 +1,5 @@
 using System;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 
 namespace KitLib.AI;
 

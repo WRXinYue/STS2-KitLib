@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
 using KitLib.AI;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2;
 using KitLib.AI.Sts2.Snapshots;
+using KitLib.Game;
 using KitLib.Multiplayer.SyncBot;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Models;

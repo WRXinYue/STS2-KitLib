@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 
 namespace KitLib.AI;
 

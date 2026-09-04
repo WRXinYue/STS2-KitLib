@@ -1,4 +1,4 @@
-using KitLib.Abstractions.ModPanel;
+using KitModPanel;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Runs;
 

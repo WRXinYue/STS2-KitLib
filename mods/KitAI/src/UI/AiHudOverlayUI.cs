@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using Godot;
 using KitLib.AI.AutoPlay;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2;
+using KitLib.Game;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Settings;
 using KitLib.UI;

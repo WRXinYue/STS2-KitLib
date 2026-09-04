@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.AI.Combat;
 using KitLib.AI.Combat.Simulation;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
 using KitLib.AI.Planning;
+using KitLib.Game;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.AI;

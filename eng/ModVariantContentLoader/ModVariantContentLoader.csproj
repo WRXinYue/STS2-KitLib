@@ -33,10 +33,11 @@
 
   <ItemGroup>
     <Compile Include="MainFile.cs" />
-    <Compile Include="HostDependencyPreloader.cs" />
+    <Compile Include="ContentAssemblyResolve.cs" />
+    <Compile Include="..\..\src\KitLib\Loader\HostVersionProbe.cs" Link="HostVersionProbe.cs" />
+    <Compile Include="..\..\src\KitLib\Loader\VariantDirectoryPicker.cs" Link="VariantDirectoryPicker.cs" />
+    <Compile Include="..\..\src\KitLib\Loader\VariantAssemblyAssociation.cs" Link="VariantAssemblyAssociation.cs" />
+    <Compile Include="..\..\src\KitLib\Loader\LinuxHarmonyNativePreloader.cs" Link="LinuxHarmonyNativePreloader.cs" />
     <Reference Include="sts2" HintPath="$(Sts2DataDir)\sts2.dll" Private="False" />
-    <ProjectReference Include="..\..\src\KitLib.ModVariantLoader\KitLib.ModVariantLoader.csproj">
-      <Private>false</Private>
-    </ProjectReference>
   </ItemGroup>
 </Project>

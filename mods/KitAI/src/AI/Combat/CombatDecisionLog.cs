@@ -3,8 +3,8 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Nodes;
 using KitLib.AI.Combat.Simulation;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Knowledge;
+using KitLib.Game;
 using KitLib.Settings;
 
 namespace KitLib.AI.Combat;

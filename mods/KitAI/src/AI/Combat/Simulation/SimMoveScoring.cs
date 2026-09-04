@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 
 namespace KitLib.AI.Combat.Simulation;
 

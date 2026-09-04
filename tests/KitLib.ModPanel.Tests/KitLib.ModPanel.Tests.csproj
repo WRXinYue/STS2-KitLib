@@ -17,6 +17,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\KitLib.Abstractions\KitLib.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\KitLib\Abstractions\KitLib.Abstractions.csproj" />
+    <Compile Include="..\..\mods\KitModPanel\src\ModPanelHostSurface.cs" Link="ModPanelHostSurface.cs" />
   </ItemGroup>
 </Project>

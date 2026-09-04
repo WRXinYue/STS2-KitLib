@@ -21,11 +21,7 @@ from lib.mod_products import MODULES_SUBDIR, PRODUCT_ORDER, PRODUCTS, product_bu
 from lib.release_assets import RELEASE_PROFILES, mod_zip_path  # noqa: E402
 
 CORE_DLL = "KitLib.Core.dll"
-ABSTRACTIONS_DLL = "KitLib.Abstractions.dll"
-ABSTRACTIONS_RUNTIME_DLLS = [
-    "Semver.dll",
-    "Microsoft.Extensions.Primitives.dll",
-]
+FACADE_DLL = "KitLib.Abstractions.dll"
 
 _SKIP_PACKAGE_NAMES = {"GodotSharp.dll"}
 _SKIP_PACKAGE_ROOT_NAMES = {
@@ -43,65 +39,6 @@ def _all_satellite_stems() -> set[str]:
     return stems
 
 
-def _resolve_abstractions_dll() -> Path:
-    candidate = product_build_dir("KitLib") / ABSTRACTIONS_DLL
-    if candidate.is_file():
-        return candidate
-    raise FileNotFoundError(f"Missing {ABSTRACTIONS_DLL} build output. Run make build first.")
-
-
-def _nuget_package_roots() -> list[Path]:
-    roots: list[Path] = []
-    env = os.environ.get("NUGET_PACKAGES")
-    if env:
-        roots.append(Path(env))
-    repo_packages = _REPO / "packages"
-    if repo_packages.is_dir():
-        roots.append(repo_packages)
-    global_packages = Path.home() / ".nuget" / "packages"
-    if global_packages.is_dir():
-        roots.append(global_packages)
-    return roots
-
-
-def _resolve_nuget_lib_dll(package_folder: str, dll_name: str) -> Path | None:
-    lib_candidates = [
-        "lib/net9.0",
-        "lib/net8.0",
-        "lib/net6.0",
-        "lib/net5.0",
-        "lib/netstandard2.1",
-        "lib/netstandard2.0",
-        "lib/netcoreapp3.0",
-    ]
-    for packages_root in _nuget_package_roots():
-        package_dir = packages_root / package_folder
-        if not package_dir.is_dir():
-            continue
-        versions = sorted(package_dir.iterdir(), reverse=True)
-        for version_dir in versions:
-            if not version_dir.is_dir():
-                continue
-            for lib_sub in lib_candidates:
-                candidate = version_dir / lib_sub / dll_name
-                if candidate.is_file():
-                    return candidate
-    return None
-
-
-def _resolve_abstractions_runtime_dll(dll_name: str) -> Path:
-    candidate = product_build_dir("KitLib") / dll_name
-    if candidate.is_file():
-        return candidate
-    package_folder = dll_name[:-4].lower()
-    if dll_name == "Microsoft.Extensions.Primitives.dll":
-        package_folder = "microsoft.extensions.primitives"
-    nuget = _resolve_nuget_lib_dll(package_folder, dll_name)
-    if nuget is not None:
-        return nuget
-    raise FileNotFoundError(f"Missing {dll_name}. Run dotnet restore.")
-
-
 def _has_variant_core(bundle_dir: Path) -> bool:
     lib = bundle_dir / "lib"
     if not lib.is_dir():
@@ -109,13 +46,20 @@ def _has_variant_core(bundle_dir: Path) -> bool:
     return any((child / CORE_DLL).is_file() for child in lib.iterdir() if child.is_dir())
 
 
+def _has_variant_facade(bundle_dir: Path) -> bool:
+    lib = bundle_dir / "lib"
+    if not lib.is_dir():
+        return False
+    return any((child / FACADE_DLL).is_file() for child in lib.iterdir() if child.is_dir())
+
+
 def _assert_kitlib_bundle(bundle_dir: Path) -> None:
-    required = ["KitLib.dll", ABSTRACTIONS_DLL, *ABSTRACTIONS_RUNTIME_DLLS]
-    missing = [name for name in required if not (bundle_dir / name).is_file()]
-    if missing:
-        raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing {', '.join(missing)}.")
+    if not (bundle_dir / "KitLib.dll").is_file():
+        raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing KitLib.dll.")
     if not _has_variant_core(bundle_dir):
         raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing lib/<api>/{CORE_DLL}.")
+    if not _has_variant_facade(bundle_dir):
+        raise FileNotFoundError(f"KitLib bundle incomplete under {bundle_dir}: missing lib/<api>/{FACADE_DLL}.")
 
 
 def _read_version() -> str:
@@ -180,9 +124,6 @@ def _stage_product(dist_root: Path, product_id: str) -> Path:
                 shutil.copytree(item, target)
             else:
                 shutil.copy2(item, target)
-        shutil.copy2(_resolve_abstractions_dll(), dst / ABSTRACTIONS_DLL)
-        for runtime_dll in ABSTRACTIONS_RUNTIME_DLLS:
-            shutil.copy2(_resolve_abstractions_runtime_dll(runtime_dll), dst / runtime_dll)
         _assert_kitlib_bundle(dst)
     else:
         entry = build_dir / product.entry_dll

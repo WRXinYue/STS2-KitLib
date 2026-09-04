@@ -3,8 +3,8 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using KitLib;
 using KitLib.AI.AutoPlay.Scoring;
-using KitLib.AI.Core.Schema;
 using KitLib.AI.Sts2;
+using KitLib.Game;
 
 namespace KitLib.AI.Core;
 

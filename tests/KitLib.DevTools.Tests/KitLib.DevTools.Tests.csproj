@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>KitLib.DevTools.Tests</AssemblyName>
+    <RootNamespace>KitLib.DevTools.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfLine.cs" Link="DevPerf\DevPerfLine.cs" />
+    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfMetrics.cs" Link="DevPerf\DevPerfMetrics.cs" />
+    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\IDevPerfLineProvider.cs" Link="DevPerf\IDevPerfLineProvider.cs" />
+    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfLogRateLimiter.cs" Link="DevPerf\DevPerfLogRateLimiter.cs" />
+    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfTransitionRecord.cs" Link="DevPerf\DevPerfTransitionRecord.cs" />
+    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfTransitionStore.cs" Link="DevPerf\DevPerfTransitionStore.cs" />
+  </ItemGroup>
+</Project>

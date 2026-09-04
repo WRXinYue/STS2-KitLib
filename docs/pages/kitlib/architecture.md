@@ -43,9 +43,12 @@ mods/
 eng/
 scripts/lib/mod_products.py
 src/
-  KitLib.Abstractions/
-  KitLib.Core/
-  KitLib.Loader/
+  KitLib/
+    Abstractions/
+    Abstractions.Facade/
+    Core/
+    Loader/
+    ModVariantLoader/
 ```
 :::
 
@@ -60,9 +63,12 @@ mods/
 eng/
 scripts/lib/mod_products.py
 src/
-  KitLib.Abstractions/
-  KitLib.Core/
-  KitLib.Loader/
+  KitLib/
+    Abstractions/
+    Abstractions.Facade/
+    Core/
+    Loader/
+    ModVariantLoader/
 ```
 :::
 
@@ -75,7 +81,8 @@ src/
 mods/
   KitLib/
     mod_manifest.json
-    KitLib.dll, KitLib.Core.dll, KitLib.Abstractions.dll, …
+    KitLib.dll
+    lib/<api>/KitLib.Core.dll, KitLib.Abstractions.dll (type-forward facade)
   KitModPanel/
     KitModPanel.dll
   KitDevTools/
@@ -86,17 +93,27 @@ mods/
     modules/KitLib.AI.dll
 ```
 
-Dependencies: KitModPanel → KitLib; KitDevTools → KitLib; KitAI → KitLib (KitDevTools optional for AI Host UI).
+`KitLib.dll` is a zero-dependency picker. Each `lib/<api>/` folder is a complete implementation unit (fat Core + Abstractions facade). Content-mod Workshop roots use the same picker shape (`eng/ModVariantContentLoader`) and do not reference `KitLib.ModVariantLoader`. KitLib may still ship `KitLib.ModVariantLoader.dll` for already-published content packs.
 :::
 
 ::: zh-CN
 ```text
 mods/
   KitLib/
+    mod_manifest.json
+    KitLib.dll
+    lib/<api>/KitLib.Core.dll, KitLib.Abstractions.dll（type-forward 门面）
   KitModPanel/
+    KitModPanel.dll
   KitDevTools/
+    KitDevTools.dll
+    modules/KitLib.Panel.dll, KitLib.Dev.dll
   KitAI/
+    KitAI.dll
+    modules/KitLib.AI.dll
 ```
+
+`KitLib.dll` 只做版本选择。每个 `lib/<api>/` 目录是一套完整实现（合并后的 Core + Abstractions 门面）。内容 mod 的 Workshop 根 DLL 同样是零依赖 picker（`eng/ModVariantContentLoader`），不引用 `KitLib.ModVariantLoader`。KitLib 仍可能带上该 DLL，供已经发布的旧内容包解析。
 
 依赖：KitModPanel → KitLib；KitDevTools → KitLib；KitAI → KitLib（KitDevTools 可选，用于 AI Host 面板）。
 :::
@@ -108,8 +125,8 @@ mods/
 ::: en
 | Assembly | References | Harmony |
 |----------|------------|---------|
-| `KitLib.Abstractions` | — | — |
-| `KitLib` (Core) | Abstractions, game | `KitLibHarmony` |
+| `KitLib.Abstractions` | compile-time NuGet; runtime facade in `lib/<api>/`. Host contracts only (not KitModPanel / KitAI / KitDevTools models). | — |
+| `KitLib.Core` | Abstractions sources + game | `KitLibHarmony` |
 | Product / satellites | Core + Abstractions | `KitLibHarmony.Apply(assembly, id)` in `ModuleEntry` |
 
 Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi` delegates. Public APIs (game I/O and mutations): **[API](/api/)**.
@@ -118,8 +135,8 @@ Cross-module wiring uses `InternalsVisibleTo` and `KitLib*Ops` / `KitLibCheatApi
 ::: zh-CN
 | 程序集 | 引用 | Harmony |
 |--------|------|---------|
-| `KitLib.Abstractions` | — | — |
-| `KitLib`（Core） | Abstractions、游戏 | `KitLibHarmony` |
+| `KitLib.Abstractions` | 编译期 NuGet；运行时 `lib/<api>/` 门面。只含宿主契约（不含 KitModPanel / KitAI / KitDevTools 产品模型）。 | — |
+| `KitLib.Core` | Abstractions 源码 + 游戏 | `KitLibHarmony` |
 | 产品 / 卫星 | Core + Abstractions | `ModuleEntry` 中 `KitLibHarmony.Apply` |
 
 跨模块用 `InternalsVisibleTo` 与 `KitLib*Ops` / `KitLibCheatApi`。对外 API（游戏 I/O 与突变）见 **[API](/api/)**。
@@ -158,15 +175,17 @@ make zip-full    # build/KitLib-vX.Y.Z.zip, KitModPanel-vX.Y.Z.zip, ...
 ## 运行时加载顺序{lang="zh-CN"}
 
 ::: en
-1. KitLib host inits **User**, and **Cheat** when `AllowHighRiskModules`.
-2. Game loads **KitModPanel** when that product is enabled.
-3. `SatelliteModuleLoader` loads Panel → AI → Dev from sibling `modules/` folders.
+1. Game loads `KitLib.dll`, which picks `lib/<api>/KitLib.Core.dll` and runs Core’s initializer.
+2. Core inits **User**, and **Cheat** when `AllowHighRiskModules`.
+3. Game loads **KitModPanel** when that product is enabled.
+4. `SatelliteModuleLoader` loads Panel → AI → Dev from sibling `modules/` folders.
 :::
 
 ::: zh-CN
-1. KitLib 宿主初始化 **User**；在 `AllowHighRiskModules` 时初始化 **Cheat**。
-2. 游戏启用 **KitModPanel** 时加载该产品。
-3. `SatelliteModuleLoader` 从兄弟产品 `modules/` 加载 Panel → AI → Dev。
+1. 游戏加载 `KitLib.dll`，由其选择 `lib/<api>/KitLib.Core.dll` 并调用 Core 初始化。
+2. Core 初始化 **User**；在 `AllowHighRiskModules` 时初始化 **Cheat**。
+3. 游戏启用 **KitModPanel** 时加载该产品。
+4. `SatelliteModuleLoader` 从兄弟产品 `modules/` 加载 Panel → AI → Dev。
 :::
 
 ## Content-mod authors{lang="en"}

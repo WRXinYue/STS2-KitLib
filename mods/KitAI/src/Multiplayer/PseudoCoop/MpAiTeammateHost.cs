@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using KitLib.AI;
 using KitLib.AI.AutoPlay.Strategies;
 using KitLib.AI.Core;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.Play;
 using KitLib.Settings;

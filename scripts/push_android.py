@@ -134,7 +134,7 @@ def _list_devices(adb: Adb) -> list[str]:
 
 
 def _read_pkg_ref(repo_root: Path, pkg_prefix: str) -> tuple[str | None, str | None]:
-    csproj = repo_root / "src" / "KitLib.Core" / "KitLib.Core.csproj"
+    csproj = repo_root / "src" / "KitLib" / "Core" / "KitLib.Core.csproj"
     try:
         text = csproj.read_text(encoding="utf-8")
     except OSError:

@@ -1,5 +1,5 @@
 using System.Text.Json.Nodes;
-using KitLib.AI.Core.Schema;
+using KitLib.Game;
 using KitLib.Host;
 
 namespace KitLib.AI.Core;
