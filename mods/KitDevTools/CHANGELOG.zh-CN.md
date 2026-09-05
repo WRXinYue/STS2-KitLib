@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-05
+
+### Changed
+
+- **为 KitLib 0.43.1 重新发布** — 在 `KitLib.ModVariantLoader` 移除后，改用共享的自包含 picker 重建。行为不变，DevTools 不再依赖该宿主 DLL。
+
 ## [0.1.0] - 2026-09-03
 
 ### Changed

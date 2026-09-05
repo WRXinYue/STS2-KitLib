@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-05
+
+### Changed
+
+- **Republished for KitLib 0.43.1** — Rebuilt against the shared self-contained picker now that `KitLib.ModVariantLoader` is removed. Behavior is unchanged; DevTools no longer depend on that host DLL.
+
 ## [0.1.0] - 2026-09-03
 
 ### Changed

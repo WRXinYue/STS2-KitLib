@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-05
+
+### Changed
+
+- **Republished for KitLib 0.43.1** — Rebuilt against the shared self-contained picker now that `KitLib.ModVariantLoader` is removed. Behavior is unchanged; the panel no longer depends on that host DLL.
+
 ## [0.1.2] - 2026-09-05
 
 ### Fixed

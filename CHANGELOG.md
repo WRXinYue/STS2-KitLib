@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.43.1] - 2026-09-05
+
 ### Removed
 
 - **`KitLib.ModVariantLoader`** — The legacy content-mod thin-loader entry assembly is removed. Content mods that use the shared `eng/ModVariantContentLoader` picker are self-contained and no longer need this host DLL. Workshop packs still shipping the old thin-loader protocol will fail to init and must republish against the shared picker.
