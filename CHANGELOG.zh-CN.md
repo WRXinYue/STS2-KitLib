@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 移除
+
+- **`KitLib.ModVariantLoader`** — 移除旧的"内容 mod 薄入口"程序集。使用共享 `eng/ModVariantContentLoader` picker 的内容 mod 是自包含的，不再需要这个宿主 DLL。仍在工坊发布旧薄入口协议的内容 mod 将无法初始化，需改用共享 picker 后重新发布。
+
 ## [0.43.0] - 2026-09-05
 
 ### Changed

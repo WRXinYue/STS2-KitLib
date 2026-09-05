@@ -19,7 +19,6 @@
     <ItemGroup>
     <ProjectReference Include="..\Core\KitLib.Core.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Abstractions.Facade\KitLib.Abstractions.Facade.csproj" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\ModVariantLoader\KitLib.ModVariantLoader.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Sts2Dir)' != ''">

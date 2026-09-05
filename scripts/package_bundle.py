@@ -4,7 +4,6 @@
 Layout:
   build/KitLib-release/
     KitLib.dll
-    KitLib.ModVariantLoader.dll  # legacy content-mod thin loaders only
     mod_manifest.json
     lib/0.107.1/KitLib.Core.dll, KitLib.Abstractions.dll (facade), compat-target.txt
     lib/0.110.1/...
@@ -58,7 +57,6 @@ MODULES_SUBDIR = "modules"
 SIBLING_VARIANT_PRODUCTS = ("KitModPanel", "KitDevTools")
 _ZIP_ROOT_FILES = [
     "KitLib.dll",
-    "KitLib.ModVariantLoader.dll",
     "mod_manifest.json",
     "mod_image.png",
 ]
@@ -267,9 +265,6 @@ def _build_loader(*, configuration: str, profile: str) -> None:
     if not loader_out.is_file():
         fail(f"Loader build did not produce {loader_out}")
     shutil.copy2(loader_out, STAGING_DIR / "KitLib.dll")
-    mvl_out = BUILD_DIR / "KitLib.ModVariantLoader.dll"
-    if mvl_out.is_file():
-        shutil.copy2(mvl_out, STAGING_DIR / "KitLib.ModVariantLoader.dll")
 
 
 def _assert_staging(staging: Path, *, product_id: str | None = None) -> None:

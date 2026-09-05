@@ -67,6 +67,7 @@ export default defineValaxyConfig<ThemeConfig>({
         subNav: [
           { locale: 'nav.intro', link: '/kitlib/preface' },
           { locale: 'nav.install', link: '/kitlib/install' },
+          { text: { en: 'Content mods & multi-version', 'zh-CN': '内容 Mod 与多版本' }, link: '/kitlib/content-mods' },
           { text: { en: 'Progress protection', 'zh-CN': '进度保护' }, link: '/kitlib/progress-protection' },
           { text: { en: 'Architecture', 'zh-CN': '架构' }, link: '/kitlib/architecture' },
           { locale: 'nav.contributing', link: '/kitlib/contributing' },

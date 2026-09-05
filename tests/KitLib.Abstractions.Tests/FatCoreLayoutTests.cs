@@ -7,7 +7,7 @@ public sealed class FatCoreLayoutTests {
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
 
     [Fact]
-    public void Loader_does_not_reference_abstractions_or_variant_loader() {
+    public void Loader_does_not_reference_abstractions_or_core() {
         var loader = Path.Combine(RepoRoot, "build", "KitLib", "KitLib.dll");
         if (!File.Exists(loader))
             return;
@@ -18,13 +18,12 @@ public sealed class FatCoreLayoutTests {
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Assert.DoesNotContain("KitLib.Abstractions", refs);
-        Assert.DoesNotContain("KitLib.ModVariantLoader", refs);
         Assert.DoesNotContain("KitLib.Core", refs);
         Assert.DoesNotContain("Semver", refs);
     }
 
     [Fact]
-    public void Content_workshop_loader_does_not_reference_variant_loader() {
+    public void Content_workshop_loader_is_self_contained() {
         var panel = Path.Combine(RepoRoot, "build", "KitModPanel", "KitModPanel.dll");
         if (!File.Exists(panel))
             return;
@@ -34,7 +33,6 @@ public sealed class FatCoreLayoutTests {
             .Select(r => r.Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        Assert.DoesNotContain("KitLib.ModVariantLoader", refs);
         Assert.DoesNotContain("KitLib.Abstractions", refs);
         Assert.DoesNotContain("KitLib.Core", refs);
     }

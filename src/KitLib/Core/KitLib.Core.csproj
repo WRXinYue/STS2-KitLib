@@ -191,11 +191,6 @@
     <MakeDir Directories="$(_CoreVariantDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(_CoreVariantDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetPath)')" />
     <WriteLinesToFile File="$(_CoreVariantDir)\compat-target.txt" Lines="$(KitLibSts2PinnedVersion)" Overwrite="true" />
-    <PropertyGroup>
-      <_MvlDll>$(RepoRoot)src\KitLib\ModVariantLoader\bin\$(Configuration)\net9.0\KitLib.ModVariantLoader.dll</_MvlDll>
-    </PropertyGroup>
-    <Copy SourceFiles="$(_MvlDll)" DestinationFolder="$(_CoreVariantDir)" SkipUnchangedFiles="true" Condition="Exists('$(_MvlDll)')" />
-    <Copy SourceFiles="$(_MvlDll)" DestinationFolder="$(RepoBuildDir)" SkipUnchangedFiles="true" Condition="Exists('$(_MvlDll)')" />
     <ItemGroup>
       <_StaleVariantSidecar Include="$(_CoreVariantDir)\Semver.dll" />
       <_StaleVariantSidecar Include="$(_CoreVariantDir)\Microsoft.Extensions.Primitives.dll" />

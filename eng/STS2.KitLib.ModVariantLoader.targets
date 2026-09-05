@@ -15,20 +15,6 @@
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
   </PropertyGroup>
 
-  <Target Name="StageKitLibSharedBundleDeps" BeforeTargets="ComposeModVariantBundle" Condition="'$(ModVariantStageKitLibHostDeps)' != 'false'">
-    <PropertyGroup>
-      <_KitLibModVariantLoaderProject>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib', 'ModVariantLoader', 'KitLib.ModVariantLoader.csproj'))</_KitLibModVariantLoaderProject>
-      <_KitLibModVariantLoaderDll>$([System.IO.Path]::Combine('$(_KitLibRepoRoot)', 'src', 'KitLib', 'ModVariantLoader', 'bin', '$(Configuration)', 'net9.0', 'KitLib.ModVariantLoader.dll'))</_KitLibModVariantLoaderDll>
-    </PropertyGroup>
-    <MSBuild
-      Projects="$(_KitLibModVariantLoaderProject)"
-      Targets="Build"
-      Properties="Configuration=$(Configuration)"
-      BuildInParallel="true" />
-    <MakeDir Directories="$(ModVariantBundleDir)" />
-    <Copy SourceFiles="$(_KitLibModVariantLoaderDll)" DestinationFolder="$(ModVariantBundleDir)" SkipUnchangedFiles="true" Condition="Exists('$(_KitLibModVariantLoaderDll)')" />
-  </Target>
-
   <!-- Workshop-root <ModId>.dll: shared thin loader. Content mods do not ship a second csproj. -->
   <Target Name="StageModVariantContentLoader">
     <Error Condition="'$(ModVariantModId)' == ''" Text="StageModVariantContentLoader requires ModId or ModVariantModId on the project." />
