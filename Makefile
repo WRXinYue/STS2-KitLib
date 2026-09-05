@@ -75,8 +75,8 @@ STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload $(STEAM_UPLOAD_
 LAUNCH := $(PYTHON) scripts/launch_sts2.py
 LAUNCH_MP_CLIENT_ID ?= 1001
 
-.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-all build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip zip-full zip-release clean docs docs-build \
-        build-flat workshop extract-touchpoints check-api verify capture-sts2-ref \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip-full zip-release clean docs docs-build \
+        workshop extract-touchpoints check-api verify capture-sts2-ref \
         build-stable build-beta build-profiles bundle sync-bundle \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
@@ -99,8 +99,7 @@ help:
 	@echo "  sync PRODUCT=X  deploy one product only"
 	@echo "  sync-full    sync + deploy tools/ (MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
-	@echo "  build-all    same as build (current Sts2Profile)"
-	@echo "  build-flat   deprecated alias for build (KitLib.dll + lib/<api>/KitLib.Core.dll)"
+	@echo "  build        build all bundle projects (auto-cleans stale build servers)"
 	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib|KitModPanel|KitDevTools|KitAI)"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against sts2.dll"
@@ -136,9 +135,6 @@ help:
 	@echo "  sync-tools   build-tools + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
 	@echo "  build-dev-viewer  pnpm build → CombatStats/viewer-shell.html (embedded in KitLib.Dev)"
-	@echo "  build-combat-stats-viewer  deprecated alias for build-dev-viewer"
-	@echo ""
-	@echo "  zip          bundle + package build/KitLib-vX.X.X.zip (alias: zip-release)"
 	@echo ""
 	@echo "  [upload]"
 	@echo "  upload-github  mod zip + MCP exe → GitHub Release (alias: publish)"
@@ -193,13 +189,10 @@ hooks-run:
 deps:
 	$(DOTNET) restore $(MOD_MAIN)
 
-build: build-flat
-	@echo "KitLib variant bundle for profile $(STS2_COMPILE_PROFILE)"
-
-build-flat:
+build:
+	-$(DOTNET) build-server shutdown
 	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile $(STS2_COMPILE_PROFILE)
-
-build-all: build-flat
+	@echo "KitLib variant bundle for profile $(STS2_COMPILE_PROFILE)"
 
 workshop:
 	$(STEAM_SYNC)
@@ -296,7 +289,7 @@ deploy-tools:
 sync-tools: build-tools
 	$(DEPLOY_TOOLS)
 
-build-dev-viewer build-combat-stats-viewer:
+build-dev-viewer:
 	cd $(DEV_VIEWER) && pnpm install && pnpm build
 
 pck: deps
@@ -338,8 +331,6 @@ zip-release: bundle
 
 zip-full:
 	$(PACKAGE_BUNDLE) --zip-all -c Release
-
-zip: zip-release
 
 ifeq ($(OS),Windows_NT)
 zip-mcp: build-tools

@@ -27,9 +27,9 @@ internal static class MpCheatParticipants {
 
         var connected =
 #if STS2_STABLE_PROFILE
-            run.RunLobby?.ConnectedPlayerIds;
+            run?.RunLobby?.ConnectedPlayerIds;
 #else
-            run.RunLobby?.PlayerIds?.ToHashSet();
+            run?.RunLobby?.PlayerIds?.ToHashSet();
 #endif
         if (connected == null || connected.Count == 0)
             return remotePlayers;

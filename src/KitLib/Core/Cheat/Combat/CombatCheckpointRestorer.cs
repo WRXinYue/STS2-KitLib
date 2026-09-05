@@ -267,6 +267,8 @@ internal static class CombatCheckpointRestorer {
             return;
 
         var nCard = NCard.Create(card);
+        if (nCard == null)
+            return;
         ui.AddChildSafely(nCard);
         nCard.UpdateVisuals(PileType.Hand, CardPreviewMode.Normal);
         nCard.Position = PileType.Hand.GetTargetPosition(nCard);

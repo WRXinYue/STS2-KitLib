@@ -172,10 +172,11 @@ internal static class RunInventoryApiBridge {
         state = null!;
         player = null!;
         error = "";
-        if (!RunContext.TryGetRunAndPlayer(out state, out var local) || local == null) {
+        if (!RunContext.TryGetRunAndPlayer(out var runState, out var local) || local == null) {
             error = "No active run.";
             return false;
         }
+        state = runState;
 
         if (!targetPlayerNetId.HasValue || targetPlayerNetId.Value == 0 || targetPlayerNetId.Value == local.NetId) {
             player = local;

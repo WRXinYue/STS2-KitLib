@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Players;
@@ -10,7 +11,9 @@ internal static class RunContext {
     private static RunState? _pendingState;
     private static ulong _pendingPlayerNetId;
 
-    public static bool TryGetRunAndPlayer(out RunState state, out Player? player) {
+    public static bool TryGetRunAndPlayer(
+        [NotNullWhen(true)] out RunState? state,
+        [NotNullWhen(true)] out Player? player) {
         state = RunManager.Instance?.DebugOnlyGetState();
         if (state == null) {
             player = null;
@@ -26,7 +29,9 @@ internal static class RunContext {
         _pendingPlayerNetId = player.NetId;
     }
 
-    public static bool TryResolvePending(out RunState state, out Player? player) {
+    public static bool TryResolvePending(
+        [NotNullWhen(true)] out RunState? state,
+        [NotNullWhen(true)] out Player? player) {
         state = _pendingState ?? RunManager.Instance?.DebugOnlyGetState();
         if (state == null) {
             player = null;

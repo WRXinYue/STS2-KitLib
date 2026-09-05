@@ -27,6 +27,13 @@
     </ProjectReference>
   </ItemGroup>
 
+  <!-- Same as KitLib.Core: the Godot script-path source generator trips on the .no-godot sentinel. -->
+  <Target Name="RemoveGodotAnalyzers" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="$([System.String]::Copy('%(Identity)').Contains('Godot'))" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <Compile Include="$(_GeneratedForwards)" Condition="Exists('$(_GeneratedForwards)')" />
   </ItemGroup>

@@ -5,7 +5,6 @@ using MegaCrit.Sts2.Core.Runs;
 
 #if STS2_STABLE_PROFILE
 using System.Collections.Generic;
-using System.Reflection;
 using HarmonyLib;
 #else
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
