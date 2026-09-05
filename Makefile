@@ -77,7 +77,7 @@ LAUNCH_MP_CLIENT_ID ?= 1001
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip-full zip-release clean docs docs-build \
         workshop extract-touchpoints check-api verify capture-sts2-ref \
-        build-stable build-beta build-profiles bundle sync-bundle \
+        build-stable build-beta build-profiles build-all-variants bundle sync-bundle \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
 
@@ -97,6 +97,7 @@ help:
 	@echo ""
 	@echo "  sync         build + deploy all products (KitLib, KitModPanel, KitDevTools, KitAI)"
 	@echo "  sync PRODUCT=X  deploy one product only"
+	@echo "  sync VARIANTS=all  build stable+beta variants; ALT_GAME_DIR deploys a second install"
 	@echo "  sync-full    sync + deploy tools/ (MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build        build all bundle projects (auto-cleans stale build servers)"
@@ -229,6 +230,12 @@ build-beta:
 
 build-profiles: build-stable build-beta
 
+# Build every product against both pinned refs so build/*/lib/ holds both
+# 0.107.1 (stable) and 0.110.1 (beta) variants; the game picks one at runtime.
+build-all-variants:
+	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile stable
+	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile beta
+
 bundle:
 	$(PACKAGE_BUNDLE) --no-zip -c Release
 
@@ -238,7 +245,16 @@ sync-bundle:
 deploy:
 	$(PYTHON) scripts/deploy_modules.py $(if $(PRODUCT),--product $(PRODUCT),)
 
-sync: build deploy
+# Default builds the current profile; make sync VARIANTS=all also builds the
+# other pinned variant so build/*/lib/ holds both (Steam branch switches then
+# just work). ALT_GAME_DIR additionally deploys to a second install (e.g. a
+# separate beta copy). Note: KitDevTools/KitAI satellites follow the last
+# built profile; KitLib.Core + KitModPanel are true dual-variant.
+SYNC_BUILD_TARGET = $(if $(filter all,$(VARIANTS)),build-all-variants,build)
+
+sync: $(SYNC_BUILD_TARGET)
+	$(PYTHON) scripts/deploy_modules.py $(if $(PRODUCT),--product $(PRODUCT),)
+	$(if $(filter all,$(VARIANTS)),$(if $(ALT_GAME_DIR),$(PYTHON) scripts/deploy_modules.py --game-root "$(ALT_GAME_DIR)",),)
 
 sync-full: sync
 	$(DEPLOY_TOOLS_BUILD)
