@@ -19,7 +19,6 @@ Install companions as needed:
 - **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
 - **[KitModPanel](./mods/KitModPanel/README.md)** ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
 - **[KitDevTools](./mods/KitDevTools/README.md)** ([Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
-- **[KitAI](./mods/KitAI/README.md)** — optional AI host / autoplay.
 
 ## Host
 
@@ -42,7 +41,7 @@ At compile time, import `eng/KitLib.ContentMod.props` (`KitLib.Abstractions.dll`
 
 ## Install
 
-- **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** (required) plus **[KitModPanel](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)** / **[KitDevTools](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)** / **KitAI** from Steam Workshop or the release zip on [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus.
+- **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** (required) plus **[KitModPanel](https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384)** / **[KitDevTools](https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840)** from Steam Workshop or the release zip on [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus.
 - **Auxiliary tools** (`KitLib.Mcp`, etc.) — same Releases / Nexus page, per-platform binaries.
 
 ## Acknowledgments

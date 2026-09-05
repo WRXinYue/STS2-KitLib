@@ -67,18 +67,9 @@ PRODUCTS: dict[str, ModProduct] = {
         loader_csproj="mods/KitDevTools/KitDevTools.csproj",
         dependency_ids=("KitLib",),
     ),
-    "KitAI": ModProduct(
-        id="KitAI",
-        display_name="KitLib AI",
-        satellite_dlls=("KitLib.AI",),
-        manifest_path=_REPO / "mods" / "KitAI" / "KitAI.json",
-        entry_dll="KitAI.dll",
-        loader_csproj="mods/KitAI/KitAI.csproj",
-        dependency_ids=("KitLib",),
-    ),
 }
 
-PRODUCT_ORDER = ("KitLib", "KitModPanel", "KitDevTools", "KitAI")
+PRODUCT_ORDER = ("KitLib", "KitModPanel", "KitDevTools")
 
 # Satellite assembly → owning product id
 SATELLITE_TO_PRODUCT: dict[str, str] = {dll: product.id for product in PRODUCTS.values() for dll in product.satellite_dlls}
@@ -93,7 +84,6 @@ KITLIB_CORE_PROJECTS = [
 SATELLITE_PROJECTS = {
     "KitLib.Panel": "mods/KitDevTools/KitLib.Panel.csproj",
     "KitLib.Dev": "mods/KitDevTools/KitLib.Dev.csproj",
-    "KitLib.AI": "mods/KitAI/KitLib.AI.csproj",
 }
 
 

@@ -54,7 +54,6 @@ public sealed class FatCoreLayoutTests {
             var names = asm.MainModule.Types.Select(t => t.FullName).ToHashSet(StringComparer.Ordinal);
             Assert.DoesNotContain("KitLib.Abstractions.ModPanel.ModPanelHostSurface", names);
             Assert.DoesNotContain("KitModPanel.ModPanelHostSurface", names);
-            Assert.DoesNotContain("KitLib.AI.Core.IAiMoveModifier", names);
             Assert.DoesNotContain("KitLib.DevPerf.DevPerfMetrics", names);
         }
     }

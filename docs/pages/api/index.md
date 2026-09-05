@@ -14,7 +14,7 @@ Public surfaces for content mods live in **KitLib.Abstractions** / **KitLib.Core
 
 ### Drive the current run
 
-Player-facing I/O (lean snapshot + click the same UI a human would). Lives in **KitLib Core**; KitAI is optional.
+Player-facing I/O (lean snapshot + click the same UI a human would). Lives in **KitLib Core**.
 
 | Page | What it does |
 | --- | --- |
@@ -45,7 +45,7 @@ Cheat-style mutations during a run (string ids; no STS2 model types on the publi
 
 ### 驱动当前一局
 
-玩家向 I/O（lean 快照 + 点人类会点的同一套 UI）。在 **KitLib Core**；KitAI 可选。
+玩家向 I/O（lean 快照 + 点人类会点的同一套 UI）。在 **KitLib Core**。
 
 | 页面 | 做什么 |
 | --- | --- |

@@ -12,14 +12,13 @@ make docs-build  # static output → docs/dist/
 | Area | Path | Audience |
 | --- | --- | --- |
 | **KitLib** | `pages/kitlib/` | Install, intro, progress protection, architecture, contributing |
-| **KitAI** | `pages/kitai/` | AI host, algorithm, LAN co-op |
 | **API** | `pages/api/` | Public Abstractions/Core bridges for content mods |
 | **Changelog** | `pages/changelog*.md` | Generated from root `CHANGELOG.md` at build time (gitignored; do not commit) |
 
 ## Repo vs game install
 
-- **Repo:** KitLib host sources under `src/` (`Core`, `Loader`); sibling products under `mods/KitModPanel|KitDevTools|KitAI`.
-- **Game:** `make sync` deploys four folders into the game’s `mods/` (`KitLib`, `KitModPanel`, `KitDevTools`, `KitAI`).
+- **Repo:** KitLib host sources under `src/` (`Core`, `Loader`); sibling products under `mods/KitModPanel|KitDevTools`.
+- **Game:** `make sync` deploys three folders into the game’s `mods/` (`KitLib`, `KitModPanel`, `KitDevTools`).
 
 Details: [Architecture](pages/kitlib/architecture.md).
 

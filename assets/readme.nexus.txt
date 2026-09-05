@@ -18,7 +18,6 @@ Install companions as needed:
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitModPanel/README.md]KitModPanel[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]Workshop[/url]) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitDevTools/README.md]KitDevTools[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Workshop[/url]) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitAI/README.md]KitAI[/url][/b] — optional AI host / autoplay.
 [/list]
 
 [b]Host[/b]
@@ -47,7 +46,7 @@ At compile time, import [i]eng/KitLib.ContentMod.props[/i] ([i]KitLib.Abstractio
 [b]Install[/b]
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required) plus [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] / [b]KitAI[/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required) plus [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
 [*][b]Auxiliary tools[/b] ([i]KitLib.Mcp[/i], etc.) — same Releases / Nexus page, per-platform binaries.
 [/list]
 
@@ -82,7 +81,6 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]（本仓库宿主）— 先加载，再提供其他 mod 在初始化时调用的 API；同时负责设置、进度保护、主题和快捷键。
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitModPanel/README.zh-CN.md]KitModPanel[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]创意工坊[/url]）— 主菜单模组列表与各模组设置页；装有 STS2-RitsuLib 时一并显示其设置页。
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitDevTools/README.zh-CN.md]KitDevTools[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]创意工坊[/url]）— 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitAI/README.zh-CN.md]KitAI[/url][/b] — 可选的 AI 托管 / 自动游玩。
 [/list]
 
 [b]宿主[/b]
@@ -111,7 +109,7 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 [b]安装[/b]
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]（必需）以及 [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] / [b]KitAI[/b]：Steam 创意工坊，或 [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus 的发布包。
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]（必需）以及 [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b]：Steam 创意工坊，或 [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus 的发布包。
 [*][b]辅助工具[/b]（[i]KitLib.Mcp[/i] 等）：同一 Releases / Nexus 页下载对应平台可执行文件。
 [/list]
 

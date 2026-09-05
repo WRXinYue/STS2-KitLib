@@ -8,9 +8,8 @@ public static class KitLibProductIds {
     public const string KitLib = "KitLib";
     public const string KitModPanel = "KitModPanel";
     public const string KitDevTools = "KitDevTools";
-    public const string KitAI = "KitAI";
 
-    public static readonly string[] All = [KitLib, KitModPanel, KitDevTools, KitAI];
+    public static readonly string[] All = [KitLib, KitModPanel, KitDevTools];
 
     /// <summary>Satellite module ids shipped under each product (excludes Core/Loader).</summary>
     public static readonly IReadOnlyDictionary<string, string[]> ModulesByProduct =
@@ -18,7 +17,6 @@ public static class KitLibProductIds {
             [KitLib] = [],
             [KitModPanel] = [],
             [KitDevTools] = [KitLibModuleIds.Panel, KitLibModuleIds.Dev],
-            [KitAI] = [KitLibModuleIds.Ai],
         };
 
     public static string? TryGetProductIdForModule(string moduleId) {

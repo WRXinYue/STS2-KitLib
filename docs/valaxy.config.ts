@@ -73,15 +73,6 @@ export default defineValaxyConfig<ThemeConfig>({
         ],
       },
       {
-        locale: 'nav.kitai',
-        link: '/kitai/mod-ai-integration',
-        subNav: [
-          { text: { en: 'Mod AI integration', 'zh-CN': 'Mod AI 集成' }, link: '/kitai/mod-ai-integration' },
-          { text: { en: 'AI algorithm', 'zh-CN': 'AI 算法' }, link: '/kitai/ai-algorithm' },
-          { text: { en: 'LAN co-op testing', 'zh-CN': 'LAN 联机测试' }, link: '/kitai/lan-host-drive-afk' },
-        ],
-      },
-      {
         locale: 'nav.api',
         link: '/api/',
         subNav: [

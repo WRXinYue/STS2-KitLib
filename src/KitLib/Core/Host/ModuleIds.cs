@@ -8,5 +8,4 @@ public static class ModuleIds {
     public const string User = "KitLib.User";
     public const string Cheat = "KitLib.Cheat";
     public const string Dev = "KitLib.Dev";
-    public const string Ai = "KitLib.AI";
 }

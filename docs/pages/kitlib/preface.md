@@ -50,7 +50,7 @@ This page points to community resources before diving into KitLib itself.
 **KitLib** is a **foundation library and host** for STS2. Other mods declare it in the manifest, reference **`STS2.KitLib.Abstractions`**, and call the **[Extension API](/api/)** — the same pattern as RitsuLib / BaseLib.
 
 - **KitLib**: host, logging, progress helpers, mutation APIs, corner-button registry.
-- **Sibling mods** (own READMEs under `mods/`): `KitModPanel`, `KitDevTools`, `KitAI`.
+- **Sibling mods** (own READMEs under `mods/`): `KitModPanel`, `KitDevTools`.
 
 Ready to install? **[Install →](/kitlib/install/)** · **[Extension API →](/api/)** · **[Architecture →](/kitlib/architecture/)**
 :::
@@ -59,7 +59,7 @@ Ready to install? **[Install →](/kitlib/install/)** · **[Extension API →](/
 **KitLib** 是 STS2 的**基础库和宿主**。其他 mod 在清单里声明它、引用 **`STS2.KitLib.Abstractions`**、调用 **[扩展 API](/api/)** — 与 RitsuLib / BaseLib 相同。
 
 - **KitLib**：宿主、日志、进度辅助、突变 API、角标注册。
-- **兄弟产品**（各自 README 在 `mods/`）：`KitModPanel`、`KitDevTools`、`KitAI`。
+- **兄弟产品**（各自 README 在 `mods/`）：`KitModPanel`、`KitDevTools`。
 
 准备安装？**[安装 →](/kitlib/install/)** · **[扩展 API →](/api/)** · **[架构 →](/kitlib/architecture/)**
 :::

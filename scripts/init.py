@@ -91,7 +91,7 @@ def main() -> int:
     print("Done. You can now run:")
     print("  make compile  -- dotnet build: DLL/manifest to game mods (no .pck)")
     print("  make pck      -- dotnet publish + Godot .pck to game mods")
-    print("  make sync              -- build + deploy KitLib, KitModPanel, KitDevTools, KitAI")
+    print("  make sync              -- build + deploy KitLib, KitModPanel, KitDevTools")
     print("  make sync PRODUCT=X    -- deploy one product only (e.g. PRODUCT=KitLib)")
     print("  make sync-framework-mods  -- copy DevMode STS2-RitsuLib NuGet into game (optional)")
     print("  make sync-launch       -- sync + launch game")

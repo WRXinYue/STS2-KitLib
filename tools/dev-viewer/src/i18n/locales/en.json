@@ -117,7 +117,7 @@
     },
     "empty": {
       "noPayload": "No AI decision snapshot yet.",
-      "noPayloadHint": "Start a combat with KitLib AI enabled; snapshots update each decision."
+      "noPayloadHint": "Start a combat; snapshots update each decision."
     },
     "bool": {
       "yes": "Yes",

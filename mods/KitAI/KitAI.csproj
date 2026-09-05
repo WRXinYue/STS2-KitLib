@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <ModId>KitAI</ModId>
-    <AssemblyName>KitAI</AssemblyName>
-    <RootNamespace>KitLib.ProductLoaders</RootNamespace>
-  </PropertyGroup>
-  <Import Project="$(RepoRoot)eng\KitLib.ProductLoader.props" />
-</Project>

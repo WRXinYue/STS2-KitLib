@@ -63,7 +63,7 @@ def main() -> int:
     ap.add_argument(
         "--product",
         default="",
-        help="One product id (KitLib, KitModPanel, KitDevTools, KitAI). Default: all products.",
+        help="One product id (KitLib, KitModPanel, KitDevTools). Default: all products.",
     )
     args = ap.parse_args()
 

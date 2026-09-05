@@ -1,5 +1,5 @@
 <Project>
-  <!-- Compile-time refs for content mods: Abstractions contracts + KitLib host (CompanionBridge). -->
+  <!-- Compile-time refs for content mods: Abstractions contracts + KitLib host. -->
   <PropertyGroup>
     <KitLibBundleDir>$(RepoRoot)build/KitLib/</KitLibBundleDir>
     <_KitLibAbstractionsBundleDll>$(KitLibBundleDir)KitLib.Abstractions.dll</_KitLibAbstractionsBundleDll>

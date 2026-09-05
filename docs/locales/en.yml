@@ -7,7 +7,6 @@ nova:
 
 nav:
   kitlib: KitLib
-  kitai: KitAI
   api: API
   contributing: Contributing
   intro: Introduction
@@ -24,7 +23,6 @@ nav:
 
 category:
   kitlib: KitLib
-  kitai: KitAI
   api: API
 
 hero:

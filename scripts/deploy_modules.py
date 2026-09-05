@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deploy KitLib family products to game mods/ (KitLib, KitModPanel, KitDevTools, KitAI)."""
+"""Deploy KitLib family products to game mods/ (KitLib, KitModPanel, KitDevTools)."""
 
 from __future__ import annotations
 

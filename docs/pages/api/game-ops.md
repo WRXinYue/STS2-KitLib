@@ -10,7 +10,7 @@ cover: https://wrxinyue.s3.bitiful.net/slay-the-spire-2-wallpaper.webp
 ## 概述{lang="zh-CN"}
 
 ::: en
-Read a **lean** run snapshot and drive **player UI** (play a card, pick a map node, collect rewards, …). Use this from content mods, MCP, or automation. Ships in **KitLib Core** — **KitAI is not required**.
+Read a **lean** run snapshot and drive **player UI** (play a card, pick a map node, collect rewards, …). Use this from content mods, MCP, or automation. Ships in **KitLib Core**.
 
 | | |
 | --- | --- |
@@ -20,11 +20,11 @@ Read a **lean** run snapshot and drive **player UI** (play a card, pick a map no
 
 This is **not** a cheat API. It clicks the same screens a player would. For adding cards or toggling cheats, use [Cards](/api/cards/) / [Cheats](/api/runtime-cheat/).
 
-Lean snapshots omit AI knowledge (`mechanicFlags`, `MonsterMechanicIndex`, scoring). KitAI keeps its own rich `GameSnapshot` for decisions.
+Lean snapshots omit AI knowledge (`mechanicFlags`, `MonsterMechanicIndex`, scoring).
 :::
 
 ::: zh-CN
-读取 **lean** 局面，并驱动**玩家 UI**（出牌、选图、领奖励等）。适合内容 mod、MCP、自动化。在 **KitLib Core** 中提供 — **不需要 KitAI**。
+读取 **lean** 局面，并驱动**玩家 UI**（出牌、选图、领奖励等）。适合内容 mod、MCP、自动化。在 **KitLib Core** 中提供。
 
 | | |
 | --- | --- |
@@ -34,7 +34,7 @@ Lean snapshots omit AI knowledge (`mechanicFlags`, `MonsterMechanicIndex`, scori
 
 这**不是**作弊 API，走的是玩家会点的同一套界面。加牌或开关作弊请用 [卡牌](/api/cards/) / [作弊](/api/runtime-cheat/)。
 
-Lean 快照不含 AI 知识库（`mechanicFlags`、`MonsterMechanicIndex`、打分）。KitAI 决策仍用自己的富 `GameSnapshot`。
+Lean 快照不含 AI 知识库（`mechanicFlags`、`MonsterMechanicIndex`、打分）。
 :::
 
 ## Basic usage{lang="en"}

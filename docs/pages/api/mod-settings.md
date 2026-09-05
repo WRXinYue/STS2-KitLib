@@ -372,11 +372,9 @@ if (host is { IsModuleLoaded: true }) {
 ::: en
 - [Logging](/api/kitlib-log/)
 - [Install](/kitlib/install/) — KitModPanel product folder
-- [Mod AI integration](/kitai/mod-ai-integration/)
-:::
+::: en
 
 ::: zh-CN
 - [日志](/api/kitlib-log/)
 - [安装](/kitlib/install/) — KitModPanel 产品目录
-- [Mod AI 集成](/kitai/mod-ai-integration/)
-:::
+::: zh-CN

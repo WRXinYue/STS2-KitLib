@@ -13,7 +13,11 @@
     <_AbstractionsDll>$(RepoRoot)src\KitLib\Abstractions\bin\$(Configuration)\net9.0\KitLib.Abstractions.dll</_AbstractionsDll>
     <_GeneratedForwards>$(MSBuildThisFileDirectory)obj\$(Configuration)\TypeForwards.g.cs</_GeneratedForwards>
     <_FacadeGenProject>$(RepoRoot)tools\AbstractionsFacadeGen\AbstractionsFacadeGen.csproj</_FacadeGenProject>
-    <_FacadeGenDll>$(RepoRoot)tools\AbstractionsFacadeGen\bin\$(Configuration)\net9.0\AbstractionsFacadeGen.dll</_FacadeGenDll>
+    <!-- Build the generator into our own obj dir so VS design-time builds (default
+         bin\Debug\net9.0) never write the same DLL concurrently with CLI builds. -->
+    <_FacadeGenObjDir>$(MSBuildThisFileDirectory)obj\$(Configuration)\facadegen\obj\</_FacadeGenObjDir>
+    <_FacadeGenBinDir>$(MSBuildThisFileDirectory)obj\$(Configuration)\facadegen\bin\</_FacadeGenBinDir>
+    <_FacadeGenDll>$(_FacadeGenBinDir)$(Configuration)\net9.0\AbstractionsFacadeGen.dll</_FacadeGenDll>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,7 +43,7 @@
   </ItemGroup>
 
   <Target Name="GenerateAbstractionsTypeForwards" BeforeTargets="CoreCompile">
-    <MSBuild Projects="$(_FacadeGenProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration)" />
+    <MSBuild Projects="$(_FacadeGenProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);BaseIntermediateOutputPath=$(_FacadeGenObjDir);BaseOutputPath=$(_FacadeGenBinDir)" />
     <Error Condition="!Exists('$(_AbstractionsDll)')" Text="Build KitLib.Abstractions before the runtime facade." />
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_GeneratedForwards)'))" />
     <Exec

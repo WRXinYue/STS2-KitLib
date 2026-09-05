@@ -117,7 +117,7 @@
     },
     "empty": {
       "noPayload": "尚无 AI 决策快照。",
-      "noPayloadHint": "开启 KitLib AI 并进入战斗后，每次决策会更新此面板。"
+      "noPayloadHint": "进入战斗后，每次决策会更新此面板。"
     },
     "bool": {
       "yes": "是",

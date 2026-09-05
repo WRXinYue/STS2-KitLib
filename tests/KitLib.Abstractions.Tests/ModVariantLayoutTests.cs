@@ -153,10 +153,10 @@ public sealed class ModVariantLayoutTests {
             Assert.Equal(Path.GetFullPath(mods), KitLibHostPaths.ResolveModsRoot(variant));
             Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveSiblingKitLibModDirectory(variant));
 
-            var kitAi = Path.Combine(mods, "KitAI");
-            WriteVariant(kitAi, "0.110.1");
-            var aiVariant = Path.Combine(kitAi, ModVariantLayout.LibDirectoryName, "0.110.1");
-            Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveSiblingKitLibModDirectory(aiVariant));
+            var kitDevTools = Path.Combine(mods, "KitDevTools");
+            WriteVariant(kitDevTools, "0.110.1");
+            var devVariant = Path.Combine(kitDevTools, ModVariantLayout.LibDirectoryName, "0.110.1");
+            Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveSiblingKitLibModDirectory(devVariant));
         }
         finally {
             Directory.Delete(mods, recursive: true);

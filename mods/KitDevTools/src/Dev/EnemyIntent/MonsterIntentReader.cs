@@ -67,7 +67,7 @@ internal static class MonsterIntentReader {
         return entries;
     }
 
-    /// <summary>Intent chain for snapshots (current + predicted enemy turns). Pressure scoring stays in KitAI.</summary>
+    /// <summary>Intent chain for snapshots (current + predicted enemy turns).</summary>
     internal static JsonArray CaptureIntentSteps(
         Creature enemy,
         IReadOnlyList<Creature> targets,

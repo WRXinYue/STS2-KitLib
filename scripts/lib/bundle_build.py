@@ -26,6 +26,10 @@ def build_bundle(
     if sts2_profile and not resolved_dir:
         resolved_dir = str(resolve_profile_dir(sts2_profile, repo_root=_REPO))
 
+    # Leftover MSBuild/VBCSCompiler nodes hold obj/bin file locks (seen as
+    # AbstractionsFacadeGen crashes or MSB3026 copy errors). Same fix as `make build`.
+    subprocess.run(["dotnet", "build-server", "shutdown"], check=False)
+
     for project in bundle_projects_for(product_id):
         cmd = [
             "dotnet",

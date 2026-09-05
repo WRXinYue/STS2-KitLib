@@ -13,10 +13,10 @@ features:
   text:
     en: >-
       KitLib is a foundation library: declare it in your mod manifest, reference KitLib.Abstractions, and call its APIs.
-      Sibling products (KitModPanel, KitDevTools, KitAI) add in-game UI. A failed sibling should not break KitLib or mods that depend on it.
+      Sibling products (KitModPanel, KitDevTools) add in-game UI. A failed sibling should not break KitLib or mods that depend on it.
     zh-CN: >-
       KitLib 是基础库：在清单中声明、引用 KitLib.Abstractions、调用公开 API。
-      兄弟产品（KitModPanel、KitDevTools、KitAI）提供游戏内 UI。某个兄弟产品异常不应拖垮核心与依赖 KitLib 的其他 mod。
+      兄弟产品（KitModPanel、KitDevTools）提供游戏内 UI。某个兄弟产品异常不应拖垮核心与依赖 KitLib 的其他 mod。
 
   cards:
     - title:
@@ -24,21 +24,11 @@ features:
         zh-CN: 安装
       details:
         en: >-
-          Install from Steam Workshop or Nexus. Add KitModPanel / KitDevTools / KitAI as needed.
+          Install from Steam Workshop or Nexus. Add KitModPanel / KitDevTools as needed.
           See /kitlib/install/
         zh-CN: >-
-          从 Steam 创意工坊或 Nexus 安装。按需加装 KitModPanel / KitDevTools / KitAI。
+          从 Steam 创意工坊或 Nexus 安装。按需加装 KitModPanel / KitDevTools。
           详见 /kitlib/install/
-    - title:
-        en: KitAI
-        zh-CN: KitAI
-      details:
-        en: >-
-          Rule-based AutoPlay, character strategies, and LAN co-op host-drive testing.
-          See /kitai/mod-ai-integration/
-        zh-CN: >-
-          规则 AutoPlay、角色策略与 LAN 联机主机代打测试。
-          详见 /kitai/mod-ai-integration/
     - title:
         en: Extension API
         zh-CN: 扩展 API

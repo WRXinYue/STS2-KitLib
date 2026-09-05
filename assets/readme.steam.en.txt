@@ -18,7 +18,6 @@ Install companions as needed:
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitModPanel/README.md]KitModPanel[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]Workshop[/url]) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitDevTools/README.md]KitDevTools[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Workshop[/url]) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitAI/README.md]KitAI[/url][/b] — optional AI host / autoplay.
 [/list]
 
 [h3]Host[/h3]
@@ -47,7 +46,7 @@ At compile time, import eng/KitLib.ContentMod.props (KitLib.Abstractions.dll). A
 [h3]Install[/h3]
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required) plus [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] / [b]KitAI[/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required) plus [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
 [*][b]Auxiliary tools[/b] (KitLib.Mcp, etc.) — same Releases / Nexus page, per-platform binaries.
 [/list]
 

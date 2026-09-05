@@ -29,9 +29,8 @@ public static class ModuleEntry {
         RegisterRailTabs();
         WirePseudoCoopDelegates();
         KitLibHost.TryEnsurePseudoCoopPresetHandler = () => {
-            if (!Companion.CompanionBridge.IsAvailable) return false;
-            PseudoCoopBootstrap.ApplyPreset();
-            return true;
+            // PseudoCoop relied on the KitAI companion module (removed); kept as a no-op stub.
+            return false;
         };
         KitLibHost.SyncPerfHudOverlay = () => {
             KitLibRootServices.EnsureRootServicesNode();

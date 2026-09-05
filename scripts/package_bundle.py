@@ -8,7 +8,7 @@ Layout:
     mod_manifest.json
     lib/0.107.1/KitLib.Core.dll, KitLib.Abstractions.dll (facade), compat-target.txt
     lib/0.110.1/...
-  build/KitModPanel-release/, KitDevTools-release/, KitAI-release/:
+  build/KitModPanel-release/, KitDevTools-release/:
     <Product>.dll, mod_manifest.json
     lib/<api>/<Product>.dll (KitModPanel) or lib/<api>/modules/*.dll
 
@@ -55,7 +55,7 @@ MANIFEST_SRC = _REPO / "KitLib.json"
 COMPAT_MARKER = "compat-target.txt"
 CORE_DLL = "KitLib.Core.dll"
 MODULES_SUBDIR = "modules"
-SIBLING_VARIANT_PRODUCTS = ("KitModPanel", "KitDevTools", "KitAI")
+SIBLING_VARIANT_PRODUCTS = ("KitModPanel", "KitDevTools")
 _ZIP_ROOT_FILES = [
     "KitLib.dll",
     "KitLib.ModVariantLoader.dll",
@@ -459,7 +459,7 @@ def main() -> int:
     ap.add_argument(
         "--product",
         default="",
-        help="Build/stage one product only (KitLib, KitModPanel, KitDevTools, KitAI). Default: all products.",
+        help="Build/stage one product only (KitLib, KitModPanel, KitDevTools). Default: all products.",
     )
     args = ap.parse_args()
     load_dotenv(_REPO / ".env")

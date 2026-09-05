@@ -12,7 +12,6 @@ public static class SatelliteModuleLoadPolicy {
 
     public static readonly ModuleInfo[] Modules = [
         new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
-        new(KitLibModuleIds.Ai, AlwaysOn: false, Requires: []),
         new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
     ];
 
