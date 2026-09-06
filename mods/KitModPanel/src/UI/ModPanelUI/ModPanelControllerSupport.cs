@@ -25,7 +25,8 @@ public partial class ModPanelControllerSupport : Node {
     private ModPanelSubmenu? _submenu;
     private IReadOnlyList<SidebarModRowVm> _sidebarRows = [];
     private Func<string>? _getSelectedModId;
-    private Action<string>? _selectMod;
+    private Func<ModEntrySource>? _getSelectedSource;
+    private Action<string, ModEntrySource>? _selectMod;
     private Control? _settingsContentRoot;
     private bool _lastUsingController;
     private bool _tabHotkeysEnabled;
@@ -44,9 +45,11 @@ public partial class ModPanelControllerSupport : Node {
     }
 
     internal void ConfigureSidebar(IReadOnlyList<SidebarModRowVm> rows, Func<string> getSelectedModId,
-        Action<string> selectMod, Control settingsContentRoot) {
+        Func<ModEntrySource> getSelectedSource, Action<string, ModEntrySource> selectMod,
+        Control settingsContentRoot) {
         _sidebarRows = rows;
         _getSelectedModId = getSelectedModId;
+        _getSelectedSource = getSelectedSource;
         _selectMod = selectMod;
         _settingsContentRoot = settingsContentRoot;
     }
@@ -136,8 +139,10 @@ public partial class ModPanelControllerSupport : Node {
 
         SidebarModRowVm? focusedRow = null;
         var currentId = _getSelectedModId!();
+        var currentSource = _getSelectedSource!();
         foreach (var row in _sidebarRows) {
-            if (string.Equals(row.Id, currentId, StringComparison.OrdinalIgnoreCase)) {
+            if (string.Equals(row.Id, currentId, StringComparison.OrdinalIgnoreCase)
+                && row.Entry.Source == currentSource) {
                 focusedRow = row;
                 break;
             }
@@ -231,9 +236,11 @@ public partial class ModPanelControllerSupport : Node {
 
     private bool CycleSidebarMod(int delta) {
         var currentId = _getSelectedModId!();
+        var currentSource = _getSelectedSource!();
         var idx = 0;
         for (var i = 0; i < _sidebarRows.Count; i++) {
-            if (string.Equals(_sidebarRows[i].Id, currentId, StringComparison.OrdinalIgnoreCase)) {
+            if (string.Equals(_sidebarRows[i].Id, currentId, StringComparison.OrdinalIgnoreCase)
+                && _sidebarRows[i].Entry.Source == currentSource) {
                 idx = i;
                 break;
             }
@@ -241,7 +248,8 @@ public partial class ModPanelControllerSupport : Node {
         var next = Mathf.Clamp(idx + delta, 0, _sidebarRows.Count - 1);
         if (next == idx)
             return false;
-        _selectMod!(_sidebarRows[next].Id);
+        var target = _sidebarRows[next];
+        _selectMod!(target.Id, target.Entry.Source);
         return true;
     }
 

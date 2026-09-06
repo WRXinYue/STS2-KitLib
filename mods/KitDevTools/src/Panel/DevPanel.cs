@@ -196,7 +196,7 @@ internal static class DevPanel {
         TryDismissCurrent();
         KitLibState.ActivePanel = ActivePanel.CardTest;
 
-        CardTestUI.Show(_globalUi);
+        TestServerUI.Show(_globalUi);
     }
 
     internal static void OpenHooks() {

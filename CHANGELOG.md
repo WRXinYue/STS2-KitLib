@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **VariantTypeReflectionBridge** — The Harmony bridge that retrofitted `ReflectionHelper.ModTypes` for stable branches < 0.108.0 is removed. KitLib now requires the game's `AssociateAssemblyWithMod` API (stable ≥ 0.108.0 / beta). Players on older stable branches must update their game.
+
 ## [0.43.1] - 2026-09-05
 
 ### Removed

@@ -149,7 +149,7 @@ internal static partial class RoomSelectUI {
             }
 
             warnLabel.Visible = false;
-            bool ok = CardTestActions.TryEnterTestRoom();
+            bool ok = TestServerActions.TryEnterTestRoom();
             statusLabel.Text = ok
                 ? I18N.T("room.entered", "Entering: {0}", I18N.T("room.type.testRoom", "Test Room"))
                 : I18N.T("room.error", "Failed to enter room.");

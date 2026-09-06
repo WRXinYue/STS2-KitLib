@@ -24,8 +24,8 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Actions;
 
-/// <summary>Combat helpers for card testing: hand cleanup, play completion waits, auto-choice.</summary>
-internal static class CardTestPlayHelper {
+/// <summary>Combat helpers for the test server: hand cleanup, play completion waits, auto-choice.</summary>
+internal static class TestServerPlayHelper {
     static Node? _pendingChoiceScreen;
     static DateTime? _choiceScreenReadyAt;
     static readonly HashSet<ulong> _freedCardNodeIds = new();
@@ -293,7 +293,7 @@ internal static class CardTestPlayHelper {
     }
 
     static async Task TryAutoResolveChoicesAsync() {
-        if (!CardTestState.TestingActive)
+        if (!TestServerState.TestingActive)
             return;
 
         var hand = NPlayerHand.Instance;
@@ -422,7 +422,7 @@ internal static class CardTestPlayHelper {
     }
 
     static List<NCardHolder> OrderHoldersForTest(List<NCardHolder> holders) {
-        var active = CardTestState.ActiveTestCard;
+        var active = TestServerState.ActiveTestCard;
         if (active == null || holders.Count == 0)
             return holders;
 

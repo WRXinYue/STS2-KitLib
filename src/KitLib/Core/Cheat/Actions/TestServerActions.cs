@@ -20,18 +20,18 @@ using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.Actions;
 
-/// <summary>One entry in the card test queue: which card and how many upgrade levels to apply.</summary>
-internal sealed class CardTestEntry {
+/// <summary>One entry in the test server queue: which card and how many upgrade levels to apply.</summary>
+internal sealed class TestServerEntry {
     public CardModel Card { get; }
     public int UpgradeLevels { get; set; }
 
-    public CardTestEntry(CardModel card, int upgradeLevels = 0) {
+    public TestServerEntry(CardModel card, int upgradeLevels = 0) {
         Card = card;
         UpgradeLevels = upgradeLevels;
     }
 }
 
-internal static class CardTestActions {
+internal static class TestServerActions {
     internal static bool IsAtRestSite(RunState state) =>
         state.CurrentRoom?.RoomType == RoomType.RestSite;
 
@@ -41,7 +41,7 @@ internal static class CardTestActions {
         return player.PlayerCombatState != null || IsAtRestSite(state);
     }
 
-    /// <summary>Teleports the run into a KitLib-owned card test combat (<see cref="KitLibCardTestEncounter"/>).</summary>
+    /// <summary>Teleports the run into a KitLib-owned card test combat (<see cref="KitLibTestServerEncounter"/>).</summary>
     internal static bool TryEnterTestRoom() {
         try {
             var rm = RunManager.Instance;
@@ -53,7 +53,7 @@ internal static class CardTestActions {
                 MainFile.Logger.Warn("CardTestActions: Test room not available in multiplayer.");
                 return false;
             }
-            var encounter = ModelDb.Encounter<KitLibCardTestEncounter>().ToMutable();
+            var encounter = ModelDb.Encounter<KitLibTestServerEncounter>().ToMutable();
             TaskHelper.RunSafely(rm.EnterRoomDebug(RoomType.Monster, MapPointType.Monster, encounter));
             return true;
         }
@@ -67,14 +67,14 @@ internal static class CardTestActions {
     /// Runs the full test queue: clears hand, tests each entry, auto-resolves blocking choices.
     /// </summary>
     internal static async Task TestQueue(
-        IReadOnlyList<CardTestEntry> queue,
+        IReadOnlyList<TestServerEntry> queue,
         CardTarget target,
         RunState state,
         Player player) {
         if (queue.Count == 0)
             return;
 
-        CardTestState.TestingActive = true;
+        TestServerState.TestingActive = true;
         try {
             if (IsAtRestSite(state)) {
                 for (var i = 0; i < queue.Count; i++)
@@ -88,7 +88,7 @@ internal static class CardTestActions {
             }
         }
         finally {
-            CardTestState.TestingActive = false;
+            TestServerState.TestingActive = false;
         }
     }
 
@@ -96,7 +96,7 @@ internal static class CardTestActions {
     /// Rest-site pass: smith-style card preview for base and upgraded copies (no combat play).
     /// </summary>
     static async Task TestEntryAtRestSite(
-        CardTestEntry template,
+        TestServerEntry template,
         int index,
         int total,
         RunState state,
@@ -137,7 +137,7 @@ internal static class CardTestActions {
     /// Clears all combat cards, injects one card, and returns the hand instance if any.
     /// </summary>
     internal static async Task<CardModel?> InjectOne(
-        CardTestEntry entry,
+        TestServerEntry entry,
         CardTarget target,
         RunState state,
         Player player) {
@@ -146,9 +146,9 @@ internal static class CardTestActions {
             return null;
         }
 
-        await CardTestPlayHelper.ClearCombatCards(player);
-        await CardTestPlayHelper.WaitForCombatSettledAsync();
-        await CardTestPlayHelper.SeedDrawPileAsync(state, player);
+        await TestServerPlayHelper.ClearCombatCards(player);
+        await TestServerPlayHelper.WaitForCombatSettledAsync();
+        await TestServerPlayHelper.SeedDrawPileAsync(state, player);
 
         var id = ((AbstractModel)entry.Card).Id.Entry;
         var hand = player.PlayerCombatState?.Hand;
@@ -183,7 +183,7 @@ internal static class CardTestActions {
     /// Tests one queue entry: inject base → play, then inject upgraded → play.
     /// </summary>
     internal static async Task TestEntry(
-        CardTestEntry template,
+        TestServerEntry template,
         int index,
         int total,
         CardTarget target,
@@ -194,15 +194,15 @@ internal static class CardTestActions {
 
         var upgLevels = Math.Max(template.UpgradeLevels, 1);
 
-        var baseCard = await InjectOne(new CardTestEntry(template.Card, 0), target, state, player);
+        var baseCard = await InjectOne(new TestServerEntry(template.Card, 0), target, state, player);
         if (baseCard != null)
             await PlayOne(player, baseCard, 0);
-        await CardTestPlayHelper.ClearCombatCards(player);
+        await TestServerPlayHelper.ClearCombatCards(player);
 
-        var upgCard = await InjectOne(new CardTestEntry(template.Card, upgLevels), target, state, player);
+        var upgCard = await InjectOne(new TestServerEntry(template.Card, upgLevels), target, state, player);
         if (upgCard != null)
             await PlayOne(player, upgCard, upgLevels);
-        await CardTestPlayHelper.ClearCombatCards(player);
+        await TestServerPlayHelper.ClearCombatCards(player);
     }
 
     /// <summary>
@@ -223,9 +223,9 @@ internal static class CardTestActions {
         var id = ((AbstractModel)card).Id.Entry;
         var target = ResolveTarget(player, card);
 
-        CardTestState.ActiveTestCard = card;
+        TestServerState.ActiveTestCard = card;
         try {
-            await CardTestPlayHelper.WaitForCombatSettledAsync();
+            await TestServerPlayHelper.WaitForCombatSettledAsync();
 
             if (!card.CanPlayTargeting(target)) {
                 MainFile.Logger.Info($"CardTestActions: Skipped {id} +{upgradeLevels} — cannot play.");
@@ -237,7 +237,7 @@ internal static class CardTestActions {
                 return false;
             }
 
-            if (!await CardTestPlayHelper.WaitForPlayAsync(card, TimeSpan.FromSeconds(12))) {
+            if (!await TestServerPlayHelper.WaitForPlayAsync(card, TimeSpan.FromSeconds(12))) {
                 MainFile.Logger.Info($"CardTestActions: Timed out waiting for {id} +{upgradeLevels} to finish.");
                 return false;
             }
@@ -246,7 +246,7 @@ internal static class CardTestActions {
             return true;
         }
         finally {
-            CardTestState.ActiveTestCard = null;
+            TestServerState.ActiveTestCard = null;
         }
     }
 

@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib.Abstractions.Modding;
 
 namespace KitLib.UI;
 
 internal static class ModPanelFocusWiring {
-    public static void Wire(IReadOnlyList<SidebarModRowVm> rows, string selectedModId, string selectedPageId,
+    public static void Wire(IReadOnlyList<SidebarModRowVm> rows, string selectedModId,
+        ModEntrySource selectedSource, string selectedPageId,
         ModPanelPageTabChrome? pageTabChrome, Control contentRoot, Control? scopeFocusTarget) {
-        var selectedRow = FindRow(rows, selectedModId);
+        var selectedRow = FindRow(rows, selectedModId, selectedSource);
         var tabs = CollectPageTabs(pageTabChrome);
         WirePageTabFocusNeighbors(tabs);
         var contentEntry = FindFirstFocusableDescendant(contentRoot);
@@ -68,9 +70,11 @@ internal static class ModPanelFocusWiring {
         }
     }
 
-    private static Control? FindRow(IReadOnlyList<SidebarModRowVm> rows, string selectedModId) {
+    private static Control? FindRow(IReadOnlyList<SidebarModRowVm> rows, string selectedModId,
+        ModEntrySource selectedSource) {
         foreach (var row in rows) {
-            if (string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase)
+                && row.Entry.Source == selectedSource)
                 return row.Host;
         }
         return rows.Count > 0 ? rows[0].Host : null;

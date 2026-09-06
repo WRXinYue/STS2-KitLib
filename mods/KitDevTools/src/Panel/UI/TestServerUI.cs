@@ -11,15 +11,15 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 namespace KitLib.UI;
 
 /// <summary>
-/// Card Test panel — wraps the card browser as the primary UI, embedding queue/action
+/// Test server panel — wraps the card browser as the primary UI, embedding queue/action
 /// controls in the right panel. Queue persists across panel open/close within a session.
 /// Single-click a card to preview; double-click to add to queue instantly.
 /// "Test" injects the queue at upgrade=0, plays, then injects again at the configured
 /// upgrade level (at least 1) and plays again, letting you compare base vs upgraded.
 /// </summary>
-internal static class CardTestUI {
+internal static class TestServerUI {
     // Queue persists while the game session is alive.
-    private static readonly List<CardTestEntry> _queue = new();
+    private static readonly List<TestServerEntry> _queue = new();
 
     // ──────────────────────────────────── Public API ────────────────────────────────────
 
@@ -31,7 +31,7 @@ internal static class CardTestUI {
         CardBrowserUI.ShowPicker(
             globalUi, state, player,
             onCardPicked: card => {
-                _queue.Add(new CardTestEntry(card, 0));
+                _queue.Add(new TestServerEntry(card, 0));
                 refreshHandle.Refresh?.Invoke();
             },
             buildPersistentContent: container => BuildPersistentContent(container, refreshHandle));
@@ -55,7 +55,7 @@ internal static class CardTestUI {
         addAllBtn.TooltipText = I18N.T("cardtest.addAllHint", "Add all cards visible in the current filter to the queue");
         addAllBtn.Pressed += () => {
             foreach (var card in CardBrowserUI.GetPickerFilteredCards())
-                _queue.Add(new CardTestEntry(card.CanonicalInstance, 0));
+                _queue.Add(new TestServerEntry(card.CanonicalInstance, 0));
             refreshHandle.Refresh?.Invoke();
         };
         header.AddChild(addAllBtn);
@@ -99,13 +99,13 @@ internal static class CardTestUI {
                 SetStatus(statusLabel, I18N.T("cardtest.notInCombat", "Enter combat to enable inject / play."));
                 return;
             }
-            if (!CardTestActions.CanRunCardTest(st, pl)) {
+            if (!TestServerActions.CanRunCardTest(st, pl)) {
                 SetStatus(statusLabel, I18N.T("cardtest.notInCombat", "Enter combat to enable inject / play."));
                 return;
             }
             // Snapshot the queue so changes mid-run don't affect either pass.
             var snapshot = _queue.ToList();
-            TaskHelper.RunSafely(CardTestActions.TestQueue(snapshot, CardTarget.Hand, st, pl));
+            TaskHelper.RunSafely(TestServerActions.TestQueue(snapshot, CardTarget.Hand, st, pl));
             SetStatus(statusLabel, I18N.T("cardtest.testing", "Testing..."));
         };
 
@@ -181,7 +181,7 @@ internal static class CardTestUI {
 
             var inMp = MpCheatSession.InMultiplayerRun;
             var inRun = RunContext.TryGetRunAndPlayer(out var runState, out var currentPlayer);
-            var canTest = inRun && currentPlayer != null && CardTestActions.CanRunCardTest(runState, currentPlayer);
+            var canTest = inRun && currentPlayer != null && TestServerActions.CanRunCardTest(runState, currentPlayer);
             testBtn.Disabled = _queue.Count == 0 || !canTest || inMp;
         };
 

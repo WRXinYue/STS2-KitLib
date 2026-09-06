@@ -26,5 +26,5 @@
       <HintPath>$(Sts2DataDir)\sts2.dll</HintPath>
       <Private>false</Private>
     </Reference>
-  </ItemGroup>
+    </ItemGroup>
 </Project>

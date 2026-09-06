@@ -10,8 +10,8 @@ using MegaCrit.Sts2.Core.MonsterMoves.MonsterMoveStateMachine;
 
 namespace KitLib.Models;
 
-/// <summary>Training dummy for KitLib card testing — infinite HP, no turn limit, battle-friend-v3 visuals.</summary>
-public sealed class KitLibCardTestDummy : MonsterModel {
+/// <summary>Training dummy for the KitLib test server — infinite HP, no turn limit, battle-friend-v3 visuals.</summary>
+public sealed class KitLibTestServerDummy : MonsterModel {
     protected override string VisualsPath => SceneHelper.GetScenePath("creature_visuals/battle_friend_v3");
 
     public override LocString Title => MonsterModel.L10NMonsterLookup("BATTLE_FRIEND_V3.name");

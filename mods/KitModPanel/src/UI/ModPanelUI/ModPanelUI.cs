@@ -134,6 +134,15 @@ public static partial class ModPanelUI {
         return sidebarPlan.InitialSelectedModId;
     }
 
+    private static ModEntrySource ResolveInitialSidebarModSource(
+        IReadOnlyList<KitLibModEntry> ordered, string id) {
+        foreach (var e in ordered) {
+            if (string.Equals(e.Id, id, StringComparison.OrdinalIgnoreCase))
+                return e.Source;
+        }
+        return ModEntrySource.ModsDirectory;
+    }
+
     private static string ResolveShowcaseModId()
         => ModPanelSidebarPlanner.ResolveShowcaseModId(
             ModRuntime.Registry.GetAllEntries(),
@@ -332,7 +341,9 @@ public static partial class ModPanelUI {
         }
         var modRows = new List<SidebarModRowVm>();
         var initialSelectedId = ResolveInitialSidebarModId(sidebarPlan, ordered);
+        var initialSelectedSource = ResolveInitialSidebarModSource(ordered, initialSelectedId);
         var selectedModId = initialSelectedId;
+        var selectedSource = initialSelectedSource;
         var contentState = new ModPanelContentState();
         Control? scopeFocusTarget = null;
         ModPanelControllerSupport controllerSupport = new();
@@ -343,8 +354,8 @@ public static partial class ModPanelUI {
         void RebuildRitsuRightPane() {
             RefreshSettingsContent(ritsuContentList, pageTabChrome, selectedModId, contentState, RebuildRitsuRightPane);
             Callable.From(() => {
-                ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabChrome, ritsuContentList,
-                    scopeFocusTarget);
+                ModPanelFocusWiring.Wire(modRows, selectedModId, selectedSource, contentState.PageId,
+                    pageTabChrome, ritsuContentList, scopeFocusTarget);
                 pageTabChrome.RefreshTriggerIcons();
                 if (GodotObject.IsInstanceValid(controllerSupport))
                     controllerSupport.RefreshHints();
@@ -353,7 +364,8 @@ public static partial class ModPanelUI {
         controllerSupport.Configure(pageTabChrome, hintsRow);
         void RefreshModRowChrome(bool animateSelection = true) {
             foreach (var row in modRows) {
-                var sel = string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase);
+                var sel = string.Equals(row.Id, selectedModId, StringComparison.OrdinalIgnoreCase)
+                    && row.Entry.Source == selectedSource;
                 var focused = row.Host.HasFocus();
                 if (animateSelection && !row.Pressing && !focused)
                     ModPanelSidebarMotion.AnimateRowStyle(row.InnerStyle, row.BgPanel, sel, row.Pressing, focused);
@@ -372,10 +384,12 @@ public static partial class ModPanelUI {
             }
         }
         titleEditor.TitleCommitted += RefreshSidebarRowTitle;
-        void SelectMod(string id) {
+        void SelectMod(string id, ModEntrySource source) {
             selectedModId = id;
+            selectedSource = source;
             RefreshModRowChrome();
-            var rowEntry = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase))?.Entry;
+            var rowEntry = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase)
+                && r.Entry.Source == source)?.Entry;
             var m = ModPanelModBanner.TryFindMod(id);
             if (m != null) {
                 ApplySidebarTexts(m, id, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
@@ -396,7 +410,8 @@ public static partial class ModPanelUI {
                 : "";
             contentState.PageId = pagesForMod;
             RebuildRitsuRightPane();
-            var selectedRow = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase));
+            var selectedRow = modRows.Find(r => string.Equals(r.Id, id, StringComparison.OrdinalIgnoreCase)
+                && r.Entry.Source == source);
             if (selectedRow != null) {
                 shell.SetInitialFocusedControl(selectedRow.Host);
                 if (Sts2InputCompat.IsUsingController(NControllerManager.Instance))
@@ -504,8 +519,9 @@ public static partial class ModPanelUI {
                 };
                 modRows.Add(vm);
                 rowHost.FocusEntered += () => {
-                    if (!string.Equals(selectedModId, vm.Id, StringComparison.OrdinalIgnoreCase))
-                        SelectMod(vm.Id);
+                    if (!string.Equals(selectedModId, vm.Id, StringComparison.OrdinalIgnoreCase)
+                        || selectedSource != vm.Entry.Source)
+                        SelectMod(vm.Id, vm.Entry.Source);
                     else
                         RefreshModRowChrome();
                 };
@@ -518,14 +534,14 @@ public static partial class ModPanelUI {
                         }
                         else {
                             vm.Pressing = false;
-                            SelectMod(vm.Id);
+                            SelectMod(vm.Id, vm.Entry.Source);
                         }
                     }
                 };
                 cardContent.AddChild(rowHost);
             }
             var deferredInitial = initialSelectedId;
-            Callable.From(() => SelectMod(deferredInitial)).CallDeferred();
+            Callable.From(() => SelectMod(deferredInitial, initialSelectedSource)).CallDeferred();
         }
         RefreshPendingRestartBanner();
         var dividerLine = CreateSidebarScrollTopDivider();
@@ -548,7 +564,8 @@ public static partial class ModPanelUI {
         mainVBox.AddChild(sidebarLower);
         shell.AddChild(controllerSupport);
         controllerSupport.BindSubmenu(shell);
-        controllerSupport.ConfigureSidebar(modRows, () => selectedModId, SelectMod, ritsuContentList);
+        controllerSupport.ConfigureSidebar(modRows, () => selectedModId, () => selectedSource,
+            SelectMod, ritsuContentList);
         void OnThemeRefresh() {
             RefreshModRowChrome(animateSelection: false);
             RebuildRitsuRightPane();
@@ -557,11 +574,12 @@ public static partial class ModPanelUI {
         shell.TreeExiting += () => ClearThemeRefresh();
         Callable.From(() => {
             if (modRows.Count > 0) {
-                ModPanelFocusWiring.Wire(modRows, selectedModId, contentState.PageId, pageTabChrome, ritsuContentList,
-                    scopeFocusTarget);
+                ModPanelFocusWiring.Wire(modRows, selectedModId, selectedSource, contentState.PageId,
+                    pageTabChrome, ritsuContentList, scopeFocusTarget);
                 pageTabChrome.RefreshTriggerIcons();
                 var selectedRow = modRows.Find(r =>
-                    string.Equals(r.Id, selectedModId, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(r.Id, selectedModId, StringComparison.OrdinalIgnoreCase)
+                    && r.Entry.Source == selectedSource);
                 shell.SetInitialFocusedControl(selectedRow?.Host);
             }
             shell.RefreshControllerFocus();

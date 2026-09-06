@@ -2,8 +2,8 @@ using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.Actions;
 
-/// <summary>Shared runtime flags for the Card Test panel.</summary>
-internal static class CardTestState {
+/// <summary>Shared runtime flags for the test server panel.</summary>
+internal static class TestServerState {
     /// <summary>True while the automated Test queue should ignore energy / star costs.</summary>
     internal static bool BypassResourceCosts => TestingActive;
 
