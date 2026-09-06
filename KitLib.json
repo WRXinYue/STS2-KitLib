@@ -4,6 +4,7 @@
   "author": "WRXinYue",
   "description": "Foundation library and host for Slay the Spire 2 mods. Pair with KitModPanel and KitDevTools for UI and tooling.",
   "version": "0.43.1",
+  "min_game_version": "0.108.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [],

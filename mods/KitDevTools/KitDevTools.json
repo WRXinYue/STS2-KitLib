@@ -4,6 +4,7 @@
   "author": "WRXinYue",
   "description": "In-game side rail, cheats, saves, and developer tools for Slay the Spire 2. Requires KitLib.",
   "version": "0.1.1",
+  "min_game_version": "0.108.0",
   "has_pck": false,
   "has_dll": true,
   "dependencies": [
