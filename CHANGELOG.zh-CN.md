@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- **VariantTypeReflectionBridge** — 移除用于在稳定版 < 0.108.0 上补齐 `ReflectionHelper.ModTypes` 的 Harmony 桥接。KitLib 现在需要游戏原生的 `AssociateAssemblyWithMod` API（稳定版 ≥ 0.108.0 / beta）。仍在旧版稳定分支的玩家需更新游戏版本。
+- **VariantTypeReflectionBridge** — 移除用于在稳定版 < 0.108.0 上补齐 `ReflectionHelper.ModTypes` 的 Harmony 桥接。KitLib 现在需要游戏原生的 `AssociateAssemblyWithMod` API（稳定版 ≥ 0.111.0）。仍在旧版稳定分支的玩家需更新游戏版本。
 
 ## [0.43.1] - 2026-09-05
 
