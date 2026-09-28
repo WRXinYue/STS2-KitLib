@@ -272,20 +272,8 @@ internal static partial class CardBrowserUI {
                 return;
 
             if (evt is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left) {
-                if (mb.Pressed) {
+                if (mb.Pressed)
                     _s.DragController?.NotifyPointerDown(holder, holder.GetGlobalMousePosition());
-                    return;
-                }
-
-                if (!mb.DoubleClick || _pickerCallback == null)
-                    return;
-
-                var dblCard = holder.CardModel;
-                if (dblCard == null)
-                    return;
-
-                _pickerCallback(dblCard.CanonicalInstance);
-                holder.AcceptEvent();
                 return;
             }
 

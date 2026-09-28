@@ -31,7 +31,6 @@ public enum ActivePanel {
     Rooms,
     Console,
     Presets,
-    CardTest,
     Hooks,
     Logs,
     Feedback,

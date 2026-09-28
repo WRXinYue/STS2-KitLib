@@ -116,49 +116,20 @@ internal static partial class CardBrowserUI {
         }
     }
 
-    // ──────── Picker state (set by ShowPicker / Show, cleared on Remove) ────────
-
-    private const string BrowserModeMetaKey = "dm_card_browser_mode";
-    private const string ModeBrowse = "browse";
-    private const string ModePicker = "picker";
-
-    private static Action<CardModel>? _pickerCallback;
-    private static Action<VBoxContainer>? _pickerPersistentBuilder;
-    // Always points at the current state's FilteredCards so callers can read the live filtered list.
-    private static Func<List<CardModel>>? _pickerGetFilteredCards;
-
-    /// <summary>Returns the card list currently visible in the browser after all active filters.</summary>
-    internal static IReadOnlyList<CardModel> GetPickerFilteredCards() =>
-        _pickerGetFilteredCards?.Invoke() ?? new List<CardModel>();
-
     // ──────── Public API ────────
-
-    /// <summary>
-    /// Opens the card browser in picker mode. Clicking a card in the right panel shows an
-    /// "Add to Queue" button that invokes <paramref name="onCardPicked"/> without closing the browser.
-    /// <paramref name="buildPersistentContent"/> is appended below the per-card section each time
-    /// the right panel is rebuilt; use it to embed persistent queue/action controls.
-    /// </summary>
-    internal static void ShowPicker(NGlobalUi globalUi, RunState runState, Player player,
-        Action<CardModel> onCardPicked, Action<VBoxContainer>? buildPersistentContent = null) {
-        Show(globalUi, runState, player);
-        _pickerCallback = onCardPicked;
-        _pickerPersistentBuilder = buildPersistentContent;
-        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
-        root?.SetMeta(BrowserModeMetaKey, ModePicker);
-    }
 
     public static void Show(NGlobalUi globalUi, RunState runState, Player player) {
         var openTotal = CardBrowserPerf.Start();
 
-        // Cards / Card Test share this root — never session-reveal; always rebuild so modes cannot leak.
+        if (TryReveal(globalUi))
+            return;
+
         var phase = CardBrowserPerf.Start();
         DevPanelUI.DestroySessionOverlay(globalUi, RootName);
         CardBrowserPerf.Log("open.remove", phase);
 
         phase = CardBrowserPerf.Start();
         var s = new State(globalUi, runState, player);
-        _pickerGetFilteredCards = () => s.FilteredCards;
         CardBrowserPerf.Log("open.createState", phase);
 
         phase = CardBrowserPerf.Start();
@@ -592,7 +563,7 @@ internal static partial class CardBrowserUI {
 
         phase = CardBrowserPerf.Start();
         dual.AttachToScene();
-        dual.Root.SetMeta(BrowserModeMetaKey, ModeBrowse);
+        TrackState(dual.Root, s);
         s.DragController = CardBrowserDragController.Attach(dual.Root, s);
         RaiseHoverTipsLayer();
         dual.Root.TreeExiting += () => {
@@ -617,15 +588,36 @@ internal static partial class CardBrowserUI {
     }
 
     public static void Remove(NGlobalUi globalUi) {
-        _pickerCallback = null;
-        _pickerPersistentBuilder = null;
-        _pickerGetFilteredCards = null;
         RestoreHoverTipsLayer();
         DevPanelUI.DestroySessionOverlay(globalUi, RootName);
     }
 
-    /// <summary>Card browser is not session-cached (shared with Card Test).</summary>
-    internal static bool TryReveal(NGlobalUi globalUi) => false;
+    internal static bool TryReveal(NGlobalUi globalUi) {
+        if (!RunContext.TryGetRunAndPlayer(out _, out var player) || player == null)
+            return false;
+
+        var root = ((Node)globalUi).GetNodeOrNull<Control>(RootName);
+        if (root == null || !DevPanelUI.IsSessionCached(root))
+            return false;
+        if (!StatesByRoot.TryGetValue(root.GetInstanceId(), out var s))
+            return false;
+
+        // Pile views reflect live combat state — rescan piles before revealing the cached root.
+        if (!IsLibrarySource) {
+            InvalidateCardCache(s);
+            RebuildGrid(s, s.SearchInput.Text ?? "");
+        }
+        DevPanelUI.RevealSessionOverlay(globalUi, root);
+        return true;
+    }
+
+    private static readonly Dictionary<ulong, State> StatesByRoot = new();
+
+    private static void TrackState(Control root, State state) {
+        ulong id = root.GetInstanceId();
+        StatesByRoot[id] = state;
+        root.TreeExiting += () => StatesByRoot.Remove(id);
+    }
 
     internal static readonly string NodeName = RootName;
 
@@ -648,8 +640,7 @@ internal static partial class CardBrowserUI {
             () => RebuildGrid(s, search(), GridRebuildOptions.ForCardEdit(card)),
             () => RebuildGridAndSyncRightPanel(s, GridRebuildOptions.ForCardListChangeWith(card)),
             IsLibrarySource, BrowseSourceToTarget(_browseSource),
-            IsLibrarySource && s.LibraryShowUpgradePreview,
-            _pickerCallback, _pickerPersistentBuilder);
+            IsLibrarySource && s.LibraryShowUpgradePreview);
         s.Dual.OpenExtension();
     }
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Card Test panel** — Removed the sidebar Card Test tab and its queued auto-play entry point. The card browser no longer shares its panel with picker mode, so session caching is restored: reopening after switching tabs no longer triggers a full grid rebuild.
+
 ## [0.1.1] - 2026-09-05
 
 ### Changed

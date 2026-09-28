@@ -27,7 +27,7 @@ In-game developer tools for Slay the Spire 2. Requires [KitLib](https://steamcom
 
 Browsers: cards, relics, enemies, powers, potions, events, rooms (including map overrides and mod-test rest/treasure rooms).
 
-Also: commands, cheats, presets, card test, enemy intents, hooks, save/load, logs, settings.
+Also: commands, cheats, presets, enemy intents, hooks, save/load, logs, settings.
 
 ## Other
 

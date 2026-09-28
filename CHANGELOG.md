@@ -10,7 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Card test queue automation** — Removed the automated batched card inject/play test queue and its resource-cost bypass patches. It shared the card browser's panel root in two incompatible modes, which prevented session caching and forced a full grid rebuild on every open. The Test Room entry in the room browser is retained for manual testing with the card browser.
 - **VariantTypeReflectionBridge** — The Harmony bridge that retrofitted `ReflectionHelper.ModTypes` for stable branches < 0.108.0 is removed. KitLib now requires the game's `AssociateAssemblyWithMod` API (stable ≥ 0.111.0). Players on older stable branches must update their game.
+
+### Changed
+
+- **Networked room teleport** — In a real multiplayer run, the Room Teleport dev cards now route through the game's authoritative ActionQueue (`ConsoleCmdGameAction "room <Type>"`) instead of calling `EnterRoomDebug` directly, so entering a room syncs on every peer and works from host or client.
+
+### Fixed
+
+- **Black screen after Map teleport in multiplayer** — `EnterRoomDebug` on the Map room type does not balance `CombatStateSynchronizer`, so a later teleport re-entered `StartSync` and desynced the client (black screen). Returning to the Map screen via the dev teleport is now refused in multiplayer.
 
 ## [0.43.1] - 2026-09-05
 

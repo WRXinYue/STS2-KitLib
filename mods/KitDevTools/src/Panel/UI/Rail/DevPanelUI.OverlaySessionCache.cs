@@ -17,9 +17,9 @@ internal static partial class DevPanelUI {
         if (_sessionRevealRegistered)
             return;
         _sessionRevealRegistered = true;
+        RegisterSessionReveal("devmode.cards", CardBrowserUI.TryReveal);
         RegisterSessionReveal("devmode.powers", PowerSelectUI.TryReveal);
         RegisterSessionReveal("devmode.relics", RelicBrowserUI.TryReveal);
-        // Card browser is shared with Card Test (picker mode) — never session-reveal it.
     }
 
     internal static void RegisterSessionReveal(string tabId, Func<NGlobalUi, bool> handler) {
@@ -54,14 +54,6 @@ internal static partial class DevPanelUI {
                 continue;
             if (!ctrl.Visible && IsSessionCached(ctrl))
                 continue;
-            // Card browser is shared by Cards + Card Test; caching one mode poisons the other.
-            if (name == CardBrowserUI.NodeName) {
-                ReleaseOverlayRailPin(globalUi, ctrl);
-                parent.RemoveChild(ctrl);
-                ctrl.QueueFree();
-                hidden++;
-                continue;
-            }
             HideSessionOverlay(globalUi, ctrl);
             hidden++;
         }

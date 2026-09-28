@@ -18,7 +18,6 @@ internal static class PanelTabRegistration {
         RegisterTab("devmode.cheats", "star", "panel.cheats", "Cheats", 750, KitLibTabGroup.Primary, KitLibTabKind.Cheat,
             gui => KitLibPanelUiOps.ShowCheatsOverlay?.Invoke(gui));
         RegisterTab("devmode.presets", "book-open-variant", "panel.presets", "Presets", 800, KitLibTabGroup.Primary, KitLibTabKind.Cheat, () => DevPanel.OpenPresets());
-        RegisterTab("devmode.cardtest", "animation-play", "panel.cardtest", "Card Test", 850, KitLibTabGroup.Primary, KitLibTabKind.Cheat, () => DevPanel.OpenCardTest());
         RegisterTab("devmode.save", "content-save", "panel.save", "Save / Load", 100, KitLibTabGroup.Utility, KitLibTabKind.Cheat,
             gui => KitLibPanelUiOps.ShowSaveLoadOverlay?.Invoke(gui));
     }

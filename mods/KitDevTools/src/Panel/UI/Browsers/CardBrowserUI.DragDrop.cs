@@ -72,7 +72,7 @@ internal static partial class CardBrowserUI {
         }
 
         internal void TryBeginDrag(NGridCardHolder holder, Vector2 globalMouse) {
-            if (_pickerCallback != null || _active)
+            if (_active)
                 return;
 
             var card = holder.CardModel;
@@ -102,7 +102,7 @@ internal static partial class CardBrowserUI {
         }
 
         internal void NotifyPointerDown(NGridCardHolder holder, Vector2 globalPos) {
-            if (_active || _pickerCallback != null)
+            if (_active)
                 return;
 
             _pendingHolder = holder;
@@ -110,7 +110,7 @@ internal static partial class CardBrowserUI {
         }
 
         internal void NotifyPointerMove(NGridCardHolder holder) {
-            if (_active || _pickerCallback != null)
+            if (_active)
                 return;
 
             var mouse = MouseCanvas;
@@ -166,7 +166,7 @@ internal static partial class CardBrowserUI {
                 : _host.GetGlobalMousePosition();
 
         internal void NotifyPointerDownAt(Vector2 globalPos) {
-            if (_active || _pickerCallback != null)
+            if (_active)
                 return;
 
             var holder = FindHolderAt(globalPos);

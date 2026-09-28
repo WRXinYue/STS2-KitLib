@@ -10,7 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **卡牌测试队列自动化** — 移除自动批量注入/打出卡牌的测试队列及配套的绕过资源消耗补丁。该功能与卡牌浏览器共用面板根节点、两种模式互相冲突，导致卡牌浏览器无法使用会话缓存，每次打开都全量重建。房间浏览器中的「测试房间」保留，可配合卡牌浏览器手动测试。
 - **VariantTypeReflectionBridge** — 移除用于在稳定版 < 0.108.0 上补齐 `ReflectionHelper.ModTypes` 的 Harmony 桥接。KitLib 现在需要游戏原生的 `AssociateAssemblyWithMod` API（稳定版 ≥ 0.111.0）。仍在旧版稳定分支的玩家需更新游戏版本。
+
+### Changed
+
+- **联机房间跳转** — 在真实联机对局中，房间跳转开发卡片改为走游戏的权威 ActionQueue（`ConsoleCmdGameAction "room <Type>"`）而非直接调用 `EnterRoomDebug`，使进入房间在各端同步生效，host 与客户端都可触发。
+
+### Fixed
+
+- **联机跳转到地图后黑屏** — `EnterRoomDebug` 对 Map 房间类型不会结算 `CombatStateSynchronizer`，导致后续跳转再次进入 `StartSync` 使客户端失步（黑屏）。联机下对地图屏的开发跳转现已被拒绝。
 
 ## [0.43.1] - 2026-09-05
 

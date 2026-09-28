@@ -109,7 +109,6 @@ internal static class DevPanel {
             "devmode.hooks" => ActivePanel.Hooks,
             "devmode.logs" => ActivePanel.Logs,
             "devmode.enemyIntent" => ActivePanel.EnemyIntent,
-            "devmode.cardtest" => ActivePanel.CardTest,
             _ => KitLibState.ActivePanel,
         };
     }
@@ -191,14 +190,6 @@ internal static class DevPanel {
         PresetUI.Show(_globalUi);
     }
 
-    internal static void OpenCardTest() {
-        if (_globalUi == null) return;
-        TryDismissCurrent();
-        KitLibState.ActivePanel = ActivePanel.CardTest;
-
-        TestServerUI.Show(_globalUi);
-    }
-
     internal static void OpenHooks() {
         if (_globalUi == null) return;
         if (MpCheatUi.IsHooksDisabledInMultiplayer) return;
@@ -270,7 +261,6 @@ internal static class DevPanel {
             case ActivePanel.Rooms: OpenRooms(); break;
             case ActivePanel.Console: OpenConsole(); break;
             case ActivePanel.Presets: OpenPresets(); break;
-            case ActivePanel.CardTest: OpenCardTest(); break;
             case ActivePanel.Hooks: OpenHooks(); break;
             case ActivePanel.Logs: OpenLogs(); break;
             case ActivePanel.EnemyIntent: OpenEnemyIntent(); break;
