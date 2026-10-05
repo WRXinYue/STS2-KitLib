@@ -29,7 +29,6 @@ internal partial class KitLibProcessNode : Node {
         if (Instance == this)
             Instance = null;
         McpBridge.Shutdown();
-        DevViewerServer.Shutdown();
         LogStreamPipeServer.Stop();
     }
 }

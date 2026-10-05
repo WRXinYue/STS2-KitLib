@@ -4,48 +4,13 @@ using KitLib.Icons;
 namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
-    internal static void SpliceBrowserPanelRight(PanelContainer panel, bool joined) {
-        if (!GodotObject.IsInstanceValid(panel))
-            return;
-        if (panel.GetThemeStylebox("panel") is not StyleBoxFlat sb)
-            return;
-
-        int r = joined ? 0 : BrowserRailRadius;
-        sb.CornerRadiusTopRight = r;
-        sb.CornerRadiusBottomRight = r;
-        sb.BorderWidthRight = joined ? 0 : 1;
-        if (joined) {
-            sb.ShadowOffset = Vector2.Zero;
-            sb.ShadowSize = 0;
-        }
-        else {
-            sb.ShadowOffset = new Vector2(20, 0);
-            sb.ShadowSize = 20;
-        }
-    }
-
-    internal static void SpliceBrowserPanelLeft(PanelContainer panel, bool joined) {
-        if (!GodotObject.IsInstanceValid(panel))
-            return;
-        if (panel.GetThemeStylebox("panel") is not StyleBoxFlat sb)
-            return;
-
-        int r = joined ? 0 : BrowserRailRadius;
-        sb.CornerRadiusTopLeft = r;
-        sb.CornerRadiusBottomLeft = r;
-        sb.BorderWidthLeft = joined ? 0 : 1;
-    }
-
     /// <summary>
     /// Browser panel chrome for a fixed pixel width; horizontal
-    /// offsets are <c>0 … width</c> (parent must already account for <see cref="BrowserPanelLeft"/>).
+    /// offsets are <c>0 … width</c>.
     /// Used for stacked browser columns inside one clip host (e.g. Save / Load + extension).
+    /// Panel pops from the center, so all four corners are uniformly rounded.
     /// </summary>
-    /// <param name="joinFlushOnRight">
-    /// When another column sits immediately to the right, square this panel's right vertical corners
-    /// so the seam has no inner rounding (reads as one split surface).
-    /// </param>
-    public static PanelContainer CreateBrowserPanelInner(float fixedWidth, bool joinFlushOnRight = false) {
+    public static PanelContainer CreateBrowserPanelInner(float fixedWidth) {
         var panel = new PanelContainer {
             Name = "BrowserPanel",
             MouseFilter = Control.MouseFilterEnum.Stop,
@@ -58,25 +23,24 @@ internal static partial class DevPanelUI {
             OffsetLeft = 0,
             OffsetRight = fixedWidth,
         };
-        int rr = joinFlushOnRight ? 0 : BrowserRailRadius;
         var style = new StyleBoxFlat {
             BgColor = ColOverlayBg,
-            CornerRadiusTopLeft = 0,
-            CornerRadiusBottomLeft = 0,
-            CornerRadiusTopRight = rr,
-            CornerRadiusBottomRight = rr,
+            CornerRadiusTopLeft = BrowserRailRadius,
+            CornerRadiusBottomLeft = BrowserRailRadius,
+            CornerRadiusTopRight = BrowserRailRadius,
+            CornerRadiusBottomRight = BrowserRailRadius,
             ContentMarginLeft = 20,
             ContentMarginRight = 20,
             ContentMarginTop = 14,
             ContentMarginBottom = 16,
-            BorderWidthLeft = 0,
+            BorderWidthLeft = 1,
             BorderWidthTop = 1,
             BorderWidthBottom = 1,
             BorderWidthRight = 1,
             BorderColor = ColOverlayBorder,
             ShadowColor = new Color(0, 0, 0, 0.40f),
             ShadowSize = 20,
-            ShadowOffset = new Vector2(20, 0)
+            ShadowOffset = Vector2.Zero
         };
         panel.AddThemeStyleboxOverride("panel", style);
         var content = new VBoxContainer { Name = "Content" };
@@ -226,7 +190,7 @@ internal static partial class DevPanelUI {
     }
     // ─────────────────────────────────────────────────────────────────────────
     private static Button CreateRailIcon(MdiIcon icon, string tooltip) =>
-        ContextRailWidgets.CreateContextIconButton(icon, tooltip, iconSize: 20);
+        ContextRailWidgets.CreateContextIconButton(icon, tooltip, iconSize: 32, contentMargin: 2);
     private static Button CreateToggleButton(string text) {
         return new Button {
             Text = text,

@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **In-game floating Logs + Combat panel** — A new persistent floating panel (`KitLibLogViewer`) merges the log viewer and in-game combat stats into one surface. It is draggable via its title bar, semi-transparent, and auto-pierces card drags (a card dragged from hand passes through the panel without being blocked; the panel only captures input that starts on it). Logs keep the existing filter/search/export extension; Combat shows live per-player dealt/taken/block/cards, event timeline, and creature HP/intent from `CombatStatsTracker`. Collapsing the panel hides it persistently; reopening rebuilds it from the rail's Logs tab.
+
 ### Removed
 
+- **Web dev viewer panel (offline)** — Removed the entire browser-based dev viewer (HTTP/WS server, embedded `viewer-shell.html`, Vue frontend, `DevViewerLauncher`/`KitLogTerminalLauncher`). Combat stats are now shown in-game. No export/history; real-time stats reuse `CombatStatsTracker`.
+- **AI decision tab + `AiUrl`** — Removed the web panel AI decision tab (a dead feature: its `/api/ai/ws` and `/api/ai/live` routes had no server implementation). Dropped the tab route, its Vue component/composable, AI DTOs, and the unused `AiUrl` property.
 - **Card Test panel** — Removed the sidebar Card Test tab and its queued auto-play entry point. The card browser no longer shares its panel with picker mode, so session caching is restored: reopening after switching tabs no longer triggers a full grid rebuild.
 
 ## [0.1.1] - 2026-09-05

@@ -12,7 +12,8 @@ internal static class ContextRailWidgets {
         string tooltip,
         Action? onPressed = null,
         Color? tint = null,
-        int iconSize = 18) {
+        int iconSize = 18,
+        int? contentMargin = null) {
         var col = tint ?? ThemeManager.Current.IconNormal;
         var tex = icon.Texture(iconSize, col);
         if (tex == null && !icon.IsAvailable)
@@ -27,16 +28,17 @@ internal static class ContextRailWidgets {
             Icon = tex,
         };
 
+        int margin = contentMargin ?? (iconSize >= 20 ? 6 : 4);
         var flat = new StyleBoxFlat {
             BgColor = Colors.Transparent,
             CornerRadiusTopLeft = 8,
             CornerRadiusTopRight = 8,
             CornerRadiusBottomLeft = 8,
             CornerRadiusBottomRight = 8,
-            ContentMarginLeft = iconSize >= 20 ? 6 : 4,
-            ContentMarginRight = iconSize >= 20 ? 6 : 4,
-            ContentMarginTop = iconSize >= 20 ? 6 : 4,
-            ContentMarginBottom = iconSize >= 20 ? 6 : 4,
+            ContentMarginLeft = margin,
+            ContentMarginRight = margin,
+            ContentMarginTop = margin,
+            ContentMarginBottom = margin,
         };
         btn.AddThemeStyleboxOverride("normal", flat);
         btn.AddThemeStyleboxOverride("hover", flat);

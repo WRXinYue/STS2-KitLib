@@ -27,6 +27,8 @@ internal static partial class DevPanelUI {
     private const int Radius = 14;
 
     // ── Panel geometry (shared by browser panels) ──
+    // BrowserPanelLeft (= RailInsetW) is the single push amount: game content is shifted right
+    // by this, so its new left edge, the rail's right edge, and the panel's left origin all align at 76.
     public const float BrowserRailLeft = 24f;
     public const float BrowserRailW = RailW;
     public const float BrowserPanelLeft = BrowserRailLeft + BrowserRailW;   // 76f
@@ -44,7 +46,6 @@ internal static partial class DevPanelUI {
     private static int _browserRailHoldCount;
 
     // ── Stored StyleBoxFlat refs for live theme refresh ──
-    private static StyleBoxFlat? _railStyle;
     private static StyleBoxFlat? _railIndicatorStyle;
     private static StyleBoxFlat? _railSepStyle;
     private static int _activeRailBtnIdx = -1;
@@ -103,10 +104,6 @@ internal static partial class DevPanelUI {
 
     /// <summary>Applies the current theme colors to the persistent rail widgets in-place.</summary>
     private static void ApplyRailTheme() {
-        if (_railStyle != null) {
-            _railStyle.BgColor = ColRailBg;
-            _railStyle.BorderColor = ColRailBorder;
-        }
         if (_railIndicatorStyle != null)
             _railIndicatorStyle.BgColor = ColIconActiveBg;
         if (_railSepStyle != null)
@@ -142,6 +139,60 @@ internal static partial class DevPanelUI {
         return MdiIcon.PuzzleOutline.Texture(20, tint);
     }
 
+    // ── Frosted-glass blur backdrop ──
+    private static ShaderMaterial? _railBackdropMat;
+
+    /// <summary>
+    /// Single-pass 2D gaussian blur reading the backbuffer (<c>screen_texture</c>) so the rail strip
+    /// shows the game behind it blurred and slightly darkened, instead of a flat black veil.
+    /// </summary>
+    private static ShaderMaterial RailBackdropMaterial() {
+        if (_railBackdropMat != null)
+            return _railBackdropMat;
+        _railBackdropMat = new ShaderMaterial {
+            Shader = new Shader { Code = RailBackdropShaderCode }
+        };
+        return _railBackdropMat;
+    }
+
+    private const string RailBackdropShaderCode = """
+        shader_type canvas_item;
+
+        uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
+        uniform float blur_radius = 6.0;
+        uniform vec4 tint = vec4(0.0, 0.0, 0.0, 0.30);
+
+        // Premultiplied-alpha correction, same as the official card blur shader.
+        vec4 read_screen(vec2 uv) {
+            vec4 c = textureLod(screen_texture, uv, 0.0);
+            if (c.a > 0.0001)
+                c.rgb /= c.a;
+            return c;
+        }
+
+        void fragment() {
+            vec2 px = SCREEN_PIXEL_SIZE;
+            int taps = int(ceil(blur_radius));
+            float sigma = max(1.0, blur_radius / 3.0);
+            float s2 = 2.0 * sigma * sigma;
+
+            vec4 acc = vec4(0.0);
+            float wsum = 0.0;
+            for (int x = -taps; x <= taps; x++) {
+                for (int y = -taps; y <= taps; y++) {
+                    float d = float(x * x + y * y);
+                    float w = exp(-d / s2);
+                    acc += read_screen(SCREEN_UV + vec2(float(x), float(y)) * px) * w;
+                    wsum += w;
+                }
+            }
+
+            vec3 blurred = (acc / wsum).rgb;
+            vec3 col = mix(blurred, tint.rgb, tint.a);
+            COLOR = vec4(col, 1.0);
+        }
+        """;
+
     // ──────── Attach ────────
     public static void Attach(NGlobalUi globalUi, DevPanelActions actions) {
         if (TryGetRailRoot(globalUi) != null)
@@ -155,7 +206,6 @@ internal static partial class DevPanelUI {
             destroyAllPanels: () => DestroyAllSessionOverlays(globalUi));
         _browserOverlayCount = 0;
         _browserRailHoldCount = 0;
-        _railStyle = null;
         _railIndicatorStyle = null;
         _railSepStyle = null;
         _activeRailBtnIdx = -1;
@@ -173,8 +223,42 @@ internal static partial class DevPanelUI {
         };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
-        // ── Icon Rail (left edge, full height, rounded right corners) ──
-        var rail = new PanelContainer {
+        // ── Backdrop for the left rail strip: frosted-glass gaussian blur of the game behind.
+        // Background layers are left unshifted (see DevPanelUI.RailInset), so there is real content
+        // behind this strip to sample. Hidden together with the rail via SlideRail.
+        var railBackdrop = new ColorRect {
+            Name = "RailBackdrop",
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            AnchorLeft = 0,
+            AnchorRight = 0,
+            AnchorTop = 0,
+            AnchorBottom = 1,
+            OffsetLeft = 0,
+            OffsetRight = BrowserPanelLeft,
+            OffsetTop = 0,
+            OffsetBottom = 0,
+            Material = RailBackdropMaterial()
+        };
+        root.AddChild(railBackdrop);
+
+        // Subtle 1px divider on the strip's right edge (child of backdrop so it hides together).
+        var railDivider = new ColorRect {
+            Name = "RailDivider",
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            AnchorLeft = 0,
+            AnchorRight = 0,
+            AnchorTop = 0,
+            AnchorBottom = 1,
+            OffsetLeft = BrowserPanelLeft,
+            OffsetRight = BrowserPanelLeft + 1,
+            OffsetTop = 0,
+            OffsetBottom = 0,
+            Color = new Color(0.5f, 0.5f, 0.5f, 0.30f)
+        };
+        railBackdrop.AddChild(railDivider);
+
+        // ── Icon Rail (left edge; transparent container so it sits in the reserved inset strip) ──
+        var rail = new Control {
             Name = "Rail",
             MouseFilter = Control.MouseFilterEnum.Stop,
             AnchorLeft = 0,
@@ -186,24 +270,6 @@ internal static partial class DevPanelUI {
             OffsetTop = 0,
             OffsetBottom = 0
         };
-        _railStyle = new StyleBoxFlat {
-            BgColor = ColRailBg,
-            CornerRadiusTopLeft = Radius,
-            CornerRadiusBottomLeft = Radius,
-            CornerRadiusTopRight = Radius,
-            CornerRadiusBottomRight = Radius,
-            ContentMarginLeft = 6,
-            ContentMarginRight = 6,
-            ContentMarginTop = 12,
-            ContentMarginBottom = 12,
-            BorderWidthRight = 1,
-            BorderWidthTop = 1,
-            BorderWidthBottom = 1,
-            BorderColor = ColRailBorder,
-            ShadowColor = new Color(0, 0, 0, 0.25f),
-            ShadowSize = 8
-        };
-        rail.AddThemeStyleboxOverride("panel", _railStyle);
 
         // Wrapper allows absolute positioning for the sliding indicator
         var railWrapper = new Control {
@@ -273,115 +339,52 @@ internal static partial class DevPanelUI {
 
         CreatePeekTab(root);
 
-        // ── Auto-hide: timer-based mouse position polling ──
-        const double RailCollapseGraceMsec = 320;
-        float hiddenX = -(24 + RailW);
+        // ── Persistent rail: always shown at the left edge (no slide-in/out, no auto-hide) ──
         float visibleX = 24f;
-        Tween? railTween = null;
-        double collapseAfterMsec = 0;
-        double expandBlockedUntilMsec = 0;
-
-        rail.OffsetLeft = hiddenX;
-        rail.OffsetRight = hiddenX + RailW;
-        rail.Modulate = new Color(1, 1, 1, 0);
+        rail.OffsetLeft = visibleX;
+        rail.OffsetRight = visibleX + RailW;
+        rail.Modulate = Colors.White;
 
         void SlideRail(bool show, bool userTriggered = false) {
-            if (_railShown == show) return;
-
-            if (show && userTriggered && SettingsStore.ShouldShowRailIntroHint()) {
-                SettingsStore.MarkRailIntroDismissed();
-                RefreshPeekTabPresentation();
-            }
-
             _railShown = show;
-
-            if (!show)
-                expandBlockedUntilMsec = Time.GetTicksMsec() + RailCollapseGraceMsec;
-
-            railTween?.Kill();
-            railTween = rail.CreateTween();
-
-            float targetLeft = show ? visibleX : hiddenX;
-            float targetRight = targetLeft + RailW;
-            float targetAlpha = show ? 1f : 0f;
-
-            railTween.TweenProperty(rail, "offset_left", targetLeft, 0.2f)
-                     .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-            railTween.Parallel()
-                     .TweenProperty(rail, "offset_right", targetRight, 0.2f)
-                     .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-            railTween.Parallel()
-                     .TweenProperty(rail, "modulate:a", targetAlpha, 0.15f)
-                     .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-
-            SyncPeekTabCollapsedVisibility(show);
+            railBackdrop.Visible = show;
+            if (show) {
+                rail.Visible = true;
+                AttachRailInset(_railGlobalUi!);
+                if (userTriggered && SettingsStore.ShouldShowRailIntroHint()) {
+                    SettingsStore.MarkRailIntroDismissed();
+                    RefreshPeekTabPresentation();
+                }
+            }
+            else {
+                rail.Visible = false;
+                DetachRailInset();
+            }
+            SyncPeekTabCollapsedVisibility(true);
             RefreshRailHintPresentation();
         }
 
         BindRailSlide(SlideRail);
 
+        // Poll only to keep log-alert hints fresh; rail itself never collapses.
         var pollTimer = new Godot.Timer {
             Name = "RailPollTimer",
             WaitTime = 0.1f,
             Autostart = true
         };
-        float hitZoneRight = visibleX + RailW + 16f;
 
         pollTimer.Timeout += () => {
-            if (_activeOverlayId != null || _pinRailCount > 0 || _keyboardRailPinned) {
-                if (!_railShown) SlideRail(true);
+            RefreshLogAlertHints();
+            if (_activeOverlayId != null || _pinRailCount > 0) {
                 SetPeekTabVisible(false);
                 StopPeekTabPresentation();
-                RefreshLogAlertHints();
-                return;
             }
-
-            var mousePos = root.GetViewport().GetMousePosition();
-            var railRect = rail.GetGlobalRect();
-            bool hoverSideMode = SettingsStore.GetRailOpenMode() == RailOpenMode.HoverSide;
-            bool hoverButtonMode = !hoverSideMode;
-            bool inHitZone = mousePos.X < hitZoneRight
-                          && mousePos.Y > railRect.Position.Y - 20
-                          && mousePos.Y < railRect.End.Y + 20;
-            bool inPeekAnchorZone = hoverButtonMode
-                                 && mousePos.X < visibleX
-                                 && mousePos.Y > railRect.Position.Y - 20
-                                 && mousePos.Y < railRect.End.Y + 20;
-            bool overRail = _railShown
-                         && (railRect.Grow(8).HasPoint(mousePos) || inPeekAnchorZone);
-            bool overPeek = IsMouseOverPeekTab(mousePos);
-            bool canExpand = Time.GetTicksMsec() >= expandBlockedUntilMsec;
-
-            if (canExpand && (overRail || overPeek || (hoverSideMode && inHitZone))) {
-                collapseAfterMsec = 0;
-                SlideRail(true, userTriggered: true);
-            }
-            else if (_railShown) {
-                double now = Time.GetTicksMsec();
-                if (collapseAfterMsec <= 0)
-                    collapseAfterMsec = now + RailCollapseGraceMsec;
-                else if (now >= collapseAfterMsec)
-                    SlideRail(false);
-            }
-            else {
-                collapseAfterMsec = 0;
-                SyncPeekTabCollapsedVisibility(false);
-            }
-
-            RefreshRailHintPresentation();
         };
         root.AddChild(pollTimer);
 
+        // Peek tab stays wired but never shows (rail is persistent).
         WirePeekTabPressed(() => SlideRail(true, userTriggered: true));
-        WirePeekTabMouseEntered(() => {
-            if (SettingsStore.GetRailOpenMode() != RailOpenMode.HoverButton)
-                return;
-            if (Time.GetTicksMsec() < expandBlockedUntilMsec)
-                return;
-            collapseAfterMsec = 0;
-            SlideRail(true, userTriggered: true);
-        });
-        SyncPeekTabCollapsedVisibility(false);
+        SyncPeekTabCollapsedVisibility(true);
         RefreshPeekTabHotkeyHint();
 
         RefreshRailHintPresentation();
@@ -392,6 +395,8 @@ internal static partial class DevPanelUI {
         }
         ((Node)globalUi).AddChild(root);
         root.TopLevel = true;
+        AttachRailInset(globalUi);
+        _railShown = true;
     }
 
     private static void OnRailLanguageChanged() {
@@ -402,6 +407,7 @@ internal static partial class DevPanelUI {
     // ──────── Detach ────────
     public static void Detach(NGlobalUi globalUi) {
         KitLibModPanelOps.CancelHotkeySettingsCapture?.Invoke();
+        DetachRailInset();
         _railGlobalUi = null;
         _activeOverlayId = null;
         ResetRailHotkeyState();
@@ -414,7 +420,6 @@ internal static partial class DevPanelUI {
         I18N.LanguageChanged -= OnRailLanguageChanged;
         TeardownPeekTab();
         StopLogAlertBlink();
-        _railStyle = null;
         _railIndicatorStyle = null;
         _railSepStyle = null;
         _railIconButtons.Clear();

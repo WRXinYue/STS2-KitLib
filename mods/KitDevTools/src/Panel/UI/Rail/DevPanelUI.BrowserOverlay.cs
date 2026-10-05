@@ -97,6 +97,24 @@ internal static partial class DevPanelUI {
     }
 
     internal static bool TryAnimateBrowserOverlayClose(Node parent, Control root) {
+        return AnimateOverlayOut(parent, root, () => AnimateOverlayOutFree(root));
+    }
+
+    private static void AnimateOverlayOutFree(Control root) {
+        if (root.IsInsideTree()) {
+            var p = root.GetParent();
+            p?.RemoveChild(root);
+            root.QueueFree();
+        }
+    }
+
+    /// <summary>
+    /// Slides the overlay's carrier out to the left, then invokes <paramref name="onComplete"/>.
+    /// Handles the closing/animating meta so a same-name replacement cannot stack with a
+    /// still-queued-free node. Callers choose the terminal action:
+    /// destroy (via <see cref="TryAnimateBrowserOverlayClose"/>) or persist-hide.
+    /// </summary>
+    private static bool AnimateOverlayOut(Node parent, Control root, Action onComplete) {
         var clipHost = root.GetNodeOrNull<Control>(BrowserPanelClipHostName);
         if (!root.HasMeta(DualCarrierMetaKey))
             return false;
@@ -112,78 +130,70 @@ internal static partial class DevPanelUI {
         root.SetMeta(BrowserPanelAnimatingMetaKey, true);
         root.MouseFilter = Control.MouseFilterEnum.Ignore;
 
-        float startX = mover.Position.X;
-        float w = Mathf.Max(1f, mover.GetRect().Size.X);
-        float endX = startX - w;
-
+        // Center fade-out (was slide-out to the left).
+        mover.PivotOffset = mover.Size * 0.5f;
         var tween = mover.CreateTween();
-        tween.SetTrans(Tween.TransitionType.Cubic);
+        tween.SetTrans(Tween.TransitionType.Quart);
         tween.SetEase(Tween.EaseType.In);
-        tween.TweenProperty(mover, "position:x", endX, 0.26f);
+        tween.Parallel().TweenProperty(mover, "modulate:a", 0f, 0.18f);
+        tween.Parallel().TweenProperty(mover, "scale", new Vector2(0.94f, 0.94f), 0.18f);
         tween.Chain().TweenCallback(Callable.From(() => {
             root.SetMeta(BrowserPanelAnimatingMetaKey, false);
-            if (root.IsInsideTree()) {
-                var p = root.GetParent();
-                p?.RemoveChild(root);
-                root.QueueFree();
-            }
+            onComplete();
         }));
 
         return true;
     }
 
-    internal static void PlaySubPanelSlideOpenFromLeft(Control mover, Action? onFinished = null) {
-        if (!mover.IsInsideTree()) {
-            onFinished?.Invoke();
+    /// <summary>
+    /// Persistent hide (always-visible collapse): slides the content panel out, marks it
+    /// session-cached and hides it (without destroying), so the next rail click on that tab
+    /// restores it via <see cref="DevPanelUI.TryRevealRailTab"/>.
+    /// </summary>
+    internal static void HideBrowserOverlayPersistent(NGlobalUi globalUi, Control root) {
+        if (!GodotObject.IsInstanceValid(root))
             return;
-        }
 
-        float w = Mathf.Max(1f, mover.GetRect().Size.X);
-        if (w < 2f) {
-            onFinished?.Invoke();
+        _controller.Deactivate();
+        OnRailPanelDismissed();
+
+        var parent = (Node)globalUi;
+        if (AnimateOverlayOut(parent, root, () => HideSessionOverlay(globalUi, root)))
             return;
-        }
 
-        mover.SetMeta(BrowserPanelAnimatingMetaKey, true);
-        float targetX = mover.Position.X;
-        float startX = targetX - w;
-        mover.Position = new Vector2(startX, mover.Position.Y);
-
-        var t = mover.CreateTween();
-        t.SetTrans(Tween.TransitionType.Quint);
-        t.SetEase(Tween.EaseType.Out);
-        t.TweenProperty(mover, "position:x", targetX, 0.82f);
-        t.Chain()
-            .TweenCallback(Callable.From(() => {
-                mover.SetMeta(BrowserPanelAnimatingMetaKey, false);
-                onFinished?.Invoke();
-            }));
+        HideSessionOverlay(globalUi, root);
     }
 
-    internal static void PlayBrowserPanelOpenFromLeft(PanelContainer panel, float durationSec = 0.82f) =>
-        PlayControlSlideOpenFromLeft(panel, durationSec);
+    internal static void PlaySubPanelSlideOpenFromLeft(Control mover, Action? onFinished = null) =>
+        PlayCenterPop(mover, onFinished: onFinished);
 
-    internal static void PlayControlSlideOpenFromLeft(Control panel, float durationSec = 0.82f) {
+    internal static void PlayBrowserPanelOpenFromLeft(PanelContainer panel, float durationSec = 0.82f) =>
+        PlayCenterPop(panel, durationSec);
+
+    internal static void PlayControlSlideOpenFromLeft(Control panel, float durationSec = 0.82f) =>
+        PlayCenterPop(panel, durationSec);
+
+    /// <summary>Pops a panel into view from the center (fade + slight scale), keeping meta-key state.</summary>
+    private static void PlayCenterPop(Control panel, float durationSec = 0.82f, Action? onFinished = null) {
         if (!panel.IsInsideTree())
             return;
 
-        float panelWidth = panel.GetRect().Size.X;
-        if (panelWidth < 1f)
-            return;
-
         panel.SetMeta(BrowserPanelAnimatingMetaKey, true);
-        float targetX = panel.Position.X;
-        float startX = targetX - panelWidth;
-        panel.Position = new Vector2(startX, panel.Position.Y);
+        panel.PivotOffset = panel.Size * 0.5f;
+        panel.Scale = new Vector2(0.82f, 0.82f);
+        panel.Modulate = new Color(1f, 1f, 1f, 0f);
+        panel.Visible = true;
 
         var t = panel.CreateTween();
-        t.SetTrans(Tween.TransitionType.Quint);
+        t.SetTrans(Tween.TransitionType.Quart);
         t.SetEase(Tween.EaseType.Out);
-        t.TweenProperty(panel, "position:x", targetX, durationSec);
-        t.Chain()
-            .TweenCallback(Callable.From(() => {
-                panel.Position = new Vector2(targetX, 0f);
-                panel.SetMeta(BrowserPanelAnimatingMetaKey, false);
-            }));
+        t.Parallel().TweenProperty(panel, "scale", Vector2.One, durationSec);
+        t.Parallel().TweenProperty(panel, "modulate:a", 1f, durationSec * 0.6f);
+        t.Chain().TweenCallback(Callable.From(() => {
+            panel.Scale = Vector2.One;
+            panel.Modulate = new Color(1f, 1f, 1f, 1f);
+            panel.SetMeta(BrowserPanelAnimatingMetaKey, false);
+            onFinished?.Invoke();
+        }));
     }
 }

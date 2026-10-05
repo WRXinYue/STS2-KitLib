@@ -19,7 +19,6 @@ MOD_MAIN := src/KitLib/Core/KitLib.Core.csproj
 SMOKE_MOD_PROJECT := samples/KitLibSmokeMod/KitLibSmokeMod.csproj
 SMOKE_MOD_TESTS := tests/KitLib.SmokeMod.Tests/KitLib.SmokeMod.Tests.csproj
 MCP_PROJECT := tools/KitLib.Mcp/KitLib.Mcp.csproj
-DEV_VIEWER := tools/dev-viewer
 
 # Runtime identifier for self-contained tool publish (override: make build-tools TOOLS_RID=linux-x64)
 ifeq ($(OS),Windows_NT)
@@ -60,11 +59,10 @@ ZIP_MCP_NAME := build/KitLib.Mcp-v$(VERSION)-$(TOOLS_RID).zip
 MCP_PUBLISH_EXE := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp.exe
 MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
 
-MOD_PROJECTS := src/KitLib.Core/KitLib.Core.csproj \
-	src/KitLib.Modules.User/KitLib.User.csproj src/KitLib.Modules.ModPanel/KitLib.ModPanel.csproj \
-	src/KitLib.Modules.Cheat/KitLib.Cheat.csproj \
-	src/KitLib.Modules.Dev/KitLib.Dev.csproj \
-	src/KitLib.Modules.Panel/KitLib.Panel.csproj
+MOD_PROJECTS := src/KitLib/Abstractions/KitLib.Abstractions.csproj \
+	src/KitLib/Core/KitLib.Core.csproj src/KitLib/Loader/KitLib.Loader.csproj \
+	mods/KitDevTools/KitLib.Dev.csproj \
+	mods/KitDevTools/KitLib.Panel.csproj
 PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
 STEAM_PRODUCT := $(if $(PRODUCT),$(PRODUCT),KitLib)
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,) $(if $(SKIP_BUILD),--skip-build,)
@@ -135,7 +133,6 @@ help:
 	@echo "  deploy-tools copy KitLib.Mcp into mods/KitLib/tools/ (build-if-missing)"
 	@echo "  sync-tools   build-tools + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
-	@echo "  build-dev-viewer  pnpm build → CombatStats/viewer-shell.html (embedded in KitLib.Dev)"
 	@echo ""
 	@echo "  [upload]"
 	@echo "  upload-github  mod zip + MCP exe → GitHub Release (alias: publish)"
@@ -304,9 +301,6 @@ deploy-tools:
 
 sync-tools: build-tools
 	$(DEPLOY_TOOLS)
-
-build-dev-viewer:
-	cd $(DEV_VIEWER) && pnpm install && pnpm build
 
 pck: deps
 	$(DOTNET) publish $(DEPLOY_TO_GAME) $(MOD_MAIN)

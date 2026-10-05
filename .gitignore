@@ -36,9 +36,5 @@ src/KitLib.Modules.Panel/Icons/mdi-used.json
 # Other
 .DS_Store
 
-# Node (dev viewer)
-tools/dev-viewer/node_modules/
-tools/dev-viewer/dist/
-
 # Local scratch under tools/
 tools/_tmp*/

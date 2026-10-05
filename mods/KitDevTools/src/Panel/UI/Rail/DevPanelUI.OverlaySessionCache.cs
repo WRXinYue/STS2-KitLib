@@ -184,9 +184,23 @@ internal static partial class DevPanelUI {
         if (mover == null)
             return;
 
-        mover.Position = new Vector2(0f, mover.Position.Y);
+        // Reopen restores the centered dock layout used at creation and discards any free-drag
+        // position, so the panel never hangs against the left edge. Do not just set Position:
+        // with 0.5 anchors, Position.X=0 stretches offset_left to -halfHost, widening the panel
+        // and pinning it to the clipHost left edge (right of the rail).
+        mover.RemoveMeta(MoverFreePositionMetaKey);
         if (mover.HasMeta(BrowserPanelAnimatingMetaKey))
             mover.RemoveMeta(BrowserPanelAnimatingMetaKey);
+
+        float w = Mathf.Max(1f, mover.Size.X);
+        mover.AnchorLeft = 0.5f;
+        mover.AnchorRight = 0.5f;
+        mover.AnchorTop = 0.15f;
+        mover.AnchorBottom = 0.85f;
+        mover.OffsetTop = 0;
+        mover.OffsetBottom = 0;
+        mover.OffsetLeft = -w * 0.5f;
+        mover.OffsetRight = w * 0.5f;
     }
 
     private static void KillSessionOverlayMotion(Control root) {

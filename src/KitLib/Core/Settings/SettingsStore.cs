@@ -204,6 +204,10 @@ public static class SettingsStore {
             Current.HotkeyOpenModPanel = HotkeyDefaults.OpenModPanel.Clone();
         if (Current.HotkeyToggleRail.KeyCode == 0)
             Current.HotkeyToggleRail = HotkeyDefaults.ToggleRail.Clone();
+        // One-time migration: the legacy rail toggle was Ctrl+Shift+D; upgrade a still-stored
+        // old default to the new Ctrl+B default without clobbering genuine user rebinds.
+        else if (Current.HotkeyToggleRail.EqualsBinding(HotkeyBinding.Of(Godot.Key.D, ctrl: true, shift: true)))
+            Current.HotkeyToggleRail = HotkeyDefaults.ToggleRail.Clone();
         if (Current.HotkeyClosePanel.KeyCode == 0)
             Current.HotkeyClosePanel = HotkeyDefaults.ClosePanel.Clone();
         if (Current.HotkeyNextTab.KeyCode == 0)

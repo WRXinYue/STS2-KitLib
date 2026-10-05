@@ -80,7 +80,6 @@ internal static class ModuleBootstrap {
             SafeStep("DevTabRegistration", () => DevTabRegistration.Register());
 
             Callable.From(StartDeferredMcpBridge).CallDeferred();
-            WireDevViewerOps();
             WireRunReplayRetention();
 
             _completed = true;
@@ -94,29 +93,6 @@ internal static class ModuleBootstrap {
 
     static void WireRunReplayRetention() {
         RunReplayRetention.Prune();
-    }
-
-    static void WireDevViewerOps() {
-        KitLibDevOps.TryOpenDevViewerLogs = query => {
-            try {
-                DevViewerServer.OpenLogsInBrowser(query, force: true);
-                return true;
-            }
-            catch (Exception ex) {
-                KitLog.Warn("DevViewer", $"Open logs failed: {ex.Message}");
-                return false;
-            }
-        };
-        KitLibDevOps.TryScheduleDevViewerLogsOnStartup = query => {
-            try {
-                DevViewerServer.ScheduleOpenLogsIfNoClient(query);
-                return true;
-            }
-            catch (Exception ex) {
-                KitLog.Warn("DevViewer", $"Startup open schedule failed: {ex.Message}");
-                return false;
-            }
-        };
     }
 
     static void StartDeferredMcpBridge() {

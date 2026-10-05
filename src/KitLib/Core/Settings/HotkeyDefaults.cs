@@ -9,7 +9,7 @@ internal static class HotkeyDefaults {
         HotkeyBinding.Of(Key.M, ctrl: true, shift: true);
 
     internal static readonly HotkeyBinding ToggleRail =
-        HotkeyBinding.Of(Key.D, ctrl: true, shift: true);
+        HotkeyBinding.Of(Key.B, ctrl: true);
 
     internal static readonly HotkeyBinding ClosePanel =
         HotkeyBinding.Of(Key.Escape);

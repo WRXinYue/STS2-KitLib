@@ -30,7 +30,7 @@ internal static class FloatingCombatOverlay {
     /// <summary>Drag title bar → move panel within host bounds.</summary>
     internal sealed class DraggablePanelBinding {
         private readonly Control _host;
-        private readonly PanelContainer _panel;
+        private readonly Control _panel;
         private readonly float _defaultWidth;
         private readonly Func<bool> _isFreePosition;
         private readonly Action<bool> _setFreePosition;
@@ -40,7 +40,7 @@ internal static class FloatingCombatOverlay {
 
         public DraggablePanelBinding(
             Control host,
-            PanelContainer panel,
+            Control panel,
             float defaultWidth,
             Func<bool> isFreePosition,
             Action<bool> setFreePosition,

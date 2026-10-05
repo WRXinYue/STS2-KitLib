@@ -1,18 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using Godot;
 
 namespace KitLib.CombatStats;
 
 internal static class CombatStatsExport {
-    private const string JsonPlaceholder = "__KITLIB_COMBAT_STATS_EMBED__";
-    private const string DataScriptOpen = "<script type=\"application/json\" id=\"combat-stats-data\">";
-    private const string ShellResourceName = "KitLib.CombatStats.viewer-shell.html";
-
     private static readonly JsonSerializerOptions SerializerOptions = new() {
         WriteIndented = false,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -26,59 +20,6 @@ internal static class CombatStatsExport {
 
     public static string ToJson(CombatStatsBundle bundle) =>
         JsonSerializer.Serialize(bundle, JsonOptions);
-
-    public static string ToHtml(CombatStatsBundle bundle) {
-        var live = new CombatStatsLiveDto {
-            Active = bundle.Current ?? bundle.Last,
-            IsActive = bundle.Current?.IsActive ?? false,
-        };
-        return ToHtml(live);
-    }
-
-    public static string ToHtml(CombatStatsLiveDto live) {
-        string shell = LoadViewerShell();
-        string json = SanitizeJsonForHtml(ToJson(live));
-        return InjectCombatStatsJson(shell, json);
-    }
-
-    public static string WriteHtmlReport(CombatStatsBundle bundle, string? directory = null) {
-        directory ??= Path.Combine(OS.GetUserDataDir(), "mod_data", "KitLib");
-        Directory.CreateDirectory(directory);
-        string path = Path.Combine(directory, $"combat-stats-{DateTime.Now:yyyyMMdd-HHmmss}.html");
-        File.WriteAllText(path, ToHtml(bundle), Encoding.UTF8);
-        return path;
-    }
-
-    public static string WriteHtmlReport(string? directory = null) =>
-        WriteHtmlReport(CaptureBundle(), directory);
-
-    public static string WriteJsonReport(string? directory = null) {
-        directory ??= Path.Combine(OS.GetUserDataDir(), "mod_data", "KitLib");
-        Directory.CreateDirectory(directory);
-        string path = Path.Combine(directory, $"combat-stats-{DateTime.Now:yyyyMMdd-HHmmss}.json");
-        File.WriteAllText(path, ToJson(CaptureBundle()), Encoding.UTF8);
-        return path;
-    }
-
-    public static string OpenInBrowser() => DevViewerServer.OpenInBrowser("combat", force: true);
-
-    public static string LoadLiveViewerShell() {
-        string shell = LoadViewerShell();
-        return InjectCombatStatsJson(shell, "{}");
-    }
-
-    public static string ToTextSummary(CombatStatsBundle bundle) {
-        var sb = new StringBuilder(512);
-        sb.AppendLine("=== DevMode Combat Stats ===");
-        sb.AppendLine($"Generated: {DateTime.Now:O}");
-        sb.AppendLine();
-
-        AppendSnapshot(sb, "Current combat", bundle.Current);
-        AppendSnapshot(sb, "Last combat", bundle.Last);
-        AppendSnapshot(sb, $"Run total ({bundle.RunCombatCount} combats)", bundle.RunTotal);
-
-        return sb.ToString();
-    }
 
     public static CombatStatsLiveDto CaptureLive() {
         CombatStatsSnapshot? active = CombatStatsTracker.IsTracking
@@ -97,55 +38,6 @@ internal static class CombatStatsExport {
             CombatStatsTracker.Last,
             CombatStatsTracker.RunTotal,
             CombatStatsTracker.RunCombatCount);
-
-    private static string LoadViewerShell() {
-        var assembly = typeof(CombatStatsExport).Assembly;
-        using var stream = assembly.GetManifestResourceStream(ShellResourceName);
-        if (stream == null)
-            throw new InvalidOperationException(
-                $"Combat stats viewer shell is missing ({ShellResourceName}). Run: cd tools/dev-viewer && pnpm build");
-
-        using var reader = new StreamReader(stream, Encoding.UTF8);
-        return reader.ReadToEnd();
-    }
-
-    private static string SanitizeJsonForHtml(string json) =>
-        json.Replace("</", "<\\/", StringComparison.Ordinal);
-
-    private static string InjectCombatStatsJson(string shell, string json) {
-        int openIdx = shell.IndexOf(DataScriptOpen, StringComparison.Ordinal);
-        if (openIdx < 0)
-            throw new InvalidOperationException("Combat stats viewer shell is missing the data script tag.");
-
-        int contentStart = openIdx + DataScriptOpen.Length;
-        int closeIdx = shell.IndexOf("</script>", contentStart, StringComparison.Ordinal);
-        if (closeIdx < 0)
-            throw new InvalidOperationException("Combat stats viewer shell data script tag is malformed.");
-
-        string current = shell.Substring(contentStart, closeIdx - contentStart);
-        if (current != JsonPlaceholder && !current.StartsWith('{'))
-            throw new InvalidOperationException("Combat stats viewer shell has unexpected data script content.");
-
-        return shell.Substring(0, contentStart) + json + shell.Substring(closeIdx);
-    }
-
-    private static void AppendSnapshot(StringBuilder sb, string label, CombatStatsSnapshotDto? snap) {
-        sb.AppendLine($"--- {label} ---");
-        if (snap == null || snap.Players.Count == 0) {
-            sb.AppendLine("(empty)");
-            sb.AppendLine();
-            return;
-        }
-
-        sb.AppendLine($"Encounter: {snap.EncounterKey}");
-        sb.AppendLine($"Active: {snap.IsActive}  Turns: {snap.MaxTurn}");
-        foreach (var p in snap.Players) {
-            sb.AppendLine($"[{p.DisplayName}] dealt={p.DamageDealt} taken={p.DamageTaken} block={p.BlockGained} " +
-                          $"overkill={p.OverkillDealt} blockedByTarget={p.BlockedByTarget} " +
-                          $"energy={p.EnergySpent} potions={p.PotionsUsed} debuffs={p.DebuffsApplied}");
-        }
-        sb.AppendLine();
-    }
 }
 
 internal sealed class CombatStatsLiveDto {

@@ -114,8 +114,6 @@ internal static class CombatStatsTracker {
         _pendingEffectSource = null;
         _powerAppliers.Clear();
 
-        CombatStatsLiveBuffer.ResetForNewCombat();
-
         foreach (Player player in state.Players) {
             if (player?.Creature != null)
                 GetOrCreate(player.Creature);
@@ -127,13 +125,6 @@ internal static class CombatStatsTracker {
         RefreshLiveCreatures(state);
 
         Tailer.Attach(CombatManager.Instance.History, state);
-
-        try {
-            DevViewerServer.EnsureStarted();
-        }
-        catch (Exception ex) {
-            KitLog.Warn("CombatStats", $"Viewer server unavailable: {ex.Message}");
-        }
 
         NotifyChanged();
     }
@@ -931,7 +922,6 @@ internal static class CombatStatsTracker {
     }
 
     private static void NotifyChanged(bool forcePersist = false) {
-        CombatStatsLiveBuffer.Persist(forcePersist);
         Changed?.Invoke();
     }
 

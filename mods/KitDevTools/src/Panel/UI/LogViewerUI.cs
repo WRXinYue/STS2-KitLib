@@ -19,8 +19,6 @@ namespace KitLib.UI;
 /// </summary>
 internal static class LogViewerUI {
     private const string RootName = "KitLibLogViewer";
-    private const string DualMetaKey = "dm_dual_log_viewer";
-    private const string CarrierNodeName = "LogViewerDualCarrier";
     private const float PanelW = 880f;
     private const float LogExportExtWidth = 300f;
     private const float FilterSideMinW = 216f;
@@ -41,30 +39,6 @@ internal static class LogViewerUI {
         return l;
     }
 
-    public static void Show(NGlobalUi globalUi, bool expandLogExport = false) {
-        var parent = (Node)globalUi;
-        Remove(parent);
-        void Close() => DevPanelUI.RequestCloseBrowserOverlay(globalUi, RootName, () => Remove(parent));
-        LogCollector.RefreshFileSnapshot();
-        var dual = DevPanelUI.CreateDualColumnOverlay(new DevPanelUI.DualColumnOverlayOptions {
-            GlobalUi = globalUi,
-            RootName = RootName,
-            DualMetaKey = DualMetaKey,
-            CarrierNodeName = CarrierNodeName,
-            MainDefaultWidth = PanelW,
-            ExtDefaultWidth = LogExportExtWidth,
-            FallbackClose = Close,
-        });
-        dual.MainContent.AddThemeConstantOverride("separation", 8);
-        LogSourcePieChart? pieChart = null;
-        var exportBtn = BuildPanel(dual.MainContent, dual.Root, Close, chart => pieChart = chart);
-        WireLogExportExtension(dual, exportBtn);
-        dual.AttachToScene();
-        pieChart?.RefreshAfterOverlayOpen();
-        if (expandLogExport)
-            dual.OpenExtension();
-    }
-
     public static void ShowOnMainMenu(NMainMenu mainMenu, bool expandLogExport = false) {
         var parent = mainMenu.GetTree().Root;
         HideAnywhere();
@@ -77,7 +51,7 @@ internal static class LogViewerUI {
         WireMainMenuLogExportExtension(root, mainPanel, exportBtn, expandLogExport);
     }
 
-    private static Button BuildPanel(
+    internal static Button BuildPanel(
         VBoxContainer vbox,
         Control root,
         Action onClose,
@@ -203,7 +177,7 @@ internal static class LogViewerUI {
             BbcodeEnabled = true,
             SelectionEnabled = true,
             ScrollActive = true,
-            ScrollFollowing = false,
+            ScrollFollowing = true,
             FitContent = false,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
@@ -515,7 +489,6 @@ internal static class LogViewerUI {
         }
 
         void Repopulate() {
-            LogCollector.RefreshFileSnapshotIfChanged();
             var scrollBar = richText.GetVScrollBar();
             bool followTail = stickToBottom;
             double prevScroll = scrollBar?.Value ?? 0;
@@ -614,10 +587,6 @@ internal static class LogViewerUI {
         ScheduleInitialRepopulate();
         return exportBtn;
     }
-
-    public static void Remove(NGlobalUi globalUi) => Remove((Node)globalUi);
-
-    public static void Remove(Node parent) => HideAnywhere();
 
     public static void HideAnywhere() => DevMainMenuOverlay.RemoveAnywhere(RootName);
 
@@ -1020,10 +989,8 @@ internal static class LogViewerUI {
     // ── Header builder ────────────────────────────────────────────────────
 
     private static Button? _clearBtn;
-    private static Label? _kitlogErrorLabel;
 
     private static Button BuildHeader(VBoxContainer vbox, Action onClose) {
-        _kitlogErrorLabel = null;
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 8);
 
@@ -1056,29 +1023,6 @@ internal static class LogViewerUI {
         ApplySmallFlatButton(openFolderBtn);
         openFolderBtn.Pressed += OpenGameLogsFolder;
         row.AddChild(openFolderBtn);
-
-        var openKitlogBtn = new Button {
-            Text = I18N.T("log.openKitlog", "Dev viewer"),
-            FocusMode = Control.FocusModeEnum.None,
-            CustomMinimumSize = new Vector2(64, 26),
-            Icon = MdiIcon.Console.Texture(14, KitLibTheme.Subtle),
-            TooltipText = I18N.T(
-                "log.openKitlogTip",
-                "Open the dev viewer in your browser; mirrors this viewer's filters live"),
-        };
-        ApplySmallFlatButton(openKitlogBtn);
-        openKitlogBtn.Pressed += () => {
-            if (_kitlogErrorLabel != null)
-                _kitlogErrorLabel.Visible = false;
-            if (!DevViewerLauncher.TryOpenLogs(out var error)) {
-                if (_kitlogErrorLabel != null) {
-                    _kitlogErrorLabel.Text = error
-                        ?? I18N.T("devViewer.launchFailed", "Could not open the dev viewer.");
-                    _kitlogErrorLabel.Visible = true;
-                }
-            }
-        };
-        row.AddChild(openKitlogBtn);
 
         _clearBtn = new Button {
             Text = I18N.T("log.clear", "Clear"),
@@ -1119,15 +1063,6 @@ internal static class LogViewerUI {
             vbox.AddChild(dualHint);
         }
 
-        _kitlogErrorLabel = new Label {
-            Visible = false,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-        };
-        _kitlogErrorLabel.AddThemeFontSizeOverride("font_size", 10);
-        _kitlogErrorLabel.AddThemeColorOverride("font_color", KitLibTheme.RarityCurse);
-        _kitlogErrorLabel.AddThemeConstantOverride("margin_left", 4);
-        vbox.AddChild(_kitlogErrorLabel);
-
         vbox.AddChild(new ColorRect {
             CustomMinimumSize = new Vector2(0, 1),
             Color = KitLibTheme.ButtonBgNormal,
@@ -1137,24 +1072,7 @@ internal static class LogViewerUI {
         return exportBtn;
     }
 
-    private static void WireLogExportExtension(DevPanelUI.DualColumnOverlayHandle dual, Button exportBtn) {
-        var backBtn = BuildLogExportExtensionBackHeader(dual.ExtContent);
-        backBtn.Pressed += () => dual.CloseExtension();
-
-        var extScroll = new ScrollContainer {
-            SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill,
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-        };
-        var exportInner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
-        FeedbackReportUI.BuildContent(exportInner, compact: false);
-        extScroll.AddChild(exportInner);
-        dual.ExtContent.AddChild(extScroll);
-
-        exportBtn.Pressed += () => dual.ToggleExtension();
-    }
-
-    private static void WireMainMenuLogExportExtension(
+    internal static void WireMainMenuLogExportExtension(
         Control overlayRoot,
         PanelContainer mainPanel,
         Button exportBtn,
@@ -1195,17 +1113,21 @@ internal static class LogViewerUI {
             extPanel = DevPanelUI.CreateMainMenuModalPanel(LogExportExtWidth);
             extPanel.Name = extName;
             extPanel.MouseFilter = Control.MouseFilterEnum.Stop;
-            extPanel.AnchorTop = mainPanel.AnchorTop;
-            extPanel.AnchorBottom = mainPanel.AnchorBottom;
-            extPanel.OffsetTop = mainPanel.OffsetTop;
-            extPanel.OffsetBottom = mainPanel.OffsetBottom;
 
-            float mainHalfW = PanelW / 2f;
-            float gap = 8f;
-            extPanel.AnchorLeft = 0.5f;
-            extPanel.AnchorRight = 0.5f;
-            extPanel.OffsetLeft = mainHalfW + gap;
-            extPanel.OffsetRight = mainHalfW + gap + LogExportExtWidth;
+            // In both the main-menu (centered) and in-game (slide/draggable) scenes the extension
+            // aligns to the main panel's right edge; the overlay root shares the viewport origin,
+            // so the global rect can be used directly as a local offset.
+            const float gap = 8f;
+            var mainRect = mainPanel.GetGlobalRect();
+            extPanel.AnchorLeft = 0;
+            extPanel.AnchorRight = 0;
+            extPanel.AnchorTop = 0;
+            extPanel.AnchorBottom = 0;
+            float rightX = mainRect.End.X + gap;
+            extPanel.OffsetLeft = rightX;
+            extPanel.OffsetRight = rightX + LogExportExtWidth;
+            extPanel.OffsetTop = mainRect.Position.Y;
+            extPanel.OffsetBottom = mainRect.End.Y;
 
             var extContent = extPanel.GetNode<VBoxContainer>("Content");
             extContent.AddThemeConstantOverride("separation", 8);

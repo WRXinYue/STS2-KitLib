@@ -16,10 +16,6 @@ internal static partial class DevPanelUI {
     private static readonly List<Button> _railButtons = new();
     private static Action<int, bool>? _moveRailIndicator;
 
-    private static ulong _hoverActivateGen;
-    private static string? _pendingHoverTabId;
-    private const float HoverActivateDebounceSec = 0.08f;
-
     internal static void RebuildRailIfAttached() {
         if (_railGlobalUi != null && GodotObject.IsInstanceValid(_railGlobalUi))
             RebuildRail(_railGlobalUi);
@@ -91,7 +87,6 @@ internal static partial class DevPanelUI {
 
         _railButtons.Clear();
         _railIconButtons.Clear();
-        CancelPendingHoverActivate();
     }
 
     private static int FindSeparatorIndex(VBoxContainer railVBox) {
@@ -127,13 +122,11 @@ internal static partial class DevPanelUI {
         ApplyRailTabAvailability(btn);
         var t = tab;
         btn.Pressed += () => {
-            CancelPendingHoverActivate();
-            ActivateRailTab(globalUi, t, railButtons, btn);
-        };
-        btn.MouseEntered += () => ScheduleHoverActivate(globalUi, t, railButtons, btn);
-        btn.MouseExited += () => {
-            if (_pendingHoverTabId == t.Id)
-                CancelPendingHoverActivate();
+            // Persistent rail: click toggles — collapse when already active and visible, otherwise open.
+            if (_controller.ActiveTabId == t.Id && IsRailTabPanelVisible(globalUi, t.Id))
+                CloseActivePanel();
+            else
+                ActivateRailTab(globalUi, t, railButtons, btn);
         };
         railButtons.Add(btn);
         _railIconButtons.Add((btn, tab.Icon));
@@ -162,35 +155,6 @@ internal static partial class DevPanelUI {
             }
         }, () => IsRailTabPanelVisible(globalUi, tab.Id));
         CardBrowserPerf.LogRail("activateRailTab", activate, $"tab={tab.Id}");
-    }
-
-    private static void ScheduleHoverActivate(
-        NGlobalUi globalUi, IDevPanelTab tab, List<Button> railButtons, Button btn) {
-        if (btn.Disabled)
-            return;
-        if (_controller.ActiveTabId == tab.Id && IsRailTabPanelVisible(globalUi, tab.Id))
-            return;
-
-        _pendingHoverTabId = tab.Id;
-        ulong gen = ++_hoverActivateGen;
-        var tree = btn.GetTree();
-        if (tree == null)
-            return;
-
-        var timer = tree.CreateTimer(HoverActivateDebounceSec);
-        timer.Timeout += () => {
-            if (gen != _hoverActivateGen || _pendingHoverTabId != tab.Id)
-                return;
-            _pendingHoverTabId = null;
-            if (!GodotObject.IsInstanceValid(btn) || !btn.IsInsideTree())
-                return;
-            ActivateRailTab(globalUi, tab, railButtons, btn);
-        };
-    }
-
-    private static void CancelPendingHoverActivate() {
-        _pendingHoverTabId = null;
-        _hoverActivateGen++;
     }
 
     internal static void RefreshRailTabAvailability() {
