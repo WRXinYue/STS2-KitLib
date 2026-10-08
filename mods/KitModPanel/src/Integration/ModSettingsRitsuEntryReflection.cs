@@ -161,7 +161,7 @@ internal static class ModSettingsRitsuEntryReflection {
         return null;
     }
     public static string ResolveLocalized(Assembly asm, string key, string fallback) {
-        var loc = asm.GetType(LocalizationTypeName);
+        var loc = RitsuModSettingsBridge.ResolveType(asm, LocalizationTypeName);
         if (loc == null)
             return fallback;
         foreach (var m in loc.GetMethods(BindingFlags.Public | BindingFlags.Static)) {

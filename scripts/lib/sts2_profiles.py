@@ -39,7 +39,7 @@ def variant_profile(compat_target: str) -> ProfileName:
     raise ValueError(f"Unknown personal compat target: {compat_target!r}")
 
 
-_REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll")
+_REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll", "Steamworks.NET.dll")
 
 
 def _read_release_version_file(path: Path) -> str | None:

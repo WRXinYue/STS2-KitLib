@@ -4,6 +4,7 @@ using KitLib.Abstractions.Modding;
 using KitLib.Host;
 using KitLib.ModPanel.Icons;
 using KitLib.Settings;
+using KitLib.Steam;
 using MegaCrit.Sts2.addons.mega_text;
 using MegaCrit.Sts2.Core.Helpers;
 namespace KitLib.UI;
@@ -319,9 +320,15 @@ public static partial class ModPanelUI {
         return btn;
     }
 
+    private const string WorkshopUpdateChipName = "WorkshopUpdateAvailableChip";
+    private static string? _currentSelectionKey;
+    private static string BuildSelectionKey(string? modId, ModEntrySource source) => $"{source}|{modId}";
+
     internal static void UpdateDetailBannerMetaChips(HBoxContainer row, string? version, ModEntrySource source,
         ModEntryLoadStatus loadStatus, string? installPath, string? modId = null, Control? popupHost = null, string? displayName = null) {
         ArgumentNullException.ThrowIfNull(row);
+
+        _currentSelectionKey = BuildSelectionKey(modId, source);
 
         foreach (Node child in row.GetChildren())
             child.QueueFree();
@@ -331,6 +338,7 @@ public static partial class ModPanelUI {
         row.AddChild(CreateModSourceChip(source, installPath));
         row.AddChildSafely(CreateSidebarModListLoadStatusChip(loadStatus));
         row.AddChildSafely(CreateDetailInstallSizeChip(installPath));
+        AddWorkshopUpdateChips(row, modId, source);
 
         if (!string.IsNullOrWhiteSpace(modId) && popupHost != null && loadStatus == ModEntryLoadStatus.Loaded) {
             var stats = QueryHarmonyStats(modId, installPath);
@@ -342,6 +350,60 @@ public static partial class ModPanelUI {
             row.AddChildSafely(CreateHarmonyOwnersChip(stats.Value));
             row.AddChild(CreateHarmonyInspectButton((Control)popupHost, modId, installPath, displayName ?? modId));
         }
+    }
+
+    internal static PanelContainer CreateModUpdateChip(string text, Color color, string? tooltip) {
+        var label = new Label {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Text = text,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            LabelSettings = new LabelSettings {
+                FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
+                FontColor = color,
+            },
+        };
+        KitLibLocaleFonts.ApplyControl(label);
+        return WrapGithubShield(label, color, tooltip);
+    }
+
+    private static void AddWorkshopUpdateChips(HBoxContainer row, string? modId, ModEntrySource source) {
+        if (source != ModEntrySource.SteamWorkshop || string.IsNullOrWhiteSpace(modId))
+            return;
+        var mod = ModPanelModBanner.TryFindMod(modId);
+        if (mod?.workshopId is not ulong wid)
+            return;
+        var local = ModWorkshopUpdateService.GetLocalUpdateTime(wid);
+        if (local is DateTimeOffset localTs) {
+            row.AddChild(CreateModUpdateChip(
+                string.Format(I18N.T("modpanel.update.updated", "Updated {0}"), localTs.ToString("yyyy-MM-dd")),
+                ModPanelUiPalette.RichTextSecondary,
+                localTs.ToString("yyyy-MM-dd HH:mm")));
+        }
+        _ = QueueUpdateAvailableChipAsync(row, modId, source, wid,
+            ModWorkshopUpdateService.GetOnlineUpdateTimeAsync(wid));
+    }
+
+    private static async Task QueueUpdateAvailableChipAsync(HBoxContainer row, string modId, ModEntrySource source,
+        ulong wid, Task<uint?> onlineQuery) {
+        _ = await onlineQuery;
+        var target = row;
+        Callable.From(() => {
+            if (!GodotObject.IsInstanceValid(target) || !target.IsInsideTree())
+                return;
+            if (_currentSelectionKey != BuildSelectionKey(modId, source))
+                return;
+            if (!ModWorkshopUpdateService.IsUpdateAvailable(wid))
+                return;
+            foreach (Node child in target.GetChildren()) {
+                if (child.Name == WorkshopUpdateChipName)
+                    return;
+            }
+            var chip = CreateModUpdateChip(I18N.T("modpanel.update.available", "Update available"),
+                ModPanelUiPalette.CompatWarning, null);
+            chip.Name = WorkshopUpdateChipName;
+            target.AddChild(chip);
+        }).CallDeferred();
     }
     private static StyleBoxFlat CreateModSidebarPreviewFrameStyle() {
         return new StyleBoxFlat {

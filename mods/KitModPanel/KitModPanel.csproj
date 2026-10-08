@@ -15,6 +15,12 @@
   <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />
   <Import Project="$(RepoRoot)eng\KitLib.StageProductVariant.targets" />
   <ItemGroup>
+    <Reference Include="Steamworks.NET">
+      <HintPath>$(Sts2DataDir)\Steamworks.NET.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="MainFile.cs" />
     <None Include="KitModPanel.json" Condition="Exists('KitModPanel.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

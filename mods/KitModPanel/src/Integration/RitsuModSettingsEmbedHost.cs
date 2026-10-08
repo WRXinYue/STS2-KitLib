@@ -37,7 +37,7 @@ internal static class RitsuModSettingsEmbedHost {
             return;
         }
 
-        var submenuType = asm.GetType(SubmenuFullName);
+        var submenuType = RitsuModSettingsBridge.ResolveType(asm, SubmenuFullName);
         if (submenuType == null) {
             MainFile.Logger.Warn($"KitLib ModPanel: type not found: {SubmenuFullName}");
             return;

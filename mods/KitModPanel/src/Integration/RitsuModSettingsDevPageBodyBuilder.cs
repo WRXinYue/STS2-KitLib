@@ -24,7 +24,7 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
             error = "null submenu or page";
             return false;
         }
-        var contextType = asm.GetType(ContextTypeName);
+        var contextType = RitsuModSettingsBridge.ResolveType(asm, ContextTypeName);
         if (contextType == null) {
             error = "ModSettingsUiContext type missing";
             return false;
@@ -304,7 +304,7 @@ internal static class RitsuModSettingsDevPageBodyBuilder {
         return ResolveLocalized(asm, "entry.label.empty", "—");
     }
     private static string ResolveLocalized(Assembly asm, string key, string fallback) {
-        var loc = asm.GetType(LocalizationTypeName);
+        var loc = RitsuModSettingsBridge.ResolveType(asm, LocalizationTypeName);
         if (loc == null)
             return fallback;
         foreach (var m in loc.GetMethods(BindingFlags.Public | BindingFlags.Static)) {

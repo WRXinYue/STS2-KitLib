@@ -48,7 +48,7 @@ internal static class ModSettingsRitsuEntryControls {
         }
     }
     private static Control? CreateRitsuFallback(object context, Type contextType, Assembly asm, object entry) {
-        var entryBase = asm.GetType(EntryDefinitionTypeName);
+        var entryBase = RitsuModSettingsBridge.ResolveType(asm, EntryDefinitionTypeName);
         var create = entryBase?.GetMethod("CreateControl",
             BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null,
             new[] { contextType }, null);
@@ -605,7 +605,7 @@ internal static class ModSettingsRitsuEntryControls {
         return null;
     }
     private static string ResolveLocalized(Assembly asm, string key, string fallback) {
-        var loc = asm.GetType(LocalizationTypeName);
+        var loc = RitsuModSettingsBridge.ResolveType(asm, LocalizationTypeName);
         if (loc == null)
             return fallback;
         foreach (var m in loc.GetMethods(BindingFlags.Public | BindingFlags.Static)) {

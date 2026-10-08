@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -12,7 +13,7 @@ namespace KitLib.Integration;
 public static class RitsuModSettingsBridge {
     /// <summary>Short manifest id for RitsuLib; <see cref="IsRitsuFrameworkModId"/> also treats <c>com.ritsukage.sts2-RitsuLib</c> as the same mod.</summary>
     public const string RitsuFrameworkModId = "STS2-RitsuLib";
-    private const string RitsuAssemblyName = "STS2-RitsuLib";
+    private const string RitsuAssemblyName = "STS2-RitsuLib.Settings";
     private const string RegistryFullName = "STS2RitsuLib.Settings.ModSettingsRegistry";
     private const string LocalizationFullName = "STS2RitsuLib.Settings.ModSettingsLocalization";
     private const string UiContextFullName = "STS2RitsuLib.Settings.ModSettingsUiContext";
@@ -44,6 +45,28 @@ public static class RitsuModSettingsBridge {
         }
         return null;
     }
+    private static readonly ConcurrentDictionary<Assembly, Type[]> TypeCache = new();
+    /// <summary>
+    /// Resolves a type by full name, including internal types (<see cref="Assembly.GetType" /> only finds public types).
+    /// </summary>
+    public static Type? ResolveType(Assembly asm, string fullName) {
+        if (asm == null)
+            return null;
+        var types = TypeCache.GetOrAdd(asm, a => GetTypesUnsafe(a));
+        foreach (var t in types) {
+            if (string.Equals(t.FullName, fullName, StringComparison.Ordinal))
+                return t;
+        }
+        return null;
+    }
+    static Type[] GetTypesUnsafe(Assembly asm) {
+        try {
+            return asm.GetTypes();
+        }
+        catch (ReflectionTypeLoadException ex) {
+            return ex.Types.OfType<Type>().ToArray();
+        }
+    }
     /// <summary>Distinct mod ids that have at least one registered settings page (any depth).</summary>
     public static IReadOnlyList<string> GetModIdsWithRegisteredPages() {
         var pages = EnumerateRegisteredPageObjects();
@@ -61,7 +84,7 @@ public static class RitsuModSettingsBridge {
         var asm = TryGetRitsuAssembly();
         if (asm == null)
             return modId;
-        var loc = asm.GetType(LocalizationFullName);
+        var loc = ResolveType(asm, LocalizationFullName);
         if (loc == null)
             return modId;
         var m = loc.GetMethod("ResolveModName", BindingFlags.Public | BindingFlags.Static, null,
@@ -102,7 +125,7 @@ public static class RitsuModSettingsBridge {
         var asm = TryGetRitsuAssembly();
         if (asm == null)
             return Array.Empty<object>();
-        var regType = asm.GetType(RegistryFullName);
+        var regType = ResolveType(asm, RegistryFullName);
         var list = new List<object>();
         foreach (var page in EnumerateRegisteredPageObjects()) {
             if (!SettingsPageModIdMatches(GetStringProperty(page, "ModId"), modId))
@@ -198,7 +221,7 @@ public static class RitsuModSettingsBridge {
             error = "Ritsu assembly missing";
             return null;
         }
-        var contextType = asm.GetType(UiContextFullName);
+        var contextType = ResolveType(asm, UiContextFullName);
         if (contextType == null) {
             error = "Ritsu settings UI types missing";
             return null;
@@ -233,7 +256,7 @@ public static class RitsuModSettingsBridge {
         var asm = TryGetRitsuAssembly();
         if (asm == null)
             yield break;
-        var reg = asm.GetType(RegistryFullName);
+        var reg = ResolveType(asm, RegistryFullName);
         if (reg == null)
             yield break;
         var getPages = reg.GetMethod("GetPages", BindingFlags.Public | BindingFlags.Static, Type.EmptyTypes);
