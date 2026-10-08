@@ -135,7 +135,14 @@ public static partial class ModPanelUI {
         pad.AddThemeConstantOverride("margin_right", 5);
         pad.AddThemeConstantOverride("margin_top", 2);
         pad.AddThemeConstantOverride("margin_bottom", 2);
-        pad.AddChild(content);
+        // Fixed content height keeps every shield chip visually aligned regardless of icon or text.
+        var holder = new VBoxContainer {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+            Alignment = BoxContainer.AlignmentMode.Center,
+            CustomMinimumSize = new Vector2(0f, 17f),
+        };
+        holder.AddChild(content);
+        pad.AddChild(holder);
         chip.AddChild(pad);
         return chip;
     }
@@ -150,8 +157,7 @@ public static partial class ModPanelUI {
     }
 
     internal static PanelContainer CreateModSourceChip(ModEntrySource source, string? installPath = null) {
-        var (tint, textColor, icon) = ResolveModSourceVisual(source);
-        var label = ModPanelInstallSource.FormatSourceLabel(source);
+        var (tint, _, icon) = ResolveModSourceVisual(source);
         var row = new HBoxContainer {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Alignment = BoxContainer.AlignmentMode.Center,
@@ -165,19 +171,8 @@ public static partial class ModPanelUI {
                 CustomMinimumSize = new Vector2(12f, 12f),
             });
         }
-        var sourceLabel = new Label {
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            Text = label,
-            VerticalAlignment = VerticalAlignment.Center,
-            LabelSettings = new LabelSettings {
-                FontSize = ModPanelUiMetrics.SidebarModListVersionBadgeFontSize,
-                FontColor = textColor,
-            },
-        };
-        KitLibLocaleFonts.ApplyControl(sourceLabel);
-        row.AddChild(sourceLabel);
         var canOpen = !string.IsNullOrWhiteSpace(installPath) && System.IO.Directory.Exists(installPath);
-        var chip = WrapGithubShield(row, tint, canOpen ? installPath : label);
+        var chip = WrapGithubShield(row, tint, canOpen ? installPath : "");
         if (!canOpen)
             return chip;
 

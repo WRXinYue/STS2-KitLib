@@ -7,11 +7,6 @@ using MegaCrit.Sts2.Core.Modding;
 namespace KitLib.UI;
 
 internal static class ModPanelInstallSource {
-    internal static string FormatSourceLabel(ModEntrySource source) => source switch {
-        ModEntrySource.SteamWorkshop => I18N.T("modpanel.install.steam", "Workshop"),
-        _ => I18N.T("modpanel.install.local", "Local"),
-    };
-
     internal static string FormatLoadStatus(ModEntryLoadStatus status) => status switch {
         ModEntryLoadStatus.Loaded => I18N.T("modpanel.loadStatus.loaded", "loaded"),
         ModEntryLoadStatus.Failed => I18N.T("modpanel.loadStatus.failed", "failed"),

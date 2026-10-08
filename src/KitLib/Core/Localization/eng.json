@@ -13,8 +13,6 @@
   "modpanel.inRun.readOnlyHint": "Mod enable/disable and module toggles are read-only during a run. Return to the main menu to change them.",
   "modpanel.sidebar.enabled": "enabled",
   "modpanel.sidebar.disabled": "disabled",
-  "modpanel.install.local": "Local",
-  "modpanel.install.steam": "Workshop",
   "modpanel.loadStatus.loaded": "loaded",
   "modpanel.loadStatus.failed": "failed",
   "modpanel.loadStatus.disabled": "disabled",

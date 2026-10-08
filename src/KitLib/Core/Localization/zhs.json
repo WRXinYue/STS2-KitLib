@@ -13,8 +13,6 @@
   "modpanel.inRun.readOnlyHint": "对局进行中无法修改模组启用/禁用与模块开关；请返回主菜单后再改。",
   "modpanel.sidebar.enabled": "已启用",
   "modpanel.sidebar.disabled": "已禁用",
-  "modpanel.install.local": "本地",
-  "modpanel.install.steam": "创意工坊",
   "modpanel.loadStatus.loaded": "已加载",
   "modpanel.loadStatus.failed": "加载失败",
   "modpanel.loadStatus.disabled": "已禁用",
