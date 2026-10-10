@@ -56,13 +56,14 @@ internal static class ModPanelInstallSource {
         _ => ModEntryLoadStatus.None,
     };
 
+    internal static bool CanOpenInstallFolder(string? installPath) =>
+        !string.IsNullOrWhiteSpace(installPath) && Directory.Exists(installPath);
+
     internal static bool TryOpenInstallFolder(string? installPath) {
-        if (string.IsNullOrWhiteSpace(installPath))
+        if (!CanOpenInstallFolder(installPath))
             return false;
         try {
-            if (!Directory.Exists(installPath))
-                return false;
-            OS.ShellOpen(installPath);
+            OS.ShellOpen(installPath!);
             return true;
         }
         catch {

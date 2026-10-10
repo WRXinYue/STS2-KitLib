@@ -1,0 +1,109 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://mod_row_template.tscn" id="1_row"]
+
+[sub_resource type="StyleBoxFlat" id="sb_root"]
+bg_color = Color(0.10, 0.09, 0.08, 1)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxFlat" id="sb_row_base"]
+bg_color = Color(0, 0, 0, 0)
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.04)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+
+[node name="MockRoot" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("sb_root")
+
+[node name="List" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+theme_override_constants/separation = 6
+
+[node name="Header" type="Label" parent="List"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.665, 0.6, 1)
+theme_override_font_sizes/font_size = 12
+text = "MOD LIST - MOCK PREVIEW"
+text_overrun_behavior = 0
+
+[node name="RowA" parent="List" instance=ExtResource("1_row")]
+layout_mode = 2
+
+[node name="Title" parent="RowA/RowContent" index="2"]
+text = "KitLib"
+
+[node name="ChipLabel" parent="RowA/RowContent/VersionChip/ChipPad/ChipHolder" index="0"]
+text = "v0.110.1"
+
+[node name="CapA" type="Label" parent="List"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.665, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "A - selected + enabled (accent bar left, accent dot)"
+
+[node name="RowB" parent="List" instance=ExtResource("1_row")]
+layout_mode = 2
+
+[node name="BgPanel" parent="RowB" index="0"]
+theme_override_styles/panel = SubResource("sb_row_base")
+
+[node name="Title" parent="RowB/RowContent" index="2"]
+text = "KitDevTools"
+
+[node name="CapB" type="Label" parent="List"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.665, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "B - not selected + enabled (hairline bottom)"
+
+[node name="RowC" parent="List" instance=ExtResource("1_row")]
+layout_mode = 2
+
+[node name="BgPanel" parent="RowC" index="0"]
+theme_override_styles/panel = SubResource("sb_row_base")
+
+[node name="StateDot" parent="RowC/RowContent" index="0"]
+theme_override_colors/font_color = Color(1, 1, 1, 0.35)
+
+[node name="Title" parent="RowC/RowContent" index="2"]
+theme_override_colors/font_color = Color(0.55, 0.52, 0.48, 0.95)
+text = "STS2-RitsuLib"
+
+[node name="CapC" type="Label" parent="List"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.665, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "C - disabled (dim title, translucent dot)"
+
+[node name="RowD" parent="List" instance=ExtResource("1_row")]
+layout_mode = 2
+
+[node name="BgPanel" parent="RowD" index="0"]
+theme_override_styles/panel = SubResource("sb_row_base")
+
+[node name="ActionsBar" parent="RowD" index="1"]
+visible = true
+
+[node name="Title" parent="RowD/RowContent" index="2"]
+text = "LustTravel2"
+
+[node name="CapD" type="Label" parent="List"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.665, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "D - swiped open (right-anchored action bar revealed)"

@@ -1,6 +1,5 @@
 using Godot;
 using KitLib.Abstractions.Modding;
-using KitLib.Integration;
 
 namespace KitLib.UI;
 
@@ -10,7 +9,11 @@ internal sealed class SidebarModRowVm {
     public required StyleBoxFlat InnerStyle { get; init; }
     public required Panel BgPanel { get; init; }
     public required Control Host { get; init; }
-    public ModPanelEnableTickbox? EnableTickbox { get; init; }
+    public required Control ActionsBar { get; init; }
+    public required Control Content { get; init; }
+    public required float ContentBaseLeft { get; init; }
+    public required float ContentBaseRight { get; init; }
+    public required float SwipeMaxOffset { get; init; }
     public bool Pressing;
 
     public string Id => Entry.Id;

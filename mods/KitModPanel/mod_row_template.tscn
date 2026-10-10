@@ -1,0 +1,219 @@
+[gd_scene load_steps=10 format=3]
+
+[sub_resource type="StyleBoxFlat" id="sb_row_selected"]
+bg_color = Color(1, 1, 1, 0.04)
+border_width_left = 6
+border_color = Color(0.917647, 0.568627, 0.015686, 1)
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxFlat" id="sb_chip"]
+bg_color = Color(0.07, 0.065, 0.058, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.917647, 0.568627, 0.015686, 0.5)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxFlat" id="sb_chip_blue"]
+bg_color = Color(0.07, 0.065, 0.058, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 0.95, 0.5)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_slate"]
+bg_color = Color(0.23, 0.25, 0.30, 0.96)
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_slate_hover"]
+bg_color = Color(0.30, 0.33, 0.39, 0.96)
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_slate_disabled"]
+bg_color = Color(0.115, 0.125, 0.15, 0.96)
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_info"]
+bg_color = Color(0.16, 0.42, 0.72, 0.96)
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_info_hover"]
+bg_color = Color(0.21, 0.49, 0.82, 0.96)
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_info_disabled"]
+bg_color = Color(0.08, 0.21, 0.36, 0.96)
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[node name="RowHost" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_minimum_size = Vector2(0, 62)
+clip_contents = true
+size_flags_horizontal = 3
+mouse_filter = 0
+
+[node name="BgPanel" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("sb_row_selected")
+clip_contents = true
+mouse_filter = 2
+
+[node name="ActionsBar" type="HBoxContainer" parent="."]
+visible = false
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -210.0
+theme_override_constants/separation = 2
+mouse_filter = 2
+
+[node name="BtnEnable" type="Button" parent="ActionsBar"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.98, 0.965, 0.93, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("sb_btn_slate")
+theme_override_styles/hover = SubResource("sb_btn_slate_hover")
+theme_override_styles/pressed = SubResource("sb_btn_slate")
+theme_override_styles/focus = SubResource("sb_btn_slate")
+theme_override_styles/disabled = SubResource("sb_btn_slate_disabled")
+text = "Enable"
+
+[node name="BtnOpen" type="Button" parent="ActionsBar"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.98, 0.965, 0.93, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("sb_btn_info")
+theme_override_styles/hover = SubResource("sb_btn_info_hover")
+theme_override_styles/pressed = SubResource("sb_btn_info")
+theme_override_styles/focus = SubResource("sb_btn_info")
+theme_override_styles/disabled = SubResource("sb_btn_info_disabled")
+text = "Open folder"
+
+[node name="RowContent" type="HBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = -8.0
+theme_override_constants/separation = 8
+alignment = 1
+mouse_filter = 2
+
+[node name="ModIcon" type="TextureRect" parent="RowContent"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 3
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="RowContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.99, 0.975, 0.94, 1)
+theme_override_font_sizes/font_size = 22
+text = "KitDevTools"
+text_overrun_behavior = 3
+vertical_alignment = 1
+
+[node name="VersionChip" type="PanelContainer" parent="RowContent"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("sb_chip")
+mouse_filter = 2
+
+[node name="ChipPad" type="MarginContainer" parent="RowContent/VersionChip"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 2
+mouse_filter = 2
+
+[node name="ChipHolder" type="VBoxContainer" parent="RowContent/VersionChip/ChipPad"]
+custom_minimum_size = Vector2(0, 17)
+layout_mode = 2
+alignment = 1
+mouse_filter = 2
+
+[node name="ChipLabel" type="Label" parent="RowContent/VersionChip/ChipPad/ChipHolder"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.917647, 0.568627, 0.015686, 1)
+theme_override_font_sizes/font_size = 11
+text = "v0.110.1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SourceChip" type="PanelContainer" parent="RowContent"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("sb_chip_blue")
+mouse_filter = 2
+
+[node name="ChipPad" type="MarginContainer" parent="RowContent/SourceChip"]
+layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 2
+mouse_filter = 2
+
+[node name="ChipHolder" type="VBoxContainer" parent="RowContent/SourceChip/ChipPad"]
+custom_minimum_size = Vector2(0, 17)
+layout_mode = 2
+alignment = 1
+mouse_filter = 2
+
+[node name="ChipLabel" type="Label" parent="RowContent/SourceChip/ChipPad/ChipHolder"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.72, 0.95, 0.95)
+theme_override_font_sizes/font_size = 11
+text = "S"
+horizontal_alignment = 1
+vertical_alignment = 1

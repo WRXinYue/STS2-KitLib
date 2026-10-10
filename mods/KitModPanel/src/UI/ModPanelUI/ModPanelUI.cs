@@ -247,6 +247,8 @@ public static partial class ModPanelUI {
             return BuildMissingUserModulePanel();
         }
 
+        ModPanelSidebarSwipe.Reset();
+
         var showcaseModId = ResolveShowcaseModId();
         var panel = new Panel {
             Name = "ModPanelSidebarPanel",
@@ -321,9 +323,18 @@ public static partial class ModPanelUI {
         var modButtonList = new VBoxContainer {
             Name = "ModPanelSidebarModList",
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
+            MouseFilter = Control.MouseFilterEnum.Stop,
         };
         modButtonList.AddThemeConstantOverride("separation", 0);
+        // Clicking empty list space closes any swipe-open row.
+        modButtonList.GuiInput += ev => {
+            if (ev is not InputEventMouseButton mb || mb.ButtonIndex != MouseButton.Left)
+                return;
+            if (mb.Pressed)
+                ModPanelSidebarSwipe.RetractAll();
+            else
+                ModPanelSidebarSwipe.HandleGlobalRelease();
+        };
         scrollInner.AddChild(modButtonList);
         var sidebarPlan = ModPanelSidebarPlanner.Plan(
             ModRuntime.Registry.GetAllEntries(),
@@ -467,6 +478,56 @@ public static partial class ModPanelUI {
                 bgPanel.AddThemeStyleboxOverride("panel", innerStyle);
                 ModPanelSidebarMotion.ApplyRowStyle(innerStyle, bgPanel, isSel, false, false);
                 rowHost.AddChild(bgPanel);
+                // Right-aligned swipe-revealed action bar; width measured from its buttons.
+                var actionsBar = new HBoxContainer {
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    Visible = false,
+                };
+                actionsBar.AddThemeConstantOverride("separation", 2);
+                actionsBar.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+                actionsBar.AnchorLeft = 1f;
+                var toggleState = captured.IsEnabledInSettings;
+                var toggleBtn = ModPanelSidebarSwipe.CreateActionButton(
+                    ModPanelSidebarSwipe.SlateTint(),
+                    ModPanelSidebarSwipe.SlateTint(hover: true),
+                    ModPanelSidebarSwipe.SlateTint(disabled: true));
+                void RefreshToggleLabel() {
+                    toggleBtn.Text = I18N.T(toggleState ? "modpanel.swipe.disable" : "modpanel.swipe.enable",
+                        toggleState ? "Disable" : "Enable");
+                }
+                RefreshToggleLabel();
+                actionsBar.AddChild(toggleBtn);
+                var openFolderBtn = ModPanelSidebarSwipe.CreateActionButton(
+                    ModPanelSidebarSwipe.InfoTint(),
+                    ModPanelSidebarSwipe.InfoTint(hover: true),
+                    ModPanelSidebarSwipe.InfoTint(disabled: true));
+                actionsBar.AddChild(openFolderBtn);
+                rowHost.AddChild(actionsBar);
+                if (ModPanelHostContext.IsModLoadEditingAllowed) {
+                    toggleBtn.Pressed += () => {
+                        toggleState = !toggleState;
+                        ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, toggleState);
+                        RefreshToggleLabel();
+                        RefreshPendingRestartBanner();
+                    };
+                }
+                else {
+                    toggleBtn.Disabled = true;
+                }
+                if (captured.Source == ModEntrySource.SteamWorkshop) {
+                    openFolderBtn.QueueFree();
+                }
+                else {
+                    openFolderBtn.Disabled = !ModPanelInstallSource.CanOpenInstallFolder(captured.InstallPath);
+                    openFolderBtn.Pressed += () =>
+                        ModPanelInstallSource.TryOpenInstallFolder(captured.InstallPath);
+                }
+                var barWidth = 0f;
+                for (var i = 0; i < actionsBar.GetChildCount(); i++)
+                    barWidth += ((Control)actionsBar.GetChild(i)).GetMinimumSize().X;
+                barWidth += (actionsBar.GetChildCount() - 1) * 2;
+                actionsBar.OffsetLeft = -barWidth;
+                // Row content: mod icon, title, version chip, source chip.
                 var rowContent = new HBoxContainer {
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                     Alignment = BoxContainer.AlignmentMode.Center,
@@ -478,17 +539,18 @@ public static partial class ModPanelUI {
                 rowContent.OffsetRight = -12;
                 rowContent.OffsetTop = 8;
                 rowContent.OffsetBottom = -8;
-                var enableTickbox = ModPanelEnableTickbox.Create(captured.IsEnabledInSettings);
-                if (ModPanelHostContext.IsModLoadEditingAllowed) {
-                    enableTickbox.Toggled += tick => {
-                        ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, tick.IsTicked);
-                        RefreshPendingRestartBanner();
-                    };
-                }
-                else {
-                    enableTickbox.SetReadOnly(true);
-                }
-                rowContent.AddChild(enableTickbox);
+                var rowIcon = new TextureRect {
+                    CustomMinimumSize = new Vector2(40f, 40f),
+                    ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                };
+                var modIconTex = ModPanelModBanner.TryLoadModIcon(null, captured.Id);
+                if (modIconTex != null)
+                    rowIcon.Texture = modIconTex;
+                else
+                    rowIcon.Visible = false;
+                rowContent.AddChild(rowIcon);
                 var titleLbl = new Label {
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                     Text = displayName,
@@ -515,7 +577,11 @@ public static partial class ModPanelUI {
                     InnerStyle = innerStyle,
                     BgPanel = bgPanel,
                     Host = rowHost,
-                    EnableTickbox = enableTickbox,
+                    ActionsBar = actionsBar,
+                    Content = rowContent,
+                    ContentBaseLeft = rowContent.OffsetLeft,
+                    ContentBaseRight = rowContent.OffsetRight,
+                    SwipeMaxOffset = barWidth,
                 };
                 modRows.Add(vm);
                 rowHost.FocusEntered += () => {
@@ -527,15 +593,54 @@ public static partial class ModPanelUI {
                 };
                 rowHost.FocusExited += () => RefreshModRowChrome();
                 rowHost.GuiInput += ev => {
-                    if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left) {
-                        if (mb.Pressed) {
+                    if (ev is InputEventMouseButton mb) {
+                        if (mb.ButtonIndex == MouseButton.Right && mb.Pressed) {
+                            ModPanelSidebarSwipe.HandleRightClick(vm);
+                            SelectMod(vm.Id, vm.Entry.Source);
+                            rowHost.AcceptEvent();
+                            return;
+                        }
+                        if (mb.ButtonIndex == MouseButton.Left) {
+                            if (mb.Pressed) {
+                                vm.Pressing = true;
+                                RefreshModRowChrome();
+                                ModPanelSidebarSwipe.HandlePressStart(vm, mb.Position, touch: false);
+                            }
+                            else {
+                                vm.Pressing = false;
+                                RefreshModRowChrome();
+                                if (!ModPanelSidebarSwipe.HandlePressEnd(vm, mb.Position, touch: false)) {
+                                    ModPanelSidebarSwipe.RetractAll();
+                                    SelectMod(vm.Id, vm.Entry.Source);
+                                }
+                            }
+                            return;
+                        }
+                    }
+                    if (ev is InputEventMouseMotion mm && (mm.ButtonMask & MouseButtonMask.Left) != 0) {
+                        if (ModPanelSidebarSwipe.HandleMove(vm, mm.Position, touch: false))
+                            rowHost.AcceptEvent();
+                        return;
+                    }
+                    if (ev is InputEventScreenTouch st) {
+                        if (st.Pressed) {
                             vm.Pressing = true;
                             RefreshModRowChrome();
+                            ModPanelSidebarSwipe.HandlePressStart(vm, st.Position, touch: true);
                         }
                         else {
                             vm.Pressing = false;
-                            SelectMod(vm.Id, vm.Entry.Source);
+                            RefreshModRowChrome();
+                            if (!ModPanelSidebarSwipe.HandlePressEnd(vm, st.Position, touch: true)) {
+                                ModPanelSidebarSwipe.RetractAll();
+                                SelectMod(vm.Id, vm.Entry.Source);
+                            }
                         }
+                        return;
+                    }
+                    if (ev is InputEventScreenDrag sd
+                        && ModPanelSidebarSwipe.HandleMove(vm, sd.Position, touch: true)) {
+                        rowHost.AcceptEvent();
                     }
                 };
                 cardContent.AddChild(rowHost);

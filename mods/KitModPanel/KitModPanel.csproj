@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Godot.NET.Sdk/4.5.1">
   <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
   <PropertyGroup>
     <ModId>KitModPanel</ModId>
@@ -11,6 +11,7 @@
     <OutputPath>$(RepoBuildDir)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <ModVariantBundleDir>$(RepoRoot)build\$(ModId)</ModVariantBundleDir>
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />
   <Import Project="$(RepoRoot)eng\KitLib.StageProductVariant.targets" />
@@ -46,18 +47,12 @@
     </ItemGroup>
   </Target>
   <Target Name="ShakeAndEmbedIcons" BeforeTargets="AssignTargetPaths">
-    <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts/shake_icons.py&quot;"
-          WorkingDirectory="$(RepoRoot)"
-          Condition="Exists('$(RepoRoot)scripts/shake_icons.py')"
-          StandardOutputImportance="low" />
-    <Warning Condition="!Exists('$(KitLibSourceDir)\Icons\mdi-used.json')"
-             Text="Icons\mdi-used.json missing: $(ModId) will embed NO icons and every lookup warns at runtime. Run: $(KitLibPython) scripts/shake_icons.py" />
+    <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts/shake_icons.py&quot;" WorkingDirectory="$(RepoRoot)" Condition="Exists('$(RepoRoot)scripts/shake_icons.py')" StandardOutputImportance="low" />
+    <Warning Condition="!Exists('$(KitLibSourceDir)\Icons\mdi-used.json')" Text="Icons\mdi-used.json missing: $(ModId) will embed NO icons and every lookup warns at runtime. Run: $(KitLibPython) scripts/shake_icons.py" />
     <ItemGroup>
-      <_ShakenIconSource Include="$(MSBuildProjectDirectory)\$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs"
-                         Condition="Exists('$(MSBuildProjectDirectory)\$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs')" />
+      <_ShakenIconSource Include="$(MSBuildProjectDirectory)\$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs" Condition="Exists('$(MSBuildProjectDirectory)\$(KitLibSourceDir)\Icons\MdiIcon.Generated.cs')" />
       <Compile Include="@(_ShakenIconSource)" Exclude="@(Compile)" />
-      <EmbeddedResource Include="$(KitLibSourceDir)\Icons\mdi-used.json" LogicalName="KitLib.ModPanel.Icons.mdi-used.json"
-                        Condition="Exists('$(KitLibSourceDir)\Icons\mdi-used.json')" />
+      <EmbeddedResource Include="$(KitLibSourceDir)\Icons\mdi-used.json" LogicalName="KitLib.ModPanel.Icons.mdi-used.json" Condition="Exists('$(KitLibSourceDir)\Icons\mdi-used.json')" />
     </ItemGroup>
   </Target>
 </Project>
