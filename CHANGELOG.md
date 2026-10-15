@@ -6,7 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [0.44.0] - 2026-10-16
+
+### Changed
+
+- **Single-package install** — Mod Panel and Dev Tools ship back inside KitLib as satellite modules under `lib/<api>/modules/` and are loaded automatically. Subscribe to KitLib only; the standalone KitModPanel and KitDevTools workshop items are deprecated.
 
 ### Removed
 

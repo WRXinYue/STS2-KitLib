@@ -16,8 +16,8 @@ Install companions as needed:
 
 [list]
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitModPanel/README.md]KitModPanel[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]Workshop[/url]) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitDevTools/README.md]KitDevTools[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Workshop[/url]) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
+[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/ModPanel/README.md]KitModPanel[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]Workshop[/url]) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
+[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/DevTools/README.md]KitDevTools[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Workshop[/url]) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
 [/list]
 
 [h3]Host[/h3]

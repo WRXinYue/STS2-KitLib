@@ -146,8 +146,8 @@ def scan_rail_tab_icon_keys(src_dir: Path) -> dict[str, str]:
 
 
 _ICON_BUNDLES = (
-    ("mods/KitModPanel/src", "KitModPanel"),
-    ("mods/KitDevTools/src/Panel", "KitLib.Panel"),
+    ("src/KitLib/Modules/ModPanel/src", "KitModPanel"),
+    ("src/KitLib/Modules/DevTools/src/Panel", "KitLib.Panel"),
 )
 
 
@@ -177,7 +177,7 @@ def _shake_bundle(repo_root: Path, full_json: Path, relative_dir: str, module_na
     if module_name == "KitLib.Panel":
         # Cheat/User tab icons live in KitLib.Core (*TabRegistration.cs); Panel mods only add their own tabs.
         for tab_root in (
-            repo_root / "mods" / "KitDevTools",
+            repo_root / "src" / "KitLib" / "Modules" / "DevTools",
             repo_root / "src" / "KitLib.Core",
         ):
             if tab_root.is_dir():

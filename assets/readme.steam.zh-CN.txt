@@ -16,8 +16,8 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 
 [list]
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]（本仓库宿主）— 先加载，再提供其他 mod 在初始化时调用的 API；同时负责设置、进度保护、主题和快捷键。
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitModPanel/README.zh-CN.md]KitModPanel[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]创意工坊[/url]）— 主菜单模组列表与各模组设置页；装有 STS2-RitsuLib 时一并显示其设置页。
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/mods/KitDevTools/README.zh-CN.md]KitDevTools[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]创意工坊[/url]）— 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
+[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/ModPanel/README.zh-CN.md]KitModPanel[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]创意工坊[/url]）— 主菜单模组列表与各模组设置页；装有 STS2-RitsuLib 时一并显示其设置页。
+[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/DevTools/README.zh-CN.md]KitDevTools[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]创意工坊[/url]）— 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
 [/list]
 
 [h3]宿主[/h3]

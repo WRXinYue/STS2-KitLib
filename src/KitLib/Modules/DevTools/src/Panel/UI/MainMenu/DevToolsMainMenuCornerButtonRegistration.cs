@@ -11,7 +11,7 @@ namespace KitLib.UI;
 internal static class DevToolsMainMenuCornerButtonRegistration {
     internal static void Register() {
         KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
-            ModId = KitLibProductIds.KitDevTools,
+            ModId = KitLibProductIds.KitLib,
             ButtonId = "dev-mode",
             Tooltip = "Dev Mode",
             TooltipKey = "menu.developerMode",

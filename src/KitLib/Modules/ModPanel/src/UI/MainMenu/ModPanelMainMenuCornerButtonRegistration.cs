@@ -8,7 +8,7 @@ namespace KitLib.UI;
 internal static class ModPanelMainMenuCornerButtonRegistration {
     internal static void Register() {
         KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
-            ModId = KitLibProductIds.KitModPanel,
+            ModId = KitLibProductIds.KitLib,
             ButtonId = "mod-panel",
             Tooltip = "Mod Panel",
             TooltipKey = "menu.modPanel",

@@ -4,17 +4,13 @@
 Outputs (not uploaded by publish_steam.py — paste manually on Steam Workshop):
   assets/readme.steam.en.txt
   assets/readme.steam.zh-CN.txt
-  mods/<Product>/assets/readme.steam.en.txt
-  mods/<Product>/assets/readme.steam.zh-CN.txt
 
-Source of truth: README.md and README.zh-CN.md next to each product.
+Source of truth: README.md and README.zh-CN.md at the repo root.
 
 Usage:
     python scripts/readme_to_steam.py
     python scripts/readme_to_steam.py --product KitLib
-    python scripts/readme_to_steam.py --product KitModPanel
     make readme-steam
-    make readme-steam PRODUCT=KitDevTools
 """
 
 from __future__ import annotations
@@ -63,7 +59,7 @@ def main() -> int:
     ap.add_argument(
         "--product",
         default="",
-        help="One product id (KitLib, KitModPanel, KitDevTools). Default: all products.",
+        help="One product id (KitLib). Default: all products.",
     )
     args = ap.parse_args()
 

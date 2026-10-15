@@ -17,11 +17,11 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfLine.cs" Link="DevPerf\DevPerfLine.cs" />
-    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfMetrics.cs" Link="DevPerf\DevPerfMetrics.cs" />
-    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\IDevPerfLineProvider.cs" Link="DevPerf\IDevPerfLineProvider.cs" />
-    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfLogRateLimiter.cs" Link="DevPerf\DevPerfLogRateLimiter.cs" />
-    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfTransitionRecord.cs" Link="DevPerf\DevPerfTransitionRecord.cs" />
-    <Compile Include="..\..\mods\KitDevTools\src\Panel\DevPerf\DevPerfTransitionStore.cs" Link="DevPerf\DevPerfTransitionStore.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\DevTools\src\Panel\DevPerf\DevPerfLine.cs" Link="DevPerf\DevPerfLine.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\DevTools\src\Panel\DevPerf\DevPerfMetrics.cs" Link="DevPerf\DevPerfMetrics.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\DevTools\src\Panel\DevPerf\IDevPerfLineProvider.cs" Link="DevPerf\IDevPerfLineProvider.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\DevTools\src\Panel\DevPerf\DevPerfLogRateLimiter.cs" Link="DevPerf\DevPerfLogRateLimiter.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\DevTools\src\Panel\DevPerf\DevPerfTransitionRecord.cs" Link="DevPerf\DevPerfTransitionRecord.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\DevTools\src\Panel\DevPerf\DevPerfTransitionStore.cs" Link="DevPerf\DevPerfTransitionStore.cs" />
   </ItemGroup>
 </Project>

@@ -10,7 +10,7 @@ namespace KitLib.UI;
 internal static class DevToolsModSettingsPage {
     internal static void Register() {
         KitLibModSettingsRegistry.Register(new KitLibModSettingsPageRegistration {
-            ModId = KitLibProductIds.KitDevTools,
+            ModId = KitLibProductIds.KitLib,
             PageId = "general",
             Title = "General",
             TitleKey = "devtools.settings.page.general",

@@ -3,20 +3,20 @@ using System.Collections.Generic;
 
 namespace KitLib.Abstractions.Host;
 
-/// <summary>Workshop / game-folder product ids and which satellite modules each product owns.</summary>
+/// <summary>
+/// Workshop / game-folder product ids and which satellite modules each product owns.
+/// KitLib is the single published product; the mod panel, in-game panel and dev tools
+/// all ship as satellite DLLs under <c>mods/KitLib/lib/&lt;api&gt;/modules/</c>.
+/// </summary>
 public static class KitLibProductIds {
     public const string KitLib = "KitLib";
-    public const string KitModPanel = "KitModPanel";
-    public const string KitDevTools = "KitDevTools";
 
-    public static readonly string[] All = [KitLib, KitModPanel, KitDevTools];
+    public static readonly string[] All = [KitLib];
 
     /// <summary>Satellite module ids shipped under each product (excludes Core/Loader).</summary>
     public static readonly IReadOnlyDictionary<string, string[]> ModulesByProduct =
         new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase) {
-            [KitLib] = [],
-            [KitModPanel] = [],
-            [KitDevTools] = [KitLibModuleIds.Panel, KitLibModuleIds.Dev],
+            [KitLib] = [KitLibModuleIds.ModPanel, KitLibModuleIds.Panel, KitLibModuleIds.Dev],
         };
 
     public static string? TryGetProductIdForModule(string moduleId) {

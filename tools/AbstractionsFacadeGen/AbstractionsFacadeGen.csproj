@@ -7,6 +7,11 @@
     <IsPackable>false</IsPackable>
     <RollForward>LatestMajor</RollForward>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <!-- KitLib.Abstractions.Facade.csproj redirects this project's
+         BaseIntermediateOutputPath into its own obj dir, so the SDK's default
+         obj/bin exclusion no longer covers this project's real obj/bin. Re-exclude
+         them, otherwise stale intermediates get compiled as sources. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Reflection.MetadataLoadContext" Version="9.0.0" />

@@ -11,6 +11,7 @@ public static class SatelliteModuleLoadPolicy {
     public const string ModulesSubdir = "modules";
 
     public static readonly ModuleInfo[] Modules = [
+        new(KitLibModuleIds.ModPanel, AlwaysOn: false, Requires: []),
         new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
         new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
     ];
@@ -22,16 +23,20 @@ public static class SatelliteModuleLoadPolicy {
     /// <summary>Whether <paramref name="moduleId"/> is a loadable product satellite DLL.</summary>
     public static bool IsKnownSatellite(string moduleId) => TryGetModule(moduleId, out _);
 
-    /// <summary>Fresh-install defaults: Panel on for PC; all optional modules on for Android (failed loads are skipped quietly).</summary>
+    /// <summary>Fresh-install defaults: mod panel + in-game panel on for PC; all satellites on for Android (failed loads are skipped quietly).</summary>
     public static IReadOnlyDictionary<string, bool> GetDefaultToggles(bool? mobileDefaults = null) {
         var defaultOn = mobileDefaults ?? OperatingSystem.IsAndroid();
         var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         foreach (var module in Modules.Where(m => !m.AlwaysOn)) {
-            toggles[module.Id] = defaultOn
-                || string.Equals(module.Id, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase);
+            toggles[module.Id] = defaultOn || IsDefaultOn(module.Id);
         }
         return toggles;
     }
+
+    /// <summary>Satellites shipped as core UX (mod panel, in-game panel) start enabled.</summary>
+    static bool IsDefaultOn(string moduleId) =>
+        string.Equals(moduleId, KitLibModuleIds.ModPanel, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(moduleId, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase);
 
     public static IReadOnlyDictionary<string, bool> ResolveEnabled(IReadOnlyDictionary<string, bool>? userToggles) {
         var source = userToggles is { Count: > 0 }

@@ -29,10 +29,12 @@
       DestinationFiles="$(_KitLibProductModules)\$(AssemblyName).dll"
       SkipUnchangedFiles="true"
       Condition="Exists('$(TargetPath)')" />
-    <!-- Drop stale satellites left in KitLib/modules from pre-merge layouts. -->
+    <!-- Drop stale satellites from pre-merge layouts, keeping the known KitLib satellites. -->
     <ItemGroup Condition="'$(KitLibProductId)' == 'KitLib'">
-      <_StaleKitLibModule Include="$(RepoRoot)build\KitLib\modules\*.dll"
-                         Condition="Exists('$(RepoRoot)build\KitLib\modules')" />
+      <_KitLibModule Include="$(RepoRoot)build\KitLib\modules\*.dll"
+                     Condition="Exists('$(RepoRoot)build\KitLib\modules')" />
+      <_StaleKitLibModule Include="@(_KitLibModule)"
+                          Condition="'%(Filename)' != 'KitModPanel' and '%(Filename)' != 'KitLib.Panel' and '%(Filename)' != 'KitLib.Dev'" />
     </ItemGroup>
     <Delete Files="@(_StaleKitLibModule)" TreatErrorsAsWarnings="true" />
   </Target>

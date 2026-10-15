@@ -1,7 +1,7 @@
 # KitLib — build pipeline
 #
 #   build   → artifacts under repo build/KitLib/  (CI-safe, no game writes)
-#   deploy  → copy products into game mods/ (KitLib, KitModPanel, KitDevTools)
+#   deploy  → copy products into game mods/ (KitLib)
 #   sync    → build + deploy (default local dev loop)
 
 DOTNET ?= dotnet
@@ -61,8 +61,9 @@ MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
 
 MOD_PROJECTS := src/KitLib/Abstractions/KitLib.Abstractions.csproj \
 	src/KitLib/Core/KitLib.Core.csproj src/KitLib/Loader/KitLib.Loader.csproj \
-	mods/KitDevTools/KitLib.Dev.csproj \
-	mods/KitDevTools/KitLib.Panel.csproj
+	src/KitLib/Modules/ModPanel/KitModPanel.csproj \
+	src/KitLib/Modules/DevTools/KitLib.Dev.csproj \
+	src/KitLib/Modules/DevTools/KitLib.Panel.csproj
 PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
 STEAM_PRODUCT := $(if $(PRODUCT),$(PRODUCT),KitLib)
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,) $(if $(SKIP_BUILD),--skip-build,)
@@ -93,13 +94,13 @@ help:
 	@echo "  hooks-run    pre-commit run --all-files"
 	@echo "  deps         dotnet restore (does not touch game mods/STS2-RitsuLib by default)"
 	@echo ""
-	@echo "  sync         build + deploy all products (KitLib, KitModPanel, KitDevTools)"
+	@echo "  sync         build + deploy KitLib"
 	@echo "  sync PRODUCT=X  deploy one product only"
 	@echo "  sync VARIANTS=all  build stable+beta variants; ALT_GAME_DIR deploys a second install"
 	@echo "  sync-full    sync + deploy tools/ (MCP)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build        build all bundle projects (auto-cleans stale build servers)"
-	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib|KitModPanel|KitDevTools)"
+	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib)"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against sts2.dll"
 	@echo "  verify       build + check-api (pre-release)"
@@ -139,7 +140,7 @@ help:
 	@echo "  upload-nexus   main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
 	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
 	@echo "  upload-all     GitHub + Nexus + MCP + Steam Workshop"
-	@echo "  upload-steam   workshop + upload to Steam Workshop (PRODUCT=KitLib|KitModPanel|KitDevTools; default KitLib)"
+	@echo "  upload-steam   workshop + upload to Steam Workshop (PRODUCT=KitLib; default KitLib)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo "  readme-steam   README*.md -> assets/readme.steam.* (PRODUCT= optional; default all)"
 	@echo "  readme-assets  readme-nexus + readme-steam"
@@ -245,8 +246,8 @@ deploy:
 # Default builds the current profile; make sync VARIANTS=all also builds the
 # other pinned variant so build/*/lib/ holds both (Steam branch switches then
 # just work). ALT_GAME_DIR additionally deploys to a second install (e.g. a
-# separate beta copy). Note: KitDevTools satellites follow the last
-# built profile; KitLib.Core + KitModPanel are true dual-variant.
+# separate beta copy). Note: satellites (KitModPanel, KitLib.Panel, KitLib.Dev)
+# follow the last built profile; KitLib.Core ships both variants.
 SYNC_BUILD_TARGET = $(if $(filter all,$(VARIANTS)),build-all-variants,build)
 
 sync: $(SYNC_BUILD_TARGET)

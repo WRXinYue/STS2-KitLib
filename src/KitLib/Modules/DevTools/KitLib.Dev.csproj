@@ -2,7 +2,7 @@
   <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
   <PropertyGroup>
     <ModId>KitLib.Dev</ModId>
-    <KitLibProductId>KitDevTools</KitLibProductId>
+    <KitLibProductId>KitLib</KitLibProductId>
     <AssemblyName>KitLib.Dev</AssemblyName>
     <RootNamespace>KitLib</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>

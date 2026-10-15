@@ -130,7 +130,7 @@ public static class KitLibHostPaths {
     /// <summary>
     /// Locate an installed product by official <c>Mod.manifest.id</c> and <c>Mod.path</c>
     /// (<see cref="ModManager"/>), then named folders under local <c>mods/</c>.
-    /// Workshop items live in numeric Steam folders, not <c>mods/KitDevTools</c>.
+    /// Workshop items live in numeric Steam folders, not <c>mods/KitLib</c>.
     /// </summary>
     public static string? TryResolveProductDirectory(string kitLibModDir, string productId) {
         if (string.IsNullOrWhiteSpace(productId))
