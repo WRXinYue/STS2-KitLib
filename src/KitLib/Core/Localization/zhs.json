@@ -60,6 +60,7 @@
   "modpanel.kitlib.modules.runtime.pending": "已启用",
   "modpanel.kitlib.modules.user.desc": "会话日志、崩溃恢复与进度辅助。",
   "modpanel.kitlib.modules.modPanel.desc": "主菜单 Mod 界面中的本设置页。",
+  "modpanel.kitlib.modules.modPanel.disableWarning": "关闭后将失去 KitLib 的游戏内设置界面；需编辑 mod_data/KitLib/settings.json 才能重新启用。",
   "modpanel.kitlib.modules.panel.desc": "局内 Dev 侧栏、标题屏 Dev Mode、进度保护与大部分浏览器。",
   "modpanel.kitlib.modules.ai.desc": "单人规则自动出牌、AI HUD 与联机 companion 辅助。",
   "modpanel.kitlib.modules.cheat.desc": "作弊标签页与运行时作弊钩子。",

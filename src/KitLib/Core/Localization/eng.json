@@ -66,6 +66,7 @@
   "modpanel.kitlib.modules.runtime.pending": "Enabled",
   "modpanel.kitlib.modules.user.desc": "Session logging, crash recovery, and progress helpers.",
   "modpanel.kitlib.modules.modPanel.desc": "This settings UI in the main-menu Mods screen.",
+  "modpanel.kitlib.modules.modPanel.disableWarning": "Disabling this removes KitLib's in-game settings screen. Re-enable it by editing mod_data/KitLib/settings.json.",
   "modpanel.kitlib.modules.panel.desc": "In-run dev rail, title-screen Dev Mode, progress protection, and most browsers.",
   "modpanel.kitlib.modules.ai.desc": "Rule-based solo autoplay, AI HUD, and multiplayer companion helpers.",
   "modpanel.kitlib.modules.cheat.desc": "Cheat tab and runtime cheat hooks.",
