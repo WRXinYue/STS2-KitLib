@@ -5,6 +5,7 @@ using Godot;
 using KitLib.Abstractions.Modding;
 using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.UI;
@@ -24,7 +25,7 @@ internal static class MainMenuRailHost {
     private const int IndicatorRadius = 8;
     private const float RefreshIntervalSeconds = 0.1f;
     private const string OpenMetaKey = "kitlib_rail_open";
-    private const float MenuRailButtonWidth = 160f;
+    private const float MenuRailButtonWidth = 80f;
     private const float ContentPadding = 10f;
     private const float LabelFontSize = 11f;
     private const string LabelFontPath = "res://themes/kreon_regular_shared.tres";
@@ -36,6 +37,9 @@ internal static class MainMenuRailHost {
 
     /// <summary>Width reserved for the menu rail; other left-docked panels start after it.</summary>
     internal const float MenuRailInset = KitLibRailChrome.RailLeft + MenuRailButtonWidth;
+
+    /// <summary>Left offset of the button column; the strip's padding is halved so the column sits centred.</summary>
+    private const float RailColumnLeft = (MenuRailInset - MenuRailButtonWidth) * 0.5f;
 
     private static NMainMenu? _menu;
     private static Control? _root;
@@ -56,6 +60,13 @@ internal static class MainMenuRailHost {
 
     /// <summary>Vanilla chrome pushed right to clear the strip, kept with its original offsets.</summary>
     private static readonly List<PushedChrome> _pushed = new();
+
+    /// <summary>Y below which the widened strip has arced back to the frame's own edge; &lt;= 0 keeps
+    /// it full height.</summary>
+    private static float _bandStepY = -1f;
+
+    /// <summary>Length of the arc the strip's widened edge bends back over, in logical pixels.</summary>
+    private const float BandStepCurve = 200f;
 
     /// <summary>Whether the rail is currently hosted by <paramref name="mainMenu"/>.</summary>
     internal static bool IsAttachedTo(NMainMenu mainMenu) =>
@@ -108,13 +119,14 @@ internal static class MainMenuRailHost {
 
         var rail = new Control {
             Name = "Rail",
-            MouseFilter = Control.MouseFilterEnum.Stop,
+            // Decoration only: the buttons inside take the clicks, so chrome under the strip stays clickable.
+            MouseFilter = Control.MouseFilterEnum.Ignore,
             AnchorLeft = 0,
             AnchorRight = 0,
             AnchorTop = 0.15f,
             AnchorBottom = 0.85f,
-            OffsetLeft = KitLibRailChrome.RailLeft,
-            OffsetRight = KitLibRailChrome.RailLeft + MenuRailButtonWidth,
+            OffsetLeft = RailColumnLeft,
+            OffsetRight = RailColumnLeft + MenuRailButtonWidth,
             OffsetTop = 0,
             OffsetBottom = 0,
         };
@@ -124,6 +136,7 @@ internal static class MainMenuRailHost {
         // Wrapper holds the sliding indicator and the button column in one coordinate space,
         // so the indicator can be positioned from a button's Y.
         var wrapper = new Control {
+            MouseFilter = Control.MouseFilterEnum.Ignore,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill,
         };
@@ -152,7 +165,10 @@ internal static class MainMenuRailHost {
         });
         wrapper.AddChild(_indicator);
 
-        _buttons = new VBoxContainer { Name = "RailButtons" };
+        _buttons = new VBoxContainer {
+            Name = "RailButtons",
+            MouseFilter = Control.MouseFilterEnum.Ignore,
+        };
         _buttons.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _buttons.AddThemeConstantOverride("separation", (int)ButtonGap);
         wrapper.AddChild(_buttons);
@@ -186,14 +202,25 @@ internal static class MainMenuRailHost {
             return;
         }
 
-        var registrations = KitLibMainMenuCornerButtonRegistry.GetOrderedButtons();
-        var signature = string.Join(",", registrations.Select(r => $"{r.ModId}/{r.ButtonId}"));
+        var surface = ResolveSurface(mainMenu);
+        var registrations = KitLibMainMenuCornerButtonRegistry.GetOrderedButtons(surface);
+        var signature = BuildSignature(surface, registrations);
         if (!string.Equals(signature, _signature, StringComparison.Ordinal))
-            RebuildButtons(mainMenu, registrations);
+            RebuildButtons(mainMenu, registrations, signature);
 
-        var occupied = MainMenuCornerButtonHost.FindOccupiedRegistration(mainMenu);
-        bool menuSurface = MainMenuCornerButtonHost.IsMainMenuShortcutSurfaceOpen(mainMenu);
-        bool show = _railButtons.Count > 0 && (occupied != null || menuSurface);
+        KitLibMainMenuCornerButtonRegistration? occupied = null;
+        bool surfaceOpen;
+        if (surface == KitLibMainMenuSurface.CharacterSelect) {
+            // Character select is an open submenu, so the shortcut-surface check would hide the rail;
+            // this surface always hosts its own entries while it is up.
+            surfaceOpen = true;
+        }
+        else {
+            occupied = MainMenuCornerButtonHost.FindOccupiedRegistration(mainMenu);
+            surfaceOpen = MainMenuCornerButtonHost.IsMainMenuShortcutSurfaceOpen(mainMenu);
+        }
+
+        bool show = _railButtons.Count > 0 && (occupied != null || surfaceOpen);
 
         CaptureInsets(mainMenu);
         // A panel opening is a deliberate request for the rail, so it overrides an earlier Ctrl+B
@@ -203,8 +230,20 @@ internal static class MainMenuRailHost {
 
         SetPresence(show, animated: true);
         if (show)
-            RefreshButtons(mainMenu, registrations, occupied);
+            RefreshButtons(mainMenu, registrations, occupied, surface);
     }
+
+    /// <summary>Surface the rail currently renders for: character select while it is the open submenu.</summary>
+    private static KitLibMainMenuSurface ResolveSurface(NMainMenu mainMenu) =>
+        mainMenu.SubmenuStack.Peek() is NCharacterSelectScreen
+            ? KitLibMainMenuSurface.CharacterSelect
+            : KitLibMainMenuSurface.MainMenu;
+
+    /// <summary>Registration signature of one surface, used to rebuild only when that surface's list changes.</summary>
+    private static string BuildSignature(
+        KitLibMainMenuSurface surface,
+        IReadOnlyList<KitLibMainMenuCornerButtonRegistration> registrations) =>
+        $"{(int)surface}:" + string.Join(",", registrations.Select(r => $"{r.ModId}/{r.ButtonId}"));
 
     /// <summary>
     /// Slide the rail with the frame: its own presence tween, capped by the wrap progress so the rail
@@ -216,7 +255,7 @@ internal static class MainMenuRailHost {
 
         if (_rail != null && GodotObject.IsInstanceValid(_rail)) {
             // Slide fully off screen as the wrap retracts; the rail's right edge lands on x=0 at 0.
-            float left = KitLibRailChrome.RailLeft - (1f - presence) * MenuRailInset;
+            float left = RailColumnLeft - (1f - presence) * (RailColumnLeft + MenuRailButtonWidth);
             _rail.OffsetLeft = left;
             _rail.OffsetRight = left + MenuRailButtonWidth;
         }
@@ -224,7 +263,7 @@ internal static class MainMenuRailHost {
         if (_band != null && GodotObject.IsInstanceValid(_band))
             _band.Visible = presence > 0.001f;
 
-        KitLibScreenFrame.SetLeftBand(_band, MenuRailInset * presence);
+        KitLibScreenFrame.SetLeftBand(_band, MenuRailInset * presence, _bandStepY, BandStepCurve);
         ApplyInsets(presence);
 
         var menu = _menu;
@@ -269,7 +308,8 @@ internal static class MainMenuRailHost {
 
     private static void RebuildButtons(
         NMainMenu mainMenu,
-        IReadOnlyList<KitLibMainMenuCornerButtonRegistration> registrations) {
+        IReadOnlyList<KitLibMainMenuCornerButtonRegistration> registrations,
+        string signature) {
         if (_buttons == null)
             return;
 
@@ -278,7 +318,7 @@ internal static class MainMenuRailHost {
             node.QueueFree();
         }
         _railButtons.Clear();
-        _signature = string.Join(",", registrations.Select(r => $"{r.ModId}/{r.ButtonId}"));
+        _signature = signature;
 
         if (_indicator != null)
             _indicator.Visible = false;
@@ -350,14 +390,15 @@ internal static class MainMenuRailHost {
     private static void RefreshButtons(
         NMainMenu mainMenu,
         IReadOnlyList<KitLibMainMenuCornerButtonRegistration> registrations,
-        KitLibMainMenuCornerButtonRegistration? occupied) {
+        KitLibMainMenuCornerButtonRegistration? occupied,
+        KitLibMainMenuSurface surface) {
         var occupiedKey = occupied == null ? null : RegistrationKey(occupied);
 
         for (var i = 0; i < _railButtons.Count && i < registrations.Count; i++) {
             var registration = registrations[i];
             var button = _railButtons[i];
             button.Visible = MainMenuCornerButtonHost.TryEvaluateButtonVisibility(
-                mainMenu, RegistrationKey(registration));
+                mainMenu, RegistrationKey(registration), surface);
 
             bool isOpen = occupiedKey != null &&
                 string.Equals(RegistrationKey(registration), occupiedKey, StringComparison.OrdinalIgnoreCase);
@@ -408,18 +449,31 @@ internal static class MainMenuRailHost {
     /// scaled by the rail's presence so the chrome animates back as the strip retracts.
     /// </summary>
     private static void CaptureInsets(NMainMenu mainMenu) {
-        if (_pushed.Count > 0)
-            return;
         CaptureRight(mainMenu, "%MainMenuTextButtons");
         CaptureRight(mainMenu, "%ChangeProfileButton");
+
+        // NBackButton re-pins its own global_position (enable / window resize), so pushing it aside
+        // never sticks; arc the strip back to the frame edge above it instead.
+        _bandStepY = -1f;
+        if (mainMenu.SubmenuStack.Peek() is NCharacterSelectScreen charSelect) {
+            var back = charSelect.GetNodeOrNull<Control>("BackButton");
+            if (back != null && GodotObject.IsInstanceValid(back))
+                _bandStepY = back.GlobalPosition.Y - BandStepClearance;
+        }
     }
 
-    private static void CaptureRight(NMainMenu mainMenu, string path) {
-        var node = mainMenu.GetNodeOrNull<Control>(path);
-        if (node == null || !GodotObject.IsInstanceValid(node))
+    /// <summary>Gap left between the strip's arc end and the vanilla buttons below it.</summary>
+    private const float BandStepClearance = 6f;
+
+    private static void CaptureRight(Node owner, string path) {
+        var node = owner.GetNodeOrNull<Control>(path);
+        if (node == null || !GodotObject.IsInstanceValid(node) || IsPushed(node))
             return;
         _pushed.Add(new PushedChrome(node, node.OffsetLeft, node.OffsetRight));
     }
+
+    private static bool IsPushed(Control node) =>
+        _pushed.Any(entry => entry.Node == node);
 
     private static void ApplyInsets(float presence) {
         float push = MenuRailInset * presence;
@@ -466,6 +520,7 @@ internal static class MainMenuRailHost {
         _wantPresence = false;
 
         RestoreInset();
+        _bandStepY = -1f;
         KitLibScreenFrame.SetLeftBand(0f);
         // The frame is a permanent decoration: restore it so the next scene starts with a full edge.
         KitLibScreenFrame.SetWrapShown(true, animated: false);
@@ -497,8 +552,9 @@ internal static class MainMenuRailHost {
             Node = node;
             Left = left;
             Right = right;
-            LastLeft = float.NaN;
-            LastRight = float.NaN;
+            // Recorded at resting offsets so the first push does not re-base (nodes captured while docked).
+            LastLeft = left;
+            LastRight = right;
         }
     }
 

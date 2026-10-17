@@ -16,7 +16,8 @@ namespace KitLib.UI;
 /// main-menu modded warning through <see cref="ApplyMainMenuInsets"/>. The left side reads as a wider
 /// band: <see cref="CreateLeftBand"/> draws the same shape from the rail's own layer with only the
 /// left thickness widened, and <see cref="SetLeftBand"/> cuts this layer's inner stroke there, so
-/// both layers together read as one window edge with a single continuous inner outline.
+/// both layers together read as one window edge with a single continuous inner outline. A band can be
+/// stopped short with a step so the narrow frame edge takes over below it.
 /// </remarks>
 internal static class KitLibScreenFrame {
     internal const string RootNodeName = "KitLibScreenFrame";
@@ -230,13 +231,16 @@ internal static class KitLibScreenFrame {
     /// Report a rail's widened left contour state: <paramref name="band"/> is the rect returned by
     /// <see cref="CreateLeftBand"/> (null when the caller has none) and <paramref name="width"/> is the
     /// width it currently occupies — already scaled by the caller's own presence, so 0 means retracted.
+    /// <paramref name="stepY"/> (&gt; 0) ends the widened strip there, bending the band back onto this
+    /// layer's own narrow outline over <paramref name="stepCurve"/> px of arc.
     /// Rewrites this layer's stroke cut and the band's own geometry, keeping both in step with the wrap.
     /// </summary>
-    internal static void SetLeftBand(ColorRect? band, float width) {
+    internal static void SetLeftBand(ColorRect? band, float width, float stepY = -1f, float stepCurve = 0f) {
         if (!Mathf.IsEqualApprox(_leftBandWidth, width)) {
             _leftBandWidth = width;
             FrameMaterial().SetShaderParameter("stroke_cut_x", BandStrokeCut());
         }
+        FrameMaterial().SetShaderParameter("stroke_cut_end_y", stepY);
 
         if (band == null || !GodotObject.IsInstanceValid(band) || band.Material is not ShaderMaterial material)
             return;
@@ -245,6 +249,8 @@ internal static class KitLibScreenFrame {
         float side = Margin * _wrapT;
         material.SetShaderParameter("margin", new Vector4(width, side, side, side));
         material.SetShaderParameter("radius", (float)Radius * _wrapT);
+        material.SetShaderParameter("drop_below_y", stepY);
+        material.SetShaderParameter("drop_below_curve", stepCurve);
     }
 
     /// <summary>Retract the widened left contour without touching any band's geometry.</summary>
@@ -270,6 +276,8 @@ internal static class KitLibScreenFrame {
         material.SetShaderParameter("edge_color", EdgeColor);
         // The band owns its inner outline all the way round: nothing cuts it.
         material.SetShaderParameter("stroke_cut_x", -1f);
+        // Full height until a caller reports a step.
+        material.SetShaderParameter("drop_below_y", -1f);
 
         var band = new ColorRect {
             Name = LeftBandNodeName,
@@ -334,6 +342,7 @@ internal static class KitLibScreenFrame {
         _material.SetShaderParameter("frame_color", FrameColor);
         _material.SetShaderParameter("edge_color", EdgeColor);
         _material.SetShaderParameter("stroke_cut_x", BandStrokeCut());
+        _material.SetShaderParameter("stroke_cut_end_y", -1f);
         return _material;
     }
 
@@ -383,6 +392,12 @@ internal static class KitLibScreenFrame {
         // Left x from which the widened band's own edge continues this inner boundary, so this layer's
         // stroke stops there (< 0.0 draws it the whole way round).
         uniform float stroke_cut_x = -1.0;
+        // > 0.0: this layer only draws above this y, so the narrow frame edge takes over below.
+        uniform float drop_below_y = -1.0;
+        // > 0.0: arc length the band bends its widened edge back over, ending at drop_below_y.
+        uniform float drop_below_curve = 0.0;
+        // > 0.0: the stroke cut above only applies above this y (< 0.0 cuts all the way down).
+        uniform float stroke_cut_end_y = -1.0;
 
         float sd_round_box(vec2 p, vec2 half_size, float r) {
             vec2 q = abs(p) - half_size + r;
@@ -391,18 +406,27 @@ internal static class KitLibScreenFrame {
 
         void fragment() {
             vec2 p = UV * rect_size;
-            vec2 half_size = max((rect_size - vec2(margin.x + margin.z, margin.y + margin.w)) * 0.5, vec2(0.0));
-            vec2 hole_center = vec2(margin.x, margin.y) + half_size;
+            // Godot forbids 'return' in fragment: fade the whole output instead (0 below the step).
+            float present = drop_below_y > 0.0 && p.y >= drop_below_y ? 0.0 : 1.0;
+            // Bending the thickness, not cutting it, leaves the SDF's own edge as a tangent arc.
+            float left = margin.x;
+            if (drop_below_y > 0.0 && drop_below_curve > 0.0)
+                left = mix(margin.x, margin.z, smoothstep(drop_below_y - drop_below_curve, drop_below_y, p.y));
+
+            vec2 half_size = max((rect_size - vec2(left + margin.z, margin.y + margin.w)) * 0.5, vec2(0.0));
+            vec2 hole_center = vec2(left, margin.y) + half_size;
             float d = sd_round_box(p - hole_center, half_size, min(radius, min(half_size.x, half_size.y)));
 
             vec3 col = frame_color.rgb;
             float a = frame_color.a * smoothstep(-0.5, 0.5, d);
 
-            float edge = p.x < stroke_cut_x ? 0.0 : 1.0 - smoothstep(0.0, edge_width, abs(d));
+            bool cut = p.x < stroke_cut_x && (stroke_cut_end_y <= 0.0 || p.y < stroke_cut_end_y);
+            float edge = cut ? 0.0 : 1.0 - smoothstep(0.0, edge_width, abs(d));
+
             col = mix(col, edge_color.rgb, edge * edge_color.a);
             a = max(a, edge * edge_color.a);
 
-            COLOR = vec4(col, a);
+            COLOR = vec4(col, a * present);
         }
         """;
 }

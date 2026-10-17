@@ -89,13 +89,14 @@ public static class KitLibMainMenuCornerButtonRegistry {
         }
     }
 
-    /// <summary>All registered buttons ordered for vertical stacking on the main menu.</summary>
-    public static IReadOnlyList<KitLibMainMenuCornerButtonRegistration> GetOrderedButtons() {
+    /// <summary>Buttons registered for <paramref name="surface"/>, ordered for vertical stacking.</summary>
+    public static IReadOnlyList<KitLibMainMenuCornerButtonRegistration> GetOrderedButtons(
+        KitLibMainMenuSurface surface = KitLibMainMenuSurface.MainMenu) {
         lock (SharedGate) {
             var reconstructed = new List<KitLibMainMenuCornerButtonRegistration>();
             foreach (var entry in SharedButtons()) {
                 var button = FromShared(entry);
-                if (button != null)
+                if (button != null && button.Surface == surface)
                     reconstructed.Add(button);
             }
 
@@ -224,6 +225,8 @@ public static class KitLibMainMenuCornerButtonRegistry {
         ["Tooltip"] = button.Tooltip,
         ["TooltipKey"] = button.TooltipKey,
         ["SortOrder"] = button.SortOrder,
+        // Stored as int: the slot is shared across AssemblyLoadContexts, so no mod-local enum instance.
+        ["Surface"] = (int)button.Surface,
         ["OnPressed"] = button.OnPressed,
         ["IsVisible"] = button.IsVisible,
         ["IsOpen"] = button.IsOpen,
@@ -251,6 +254,9 @@ public static class KitLibMainMenuCornerButtonRegistry {
             Tooltip = ReadString(data, "Tooltip"),
             TooltipKey = ReadString(data, "TooltipKey"),
             SortOrder = data.GetValueOrDefault("SortOrder") is int sortOrder ? sortOrder : 0,
+            Surface = data.GetValueOrDefault("Surface") is int surface
+                ? (KitLibMainMenuSurface)surface
+                : KitLibMainMenuSurface.MainMenu,
             OnPressed = onPressed,
             IsVisible = data.GetValueOrDefault("IsVisible") as Func<object, bool>,
             ActiveIconPath = ReadString(data, "ActiveIconPath"),

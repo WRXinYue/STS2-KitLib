@@ -611,8 +611,11 @@ internal static class MainMenuCornerButtonHost {
     static bool IsFlyTweenRunning() =>
         _flyTween != null && GodotObject.IsInstanceValid(_flyTween) && _flyTween.IsRunning();
 
-    internal static bool TryEvaluateButtonVisibility(NMainMenu mainMenu, string registrationKey) {
-        foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons()) {
+    internal static bool TryEvaluateButtonVisibility(
+        NMainMenu mainMenu,
+        string registrationKey,
+        KitLibMainMenuSurface surface = KitLibMainMenuSurface.MainMenu) {
+        foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons(surface)) {
             if (!string.Equals(RegistrationKey(registration), registrationKey, StringComparison.OrdinalIgnoreCase))
                 continue;
             if (registration.IsVisible == null)

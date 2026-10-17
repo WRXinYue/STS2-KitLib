@@ -28,6 +28,24 @@ internal static class DevMainMenuUI {
     internal static void StartNewTestWithSeed(NMainMenu mainMenu) =>
         ShowSeedInputOverlay(mainMenu, () => StartNewTest(mainMenu));
 
+    /// <summary>
+    /// Start a DevMode run from the character select screen: raises the dev flag, then drives the vanilla
+    /// Confirm button so the run launches through the official flow.
+    /// </summary>
+    internal static void StartNewTestFromCharSelect(NMainMenu mainMenu) {
+        if (mainMenu.SubmenuStack.Peek() is not NCharacterSelectScreen charSelect)
+            return;
+
+        KitLibState.InDevRun = true;
+        var embark = charSelect.GetNodeOrNull<NConfirmButton>("ConfirmButton");
+        if (embark == null || !GodotObject.IsInstanceValid(embark)) {
+            MainFile.Logger.Warn("Dev New Test: character-select Confirm button not found.");
+            return;
+        }
+
+        embark.ForceClick();
+    }
+
     internal static void StartAutoSlay(NMainMenu mainMenu) => ShowAutoSlaySeedOverlay(mainMenu);
 
     internal static void LoadSave(NMainMenu mainMenu) => SaveSlotUI.Show(

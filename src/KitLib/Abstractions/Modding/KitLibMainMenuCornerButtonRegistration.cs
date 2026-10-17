@@ -50,6 +50,12 @@ public sealed class KitLibMainMenuCornerButtonRegistration {
     /// <summary>Lower sorts earlier. Ties break by <see cref="ModId"/> then <see cref="ButtonId"/>.</summary>
     public int SortOrder { get; init; }
 
+    /// <summary>
+    /// Which main-menu screen shows this entry. Defaults to <see cref="KitLibMainMenuSurface.MainMenu"/>;
+    /// entries render only on their own surface.
+    /// </summary>
+    public KitLibMainMenuSurface Surface { get; init; } = KitLibMainMenuSurface.MainMenu;
+
     /// <summary>Invoked when the icon is clicked.</summary>
     public required Action<object> OnPressed { get; init; }
 

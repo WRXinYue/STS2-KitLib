@@ -7,12 +7,14 @@ using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 namespace KitLib.UI;
 
 /// <summary>
-/// Publishes every Dev Mode action as its own main-menu rail entry, so the rail is a flat
-/// text list instead of a single "Dev Mode" button opening a nested menu panel.
+/// Publishes every Dev Mode action as its own left-rail entry, so the rail is a flat text list
+/// instead of a single "Dev Mode" button opening a nested menu panel. New Test lives on the
+/// character select surface so a test run can start from the vanilla character flow.
 /// </summary>
 internal static class DevToolsMainMenuCornerButtonRegistration {
     internal static void Register() {
-        RegisterAction("dev-new-test", "New Test", "devmenu.newTest", 0, DevMainMenuUI.StartNewTest);
+        RegisterAction("dev-new-test", "New Test", "devmenu.newTest", 0, DevMainMenuUI.StartNewTestFromCharSelect,
+            surface: KitLibMainMenuSurface.CharacterSelect);
         RegisterAction("dev-new-test-seed", "New Test (Seed)", "devmenu.newTestWithSeed", 1,
             DevMainMenuUI.StartNewTestWithSeed);
         RegisterAction("dev-autoslay", "AutoSlay", "devmenu.autoslay", 2, DevMainMenuUI.StartAutoSlay,
@@ -34,13 +36,15 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
     }
 
     static void RegisterAction(string buttonId, string tooltip, string tooltipKey, int sortOrder,
-        Action<NMainMenu> action, Func<object, bool>? isVisible = null, Func<object, bool>? isOpen = null) {
+        Action<NMainMenu> action, Func<object, bool>? isVisible = null, Func<object, bool>? isOpen = null,
+        KitLibMainMenuSurface surface = KitLibMainMenuSurface.MainMenu) {
         KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
             ModId = KitLibProductIds.KitLib,
             ButtonId = buttonId,
             Tooltip = tooltip,
             TooltipKey = tooltipKey,
             SortOrder = sortOrder,
+            Surface = surface,
             IsVisible = isVisible,
             IsOpen = isOpen ?? (_ => false),
             OnPressed = mainMenuObj => {

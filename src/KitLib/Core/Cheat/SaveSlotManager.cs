@@ -334,9 +334,6 @@ internal static class SaveSlotManager {
                 var state = RunState.FromSerializable(save);
                 await SetUpSavedSinglePlayerCompat(RunManager.Instance, state, save);
 
-                var prop = AccessTools.Property(typeof(RunManager), "ShouldSave");
-                prop?.SetValue(RunManager.Instance, false);
-
                 NGame.Instance.ReactionContainer.InitializeNetworking(
                     new MegaCrit.Sts2.Core.Multiplayer.NetSingleplayerGameService());
 
