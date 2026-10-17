@@ -55,14 +55,4 @@ public static class MainMenuPatch {
         charSelect.InitializeSingleplayer();
         __instance.SubmenuStack.Push(charSelect);
     }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(nameof(NMainMenu.RefreshButtons))]
-    public static void OnMainMenuRefreshButtons(NMainMenu __instance) {
-        if (__instance != _mainMenuRef)
-            return;
-
-        if (DevMainMenuUI.IsVisible)
-            DevMainMenuUI.ReapplyHide();
-    }
 }

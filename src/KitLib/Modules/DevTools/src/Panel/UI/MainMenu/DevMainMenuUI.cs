@@ -1,210 +1,64 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Godot;
 using KitLib;
-using KitLib.Abstractions.Modding;
 using KitLib.Actions;
 using KitLib.Compat;
 using KitLib.Feedback;
 using KitLib.Replay;
-using MegaCrit.Sts2.Core.ControllerInput;
 using MegaCrit.Sts2.Core.Helpers;
-using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Saves;
 
 namespace KitLib.UI;
 
-internal sealed class DevMainMenuActions {
-    public required Action OnNewTest { get; init; }
-}
-
 internal static class DevMainMenuUI {
-    private const string ButtonsContainerPath = "%MainMenuTextButtons";
-    private const string RootOverlayName = "KitLibDevModeMenu";
-    private const float RootOverlayWidth = 420f;
+    // ── Rail actions (invoked directly from the main-menu left rail) ──────
 
-    private static NMainMenu? _mainMenu;
-    private static Control? _overlayRoot;
-    private static VBoxContainer? _menuContent;
-    private static DevMainMenuActions? _actions;
-    private static readonly List<Button> _addedButtons = new();
-    private static DevMenuLevel _currentLevel;
-    private static DevMainMenuInputForwarder? _inputForwarder;
-
-    private enum DevMenuLevel {
-        Root,
-        Diagnostics,
+    internal static void StartNewTest(NMainMenu mainMenu) {
+        DismissOverlays(mainMenu.GetTree()?.Root);
+        KitLibState.InDevRun = true;
+        var charSelect = mainMenu.SubmenuStack.GetSubmenuType<NCharacterSelectScreen>();
+        charSelect.InitializeSingleplayer();
+        mainMenu.SubmenuStack.Push(charSelect);
     }
 
-    public static void Show(NMainMenu mainMenu, DevMainMenuActions actions) {
-        _mainMenu = mainMenu;
-        _actions = actions;
+    internal static void StartNewTestWithSeed(NMainMenu mainMenu) =>
+        ShowSeedInputOverlay(mainMenu, () => StartNewTest(mainMenu));
 
-        DismissOverlays(mainMenu.GetTree().Root);
-        EnsureOverlay(mainMenu);
-        EnsureInputForwarder(mainMenu);
-        mainMenu.EnableBackstop();
-        ShowRootMenu();
-        KitLibMainMenuCornerButtonRegistry.RequestRefresh?.Invoke();
-    }
+    internal static void StartAutoSlay(NMainMenu mainMenu) => ShowAutoSlaySeedOverlay(mainMenu);
 
-    static void ShowRootMenu() {
-        if (_mainMenu == null || _actions == null || !EnsureMenuContent())
-            return;
-
-        ClearMenuContent();
-        var mainMenu = _mainMenu;
-        var actions = _actions;
-        AddMenuHeader(I18N.T("menu.developerMode", "Dev Mode"));
-
-        AddButton(I18N.T("devmenu.newTest", "New Test"), () => { Hide(); actions.OnNewTest(); });
-        AddButton(I18N.T("devmenu.newTestWithSeed", "New Test (Seed)"), () => {
-            ShowSeedInputOverlay(mainMenu, actions.OnNewTest);
-        });
-        var autoSlayBtn = AddButton(I18N.T("devmenu.autoslay", "AutoSlay"), () => {
-            ShowAutoSlaySeedOverlay(mainMenu);
-        });
-        if (AutoSlayRunner.IsBlockedByMultiplayer || AutoSlayRunner.IsRunning)
-            autoSlayBtn.Disabled = true;
-
-        bool anySlot = SaveSlotManager.GetAllSlotIds().Count > 0;
-
-        var loadBtn = AddButton(I18N.T("devmenu.loadSnapshot", "Load Save"), () => {
-            SaveSlotUI.Show(mainMenu.GetTree().Root, saveMode: false, onConfirm: (slot, _) => {
-                SaveSlotUI.Hide();
-                Hide();
-                SaveSlotManager.LoadFromSlot(slot);
-            });
-        });
-        if (!anySlot)
-            loadBtn.Disabled = true;
-
-        AddButton(I18N.T("devmenu.loadFeedback", "Load Feedback ZIP"), () => {
-            OpenFeedbackZipPicker(mainMenu);
+    internal static void LoadSave(NMainMenu mainMenu) => SaveSlotUI.Show(
+        mainMenu.GetTree().Root,
+        saveMode: false,
+        onConfirm: (slot, _) => {
+            SaveSlotUI.Hide();
+            DismissOverlays(mainMenu.GetTree()?.Root);
+            SaveSlotManager.LoadFromSlot(slot);
         });
 
-        AddButton(I18N.T("devmenu.replay", "Play Official Replay"), () => {
-            OpenCombatReplayPicker(mainMenu);
-        });
+    internal static void LoadFeedbackZip(NMainMenu mainMenu) => OpenFeedbackZipPicker(mainMenu);
 
-        AddButton(I18N.T("devmenu.runReplay", "Play DevTools Replay"), () => {
-            OpenRunReplayPicker(mainMenu);
-        });
+    internal static void PlayOfficialReplay(NMainMenu mainMenu) => OpenCombatReplayPicker(mainMenu);
 
-        AddButton(I18N.T("devmenu.pseudocoop", "Pseudo Co-op Test (Host)"), () => {
-            DevMainMenuPseudoCoopUI.Show(mainMenu, Hide);
-        });
+    internal static void PlayDevToolsReplay(NMainMenu mainMenu) => OpenRunReplayPicker(mainMenu);
 
-        AddButton(I18N.T("devmenu.unlockAll", "Unlock All Progress"), () => {
-            ShowUnlockAllConfirm(mainMenu);
-        });
+    internal static void StartPseudoCoop(NMainMenu mainMenu) =>
+        DevMainMenuPseudoCoopUI.Show(mainMenu, () => DismissOverlays(mainMenu.GetTree()?.Root));
 
-        AddButton(I18N.T("devmenu.diagnostics", "Diagnostics"), ShowDiagnosticsMenu);
+    internal static void UnlockAllProgress(NMainMenu mainMenu) => ShowUnlockAllConfirm(mainMenu);
 
-        AddButton(I18N.T("devmenu.back", "Back"), Hide);
-        FinishMenuBuild(DevMenuLevel.Root);
-    }
+    internal static void ShowLogs(NMainMenu mainMenu) => LogViewerUI.ShowOnMainMenu(mainMenu);
 
-    static void ShowDiagnosticsMenu() {
-        if (_mainMenu == null || !EnsureMenuContent())
-            return;
+    internal static bool AutoSlayAvailable =>
+        !AutoSlayRunner.IsBlockedByMultiplayer && !AutoSlayRunner.IsRunning;
 
-        ClearMenuContent();
-        var mainMenu = _mainMenu;
-        AddMenuHeader(I18N.T("devmenu.diagnostics", "Diagnostics"));
+    internal static bool HasAnySaveSlot => SaveSlotManager.GetAllSlotIds().Count > 0;
 
-        AddButton(I18N.T("devmenu.logs", "Logs"), () => {
-            LogViewerUI.ShowOnMainMenu(mainMenu);
-        });
-
-        AddButton(I18N.T("devmenu.back", "Back"), ShowRootMenu);
-        FinishMenuBuild(DevMenuLevel.Diagnostics);
-    }
-
-    static void ClearMenuContent() {
-        if (_menuContent != null && GodotObject.IsInstanceValid(_menuContent)) {
-            foreach (var child in _menuContent.GetChildren())
-                child.QueueFree();
-        }
-        _addedButtons.Clear();
-    }
-
-    public static void Hide() {
-        var mainMenu = _mainMenu;
-        Node? root = null;
-        if (mainMenu != null && GodotObject.IsInstanceValid(mainMenu))
-            root = mainMenu.GetTree().Root;
-
-        DismissOverlays(root);
-        var overlay = _overlayRoot;
-        _overlayRoot = null;
-        _menuContent = null;
-        if (overlay != null && GodotObject.IsInstanceValid(overlay))
-            overlay.QueueFree();
-        if (mainMenu != null && GodotObject.IsInstanceValid(mainMenu)) {
-            mainMenu.DisableBackstop();
-            RestoreStockMainMenuControllerFocus(mainMenu);
-        }
-        ClearSessionState();
-        KitLibMainMenuCornerButtonRegistry.RequestRefresh?.Invoke();
-    }
-
-    public static bool IsVisible =>
-        _overlayRoot != null && GodotObject.IsInstanceValid(_overlayRoot) && !_overlayRoot.IsQueuedForDeletion();
-
-    public static void ReapplyHide() {
-    }
-
-    internal static void NotifyOverlayOpened(Control overlayRoot, PanelContainer panel) {
-        ReleaseDevMenuButtonFocus();
-        DevMainMenuOverlay.FocusOverlayContentDeferred(overlayRoot, panel);
-    }
-
-    internal static void NotifyOverlayClosed() {
-        if (!IsVisible)
-            return;
-        ReleaseDevMenuButtonFocus();
-        RefreshControllerFocus();
-    }
-
-    private static void ReleaseDevMenuButtonFocus() {
-        if (_mainMenu == null || !GodotObject.IsInstanceValid(_mainMenu))
-            return;
-
-        foreach (var btn in _addedButtons) {
-            if (!GodotObject.IsInstanceValid(btn) || !btn.HasFocus())
-                continue;
-            btn.ReleaseFocus();
-        }
-
-        _mainMenu.GetViewport()?.GuiReleaseFocus();
-    }
-
-    private static void EnsureOverlay(NMainMenu mainMenu) {
-        if (_overlayRoot != null && GodotObject.IsInstanceValid(_overlayRoot) &&
-            _menuContent != null && GodotObject.IsInstanceValid(_menuContent))
-            return;
-
-        var (root, content) = DevMainMenuOverlay.Create(
-            mainMenu, RootOverlayName, RootOverlayWidth, Hide, dimBackdrop: false);
-        _overlayRoot = root;
-        _menuContent = content;
-    }
-
-    private static bool EnsureMenuContent() =>
-        _menuContent != null && GodotObject.IsInstanceValid(_menuContent);
-
-    private static void AddMenuHeader(string title) {
-        if (_menuContent == null)
-            return;
-        _menuContent.AddChild(DevPanelUI.CreatePanelTitle(title));
-        _menuContent.AddChild(DevPanelUI.CreateOverlaySeparator());
-    }
-
-    private static void DismissOverlays(Node? attachRoot) {
+    /// <summary>Close every overlay this module can leave on top of the main menu.</summary>
+    internal static void DismissOverlays(Node? attachRoot) {
         SaveSlotUI.Hide();
         LogViewerUI.HideAnywhere();
         ProgressGuardUI.HideAnywhere();
@@ -216,182 +70,6 @@ internal static class DevMainMenuUI {
         DevMainMenuOverlay.RemoveAnywhere(UnlockAllOverlayName);
         DevMainMenuOverlay.RemoveAnywhere(FeedbackOverlayName);
         CombatReplayBarUI.Hide();
-    }
-
-    private static void ClearSessionState() {
-        if (_inputForwarder != null && GodotObject.IsInstanceValid(_inputForwarder))
-            _inputForwarder.QueueFree();
-        _inputForwarder = null;
-        _currentLevel = DevMenuLevel.Root;
-        _mainMenu = null;
-        _overlayRoot = null;
-        _menuContent = null;
-        _actions = null;
-        _addedButtons.Clear();
-    }
-
-    private static void FinishMenuBuild(DevMenuLevel level) {
-        _currentLevel = level;
-        WireAddedButtonFocusNeighbors();
-        RefreshControllerFocus();
-    }
-
-    private static void WireAddedButtonFocusNeighbors() {
-        var focusable = new List<Button>();
-        foreach (var btn in _addedButtons) {
-            if (IsFocusableMenuButton(btn))
-                focusable.Add(btn);
-        }
-
-        for (var i = 0; i < focusable.Count; i++) {
-            var btn = focusable[i];
-            btn.FocusNeighborLeft = new NodePath(".");
-            btn.FocusNeighborRight = new NodePath(".");
-            btn.FocusNeighborTop = i > 0 ? focusable[i - 1].GetPath() : btn.GetPath();
-            btn.FocusNeighborBottom = i < focusable.Count - 1
-                ? focusable[i + 1].GetPath()
-                : btn.GetPath();
-        }
-    }
-
-    private static void RefreshControllerFocus() {
-        if (!ShouldPreferControllerFocus())
-            return;
-
-        Callable.From(() => {
-            foreach (var btn in _addedButtons) {
-                if (!IsFocusableMenuButton(btn))
-                    continue;
-                btn.GrabFocus();
-                return;
-            }
-        }).CallDeferred();
-    }
-
-    private static bool ShouldPreferControllerFocus() =>
-        Sts2InputCompat.IsUsingController(NControllerManager.Instance)
-        || Input.GetConnectedJoypads().Count > 0;
-
-    private static void RestoreStockMainMenuControllerFocus(NMainMenu mainMenu) {
-        Callable.From(() => {
-            if (!GodotObject.IsInstanceValid(mainMenu))
-                return;
-
-            mainMenu.GetViewport()?.GuiReleaseFocus();
-            WireStockButtonFocusNeighbors(mainMenu);
-
-            if (ShouldPreferControllerFocus())
-                GrabFirstVisibleStockButtonFocus(mainMenu);
-        }).CallDeferred();
-    }
-
-    private static void WireStockButtonFocusNeighbors(NMainMenu mainMenu) {
-        var container = mainMenu.GetNodeOrNull<Control>(ButtonsContainerPath)
-            ?? mainMenu.GetNodeOrNull<Control>("MainMenuTextButtons");
-        if (container == null)
-            return;
-
-        var focusable = new List<NMainMenuTextButton>();
-        foreach (var child in container.GetChildren()) {
-            if (child is not NMainMenuTextButton btn || !btn.Visible || !btn.IsEnabled)
-                continue;
-            if (btn.FocusMode == Control.FocusModeEnum.None)
-                continue;
-            focusable.Add(btn);
-        }
-
-        for (var i = 0; i < focusable.Count; i++) {
-            var btn = focusable[i];
-            btn.FocusNeighborLeft = new NodePath(".");
-            btn.FocusNeighborRight = new NodePath(".");
-            btn.FocusNeighborTop = i > 0 ? focusable[i - 1].GetPath() : btn.GetPath();
-            btn.FocusNeighborBottom = i < focusable.Count - 1
-                ? focusable[i + 1].GetPath()
-                : btn.GetPath();
-        }
-    }
-
-    private static void GrabFirstVisibleStockButtonFocus(NMainMenu mainMenu) {
-        var container = mainMenu.GetNodeOrNull<Control>(ButtonsContainerPath)
-            ?? mainMenu.GetNodeOrNull<Control>("MainMenuTextButtons");
-        if (container == null)
-            return;
-
-        foreach (var child in container.GetChildren()) {
-            if (child is not NMainMenuTextButton btn || !btn.Visible || !btn.IsEnabled)
-                continue;
-            if (btn.FocusMode == Control.FocusModeEnum.None)
-                continue;
-            btn.GrabFocus();
-            return;
-        }
-    }
-
-    private static bool IsFocusableMenuButton(Button btn) =>
-        GodotObject.IsInstanceValid(btn)
-        && btn.Visible
-        && btn.FocusMode != Control.FocusModeEnum.None
-        && !btn.Disabled;
-
-    private static void EnsureInputForwarder(NMainMenu mainMenu) {
-        if (_inputForwarder != null && GodotObject.IsInstanceValid(_inputForwarder))
-            return;
-
-        _inputForwarder = new DevMainMenuInputForwarder { Name = "KitLibDevMenuInput" };
-        mainMenu.AddChild(_inputForwarder);
-    }
-
-    private static void HandleCancelInput() {
-        switch (_currentLevel) {
-            case DevMenuLevel.Diagnostics:
-                ShowRootMenu();
-                break;
-            default:
-                Hide();
-                break;
-        }
-    }
-
-    private static bool HasBlockingOverlay() {
-        var root = _mainMenu?.GetTree().Root;
-        if (root == null)
-            return false;
-
-        foreach (var name in CancelBlockingOverlayNames) {
-            if (root.FindChild(name, recursive: true, owned: false) != null)
-                return true;
-        }
-
-        return false;
-    }
-
-    private static readonly string[] CancelBlockingOverlayNames = [
-        SeedOverlayName,
-        UnlockAllOverlayName,
-        SaveSlotDialogRootId.NodeName,
-        "KitLibLogViewer",
-        "KitLibPseudoCoopLaunch",
-    ];
-
-    private sealed class DevMainMenuInputForwarder : Node {
-        public override void _Ready() => SetProcessUnhandledInput(true);
-
-        public override void _UnhandledInput(InputEvent @event) {
-            if (!IsVisible || HasBlockingOverlay())
-                return;
-
-            if (@event is InputEventKey { Echo: false, Pressed: true } key
-                && (key.Keycode == Key.Escape || key.PhysicalKeycode == Key.Escape)) {
-                HandleCancelInput();
-                GetViewport()?.SetInputAsHandled();
-                return;
-            }
-
-            if (@event.IsActionPressed("ui_cancel")) {
-                HandleCancelInput();
-                GetViewport()?.SetInputAsHandled();
-            }
-        }
     }
 
     private const string SeedOverlayName = "KitLibSeedInput";
@@ -439,7 +117,7 @@ internal static class DevMainMenuUI {
             body,
             confirmText: I18N.T("devmenu.loadFeedback.enter", "Enter run"),
             onConfirm: () => {
-                Hide();
+                DismissOverlays(mainMenu.GetTree()?.Root);
                 if (!SaveSlotManager.LoadFromFile(imported.RunSavePath)) {
                     MainFile.Logger.Warn("Feedback import: failed to load run save.");
                     ShowFeedbackImportMessage(mainMenu,
@@ -514,7 +192,7 @@ internal static class DevMainMenuUI {
                 onConfirm: null);
             return;
         }
-        Hide();
+        DismissOverlays(mainMenu.GetTree()?.Root);
         CombatReplayBarUI.Show(tree);
     }
 
@@ -529,7 +207,7 @@ internal static class DevMainMenuUI {
                 onConfirm: null);
             return;
         }
-        Hide();
+        DismissOverlays(mainMenu.GetTree()?.Root);
         CombatReplayBarUI.Show(tree);
     }
 
@@ -750,7 +428,7 @@ internal static class DevMainMenuUI {
             I18N.T("restart.seed.label", "Seed (leave empty for random):"),
             I18N.T("autoslay.seedPlaceholder", "Leave empty for a random seed"),
             seed => {
-                Hide();
+                DismissOverlays(mainMenu.GetTree()?.Root);
                 Callable.From(() => {
                     if (!AutoSlayRunner.TryStart(seed, out var message))
                         MainFile.Logger.Warn($"AutoSlay did not start: {message}");
@@ -770,7 +448,6 @@ internal static class DevMainMenuUI {
                     KitLog.Info($"MainMenu seed input: '{KitLibState.PendingRestartSeed}'.");
                 }
 
-                Hide();
                 onNewTest();
             });
     }
@@ -858,18 +535,5 @@ internal static class DevMainMenuUI {
 
         root.AddChild(overlay);
         seedInput.GrabFocus();
-    }
-
-    private static Button AddButton(string text, Action action) {
-        if (_menuContent == null)
-            throw new InvalidOperationException("Dev Mode overlay content is missing.");
-
-        var btn = DevPanelUI.CreateListItemButton(text);
-        btn.Name = $"KitLibBtn_{text.Replace(" ", "")}";
-        btn.FocusMode = Control.FocusModeEnum.All;
-        btn.Pressed += action;
-        _menuContent.AddChild(btn);
-        _addedButtons.Add(btn);
-        return btn;
     }
 }

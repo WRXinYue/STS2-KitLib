@@ -103,10 +103,7 @@ public static class ModuleEntry {
         }
 
         KitLibPanelOps.IsProgressLossPromptVisible = () => ProgressLossPromptUI.IsVisible;
-        KitLibPanelOps.HideDevMainMenuIfVisible = () => {
-            if (DevMainMenuUI.IsVisible)
-                DevMainMenuUI.Hide();
-        };
+        KitLibPanelOps.HideDevMainMenuIfVisible = () => DevMainMenuUI.DismissOverlays(null);
 
         KitLibDevOps.OpenHooks = DevPanel.OpenHooks;
         KitLibDevOps.OpenEnemyIntent = DevPanel.OpenEnemyIntent;

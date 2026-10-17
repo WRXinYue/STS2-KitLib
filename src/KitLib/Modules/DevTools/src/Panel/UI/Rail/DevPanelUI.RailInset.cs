@@ -12,20 +12,29 @@ namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
     /// <summary>
-    /// Keeps left-edge chrome readable next to the rail: the top bar's left-anchored player info,
-    /// left-edge boxes (relic inventory / multiplayer bar) and the combat draw pile are pushed right
-    /// by <see cref="RailInsetW"/>. Background layers and the rest of the combat HUD are intentionally
-    /// NOT moved — the frosted rail backdrop (<see cref="RailBackdrop"/>) overlays real game content,
-    /// so there is something to blur, and right-anchored piles never run off-screen.
+    /// Keeps chrome readable inside the KitLib screen frame: the top bar's left-anchored player info,
+    /// left-edge boxes (relic inventory / multiplayer bar) and the combat draw pile are pushed right by
+    /// <see cref="RailInsetW"/>, which is also the width of the left contour band
+    /// (<c>RailBackdrop</c>) where the screen frame's left border is widened to host the rail. The top
+    /// bar is additionally pushed down and the hand container lifted by
+    /// <see cref="KitLibScreenFrame.Margin"/>. Background layers and the rest of the combat HUD are
+    /// intentionally NOT moved — the band simply covers the left edge of the background, and
+    /// right-anchored piles never run off-screen.
     /// </summary>
     internal const float RailInsetW = BrowserPanelLeft; // 76
 
     private static SceneTree? _railTree;
     private static bool _railInsetQueued;
-    // OffsetLeft-only content nodes (FullRect): RoomContainer / overlay / map.
-    private static readonly List<(Control Ctrl, float Left, float LastLeft)> _leftContentInset = new();
+    // FullRect content pushed right by RailInsetW and down by the frame margin: the top bar.
+    private static readonly List<(Control Ctrl, float Left, float Top, float LastLeft, float LastTop)> _leftContentInset = new();
     // Double-offset content nodes (left-anchored boxes that must keep width): relic inventory / multiplayer bar.
     private static readonly List<(Control Ctrl, float Left, float Right, float LastLeft)> _leftContentShifted = new();
+
+    // Bottom frame margin target: the hand container is the only node whose content reaches the frame edge.
+    private static Control? _frameHand;
+    private static float _frameHandBaseTop;
+    private static float _frameHandBaseBottom;
+    private static float _frameHandLastTop = float.NaN;
 
     internal static void AttachRailInset(NGlobalUi globalUi) {
         DetachRailInset();
@@ -55,16 +64,23 @@ internal static partial class DevPanelUI {
             return;
 
         ApplyLeftContentInset();
+        ApplyFrameBottomInset();
     }
 
     // Only chrome that must stay readable (player info top bar + left-edge boxes) is pushed right.
-    // Background layers (RoomContainer / overlay / map) are intentionally left at x=0 so the frosted
-    // rail backdrop (DevPanelUI.RailBackdrop) has real game content behind it to blur.
+    // Background layers (RoomContainer / overlay / map) are intentionally left at x=0: the black
+    // contour band covers their left edge, so they need no push.
     static void ApplyLeftContentInset() {
         var wanted = new List<Control>();
 
-        // TopBar is a FullRect child of GlobalUi; shifting only its OffsetLeft moves the
-        // left-anchored player info right while keeping the right-anchored buttons pinned.
+        // Both push amounts ride the wrap progress, so pushed chrome animates back to the real screen
+        // edge in step with the frame retracting instead of snapping once the rail is gone.
+        float railInset = RailInsetW * KitLibScreenFrame.WrapT;
+        float frameMargin = KitLibScreenFrame.Margin * KitLibScreenFrame.WrapT;
+
+        // TopBar is a FullRect child of GlobalUi; shifting its OffsetLeft moves the left-anchored
+        // player info right while keeping the right-anchored buttons pinned (their vanilla edge is
+        // exactly 16px in), and shifting OffsetTop drops the whole strip below the frame's top edge.
         if (_railGlobalUi is Control globalUiTop) {
             var topBar = globalUiTop.GetNodeOrNull<Control>("TopBar");
             if (topBar != null)
@@ -72,37 +88,45 @@ internal static partial class DevPanelUI {
         }
 
         for (int i = _leftContentInset.Count - 1; i >= 0; i--) {
-            var (ctrl, left, _) = _leftContentInset[i];
+            var (ctrl, left, top, _, _) = _leftContentInset[i];
             if (wanted.Contains(ctrl))
                 continue;
-            if (GodotObject.IsInstanceValid(ctrl))
+            if (GodotObject.IsInstanceValid(ctrl)) {
                 ctrl.OffsetLeft = left;
+                ctrl.OffsetTop = top;
+            }
             _leftContentInset.RemoveAt(i);
         }
 
         foreach (var ctrl in wanted) {
             int i = _leftContentInset.FindIndex(s => s.Ctrl == ctrl);
             if (i < 0) {
-                _leftContentInset.Add((ctrl, ctrl.OffsetLeft, float.NaN));
+                _leftContentInset.Add((ctrl, ctrl.OffsetLeft, ctrl.OffsetTop, float.NaN, float.NaN));
                 i = _leftContentInset.Count - 1;
             }
 
-            var (c, left, lastLeft) = _leftContentInset[i];
-            bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft);
-            if (gameOwned)
+            var (c, left, top, lastLeft, lastTop) = _leftContentInset[i];
+            bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft) ||
+                             float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop);
+            if (gameOwned) {
                 left = c.OffsetLeft;
+                top = c.OffsetTop;
+            }
 
-            float wantedLeft = left + RailInsetW;
+            float wantedLeft = left + railInset;
+            float wantedTop = top + frameMargin;
             if (!Mathf.IsEqualApprox(c.OffsetLeft, wantedLeft))
                 c.OffsetLeft = wantedLeft;
-            _leftContentInset[i] = (c, left, wantedLeft);
+            if (!Mathf.IsEqualApprox(c.OffsetTop, wantedTop))
+                c.OffsetTop = wantedTop;
+            _leftContentInset[i] = (c, left, top, wantedLeft, wantedTop);
         }
 
         // Left-anchored boxes that must keep their width: shift both edges right.
         if (_railGlobalUi is Control globalCtrl) {
-            PushLeftShifted(_leftContentShifted, globalCtrl.GetNodeOrNull<Control>("RelicInventory"));
+            PushLeftShifted(_leftContentShifted, globalCtrl.GetNodeOrNull<Control>("RelicInventory"), railInset);
             if (globalCtrl is NGlobalUi g)
-                PushLeftShifted(_leftContentShifted, g.MultiplayerPlayerContainer);
+                PushLeftShifted(_leftContentShifted, g.MultiplayerPlayerContainer, railInset);
         }
 
         // The draw pile is left-bottom anchored (x=15..95) and would sit under the rail strip,
@@ -110,24 +134,79 @@ internal static partial class DevPanelUI {
         // Discard / exhaust piles are right-anchored and stay put — no risk of running off-screen.
         if (NCombatRoom.Instance?.Ui is Control combatUi) {
             var piles = combatUi.GetNodeOrNull<Control>("%CombatPileContainer");
-            PushLeftShifted(_leftContentShifted, piles?.GetNodeOrNull<Control>("%DrawPile"));
+            PushLeftShifted(_leftContentShifted, piles?.GetNodeOrNull<Control>("%DrawPile"), railInset);
         }
     }
 
     static void RestoreLeftContentInset() {
-        foreach (var (ctrl, left, _) in _leftContentInset) {
-            if (GodotObject.IsInstanceValid(ctrl))
+        foreach (var (ctrl, left, top, _, _) in _leftContentInset) {
+            if (GodotObject.IsInstanceValid(ctrl)) {
                 ctrl.OffsetLeft = left;
+                ctrl.OffsetTop = top;
+            }
         }
         _leftContentInset.Clear();
         RestoreLeftShiftedList(_leftContentShifted);
+        RestoreFrameBottomInset();
     }
 
-    // Hand and right-anchored piles are intentionally NOT shifted: the frosted rail overlays the
-    // left edge (like the replay bar overlays the bottom), so they never run off-screen. Only the
-    // left-anchored draw pile is pushed right (see ApplyLeftContentInset).
+    // The hand container is the only node whose content reaches the bottom frame edge; the piles,
+    // end-turn button and energy counter all stop at least 6px short. Skipped while the replay bar
+    // docks: its DockHeight already lifts the same nodes far above the frame, so the two never fight.
+    static void ApplyFrameBottomInset() {
+        if (CombatReplayBarUI.IsShowing) {
+            RestoreFrameBottomInset();
+            return;
+        }
 
-    static void PushLeftShifted(List<(Control Ctrl, float Left, float Right, float LastLeft)> list, Control? ctrl) {
+        var hand = NCombatRoom.Instance?.Ui is Control combatUi
+            ? combatUi.GetNodeOrNull<Control>("%Hand")?.GetNodeOrNull<Control>("%CardHolderContainer")
+            : null;
+        if (hand == null || !GodotObject.IsInstanceValid(hand)) {
+            RestoreFrameBottomInset();
+            return;
+        }
+
+        if (_frameHand != hand) {
+            RestoreFrameBottomInset();
+            _frameHand = hand;
+            _frameHandBaseTop = hand.OffsetTop;
+            _frameHandBaseBottom = hand.OffsetBottom;
+        }
+
+        // The game owns the offset when it differs from what we last wrote -> re-capture the base.
+        if (float.IsNaN(_frameHandLastTop) || !Mathf.IsEqualApprox(hand.OffsetTop, _frameHandLastTop)) {
+            _frameHandBaseTop = hand.OffsetTop;
+            _frameHandBaseBottom = hand.OffsetBottom;
+        }
+
+        // Lift rides the wrap progress so the hand settles back onto the screen edge as the frame leaves.
+        float margin = KitLibScreenFrame.Margin * KitLibScreenFrame.WrapT;
+        float wantedTop = _frameHandBaseTop - margin;
+        float wantedBottom = _frameHandBaseBottom - margin;
+        if (!Mathf.IsEqualApprox(hand.OffsetTop, wantedTop))
+            hand.OffsetTop = wantedTop;
+        if (!Mathf.IsEqualApprox(hand.OffsetBottom, wantedBottom))
+            hand.OffsetBottom = wantedBottom;
+        _frameHandLastTop = wantedTop;
+    }
+
+    static void RestoreFrameBottomInset() {
+        if (_frameHand != null && GodotObject.IsInstanceValid(_frameHand)) {
+            _frameHand.OffsetTop = _frameHandBaseTop;
+            _frameHand.OffsetBottom = _frameHandBaseBottom;
+        }
+        _frameHand = null;
+        _frameHandLastTop = float.NaN;
+    }
+
+    // Hand and right-anchored piles are intentionally NOT shifted horizontally: the black left contour
+    // band covers the left edge (like the replay bar covers the bottom), so they never run off-screen.
+    // Only the left-anchored draw pile is pushed right (see ApplyLeftContentInset); the hand is
+    // lifted vertically instead (see ApplyFrameBottomInset).
+
+    static void PushLeftShifted(
+        List<(Control Ctrl, float Left, float Right, float LastLeft)> list, Control? ctrl, float amount) {
         if (ctrl == null || !GodotObject.IsInstanceValid(ctrl))
             return;
 
@@ -144,8 +223,8 @@ internal static partial class DevPanelUI {
             right = c.OffsetRight;
         }
 
-        float wantedLeft = left + RailInsetW;
-        float wantedRight = right + RailInsetW;
+        float wantedLeft = left + amount;
+        float wantedRight = right + amount;
         if (!Mathf.IsEqualApprox(c.OffsetLeft, wantedLeft))
             c.OffsetLeft = wantedLeft;
         if (!Mathf.IsEqualApprox(c.OffsetRight, wantedRight))

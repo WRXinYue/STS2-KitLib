@@ -19,6 +19,11 @@ internal static class MainMenuCornerButtonReadyPatch {
         try {
             if (!GodotObject.IsInstanceValid(mainMenu))
                 return;
+            // Screen frame first: it owns the edge margin the rail and chrome are laid out inside.
+            KitLibScreenFrame.EnsureAttached();
+            KitLibScreenFrame.ApplyMainMenuInsets(mainMenu);
+            // Rail next: the corner host hides itself while the rail owns the tool entry points.
+            MainMenuRailHost.EnsureAttached(mainMenu);
             MainMenuCornerButtonHost.EnsureAttached(mainMenu);
         }
         catch (Exception ex) {
@@ -33,6 +38,7 @@ internal static class MainMenuCornerButtonSubmenuPatch {
     [HarmonyPriority(Priority.Last)]
     static void Postfix(NMainMenu __instance) {
         try {
+            MainMenuRailHost.EnsureAttached(__instance);
             MainMenuCornerButtonHost.SyncVisibility(__instance);
         }
         catch (Exception ex) {
@@ -47,6 +53,7 @@ internal static class MainMenuCornerButtonRefreshPatch {
     [HarmonyPriority(Priority.Last)]
     static void Postfix(NMainMenu __instance) {
         try {
+            MainMenuRailHost.EnsureAttached(__instance);
             MainMenuCornerButtonHost.EnsureAttached(__instance);
         }
         catch (Exception ex) {

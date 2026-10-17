@@ -13,19 +13,23 @@ internal static class DevPanelHotkeys {
         if (!SettingsStore.Current.HotkeysEnabled)
             return false;
 
-        if (!DevPanelUI.IsRailAttached)
-            return false;
-
         var settings = SettingsStore.Current;
 
-        if (settings.HotkeyClosePanel.Matches(key) && DevPanelUI.HasOpenPanel) {
-            DevPanelUI.CloseActivePanel();
+        // Ctrl+B retracts/restores the whole KitLib wrap — window edge, rail and pushed chrome — in any
+        // scene hosting a rail, the main menu included.
+        if (settings.HotkeyToggleRail.Matches(key)) {
+            if (!KitLibScreenFrame.HasWrapHost)
+                return false;
+            KitLibScreenFrame.ToggleWrapShown(animated: true);
             viewport.SetInputAsHandled();
             return true;
         }
 
-        if (settings.HotkeyToggleRail.Matches(key)) {
-            DevPanelUI.ToggleRailExpanded();
+        if (!DevPanelUI.IsRailAttached)
+            return false;
+
+        if (settings.HotkeyClosePanel.Matches(key) && DevPanelUI.HasOpenPanel) {
+            DevPanelUI.CloseActivePanel();
             viewport.SetInputAsHandled();
             return true;
         }

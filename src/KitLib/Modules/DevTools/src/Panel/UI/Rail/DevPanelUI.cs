@@ -22,14 +22,14 @@ internal static partial class DevPanelUI {
     internal static Control? TryGetRailRoot(NGlobalUi? globalUi = null) =>
         globalUi != null ? ((Node)globalUi).GetNodeOrNull<Control>(RootName) : null;
     private const float RailW = 52f;
-    private const float IconBtnSize = 36f;
+    private const float IconBtnSize = KitLibRailChrome.IconButtonSize;
     private const float OverlayW = 560f;
     private const int Radius = 14;
 
     // ── Panel geometry (shared by browser panels) ──
     // BrowserPanelLeft (= RailInsetW) is the single push amount: game content is shifted right
     // by this, so its new left edge, the rail's right edge, and the panel's left origin all align at 76.
-    public const float BrowserRailLeft = 24f;
+    public const float BrowserRailLeft = KitLibRailChrome.RailLeft;
     public const float BrowserRailW = RailW;
     public const float BrowserPanelLeft = BrowserRailLeft + BrowserRailW;   // 76f
     public const float BrowserPanelRight = 24f;
@@ -139,59 +139,7 @@ internal static partial class DevPanelUI {
         return MdiIcon.PuzzleOutline.Texture(20, tint);
     }
 
-    // ── Frosted-glass blur backdrop ──
-    private static ShaderMaterial? _railBackdropMat;
-
-    /// <summary>
-    /// Single-pass 2D gaussian blur reading the backbuffer (<c>screen_texture</c>) so the rail strip
-    /// shows the game behind it blurred and slightly darkened, instead of a flat black veil.
-    /// </summary>
-    private static ShaderMaterial RailBackdropMaterial() {
-        if (_railBackdropMat != null)
-            return _railBackdropMat;
-        _railBackdropMat = new ShaderMaterial {
-            Shader = new Shader { Code = RailBackdropShaderCode }
-        };
-        return _railBackdropMat;
-    }
-
-    private const string RailBackdropShaderCode = """
-        shader_type canvas_item;
-
-        uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
-        uniform float blur_radius = 6.0;
-        uniform vec4 tint = vec4(0.0, 0.0, 0.0, 0.30);
-
-        // Premultiplied-alpha correction, same as the official card blur shader.
-        vec4 read_screen(vec2 uv) {
-            vec4 c = textureLod(screen_texture, uv, 0.0);
-            if (c.a > 0.0001)
-                c.rgb /= c.a;
-            return c;
-        }
-
-        void fragment() {
-            vec2 px = SCREEN_PIXEL_SIZE;
-            int taps = int(ceil(blur_radius));
-            float sigma = max(1.0, blur_radius / 3.0);
-            float s2 = 2.0 * sigma * sigma;
-
-            vec4 acc = vec4(0.0);
-            float wsum = 0.0;
-            for (int x = -taps; x <= taps; x++) {
-                for (int y = -taps; y <= taps; y++) {
-                    float d = float(x * x + y * y);
-                    float w = exp(-d / s2);
-                    acc += read_screen(SCREEN_UV + vec2(float(x), float(y)) * px) * w;
-                    wsum += w;
-                }
-            }
-
-            vec3 blurred = (acc / wsum).rgb;
-            vec3 col = mix(blurred, tint.rgb, tint.a);
-            COLOR = vec4(col, 1.0);
-        }
-        """;
+    // ── Frosted-glass blur backdrop — shared with the main-menu rail via KitLibRailChrome ──
 
     // ──────── Attach ────────
     public static void Attach(NGlobalUi globalUi, DevPanelActions actions) {
@@ -223,39 +171,13 @@ internal static partial class DevPanelUI {
         };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
-        // ── Backdrop for the left rail strip: frosted-glass gaussian blur of the game behind.
-        // Background layers are left unshifted (see DevPanelUI.RailInset), so there is real content
-        // behind this strip to sample. Hidden together with the rail via SlideRail.
-        var railBackdrop = new ColorRect {
-            Name = "RailBackdrop",
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            AnchorLeft = 0,
-            AnchorRight = 0,
-            AnchorTop = 0,
-            AnchorBottom = 1,
-            OffsetLeft = 0,
-            OffsetRight = BrowserPanelLeft,
-            OffsetTop = 0,
-            OffsetBottom = 0,
-            Material = RailBackdropMaterial()
-        };
+        // ── Left contour band: the screen frame's left border widened to this rail's strip, so the
+        // rail lives inside one continuous window edge instead of beside it. The frame layer cuts its
+        // own inner stroke here (SetLeftBand) and the band draws that boundary instead. Game content
+        // it would cover is pushed right by BrowserPanelLeft (see RailInset).
+        // Hidden together with the rail via SlideRail.
+        var railBackdrop = KitLibScreenFrame.CreateLeftBand(BrowserPanelLeft);
         root.AddChild(railBackdrop);
-
-        // Subtle 1px divider on the strip's right edge (child of backdrop so it hides together).
-        var railDivider = new ColorRect {
-            Name = "RailDivider",
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            AnchorLeft = 0,
-            AnchorRight = 0,
-            AnchorTop = 0,
-            AnchorBottom = 1,
-            OffsetLeft = BrowserPanelLeft,
-            OffsetRight = BrowserPanelLeft + 1,
-            OffsetTop = 0,
-            OffsetBottom = 0,
-            Color = new Color(0.5f, 0.5f, 0.5f, 0.30f)
-        };
-        railBackdrop.AddChild(railDivider);
 
         // ── Icon Rail (left edge; transparent container so it sits in the reserved inset strip) ──
         var rail = new Control {
@@ -265,8 +187,8 @@ internal static partial class DevPanelUI {
             AnchorRight = 0,
             AnchorTop = 0.15f,
             AnchorBottom = 0.85f,
-            OffsetLeft = 24,
-            OffsetRight = 24 + RailW,
+            OffsetLeft = BrowserRailLeft,
+            OffsetRight = BrowserPanelLeft,
             OffsetTop = 0,
             OffsetBottom = 0
         };
@@ -339,26 +261,19 @@ internal static partial class DevPanelUI {
 
         CreatePeekTab(root);
 
-        // ── Persistent rail: always shown at the left edge (no slide-in/out, no auto-hide) ──
-        float visibleX = 24f;
+        // ── Rail docked at the left edge; it retracts with the screen frame's wrap (Ctrl+B) instead of
+        // sliding on its own, so the whole window edge leaves and returns as one piece.
+        float visibleX = BrowserRailLeft;
         rail.OffsetLeft = visibleX;
         rail.OffsetRight = visibleX + RailW;
         rail.Modulate = Colors.White;
 
         void SlideRail(bool show, bool userTriggered = false) {
             _railShown = show;
-            railBackdrop.Visible = show;
-            if (show) {
-                rail.Visible = true;
-                AttachRailInset(_railGlobalUi!);
-                if (userTriggered && SettingsStore.ShouldShowRailIntroHint()) {
-                    SettingsStore.MarkRailIntroDismissed();
-                    RefreshPeekTabPresentation();
-                }
-            }
-            else {
-                rail.Visible = false;
-                DetachRailInset();
+            KitLibScreenFrame.SetWrapShown(show, animated: true);
+            if (show && userTriggered && SettingsStore.ShouldShowRailIntroHint()) {
+                SettingsStore.MarkRailIntroDismissed();
+                RefreshPeekTabPresentation();
             }
             SyncPeekTabCollapsedVisibility(true);
             RefreshRailHintPresentation();
@@ -366,7 +281,7 @@ internal static partial class DevPanelUI {
 
         BindRailSlide(SlideRail);
 
-        // Poll only to keep log-alert hints fresh; rail itself never collapses.
+        // Poll only to keep log-alert hints fresh; rail itself never collapses on its own.
         var pollTimer = new Godot.Timer {
             Name = "RailPollTimer",
             WaitTime = 0.1f,
@@ -375,6 +290,8 @@ internal static partial class DevPanelUI {
 
         pollTimer.Timeout += () => {
             RefreshLogAlertHints();
+            // Re-assert the band so the frame's stroke cut keeps tracking this rail during scene swaps.
+            ApplyWrapState();
             if (_activeOverlayId != null || _pinRailCount > 0) {
                 SetPeekTabVisible(false);
                 StopPeekTabPresentation();
@@ -397,6 +314,41 @@ internal static partial class DevPanelUI {
         root.TopLevel = true;
         AttachRailInset(globalUi);
         _railShown = true;
+        // Rail starts shown, so it is placed (and its contour reported) at the current wrap right away.
+        KitLibScreenFrame.AddWrapListener(ApplyWrapState);
+        ApplyWrapState();
+    }
+
+    /// <summary>
+    /// Place the rail and its widened contour from the current wrap progress. Registered as a wrap
+    /// listener so a Ctrl+B retract carries the rail out and back in with the screen frame, and called
+    /// by the poll timer to keep the frame's stroke cut tied to this rail across scene swaps.
+    /// </summary>
+    private static void ApplyWrapState() {
+        if (_railGlobalUi == null || !GodotObject.IsInstanceValid(_railGlobalUi))
+            return;
+
+        float t = KitLibScreenFrame.WrapT;
+        // Ctrl+B drives the wrap directly, so the local shown flag follows it to keep rail hotkeys,
+        // tab activation and the dismiss logic working against the real state.
+        _railShown = KitLibScreenFrame.WrapShown;
+        var root = TryGetRailRoot(_railGlobalUi);
+        var rail = root?.GetNodeOrNull<Control>("Rail");
+        var band = root?.GetNodeOrNull<ColorRect>(KitLibScreenFrame.LeftBandNodeName);
+
+        if (rail != null) {
+            // Slide fully off screen as the wrap retracts; the rail's right edge lands on x=0 at t=0.
+            float left = BrowserRailLeft - (1f - t) * BrowserPanelLeft;
+            rail.OffsetLeft = left;
+            rail.OffsetRight = left + RailW;
+            // Stay visible through the retract so the slide is seen, then hide once fully off screen.
+            rail.Visible = _railShown || t > 0.001f;
+        }
+
+        if (band != null)
+            band.Visible = t > 0.001f;
+
+        KitLibScreenFrame.SetLeftBand(band, BrowserPanelLeft * t);
     }
 
     private static void OnRailLanguageChanged() {
@@ -407,7 +359,11 @@ internal static partial class DevPanelUI {
     // ──────── Detach ────────
     public static void Detach(NGlobalUi globalUi) {
         KitLibModPanelOps.CancelHotkeySettingsCapture?.Invoke();
+        KitLibScreenFrame.RemoveWrapListener(ApplyWrapState);
         DetachRailInset();
+        KitLibScreenFrame.SetLeftBand(0f);
+        // The frame is a permanent decoration: restore it so the next scene starts with a full edge.
+        KitLibScreenFrame.SetWrapShown(true, animated: false);
         _railGlobalUi = null;
         _activeOverlayId = null;
         ResetRailHotkeyState();

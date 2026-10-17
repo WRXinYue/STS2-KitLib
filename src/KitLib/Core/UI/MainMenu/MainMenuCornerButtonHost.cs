@@ -83,6 +83,14 @@ internal static class MainMenuCornerButtonHost {
         if (FindHost(mainMenu) is not { } host || !GodotObject.IsInstanceValid(host))
             return;
 
+        // The left rail owns the tool entry points on the main menu, so the corner stack is hidden
+        // and the patch-notes slot stays free (there is no icon flying up into it anymore).
+        if (MainMenuRailHost.IsAttachedTo(mainMenu)) {
+            host.Visible = false;
+            SuppressSiblingShortcuts(mainMenu, occupied: false);
+            return;
+        }
+
         if (!IsFlyRowActive())
             RebuildButtonsIfNeeded(mainMenu, host);
 
@@ -395,7 +403,7 @@ internal static class MainMenuCornerButtonHost {
         return null;
     }
 
-    static bool IsMainMenuShortcutSurfaceOpen(NMainMenu mainMenu) {
+    internal static bool IsMainMenuShortcutSurfaceOpen(NMainMenu mainMenu) {
         if (!GodotObject.IsInstanceValid(mainMenu))
             return false;
 
@@ -410,7 +418,7 @@ internal static class MainMenuCornerButtonHost {
         return true;
     }
 
-    static KitLibMainMenuCornerButtonRegistration? FindOccupiedRegistration(NMainMenu mainMenu) {
+    internal static KitLibMainMenuCornerButtonRegistration? FindOccupiedRegistration(NMainMenu mainMenu) {
         foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons()) {
             if (TryEvaluateIsOpen(mainMenu, registration))
                 return registration;
@@ -603,7 +611,7 @@ internal static class MainMenuCornerButtonHost {
     static bool IsFlyTweenRunning() =>
         _flyTween != null && GodotObject.IsInstanceValid(_flyTween) && _flyTween.IsRunning();
 
-    static bool TryEvaluateButtonVisibility(NMainMenu mainMenu, string registrationKey) {
+    internal static bool TryEvaluateButtonVisibility(NMainMenu mainMenu, string registrationKey) {
         foreach (var registration in KitLibMainMenuCornerButtonRegistry.GetOrderedButtons()) {
             if (!string.Equals(RegistrationKey(registration), registrationKey, StringComparison.OrdinalIgnoreCase))
                 continue;

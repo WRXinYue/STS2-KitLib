@@ -22,21 +22,6 @@ internal static partial class DevPanelUI {
 
     internal static void BindRailSlide(Action<bool, bool> slideRail) => _slideRail = slideRail;
 
-    internal static void ToggleRailExpanded() {
-        if (_slideRail == null)
-            return;
-
-        if (_keyboardRailPinned || _railShown) {
-            _keyboardRailPinned = false;
-            if (_activeOverlayId == null && _pinRailCount == 0)
-                _slideRail(false, false);
-            return;
-        }
-
-        _keyboardRailPinned = true;
-        _slideRail(true, true);
-    }
-
     internal static void ToggleRailKeyboardPin() {
         if (_slideRail == null)
             return;

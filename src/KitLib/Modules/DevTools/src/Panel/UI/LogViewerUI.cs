@@ -590,6 +590,8 @@ internal static class LogViewerUI {
 
     public static void HideAnywhere() => DevMainMenuOverlay.RemoveAnywhere(RootName);
 
+    internal static bool IsVisible => DevMainMenuOverlay.IsPresent(RootName);
+
     // ── Filtering ────────────────────────────────────────────────────────
 
     private readonly record struct FilteredLogEntry(LogCollector.Entry Entry, string Source);

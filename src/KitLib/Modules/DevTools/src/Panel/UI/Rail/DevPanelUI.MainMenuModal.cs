@@ -5,24 +5,36 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 namespace KitLib.UI;
 
 internal static partial class DevPanelUI {
+    private const float DockLeftGap = 16f;
+
     /// <summary>
-    /// Centered modal panel with slide-in animation. Used for main-menu toggle overlays and
-    /// similar full-screen contexts — not the rail-spliced <see cref="CreateBrowserPanel"/> layout.
+    /// Modal panel with slide-in animation. Used for main-menu toggle overlays and similar
+    /// full-screen contexts — not the rail-spliced <see cref="CreateBrowserPanel"/> layout.
+    /// Set <paramref name="dockLeft"/> to dock it against the left rail instead of centering it.
     /// </summary>
-    internal static PanelContainer CreateMainMenuModalPanel(float width = 560f) {
-        float halfW = width / 2f;
+    internal static PanelContainer CreateMainMenuModalPanel(float width = 560f, bool dockLeft = false) {
         var panel = new PanelContainer {
             Name = "MainMenuModalPanel",
             MouseFilter = Control.MouseFilterEnum.Stop,
-            AnchorLeft = 0.5f,
-            AnchorRight = 0.5f,
-            OffsetLeft = -halfW,
-            OffsetRight = halfW,
             AnchorTop = 0.15f,
             AnchorBottom = 0.85f,
             OffsetTop = 0,
             OffsetBottom = 0
         };
+
+        if (dockLeft) {
+            panel.AnchorLeft = 0;
+            panel.AnchorRight = 0;
+            panel.OffsetLeft = MainMenuRailHost.MenuRailInset + DockLeftGap;
+            panel.OffsetRight = panel.OffsetLeft + width;
+        }
+        else {
+            float halfW = width / 2f;
+            panel.AnchorLeft = 0.5f;
+            panel.AnchorRight = 0.5f;
+            panel.OffsetLeft = -halfW;
+            panel.OffsetRight = halfW;
+        }
 
         var style = new StyleBoxFlat {
             BgColor = ColOverlayBg,

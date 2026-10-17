@@ -1,41 +1,51 @@
+using System;
 using Godot;
-using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Abstractions.Modding;
-using KitLib.Host;
-using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.UI;
 
+/// <summary>
+/// Publishes every Dev Mode action as its own main-menu rail entry, so the rail is a flat
+/// text list instead of a single "Dev Mode" button opening a nested menu panel.
+/// </summary>
 internal static class DevToolsMainMenuCornerButtonRegistration {
     internal static void Register() {
-        KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
-            ModId = KitLibProductIds.KitLib,
-            ButtonId = "dev-mode",
-            Tooltip = "Dev Mode",
-            TooltipKey = "menu.developerMode",
-            SortOrder = 0,
-            IsOpen = _ => DevMainMenuUI.IsVisible,
-            OnPressed = OpenDevMenu,
-        });
+        RegisterAction("dev-new-test", "New Test", "devmenu.newTest", 0, DevMainMenuUI.StartNewTest);
+        RegisterAction("dev-new-test-seed", "New Test (Seed)", "devmenu.newTestWithSeed", 1,
+            DevMainMenuUI.StartNewTestWithSeed);
+        RegisterAction("dev-autoslay", "AutoSlay", "devmenu.autoslay", 2, DevMainMenuUI.StartAutoSlay,
+            isVisible: _ => DevMainMenuUI.AutoSlayAvailable);
+        RegisterAction("dev-load-save", "Load Save", "devmenu.loadSnapshot", 3, DevMainMenuUI.LoadSave,
+            isVisible: _ => DevMainMenuUI.HasAnySaveSlot);
+        RegisterAction("dev-load-feedback", "Load Feedback ZIP", "devmenu.loadFeedback", 4,
+            DevMainMenuUI.LoadFeedbackZip);
+        RegisterAction("dev-official-replay", "Play Official Replay", "devmenu.replay", 5,
+            DevMainMenuUI.PlayOfficialReplay);
+        RegisterAction("dev-run-replay", "Play DevTools Replay", "devmenu.runReplay", 6,
+            DevMainMenuUI.PlayDevToolsReplay);
+        RegisterAction("dev-pseudo-coop", "Pseudo Co-op Test (Host)", "devmenu.pseudocoop", 7,
+            DevMainMenuUI.StartPseudoCoop);
+        RegisterAction("dev-unlock-all", "Unlock All Progress", "devmenu.unlockAll", 8,
+            DevMainMenuUI.UnlockAllProgress);
+        RegisterAction("dev-logs", "Logs", "devmenu.logs", 9, DevMainMenuUI.ShowLogs,
+            isOpen: _ => LogViewerUI.IsVisible);
     }
 
-    static void OpenDevMenu(object mainMenuObj) {
-        if (mainMenuObj is not NMainMenu mainMenu || !GodotObject.IsInstanceValid(mainMenu))
-            return;
-
-        if (DevMainMenuUI.IsVisible) {
-            DevMainMenuUI.Hide();
-            return;
-        }
-
-        DevMainMenuUI.Show(mainMenu, new DevMainMenuActions {
-            OnNewTest = () => {
-                KitLibState.InDevRun = true;
-                var charSelect = mainMenu.SubmenuStack.GetSubmenuType<NCharacterSelectScreen>();
-                charSelect.InitializeSingleplayer();
-                mainMenu.SubmenuStack.Push(charSelect);
+    static void RegisterAction(string buttonId, string tooltip, string tooltipKey, int sortOrder,
+        Action<NMainMenu> action, Func<object, bool>? isVisible = null, Func<object, bool>? isOpen = null) {
+        KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
+            ModId = KitLibProductIds.KitLib,
+            ButtonId = buttonId,
+            Tooltip = tooltip,
+            TooltipKey = tooltipKey,
+            SortOrder = sortOrder,
+            IsVisible = isVisible,
+            IsOpen = isOpen ?? (_ => false),
+            OnPressed = mainMenuObj => {
+                if (mainMenuObj is NMainMenu mainMenu && GodotObject.IsInstanceValid(mainMenu))
+                    action(mainMenu);
             },
         });
     }

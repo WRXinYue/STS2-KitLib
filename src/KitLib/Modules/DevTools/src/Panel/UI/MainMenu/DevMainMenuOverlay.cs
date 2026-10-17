@@ -5,19 +5,6 @@ namespace KitLib.UI;
 
 /// <summary>Fullscreen centered modal shell for DevMode panels opened from the title screen.</summary>
 internal static class DevMainMenuOverlay {
-    internal static (Control Root, VBoxContainer Content) Create(
-        Node attachRoot,
-        string rootName,
-        float panelWidth,
-        Action onClose,
-        int contentSeparation = 10,
-        int zIndex = 2000,
-        bool dimBackdrop = true) {
-        var (root, content, _) = CreateWithPanel(
-            attachRoot, rootName, panelWidth, onClose, contentSeparation, zIndex, dimBackdrop);
-        return (root, content);
-    }
-
     internal static (Control Root, VBoxContainer Content, PanelContainer Panel) CreateWithPanel(
         Node attachRoot,
         string rootName,
@@ -25,7 +12,8 @@ internal static class DevMainMenuOverlay {
         Action onClose,
         int contentSeparation = 10,
         int zIndex = 2000,
-        bool dimBackdrop = true) {
+        bool dimBackdrop = true,
+        bool dockLeft = false) {
         Remove(attachRoot, rootName);
 
         var root = new Control {
@@ -35,10 +23,7 @@ internal static class DevMainMenuOverlay {
         };
         root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
 
-        void CloseOverlay() {
-            onClose();
-            DevMainMenuUI.NotifyOverlayClosed();
-        }
+        void CloseOverlay() => onClose();
 
         if (dimBackdrop) {
             var backdrop = new ColorRect {
@@ -53,7 +38,7 @@ internal static class DevMainMenuOverlay {
             root.AddChild(backdrop);
         }
 
-        var panel = DevPanelUI.CreateMainMenuModalPanel(panelWidth);
+        var panel = DevPanelUI.CreateMainMenuModalPanel(panelWidth, dockLeft);
         panel.MouseFilter = Control.MouseFilterEnum.Stop;
         root.AddChild(panel);
 
@@ -61,30 +46,19 @@ internal static class DevMainMenuOverlay {
         content.AddThemeConstantOverride("separation", contentSeparation);
 
         attachRoot.AddChild(root);
-        DevMainMenuUI.NotifyOverlayOpened(root, panel);
         return (root, content, panel);
     }
 
-    private static Control? FindFirstFocusableDescendant(Control root) {
-        if (root.FocusMode != Control.FocusModeEnum.None && root.Visible)
-            return root;
-        foreach (var child in root.GetChildren()) {
-            if (child is not Control c || !c.Visible)
-                continue;
-            var found = FindFirstFocusableDescendant(c);
-            if (found != null)
-                return found;
-        }
-        return null;
-    }
+    /// <summary>Whether an overlay registered under <paramref name="rootName"/> is currently on screen.</summary>
+    internal static bool IsPresent(string rootName) {
+        var tree = Engine.GetMainLoop() as SceneTree;
+        var root = tree?.Root;
+        if (root == null)
+            return false;
 
-    internal static void FocusOverlayContentDeferred(Control overlayRoot, PanelContainer panel) {
-        Callable.From(() => {
-            if (!GodotObject.IsInstanceValid(overlayRoot) || !GodotObject.IsInstanceValid(panel))
-                return;
-            overlayRoot.GetViewport()?.GuiReleaseFocus();
-            FindFirstFocusableDescendant(panel)?.GrabFocus();
-        }).CallDeferred();
+        foreach (var node in root.FindChildren(rootName, recursive: true, owned: false))
+            return !node.IsQueuedForDeletion();
+        return false;
     }
 
     internal static void Remove(Node attachRoot, string rootName) =>

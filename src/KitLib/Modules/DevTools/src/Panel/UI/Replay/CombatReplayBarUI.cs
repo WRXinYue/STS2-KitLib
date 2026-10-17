@@ -48,6 +48,9 @@ internal static class CombatReplayBarUI {
     static float _handLastY = float.NaN;
     static float _handBaseY;
 
+    /// <summary>Whether the replay bar is docked; its DockHeight already lifts the bottom HUD clear of the frame.</summary>
+    internal static bool IsShowing => _layer != null && GodotObject.IsInstanceValid(_layer);
+
     internal static void Show(SceneTree tree) {
         Hide();
         var layer = new CanvasLayer {
