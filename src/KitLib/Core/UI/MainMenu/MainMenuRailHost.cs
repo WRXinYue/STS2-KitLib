@@ -6,6 +6,7 @@ using KitLib.Abstractions.Modding;
 using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
+using MegaCrit.Sts2.Core.Nodes.Screens.CustomRun;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.UI;
@@ -208,17 +209,12 @@ internal static class MainMenuRailHost {
         if (!string.Equals(signature, _signature, StringComparison.Ordinal))
             RebuildButtons(mainMenu, registrations, signature);
 
-        KitLibMainMenuCornerButtonRegistration? occupied = null;
-        bool surfaceOpen;
-        if (surface == KitLibMainMenuSurface.CharacterSelect) {
-            // Character select is an open submenu, so the shortcut-surface check would hide the rail;
-            // this surface always hosts its own entries while it is up.
-            surfaceOpen = true;
-        }
-        else {
-            occupied = MainMenuCornerButtonHost.FindOccupiedRegistration(mainMenu);
-            surfaceOpen = MainMenuCornerButtonHost.IsMainMenuShortcutSurfaceOpen(mainMenu);
-        }
+        // Submenu surfaces host their own entries; the shortcut-surface check only gates the title screen.
+        bool surfaceOpen = surface != KitLibMainMenuSurface.MainMenu ||
+                           MainMenuCornerButtonHost.IsMainMenuShortcutSurfaceOpen(mainMenu);
+        var occupied = surface == KitLibMainMenuSurface.MainMenu
+            ? MainMenuCornerButtonHost.FindOccupiedRegistration(mainMenu)
+            : null;
 
         bool show = _railButtons.Count > 0 && (occupied != null || surfaceOpen);
 
@@ -233,11 +229,15 @@ internal static class MainMenuRailHost {
             RefreshButtons(mainMenu, registrations, occupied, surface);
     }
 
-    /// <summary>Surface the rail currently renders for: character select while it is the open submenu.</summary>
+    /// <summary>Surface the rail currently renders for, picked from the type of the open submenu.</summary>
     private static KitLibMainMenuSurface ResolveSurface(NMainMenu mainMenu) =>
-        mainMenu.SubmenuStack.Peek() is NCharacterSelectScreen
-            ? KitLibMainMenuSurface.CharacterSelect
-            : KitLibMainMenuSurface.MainMenu;
+        mainMenu.SubmenuStack.Peek() switch {
+            NCharacterSelectScreen => KitLibMainMenuSurface.CharacterSelect,
+            NMultiplayerSubmenu or NMultiplayerHostSubmenu or NJoinFriendScreen
+                or NMultiplayerLoadGameScreen => KitLibMainMenuSurface.Multiplayer,
+            NCustomRunScreen => KitLibMainMenuSurface.CustomRun,
+            _ => KitLibMainMenuSurface.MainMenu,
+        };
 
     /// <summary>Registration signature of one surface, used to rebuild only when that surface's list changes.</summary>
     private static string BuildSignature(
@@ -453,10 +453,11 @@ internal static class MainMenuRailHost {
         CaptureRight(mainMenu, "%ChangeProfileButton");
 
         // NBackButton re-pins its own global_position (enable / window resize), so pushing it aside
-        // never sticks; arc the strip back to the frame edge above it instead.
+        // never sticks; arc the strip back to the frame edge above it instead. Every submenu screen
+        // with one (character select, custom run, multiplayer) gets the same treatment.
         _bandStepY = -1f;
-        if (mainMenu.SubmenuStack.Peek() is NCharacterSelectScreen charSelect) {
-            var back = charSelect.GetNodeOrNull<Control>("BackButton");
+        if (mainMenu.SubmenuStack.Peek() is Node screen) {
+            var back = screen.GetNodeOrNull<Control>("BackButton");
             if (back != null && GodotObject.IsInstanceValid(back))
                 _bandStepY = back.GlobalPosition.Y - BandStepClearance;
         }

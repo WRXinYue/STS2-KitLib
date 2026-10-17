@@ -86,8 +86,7 @@
   "modpanel.sidebar.scope.collapse": "Hide details",
   "modpanel.sidebar.scope.collapsedSummary": "Mod settings panel · click to expand",
 
-  "devmenu.newTest": "New Test",
-  "devmenu.newTestWithSeed": "New Test (Seed)",
+  "devmenu.testMode": "Test Mode",
   "devmenu.autoslay": "AutoSlay",
   "devmenu.loadSnapshot": "Load Save",
   "devmenu.loadFeedback": "Load Feedback ZIP",

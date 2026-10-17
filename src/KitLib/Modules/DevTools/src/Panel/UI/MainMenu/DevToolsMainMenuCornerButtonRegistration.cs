@@ -8,15 +8,15 @@ namespace KitLib.UI;
 
 /// <summary>
 /// Publishes every Dev Mode action as its own left-rail entry, so the rail is a flat text list
-/// instead of a single "Dev Mode" button opening a nested menu panel. New Test lives on the
-/// character select surface so a test run can start from the vanilla character flow.
+/// instead of a single "Dev Mode" button opening a nested menu panel. Each entry is bound to the
+/// menu surface it belongs to (title / character select / custom run / multiplayer).
 /// </summary>
 internal static class DevToolsMainMenuCornerButtonRegistration {
     internal static void Register() {
-        RegisterAction("dev-new-test", "New Test", "devmenu.newTest", 0, DevMainMenuUI.StartNewTestFromCharSelect,
+        RegisterAction("dev-new-test", "Test Mode", "devmenu.testMode", 0, DevMainMenuUI.StartNewTestFromCharSelect,
             surface: KitLibMainMenuSurface.CharacterSelect);
-        RegisterAction("dev-new-test-seed", "New Test (Seed)", "devmenu.newTestWithSeed", 1,
-            DevMainMenuUI.StartNewTestWithSeed);
+        RegisterAction("dev-custom-test-mode", "Test Mode", "devmenu.testMode", 0,
+            DevMainMenuUI.StartCustomRunTestMode, surface: KitLibMainMenuSurface.CustomRun);
         RegisterAction("dev-autoslay", "AutoSlay", "devmenu.autoslay", 2, DevMainMenuUI.StartAutoSlay,
             isVisible: _ => DevMainMenuUI.AutoSlayAvailable);
         RegisterAction("dev-load-save", "Load Save", "devmenu.loadSnapshot", 3, DevMainMenuUI.LoadSave,
@@ -28,7 +28,7 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
         RegisterAction("dev-run-replay", "Play DevTools Replay", "devmenu.runReplay", 6,
             DevMainMenuUI.PlayDevToolsReplay);
         RegisterAction("dev-pseudo-coop", "Pseudo Co-op Test (Host)", "devmenu.pseudocoop", 7,
-            DevMainMenuUI.StartPseudoCoop);
+            DevMainMenuUI.StartPseudoCoop, surface: KitLibMainMenuSurface.Multiplayer);
         RegisterAction("dev-unlock-all", "Unlock All Progress", "devmenu.unlockAll", 8,
             DevMainMenuUI.UnlockAllProgress);
         RegisterAction("dev-logs", "Logs", "devmenu.logs", 9, DevMainMenuUI.ShowLogs,

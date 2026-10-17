@@ -9,6 +9,7 @@ using KitLib.Replay;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
+using MegaCrit.Sts2.Core.Nodes.Screens.CustomRun;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Saves;
 
@@ -25,9 +26,6 @@ internal static class DevMainMenuUI {
         mainMenu.SubmenuStack.Push(charSelect);
     }
 
-    internal static void StartNewTestWithSeed(NMainMenu mainMenu) =>
-        ShowSeedInputOverlay(mainMenu, () => StartNewTest(mainMenu));
-
     /// <summary>
     /// Start a DevMode run from the character select screen: raises the dev flag, then drives the vanilla
     /// Confirm button so the run launches through the official flow.
@@ -40,6 +38,24 @@ internal static class DevMainMenuUI {
         var embark = charSelect.GetNodeOrNull<NConfirmButton>("ConfirmButton");
         if (embark == null || !GodotObject.IsInstanceValid(embark)) {
             MainFile.Logger.Warn("Dev New Test: character-select Confirm button not found.");
+            return;
+        }
+
+        embark.ForceClick();
+    }
+
+    /// <summary>
+    /// Start the configured custom run in DevMode: raises the dev flag, then drives the screen's own
+    /// Confirm button so the run launches through the official flow with its seed and modifiers.
+    /// </summary>
+    internal static void StartCustomRunTestMode(NMainMenu mainMenu) {
+        if (mainMenu.SubmenuStack.Peek() is not NCustomRunScreen custom)
+            return;
+
+        KitLibState.InDevRun = true;
+        var embark = custom.GetNodeOrNull<NConfirmButton>("ConfirmButton");
+        if (embark == null || !GodotObject.IsInstanceValid(embark)) {
+            MainFile.Logger.Warn("Dev Test Mode: custom-run Confirm button not found.");
             return;
         }
 

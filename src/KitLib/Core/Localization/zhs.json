@@ -86,8 +86,7 @@
   "modpanel.sidebar.scope.collapse": "收起说明",
   "modpanel.sidebar.scope.collapsedSummary": "模组设置面板说明 · 点击展开",
 
-  "devmenu.newTest": "新建测试",
-  "devmenu.newTestWithSeed": "指定种子新建",
+  "devmenu.testMode": "测试模式",
   "devmenu.autoslay": "AutoSlay",
   "devmenu.loadSnapshot": "读取存档",
   "devmenu.loadFeedback": "加载反馈 ZIP",

@@ -10,4 +10,10 @@ public enum KitLibMainMenuSurface {
 
     /// <summary>Vanilla character select, while it is the open submenu.</summary>
     CharacterSelect = 1,
+
+    /// <summary>Vanilla multiplayer flow, while any of its submenus is open (host / join / load).</summary>
+    Multiplayer = 2,
+
+    /// <summary>Vanilla custom run setup, while it is the open submenu.</summary>
+    CustomRun = 3,
 }
