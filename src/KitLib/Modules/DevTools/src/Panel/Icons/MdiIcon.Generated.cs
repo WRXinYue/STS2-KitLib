@@ -3,11 +3,13 @@ namespace KitLib.Icons;
 
 public readonly partial struct MdiIcon
 {
+    public static readonly MdiIcon Account = new("account");
     public static readonly MdiIcon AnimationPlay = new("animation-play");
     public static readonly MdiIcon BookOpenVariant = new("book-open-variant");
     public static readonly MdiIcon BullseyeArrow = new("bullseye-arrow");
     public static readonly MdiIcon CalendarStar = new("calendar-star");
     public static readonly MdiIcon Cards = new("cards");
+    public static readonly MdiIcon ChartDonut = new("chart-donut");
     public static readonly MdiIcon Check = new("check");
     public static readonly MdiIcon ChevronRight = new("chevron-right");
     public static readonly MdiIcon Close = new("close");
@@ -34,12 +36,14 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon Plus = new("plus");
     public static readonly MdiIcon PuzzleOutline = new("puzzle-outline");
     public static readonly MdiIcon Refresh = new("refresh");
+    public static readonly MdiIcon Shield = new("shield");
     public static readonly MdiIcon SkipBackward = new("skip-backward");
     public static readonly MdiIcon SkipNext = new("skip-next");
     public static readonly MdiIcon SkipPrevious = new("skip-previous");
     public static readonly MdiIcon Skull = new("skull");
     public static readonly MdiIcon SpeedometerMedium = new("speedometer-medium");
     public static readonly MdiIcon Star = new("star");
+    public static readonly MdiIcon Sword = new("sword");
     public static readonly MdiIcon TextBoxOutline = new("text-box-outline");
     public static readonly MdiIcon TreasureChest = new("treasure-chest");
     public static readonly MdiIcon WeatherNight = new("weather-night");

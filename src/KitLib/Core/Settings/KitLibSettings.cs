@@ -33,6 +33,15 @@ public sealed partial class KitLibSettings {
     /// <summary>In-run rail expand trigger: HoverButton (peek tab) or HoverSide (left edge).</summary>
     public string RailOpenMode { get; set; } = "HoverButton";
 
+    /// <summary>Metric shown on the in-run combat contribution rings (<see cref="CombatRingMetric"/> name).</summary>
+    public string CombatRingMetric { get; set; } = nameof(Settings.CombatRingMetric.Damage);
+
+    /// <summary>
+    /// Metrics the single-player combat rings list, comma separated
+    /// (<see cref="CombatRingMetric"/> names). Team mode keeps using <see cref="CombatRingMetric"/>.
+    /// </summary>
+    public string CombatRingMetrics { get; set; } = "Damage,Block,Cards,Energy,Potion,Score";
+
     /// <summary>Opt in to synchronized multiplayer cheat sessions (requires DevMode on all peers).</summary>
     public bool MultiplayerCheatOptIn { get; set; }
 

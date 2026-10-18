@@ -76,6 +76,52 @@ public static class SettingsStore {
         return RailOpenMode.HoverButton;
     }
 
+    public static CombatRingMetric GetCombatRingMetric() {
+        if (Enum.TryParse(Current.CombatRingMetric, ignoreCase: true, out CombatRingMetric metric))
+            return metric;
+        return CombatRingMetric.Damage;
+    }
+
+    public static void SetCombatRingMetric(CombatRingMetric metric) {
+        Current.CombatRingMetric = metric.ToString();
+        Save();
+    }
+
+    /// <summary>Metrics the single-player rings list, rebuilt in enum order so rows never shuffle.</summary>
+    public static List<CombatRingMetric> GetCombatRingMetrics() {
+        var enabled = new HashSet<CombatRingMetric>();
+        foreach (string name in Current.CombatRingMetrics.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) {
+            if (Enum.TryParse(name, ignoreCase: true, out CombatRingMetric metric))
+                enabled.Add(metric);
+        }
+
+        var listed = new List<CombatRingMetric>();
+        foreach (CombatRingMetric metric in Enum.GetValues<CombatRingMetric>()) {
+            if (enabled.Contains(metric))
+                listed.Add(metric);
+        }
+        return listed;
+    }
+
+    public static bool IsCombatRingMetricEnabled(CombatRingMetric metric) =>
+        GetCombatRingMetrics().Contains(metric);
+
+    /// <summary>Turns one metric on or off for the single-player rings.</summary>
+    public static void SetCombatRingMetricEnabled(CombatRingMetric metric, bool enabled) {
+        var metrics = GetCombatRingMetrics();
+        if (enabled) {
+            if (!metrics.Contains(metric))
+                metrics.Add(metric);
+        }
+        else {
+            metrics.RemoveAll(m => m == metric);
+        }
+
+        metrics.Sort();
+        Current.CombatRingMetrics = string.Join(",", metrics);
+        Save();
+    }
+
     public static void SetPerfHudEnabled(bool enabled) {
         Current.PerfHudEnabled = enabled;
         Save();

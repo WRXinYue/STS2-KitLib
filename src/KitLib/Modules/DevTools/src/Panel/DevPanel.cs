@@ -69,6 +69,7 @@ internal static class DevPanel {
             TryInvokeOptionalPanelHook(globalUi, KitLibPanelOps.OnPanelAttach, "attach");
 
             DevPanelUI.Attach(globalUi, actions);
+            CombatRingsHud.Attach(globalUi);
             ((Node)globalUi).TreeExiting += () => Detach(globalUi);
 
             MainFile.Logger.Info("DevPanel: Sidebar attached.");
@@ -83,6 +84,7 @@ internal static class DevPanel {
             TryInvokeOptionalPanelHook(globalUi, KitLibPanelOps.OnPanelDetach, "detach");
             DevPanelRegistry.DeactivateAll(globalUi);
             DevPanelUI.Detach(globalUi);
+            CombatRingsHud.Detach();
             ClearState();
             SpeedControl.Reset();
             SkipAnimControl.Reset();
