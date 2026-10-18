@@ -227,6 +227,7 @@ public static class KitLibMainMenuCornerButtonRegistry {
         ["SortOrder"] = button.SortOrder,
         // Stored as int: the slot is shared across AssemblyLoadContexts, so no mod-local enum instance.
         ["Surface"] = (int)button.Surface,
+        ["SingleplayerOnly"] = button.SingleplayerOnly,
         ["OnPressed"] = button.OnPressed,
         ["IsVisible"] = button.IsVisible,
         ["IsOpen"] = button.IsOpen,
@@ -257,6 +258,7 @@ public static class KitLibMainMenuCornerButtonRegistry {
             Surface = data.GetValueOrDefault("Surface") is int surface
                 ? (KitLibMainMenuSurface)surface
                 : KitLibMainMenuSurface.MainMenu,
+            SingleplayerOnly = data.GetValueOrDefault("SingleplayerOnly") is true,
             OnPressed = onPressed,
             IsVisible = data.GetValueOrDefault("IsVisible") as Func<object, bool>,
             ActiveIconPath = ReadString(data, "ActiveIconPath"),

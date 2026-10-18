@@ -14,9 +14,9 @@ namespace KitLib.UI;
 internal static class DevToolsMainMenuCornerButtonRegistration {
     internal static void Register() {
         RegisterAction("dev-new-test", "Test Mode", "devmenu.testMode", 0, DevMainMenuUI.StartNewTestFromCharSelect,
-            surface: KitLibMainMenuSurface.CharacterSelect);
+            surface: KitLibMainMenuSurface.CharacterSelect, singleplayerOnly: true);
         RegisterAction("dev-custom-test-mode", "Test Mode", "devmenu.testMode", 0,
-            DevMainMenuUI.StartCustomRunTestMode, surface: KitLibMainMenuSurface.CustomRun);
+            DevMainMenuUI.StartCustomRunTestMode, surface: KitLibMainMenuSurface.CustomRun, singleplayerOnly: true);
         RegisterAction("dev-autoslay", "AutoSlay", "devmenu.autoslay", 2, DevMainMenuUI.StartAutoSlay,
             isVisible: _ => DevMainMenuUI.AutoSlayAvailable);
         RegisterAction("dev-load-save", "Load Save", "devmenu.loadSnapshot", 3, DevMainMenuUI.LoadSave,
@@ -37,7 +37,7 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
 
     static void RegisterAction(string buttonId, string tooltip, string tooltipKey, int sortOrder,
         Action<NMainMenu> action, Func<object, bool>? isVisible = null, Func<object, bool>? isOpen = null,
-        KitLibMainMenuSurface surface = KitLibMainMenuSurface.MainMenu) {
+        KitLibMainMenuSurface surface = KitLibMainMenuSurface.MainMenu, bool singleplayerOnly = false) {
         KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
             ModId = KitLibProductIds.KitLib,
             ButtonId = buttonId,
@@ -45,6 +45,7 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
             TooltipKey = tooltipKey,
             SortOrder = sortOrder,
             Surface = surface,
+            SingleplayerOnly = singleplayerOnly,
             IsVisible = isVisible,
             IsOpen = isOpen ?? (_ => false),
             OnPressed = mainMenuObj => {

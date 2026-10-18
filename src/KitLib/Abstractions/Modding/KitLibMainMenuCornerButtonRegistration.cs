@@ -56,6 +56,12 @@ public sealed class KitLibMainMenuCornerButtonRegistration {
     /// </summary>
     public KitLibMainMenuSurface Surface { get; init; } = KitLibMainMenuSurface.MainMenu;
 
+    /// <summary>
+    /// Hidden while the main menu is inside the official multiplayer flow. Solo-only entries (starting a
+    /// test run, for instance) would launch a real lobby run from the flow's own screens.
+    /// </summary>
+    public bool SingleplayerOnly { get; init; }
+
     /// <summary>Invoked when the icon is clicked.</summary>
     public required Action<object> OnPressed { get; init; }
 

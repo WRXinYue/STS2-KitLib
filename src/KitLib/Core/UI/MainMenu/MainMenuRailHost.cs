@@ -51,6 +51,9 @@ internal static class MainMenuRailHost {
     private static readonly List<Button> _railButtons = new();
     private static string _signature = "";
 
+    /// <summary>Whether the menu sits inside the official multiplayer flow; solo-only entries hide while it does.</summary>
+    private static bool _inMultiplayerFlow;
+
     // ── Rail presence ──
     // 0 = retracted off screen, 1 = docked. Own tween for the panel-driven appearance, capped by the
     // screen frame's wrap so Ctrl+B retracting the window edge takes the rail with it.
@@ -66,8 +69,16 @@ internal static class MainMenuRailHost {
     /// it full height.</summary>
     private static float _bandStepY = -1f;
 
-    /// <summary>Length of the arc the strip's widened edge bends back over, in logical pixels.</summary>
-    private const float BandStepCurve = 200f;
+    /// <summary>Length the strip's widened edge bends back over, in logical pixels.</summary>
+    private static float _bandStepCurve;
+
+    /// <summary>Share of the rail's content height the taper spans, clamped to these bounds in logical pixels.</summary>
+    private const float BandStepCurveRatio = 0.5f;
+    private const float BandStepCurveMin = 140f;
+    private const float BandStepCurveMax = 200f;
+
+    /// <summary>Screen-space Y to pin the strip's taper to; &lt;= 0 (default) follows the rail's content instead.</summary>
+    internal static float BandStepOverride { get; set; } = -1f;
 
     /// <summary>Whether the rail is currently hosted by <paramref name="mainMenu"/>.</summary>
     internal static bool IsAttachedTo(NMainMenu mainMenu) =>
@@ -124,7 +135,7 @@ internal static class MainMenuRailHost {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             AnchorLeft = 0,
             AnchorRight = 0,
-            AnchorTop = 0.15f,
+            AnchorTop = 0.07f,
             AnchorBottom = 0.85f,
             OffsetLeft = RailColumnLeft,
             OffsetRight = RailColumnLeft + MenuRailButtonWidth,
@@ -204,14 +215,25 @@ internal static class MainMenuRailHost {
         }
 
         var surface = ResolveSurface(mainMenu);
+        var onTitle = surface == KitLibMainMenuSurface.MainMenu &&
+                      MainMenuCornerButtonHost.IsMainMenuShortcutSurfaceOpen(mainMenu);
+
+        // The multiplayer submenu is the only way into that flow, and every screen it leads to stays in it
+        // until the title screen returns, so solo-only entries stay hidden down the chain.
+        if (surface == KitLibMainMenuSurface.Multiplayer)
+            _inMultiplayerFlow = true;
+        else if (onTitle)
+            _inMultiplayerFlow = false;
+
         var registrations = KitLibMainMenuCornerButtonRegistry.GetOrderedButtons(surface);
+        if (_inMultiplayerFlow)
+            registrations = registrations.Where(static r => !r.SingleplayerOnly).ToArray();
         var signature = BuildSignature(surface, registrations);
         if (!string.Equals(signature, _signature, StringComparison.Ordinal))
             RebuildButtons(mainMenu, registrations, signature);
 
         // Submenu surfaces host their own entries; the shortcut-surface check only gates the title screen.
-        bool surfaceOpen = surface != KitLibMainMenuSurface.MainMenu ||
-                           MainMenuCornerButtonHost.IsMainMenuShortcutSurfaceOpen(mainMenu);
+        bool surfaceOpen = surface != KitLibMainMenuSurface.MainMenu || onTitle;
         var occupied = surface == KitLibMainMenuSurface.MainMenu
             ? MainMenuCornerButtonHost.FindOccupiedRegistration(mainMenu)
             : null;
@@ -263,7 +285,7 @@ internal static class MainMenuRailHost {
         if (_band != null && GodotObject.IsInstanceValid(_band))
             _band.Visible = presence > 0.001f;
 
-        KitLibScreenFrame.SetLeftBand(_band, MenuRailInset * presence, _bandStepY, BandStepCurve);
+        KitLibScreenFrame.SetLeftBand(_band, MenuRailInset * presence, _bandStepY, _bandStepCurve);
         ApplyInsets(presence);
 
         var menu = _menu;
@@ -452,18 +474,38 @@ internal static class MainMenuRailHost {
         CaptureRight(mainMenu, "%MainMenuTextButtons");
         CaptureRight(mainMenu, "%ChangeProfileButton");
 
-        // NBackButton re-pins its own global_position (enable / window resize), so pushing it aside
-        // never sticks; arc the strip back to the frame edge above it instead. Every submenu screen
-        // with one (character select, custom run, multiplayer) gets the same treatment.
-        _bandStepY = -1f;
-        if (mainMenu.SubmenuStack.Peek() is Node screen) {
-            var back = screen.GetNodeOrNull<Control>("BackButton");
-            if (back != null && GodotObject.IsInstanceValid(back))
-                _bandStepY = back.GlobalPosition.Y - BandStepClearance;
-        }
+        // The widened strip wraps the rail's own entries only: past the last one it tapers back to the
+        // frame's own edge, so the spare room below never reads as a wide empty band. The taper scales
+        // with the content, and BandStepOverride pins it when a caller wants a fixed height.
+        var content = RailContent();
+        _bandStepCurve = Mathf.Clamp(content.Height * BandStepCurveRatio, BandStepCurveMin, BandStepCurveMax);
+
+        if (BandStepOverride > 0f)
+            _bandStepY = BandStepOverride;
+        else if (content.Height < 0f)
+            _bandStepY = -1f;
+        else
+            _bandStepY = content.Bottom + BandStepClearance + _bandStepCurve;
     }
 
-    /// <summary>Gap left between the strip's arc end and the vanilla buttons below it.</summary>
+    /// <summary>Screen-space extent of the rail's visible entries; <c>Height</c> is &lt; 0 when it shows none.</summary>
+    private static (float Height, float Bottom) RailContent() {
+        if (_rail == null || !GodotObject.IsInstanceValid(_rail))
+            return (-1f, -1f);
+
+        var visible = 0;
+        foreach (var button in _railButtons) {
+            if (button.Visible)
+                visible++;
+        }
+        if (visible == 0)
+            return (-1f, -1f);
+
+        var height = visible * KitLibRailChrome.IconButtonSize + (visible - 1) * ButtonGap;
+        return (height, _rail.GlobalPosition.Y + height);
+    }
+
+    /// <summary>Gap between the rail's last entry and the start of the strip's taper back to the frame edge.</summary>
     private const float BandStepClearance = 6f;
 
     private static void CaptureRight(Node owner, string path) {
@@ -522,6 +564,7 @@ internal static class MainMenuRailHost {
 
         RestoreInset();
         _bandStepY = -1f;
+        _inMultiplayerFlow = false;
         KitLibScreenFrame.SetLeftBand(0f);
         // The frame is a permanent decoration: restore it so the next scene starts with a full edge.
         KitLibScreenFrame.SetWrapShown(true, animated: false);
