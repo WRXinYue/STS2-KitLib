@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Godot;
+using KitLib.Abstractions.Host;
+using KitLib.Modding;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
 namespace KitLib.UI;
@@ -13,11 +15,12 @@ namespace KitLib.UI;
 /// <remarks>
 /// Purely decorative and input-transparent. Chrome that would land under the frame is pushed inward
 /// by <see cref="Margin"/> — the in-run TopBar and hand container through the rail inset, the
-/// main-menu modded warning through <see cref="ApplyMainMenuInsets"/>. The left side reads as a wider
+/// main-menu modded warning, version text and patch-notes shortcut through <see cref="ApplyMainMenuInsets"/>. The left side reads as a wider
 /// band: <see cref="CreateLeftBand"/> draws the same shape from the rail's own layer with only the
 /// left thickness widened, and <see cref="SetLeftBand"/> cuts this layer's inner stroke there, so
 /// both layers together read as one window edge with a single continuous inner outline. A band can be
-/// stopped short with a step so the narrow frame edge takes over below it.
+/// stopped short with a step so the narrow frame edge takes over below it. The bottom-right stripe
+/// also carries KitLib's own version stamp — see <see cref="EnsureStamp"/>.
 /// </remarks>
 internal static class KitLibScreenFrame {
     internal const string RootNodeName = "KitLibScreenFrame";
@@ -36,6 +39,15 @@ internal static class KitLibScreenFrame {
     /// <summary>Frame fill; the widened left contour bands reuse it so all read as one window edge.</summary>
     internal static readonly Color FrameColor = new(0f, 0f, 0f, 1f);
     private static readonly Color EdgeColor = new(1f, 1f, 1f, 0.10f);
+
+    /// <summary>Node name of the KitLib version stamp drawn on the border's bottom-right stripe.</summary>
+    private const string StampNodeName = "KitLibVersionStamp";
+    private const string StampFontPath = "res://themes/kreon_regular_shared.tres";
+    private const int StampFontSize = 10;
+    private static readonly Color StampColor = new(1f, 1f, 1f, 0.45f);
+
+    private static Label? _stamp;
+    private static string _stampText = "";
 
     private static CanvasLayer? _layer;
     private static ColorRect? _rect;
@@ -75,6 +87,7 @@ internal static class KitLibScreenFrame {
             if (existing != null && GodotObject.IsInstanceValid(existing)) {
                 _layer = existing;
                 _rect = _layer.GetNodeOrNull<ColorRect>("FrameHolder/FrameRect");
+                EnsureStamp(_layer.GetNodeOrNull<Control>("FrameHolder"));
             }
             else {
                 _layer = new CanvasLayer {
@@ -98,6 +111,7 @@ internal static class KitLibScreenFrame {
                 };
                 _rect.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
                 holder.AddChild(_rect);
+                EnsureStamp(holder);
             }
 
             BindViewport();
@@ -157,6 +171,71 @@ internal static class KitLibScreenFrame {
 
     internal static void RemoveWrapListener(Action listener) => _wrapListeners.Remove(listener);
 
+    /// <summary>
+    /// KitLib's version stamp on the border's bottom-right stripe. The border sits outside every game
+    /// node, so the stamp can live there without ever covering the hand or the card piles.
+    /// </summary>
+    private static void EnsureStamp(Control? holder) {
+        if (_stamp == null || !GodotObject.IsInstanceValid(_stamp)) {
+            if (holder == null || !GodotObject.IsInstanceValid(holder))
+                return;
+
+            _stamp = new Label {
+                Name = StampNodeName,
+                MouseFilter = Control.MouseFilterEnum.Ignore,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                AnchorLeft = 1f,
+                AnchorTop = 1f,
+                AnchorRight = 1f,
+                AnchorBottom = 1f,
+                // Right-aligned inside the bottom stripe, stopping short of the corner's own arc.
+                OffsetLeft = -152f,
+                OffsetRight = -(Radius + 16f),
+                OffsetTop = -Margin,
+                OffsetBottom = 0f,
+            };
+            if (ResourceLoader.Exists(StampFontPath))
+                _stamp.AddThemeFontOverride("font", GD.Load<Font>(StampFontPath));
+            _stamp.AddThemeFontSizeOverride("font_size", StampFontSize);
+            _stamp.AddThemeColorOverride("font_color", StampColor);
+            holder.AddChild(_stamp);
+        }
+
+        // The catalog only fills in once the game's own mod scan finishes, so keep asking until it does.
+        if (string.IsNullOrEmpty(_stampText))
+            _stampText = ResolveStampText();
+        if (!string.Equals(_stamp.Text, _stampText, StringComparison.Ordinal))
+            _stamp.Text = _stampText;
+
+        SyncStampPresence();
+    }
+
+    /// <summary>KitLib's own version from the mod catalog, or empty while the catalog is still filling in.</summary>
+    private static string ResolveStampText() {
+        try {
+            foreach (var info in ModRuntime.GetOrderedLoadedMods()) {
+                if (string.Equals(info.Id, KitLibProductIds.KitLib, StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(info.Version))
+                    return $"KitLib v{info.Version}";
+            }
+        }
+        catch (Exception) {
+            // Catalog is optional until mods finish loading.
+        }
+
+        return "";
+    }
+
+    /// <summary>Fade the stamp with the wrap so it retracts along with the border it is printed on.</summary>
+    private static void SyncStampPresence() {
+        if (_stamp == null || !GodotObject.IsInstanceValid(_stamp))
+            return;
+
+        _stamp.Visible = _wrapT > 0.01f;
+        _stamp.Modulate = new Color(1f, 1f, 1f, _wrapT);
+    }
+
     private static void SetWrapProgress(float t) {
         _wrapT = t;
         ApplyWrap();
@@ -167,6 +246,7 @@ internal static class KitLibScreenFrame {
         material.SetShaderParameter("margin", new Vector4(Margin * _wrapT, Margin * _wrapT,
             Margin * _wrapT, Margin * _wrapT));
         material.SetShaderParameter("radius", (float)Radius * _wrapT);
+        SyncStampPresence();
 
         for (int i = _wrapListeners.Count - 1; i >= 0; i--) {
             var listener = _wrapListeners[i];
@@ -191,39 +271,55 @@ internal static class KitLibScreenFrame {
             _menuOwner = menu;
         }
 
-        // Only the bottom-right modded warning reaches into the frame: '%ReleaseInfo' (y=18) and
-        // '%PatchNotesButton' (24px off the right edge) already sit clear of the 16px margin.
-        var warning = menu.GetNodeOrNull<Control>("%ModdedWarning");
-        if (warning == null || !GodotObject.IsInstanceValid(warning))
+        // Chrome the frame crowds: the bottom-right modded warning reaches under it, and the top-right
+        // version text plus patch-notes shortcut sit only a couple of pixels clear of it. The two share
+        // one visual row, so they move by the same amount to stay aligned.
+        PushInward(menu.GetNodeOrNull<Control>("%ModdedWarning"));
+        PushInward(menu.GetNodeOrNull<Control>("%ReleaseInfo"));
+        PushInward(menu.GetNodeOrNull<Control>("%PatchNotesButton"));
+
+        // Main-menu syncs outlive the mod scan, so this is where the stamp picks up KitLib's version.
+        EnsureStamp(null);
+    }
+
+    /// <summary>
+    /// Move one chrome node <see cref="Margin"/> px away from the window edge it is anchored to, scaled
+    /// by the wrap progress so it rides back out as the frame retracts. Free edges follow the anchored
+    /// one so the node keeps its size.
+    /// </summary>
+    private static void PushInward(Control? node) {
+        if (node == null || !GodotObject.IsInstanceValid(node))
             return;
 
-        int index = _menuPushed.FindIndex(e => e.Node == warning);
+        int index = _menuPushed.FindIndex(e => e.Node == node);
         if (index < 0) {
-            _menuPushed.Add(new MenuEntry(warning, warning.OffsetLeft, warning.OffsetTop,
-                warning.OffsetRight, warning.OffsetBottom));
+            _menuPushed.Add(new MenuEntry(node, node.OffsetLeft, node.OffsetTop,
+                node.OffsetRight, node.OffsetBottom));
             index = _menuPushed.Count - 1;
         }
 
         var entry = _menuPushed[index];
         // The game owns the offset when it differs from what we last wrote -> re-capture the base.
-        bool gameOwned = !Mathf.IsEqualApprox(warning.OffsetLeft, entry.LastLeft) ||
-                         !Mathf.IsEqualApprox(warning.OffsetTop, entry.LastTop);
+        bool gameOwned = !Mathf.IsEqualApprox(node.OffsetLeft, entry.LastLeft) ||
+                         !Mathf.IsEqualApprox(node.OffsetTop, entry.LastTop);
         if (gameOwned) {
-            entry.Left = warning.OffsetLeft;
-            entry.Top = warning.OffsetTop;
-            entry.Right = warning.OffsetRight;
-            entry.Bottom = warning.OffsetBottom;
+            entry.Left = node.OffsetLeft;
+            entry.Top = node.OffsetTop;
+            entry.Right = node.OffsetRight;
+            entry.Bottom = node.OffsetBottom;
         }
 
-        // Scaled by the wrap progress so the warning rides back out as the frame retracts.
         float push = Margin * _wrapT;
-        warning.OffsetLeft = entry.Left - push;
-        warning.OffsetTop = entry.Top - push;
-        warning.OffsetRight = entry.Right - push;
-        warning.OffsetBottom = entry.Bottom - push;
+        float dx = node.AnchorLeft > 0.5f ? -push : push;
+        float dy = node.AnchorTop > 0.5f ? -push : push;
 
-        entry.LastLeft = warning.OffsetLeft;
-        entry.LastTop = warning.OffsetTop;
+        node.OffsetLeft = entry.Left + dx;
+        node.OffsetTop = entry.Top + dy;
+        node.OffsetRight = entry.Right + dx;
+        node.OffsetBottom = entry.Bottom + dy;
+
+        entry.LastLeft = node.OffsetLeft;
+        entry.LastTop = node.OffsetTop;
         _menuPushed[index] = entry;
     }
 

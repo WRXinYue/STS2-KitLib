@@ -75,9 +75,7 @@ internal static class DevMainMenuUI {
 
     internal static void LoadFeedbackZip(NMainMenu mainMenu) => OpenFeedbackZipPicker(mainMenu);
 
-    internal static void PlayOfficialReplay(NMainMenu mainMenu) => OpenCombatReplayPicker(mainMenu);
-
-    internal static void PlayDevToolsReplay(NMainMenu mainMenu) => OpenRunReplayPicker(mainMenu);
+    internal static void PlayReplay(NMainMenu mainMenu) => OpenReplayPicker(mainMenu);
 
     internal static void StartPseudoCoop(NMainMenu mainMenu) =>
         DevMainMenuPseudoCoopUI.Show(mainMenu, () => DismissOverlays(mainMenu.GetTree()?.Root));
@@ -163,41 +161,26 @@ internal static class DevMainMenuUI {
                 : I18N.T("devmenu.loadFeedback.playReplay", "Play official replay"),
             onExtra: imported.ReplayMcrPath == null
                 ? null
-                : () => StartCombatReplay(mainMenu, imported.ReplayMcrPath!));
+                : () => StartReplay(mainMenu, imported.ReplayMcrPath!));
     }
 
-    private static void OpenCombatReplayPicker(NMainMenu mainMenu) {
+    private static void OpenReplayPicker(NMainMenu mainMenu) {
+        var official = DefaultReplayDirectory();
         var dlg = new FileDialog {
             FileMode = FileDialog.FileModeEnum.OpenFile,
             Access = FileDialog.AccessEnum.Filesystem,
             UseNativeDialog = true,
-            Title = I18N.T("devmenu.replay", "Play Official Replay"),
-            CurrentDir = DefaultReplayDirectory()
+            Title = I18N.T("devmenu.replay", "Play Replay"),
+            CurrentDir = Directory.Exists(official) ? official : CombatReplayPlayback.DefaultRunLogsDirectory()
         };
+        // TryPlay routes on the file's own format, so one picker serves official and DevTools replays.
         dlg.AddFilter("*.mcr", I18N.T("devmenu.replay.filter", "Official replay"));
-        mainMenu.AddChild(dlg);
-        dlg.FileSelected += path => {
-            dlg.QueueFree();
-            StartCombatReplay(mainMenu, path);
-        };
-        dlg.Canceled += () => dlg.QueueFree();
-        dlg.PopupCentered();
-    }
-
-    private static void OpenRunReplayPicker(NMainMenu mainMenu) {
-        var dlg = new FileDialog {
-            FileMode = FileDialog.FileModeEnum.OpenFile,
-            Access = FileDialog.AccessEnum.Filesystem,
-            UseNativeDialog = true,
-            Title = I18N.T("devmenu.runReplay", "Play DevTools Replay"),
-            CurrentDir = CombatReplayPlayback.DefaultRunLogsDirectory(),
-        };
         dlg.AddFilter("*" + CombatReplayPlayback.RunReplayExtension, I18N.T("devmenu.runReplay.filter", "DevTools replay"));
         dlg.AddFilter("*" + CombatReplayPlayback.LegacyRunReplayExtension, I18N.T("devmenu.runReplay.filterLegacy", "DevTools replay (legacy)"));
         mainMenu.AddChild(dlg);
         dlg.FileSelected += path => {
             dlg.QueueFree();
-            StartRunReplay(mainMenu, path);
+            StartReplay(mainMenu, path);
         };
         dlg.Canceled += () => dlg.QueueFree();
         dlg.PopupCentered();
@@ -215,27 +198,12 @@ internal static class DevMainMenuUI {
         return OS.GetUserDataDir();
     }
 
-    private static void StartCombatReplay(NMainMenu mainMenu, string path) {
+    private static void StartReplay(NMainMenu mainMenu, string path) {
         var tree = mainMenu.GetTree();
         if (!CombatReplayPlayback.TryPlay(path, tree, out var error)) {
             ShowFeedbackImportOverlay(
                 mainMenu,
-                I18N.T("devmenu.replay", "Play Official Replay"),
-                error,
-                confirmText: null,
-                onConfirm: null);
-            return;
-        }
-        DismissOverlays(mainMenu.GetTree()?.Root);
-        CombatReplayBarUI.Show(tree);
-    }
-
-    private static void StartRunReplay(NMainMenu mainMenu, string path) {
-        var tree = mainMenu.GetTree();
-        if (!CombatReplayPlayback.TryPlay(path, tree, out var error)) {
-            ShowFeedbackImportOverlay(
-                mainMenu,
-                I18N.T("devmenu.runReplay", "Play DevTools Replay"),
+                I18N.T("devmenu.replay", "Play Replay"),
                 error,
                 confirmText: null,
                 onConfirm: null);

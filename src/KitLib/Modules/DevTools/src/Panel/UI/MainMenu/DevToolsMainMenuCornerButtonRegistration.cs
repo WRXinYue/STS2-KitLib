@@ -23,10 +23,7 @@ internal static class DevToolsMainMenuCornerButtonRegistration {
             isVisible: _ => DevMainMenuUI.HasAnySaveSlot);
         RegisterAction("dev-load-feedback", "Load Feedback ZIP", "devmenu.loadFeedback", 4,
             DevMainMenuUI.LoadFeedbackZip);
-        RegisterAction("dev-official-replay", "Play Official Replay", "devmenu.replay", 5,
-            DevMainMenuUI.PlayOfficialReplay);
-        RegisterAction("dev-run-replay", "Play DevTools Replay", "devmenu.runReplay", 6,
-            DevMainMenuUI.PlayDevToolsReplay);
+        RegisterAction("dev-replay", "Play Replay", "devmenu.replay", 5, DevMainMenuUI.PlayReplay);
         RegisterAction("dev-pseudo-coop", "Pseudo Co-op Test (Host)", "devmenu.pseudocoop", 7,
             DevMainMenuUI.StartPseudoCoop, surface: KitLibMainMenuSurface.Multiplayer);
         RegisterAction("dev-unlock-all", "Unlock All Progress", "devmenu.unlockAll", 8,
