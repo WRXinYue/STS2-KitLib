@@ -258,8 +258,6 @@ public static partial class ModPanelUI {
             return BuildMissingUserModulePanel();
         }
 
-        ModPanelSidebarSwipe.Reset();
-
         var showcaseModId = ResolveShowcaseModId();
         var panel = new Panel {
             Name = "ModPanelSidebarPanel",
@@ -309,7 +307,7 @@ public static partial class ModPanelUI {
             HorizontalAlignment = HorizontalAlignment.Left,
             LabelSettings = new LabelSettings {
                 FontSize = 12,
-                FontColor = new Color(0.95f, 0.78f, 0.42f, 0.98f),
+                FontColor = ModPanelUiPalette.PendingRestartAmber,
             },
         };
         KitLibLocaleFonts.ApplyControl(pendingRestartBanner);
@@ -347,12 +345,6 @@ public static partial class ModPanelUI {
                 ModPanelSidebarSwipe.HandleGlobalRelease();
         };
         scrollInner.AddChild(modButtonList);
-        var sidebarPlan = ModPanelSidebarPlanner.Plan(
-            ModRuntime.Registry.GetAllEntries(),
-            KitLibModuleIds.Core,
-            RitsuModSettingsBridge.IsRitsuFrameworkModId,
-            IsSelectableSidebarMod);
-        var ordered = new List<KitLibModEntry>(sidebarPlan.OrderedMods);
         void RefreshPendingRestartBanner() {
             var pending = ModRuntime.LoadSettings.HasPendingRestartChanges();
             pendingRestartBanner.Visible = pending;
@@ -361,11 +353,10 @@ public static partial class ModPanelUI {
                     "Restart the game to apply mod enable/disable changes.");
             }
         }
+        var ordered = new List<KitLibModEntry>();
         var modRows = new List<SidebarModRowVm>();
-        var initialSelectedId = ResolveInitialSidebarModId(sidebarPlan, ordered);
-        var initialSelectedSource = ResolveInitialSidebarModSource(ordered, initialSelectedId);
-        var selectedModId = initialSelectedId;
-        var selectedSource = initialSelectedSource;
+        var selectedModId = "";
+        var selectedSource = ModEntrySource.ModsDirectory;
         var contentState = new ModPanelContentState();
         Control? scopeFocusTarget = null;
         ModPanelControllerSupport controllerSupport = new();
@@ -440,18 +431,40 @@ public static partial class ModPanelUI {
                     Callable.From(() => selectedRow.Host.TryGrabFocus()).CallDeferred();
             }
         }
-        if (ordered.Count == 0) {
-            var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
-            ApplySidebarTexts(fallback, showcaseModId, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
-            var tex0 = ModPanelModBanner.TryLoadModIcon(fallback, showcaseModId);
-            ApplyPreviewState(tex0, fallback == null, modIcon, previewPlaceholder, previewCaption);
-            contentState.PageId = ResolveInitialPageId(showcaseModId);
-            Callable.From(RebuildRitsuRightPane).CallDeferred();
-        }
-        else {
+        // Rebuilds the row list from the live registry; also re-run when the game detects a runtime mod.
+        void BuildSidebarModRows(bool firstBuild) {
+            var plan = ModPanelSidebarPlanner.Plan(
+                ModRuntime.Registry.GetAllEntries(),
+                KitLibModuleIds.Core,
+                RitsuModSettingsBridge.IsRitsuFrameworkModId,
+                IsSelectableSidebarMod);
+            ordered.Clear();
+            ordered.AddRange(plan.OrderedMods);
+            if (firstBuild) {
+                selectedModId = ResolveInitialSidebarModId(plan, ordered);
+                selectedSource = ResolveInitialSidebarModSource(ordered, selectedModId);
+            }
+            ModPanelSidebarSwipe.Reset();
+            modRows.Clear();
+            foreach (Node child in modButtonList.GetChildren()) {
+                modButtonList.RemoveChild(child);
+                child.QueueFree();
+            }
+            if (ordered.Count == 0) {
+                if (!firstBuild)
+                    return;
+                var fallback = ModPanelModBanner.TryFindMod(showcaseModId);
+                ApplySidebarTexts(fallback, showcaseModId, titleEditor, metaChipRow, modIdLabel, descScroll, descLabel);
+                var tex0 = ModPanelModBanner.TryLoadModIcon(fallback, showcaseModId);
+                ApplyPreviewState(tex0, fallback == null, modIcon, previewPlaceholder, previewCaption);
+                contentState.PageId = ResolveInitialPageId(showcaseModId);
+                Callable.From(RebuildRitsuRightPane).CallDeferred();
+                return;
+            }
             foreach (var info in ordered) {
                 var displayName = ResolveSidebarListTitle(info);
-                var isSel = string.Equals(info.Id, initialSelectedId, StringComparison.OrdinalIgnoreCase);
+                var isSel = string.Equals(info.Id, selectedModId, StringComparison.OrdinalIgnoreCase)
+                    && info.Source == selectedSource;
                 var captured = info;
                 var section = new VBoxContainer {
                     Name = $"SidebarModSection_{info.Id}",
@@ -498,6 +511,8 @@ public static partial class ModPanelUI {
                 actionsBar.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
                 actionsBar.AnchorLeft = 1f;
                 var toggleState = captured.IsEnabledInSettings;
+                // Assigned once the row chrome exists; keeps title/badge in sync with the live toggle.
+                Action refreshRowState = static () => { };
                 var toggleBtn = ModPanelSidebarSwipe.CreateActionButton(
                     ModPanelSidebarSwipe.SlateTint(),
                     ModPanelSidebarSwipe.SlateTint(hover: true),
@@ -507,6 +522,16 @@ public static partial class ModPanelUI {
                         toggleState ? "Disable" : "Enable");
                 }
                 RefreshToggleLabel();
+                // Shared by the swipe action button and the row double-click; read-only during a run.
+                void ToggleModEnabled() {
+                    if (!ModPanelHostContext.IsModLoadEditingAllowed)
+                        return;
+                    toggleState = !toggleState;
+                    ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, toggleState);
+                    RefreshToggleLabel();
+                    refreshRowState();
+                    RefreshPendingRestartBanner();
+                }
                 actionsBar.AddChild(toggleBtn);
                 var openFolderBtn = ModPanelSidebarSwipe.CreateActionButton(
                     ModPanelSidebarSwipe.InfoTint(),
@@ -514,17 +539,10 @@ public static partial class ModPanelUI {
                     ModPanelSidebarSwipe.InfoTint(disabled: true));
                 actionsBar.AddChild(openFolderBtn);
                 rowHost.AddChild(actionsBar);
-                if (ModPanelHostContext.IsModLoadEditingAllowed) {
-                    toggleBtn.Pressed += () => {
-                        toggleState = !toggleState;
-                        ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, toggleState);
-                        RefreshToggleLabel();
-                        RefreshPendingRestartBanner();
-                    };
-                }
-                else {
+                if (ModPanelHostContext.IsModLoadEditingAllowed)
+                    toggleBtn.Pressed += ToggleModEnabled;
+                else
                     toggleBtn.Disabled = true;
-                }
                 if (captured.Source == ModEntrySource.SteamWorkshop) {
                     openFolderBtn.QueueFree();
                 }
@@ -556,18 +574,41 @@ public static partial class ModPanelUI {
                 rowContent.OffsetRight = -12;
                 rowContent.OffsetTop = 8;
                 rowContent.OffsetBottom = -8;
-                var rowIcon = new TextureRect {
+                var iconSlot = new Control {
                     CustomMinimumSize = new Vector2(40f, 40f),
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                };
+                var rowIcon = new TextureRect {
                     ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
                     StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                 };
+                rowIcon.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
                 var modIconTex = ModPanelModBanner.TryLoadModIcon(null, captured.Id);
                 if (modIconTex != null)
                     rowIcon.Texture = modIconTex;
                 else
                     rowIcon.Visible = false;
-                rowContent.AddChild(rowIcon);
+                iconSlot.AddChild(rowIcon);
+                var restartDot = new Panel {
+                    Name = "ModPanelPendingRestartDot",
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    Visible = false,
+                };
+                restartDot.SetAnchorsPreset(Control.LayoutPreset.TopRight);
+                restartDot.OffsetLeft = -13f;
+                restartDot.OffsetTop = 1f;
+                restartDot.OffsetRight = -1f;
+                restartDot.OffsetBottom = 13f;
+                restartDot.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
+                    BgColor = ModPanelUiPalette.PendingRestartAmber,
+                    CornerRadiusTopLeft = 6,
+                    CornerRadiusTopRight = 6,
+                    CornerRadiusBottomRight = 6,
+                    CornerRadiusBottomLeft = 6,
+                });
+                iconSlot.AddChild(restartDot);
+                rowContent.AddChild(iconSlot);
                 var titleLbl = new Label {
                     MouseFilter = Control.MouseFilterEnum.Ignore,
                     Text = displayName,
@@ -578,11 +619,16 @@ public static partial class ModPanelUI {
                     SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
                     LabelSettings = new LabelSettings {
                         FontSize = 22,
-                        FontColor = ResolveSidebarModTitleColor(captured.LoadStatus),
                     },
                 };
                 KitLibLocaleFonts.ApplyControl(titleLbl);
                 rowContent.AddChild(titleLbl);
+                refreshRowState = () => {
+                    titleLbl.LabelSettings.FontColor =
+                        ResolveSidebarModTitleColor(captured.LoadStatus, toggleState);
+                    restartDot.Visible = ShouldShowPendingRestartBadge(captured.LoadStatus, toggleState);
+                };
+                refreshRowState();
                 var versionChip = CreateSidebarModListVersionChip(captured.Version);
                 if (versionChip != null)
                     rowContent.AddChild(versionChip);
@@ -619,6 +665,11 @@ public static partial class ModPanelUI {
                         }
                         if (mb.ButtonIndex == MouseButton.Left) {
                             if (mb.Pressed) {
+                                if (mb.DoubleClick) {
+                                    ToggleModEnabled();
+                                    rowHost.AcceptEvent();
+                                    return;
+                                }
                                 vm.Pressing = true;
                                 RefreshModRowChrome();
                                 ModPanelSidebarSwipe.HandlePressStart(vm, mb.Position, touch: false);
@@ -662,9 +713,39 @@ public static partial class ModPanelUI {
                 };
                 cardContent.AddChild(rowHost);
             }
-            var deferredInitial = initialSelectedId;
-            Callable.From(() => SelectMod(deferredInitial, initialSelectedSource)).CallDeferred();
+            // Keep the current selection across a rebuild; fall back to the first row when it is gone.
+            Callable.From(() => {
+                if (!GodotObject.IsInstanceValid(shell))
+                    return;
+                var target = modRows.Find(r => string.Equals(r.Id, selectedModId, StringComparison.OrdinalIgnoreCase)
+                    && r.Entry.Source == selectedSource);
+                if (target == null && modRows.Count > 0) {
+                    target = modRows[0];
+                    selectedModId = target.Id;
+                    selectedSource = target.Entry.Source;
+                }
+                if (target != null)
+                    SelectMod(selectedModId, selectedSource);
+            }).CallDeferred();
         }
+        BuildSidebarModRows(firstBuild: true);
+        // Runtime-detected mods (e.g. a Workshop item finishing mid-session) refresh the list live.
+        var modRefreshQueued = false;
+        ModManager.OnModDetected += OnRuntimeModDetected;
+        shell.TreeExiting += OnShellTreeExiting;
+        void OnRuntimeModDetected(Mod _) {
+            if (modRefreshQueued || !GodotObject.IsInstanceValid(shell))
+                return;
+            modRefreshQueued = true;
+            Callable.From(() => {
+                modRefreshQueued = false;
+                if (!GodotObject.IsInstanceValid(shell))
+                    return;
+                BuildSidebarModRows(firstBuild: false);
+                RefreshPendingRestartBanner();
+            }).CallDeferred();
+        }
+        void OnShellTreeExiting() => ModManager.OnModDetected -= OnRuntimeModDetected;
         RefreshPendingRestartBanner();
         var dividerLine = CreateSidebarScrollTopDivider();
         dividerLine.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;

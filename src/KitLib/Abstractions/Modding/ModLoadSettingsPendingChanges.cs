@@ -7,6 +7,9 @@ public static class ModLoadSettingsPendingChanges {
             return true;
         if (runtimeStatus == ModEntryLoadStatus.Loaded && !settingsEnabled)
             return true;
+        // Runtime-added mods miss the launch-time load pass; enabling one needs a restart.
+        if (runtimeStatus == ModEntryLoadStatus.AddedAtRuntime && settingsEnabled)
+            return true;
         return false;
     }
 

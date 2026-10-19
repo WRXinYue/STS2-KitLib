@@ -11,6 +11,11 @@ public static class ModPanelUiPalette {
     public static readonly Color LabelSecondary = new(0.86f, 0.825f, 0.755f, 0.98f);
     /// <summary>Failed-mod title and compat warning accent (matches <see cref="ResolveSidebarModTitleColor"/> Failed).</summary>
     public static readonly Color CompatWarning = new(0.92f, 0.38f, 0.34f, 1f);
+    /// <summary>
+    /// <para xml:lang="en">Pending-restart accent shared by the sidebar banner and mod-row marks.</para>
+    /// <para xml:lang="zh-CN">侧栏横幅与模组行标记共用的待重启提示色。</para>
+    /// </summary>
+    public static readonly Color PendingRestartAmber = new(0.95f, 0.78f, 0.42f, 0.98f);
     public static readonly Color SidebarSection = new(0.88f, 0.855f, 0.795f);
     public static Color SidebarModActiveAccent => KitLibTheme.Accent;
 }

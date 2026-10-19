@@ -18,14 +18,32 @@ public static partial class ModPanelUI {
 
     internal static MegaRichTextLabel CreateModStatusDescription(string statusText)
         => CreateInlineDescription(statusText);
-    internal static Color ResolveSidebarModTitleColor(ModEntryLoadStatus status) => status switch {
+    internal static Color ResolveLoadStatusColor(ModEntryLoadStatus status) => status switch {
         ModEntryLoadStatus.Loaded => ModPanelUiPalette.LabelPrimary,
         ModEntryLoadStatus.Failed => ModPanelUiPalette.CompatWarning,
-        ModEntryLoadStatus.Disabled => new Color(0.55f, 0.52f, 0.48f, 0.95f),
-        ModEntryLoadStatus.DisabledDuplicate => new Color(0.55f, 0.52f, 0.48f, 0.95f),
-        ModEntryLoadStatus.AddedAtRuntime => new Color(0.55f, 0.52f, 0.48f, 0.95f),
+        ModEntryLoadStatus.Disabled or ModEntryLoadStatus.DisabledDuplicate
+            or ModEntryLoadStatus.AddedAtRuntime => new Color(0.55f, 0.52f, 0.48f, 0.95f),
         _ => new Color(0.62f, 0.52f, 0.72f, 0.95f),
     };
+
+    /// <summary>
+    /// <para xml:lang="en">Row title color from load state and the live settings toggle (grey states stay grey; a grey
+    /// row with a pending restart gets an amber icon badge instead).</para>
+    /// <para xml:lang="zh-CN">依据加载状态与当前设置开关取行标题颜色（灰色状态保持灰色，待重启的灰色行改用琥珀色图标角标）。</para>
+    /// </summary>
+    internal static Color ResolveSidebarModTitleColor(ModEntryLoadStatus status, bool settingsEnabled)
+        => status == ModEntryLoadStatus.Loaded && !settingsEnabled
+            ? ModPanelUiPalette.PendingRestartAmber
+            : ResolveLoadStatusColor(status);
+
+    /// <summary>
+    /// <para xml:lang="en">True when a grey row needs an amber icon badge: enabled in settings but absent from this
+    /// launch (disabled mod turned on, or mod detected after load).</para>
+    /// <para xml:lang="zh-CN">灰色行何时需要琥珀色图标角标：设置已启用但本局未加载（停用模组被开启，或加载后才探测到的模组）。</para>
+    /// </summary>
+    internal static bool ShouldShowPendingRestartBadge(ModEntryLoadStatus status, bool settingsEnabled)
+        => settingsEnabled
+           && (status == ModEntryLoadStatus.Disabled || status == ModEntryLoadStatus.AddedAtRuntime);
     internal static void ApplySidebarModGroupInnerRowStyle(StyleBoxFlat box, bool selected, bool pressed,
         bool focused = false) {
         var a = ModPanelUiMetrics.SidebarModListSubtleAlpha;
@@ -231,7 +249,7 @@ public static partial class ModPanelUI {
         if (status is ModEntryLoadStatus.Loaded or ModEntryLoadStatus.None)
             return null;
         var statusText = ModPanelInstallSource.FormatLoadStatus(status);
-        var statusColor = ResolveSidebarModTitleColor(status);
+        var statusColor = ResolveLoadStatusColor(status);
         var label = new Label {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             Text = statusText,

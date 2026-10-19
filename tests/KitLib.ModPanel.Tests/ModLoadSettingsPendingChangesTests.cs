@@ -9,6 +9,9 @@ public sealed class ModLoadSettingsPendingChangesTests {
     [InlineData(ModEntryLoadStatus.Loaded, true, false)]
     [InlineData(ModEntryLoadStatus.Disabled, false, false)]
     [InlineData(ModEntryLoadStatus.Failed, true, false)]
+    [InlineData(ModEntryLoadStatus.AddedAtRuntime, true, true)]
+    [InlineData(ModEntryLoadStatus.AddedAtRuntime, false, false)]
+    [InlineData(ModEntryLoadStatus.DisabledDuplicate, true, false)]
     public void EntryHasPendingRestart_matches_official_rules(ModEntryLoadStatus runtime, bool enabled,
         bool expected) {
         Assert.Equal(expected, ModLoadSettingsPendingChanges.EntryHasPendingRestart(runtime, enabled));
