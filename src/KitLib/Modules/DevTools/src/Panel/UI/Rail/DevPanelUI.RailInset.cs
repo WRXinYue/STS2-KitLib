@@ -17,7 +17,8 @@ internal static partial class DevPanelUI {
     /// <see cref="RailInsetW"/>, which is also the width of the left contour band
     /// (<c>RailBackdrop</c>) where the screen frame's left border is widened to host the rail. The top
     /// bar is additionally pushed down and the hand container lifted by
-    /// <see cref="KitLibScreenFrame.Margin"/>. Background layers and the rest of the combat HUD are
+    /// <see cref="KitLibScreenFrame.Margin"/>, and the boxes stacked under the top bar ride that same
+    /// drop so their vanilla spacing survives. Background layers and the rest of the combat HUD are
     /// intentionally NOT moved — the band simply covers the left edge of the background, and
     /// right-anchored piles never run off-screen.
     /// </summary>
@@ -25,10 +26,21 @@ internal static partial class DevPanelUI {
 
     private static SceneTree? _railTree;
     private static bool _railInsetQueued;
+
+    // HACK: temporary TopBar presence/visibility trace for the "official top bar vanishes mid-run" report.
+    private static bool _diagMissing = true;
+    private static bool _diagVisible;
+    private static bool _diagInTree;
+    private static Vector2 _diagSize;
+    private static Node? _diagParent;
+    private static float _diagWrapT = float.NaN;
+    private static bool _diagWrapShown;
+
     // FullRect content pushed right by RailInsetW and down by the frame margin: the top bar.
     private static readonly List<(Control Ctrl, float Left, float Top, float LastLeft, float LastTop)> _leftContentInset = new();
-    // Double-offset content nodes (left-anchored boxes that must keep width): relic inventory / multiplayer bar.
-    private static readonly List<(Control Ctrl, float Left, float Right, float LastLeft)> _leftContentShifted = new();
+    // Double-offset content nodes (left-anchored boxes that must keep their size): relic inventory /
+    // multiplayer bar. Both edges move per axis, so the box translates instead of resizing.
+    private static readonly List<(Control Ctrl, float Left, float Right, float Top, float Bottom, float LastLeft, float LastTop)> _leftContentShifted = new();
 
     // Bottom frame margin target: the hand container is the only node whose content reaches the frame edge.
     private static Control? _frameHand;
@@ -38,16 +50,23 @@ internal static partial class DevPanelUI {
 
     internal static void AttachRailInset(NGlobalUi globalUi) {
         DetachRailInset();
+        KitLog.Info("RailDiag", "AttachRailInset");
         _railTree = ((Node)globalUi).GetTree();
         _railTree.ProcessFrame += TickLeftInset;
     }
 
     internal static void DetachRailInset() {
+        if (_railTree != null || _leftContentInset.Count > 0 || _leftContentShifted.Count > 0)
+            KitLog.Info("RailDiag",
+                $"DetachRailInset tree={_railTree != null} inset={_leftContentInset.Count} shifted={_leftContentShifted.Count}");
         if (_railTree != null) {
             _railTree.ProcessFrame -= TickLeftInset;
             _railTree = null;
         }
         _railInsetQueued = false;
+        _diagMissing = true;
+        _diagParent = null;
+        _diagSize = Vector2.Zero;
         RestoreLeftContentInset();
     }
 
@@ -81,11 +100,13 @@ internal static partial class DevPanelUI {
         // TopBar is a FullRect child of GlobalUi; shifting its OffsetLeft moves the left-anchored
         // player info right while keeping the right-anchored buttons pinned (their vanilla edge is
         // exactly 16px in), and shifting OffsetTop drops the whole strip below the frame's top edge.
+        Control? topBar = null;
         if (_railGlobalUi is Control globalUiTop) {
-            var topBar = globalUiTop.GetNodeOrNull<Control>("TopBar");
+            topBar = globalUiTop.GetNodeOrNull<Control>("TopBar");
             if (topBar != null)
                 wanted.Add(topBar);
         }
+        DiagTopBar(topBar);
 
         for (int i = _leftContentInset.Count - 1; i >= 0; i--) {
             var (ctrl, left, top, _, _) = _leftContentInset[i];
@@ -109,6 +130,9 @@ internal static partial class DevPanelUI {
             bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft) ||
                              float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop);
             if (gameOwned) {
+                if (!Mathf.IsEqualApprox(left, c.OffsetLeft) || !Mathf.IsEqualApprox(top, c.OffsetTop))
+                    KitLog.Info("RailDiag",
+                        $"{c.Name} game-owned base -> left={c.OffsetLeft} top={c.OffsetTop} (was left={left} top={top})");
                 left = c.OffsetLeft;
                 top = c.OffsetTop;
             }
@@ -122,11 +146,12 @@ internal static partial class DevPanelUI {
             _leftContentInset[i] = (c, left, top, wantedLeft, wantedTop);
         }
 
-        // Left-anchored boxes that must keep their width: shift both edges right.
+        // Left-anchored boxes that must keep their size: shift both edges right, and drop them by the
+        // same frame margin the top bar takes, so the bar keeps its gap to the row beneath it.
         if (_railGlobalUi is Control globalCtrl) {
-            PushLeftShifted(_leftContentShifted, globalCtrl.GetNodeOrNull<Control>("RelicInventory"), railInset);
+            PushShifted(_leftContentShifted, globalCtrl.GetNodeOrNull<Control>("RelicInventory"), railInset, frameMargin);
             if (globalCtrl is NGlobalUi g)
-                PushLeftShifted(_leftContentShifted, g.MultiplayerPlayerContainer, railInset);
+                PushShifted(_leftContentShifted, g.MultiplayerPlayerContainer, railInset, frameMargin);
         }
 
         // The draw pile is left-bottom anchored (x=15..95) and would sit under the rail strip,
@@ -134,7 +159,7 @@ internal static partial class DevPanelUI {
         // Discard / exhaust piles are right-anchored and stay put — no risk of running off-screen.
         if (NCombatRoom.Instance?.Ui is Control combatUi) {
             var piles = combatUi.GetNodeOrNull<Control>("%CombatPileContainer");
-            PushLeftShifted(_leftContentShifted, piles?.GetNodeOrNull<Control>("%DrawPile"), railInset);
+            PushShifted(_leftContentShifted, piles?.GetNodeOrNull<Control>("%DrawPile"), railInset, 0f);
         }
     }
 
@@ -205,40 +230,86 @@ internal static partial class DevPanelUI {
     // Only the left-anchored draw pile is pushed right (see ApplyLeftContentInset); the hand is
     // lifted vertically instead (see ApplyFrameBottomInset).
 
-    static void PushLeftShifted(
-        List<(Control Ctrl, float Left, float Right, float LastLeft)> list, Control? ctrl, float amount) {
+    static void PushShifted(
+        List<(Control Ctrl, float Left, float Right, float Top, float Bottom, float LastLeft, float LastTop)> list,
+        Control? ctrl, float dx, float dy) {
         if (ctrl == null || !GodotObject.IsInstanceValid(ctrl))
             return;
 
         int i = list.FindIndex(s => s.Ctrl == ctrl);
         if (i < 0) {
-            list.Add((ctrl, ctrl.OffsetLeft, ctrl.OffsetRight, float.NaN));
+            list.Add((ctrl, ctrl.OffsetLeft, ctrl.OffsetRight, ctrl.OffsetTop, ctrl.OffsetBottom,
+                float.NaN, float.NaN));
             i = list.Count - 1;
         }
 
-        var (c, left, right, lastLeft) = list[i];
-        bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft);
+        var (c, left, right, top, bottom, lastLeft, lastTop) = list[i];
+        bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft) ||
+                         float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop);
         if (gameOwned) {
             left = c.OffsetLeft;
             right = c.OffsetRight;
+            top = c.OffsetTop;
+            bottom = c.OffsetBottom;
         }
 
-        float wantedLeft = left + amount;
-        float wantedRight = right + amount;
+        float wantedLeft = left + dx;
+        float wantedRight = right + dx;
+        float wantedTop = top + dy;
+        float wantedBottom = bottom + dy;
         if (!Mathf.IsEqualApprox(c.OffsetLeft, wantedLeft))
             c.OffsetLeft = wantedLeft;
         if (!Mathf.IsEqualApprox(c.OffsetRight, wantedRight))
             c.OffsetRight = wantedRight;
-        list[i] = (c, left, right, wantedLeft);
+        if (!Mathf.IsEqualApprox(c.OffsetTop, wantedTop))
+            c.OffsetTop = wantedTop;
+        if (!Mathf.IsEqualApprox(c.OffsetBottom, wantedBottom))
+            c.OffsetBottom = wantedBottom;
+        list[i] = (c, left, right, top, bottom, wantedLeft, wantedTop);
     }
 
-    static void RestoreLeftShiftedList(List<(Control Ctrl, float Left, float Right, float LastLeft)> list) {
-        foreach (var (ctrl, left, right, _) in list) {
+    static void RestoreLeftShiftedList(
+        List<(Control Ctrl, float Left, float Right, float Top, float Bottom, float LastLeft, float LastTop)> list) {
+        foreach (var (ctrl, left, right, top, bottom, _, _) in list) {
             if (GodotObject.IsInstanceValid(ctrl)) {
                 ctrl.OffsetLeft = left;
                 ctrl.OffsetRight = right;
+                ctrl.OffsetTop = top;
+                ctrl.OffsetBottom = bottom;
             }
         }
         list.Clear();
+    }
+
+    // HACK: logs only when the observed state changes so it does not spam; remove once the report is closed.
+    static void DiagTopBar(Control? topBar) {
+        float wrapT = KitLibScreenFrame.WrapT;
+        bool wrapShown = KitLibScreenFrame.WrapShown;
+
+        bool missing = topBar == null;
+        bool visible = !missing && topBar!.Visible;
+        bool inTree = !missing && topBar!.IsVisibleInTree();
+        Vector2 size = missing ? Vector2.Zero : topBar!.Size;
+        Node? parent = missing ? null : topBar!.GetParent();
+
+        bool changed = missing != _diagMissing || visible != _diagVisible || inTree != _diagInTree ||
+                       parent != _diagParent || !size.IsEqualApprox(_diagSize);
+        if (changed) {
+            _diagMissing = missing;
+            _diagVisible = visible;
+            _diagInTree = inTree;
+            _diagSize = size;
+            _diagParent = parent;
+            KitLog.Info("RailDiag", missing
+                ? $"TopBar MISSING (wrapT={wrapT:0.###} wrapShown={wrapShown})"
+                : $"TopBar visible={visible} inTree={inTree} size={size} gpos={topBar!.GlobalPosition} "
+                  + $"parent={(parent == null ? "null" : parent.Name.ToString())} (wrapT={wrapT:0.###} wrapShown={wrapShown})");
+        }
+
+        if (!Mathf.IsEqualApprox(wrapT, _diagWrapT) || wrapShown != _diagWrapShown) {
+            _diagWrapT = wrapT;
+            _diagWrapShown = wrapShown;
+            KitLog.Info("RailDiag", $"wrap wrapT={wrapT:0.###} wrapShown={wrapShown}");
+        }
     }
 }

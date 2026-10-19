@@ -80,6 +80,32 @@ internal static class MainMenuRailHost {
     /// <summary>Screen-space Y to pin the strip's taper to; &lt;= 0 (default) follows the rail's content instead.</summary>
     internal static float BandStepOverride { get; set; } = -1f;
 
+    /// <summary>Damping ratio of the taper arc; softer, so it settles slightly after the height.</summary>
+    private const float BandStepSpringZetaCurve = 0.65f;
+
+    // Targets the taper animates towards; _bandStepY / _bandStepCurve hold the current animated values.
+    private static float _bandStepYTarget = -1f;
+    private static float _bandStepCurveTarget;
+    // Cleared on reset so the first placement of a fresh rail snaps instead of animating in.
+    private static bool _bandStepInit;
+    private static Tween? _bandStepTween;
+
+    // Indicator row the highlight slides towards; the tween rewrites the panel's own offsets.
+    private static float _indicatorTopTarget;
+    private static float _indicatorBottomTarget;
+    // False until the indicator has been placed, so appearing at a row snaps instead of sliding in.
+    private static bool _indicatorPlaced;
+    private static Tween? _indicatorTween;
+
+    /// <summary>Scale a row starts at when it springs in; it settles at 1.</summary>
+    private const float RowAppearScale = 0.9f;
+    /// <summary>Meta key holding a row's target visibility, so the poll only animates real flips.</summary>
+    private const string RowShownMetaKey = "kitlib_rail_row_shown";
+    /// <summary>Meta key holding a row's in-flight appear / disappear tween.</summary>
+    private const string RowTweenMetaKey = "kitlib_rail_row_tween";
+    // Cleared on reset so the first surface's rows appear without animating in.
+    private static bool _rowsPrimed;
+
     /// <summary>Whether the rail is currently hosted by <paramref name="mainMenu"/>.</summary>
     internal static bool IsAttachedTo(NMainMenu mainMenu) =>
         _root != null && _menu == mainMenu &&
@@ -342,11 +368,26 @@ internal static class MainMenuRailHost {
         _railButtons.Clear();
         _signature = signature;
 
+        if (_indicatorTween != null && GodotObject.IsInstanceValid(_indicatorTween))
+            _indicatorTween.Kill();
+        _indicatorTween = null;
+        _indicatorPlaced = false;
+
         if (_indicator != null)
             _indicator.Visible = false;
 
-        foreach (var registration in registrations)
-            _buttons.AddChild(CreateButton(mainMenu, registration));
+        // The first surface's rows are placed at rest; later rebuilds (surface switches) spring in.
+        bool animateRows = _rowsPrimed;
+        _rowsPrimed = true;
+
+        foreach (var registration in registrations) {
+            var button = CreateButton(mainMenu, registration);
+            _buttons.AddChild(button);
+            if (animateRows) {
+                button.SetMeta(RowShownMetaKey, true);
+                AnimateRow(button, appear: true);
+            }
+        }
     }
 
     private static Button CreateButton(NMainMenu mainMenu, KitLibMainMenuCornerButtonRegistration registration) {
@@ -362,6 +403,8 @@ internal static class MainMenuRailHost {
             MouseFilter = Control.MouseFilterEnum.Stop,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand,
             TooltipText = title,
+            // Scales from its left edge, so a row grows in without drifting sideways.
+            PivotOffset = new Vector2(0f, KitLibRailChrome.IconButtonSize * 0.5f),
         };
         if (LabelFont() is { } font)
             button.AddThemeFontOverride("font", font);
@@ -419,8 +462,8 @@ internal static class MainMenuRailHost {
         for (var i = 0; i < _railButtons.Count && i < registrations.Count; i++) {
             var registration = registrations[i];
             var button = _railButtons[i];
-            button.Visible = MainMenuCornerButtonHost.TryEvaluateButtonVisibility(
-                mainMenu, RegistrationKey(registration), surface);
+            SetRowVisible(button, MainMenuCornerButtonHost.TryEvaluateButtonVisibility(
+                mainMenu, RegistrationKey(registration), surface));
 
             bool isOpen = occupiedKey != null &&
                 string.Equals(RegistrationKey(registration), occupiedKey, StringComparison.OrdinalIgnoreCase);
@@ -444,12 +487,140 @@ internal static class MainMenuRailHost {
 
         if (open == null) {
             _indicator.Visible = false;
+            _indicatorPlaced = false;
             return;
         }
 
         _indicator.Visible = true;
-        _indicator.OffsetTop = open.Position.Y;
-        _indicator.OffsetBottom = open.Position.Y + open.Size.Y;
+
+        float top = open.Position.Y;
+        float bottom = top + open.Size.Y;
+
+        // Appear at the row directly; only a row-to-row move reads as a slide.
+        if (!_indicatorPlaced) {
+            _indicatorPlaced = true;
+            _indicatorTopTarget = top;
+            _indicatorBottomTarget = bottom;
+            _indicator.OffsetTop = top;
+            _indicator.OffsetBottom = bottom;
+            return;
+        }
+
+        // The poll re-enters every 0.1s; comparing against the target keeps the tween from restarting.
+        if (Mathf.IsEqualApprox(top, _indicatorTopTarget) &&
+            Mathf.IsEqualApprox(bottom, _indicatorBottomTarget))
+            return;
+
+        _indicatorTopTarget = top;
+        _indicatorBottomTarget = bottom;
+        AnimateIndicator(top, bottom);
+    }
+
+    /// <summary>Ease the highlight pill between rows with the rail's spring.</summary>
+    private static void AnimateIndicator(float top, float bottom) {
+        if (_indicatorTween != null && GodotObject.IsInstanceValid(_indicatorTween))
+            _indicatorTween.Kill();
+        _indicatorTween = null;
+
+        var indicator = _indicator;
+        if (indicator == null || !GodotObject.IsInstanceValid(indicator))
+            return;
+
+        float fromTop = indicator.OffsetTop;
+        float fromBottom = indicator.OffsetBottom;
+        var tween = indicator.CreateTween();
+        // The tween drives 0..1 progress; SpringEase() shapes it into a light overshoot.
+        tween.TweenMethod(Callable.From<float>(p => {
+            float eased = KitLibRailChrome.SpringEase(p * KitLibRailChrome.SpringSeconds, KitLibRailChrome.SpringZeta);
+            indicator.OffsetTop = Mathf.Lerp(fromTop, top, eased);
+            indicator.OffsetBottom = Mathf.Lerp(fromBottom, bottom, eased);
+        }), 0f, 1f, KitLibRailChrome.SpringSeconds)
+            .SetTrans(Tween.TransitionType.Linear);
+        // A spring's last step can land off target; snap so the pill settles cleanly.
+        tween.Finished += () => {
+            indicator.OffsetTop = top;
+            indicator.OffsetBottom = bottom;
+            _indicatorTween = null;
+        };
+        _indicatorTween = tween;
+    }
+
+    /// <summary>Show or hide a row, animating only real flips so the 0.1s poll does not re-fire it.</summary>
+    private static void SetRowVisible(Button button, bool visible) {
+        if (button.HasMeta(RowShownMetaKey) && button.GetMeta(RowShownMetaKey).AsBool() == visible)
+            return;
+
+        // A row with no recorded state is being placed for the first time: snap instead of animating.
+        bool placed = button.HasMeta(RowShownMetaKey);
+        button.SetMeta(RowShownMetaKey, visible);
+
+        if (!placed) {
+            button.Visible = visible;
+            button.Modulate = Colors.White;
+            button.Scale = Vector2.One;
+            return;
+        }
+
+        AnimateRow(button, appear: visible);
+    }
+
+    /// <summary>
+    /// Spring a row's text in or out with scale and alpha, so a surface change reads as a fade instead of
+    /// a hard swap. Layout stays with the container; only the drawing animates.
+    /// </summary>
+    private static void AnimateRow(Button button, bool appear) {
+        KillRowTween(button);
+
+        if (!button.IsInsideTree()) {
+            button.Visible = appear;
+            button.Modulate = Colors.White;
+            button.Scale = Vector2.One;
+            return;
+        }
+
+        if (appear) {
+            button.Visible = true;
+            button.Modulate = new Color(1f, 1f, 1f, 0f);
+            button.Scale = new Vector2(RowAppearScale, RowAppearScale);
+        }
+        else if (!button.Visible) {
+            return;
+        }
+
+        float fromAlpha = button.Modulate.A;
+        var fromScale = button.Scale;
+        float toAlpha = appear ? 1f : 0f;
+        var toScale = appear ? Vector2.One : new Vector2(RowAppearScale, RowAppearScale);
+
+        var tween = button.CreateTween();
+        // The tween drives 0..1 progress; SpringEase() shapes it into a light overshoot.
+        tween.TweenMethod(Callable.From<float>(p => {
+            float eased = KitLibRailChrome.SpringEase(p * KitLibRailChrome.SpringSeconds, KitLibRailChrome.SpringZeta);
+            var color = button.Modulate;
+            color.A = Mathf.Lerp(fromAlpha, toAlpha, eased);
+            button.Modulate = color;
+            button.Scale = fromScale.Lerp(toScale, eased);
+        }), 0f, 1f, KitLibRailChrome.SpringSeconds)
+            .SetTrans(Tween.TransitionType.Linear);
+        // A spring's last step can land off target; snap so the row settles cleanly.
+        tween.Finished += () => {
+            button.Modulate = new Color(1f, 1f, 1f, toAlpha);
+            button.Scale = toScale;
+            if (!appear)
+                button.Visible = false;
+            button.RemoveMeta(RowTweenMetaKey);
+        };
+        button.SetMeta(RowTweenMetaKey, tween);
+    }
+
+    private static void KillRowTween(Button button) {
+        if (!button.HasMeta(RowTweenMetaKey))
+            return;
+
+        var meta = button.GetMeta(RowTweenMetaKey);
+        if (meta.VariantType == Variant.Type.Object && meta.AsGodotObject() is Tween tween)
+            tween.Kill();
+        button.RemoveMeta(RowTweenMetaKey);
     }
 
     private static void OnButtonPressed(NMainMenu mainMenu, KitLibMainMenuCornerButtonRegistration registration) {
@@ -478,14 +649,36 @@ internal static class MainMenuRailHost {
         // frame's own edge, so the spare room below never reads as a wide empty band. The taper scales
         // with the content, and BandStepOverride pins it when a caller wants a fixed height.
         var content = RailContent();
-        _bandStepCurve = Mathf.Clamp(content.Height * BandStepCurveRatio, BandStepCurveMin, BandStepCurveMax);
+        float targetCurve = Mathf.Clamp(content.Height * BandStepCurveRatio, BandStepCurveMin, BandStepCurveMax);
+        float targetStepY = BandStepOverride > 0f
+            ? BandStepOverride
+            : content.Height < 0f
+                ? -1f
+                : content.Bottom + BandStepClearance + targetCurve;
 
-        if (BandStepOverride > 0f)
-            _bandStepY = BandStepOverride;
-        else if (content.Height < 0f)
-            _bandStepY = -1f;
-        else
-            _bandStepY = content.Bottom + BandStepClearance + _bandStepCurve;
+        // Compare against the target, not the animated value: the poll would otherwise restart the tween
+        // mid-flight on every tick.
+        bool targetChanged = !_bandStepInit ||
+                             !Mathf.IsEqualApprox(targetStepY, _bandStepYTarget) ||
+                             !Mathf.IsEqualApprox(targetCurve, _bandStepCurveTarget);
+        _bandStepYTarget = targetStepY;
+        _bandStepCurveTarget = targetCurve;
+
+        if (!_bandStepInit) {
+            // Fresh rail: place it at its final height so it does not animate in from the default.
+            _bandStepInit = true;
+            _bandStepY = targetStepY;
+            _bandStepCurve = targetCurve;
+            return;
+        }
+
+        // Only ease between two real tapers; entering/leaving "no taper" (-1) snaps.
+        if (targetChanged && _bandStepY > 0f && targetStepY > 0f)
+            AnimateBandStep();
+        else if (targetChanged) {
+            _bandStepY = targetStepY;
+            _bandStepCurve = targetCurve;
+        }
     }
 
     /// <summary>Screen-space extent of the rail's visible entries; <c>Height</c> is &lt; 0 when it shows none.</summary>
@@ -503,6 +696,51 @@ internal static class MainMenuRailHost {
 
         var height = visible * KitLibRailChrome.IconButtonSize + (visible - 1) * ButtonGap;
         return (height, _rail.GlobalPosition.Y + height);
+    }
+
+    /// <summary>
+    /// Ease the strip's taper from its current height to the target with a spring, instead of letting the
+    /// widened band snap when the surface changes how many entries the rail carries.
+    /// </summary>
+    private static void AnimateBandStep() {
+        if (_bandStepTween != null && GodotObject.IsInstanceValid(_bandStepTween))
+            _bandStepTween.Kill();
+        _bandStepTween = null;
+
+        var root = _root;
+        if (root == null || !GodotObject.IsInstanceValid(root)) {
+            _bandStepY = _bandStepYTarget;
+            _bandStepCurve = _bandStepCurveTarget;
+            ApplyMenuWrap();
+            return;
+        }
+
+        float fromY = _bandStepY;
+        float fromCurve = _bandStepCurve;
+        float toY = _bandStepYTarget;
+        float toCurve = _bandStepCurveTarget;
+        var tween = root.CreateTween();
+        tween.SetParallel(true);
+        // The tween only drives 0..1 progress; SpringEase() shapes it. Each height step re-reports the band
+        // so the taper rides the wrap it is layered on.
+        tween.TweenMethod(Callable.From<float>(p => {
+            _bandStepY = Mathf.Lerp(fromY, toY,
+                KitLibRailChrome.SpringEase(p * KitLibRailChrome.SpringSeconds, KitLibRailChrome.SpringZeta));
+            ApplyMenuWrap();
+        }), 0f, 1f, KitLibRailChrome.SpringSeconds)
+            .SetTrans(Tween.TransitionType.Linear);
+        tween.TweenMethod(Callable.From<float>(p =>
+                _bandStepCurve = Mathf.Lerp(fromCurve, toCurve,
+                    KitLibRailChrome.SpringEase(p * KitLibRailChrome.SpringSeconds, BandStepSpringZetaCurve))),
+            0f, 1f, KitLibRailChrome.SpringSeconds)
+            .SetTrans(Tween.TransitionType.Linear);
+        // A spring's last step can land off target; snap so the strip settles cleanly.
+        tween.Finished += () => {
+            _bandStepY = _bandStepYTarget;
+            _bandStepCurve = _bandStepCurveTarget;
+            ApplyMenuWrap();
+        };
+        _bandStepTween = tween;
     }
 
     /// <summary>Gap between the rail's last entry and the start of the strip's taper back to the frame edge.</summary>
@@ -563,7 +801,22 @@ internal static class MainMenuRailHost {
         _wantPresence = false;
 
         RestoreInset();
+        if (_bandStepTween != null && GodotObject.IsInstanceValid(_bandStepTween))
+            _bandStepTween.Kill();
+        _bandStepTween = null;
+        _bandStepInit = false;
+        _bandStepYTarget = -1f;
+        _bandStepCurveTarget = 0f;
         _bandStepY = -1f;
+
+        if (_indicatorTween != null && GodotObject.IsInstanceValid(_indicatorTween))
+            _indicatorTween.Kill();
+        _indicatorTween = null;
+        _indicatorPlaced = false;
+        _indicatorTopTarget = 0f;
+        _indicatorBottomTarget = 0f;
+        _rowsPrimed = false;
+
         _inMultiplayerFlow = false;
         KitLibScreenFrame.SetLeftBand(0f);
         // The frame is a permanent decoration: restore it so the next scene starts with a full edge.

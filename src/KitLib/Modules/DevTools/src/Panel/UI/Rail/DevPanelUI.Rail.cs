@@ -13,6 +13,7 @@ namespace KitLib.UI;
 internal static partial class DevPanelUI {
     private static VBoxContainer? _railVBox;
     private static Panel? _railIndicator;
+    private static Tween? _railIndicatorTween;
     private static readonly List<Button> _railButtons = new();
     private static Action<int, bool>? _moveRailIndicator;
 
@@ -195,13 +196,28 @@ internal static partial class DevPanelUI {
 
             railIndicator.Visible = true;
 
+            if (_railIndicatorTween != null && GodotObject.IsInstanceValid(_railIndicatorTween))
+                _railIndicatorTween.Kill();
+            _railIndicatorTween = null;
+
             if (animate && railIndicator.IsInsideTree()) {
+                float fromTop = railIndicator.OffsetTop;
+                float fromBottom = railIndicator.OffsetBottom;
                 var tw = railIndicator.CreateTween();
-                tw.SetParallel(true);
-                tw.TweenProperty(railIndicator, "offset_top", top, 0.25f)
-                  .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
-                tw.TweenProperty(railIndicator, "offset_bottom", bottom, 0.25f)
-                  .SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+                // The tween drives 0..1 progress; SpringEase() shapes it into a light overshoot.
+                tw.TweenMethod(Callable.From<float>(p => {
+                    float eased = KitLibRailChrome.SpringEase(p * KitLibRailChrome.SpringSeconds, KitLibRailChrome.SpringZeta);
+                    railIndicator.OffsetTop = Mathf.Lerp(fromTop, top, eased);
+                    railIndicator.OffsetBottom = Mathf.Lerp(fromBottom, bottom, eased);
+                }), 0f, 1f, KitLibRailChrome.SpringSeconds)
+                  .SetTrans(Tween.TransitionType.Linear);
+                // A spring's last step can land off target; snap so the pill settles cleanly.
+                tw.Finished += () => {
+                    railIndicator.OffsetTop = top;
+                    railIndicator.OffsetBottom = bottom;
+                    _railIndicatorTween = null;
+                };
+                _railIndicatorTween = tw;
             }
             else {
                 railIndicator.OffsetTop = top;

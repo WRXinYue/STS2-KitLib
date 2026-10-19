@@ -381,6 +381,9 @@ internal static partial class DevPanelUI {
         _railIconButtons.Clear();
         _railButtons.Clear();
         _railVBox = null;
+        if (_railIndicatorTween != null && GodotObject.IsInstanceValid(_railIndicatorTween))
+            _railIndicatorTween.Kill();
+        _railIndicatorTween = null;
         _railIndicator = null;
         _moveRailIndicator = null;
         ((Node)globalUi).GetNodeOrNull<Control>(RootName)?.QueueFree();
