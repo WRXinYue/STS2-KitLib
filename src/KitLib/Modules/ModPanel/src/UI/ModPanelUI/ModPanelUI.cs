@@ -538,6 +538,13 @@ public static partial class ModPanelUI {
                     barWidth += ((Control)actionsBar.GetChild(i)).GetMinimumSize().X;
                 barWidth += (actionsBar.GetChildCount() - 1) * 2;
                 actionsBar.OffsetLeft = -barWidth;
+                var contentClip = new Control {
+                    MouseFilter = Control.MouseFilterEnum.Ignore,
+                    ClipContents = true,
+                };
+                contentClip.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+                contentClip.OffsetLeft = Mathf.RoundToInt(ModPanelUiMetrics.SidebarModAccentBarWidth);
+                rowHost.AddChild(contentClip);
                 // Row content: mod icon, title, version chip, source chip.
                 var rowContent = new HBoxContainer {
                     MouseFilter = Control.MouseFilterEnum.Ignore,
@@ -545,8 +552,7 @@ public static partial class ModPanelUI {
                 };
                 rowContent.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
                 rowContent.AddThemeConstantOverride("separation", 8);
-                rowContent.OffsetLeft = 8 + (int)ModPanelUiMetrics.SidebarModAccentBarWidth
-                    + ModPanelUiMetrics.SidebarModAccentTextGutter;
+                rowContent.OffsetLeft = 8 + ModPanelUiMetrics.SidebarModAccentTextGutter;
                 rowContent.OffsetRight = -12;
                 rowContent.OffsetTop = 8;
                 rowContent.OffsetBottom = -8;
@@ -581,7 +587,7 @@ public static partial class ModPanelUI {
                 if (versionChip != null)
                     rowContent.AddChild(versionChip);
                 rowContent.AddChild(CreateModSourceChip(captured.Source, captured.InstallPath));
-                rowHost.AddChild(rowContent);
+                contentClip.AddChild(rowContent);
                 var vm = new SidebarModRowVm {
                     Entry = captured,
                     TitleLabel = titleLbl,
