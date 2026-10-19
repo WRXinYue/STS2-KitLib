@@ -29,6 +29,12 @@ public static partial class ModPanelUI {
     private const int ZOrder = 2000;
     private static ModPanelSubmenu? _root;
     private static NSubmenuStack? _hostStack;
+    /// <summary>
+    /// True between <see cref="TeardownShell"/> and the new submenu being pushed. The stack already
+    /// reports an open submenu across that window, so the rail must keep counting this panel as open
+    /// or it retracts before the panel is up.
+    /// </summary>
+    private static bool _opening;
     private static string? _pendingInitialModId;
     private static string? _pendingInitialPageId;
     private static string? _pendingInitialPageModId;
@@ -64,6 +70,7 @@ public static partial class ModPanelUI {
     public static void Show(NSubmenuStack stack, string? initialModId = null, string? initialPageId = null) {
         var perf = ModPanelPerf.Start();
         MainFile.Logger.Info("KitLib: Opening mod panel…");
+        _opening = true;
         TeardownShell();
         _pendingInitialModId = initialModId;
         _pendingInitialPageId = initialPageId;
@@ -72,6 +79,7 @@ public static partial class ModPanelUI {
         ModPanelHostContext.SetActiveSurface(ModPanelHostContext.ResolveCurrent());
         _hostStack = stack;
         _root = stack.PushSubmenuType<ModPanelSubmenu>();
+        _opening = false;
         ModPanelPerf.Log("open.pushSubmenu", perf);
         var reportSw = ModPanelPerf.Start();
         var openReport = BuildOpenReport();
@@ -97,8 +105,11 @@ public static partial class ModPanelUI {
         _detailTitleEditor = null;
         ModPanelHostContext.SetActiveSurface(ModPanelHostSurface.MainMenu);
     }
+
+    // Counts as open while <see cref="_opening"/> too: the panel is up for the rail the moment the press
+    // lands, even though _root is only assigned once the submenu has been pushed.
     public static bool IsVisible =>
-        _root != null && GodotObject.IsInstanceValid(_root) && _root.Visible;
+        _opening || (_root != null && GodotObject.IsInstanceValid(_root));
 
     internal static NSubmenuStack? TryGetHostStack() =>
         _hostStack != null && GodotObject.IsInstanceValid(_hostStack) ? _hostStack : null;
