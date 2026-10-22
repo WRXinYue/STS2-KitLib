@@ -52,6 +52,11 @@ internal static partial class DevPanelUI {
     private static readonly List<(Button btn, MdiIcon icon)> _railIconButtons = new();
     private static NGlobalUi? _railGlobalUi;
 
+    private static float _railTaperEndY = -1f;
+
+    /// <summary>Screen Y below which the widened strip has bent back onto the frame edge; &lt;= 0 means full height.</summary>
+    internal static float RailTaperEndY => _railTaperEndY;
+
     /// <summary>Pin the rail visible (e.g. while an external overlay is open). Call Unpin when done.</summary>
     public static void PinRail() => _pinRailCount++;
     public static void UnpinRail() => _pinRailCount = Math.Max(0, _pinRailCount - 1);
@@ -233,9 +238,6 @@ internal static partial class DevPanelUI {
 
         PopulatePrimaryRailButtons(globalUi, railVBox, _railButtons);
 
-        // ── Spacer ──
-        railVBox.AddChild(new Control { SizeFlagsVertical = Control.SizeFlags.ExpandFill });
-
         // ── Separator line ──
         if (!KitLibState.DualInstanceMinimalRail) {
             var sep = new HSeparator();
@@ -325,8 +327,10 @@ internal static partial class DevPanelUI {
     /// by the poll timer to keep the frame's stroke cut tied to this rail across scene swaps.
     /// </summary>
     private static void ApplyWrapState() {
-        if (_railGlobalUi == null || !GodotObject.IsInstanceValid(_railGlobalUi))
+        if (_railGlobalUi == null || !GodotObject.IsInstanceValid(_railGlobalUi)) {
+            _railTaperEndY = -1f;
             return;
+        }
 
         float t = KitLibScreenFrame.WrapT;
         // Ctrl+B drives the wrap directly, so the local shown flag follows it to keep rail hotkeys,
@@ -348,7 +352,40 @@ internal static partial class DevPanelUI {
         if (band != null)
             band.Visible = t > 0.001f;
 
-        KitLibScreenFrame.SetLeftBand(band, BrowserPanelLeft * t);
+        var (stepY, stepCurve) = RailBandTaper();
+        _railTaperEndY = stepY;
+        KitLibScreenFrame.SetLeftBand(band, BrowserPanelLeft * t, stepY, stepCurve);
+    }
+
+    // Same taper shape as the main-menu rail, so both strips bend back identically.
+    private const float BandStepClearance = 6f;
+    private const float BandStepCurveRatio = 0.5f;
+    private const float BandStepCurveMin = 140f;
+    private const float BandStepCurveMax = 200f;
+
+    /// <summary>
+    /// <para xml:lang="en">Where this rail's widened strip bends back onto the frame's own edge: just past the last
+    /// visible entry plus the taper arc, so the spare room below never reads as a wide empty band.</para>
+    /// <para xml:lang="zh-CN">本栏加宽带收窄的位置：最后一个可见条目之后加清空余量与弧长，下方空余不再是一条宽黑带。</para>
+    /// </summary>
+    private static (float StepY, float Curve) RailBandTaper() {
+        float top = float.PositiveInfinity;
+        float bottom = float.NegativeInfinity;
+        foreach (var (btn, _) in _railIconButtons) {
+            if (!GodotObject.IsInstanceValid(btn) || !btn.Visible)
+                continue;
+
+            var rect = btn.GetGlobalRect();
+            top = Mathf.Min(top, rect.Position.Y);
+            bottom = Mathf.Max(bottom, rect.End.Y);
+        }
+
+        // Buttons have no rect until the first layout pass; keep the strip full height until then.
+        if (float.IsNegativeInfinity(bottom) || bottom <= 0f)
+            return (-1f, 0f);
+
+        float curve = Mathf.Clamp((bottom - top) * BandStepCurveRatio, BandStepCurveMin, BandStepCurveMax);
+        return (bottom + BandStepClearance + curve, curve);
     }
 
     private static void OnRailLanguageChanged() {
@@ -365,6 +402,7 @@ internal static partial class DevPanelUI {
         // The frame is a permanent decoration: restore it so the next scene starts with a full edge.
         KitLibScreenFrame.SetWrapShown(true, animated: false);
         _railGlobalUi = null;
+        _railTaperEndY = -1f;
         _activeOverlayId = null;
         ResetRailHotkeyState();
         DestroyAllSessionOverlays(globalUi);

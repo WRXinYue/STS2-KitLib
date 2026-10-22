@@ -97,6 +97,13 @@ internal static partial class DevPanelUI {
         float railInset = RailInsetW * KitLibScreenFrame.WrapT;
         float frameMargin = KitLibScreenFrame.Margin * KitLibScreenFrame.WrapT;
 
+        // Below the strip's taper only the narrow frame edge remains, so chrome down there keeps a
+        // frame-width gap instead of the full rail inset.
+        float InsetFor(Control? c) =>
+            DevPanelUI.RailTaperEndY > 0f && c != null && c.GetGlobalRect().Position.Y >= DevPanelUI.RailTaperEndY
+                ? frameMargin
+                : railInset;
+
         // TopBar is a FullRect child of GlobalUi; shifting its OffsetLeft moves the left-anchored
         // player info right while keeping the right-anchored buttons pinned (their vanilla edge is
         // exactly 16px in), and shifting OffsetTop drops the whole strip below the frame's top edge.
@@ -127,17 +134,21 @@ internal static partial class DevPanelUI {
             }
 
             var (c, left, top, lastLeft, lastTop) = _leftContentInset[i];
-            bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft) ||
-                             float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop);
-            if (gameOwned) {
+            // Re-base each axis on its own: the game animates only OffsetTop (the bar's show/hide slide), and
+            // merging the axes would re-base OffsetLeft on our own last write and accrue the inset per frame.
+            bool gameOwnedLeft = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft);
+            bool gameOwnedTop = float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop);
+            if (gameOwnedLeft || gameOwnedTop) {
                 if (!Mathf.IsEqualApprox(left, c.OffsetLeft) || !Mathf.IsEqualApprox(top, c.OffsetTop))
                     KitLog.Info("RailDiag",
                         $"{c.Name} game-owned base -> left={c.OffsetLeft} top={c.OffsetTop} (was left={left} top={top})");
-                left = c.OffsetLeft;
-                top = c.OffsetTop;
+                if (gameOwnedLeft)
+                    left = c.OffsetLeft;
+                if (gameOwnedTop)
+                    top = c.OffsetTop;
             }
 
-            float wantedLeft = left + railInset;
+            float wantedLeft = left + InsetFor(c);
             float wantedTop = top + frameMargin;
             if (!Mathf.IsEqualApprox(c.OffsetLeft, wantedLeft))
                 c.OffsetLeft = wantedLeft;
@@ -149,9 +160,10 @@ internal static partial class DevPanelUI {
         // Left-anchored boxes that must keep their size: shift both edges right, and drop them by the
         // same frame margin the top bar takes, so the bar keeps its gap to the row beneath it.
         if (_railGlobalUi is Control globalCtrl) {
-            PushShifted(_leftContentShifted, globalCtrl.GetNodeOrNull<Control>("RelicInventory"), railInset, frameMargin);
+            var relics = globalCtrl.GetNodeOrNull<Control>("RelicInventory");
+            PushShifted(_leftContentShifted, relics, InsetFor(relics), frameMargin);
             if (globalCtrl is NGlobalUi g)
-                PushShifted(_leftContentShifted, g.MultiplayerPlayerContainer, railInset, frameMargin);
+                PushShifted(_leftContentShifted, g.MultiplayerPlayerContainer, InsetFor(g.MultiplayerPlayerContainer), frameMargin);
         }
 
         // The draw pile is left-bottom anchored (x=15..95) and would sit under the rail strip,
@@ -159,7 +171,8 @@ internal static partial class DevPanelUI {
         // Discard / exhaust piles are right-anchored and stay put — no risk of running off-screen.
         if (NCombatRoom.Instance?.Ui is Control combatUi) {
             var piles = combatUi.GetNodeOrNull<Control>("%CombatPileContainer");
-            PushShifted(_leftContentShifted, piles?.GetNodeOrNull<Control>("%DrawPile"), railInset, 0f);
+            var drawPile = piles?.GetNodeOrNull<Control>("%DrawPile");
+            PushShifted(_leftContentShifted, drawPile, InsetFor(drawPile), 0f);
         }
     }
 
@@ -244,11 +257,13 @@ internal static partial class DevPanelUI {
         }
 
         var (c, left, right, top, bottom, lastLeft, lastTop) = list[i];
-        bool gameOwned = float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft) ||
-                         float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop);
-        if (gameOwned) {
+        // Re-base the edges on their own axis, same reason as ApplyLeftContentInset: a game-driven
+        // vertical slide must not make the horizontal inset accrue.
+        if (float.IsNaN(lastLeft) || !Mathf.IsEqualApprox(c.OffsetLeft, lastLeft)) {
             left = c.OffsetLeft;
             right = c.OffsetRight;
+        }
+        if (float.IsNaN(lastTop) || !Mathf.IsEqualApprox(c.OffsetTop, lastTop)) {
             top = c.OffsetTop;
             bottom = c.OffsetBottom;
         }
