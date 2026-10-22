@@ -44,6 +44,7 @@ public class MainFile {
         });
         KitLibStartupAudit.Measure("screenFrame", KitLibScreenFrame.EnsureAttached);
         KitLibStartupAudit.Measure("i18n", I18N.Initialize);
+        KitLibModNotificationBridge.Initialize();
         Logger.Info("KitLib Core initialized.");
         KitLibStartupAudit.LogCoreOnlyReportIfNeeded();
     }

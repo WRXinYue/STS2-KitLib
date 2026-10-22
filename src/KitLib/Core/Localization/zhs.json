@@ -1,6 +1,9 @@
 {
   "menu.developerMode": "开发模式",
   "menu.modPanel": "模组面板",
+  "kitlib.notify.modEnabled": "已启用模组：{0}",
+  "kitlib.notify.modDisabled": "已禁用模组：{0}",
+  "kitlib.notify.modDetected": "检测到新模组：{0}",
   "modpanel.shell.sidebarTitle": "模组面板",
   "modpanel.shell.sidebarHint": "选择左侧模组可预览清单信息；右侧为该模组的选项。",
   "modpanel.shell.empty": "暂无选项。",

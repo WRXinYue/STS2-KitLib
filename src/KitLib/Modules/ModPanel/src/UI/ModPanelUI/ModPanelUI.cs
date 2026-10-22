@@ -528,6 +528,9 @@ public static partial class ModPanelUI {
                         return;
                     toggleState = !toggleState;
                     ModRuntime.LoadSettings.SetEnabled(captured.Id, captured.Source, toggleState);
+                    KitLibNotificationCenter.Raise(new KitLibNotification(I18N.T(
+                        toggleState ? "kitlib.notify.modEnabled" : "kitlib.notify.modDisabled",
+                        toggleState ? "Mod enabled: {0}" : "Mod disabled: {0}", displayName)));
                     RefreshToggleLabel();
                     refreshRowState();
                     RefreshPendingRestartBanner();

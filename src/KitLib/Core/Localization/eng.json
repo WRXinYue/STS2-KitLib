@@ -1,6 +1,9 @@
 {
   "menu.developerMode": "Dev Mode",
   "menu.modPanel": "Mod Panel",
+  "kitlib.notify.modEnabled": "Mod enabled: {0}",
+  "kitlib.notify.modDisabled": "Mod disabled: {0}",
+  "kitlib.notify.modDetected": "New mod detected: {0}",
   "modpanel.shell.sidebarTitle": "Mod Panel",
   "modpanel.shell.sidebarHint": "Select a mod to preview manifest details; options are on the right.",
   "modpanel.shell.empty": "No options yet.",

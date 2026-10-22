@@ -25,6 +25,7 @@ internal static class MainMenuCornerButtonReadyPatch {
             // Rail next: the corner host hides itself while the rail owns the tool entry points.
             MainMenuRailHost.EnsureAttached(mainMenu);
             MainMenuCornerButtonHost.EnsureAttached(mainMenu);
+            MainMenuTopIslandHost.EnsureAttached(mainMenu);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to attach: {ex.Message}");
@@ -40,6 +41,7 @@ internal static class MainMenuCornerButtonSubmenuPatch {
         try {
             MainMenuRailHost.EnsureAttached(__instance);
             MainMenuCornerButtonHost.SyncVisibility(__instance);
+            MainMenuTopIslandHost.EnsureAttached(__instance);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to sync: {ex.Message}");
@@ -55,6 +57,7 @@ internal static class MainMenuCornerButtonRefreshPatch {
         try {
             MainMenuRailHost.EnsureAttached(__instance);
             MainMenuCornerButtonHost.EnsureAttached(__instance);
+            MainMenuTopIslandHost.EnsureAttached(__instance);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to refresh: {ex.Message}");
