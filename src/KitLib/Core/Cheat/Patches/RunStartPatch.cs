@@ -1,11 +1,14 @@
 using System;
 using System.Reflection;
+using Godot;
 using HarmonyLib;
 using KitLib.Cheat;
 using KitLib.Presets;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
+using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 
@@ -76,6 +79,61 @@ public static class RunStartPatch {
             MainFile.Logger.Info($"KitLib: Set max energy to {KitLibState.MaxEnergy}");
         }
     }
+}
+
+/// <summary>Same rail slide, started one step earlier at the embark click so it is visible.</summary>
+[HarmonyPatch(typeof(NCharacterSelectScreen), "OnEmbarkPressed")]
+internal static class EmbarkWrapPatch {
+    [HarmonyPrefix]
+    static bool Prefix(NCharacterSelectScreen __instance, object[] __args) =>
+        !EntrySlideGate.Defer(__instance, EntrySlideGate.Embark, __instance, __args);
+}
+
+/// <summary>
+/// <para xml:lang="en">Holds the click that enters a run for one wrap animation. The game builds a run inside that single frame, so without the hold there is no frame left in which the rail could slide out.</para>
+/// <para xml:lang="zh-CN">把进入游戏的那次点击推迟一个收起动画的时长；游戏在同一帧里就建完全局，不推迟根本没有帧用来播滑出。</para>
+/// </summary>
+internal static class EntrySlideGate {
+    internal static readonly MethodInfo ContinueAsync =
+        AccessTools.Method(typeof(NMainMenu), "OnContinueButtonPressedAsync");
+    internal static readonly MethodInfo Embark =
+        AccessTools.Method(typeof(NCharacterSelectScreen), "OnEmbarkPressed");
+
+    private static bool _pending;
+
+    /// <summary>Defer the entry call; false means the caller should just run it now.</summary>
+    internal static bool Defer(Node host, MethodInfo entry, object instance, object[] args) {
+        if (entry == null || _pending)
+            return false;
+        // Nothing on screen to slide out; the call can proceed at once.
+        if (!UI.MainMenuRailHost.IsRailOnScreen)
+            return false;
+
+        var tree = host.GetTree();
+        if (tree == null)
+            return false;
+
+        UI.MainMenuRailHost.SlideOutForEntry();
+        _pending = true;
+        tree.CreateTimer(UI.KitLibScreenFrame.AnimationSeconds).Timeout += () => {
+            _pending = false;
+            try {
+                entry.Invoke(instance, args);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"KitLib entry slide gate: {ex.Message}");
+            }
+        };
+        return true;
+    }
+}
+
+/// <summary>Continue from the main menu loads a run straight away, so it takes the same gate.</summary>
+[HarmonyPatch(typeof(NMainMenu), "OnContinueButtonPressedAsync")]
+internal static class ContinueEntryWrapPatch {
+    [HarmonyPrefix]
+    static bool Prefix(NMainMenu __instance) =>
+        !EntrySlideGate.Defer(__instance, EntrySlideGate.ContinueAsync, __instance, Array.Empty<object>());
 }
 
 /// <summary>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Godot;
 using HarmonyLib;
 using KitLib.Abstractions.Host;
@@ -12,6 +13,7 @@ using MegaCrit.Sts2.Core.Entities.Relics;
 using MegaCrit.Sts2.Core.Entities.UI;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Acts;
+using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Cards.Holders;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 using MegaCrit.Sts2.Core.Nodes.Screens.CardLibrary;
@@ -235,4 +237,45 @@ public static class OvergrowthAncientPatch {
 public static class UnderdocksAncientPatch {
     public static void Postfix(ActModel __instance, ref IEnumerable<AncientEventModel> __result)
         => AncientUnlockPatch.Postfix(__instance, ref __result);
+}
+
+/// <summary>
+/// <para xml:lang="en">Holds the return to the main menu for one slide, so the run rail is seen leaving. The game fades and swaps the scene inside that single call, which would otherwise swallow the slide.</para>
+/// <para xml:lang="zh-CN">把回主菜单的调用推迟一个划出动画的时长，以便看到局内左侧栏划出；游戏会在这一次调用内淡出并换场景，不推迟就看不到。</para>
+/// </summary>
+[HarmonyPatch(typeof(NGame), "ReturnToMainMenu")]
+internal static class RunRailExitSlidePatch {
+    private static readonly MethodInfo Return = AccessTools.Method(typeof(NGame), "ReturnToMainMenu");
+    private static bool _pending;
+
+    [HarmonyPrefix]
+    static bool Prefix(NGame __instance) {
+        if (_pending || Return == null)
+            return true;
+
+        bool rail = DevPanelUI.IsRailOnScreen;
+        bool band = CombatRingsHud.IsBandOnScreen;
+        if (!rail && !band)
+            return true;
+
+        var tree = ((Node)__instance).GetTree();
+        if (tree == null)
+            return true;
+
+        if (rail)
+            DevPanelUI.SlideOutForExit();
+        if (band)
+            CombatRingsHud.SlideOutForExit();
+        _pending = true;
+        tree.CreateTimer(KitLibScreenFrame.AnimationSeconds).Timeout += () => {
+            _pending = false;
+            try {
+                Return.Invoke(__instance, null);
+            }
+            catch (Exception ex) {
+                MainFile.Logger.Warn($"KitLib rail exit slide gate: {ex.Message}");
+            }
+        };
+        return false;
+    }
 }

@@ -52,10 +52,32 @@ internal static partial class DevPanelUI {
     private static readonly List<(Button btn, MdiIcon icon)> _railIconButtons = new();
     private static NGlobalUi? _railGlobalUi;
 
+    // Live taper eases toward the target the rail's entries ask for, so scene swaps do not snap.
+    private const float TaperStallSeconds = 1f / 20f;
     private static float _railTaperEndY = -1f;
+    private static float _railTaperCurve;
+    private static float _railTaperEndYTarget = -1f;
+    private static float _railTaperCurveTarget;
+    private static float _taperFromY;
+    private static float _taperFromCurve;
+    private static float _taperElapsed;
+    private static bool _taperRunning;
+    private static SceneTree? _taperTree;
+    private static ColorRect? _railBand;
 
     /// <summary>Screen Y below which the widened strip has bent back onto the frame edge; &lt;= 0 means full height.</summary>
     internal static float RailTaperEndY => _railTaperEndY;
+
+    // ── Entry / exit slide ──
+    // The rail normally follows the frame's wrap, but entering a run has to move it alone: the frame
+    // itself stays put, so the rail carries its own 0..1 progress and the wrap only caps it.
+    private static KitLibSlide? _railSlide;
+
+    /// <summary>Rail slide progress: 0 fully off screen, 1 docked.</summary>
+    internal static float RailSlideT { get; private set; } = 1f;
+
+    private static Control? _railRoot;
+    private static readonly KitLibRevealWait _revealWait = new();
 
     /// <summary>Pin the rail visible (e.g. while an external overlay is open). Call Unpin when done.</summary>
     public static void PinRail() => _pinRailCount++;
@@ -318,7 +340,38 @@ internal static partial class DevPanelUI {
         _railShown = true;
         // Rail starts shown, so it is placed (and its contour reported) at the current wrap right away.
         KitLibScreenFrame.AddWrapListener(ApplyWrapState);
+        // Start the strip where the previous scene left it, so the height changes by easing instead of
+        // snapping once this scene's entries are measured.
+        _railTaperEndY = _railTaperEndYTarget = KitLibScreenFrame.LastBandStepY;
+        _railTaperCurve = _railTaperCurveTarget = KitLibScreenFrame.LastBandStepCurve;
+        // Start off screen so the rail slides in from under the frame instead of popping into place.
+        _railSlide = new KitLibSlide(0f, SetRailSlide, KitLibScreenFrame.AnimationSeconds);
+        RailSlideT = 0f;
+        _railRoot = root;
         ApplyWrapState();
+        // Entry rects exist only after the first layout pass; pick the real height up on the next frame.
+        Callable.From(ApplyWrapState).CallDeferred();
+        // The run scene is built behind the transition fade; slide in once the screen is actually shown.
+        _revealWait.Begin(root, () => _railSlide?.To(_railRoot, 1f, animated: true));
+    }
+
+    private static void SetRailSlide(float t) {
+        RailSlideT = t;
+        ApplyWrapState();
+    }
+
+    /// <summary>Whether the run rail is on screen, so an exit slide has something to move.</summary>
+    internal static bool IsRailOnScreen => _railSlide != null && RailSlideT > 0.01f;
+
+    /// <summary>
+    /// <para xml:lang="en">Slide the rail out for a return to the main menu; the window edge itself stays put.</para>
+    /// <para xml:lang="zh-CN">回主菜单时只把左侧栏划出，外层边框保持不动。</para>
+    /// </summary>
+    internal static void SlideOutForExit() {
+        var root = _railGlobalUi != null && GodotObject.IsInstanceValid(_railGlobalUi)
+            ? TryGetRailRoot(_railGlobalUi)
+            : null;
+        _railSlide?.To(root, 0f, animated: true);
     }
 
     /// <summary>
@@ -332,7 +385,7 @@ internal static partial class DevPanelUI {
             return;
         }
 
-        float t = KitLibScreenFrame.WrapT;
+        float t = Mathf.Min(RailSlideT, KitLibScreenFrame.WrapT);
         // Ctrl+B drives the wrap directly, so the local shown flag follows it to keep rail hotkeys,
         // tab activation and the dismiss logic working against the real state.
         _railShown = KitLibScreenFrame.WrapShown;
@@ -352,9 +405,118 @@ internal static partial class DevPanelUI {
         if (band != null)
             band.Visible = t > 0.001f;
 
+        _railBand = band;
         var (stepY, stepCurve) = RailBandTaper();
-        _railTaperEndY = stepY;
-        KitLibScreenFrame.SetLeftBand(band, BrowserPanelLeft * t, stepY, stepCurve);
+        SyncRailTaper(stepY, stepCurve);
+        KitLibScreenFrame.SetLeftBand(band, BrowserPanelLeft * t, _railTaperEndY, _railTaperCurve);
+    }
+
+    /// <summary>
+    /// <para xml:lang="en">Move the taper toward the height the rail's entries ask for. The session's first rail takes
+    /// its final height outright; later ones ease from wherever the previous scene left the strip.</para>
+    /// <para xml:lang="zh-CN">让收窄点移到条目高度所求的位置：首次出现直接落位，跨场景时从上一处收窄点缓入。</para>
+    /// </summary>
+    private static void SyncRailTaper(float targetY, float targetCurve) {
+        bool changed = !Mathf.IsEqualApprox(targetY, _railTaperEndYTarget)
+                       || !Mathf.IsEqualApprox(targetCurve, _railTaperCurveTarget);
+        _railTaperEndYTarget = targetY;
+        _railTaperCurveTarget = targetCurve;
+        if (!changed)
+            return;
+
+        // Entries carry no rect until layout settles; hold the previous scene's taper instead of
+        // flashing a full-height strip, then ease from it once the real height is known.
+        if (targetY <= 0f) {
+            if (_railTaperEndY <= 0f) {
+                _railTaperEndY = KitLibScreenFrame.LastBandStepY;
+                _railTaperCurve = KitLibScreenFrame.LastBandStepCurve;
+            }
+            return;
+        }
+
+        if (_railTaperEndY <= 0f) {
+            float last = KitLibScreenFrame.LastBandStepY;
+            if (last <= 0f) {
+                _railTaperEndY = targetY;
+                _railTaperCurve = targetCurve;
+                return;
+            }
+
+            _railTaperEndY = last;
+            _railTaperCurve = KitLibScreenFrame.LastBandStepCurve;
+        }
+
+        AnimateRailTaper();
+    }
+
+    /// <summary>
+    /// <para xml:lang="en">Spring the taper towards its target. Driven from the band's own process step with a clamped delta: the frame that loads a run runs long, and a tween would spend most of the travel in that single tick.</para>
+    /// <para xml:lang="zh-CN">把收窄点弹向目标；由 band 自己的 process 驱动并钳制单帧步长，避免进局那帧过长时把大部分位移一次性吃掉。</para>
+    /// </summary>
+    private static void AnimateRailTaper() {
+        if (_railBand == null || !GodotObject.IsInstanceValid(_railBand)) {
+            _railTaperEndY = _railTaperEndYTarget;
+            _railTaperCurve = _railTaperCurveTarget;
+            return;
+        }
+
+        _taperFromY = _railTaperEndY;
+        _taperFromCurve = _railTaperCurve;
+        _taperElapsed = 0f;
+
+        if (_taperRunning)
+            return;
+
+        var tree = _railBand.GetTree();
+        if (tree == null)
+            return;
+
+        _taperRunning = true;
+        _taperTree = tree;
+        tree.ProcessFrame += StepRailTaper;
+    }
+
+    // One step of the taper spring. Long frames are scene-load stalls rather than animation, so they
+    // hold the strip instead of pushing it a visible chunk in one frame.
+    private static void StepRailTaper() {
+        float delta = _railBand != null && GodotObject.IsInstanceValid(_railBand)
+            ? (float)_railBand.GetProcessDeltaTime()
+            : 0f;
+        if (delta > TaperStallSeconds)
+            return;
+
+        _taperElapsed += delta;
+        float seconds = Mathf.Min(_taperElapsed, KitLibRailChrome.SpringSeconds);
+        float eased = KitLibRailChrome.SpringEase(seconds, KitLibRailChrome.SpringZeta);
+        _railTaperEndY = Mathf.Lerp(_taperFromY, _railTaperEndYTarget, eased);
+        _railTaperCurve = Mathf.Lerp(_taperFromCurve, _railTaperCurveTarget, eased);
+        ApplyBandGeometry();
+
+        if (_taperElapsed < KitLibRailChrome.SpringSeconds)
+            return;
+
+        // A spring's last step can land off target; snap so the strip settles cleanly.
+        _railTaperEndY = _railTaperEndYTarget;
+        _railTaperCurve = _railTaperCurveTarget;
+        ApplyBandGeometry();
+        StopTaper();
+    }
+
+    private static void StopTaper() {
+        _taperRunning = false;
+        _taperElapsed = 0f;
+        if (_taperTree != null) {
+            _taperTree.ProcessFrame -= StepRailTaper;
+            _taperTree = null;
+        }
+    }
+
+    private static void ApplyBandGeometry() {
+        if (_railBand == null || !GodotObject.IsInstanceValid(_railBand))
+            return;
+
+        KitLibScreenFrame.SetLeftBand(_railBand, BrowserPanelLeft * KitLibScreenFrame.WrapT,
+            _railTaperEndY, _railTaperCurve);
     }
 
     // Same taper shape as the main-menu rail, so both strips bend back identically.
@@ -402,7 +564,17 @@ internal static partial class DevPanelUI {
         // The frame is a permanent decoration: restore it so the next scene starts with a full edge.
         KitLibScreenFrame.SetWrapShown(true, animated: false);
         _railGlobalUi = null;
+        _railSlide?.Stop();
+        _railSlide = null;
+        _railRoot = null;
+        _revealWait.Cancel();
+        RailSlideT = 1f;
         _railTaperEndY = -1f;
+        _railTaperCurve = 0f;
+        _railTaperEndYTarget = -1f;
+        _railTaperCurveTarget = 0f;
+        StopTaper();
+        _railBand = null;
         _activeOverlayId = null;
         ResetRailHotkeyState();
         DestroyAllSessionOverlays(globalUi);

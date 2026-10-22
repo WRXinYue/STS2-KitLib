@@ -69,6 +69,12 @@ internal static partial class CombatRingsHud {
     private static bool _refreshQueued;
     private static string? _lastDiag;
 
+    // The band enters the same way the left rail does: off screen, then sliding in once the run scene
+    // has finished its transition fade, so it does not pop in with the scene.
+    private static KitLibSlide? _bandSlide;
+    private static float _bandSlideT = 1f;
+    private static readonly KitLibRevealWait _revealWait = new();
+
     #region debug-point mp-stats-values-missing
     // Instrumentation only: proves whether the right-edge band stopped repainting and why.
     private static string? _dbgSig;
@@ -184,10 +190,30 @@ internal static partial class CombatRingsHud {
         KitLibScreenFrame.RemoveWrapListener(ApplyWrap);
         KitLibScreenFrame.AddWrapListener(ApplyWrap);
         GD.Print("[CombatRings] hud attached");
+        _bandSlide = new KitLibSlide(0f, SetBandSlide, KitLibScreenFrame.AnimationSeconds);
+        _bandSlideT = 0f;
         ApplyWrap();
         Refresh();
         // Built before the node enters the tree; redraw once it is in place.
         Callable.From(Refresh).CallDeferred();
+        _revealWait.Begin(root, () => _bandSlide?.To(_root, 1f, animated: true));
+    }
+
+    private static void SetBandSlide(float t) {
+        _bandSlideT = t;
+        ApplyWrap();
+    }
+
+    /// <summary>Whether the band is on screen, so an exit slide has something to move.</summary>
+    internal static bool IsBandOnScreen => _bandSlide != null && _bandSlideT > 0.01f;
+
+    /// <summary>
+    /// <para xml:lang="en">Slide the band out past the right edge for a return to the main menu; the window edge itself stays put.</para>
+    /// <para xml:lang="zh-CN">回主菜单时把右侧竖带划出屏幕右缘，外层边框保持不动。</para>
+    /// </summary>
+    internal static void SlideOutForExit() {
+        _revealWait.Cancel();
+        _bandSlide?.To(_root, 0f, animated: true);
     }
 
     /// <summary>Round, anti-aliased disc mask holding the colour the hover wave sweeps across.</summary>
@@ -233,16 +259,22 @@ internal static partial class CombatRingsHud {
             return;
 
         float inset = BandInsetRight * KitLibScreenFrame.WrapT;
+        // Slide the whole strip in from beyond the right edge; at 0 the band sits fully off screen.
+        float slide = (BandWidth + inset) * (1f - _bandSlideT);
         // Ride both edges so the strip keeps the band's exact width: the VBoxContainer truncates the
         // fractional cross-axis slack, which left the band's right edge a pixel short of the screen edge.
-        _strip.OffsetLeft = -(BandWidth + inset);
-        _strip.OffsetRight = -inset;
+        _strip.OffsetLeft = -(BandWidth + inset) + slide;
+        _strip.OffsetRight = -inset + slide;
     }
 
     internal static void Detach() {
         CombatStatsTracker.Changed -= OnChanged;
         KitLibScreenFrame.RemoveWrapListener(ApplyWrap);
         KitLibScreenFrame.SetRightStrokeCut(-1f, -1f);
+        _bandSlide?.Stop();
+        _bandSlide = null;
+        _bandSlideT = 1f;
+        _revealWait.Cancel();
         if (_root != null && GodotObject.IsInstanceValid(_root))
             _root.QueueFree();
 

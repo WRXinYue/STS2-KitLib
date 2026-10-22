@@ -93,8 +93,9 @@ internal static partial class DevPanelUI {
         var wanted = new List<Control>();
 
         // Both push amounts ride the wrap progress, so pushed chrome animates back to the real screen
-        // edge in step with the frame retracting instead of snapping once the rail is gone.
-        float railInset = RailInsetW * KitLibScreenFrame.WrapT;
+        // edge in step with the frame retracting instead of snapping once the rail is gone. The left
+        // inset also rides the rail's own slide, so run entry pushes chrome in step with the strip.
+        float railInset = RailInsetW * Mathf.Min(DevPanelUI.RailSlideT, KitLibScreenFrame.WrapT);
         float frameMargin = KitLibScreenFrame.Margin * KitLibScreenFrame.WrapT;
 
         // Below the strip's taper only the narrow frame edge remains, so chrome down there keeps a

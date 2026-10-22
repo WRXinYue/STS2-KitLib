@@ -55,6 +55,9 @@ internal static class KitLibScreenFrame {
     private static Shader? _shader;
     private static ShaderMaterial? _material;
     private static float _leftBandWidth;
+    // Last taper any rail host placed; kept across scene swaps so the next host can ease into its own.
+    private static float _lastBandStepY = -1f;
+    private static float _lastBandStepCurve;
     // Bands run the frame shader at a rail's own width; tracked so viewport resizes re-map them.
     private static readonly List<(ColorRect Node, ShaderMaterial Material)> _bands = new();
 
@@ -127,6 +130,10 @@ internal static class KitLibScreenFrame {
     /// <summary>Current wrap progress: 1 = fully on screen, 0 = fully retracted.</summary>
     internal static float WrapT => _wrapT;
 
+    /// <summary>Last taper a rail host applied; the next host eases from it instead of snapping across scenes.</summary>
+    internal static float LastBandStepY => _lastBandStepY;
+    internal static float LastBandStepCurve => _lastBandStepCurve;
+
     /// <summary>Whether the wrap is currently targeted on screen (animations may still be running).</summary>
     internal static bool WrapShown => _wrapShown;
 
@@ -158,6 +165,8 @@ internal static class KitLibScreenFrame {
         }
 
         var tween = _rect.CreateTween();
+        // Run entry pauses the tree while the scene loads; keep the retract animating through it.
+        tween.SetPauseMode(Tween.TweenPauseMode.Process);
         tween.TweenMethod(Callable.From<float>(SetWrapProgress), _wrapT, target, AnimationSeconds)
             .SetTrans(Tween.TransitionType.Cubic)
             .SetEase(Tween.EaseType.Out);
@@ -335,6 +344,11 @@ internal static class KitLibScreenFrame {
     /// Rewrites this layer's stroke cut and the band's own geometry, keeping both in step with the wrap.
     /// </summary>
     internal static void SetLeftBand(ColorRect? band, float width, float stepY = -1f, float stepCurve = 0f) {
+        if (stepY > 0f) {
+            _lastBandStepY = stepY;
+            _lastBandStepCurve = stepCurve;
+        }
+
         if (!Mathf.IsEqualApprox(_leftBandWidth, width)) {
             _leftBandWidth = width;
             FrameMaterial().SetShaderParameter("stroke_cut_x", BandStrokeCut());

@@ -51,16 +51,31 @@ internal static class MainMenuRailHost {
     private static readonly List<Button> _railButtons = new();
     private static string _signature = "";
 
+    // Set while an entry slide is playing, so the periodic sync does not put the rail back.
+    private static bool _entrySliding;
+
+    /// <summary>
+    /// <para xml:lang="en">Slide the rail out for a run entry; the window edge itself stays put.</para>
+    /// <para xml:lang="zh-CN">进局时只把左侧栏滑出，外边那一圈边框保持不动。</para>
+    /// </summary>
+    internal static void SlideOutForEntry() {
+        _entrySliding = true;
+        SetPresence(false, animated: true);
+    }
+
+    /// <summary>Whether the rail currently occupies screen space, so an entry slide has something to move.</summary>
+    internal static bool IsRailOnScreen =>
+        _rail != null && GodotObject.IsInstanceValid(_rail) && _presence > 0.01f;
+
     /// <summary>Whether the menu sits inside the official multiplayer flow; solo-only entries hide while it does.</summary>
     private static bool _inMultiplayerFlow;
 
     // ── Rail presence ──
-    // 0 = retracted off screen, 1 = docked. Own tween for the panel-driven appearance, capped by the
+    // 0 = retracted off screen, 1 = docked. Own slide for the panel-driven appearance, capped by the
     // screen frame's wrap so Ctrl+B retracting the window edge takes the rail with it.
     private static float _presence;
-    private static float _presenceTarget;
     private static bool _wantPresence;
-    private static Tween? _presenceTween;
+    private static KitLibSlide? _presenceSlide;
 
     /// <summary>Vanilla chrome pushed right to clear the strip, kept with its original offsets.</summary>
     private static readonly List<PushedChrome> _pushed = new();
@@ -264,7 +279,7 @@ internal static class MainMenuRailHost {
             ? MainMenuCornerButtonHost.FindOccupiedRegistration(mainMenu)
             : null;
 
-        bool show = _railButtons.Count > 0 && (occupied != null || surfaceOpen);
+        bool show = !_entrySliding && _railButtons.Count > 0 && (occupied != null || surfaceOpen);
 
         CaptureInsets(mainMenu);
         // A panel opening is a deliberate request for the rail, so it overrides an earlier Ctrl+B
@@ -308,6 +323,8 @@ internal static class MainMenuRailHost {
             _rail.OffsetRight = left + MenuRailButtonWidth;
         }
 
+        // The widened contour follows the rail, so the whole strip recedes into the frame edge together
+        // with the buttons and the chrome it pushes. The four window edges themselves never move.
         if (_band != null && GodotObject.IsInstanceValid(_band))
             _band.Visible = presence > 0.001f;
 
@@ -322,31 +339,8 @@ internal static class MainMenuRailHost {
     private static void SetPresence(bool show, bool animated) {
         _wantPresence = show;
         float target = show ? 1f : 0f;
-
-        if (Mathf.IsEqualApprox(_presenceTarget, target)) {
-            // Already there or already heading there: refresh the geometry, do not restart the tween.
-            ApplyMenuWrap();
-            return;
-        }
-
-        _presenceTarget = target;
-        if (_presenceTween != null && GodotObject.IsInstanceValid(_presenceTween))
-            _presenceTween.Kill();
-        _presenceTween = null;
-
-        if (!animated || _root == null || !GodotObject.IsInstanceValid(_root)) {
-            _presence = target;
-            ApplyMenuWrap();
-            return;
-        }
-
-        var tween = _root.CreateTween();
-        tween.TweenMethod(Callable.From<float>(SetPresenceProgress), _presence, target,
-                KitLibScreenFrame.AnimationSeconds)
-            .SetTrans(Tween.TransitionType.Cubic)
-            .SetEase(Tween.EaseType.Out);
-        tween.Finished += () => SetPresenceProgress(target);
-        _presenceTween = tween;
+        _presenceSlide ??= new KitLibSlide(_presence, SetPresenceProgress, KitLibScreenFrame.AnimationSeconds);
+        _presenceSlide.To(_root, target, animated);
     }
 
     private static void SetPresenceProgress(float presence) {
@@ -665,8 +659,16 @@ internal static class MainMenuRailHost {
         _bandStepCurveTarget = targetCurve;
 
         if (!_bandStepInit) {
-            // Fresh rail: place it at its final height so it does not animate in from the default.
             _bandStepInit = true;
+            // Ease in from wherever the previous scene left the strip; the session's first rail has no
+            // such value and takes its final height outright.
+            if (targetStepY > 0f && KitLibScreenFrame.LastBandStepY > 0f) {
+                _bandStepY = KitLibScreenFrame.LastBandStepY;
+                _bandStepCurve = KitLibScreenFrame.LastBandStepCurve;
+                AnimateBandStep();
+                return;
+            }
+
             _bandStepY = targetStepY;
             _bandStepCurve = targetCurve;
             return;
@@ -793,12 +795,11 @@ internal static class MainMenuRailHost {
 
     private static void ResetStatics() {
         KitLibScreenFrame.RemoveWrapListener(ApplyMenuWrap);
-        if (_presenceTween != null && GodotObject.IsInstanceValid(_presenceTween))
-            _presenceTween.Kill();
-        _presenceTween = null;
+        _presenceSlide?.Stop();
+        _presenceSlide = null;
         _presence = 0f;
-        _presenceTarget = 0f;
         _wantPresence = false;
+        _entrySliding = false;
 
         RestoreInset();
         if (_bandStepTween != null && GodotObject.IsInstanceValid(_bandStepTween))
