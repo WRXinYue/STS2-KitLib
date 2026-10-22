@@ -59,6 +59,7 @@ internal static partial class CombatRingsHud {
 
     private static Control? _root;
     private static CombatRingBand? _band;
+    private static VBoxContainer? _strip;
     private static Control? _ringsBox;
     private static Button? _gear;
     private static TextureRect? _gearDisc;
@@ -67,6 +68,30 @@ internal static partial class CombatRingsHud {
     private static readonly List<(VBoxContainer Root, CombatStatRing Ring, Label Label)> _rows = new();
     private static bool _refreshQueued;
     private static string? _lastDiag;
+
+    #region debug-point mp-stats-values-missing
+    // Instrumentation only: proves whether the right-edge band stopped repainting and why.
+    private static string? _dbgSig;
+    private static long _dbgSeq;
+    private static long _dbgTriggers;
+
+    private static void Dbg(string line) {
+        _dbgSeq++;
+        GD.Print($"[CombatRings][TRACE] seq={_dbgSeq} {line}");
+    }
+
+    // Same-state repaints are dropped, so one line marks one distinct roster / metric / value state.
+    private static void DbgTrace(string signature) {
+        if (signature == _dbgSig)
+            return;
+
+        _dbgSig = signature;
+        Dbg(signature);
+    }
+
+    private static string Describe(Control? node) =>
+        node == null ? "null" : GodotObject.IsInstanceValid(node) ? "valid" : "freed";
+    #endregion
 
     // ──────── Lifecycle ────────
 
@@ -151,11 +176,15 @@ internal static partial class CombatRingsHud {
 
         _root = root;
         _band = band;
+        _strip = strip;
         _rows.Clear();
 
         CombatStatsTracker.Changed -= OnChanged;
         CombatStatsTracker.Changed += OnChanged;
+        KitLibScreenFrame.RemoveWrapListener(ApplyWrap);
+        KitLibScreenFrame.AddWrapListener(ApplyWrap);
         GD.Print("[CombatRings] hud attached");
+        ApplyWrap();
         Refresh();
         // Built before the node enters the tree; redraw once it is in place.
         Callable.From(Refresh).CallDeferred();
@@ -195,13 +224,31 @@ internal static partial class CombatRingsHud {
             from, to, GearWaveSeconds).SetEase(Tween.EaseType.Out);
     }
 
+    /// <summary>
+    /// <para xml:lang="en">Rides the band out with the frame's right border: the clearance collapses to zero as the wrap retracts.</para>
+    /// <para xml:lang="zh-CN">竖带随右边框一起外移：wrap 收起时右侧留白归零，贴住屏幕右缘。</para>
+    /// </summary>
+    private static void ApplyWrap() {
+        if (_strip == null || !GodotObject.IsInstanceValid(_strip))
+            return;
+
+        float inset = BandInsetRight * KitLibScreenFrame.WrapT;
+        // Ride both edges so the strip keeps the band's exact width: the VBoxContainer truncates the
+        // fractional cross-axis slack, which left the band's right edge a pixel short of the screen edge.
+        _strip.OffsetLeft = -(BandWidth + inset);
+        _strip.OffsetRight = -inset;
+    }
+
     internal static void Detach() {
         CombatStatsTracker.Changed -= OnChanged;
+        KitLibScreenFrame.RemoveWrapListener(ApplyWrap);
+        KitLibScreenFrame.SetRightStrokeCut(-1f, -1f);
         if (_root != null && GodotObject.IsInstanceValid(_root))
             _root.QueueFree();
 
         _root = null;
         _band = null;
+        _strip = null;
         _ringsBox = null;
         _gear = null;
         _gearDisc = null;
@@ -209,11 +256,24 @@ internal static partial class CombatRingsHud {
         _gearSweep = null;
         _rows.Clear();
         _refreshQueued = false;
+        #region debug-point mp-stats-values-missing
+        Dbg("hud detached: refresh chain is dead until a fresh Attach");
+        #endregion
     }
 
     private static void OnChanged() {
-        if (_refreshQueued || _root == null)
+        #region debug-point mp-stats-values-missing
+        _dbgTriggers++;
+        #endregion
+        if (_refreshQueued || _root == null) {
+            #region debug-point mp-stats-values-missing
+            // The only silent path that can freeze the band for good.
+            if (_root == null)
+                Dbg("tracker changed with no root: refresh chain dead, band can no longer repaint");
+            #endregion
             return;
+        }
+
         _refreshQueued = true;
         Callable.From(Refresh).CallDeferred();
     }
@@ -222,6 +282,12 @@ internal static partial class CombatRingsHud {
 
     internal static void Refresh() {
         _refreshQueued = false;
+        #region debug-point mp-stats-values-missing
+        // Reports a repaint that never reached the band; the real guard below stays untouched.
+        if (_root == null || _ringsBox == null || _gear == null || !GodotObject.IsInstanceValid(_root))
+            Dbg($"refresh dropped: root={Describe(_root)} ringsBox={(_ringsBox == null ? "null" : "set")} "
+                + $"gear={(_gear == null ? "null" : "set")}");
+        #endregion
         if (_root == null || _ringsBox == null || _gear == null || !GodotObject.IsInstanceValid(_root))
             return;
 
@@ -238,9 +304,32 @@ internal static partial class CombatRingsHud {
         }
 
         if (snapshot == null || snapshot.Players.Count == 0) {
+            #region debug-point mp-stats-values-missing
+            Dbg($"band hidden: snapshot={(snapshot == null ? "null" : $"{snapshot.Players.Count} players")}");
+            #endregion
             SetHudVisible(false);
             return;
         }
+
+        #region debug-point mp-stats-values-missing
+        // One line per distinct roster / metric / value state, so the last state before a vanish is visible.
+        {
+            var dbgMetric = SettingsStore.GetCombatRingMetric();
+            var dbgVals = new List<string>();
+            long dbgTotal = 0;
+            foreach (var p in snapshot.Players.Values) {
+                int v = MetricValue(p, dbgMetric);
+                dbgTotal += v;
+                dbgVals.Add($"{p.Key}={v}");
+            }
+
+            DbgTrace($"tracking={CombatStatsTracker.IsTracking} snap={snapshot.Players.Count}p "
+                + $"vals=[{string.Join(",", dbgVals)}] total={dbgTotal} metric={dbgMetric} "
+                + $"soloMetrics={SettingsStore.GetCombatRingMetrics().Count} triggers={_dbgTriggers} "
+                + $"band={(_band == null ? "null" : $"{_band.Visible}@{_band.GlobalPosition.ToString()} {_band.Size.ToString()}")} "
+                + $"view={_root.GetViewportRect().Size.ToString()} localNetId={(RunManager.Instance?.NetService == null ? "null" : RunManager.Instance.NetService.NetId.ToString())}");
+        }
+        #endregion
 
         var players = OrderPlayers(snapshot);
         if (players.Count > 1) {
@@ -272,6 +361,9 @@ internal static partial class CombatRingsHud {
             _band.Visible = visible;
         if (_ringsBox != null)
             _ringsBox.Visible = visible;
+        // No band on screen means nothing for the border's stroke to merge into; restore it whole.
+        if (!visible)
+            KitLibScreenFrame.SetRightStrokeCut(-1f, -1f);
     }
 
     /// <summary>True while the tracked session has teammates, so the rings read as team shares.</summary>
@@ -294,6 +386,7 @@ internal static partial class CombatRingsHud {
 
         float bandHeight = BandPadV * 2f + contentHeight;
         _band.CustomMinimumSize = new Vector2(BandWidth, bandHeight);
+        SyncBandStrokeCut(bandHeight);
 
         float y = BandPadV;
         for (int i = 0; i < _rows.Count; i++) {
@@ -317,6 +410,22 @@ internal static partial class CombatRingsHud {
                 _gearDisc.Size = new Vector2(GearSize, GearSize);
             }
         }
+    }
+
+    /// <summary>
+    /// <para xml:lang="en">Mutes the frame's inner stroke behind the band's own span, so the band's right edge and the window border read as one block instead of a hairline seam.</para>
+    /// <para xml:lang="zh-CN">在竖带所占高度内抑制边框内描边，使竖带右缘与窗口边框连成一整块，而不是留一条细缝。</para>
+    /// </summary>
+    private static void SyncBandStrokeCut(float bandHeight) {
+        if (_root == null || !GodotObject.IsInstanceValid(_root)) {
+            KitLibScreenFrame.SetRightStrokeCut(-1f, -1f);
+            return;
+        }
+
+        // The strip spans the viewport and centres the band, so the span follows without waiting a frame
+        // for the container to sort.
+        float top = (_root.GetViewportRect().Size.Y - bandHeight) * 0.5f;
+        KitLibScreenFrame.SetRightStrokeCut(top, top + bandHeight);
     }
 
     private static void EnsureRingRows(int count) {

@@ -58,6 +58,9 @@ internal static class KitLibScreenFrame {
     // Bands run the frame shader at a rail's own width; tracked so viewport resizes re-map them.
     private static readonly List<(ColorRect Node, ShaderMaterial Material)> _bands = new();
 
+    // Optional top notification island drawn on this layer, so it floats above every KitLib panel.
+    private static KitLibTopIsland? _topIsland;
+
     // ── Wrap presence ──
     // 1 = full window edge on screen, 0 = the whole wrap (four edges + rail + insets) retracted.
     // Rail hosts drive it (Ctrl+B) and read it back to slide their rail and scale their inset by the
@@ -353,6 +356,17 @@ internal static class KitLibScreenFrame {
     internal static void SetLeftBand(float width) => SetLeftBand(null, width);
 
     /// <summary>
+    /// <para xml:lang="en">Suppress this layer's own inner stroke along the right edge between the two y's, so a band drawn in
+    /// the frame colour continues the boundary unbroken instead of leaving a seam. Pass <c>y1 &lt;= 0</c> to draw it whole again.</para>
+    /// <para xml:lang="zh-CN">在给定高度区间内抑制本层右边框的内描边，使同色竖带与边框连成一整块、不留缝。传 <c>y1 &lt;= 0</c> 恢复整条描边。</para>
+    /// </summary>
+    internal static void SetRightStrokeCut(float y0, float y1) {
+        var material = FrameMaterial();
+        material.SetShaderParameter("stroke_cut_y0", y0);
+        material.SetShaderParameter("stroke_cut_y1", y1);
+    }
+
+    /// <summary>
     /// Widened left contour band for a rail: a full-screen rect running the frame shader with only the
     /// left thickness widened to <paramref name="width"/>, so its fill continues this frame and its
     /// inner boundary (straight edge + fillets into the top/bottom edges) is the window's left edge.
@@ -387,6 +401,36 @@ internal static class KitLibScreenFrame {
     }
 
     private static float BandStrokeCut() => _leftBandWidth > 0f ? _leftBandWidth + Radius : -1f;
+
+    /// <summary>
+    /// Create the top notification island on this layer, painted with the frame's own window-edge colors so it
+    /// reads as part of the same border. The caller owns the returned handle and frees it with
+    /// <see cref="RemoveTopIsland"/>.
+    /// </summary>
+    internal static KitLibTopIsland CreateTopIsland() {
+        EnsureAttached();
+
+        var holder = _layer != null && GodotObject.IsInstanceValid(_layer)
+            ? _layer.GetNodeOrNull<Control>("FrameHolder")
+            : null;
+        var island = KitLibTopIslandChrome.Build(holder);
+        island.Material.SetShaderParameter("tab_color", FrameColor);
+        island.Material.SetShaderParameter("tab_edge_color", EdgeColor);
+        _topIsland = island;
+        return island;
+    }
+
+    /// <summary>Free an island previously returned by <see cref="CreateTopIsland"/>.</summary>
+    internal static void RemoveTopIsland(KitLibTopIsland island) {
+        if (_topIsland == island)
+            _topIsland = null;
+
+        if (island.Root == null || !GodotObject.IsInstanceValid(island.Root))
+            return;
+
+        island.Root.GetParent()?.RemoveChild(island.Root);
+        island.Root.QueueFree();
+    }
 
     private static Vector2 ViewportSize() =>
         _rect?.GetViewport()?.GetVisibleRect().Size ?? new Vector2(1920f, 1080f);
@@ -424,6 +468,9 @@ internal static class KitLibScreenFrame {
         PruneBands();
         foreach (var (_, material) in _bands)
             material.SetShaderParameter("rect_size", size);
+
+        if (_topIsland != null && GodotObject.IsInstanceValid(_topIsland.Material))
+            KitLibTopIslandChrome.SyncSize(_topIsland, size);
     }
 
     private static ShaderMaterial FrameMaterial() {
@@ -439,6 +486,8 @@ internal static class KitLibScreenFrame {
         _material.SetShaderParameter("edge_color", EdgeColor);
         _material.SetShaderParameter("stroke_cut_x", BandStrokeCut());
         _material.SetShaderParameter("stroke_cut_end_y", -1f);
+        _material.SetShaderParameter("stroke_cut_y0", -1f);
+        _material.SetShaderParameter("stroke_cut_y1", -1f);
         return _material;
     }
 
@@ -494,6 +543,10 @@ internal static class KitLibScreenFrame {
         uniform float drop_below_curve = 0.0;
         // > 0.0: the stroke cut above only applies above this y (< 0.0 cuts all the way down).
         uniform float stroke_cut_end_y = -1.0;
+        // > 0.0: this layer's own inner stroke is also suppressed along the right edge between these two
+        // y's, so a right-edge band of the same fill continues the boundary instead of leaving a seam.
+        uniform float stroke_cut_y0 = -1.0;
+        uniform float stroke_cut_y1 = -1.0;
 
         float sd_round_box(vec2 p, vec2 half_size, float r) {
             vec2 q = abs(p) - half_size + r;
@@ -516,7 +569,11 @@ internal static class KitLibScreenFrame {
             vec3 col = frame_color.rgb;
             float a = frame_color.a * smoothstep(-0.5, 0.5, d);
 
-            bool cut = p.x < stroke_cut_x && (stroke_cut_end_y <= 0.0 || p.y < stroke_cut_end_y);
+            // The right cut only ever reaches the boundary at the hole's own right edge, so the left edge
+            // is never touched even when a band's span overlaps it.
+            bool cut = (p.x < stroke_cut_x && (stroke_cut_end_y <= 0.0 || p.y < stroke_cut_end_y))
+                || (stroke_cut_y0 > 0.0 && p.x > rect_size.x - margin.z - 1.0
+                    && p.y >= stroke_cut_y0 && p.y < stroke_cut_y1);
             float edge = cut ? 0.0 : 1.0 - smoothstep(0.0, edge_width, abs(d));
 
             col = mix(col, edge_color.rgb, edge * edge_color.a);
