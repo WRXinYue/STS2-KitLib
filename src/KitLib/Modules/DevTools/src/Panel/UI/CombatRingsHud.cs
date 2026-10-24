@@ -6,6 +6,7 @@ using KitLib.CombatStats;
 using KitLib.Icons;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.UI;
@@ -329,7 +330,8 @@ internal static partial class CombatRingsHud {
         _gear.Icon = MdiIcon.Cog.Texture(GearGlyphSize, GearColor);
 
         // Outside combat the band reports the run's accumulated totals; inside it reports this combat.
-        bool live = CombatStatsTracker.IsTracking;
+        // The map overlay is a run-level view, so it keeps reporting run totals even mid-combat.
+        bool live = CombatStatsTracker.IsTracking && NMapScreen.Instance is not { IsOpen: true };
         var snapshot = live ? CombatStatsTracker.Current : CombatStatsTracker.RunTotal;
         var diag = $"players={snapshot?.Players.Count ?? 0} rows={_rows.Count} "
             + $"ring={(_rows.Count > 0 ? _rows[0].Ring.Size.ToString() : "none")} "
