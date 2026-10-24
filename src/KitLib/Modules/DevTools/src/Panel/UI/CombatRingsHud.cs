@@ -6,7 +6,6 @@ using KitLib.CombatStats;
 using KitLib.Icons;
 using KitLib.Settings;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
-using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
 
 namespace KitLib.UI;
@@ -38,6 +37,11 @@ internal static partial class CombatRingsHud {
     private const float GearSweepIn = 1.2f;
     private const float GearSweepOut = -0.2f;
     private const float GearWaveSeconds = 0.15f;
+    // Value motion: the arc fills like a loading bar; the number counts up alongside it.
+    private const float ValueAnimSeconds = 0.45f;
+    private const float PopUpSeconds = 0.08f;
+    private const float PopDownSeconds = 0.16f;
+    private const float PopScale = 1.10f;
 
     private static readonly Color BandBg = KitLibScreenFrame.FrameColor;
     private static readonly Color GearWaveColor = new(0.16f, 0.16f, 0.20f, 1f);
@@ -69,8 +73,10 @@ internal static partial class CombatRingsHud {
     private static TextureRect? _gearDisc;
     private static ShaderMaterial? _gearWave;
     private static Tween? _gearSweep;
-    private static readonly List<(VBoxContainer Root, CombatStatRing Ring, Label Label)> _rows = new();
+    private static readonly List<RingRow> _rows = new();
     private static bool _refreshQueued;
+    // Map overlay state, driven only by the map screen's open/close patches.
+    private static bool _mapOpen;
     private static string? _lastDiag;
 
     // The band enters the same way the left rail does: off screen, then sliding in once the run scene
@@ -101,6 +107,16 @@ internal static partial class CombatRingsHud {
 
     private static string Describe(Control? node) =>
         node == null ? "null" : GodotObject.IsInstanceValid(node) ? "valid" : "freed";
+
+    internal static void NotifyMapOpen() {
+        _mapOpen = true;
+        Refresh();
+    }
+
+    internal static void NotifyMapClose() {
+        _mapOpen = false;
+        Refresh();
+    }
     #endregion
 
     // ──────── Lifecycle ────────
@@ -331,7 +347,9 @@ internal static partial class CombatRingsHud {
 
         // Outside combat the band reports the run's accumulated totals; inside it reports this combat.
         // The map overlay is a run-level view, so it keeps reporting run totals even mid-combat.
-        bool live = CombatStatsTracker.IsTracking && NMapScreen.Instance is not { IsOpen: true };
+        // The map flag comes from the open/close patches: polling NMapScreen.Instance here proved
+        // unreliable (it could read a different state on consecutive repaints, flipping the view).
+        bool live = CombatStatsTracker.IsTracking && !_mapOpen;
         var snapshot = live ? CombatStatsTracker.Current : CombatStatsTracker.RunTotal;
         var diag = $"players={snapshot?.Players.Count ?? 0} rows={_rows.Count} "
             + $"ring={(_rows.Count > 0 ? _rows[0].Ring.Size.ToString() : "none")} "
@@ -371,32 +389,43 @@ internal static partial class CombatRingsHud {
         #endregion
 
         var players = OrderPlayers(snapshot);
+        ApplyViews(BuildViews(players, live), animate: _band?.Visible == true);
+    }
+
+    /// <summary>Builds one RingView per row for the current roster and view mode.</summary>
+    private static List<RingView> BuildViews(List<PlayerCombatStats> players, bool live) {
+        var views = new List<RingView>();
         if (players.Count > 1) {
             // Team mode: one ring per player, each on its share of the picked metric.
             var metric = SettingsStore.GetCombatRingMetric();
-            EnsureRingRows(players.Count);
-            SetHudVisible(true);
-            LayoutRows();
-            for (int i = 0; i < players.Count; i++)
-                ApplyRingRow(i, BuildShareView(players[i], players, metric));
-            return;
+            foreach (var player in players)
+                views.Add(BuildShareView(player, players, metric));
+            return views;
         }
 
         // Solo: one row per enabled metric, the ring comparing this combat with the run average.
-        var metrics = SettingsStore.GetCombatRingMetrics();
-        EnsureRingRows(metrics.Count);
-        SetHudVisible(metrics.Count > 0);
-        if (metrics.Count == 0)
-            return;
-
-        LayoutRows();
-        for (int i = 0; i < metrics.Count; i++) {
-            var metric = metrics[i];
+        foreach (var metric in SettingsStore.GetCombatRingMetrics()) {
             // The score row always reports the run total: a single combat's score is not what a total reads as.
-            ApplyRingRow(i, metric == CombatRingMetric.Score
+            views.Add(metric == CombatRingMetric.Score
                 ? BuildScoreView(players[0], live)
                 : live ? BuildMetricView(players[0], metric) : BuildRunView(players[0], metric));
         }
+
+        return views;
+    }
+
+    private static void ApplyViews(List<RingView> views, bool animate) {
+        if (_ringsBox == null)
+            return;
+
+        EnsureRingRows(views.Count);
+        SetHudVisible(views.Count > 0);
+        if (views.Count == 0)
+            return;
+
+        LayoutRows();
+        for (int i = 0; i < views.Count; i++)
+            ApplyRingRow(i, views[i], animate);
     }
 
     /// <summary>The run's accumulated score, plus the combat in progress so it keeps growing in a fight.</summary>
@@ -412,7 +441,8 @@ internal static partial class CombatRingsHud {
             1f,
             color,
             MetricIcon(CombatRingMetric.Score).Texture(RingGlyphSize, color.Lightened(0.15f)),
-            value.ToString(),
+            value,
+            "",
             I18N.T("combatStats.ring.tooltipRun", "{0}\n{1} {2} (run total)",
                 PlayerName(player), MetricLabel(CombatRingMetric.Score), value));
     }
@@ -496,6 +526,7 @@ internal static partial class CombatRingsHud {
 
         while (_rows.Count > count) {
             var last = _rows[^1];
+            last.StopTweens();
             _ringsBox.RemoveChild(last.Root);
             last.Root.QueueFree();
             _rows.RemoveAt(_rows.Count - 1);
@@ -508,6 +539,8 @@ internal static partial class CombatRingsHud {
                 VerticalAlignment = VerticalAlignment.Center,
                 CustomMinimumSize = new Vector2(LabelWidth, 14f),
                 MouseFilter = Control.MouseFilterEnum.Ignore,
+                // Scale from the text centre so the pop stays inside the band.
+                PivotOffset = new Vector2(LabelWidth * 0.5f, 7f),
             };
             label.AddThemeFontSizeOverride("font_size", 11);
             label.AddThemeColorOverride("font_color", LabelColor);
@@ -520,24 +553,122 @@ internal static partial class CombatRingsHud {
             row.AddChild(label);
 
             _ringsBox.AddChild(row);
-            _rows.Add((row, ring, label));
+            _rows.Add(new RingRow(row, ring, label));
         }
     }
 
-    private static void ApplyRingRow(int index, RingView view) {
-        var (_, ring, label) = _rows[index];
-        ring.Fraction = view.Fraction;
-        ring.ValueColor = view.Color;
-        ring.Glyph = view.Glyph;
-        ring.TooltipText = view.Tooltip;
-        ring.Apply();
-        label.Text = view.Text;
-        label.AddThemeColorOverride("font_color", LabelColor);
+    /// <summary>
+    /// <para xml:lang="en">Writes one row. With animation the arc sweeps and the number counts up from what is on screen, so overlapping stat updates retarget instead of queueing.</para>
+    /// <para xml:lang="zh-CN">写入一行。带动画时圆弧从当前显示值扫向新值、数字滚动递增；连续更新只重定向，不排队。</para>
+    /// </summary>
+    private static void ApplyRingRow(int index, RingView view, bool animate) {
+        var row = _rows[index];
+        row.Ring.ValueColor = view.Color;
+        row.Ring.Glyph = view.Glyph;
+        row.Ring.TooltipText = view.Tooltip;
+        row.Ring.ApplyStyle();
+        row.Label.AddThemeColorOverride("font_color", LabelColor);
+
+        bool first = !row.Primed;
+        row.Primed = true;
+        if (!animate || first) {
+            row.StopTweens();
+            row.Fraction = view.Fraction;
+            row.Value = view.Value;
+            row.ShownValue = view.Value;
+            row.Suffix = view.Suffix;
+            row.Ring.SetFraction(view.Fraction);
+            row.Label.Text = view.Text;
+            row.Label.Scale = Vector2.One;
+            return;
+        }
+
+        if (!Mathf.IsEqualApprox(row.Fraction, view.Fraction)) {
+            // Sweep the gauge itself from the on-screen value, so repeated updates retarget smoothly.
+            row.FractionTween?.Kill();
+            float from = row.Ring.Fraction;
+            var tween = row.Label.CreateTween();
+            tween.TweenMethod(Callable.From<float>(row.Ring.SetFraction), from, view.Fraction, ValueAnimSeconds)
+                .SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+            row.FractionTween = tween;
+            row.Fraction = view.Fraction;
+        }
+
+        int fromValue = Mathf.RoundToInt(row.ShownValue);
+        if (fromValue != view.Value || row.Suffix != view.Suffix) {
+            row.ValueTween?.Kill();
+            string suffix = view.Suffix;
+            if (fromValue == view.Value) {
+                row.Label.Text = view.Text;
+                row.ShownValue = view.Value;
+            }
+            else {
+                var tween = row.Label.CreateTween();
+                // Count from the number on screen, so a burst of updates retargets instead of jumping.
+                tween.TweenMethod(
+                        Callable.From<float>(v => {
+                            row.ShownValue = v;
+                            row.Label.Text = Mathf.RoundToInt(v).ToString() + suffix;
+                        }),
+                        row.ShownValue, view.Value, ValueAnimSeconds)
+                    .SetEase(Tween.EaseType.Out).SetTrans(Tween.TransitionType.Cubic);
+                row.ValueTween = tween;
+                if (view.Value > fromValue)
+                    PlayPop(row);
+            }
+
+            row.Value = view.Value;
+            row.Suffix = suffix;
+        }
+    }
+
+    /// <summary>Quick swell on growth, so a rising stat registers without the number bouncing.</summary>
+    private static void PlayPop(RingRow row) {
+        row.PopTween?.Kill();
+        row.Label.Scale = Vector2.One;
+        var tween = row.Label.CreateTween();
+        tween.TweenProperty(row.Label, "scale", new Vector2(PopScale, PopScale), PopUpSeconds)
+            .SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(row.Label, "scale", Vector2.One, PopDownSeconds).SetEase(Tween.EaseType.Out);
+        row.PopTween = tween;
     }
 
     // ──────── Ring values ────────
 
-    private readonly record struct RingView(float Fraction, Color Color, ImageTexture? Glyph, string Text, string Tooltip);
+    private readonly record struct RingView(float Fraction, Color Color, ImageTexture? Glyph, int Value, string Suffix, string Tooltip) {
+        public string Text => Value.ToString() + Suffix;
+    }
+
+    /// <summary>One ring row plus the values currently on screen, so animations always start from them.</summary>
+    private sealed class RingRow {
+        public readonly VBoxContainer Root;
+        public readonly CombatStatRing Ring;
+        public readonly Label Label;
+        public float Fraction;
+        public int Value;
+        // Number currently painted, so count-up restarts from what is on screen.
+        public float ShownValue;
+        public string Suffix = "";
+        public bool Primed;
+        public Tween? FractionTween;
+        public Tween? ValueTween;
+        public Tween? PopTween;
+
+        public RingRow(VBoxContainer root, CombatStatRing ring, Label label) {
+            Root = root;
+            Ring = ring;
+            Label = label;
+        }
+
+        public void StopTweens() {
+            FractionTween?.Kill();
+            ValueTween?.Kill();
+            PopTween?.Kill();
+            FractionTween = null;
+            ValueTween = null;
+            PopTween = null;
+        }
+    }
 
     /// <summary>Multiplayer: each ring is one player's share of the team total.</summary>
     private static RingView BuildShareView(PlayerCombatStats player, List<PlayerCombatStats> players, CombatRingMetric metric) {
@@ -554,7 +685,8 @@ internal static partial class CombatRingsHud {
             Mathf.Clamp(share, 0f, 1f),
             color,
             MdiIcon.Account.Texture(RingGlyphSize, color.Lightened(0.15f)),
-            percent,
+            Mathf.RoundToInt(share * 100f),
+            "%",
             I18N.T("combatStats.ring.tooltipMp", "{0}\n{1} {2} ({3})",
                 PlayerName(player), MetricLabel(metric), value, percent));
     }
@@ -570,17 +702,21 @@ internal static partial class CombatRingsHud {
             && CombatStatsTracker.RunTotal.Players.TryGetValue(player.Key, out var runPlayer))
             baseline = MetricValue(runPlayer!, metric) / (float)CombatStatsTracker.RunCombatCount;
 
-        // No history yet (first combat of the run): this combat becomes its own baseline.
+        // No history yet (first combat of the run): use a nominal reference so the arc has a
+        // mid-state to animate through instead of pinning at full on the first point.
         if (baseline <= 0f)
-            baseline = Mathf.Max(value, 1f);
+            baseline = NominalReference(metric);
 
-        float ratio = value / baseline;
+        // Saturating fill: half a ring at the reference, approaching (never reaching) full beyond it,
+        // so every increment still sweeps visibly.
+        float fill = value / (value + baseline);
 
         return new RingView(
-            Mathf.Clamp(ratio, 0f, 1f),
-            ratio > 1f ? KitLibTheme.Accent : color,
+            Mathf.Clamp(fill, 0f, 1f),
+            color,
             glyph,
-            value.ToString(),
+            value,
+            "",
             I18N.T("combatStats.ring.tooltipSp", "{0}\n{1} {2} (run avg {3})",
                 PlayerName(player), MetricLabel(metric), value,
                 Mathf.RoundToInt(baseline).ToString()));
@@ -596,7 +732,8 @@ internal static partial class CombatRingsHud {
             1f,
             color,
             MetricIcon(metric).Texture(RingGlyphSize, color.Lightened(0.15f)),
-            value.ToString(),
+            value,
+            "",
             I18N.T("combatStats.ring.tooltipRun", "{0}\n{1} {2} (run total)",
                 PlayerName(player), MetricLabel(metric), value));
     }
@@ -628,6 +765,16 @@ internal static partial class CombatRingsHud {
         CombatRingMetric.Energy => player.EnergySpent,
         CombatRingMetric.Potion => player.PotionsUsed,
         _ => ContributionScore(player),
+    };
+
+    /// <summary>Rough per-combat reference used only before the run has an average to compare with.</summary>
+    private static float NominalReference(CombatRingMetric metric) => metric switch {
+        CombatRingMetric.Damage => 25f,
+        CombatRingMetric.Block => 20f,
+        CombatRingMetric.Cards => 10f,
+        CombatRingMetric.Energy => 8f,
+        CombatRingMetric.Potion => 2f,
+        _ => 10f,
     };
 
     /// <summary>Composite score, reviving the retired CombatScoreCalculator weights over surviving aggregates.</summary>

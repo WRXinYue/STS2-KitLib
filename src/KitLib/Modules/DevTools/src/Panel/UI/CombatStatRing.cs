@@ -30,10 +30,14 @@ internal sealed partial class CombatStatRing : Control {
             TextureUnder = RingTexture,
             TextureProgress = RingTexture,
             FillMode = (int)TextureProgressBar.FillModeEnum.Clockwise,
-            RadialInitialAngle = -90f,
+            // Godot measures this from 12 o'clock, clockwise; sweep starts at the top like a loading ring.
+            RadialInitialAngle = 0f,
             RadialFillDegrees = 360f,
             MinValue = 0,
             MaxValue = 1,
+            // Fine step + no rounding, so tweened fractions are not snapped to whole units.
+            Step = 0.001f,
+            Rounded = false,
             MouseFilter = MouseFilterEnum.Ignore,
         };
         _arc.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
@@ -58,10 +62,21 @@ internal sealed partial class CombatStatRing : Control {
 
     /// <summary>Pushes the current values into the built-in nodes (no custom drawing involved).</summary>
     public void Apply() {
+        ApplyStyle();
+        SetFraction(Fraction);
+    }
+
+    /// <summary>Colour and glyph only; the arc keeps its value so a tween can drive it separately.</summary>
+    public void ApplyStyle() {
         _arc.TintUnder = TrackColor;
         _arc.TintProgress = ValueColor;
-        _arc.Value = Mathf.Clamp(Fraction, 0f, 1f);
         _glyph.Texture = Glyph;
+    }
+
+    /// <summary>Sets the arc fill without touching the glyph, so animated steps stay cheap.</summary>
+    public void SetFraction(float fraction) {
+        Fraction = fraction;
+        _arc.Value = Mathf.Clamp(fraction, 0f, 1f);
     }
 
     /// <summary>Procedural annulus, generated once at runtime (no asset shipped).</summary>

@@ -8,10 +8,10 @@ namespace KitLib.Patches;
 // Refresh is deferred and no-ops when the HUD is not attached.
 [HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.Open))]
 public static class CombatRingsMapOpenPatch {
-    public static void Postfix() => CombatRingsHud.Refresh();
+    public static void Postfix() => CombatRingsHud.NotifyMapOpen();
 }
 
 [HarmonyPatch(typeof(NMapScreen), nameof(NMapScreen.Close))]
 public static class CombatRingsMapClosePatch {
-    public static void Postfix() => CombatRingsHud.Refresh();
+    public static void Postfix() => CombatRingsHud.NotifyMapClose();
 }
