@@ -33,6 +33,8 @@ internal static class CombatStatsTracker {
     private static CombatStatsSnapshot? _last;
     private static CombatStatsSnapshot? _runTotal;
     private static int _runCombatCount;
+    // Seed of the active run; run totals persist to disk under it so reloads keep the history.
+    private static string? _runKey;
     private static int _nextEventSequence;
     private static readonly HashSet<int> _turnEndStatesEmitted = new();
     private static int _displayTurn = 1;
@@ -96,6 +98,11 @@ internal static class CombatStatsTracker {
         _runTotal = new CombatStatsSnapshot();
         _runCombatCount = 0;
         SeedRunTotal(state);
+        _runKey = RunStatsStore.KeyFor(state);
+        if (RunStatsStore.TryRestore(_runKey, RunTotal, out int combatCount)) {
+            _runCombatCount = combatCount;
+            NotifyChanged();
+        }
     }
 
     // A run starts on the map, where the band reads the run totals; seed them so it can report zeros
@@ -195,6 +202,7 @@ internal static class CombatStatsTracker {
             // MergeInto writes into the argument; the run totals accumulate this combat.
             _last.MergeInto(RunTotal);
             _runCombatCount++;
+            RunStatsStore.Persist(_runKey, RunTotal, _runCombatCount);
         }
 
         _combatState = null;
