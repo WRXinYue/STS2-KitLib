@@ -99,13 +99,14 @@ internal sealed class CombatActionTool : IMcpTool {
             }
         }
 
-        if (actionStr == "play_card" && result.Success) {
-            if (result.Message?.Contains("Queued play", StringComparison.OrdinalIgnoreCase) == true)
+        // Every action reports the state it produced, including end_turn and potions, so the caller does
+        // not have to poll get_game_state after each step of a fight.
+        if (result.Success) {
+            if (result.Message?.Contains("Queued play", StringComparison.OrdinalIgnoreCase) == true) {
                 response["queued"] = true;
-            else {
-                var after = KitLibGameOps.CaptureCombatAfterState();
-                if (after != null)
-                    response["afterState"] = after;
+            }
+            else if (DevCardMcpHelper.PostActionState() is { } state) {
+                response["state"] = state;
             }
         }
 

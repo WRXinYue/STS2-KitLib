@@ -24,6 +24,15 @@ internal sealed class McpToolRegistry {
         return arr;
     }
 
+    /// <summary>Runs one tool and returns its bare result, for callers such as <c>dev_batch</c> that
+    /// compose tools instead of forwarding them to the client.</summary>
+    public async Task<JsonNode> ExecuteToolAsync(string name, JsonObject? args) {
+        if (!_tools.TryGetValue(name, out var tool))
+            return new JsonObject { ["error"] = $"Unknown tool: {name}" };
+
+        return await tool.ExecuteAsync(args ?? new JsonObject());
+    }
+
     public async Task<JsonNode> CallAsync(string name, JsonObject? args) {
         if (!_tools.TryGetValue(name, out var tool)) {
             return new JsonObject {

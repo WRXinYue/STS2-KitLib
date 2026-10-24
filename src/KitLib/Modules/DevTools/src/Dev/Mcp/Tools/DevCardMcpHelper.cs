@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using KitLib.Abstractions.Host;
 using KitLib.Actions;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Runs;
@@ -156,6 +157,65 @@ internal static class DevCardMcpHelper {
         if (match == null)
             error = $"Card '{cardId}' not found in target pile.";
         return match;
+    }
+
+    // Post-action digest: what a caller needs right after acting is phase plus the live combat/map
+    // essentials, so the bulky parts of a full snapshot stay out of every action response.
+    public static JsonObject? PostActionState() {
+        var snapshot = KitLibGameOps.Snapshot();
+        if (snapshot == null)
+            return null;
+
+        var state = new JsonObject {
+            ["phase"] = snapshot["phase"]?.DeepClone(),
+            ["currentHp"] = snapshot["currentHp"]?.DeepClone(),
+            ["gold"] = snapshot["gold"]?.DeepClone(),
+        };
+
+        foreach (var key in PhaseKeys) {
+            if (snapshot[key] is { } node)
+                state[key] = node.DeepClone();
+        }
+
+        if (snapshot["combat"] is JsonObject combat)
+            state["combat"] = CompactCombat(combat);
+
+        return state;
+    }
+
+    private static readonly string[] PhaseKeys = [
+        "roomType", "mapNodes", "rewardsHaveCollectable", "offeredCards",
+        "eventOptions", "shopOffers", "restOptions", "offeredRelics",
+    ];
+
+    private static JsonObject CompactCombat(JsonObject combat) {
+        var enemies = new JsonArray();
+        if (combat["enemies"] is JsonArray raw) {
+            foreach (var node in raw) {
+                if (node is not JsonObject enemy)
+                    continue;
+                var entry = new JsonObject {
+                    ["index"] = enemy["index"]?.DeepClone(),
+                    ["currentHp"] = enemy["currentHp"]?.DeepClone(),
+                    ["maxHp"] = enemy["maxHp"]?.DeepClone(),
+                    ["block"] = enemy["block"]?.DeepClone(),
+                    ["isAlive"] = enemy["isAlive"]?.DeepClone(),
+                };
+                if (enemy["name"] is { } name)
+                    entry["name"] = name.DeepClone();
+                if (enemy["intentDamage"] is { } intent)
+                    entry["intentDamage"] = intent.DeepClone();
+                enemies.Add(entry);
+            }
+        }
+
+        return new JsonObject {
+            ["phase"] = combat["phase"]?.DeepClone(),
+            ["currentEnergy"] = combat["currentEnergy"]?.DeepClone(),
+            ["turnNumber"] = combat["turnNumber"]?.DeepClone(),
+            ["handCount"] = (combat["hand"] as JsonArray)?.Count ?? 0,
+            ["enemies"] = enemies,
+        };
     }
 
     public static bool TryRequireRun(out RunState state, out Player player, out JsonObject? error) {

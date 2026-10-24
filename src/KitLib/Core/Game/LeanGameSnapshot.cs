@@ -278,7 +278,7 @@ internal static class LeanGameSnapshot {
         obj["mapNodes"] = arr;
     }
 
-    static List<NMapPoint> GetAvailableMapPoints(RunState state, List<NMapPoint> allPoints) {
+    internal static List<NMapPoint> GetAvailableMapPoints(RunState state, List<NMapPoint> allPoints) {
         if (state.VisitedMapCoords.Count == 0)
             return allPoints.Where(mp => mp.Point.coord.row == 0).ToList();
 

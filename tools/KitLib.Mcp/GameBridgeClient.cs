@@ -14,8 +14,32 @@ internal sealed class GameBridgeClient : IDisposable {
 
     public GameBridgeClient(int port) {
         _port = port;
-        _http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        _messagesUrl = $"http://localhost:{port}/messages";
+        // Loopback only: skip proxy discovery and fail fast when the game is not listening.
+        _http = new HttpClient(new SocketsHttpHandler {
+            UseProxy = false,
+            ConnectTimeout = TimeSpan.FromSeconds(2),
+        }) {
+            Timeout = TimeSpan.FromSeconds(60),
+        };
+        _messagesUrl = $"http://127.0.0.1:{port}/messages";
+    }
+
+    public async Task<JsonArray> ListToolsAsync(CancellationToken cancellationToken = default) {
+        var request = new JsonObject {
+            ["jsonrpc"] = "2.0",
+            ["id"] = 1,
+            ["method"] = "tools/list",
+        };
+
+        using var content = new StringContent(request.ToJsonString(), Encoding.UTF8, "application/json");
+        using var response = await _http.PostAsync(_messagesUrl, content, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var node = JsonNode.Parse(body)?.AsObject();
+        if (node?["error"] is JsonObject err)
+            throw new InvalidOperationException(err["message"]?.GetValue<string>() ?? "tools/list failed.");
+        return node?["result"]?["tools"]?.AsArray()?.DeepClone() as JsonArray ?? new JsonArray();
     }
 
     public async Task<string> CallToolAsync(

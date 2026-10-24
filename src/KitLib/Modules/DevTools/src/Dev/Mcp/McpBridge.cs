@@ -39,6 +39,7 @@ internal static class McpBridge {
         Tools.Register(new SelectionActionTool());
         Tools.Register(new GetCombatStatsTool());
         Tools.Register(new MapActionTool());
+        Tools.Register(new GetMapStateTool());
         Tools.Register(new DevGetSessionTool());
         Tools.Register(new DevListSaveSlotsTool());
         Tools.Register(new DevTagSaveSlotTool());
@@ -54,6 +55,10 @@ internal static class McpBridge {
         Tools.Register(new DevAddMonsterTool());
         Tools.Register(new DevSetCheatTool());
         Tools.Register(new DevSetStatTool());
+        Tools.Register(new DevWaitPhaseTool());
+        Tools.Register(new DevReadTextTool());
+        Tools.Register(new DevCombatTurnTool());
+        Tools.Register(new DevBatchTool(Tools));
 
         try {
             _cts = new CancellationTokenSource();

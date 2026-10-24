@@ -12,7 +12,9 @@ internal sealed class GameOrchestrator : IDisposable {
 
     private static string? _cachedPython;
 
-    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
+    private readonly HttpClient _http = new(new SocketsHttpHandler { UseProxy = false }) {
+        Timeout = TimeSpan.FromSeconds(5),
+    };
 
     public JsonObject Launch() {
         var started = DateTime.UtcNow;

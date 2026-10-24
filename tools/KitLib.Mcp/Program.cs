@@ -10,6 +10,10 @@ for (int i = 0; i < args.Length; i++) {
         port = p;
 }
 
+var bridge = new GameBridgeClient(port);
+// Tool schemas live in the game; the proxy only adds the local launch/wait/stop helpers.
+var bridgeTools = await BridgeToolCatalog.LoadAsync(bridge);
+
 var builder = Host.CreateApplicationBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole(consoleLogOptions => {
@@ -17,11 +21,12 @@ builder.Logging.AddConsole(consoleLogOptions => {
     consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
 });
 
-builder.Services.AddSingleton(new GameBridgeClient(port));
+builder.Services.AddSingleton(bridge);
 builder.Services.AddSingleton<GameOrchestrator>();
 builder.Services
     .AddMcpServer()
     .WithStdioServerTransport()
-    .WithToolsFromAssembly();
+    .WithToolsFromAssembly()
+    .WithTools(bridgeTools);
 
 await builder.Build().RunAsync();

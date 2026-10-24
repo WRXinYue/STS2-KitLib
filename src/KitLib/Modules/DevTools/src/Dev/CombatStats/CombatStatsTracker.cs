@@ -95,6 +95,20 @@ internal static class CombatStatsTracker {
         if (!KitLibState.IsActive) return;
         _runTotal = new CombatStatsSnapshot();
         _runCombatCount = 0;
+        SeedRunTotal(state);
+    }
+
+    // A run starts on the map, where the band reads the run totals; seed them so it can report zeros
+    // before the first combat has anything to merge in.
+    private static void SeedRunTotal(RunState state) {
+        foreach (Player player in state.Players) {
+            if (player?.Creature == null)
+                continue;
+            string key = ResolvePlayerKey(player.Creature);
+            var stats = new PlayerCombatStats { Key = key };
+            RefreshPlayerIdentity(stats, player.Creature);
+            RunTotal.Players[key] = stats;
+        }
     }
 
     private static void OnCombatSetUp(CombatState state) {
@@ -178,7 +192,8 @@ internal static class CombatStatsTracker {
 
             _current.IsActive = false;
             _last = _current.Clone();
-            _runTotal.MergeInto(_last);
+            // MergeInto writes into the argument; the run totals accumulate this combat.
+            _last.MergeInto(RunTotal);
             _runCombatCount++;
         }
 

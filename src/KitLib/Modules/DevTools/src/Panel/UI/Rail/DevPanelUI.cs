@@ -603,7 +603,7 @@ internal static partial class DevPanelUI {
     }
 
     // ──────── Close all known overlays (internal + external UIs) ────────
-    private static readonly HashSet<string> _keepNodes = new() { RootName };
+    private static readonly HashSet<string> _keepNodes = new() { RootName, CombatRingsHud.RootNodeName };
 
     /// <summary>
     /// Close the internal overlay (cheats/save/ai) and remove all DevMode external

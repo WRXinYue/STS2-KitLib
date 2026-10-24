@@ -13,6 +13,9 @@ namespace KitLib.UI;
 /// <summary>Right-edge combat HUD: team mode draws one share ring per player, solo lists every
 /// enabled metric against its run average, and a gear opens the matching settings.</summary>
 internal static partial class CombatRingsHud {
+    /// <summary>Node name of the HUD root; the panel overlays must leave it alone.</summary>
+    internal const string RootNodeName = "KitLibCombatRingsHud";
+
     private const int HudZIndex = 1100;
 
     // Wide enough for the band's body (CombatRingBand.BodyWidth) plus room for the row labels.
@@ -107,7 +110,7 @@ internal static partial class CombatRingsHud {
             return;
 
         var root = new Control {
-            Name = "KitLibCombatRingsHud",
+            Name = RootNodeName,
             MouseFilter = Control.MouseFilterEnum.Ignore,
             ZIndex = HudZIndex,
         };
@@ -325,7 +328,9 @@ internal static partial class CombatRingsHud {
 
         _gear.Icon = MdiIcon.Cog.Texture(GearGlyphSize, GearColor);
 
-        var snapshot = CombatStatsTracker.IsTracking ? CombatStatsTracker.Current : CombatStatsTracker.Last;
+        // Outside combat the band reports the run's accumulated totals; inside it reports this combat.
+        bool live = CombatStatsTracker.IsTracking;
+        var snapshot = live ? CombatStatsTracker.Current : CombatStatsTracker.RunTotal;
         var diag = $"players={snapshot?.Players.Count ?? 0} rows={_rows.Count} "
             + $"ring={(_rows.Count > 0 ? _rows[0].Ring.Size.ToString() : "none")} "
             + $"band={_band?.Size.ToString() ?? "none"}@{_band?.GlobalPosition.ToString() ?? "none"} "
@@ -383,8 +388,31 @@ internal static partial class CombatRingsHud {
             return;
 
         LayoutRows();
-        for (int i = 0; i < metrics.Count; i++)
-            ApplyRingRow(i, BuildMetricView(players[0], metrics[i]));
+        for (int i = 0; i < metrics.Count; i++) {
+            var metric = metrics[i];
+            // The score row always reports the run total: a single combat's score is not what a total reads as.
+            ApplyRingRow(i, metric == CombatRingMetric.Score
+                ? BuildScoreView(players[0], live)
+                : live ? BuildMetricView(players[0], metric) : BuildRunView(players[0], metric));
+        }
+    }
+
+    /// <summary>The run's accumulated score, plus the combat in progress so it keeps growing in a fight.</summary>
+    private static RingView BuildScoreView(PlayerCombatStats player, bool live) {
+        int value = 0;
+        if (CombatStatsTracker.RunTotal.Players.TryGetValue(player.Key, out var totals))
+            value += ContributionScore(totals);
+        if (live)
+            value += ContributionScore(player);
+
+        var color = MetricColor(CombatRingMetric.Score);
+        return new RingView(
+            1f,
+            color,
+            MetricIcon(CombatRingMetric.Score).Texture(RingGlyphSize, color.Lightened(0.15f)),
+            value.ToString(),
+            I18N.T("combatStats.ring.tooltipRun", "{0}\n{1} {2} (run total)",
+                PlayerName(player), MetricLabel(CombatRingMetric.Score), value));
     }
 
     /// <summary>Shows or hides the band and every row on it — the gear rides along.</summary>
@@ -554,6 +582,21 @@ internal static partial class CombatRingsHud {
             I18N.T("combatStats.ring.tooltipSp", "{0}\n{1} {2} (run avg {3})",
                 PlayerName(player), MetricLabel(metric), value,
                 Mathf.RoundToInt(baseline).ToString()));
+    }
+
+    /// <summary>Solo, outside combat: the row shows the run's accumulated total, so the ring is drawn
+    /// whole instead of comparing against an average that no longer applies.</summary>
+    private static RingView BuildRunView(PlayerCombatStats player, CombatRingMetric metric) {
+        int value = MetricValue(player, metric);
+        var color = MetricColor(metric);
+
+        return new RingView(
+            1f,
+            color,
+            MetricIcon(metric).Texture(RingGlyphSize, color.Lightened(0.15f)),
+            value.ToString(),
+            I18N.T("combatStats.ring.tooltipRun", "{0}\n{1} {2} (run total)",
+                PlayerName(player), MetricLabel(metric), value));
     }
 
     private static List<PlayerCombatStats> OrderPlayers(CombatStatsSnapshot snapshot) {

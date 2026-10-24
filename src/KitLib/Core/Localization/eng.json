@@ -1238,6 +1238,7 @@
   "combatStats.ring.score": "Score",
   "combatStats.ring.tooltipMp": "{0}\n{1} {2} ({3})",
   "combatStats.ring.tooltipSp": "{0}\n{1} {2} (run avg {3})",
+  "combatStats.ring.tooltipRun": "{0}\n{1} {2} (run total)",
   "combatStats.ring.firstCombat": "First combat",
 
   "theme.dark": "Dark",

@@ -8,7 +8,8 @@ namespace KitLib.Mcp.Tools;
 internal sealed class MapActionTool : IMcpTool {
     public string Name => "map_action";
     public string Description =>
-        "Execute a non-combat action: select map node, pick card reward, choose event option, interact with shop, rest, or proceed.";
+        "Execute a non-combat action: select map node, pick card reward, choose event option, interact with shop, rest, or proceed. " +
+        "Call get_map_state first to plan a route across the act.";
     public string InputSchemaJson => """
     {
         "type": "object",
@@ -60,9 +61,16 @@ internal sealed class MapActionTool : IMcpTool {
             TargetIndex = targetIndex,
             Reason = "MCP tool call",
         });
-        return new JsonObject {
+
+        var response = new JsonObject {
             ["success"] = result.Success,
             ["message"] = result.Message,
         };
+        // The panel usually changes after acting (rewards closed, map opened), so hand back the new
+        // phase instead of making the caller spend another call on get_game_state.
+        if (DevCardMcpHelper.PostActionState() is { } state)
+            response["state"] = state;
+
+        return response;
     }
 }
