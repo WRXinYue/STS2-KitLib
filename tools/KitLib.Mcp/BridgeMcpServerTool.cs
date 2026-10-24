@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text;
 using System.Text.Json.Nodes;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -30,13 +32,18 @@ internal sealed class BridgeMcpServerTool : McpServerTool {
                 arguments[key] = JsonNode.Parse(value.GetRawText());
         }
 
+        long started = Stopwatch.GetTimestamp();
         try {
             string text = await _bridge.CallToolAsync(_protocolTool.Name, arguments, cancellationToken);
+            CallLog.Write(_protocolTool.Name, Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+                Encoding.UTF8.GetByteCount(text), isError: false);
             return new CallToolResult {
                 Content = new List<ContentBlock> { new TextContentBlock { Text = text } },
             };
         }
         catch (Exception ex) {
+            CallLog.Write(_protocolTool.Name, Stopwatch.GetElapsedTime(started).TotalMilliseconds,
+                Encoding.UTF8.GetByteCount(ex.Message), isError: true);
             return new CallToolResult {
                 Content = new List<ContentBlock> { new TextContentBlock { Text = ex.Message } },
                 IsError = true,

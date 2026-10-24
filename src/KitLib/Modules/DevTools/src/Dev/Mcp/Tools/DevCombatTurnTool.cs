@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Godot;
 using KitLib.Game;
 using KitLib.Host;
+using MegaCrit.Sts2.Core.Models;
 
 namespace KitLib.Mcp.Tools;
 
@@ -16,8 +19,9 @@ internal sealed class DevCombatTurnTool : IMcpTool {
 
     public string Name => "dev_combat_turn";
     public string Description =>
-        "Play a full turn in one call: play cards in order (index/target), optionally end the turn, " +
-        "wait for resolution, and return the resulting state. Stops after the first failing card.";
+        "Play a full turn in one call: play cards in order (index/target refer to the hand at call " +
+        "time), optionally end the turn, wait for resolution, and return the resulting state. " +
+        "Stops after the first failing card.";
     public string InputSchemaJson => """
     {
         "type": "object",
@@ -56,12 +60,45 @@ internal sealed class DevCombatTurnTool : IMcpTool {
         bool ok = true;
 
         if (args["cards"] is JsonArray cards) {
+            RunContext.TryGetRunAndPlayer(out _, out var player);
+            var hand = player?.PlayerCombatState?.Hand?.Cards?.ToList();
+
+            // Hand indexes shift after each play, so the requested cards are re-resolved by identity.
+            int LiveIndexOf(CardModel model) {
+                var live = player?.PlayerCombatState?.Hand?.Cards;
+                if (live == null)
+                    return -1;
+                int i = 0;
+                foreach (var current in live) {
+                    if (ReferenceEquals(current, model))
+                        return i;
+                    i++;
+                }
+                return -1;
+            }
+
             foreach (var node in cards) {
                 if (node is not JsonObject card)
                     continue;
 
-                int index = card["index"]?.GetValue<int>() ?? -1;
+                int requested = card["index"]?.GetValue<int>() ?? -1;
                 int target = card["target"]?.GetValue<int>() ?? -1;
+                CardModel? model = hand != null && requested >= 0 && requested < hand.Count
+                    ? hand[requested]
+                    : null;
+                int index = model != null ? LiveIndexOf(model) : requested;
+
+                if (model != null && index < 0) {
+                    played.Add(new JsonObject {
+                        ["index"] = requested,
+                        ["target"] = target,
+                        ["success"] = false,
+                        ["message"] = "Card is no longer in hand.",
+                    });
+                    ok = false;
+                    break;
+                }
+
                 var result = await KitLibGameOps.Execute(new GameAction {
                     Type = ActionType.PlayCard,
                     TargetIndex = index,
@@ -71,6 +108,7 @@ internal sealed class DevCombatTurnTool : IMcpTool {
 
                 played.Add(new JsonObject {
                     ["index"] = index,
+                    ["requested"] = requested,
                     ["target"] = target,
                     ["success"] = result.Success,
                     ["message"] = result.Message,

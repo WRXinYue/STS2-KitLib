@@ -24,7 +24,27 @@ builder.Logging.AddConsole(consoleLogOptions => {
 builder.Services.AddSingleton(bridge);
 builder.Services.AddSingleton<GameOrchestrator>();
 builder.Services
-    .AddMcpServer()
+    .AddMcpServer(options => {
+        // Shipped to every client in initialize, so the usage policy travels with the server.
+        options.ServerInstructions = """
+        KitLib dev bridge for Slay the Spire 2. The game must be running; call dev_launch_game
+        and dev_wait_bridge first, and dev_stop_game when done.
+
+        Efficiency rules:
+        - Read state with get_game_state. Add "sections" only when you need deck/relics/potions.
+        - Merge independent reads into one dev_batch call.
+        - Combat: plan the turn, then play it with one dev_combat_turn call (cards + end_turn).
+          Do not call combat_action once per card unless you need to branch between plays.
+        - Card indexes come from the latest get_game_state hand. dev_combat_turn re-resolves
+          them by card identity, so the given order is safe.
+        - After an action, wait with dev_wait_phase (play_phase, not_combat, or a phase name)
+          instead of polling get_game_state.
+        - Call get_map_state once per act for route planning, then map_action select_map_node
+          with the returned available.index.
+        - Use dev_read_text only for on-screen text; state reads are much cheaper.
+        - Never poll get_game_state in a loop; every call costs one model round trip.
+        """;
+    })
     .WithStdioServerTransport()
     .WithToolsFromAssembly()
     .WithTools(bridgeTools);

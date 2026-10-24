@@ -15,7 +15,8 @@ internal sealed class DevWaitPhaseTool : IMcpTool {
     public string Name => "dev_wait_phase";
     public string Description =>
         "Block until the game reaches a phase (Combat, MapSelection, RewardScreen, CardReward, " +
-        "RelicSelection, RestSite, Shop, EventChoice, TreasureRoom, GameOver), or 'not_combat'. " +
+        "RelicSelection, RestSite, Shop, EventChoice, TreasureRoom, GameOver), 'not_combat', " +
+        "'play_phase' (combat and the player can act), or 'not_play_phase'. " +
         "Use it after an action instead of re-polling get_game_state.";
     public string InputSchemaJson => """
     {
@@ -23,7 +24,7 @@ internal sealed class DevWaitPhaseTool : IMcpTool {
         "properties": {
             "phase": {
                 "type": "string",
-                "description": "Target GamePhase name, or 'not_combat'."
+                "description": "Target GamePhase name, 'not_combat', 'play_phase', or 'not_play_phase'."
             },
             "timeout_ms": {
                 "type": "integer",
@@ -73,6 +74,10 @@ internal sealed class DevWaitPhaseTool : IMcpTool {
     private static bool Matches(GamePhase current, string target) {
         if (target.Equals("not_combat", StringComparison.OrdinalIgnoreCase))
             return current != GamePhase.Combat;
+        if (target.Equals("play_phase", StringComparison.OrdinalIgnoreCase))
+            return current == GamePhase.Combat && Sts2CombatCompat.IsCombatPlayPhaseActive();
+        if (target.Equals("not_play_phase", StringComparison.OrdinalIgnoreCase))
+            return current != GamePhase.Combat || !Sts2CombatCompat.IsCombatPlayPhaseActive();
         return Enum.TryParse<GamePhase>(target, ignoreCase: true, out var parsed) && current == parsed;
     }
 }
