@@ -36,6 +36,9 @@ internal static partial class DevPanelUI {
         var inner = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         inner.AddThemeConstantOverride("separation", 4);
 
+        if (KitLibWelcomeCard.TryCreate() is { } welcome)
+            inner.AddChild(welcome);
+
         inner.AddChild(CreateSectionHeader(I18N.T("appearance.title", "Appearance")));
         inner.AddChild(CreateAppearanceSection(() => ShowSettingsOverlay(globalUi, actions)));
 
@@ -202,6 +205,10 @@ internal static partial class DevPanelUI {
         hint.AddThemeFontSizeOverride("font_size", 11);
         hint.AddThemeColorOverride("font_color", KitLibTheme.Subtle);
         col.AddChild(hint);
+
+        col.AddChild(KitLibHotkeyChip.CreateRow(
+            I18N.T("rail.hotkeyHint", "Toggle the whole sidebar"),
+            HotkeyActionId.ToggleRail));
 
         col.AddChild(CreateRailGroupEditor(
             globalUi,

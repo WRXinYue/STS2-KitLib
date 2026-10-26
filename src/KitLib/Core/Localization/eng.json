@@ -1083,6 +1083,7 @@
   "appearance.resetPanelWidths": "Reset saved panel widths",
   "rail.title": "Sidebar",
   "rail.hint": "Drag to reorder. Uncheck to hide a panel from the sidebar.",
+  "rail.hotkeyHint": "Hide or show the whole sidebar",
   "rail.peekHint": "Show KitLib sidebar",
   "rail.peekHotkey": "Show KitLib sidebar ({0})",
   "rail.group.primary": "Main panels",
@@ -1394,5 +1395,14 @@
   "autoslay.seedPlaceholder": "Leave empty for a random seed",
   "autoslay.alreadyRunning": "Already running.",
   "autoslay.mpWarning": "Not available in multiplayer.",
-  "autoslay.started": "Started with seed {0}"
+  "autoslay.started": "Started with seed {0}",
+
+  "tutorial.tip.rail": "Press {0} to hide or show the sidebar",
+  "tutorial.tip.panel": "Press {0} to open KitLib settings",
+  "tutorial.welcome.kicker": "Getting started",
+  "tutorial.welcome.title": "KitLib is ready — here are the keys that matter",
+  "tutorial.welcome.rail": "Hide or show every KitLib sidebar panel",
+  "tutorial.welcome.panel": "Open KitLib settings: modules, hotkeys, ring metrics",
+  "tutorial.welcome.close": "Close the current panel or settings screen",
+  "tutorial.welcome.dismiss": "Got it"
 }

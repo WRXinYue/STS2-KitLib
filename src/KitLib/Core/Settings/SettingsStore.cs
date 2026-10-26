@@ -222,6 +222,40 @@ public static class SettingsStore {
         Save();
     }
 
+    /// <summary>True while the player has not dismissed the welcome card at this version.</summary>
+    public static bool ShouldShowWelcomeCard(int version)
+        => Current.WelcomeCardSeenVersion < version;
+
+    public static void MarkWelcomeCardSeen(int version) {
+        if (Current.WelcomeCardSeenVersion >= version)
+            return;
+        Current.WelcomeCardSeenVersion = version;
+        Save();
+    }
+
+    /// <summary>True while the first-run main-menu hint has not been shown at this version.</summary>
+    public static bool ShouldShowFirstRunTip(int version)
+        => Current.FirstRunTipSeenVersion < version;
+
+    public static void MarkFirstRunTipSeen(int version) {
+        if (Current.FirstRunTipSeenVersion >= version)
+            return;
+        Current.FirstRunTipSeenVersion = version;
+        Current.FirstRunTipStep = 0;
+        Save();
+    }
+
+    /// <summary>Step of the first-run walkthrough to show, 0-based; past the last step once it has been seen.</summary>
+    public static int FirstRunTipStep => Current.FirstRunTipStep;
+
+    /// <summary>Persists the walkthrough step so leaving the menu mid-tutorial resumes where it stopped.</summary>
+    public static void SetFirstRunTipStep(int step) {
+        if (Current.FirstRunTipStep == step)
+            return;
+        Current.FirstRunTipStep = step;
+        Save();
+    }
+
     private static void ApplyNormalRunModeFromSettings() {
         KitLibState.NormalRunMode = ParseNormalRunMode(Current.NormalRunMode);
     }

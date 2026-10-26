@@ -384,7 +384,7 @@ public static partial class ModPanelUI {
         if (source != ModEntrySource.SteamWorkshop || string.IsNullOrWhiteSpace(modId))
             return;
         var mod = ModPanelModBanner.TryFindMod(modId);
-        if (mod?.workshopId is not ulong wid)
+        if (ModWorkshopIds.Resolve(mod) is not ulong wid)
             return;
         var local = ModWorkshopUpdateService.GetLocalUpdateTime(wid);
         if (local is DateTimeOffset localTs) {

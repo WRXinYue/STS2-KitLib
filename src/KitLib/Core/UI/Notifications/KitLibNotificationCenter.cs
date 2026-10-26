@@ -26,8 +26,14 @@ internal static class KitLibNotificationCenter {
 }
 
 /// <summary>
-/// <para xml:lang="en">One notification: a short message plus an optional icon, which falls back to a theme
-/// accent dot when null.</para>
-/// <para xml:lang="zh-CN">一条通知：一段短文案加可选图标；图标为 null 时改用主题色圆点。</para>
+/// <para xml:lang="en">One notification: a short message plus an optional icon (hidden when null).
+/// <c>TtlSeconds</c> overrides the host's default dwell time. <c>DismissOnHotkey</c> pins the notification
+/// instead: it never times out, holding until the player actually uses that shortcut.</para>
+/// <para xml:lang="zh-CN">一条通知：一段短文案加可选图标（为 null 时不显示）。<c>TtlSeconds</c> 可覆盖宿主默认停留时长。
+/// <c>DismissOnHotkey</c> 则改为钉住通知：不自动超时，直到玩家真正按下对应快捷键才收起。</para>
 /// </summary>
-internal readonly record struct KitLibNotification(string Message, Texture2D? Icon = null);
+internal readonly record struct KitLibNotification(
+    string Message,
+    Texture2D? Icon = null,
+    float? TtlSeconds = null,
+    string? DismissOnHotkey = null);

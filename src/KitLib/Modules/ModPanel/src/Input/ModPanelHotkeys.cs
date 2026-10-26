@@ -29,6 +29,7 @@ internal static class ModPanelHotkeys {
 
         if (ModPanelUI.IsVisible) {
             ModPanelUI.Hide();
+            KitLibHotkeySignals.ReportUsed(HotkeyActionId.OpenModPanel);
             viewport.SetInputAsHandled();
             return true;
         }
@@ -38,6 +39,7 @@ internal static class ModPanelHotkeys {
             return false;
 
         ModPanelUI.Show(stack);
+        KitLibHotkeySignals.ReportUsed(HotkeyActionId.OpenModPanel);
         viewport.SetInputAsHandled();
         return true;
     }

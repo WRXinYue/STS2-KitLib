@@ -23,6 +23,9 @@ internal static class KitLibSatelliteModuleSettingsUi {
         var stack = KitLibModSettingsUiBuilders.CreatePageStack();
         var bindings = new List<ModuleRowBinding>();
 
+        if (KitLibWelcomeCard.TryCreate() is { } welcome)
+            stack.AddChild(welcome);
+
         stack.AddChild(CreateNoticeLabel(
             "modpanel.kitlib.modules.restartNotice",
             "Changes take effect after restarting the game."));

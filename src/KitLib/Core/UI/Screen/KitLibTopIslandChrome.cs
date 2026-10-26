@@ -3,38 +3,40 @@ using Godot;
 namespace KitLib.UI;
 
 /// <summary>
-/// <para xml:lang="en">Top-edge notification tab ("dynamic island"): a black trapezoid hanging from the window's
-/// top border, carrying one short message. Built onto <see cref="KitLibScreenFrame"/>'s own layer so it floats
-/// above every KitLib panel, and painted with that frame's window-edge colors so the top edge merges with the
-/// border it hangs from.</para>
-/// <para xml:lang="zh-CN">顶部通知梯形（灵动岛式）：自窗口顶边垂下、承载一条短文案的黑色梯形。构建在
-/// <see cref="KitLibScreenFrame"/> 自身图层上以浮于所有 KitLib 面板之上，并沿用该边框的窗口边配色，
-/// 使顶边与所依附的边框无缝合并。</para>
+/// <para xml:lang="en">Top notification tab: a black trapezoid hanging from the top border, carrying one short message.
+/// Lives on <see cref="KitLibScreenFrame"/>'s layer so it floats above every KitLib panel.</para>
+/// <para xml:lang="zh-CN">顶部通知梯形：自顶部边框垂下、承载一条短文案的黑色梯形。位于
+/// <see cref="KitLibScreenFrame"/> 图层，浮于所有 KitLib 面板之上。</para>
 /// </summary>
 internal static class KitLibTopIslandChrome {
     internal const string ContentNodeName = "KitLibTopIslandContent";
-    /// <summary><para xml:lang="en">Tab depth when fully revealed; deeper than the frame margin so it covers the
-    /// inner stroke of the border it hangs from.</para>
-    /// <para xml:lang="zh-CN">完全展开时的梯形深度；大于边框厚度，以盖住所依附边框的内描边。</para></summary>
-    internal const float TabDepth = 64f;
+    /// <summary><para xml:lang="en">Tab depth when fully revealed, measured down from the border's inner edge; the
+    /// border itself is left intact instead of being painted over.</para>
+    /// <para xml:lang="zh-CN">完全展开时的梯形深度，自边框内沿向下量起；边框本身保持完整，不被覆盖。</para></summary>
+    internal const float TabDepth = 56f;
     /// <summary><para xml:lang="en">Half-width of the tab's top edge, the widest part.</para>
     /// <para xml:lang="zh-CN">梯形顶边（最宽处）的半宽。</para></summary>
-    internal const float TabHalfTop = 150f;
+    internal const float TabHalfTop = 200f;
+    /// <summary><para xml:lang="en">Y of the tab's top edge; slightly inside the border.</para>
+    /// <para xml:lang="zh-CN">梯形顶边的 y 坐标，略进入边框内部。</para></summary>
+    internal const float TabTop = KitLibScreenFrame.Margin - 2f;
     /// <summary><para xml:lang="en">Half-width the slanted sides taper down to.</para>
     /// <para xml:lang="zh-CN">斜边向下收窄到的半宽。</para></summary>
-    internal const float TabHalfBottom = 110f;
-    /// <summary><para xml:lang="en">Radius of the outward bottom corners.</para>
-    /// <para xml:lang="zh-CN">底部外扩圆角半径。</para></summary>
-    internal const float CornerRadius = 18f;
+    internal const float TabHalfBottom = 160f;
+    /// <summary><para xml:lang="en">Fillet radius of the two bottom corners; the top edge stays flush with the
+    /// border it hangs from.</para>
+    /// <para xml:lang="zh-CN">底部两角的圆角半径；顶边保持与所依附边框齐平。</para></summary>
+    internal const float CornerRadius = 10f;
 
     private const string RootNodeName = "KitLibTopIsland";
     private const string TabNodeName = "KitLibTopIslandTab";
-    private const string IconDotNodeName = "KitLibTopIslandDot";
     private const string IconNodeName = "KitLibTopIslandIcon";
     private const string LabelNodeName = "KitLibTopIslandLabel";
     private const float IconSize = 22f;
     private const int ContentSeparation = 10;
-    private const int LabelFontSize = 15;
+    private const int LabelFontSize = 12;
+    /// <summary>Padding between the tab's outline and its content row.</summary>
+    private const float ContentInset = 14f;
     /// <summary>Content half-width; inside <see cref="TabHalfBottom"/> so it never pokes past the tab's outline.</summary>
     private const float ContentHalfWidth = TabHalfBottom - 10f;
     /// <summary>Reveal progress at which the message starts / finishes fading in, once the tab is deep enough
@@ -57,7 +59,9 @@ internal static class KitLibTopIslandChrome {
         var material = new ShaderMaterial { Shader = TabShader() };
         material.SetShaderParameter("tab_half_top", TabHalfTop);
         material.SetShaderParameter("tab_half_bottom", TabHalfBottom);
-        material.SetShaderParameter("tab_depth", 0f);
+        material.SetShaderParameter("tab_depth", TabDepth);
+        material.SetShaderParameter("tab_top", TabTop * KitLibScreenFrame.WrapT);
+        material.SetShaderParameter("tab_reveal", 0f);
         material.SetShaderParameter("tab_corner_radius", CornerRadius);
         material.SetShaderParameter("tab_edge_width", 1f);
         material.SetShaderParameter("tab_inset", NarrowInset);
@@ -98,27 +102,27 @@ internal static class KitLibTopIslandChrome {
     }
 
     /// <summary>
-    /// <para xml:lang="en">Show one notification: message text, and either its icon or the accent dot.</para>
-    /// <para xml:lang="zh-CN">展示一条通知：文案，以及其图标或主题色圆点。</para>
+    /// <para xml:lang="en">Show one notification: the message text, plus an optional leading icon.</para>
+    /// <para xml:lang="zh-CN">展示一条通知：文案，以及可选的前置图标。</para>
     /// </summary>
     internal static void SetContent(KitLibTopIsland island, KitLibNotification notification) {
         island.Label.Text = notification.Message;
 
-        bool hasIcon = notification.Icon != null;
         island.Icon.Texture = notification.Icon;
-        island.Icon.Visible = hasIcon;
-        island.IconDot.Visible = !hasIcon;
+        island.Icon.Visible = notification.Icon != null;
     }
 
     /// <summary>
-    /// <para xml:lang="en">Drive the reveal: 0 hides the tab (zero area), 1 shows it at full depth. The message
-    /// fades in only once the tab is deep enough to hold the whole row, so it never floats outside the tab's
-    /// outline while the tab is still unfolding.</para>
-    /// <para xml:lang="zh-CN">驱动展开：0 为完全收起（面积为零），1 为全深度展开。文案只在梯形深到足以容纳整行后才淡入，
-    /// 因此展开过程中不会飘到梯形轮廓之外。</para>
+    /// <para xml:lang="en">Drive the reveal: 0 hides the tab, 1 shows it at full depth. The whole trapezoid slides up
+    /// into the border as it retracts instead of being squashed, so its outline moves as one piece. The message fades
+    /// out over the top of the motion.</para>
+    /// <para xml:lang="zh-CN">驱动展开：0 为完全收起，1 为全深度展开。收起时整块梯形上滑进边框，而不是被压扁，
+    /// 因此轮廓始终作为一个整体移动；文案在动作前段淡出。</para>
     /// </summary>
     internal static void SetPresence(KitLibTopIsland island, float presence) {
-        island.Material.SetShaderParameter("tab_depth", TabDepth * presence);
+        island.Material.SetShaderParameter("tab_reveal", presence);
+        // Ride the border's inner edge as the wrap retracts, otherwise the border pulls away and leaves a gap.
+        island.Material.SetShaderParameter("tab_top", TabTop * KitLibScreenFrame.WrapT);
         // Smooth Hermite fade over the top of the reveal.
         float t = Mathf.Clamp((presence - ContentFadeFrom) / (ContentFadeTo - ContentFadeFrom), 0f, 1f);
         island.Content.Modulate = new Color(1f, 1f, 1f, t * t * (3f - 2f * t));
@@ -137,28 +141,12 @@ internal static class KitLibTopIslandChrome {
             AnchorBottom = 0f,
             OffsetLeft = -ContentHalfWidth,
             OffsetRight = ContentHalfWidth,
-            OffsetTop = KitLibScreenFrame.Margin,
-            OffsetBottom = TabDepth - KitLibScreenFrame.Margin,
+            OffsetTop = TabTop + ContentInset,
+            OffsetBottom = TabTop + TabDepth - ContentInset,
             Modulate = new Color(1f, 1f, 1f, 0f),
         };
         content.AddThemeConstantOverride("separation", ContentSeparation);
         island.Content = content;
-
-        var dot = new Panel {
-            Name = IconDotNodeName,
-            MouseFilter = Control.MouseFilterEnum.Ignore,
-            CustomMinimumSize = new Vector2(IconSize, IconSize),
-            SizeFlagsVertical = Control.SizeFlags.ShrinkCenter,
-        };
-        dot.AddThemeStyleboxOverride("panel", new StyleBoxFlat {
-            BgColor = KitLibTheme.Accent,
-            CornerRadiusTopLeft = (int)(IconSize * 0.5f),
-            CornerRadiusTopRight = (int)(IconSize * 0.5f),
-            CornerRadiusBottomLeft = (int)(IconSize * 0.5f),
-            CornerRadiusBottomRight = (int)(IconSize * 0.5f),
-        });
-        content.AddChild(dot);
-        island.IconDot = dot;
 
         var icon = new TextureRect {
             Name = IconNodeName,
@@ -177,6 +165,9 @@ internal static class KitLibTopIslandChrome {
             MouseFilter = Control.MouseFilterEnum.Ignore,
             VerticalAlignment = VerticalAlignment.Center,
             SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+            // ClipText keeps the text out of the row's minimum size, so a long message can never
+            // stretch the row past the tab's outline; it trims with an ellipsis instead.
+            ClipText = true,
             TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
         };
         KitLibLocaleFonts.ApplyControl(label);
@@ -200,9 +191,9 @@ internal static class KitLibTopIslandChrome {
     }
 
     // Trapezoid hanging from the window's top edge, in logical pixels (UV * rect_size). The top edge sits
-    // exactly at y = 0 with no stroke, so it merges with the border it overlaps, and the slanted / bottom
-    // edges keep the frame's 1px inner stroke look. With Godot's fragment rules the shape is faded, not
-    // returned from.
+    // exactly at y = 0 with no stroke, so it merges with the border it overlaps; the slanted sides, the
+    // rounded bottom corners and the bottom edge keep the frame's 1px inner stroke look. With Godot's
+    // fragment rules the shape is faded, not returned from.
     private const string TopTabShaderCode = """
         shader_type canvas_item;
 
@@ -210,41 +201,54 @@ internal static class KitLibTopIslandChrome {
         uniform float tab_center_x = 960.0;
         uniform float tab_half_top = 100.0;
         uniform float tab_half_bottom = 70.0;
-        // Reveal depth from the top edge; 0 hides the tab (zero area).
-        uniform float tab_depth = 0.0;
-        uniform float tab_corner_radius = 14.0;
+        // Full depth below the border; the shape itself never changes size.
+        uniform float tab_depth = 56.0;
+        // Y of the tab's top edge, slightly inside the border.
+        uniform float tab_top = 14.0;
+        // Reveal progress 0..1: the whole tab slides up into the border as it retracts.
+        uniform float tab_reveal = 0.0;
         uniform vec4 tab_color : source_color = vec4(0.0, 0.0, 0.0, 1.0);
         uniform vec4 tab_edge_color : source_color = vec4(1.0, 1.0, 1.0, 0.10);
         uniform float tab_edge_width = 1.0;
+        // Fillet radius of the two bottom corners only; the top edge stays straight and flush.
+        uniform float tab_corner_radius = 10.0;
         // Gutter the tab must stay inside on narrow windows: frame margin + corner radius.
         uniform float tab_inset = 32.0;
 
         void fragment() {
             vec2 p = UV * rect_size;
-            float present = tab_depth > 0.0 ? 1.0 : 0.0;
+            float revealed = clamp(tab_reveal, 0.0, 1.0);
+            float present = revealed > 0.0 ? 1.0 : 0.0;
+            // Shift the whole shape up as it retracts; its geometry never deforms. y is the shape's own space.
+            float y = p.y - tab_top + (1.0 - revealed) * tab_depth;
             // Shrink to fit narrow windows so the tab never runs past the frame's rounded corners.
             float fit = min(1.0, max((rect_size.x - 2.0 * tab_inset) * 0.5, 1.0) / max(tab_half_top, 1.0));
             float half_top = tab_half_top * fit;
             float half_bottom = tab_half_bottom * fit;
 
-            // Slanted sides run from the top edge down to where the corner arc takes over.
-            float r = min(tab_corner_radius, tab_depth * 0.5);
-            float slant_end = max(tab_depth - r, 0.0001);
-            float half_w = mix(half_top, half_bottom, clamp(p.y / slant_end, 0.0, 1.0));
-            if (p.y > slant_end) {
-                // Bottom corners: a quarter arc bulging outward, so the tab ends on a rounded foot.
-                float dy = p.y - slant_end;
-                half_w = (half_bottom - r) + sqrt(max(r * r - dy * dy, 0.0));
-            }
+            // Straight slanted sides running the full depth: a plain trapezoid, no bulging feet.
+            float half_w = mix(half_top, half_bottom, clamp(y / max(tab_depth, 0.0001), 0.0, 1.0));
 
-            // Inside distance like the frame's: sides and bottom form the silhouette, the top is open at y = 0.
-            float d = min(half_w - abs(p.x - tab_center_x), tab_depth - p.y);
+            // Inside distances to the silhouette: the slanted sides and the bottom edge. The top is open so the
+            // tab reads as one solid piece with the border it hangs from.
+            float d_side = half_w - abs(p.x - tab_center_x);
+            float d_bottom = tab_depth - y;
+
+            // Round the bottom corners by treating (side, bottom) as the two axes of a box SDF: the fillet
+            // only bites where both distances fall inside the radius, leaving the top edge and the sides
+            // themselves untouched.
+            float r = min(tab_corner_radius, tab_depth * 0.5);
+            vec2 q = vec2(r - d_side, r - d_bottom);
+            float d = r - length(max(q, vec2(0.0))) - min(max(q.x, q.y), 0.0);
 
             vec3 col = tab_color.rgb;
             float a = tab_color.a * smoothstep(-0.5, 0.5, d);
             float edge = 1.0 - smoothstep(0.0, tab_edge_width, abs(d));
             col = mix(col, tab_edge_color.rgb, edge * tab_edge_color.a);
             a = max(a, edge * tab_edge_color.a);
+            // Cut at the shape's own top edge and again at the border line, so a retracting tab disappears into
+            // the border instead of surfacing above it.
+            a *= smoothstep(-0.5, 0.5, y) * smoothstep(-0.5, 0.5, p.y - tab_top);
 
             COLOR = vec4(col, a * present);
         }
@@ -261,6 +265,5 @@ internal sealed class KitLibTopIsland {
     internal ShaderMaterial Material = null!;
     internal HBoxContainer Content = null!;
     internal TextureRect Icon = null!;
-    internal Panel IconDot = null!;
     internal Label Label = null!;
 }

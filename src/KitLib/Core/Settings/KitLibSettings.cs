@@ -80,6 +80,15 @@ public sealed partial class KitLibSettings {
     /// </summary>
     public bool? RailIntroDismissed { get; set; }
 
+    /// <summary>Highest first-run welcome card version the player has dismissed (0 = never shown).</summary>
+    public int WelcomeCardSeenVersion { get; set; }
+
+    /// <summary>Highest first-run main-menu hint version the player has seen (0 = never shown).</summary>
+    public int FirstRunTipSeenVersion { get; set; }
+
+    /// <summary>Step of the first-run walkthrough the player is on; resets with the version.</summary>
+    public int FirstRunTipStep { get; set; }
+
     /// <summary>Back up active profile progress when the loaded mod set fingerprint changes.</summary>
     public bool AutoBackupProgressOnModChange { get; set; } = true;
 

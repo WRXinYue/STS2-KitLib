@@ -1263,6 +1263,7 @@
   "appearance.resetPanelWidths": "重置面板宽度",
   "rail.title": "侧边栏",
   "rail.hint": "拖动调整顺序；取消勾选可从侧边栏隐藏该面板。",
+  "rail.hotkeyHint": "隐藏 / 显示整个侧边栏",
   "rail.peekHint": "显示 KitLib 侧边栏",
   "rail.peekHotkey": "显示 KitLib 侧边栏（{0}）",
   "rail.group.primary": "主面板",
@@ -1426,5 +1427,14 @@
   "autoslay.seedPlaceholder": "留空则随机种子",
   "autoslay.alreadyRunning": "已在运行。",
   "autoslay.mpWarning": "多人模式下不可用。",
-  "autoslay.started": "已用种子 {0} 启动"
+  "autoslay.started": "已用种子 {0} 启动",
+
+  "tutorial.tip.rail": "按 {0} 显示 / 隐藏侧边栏",
+  "tutorial.tip.panel": "按 {0} 打开 KitLib 设置",
+  "tutorial.welcome.kicker": "快速开始",
+  "tutorial.welcome.title": "KitLib 已就绪，先记住这几个快捷键",
+  "tutorial.welcome.rail": "隐藏 / 显示所有 KitLib 侧边栏面板",
+  "tutorial.welcome.panel": "打开 KitLib 设置：模块、快捷键、圆环指标",
+  "tutorial.welcome.close": "关闭当前面板或设置界面",
+  "tutorial.welcome.dismiss": "知道了"
 }

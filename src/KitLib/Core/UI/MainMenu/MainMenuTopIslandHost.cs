@@ -28,6 +28,8 @@ internal static class MainMenuTopIslandHost {
     private static Godot.Timer? _timer;
     private static Tween? _tween;
     private static float _presence;
+    /// <summary>Shortcut a pinned notification is waiting on; null when nothing is pinned.</summary>
+    private static string? _pinnedHotkey;
 
     /// <summary>Whether the island is currently hosted by <paramref name="mainMenu"/>.</summary>
     internal static bool IsAttachedTo(NMainMenu mainMenu) =>
@@ -48,7 +50,10 @@ internal static class MainMenuTopIslandHost {
         // Registered so a Ctrl+B wrap retract carries the island out and back in with the window edge.
         KitLibScreenFrame.AddWrapListener(ApplyWrap);
         KitLibNotificationCenter.Raised += OnNotificationRaised;
+        KitLibHotkeySignals.Used += OnHotkeyUsed;
         mainMenu.TreeExiting += Detach;
+        // One-time first-run hint, carried by the same island the notifications use.
+        KitLibWelcomeCard.TryRaiseFirstRunTip();
         MainFile.Logger.Info("KitLib main-menu top island attached.");
     }
 
@@ -79,7 +84,9 @@ internal static class MainMenuTopIslandHost {
 
     private static void ResetStatics() {
         KitLibNotificationCenter.Raised -= OnNotificationRaised;
+        KitLibHotkeySignals.Used -= OnHotkeyUsed;
         KitLibScreenFrame.RemoveWrapListener(ApplyWrap);
+        _pinnedHotkey = null;
 
         var menu = _menu;
         if (menu != null && GodotObject.IsInstanceValid(menu))
@@ -107,7 +114,26 @@ internal static class MainMenuTopIslandHost {
         KitLibTopIslandChrome.SetContent(island, notification);
         island.Root.Visible = true;
         Reveal();
-        RestartTtl();
+        // A notification pinned to a shortcut waits for that key instead of timing out.
+        _pinnedHotkey = notification.DismissOnHotkey;
+        if (_pinnedHotkey != null)
+            StopTtl();
+        else
+            RestartTtl(notification.TtlSeconds ?? TtlSeconds);
+    }
+
+    /// <summary>
+    /// <para xml:lang="en">Retract a pinned notification once the player has actually used the shortcut it teaches,
+    /// so each walkthrough step ends on demonstrated understanding rather than on a timer.</para>
+    /// <para xml:lang="zh-CN">玩家真正按下被讲解的快捷键后才收起钉住的通知：每个引导步骤以"已学会"结束，而不是靠计时器。</para>
+    /// </summary>
+    private static void OnHotkeyUsed(string actionId) {
+        if (_pinnedHotkey != actionId)
+            return;
+
+        _pinnedHotkey = null;
+        Retract();
+        KitLibWelcomeCard.AdvanceFirstRunTip();
     }
 
     private static void Reveal() {
@@ -159,13 +185,20 @@ internal static class MainMenuTopIslandHost {
         _tween = tween;
     }
 
-    private static void RestartTtl() {
+    private static void RestartTtl(float seconds) {
         var timer = _timer;
         if (timer == null || !GodotObject.IsInstanceValid(timer))
             return;
 
         timer.Stop();
+        timer.WaitTime = Mathf.Max(0.5f, seconds);
         timer.Start();
+    }
+
+    private static void StopTtl() {
+        var timer = _timer;
+        if (timer != null && GodotObject.IsInstanceValid(timer))
+            timer.Stop();
     }
 
     /// <summary>

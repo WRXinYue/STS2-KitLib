@@ -21,6 +21,7 @@ internal static class DevPanelHotkeys {
             if (!KitLibScreenFrame.HasWrapHost)
                 return false;
             KitLibScreenFrame.ToggleWrapShown(animated: true);
+            KitLibHotkeySignals.ReportUsed(HotkeyActionId.ToggleRail);
             viewport.SetInputAsHandled();
             return true;
         }
