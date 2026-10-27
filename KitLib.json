@@ -3,7 +3,7 @@
   "name": "KitLib",
   "author": "WRXinYue",
   "description": "Foundation library, in-game mod panel, and developer tools for Slay the Spire 2 mods.",
-  "version": "0.49.0",
+  "version": "0.50.0",
   "min_game_version": "0.111.0",
   "has_pck": false,
   "has_dll": true,

@@ -20,6 +20,23 @@ One package; the satellite modules load automatically:
   - **Mod Panel** — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
   - **Dev Tools** — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
 
+## Mod Panel
+
+Main-menu mod list and per-mod settings. Complements the official mod manager; it does not replace it.
+
+- Enable / disable mods (restart to apply; read-only during a run); load status, version, Workshop vs local, install size
+- Swipe a row to enable or disable it; rows mark mods that need a restart, duplicate local overrides, and Workshop updates
+- Settings pages from KitLib and from any mod that registers them, plus STS2-RitsuLib pages when RitsuLib is loaded
+- Open from the main-menu corner, Settings → General → KitLib, or a configurable hotkey. Controller: LB / RB switch pages
+- Disable Mod Panel in the game's mod list to turn the Mods UI off completely; CJK uses the game's locale fonts (Wine / Linux included)
+
+## Dev Tools
+
+- **Title screen (Dev Mode)** — new test / seed / AutoSlay, load a save or a feedback ZIP (without overwriting the live slot), pseudo co-op host, unlock all progress, logs
+- **Replay** — official `.mcr` and recorded full runs (`.replay`: room timeline, speed / step, keeps the newest 5)
+- **In-run rail** — card, relic, enemy, power, potion, event and room browsers, plus commands, cheats, presets, enemy intents, hooks, save/load, logs, settings
+- **Other** — combat stats and rings, skip animations, game speed, Harmony analysis, RitsuLib snapshot, performance overlay, MCP bridge for external agents, feedback ZIP, dual-instance LAN helpers
+
 ## Host
 
 - Loader (`KitLib.dll` + `KitLib.Core.dll`); picks the `lib/<api>` variant for the running game

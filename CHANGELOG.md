@@ -6,24 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [0.44.0] - 2026-10-16
+## [Unreleased]
+
+## [0.50.0] - 2026-10-27
+
+### Added
+
+- **Screen frame and left rail** — The main menu and the in-run HUD sit inside a thin edge frame with a frosted left rail. `Ctrl+B` retracts the rail and the frame together, entries follow the current surface (run, custom run, multiplayer), and the frame carries KitLib's version. Bands and row highlights spring into place, the in-run rail tapers like the main-menu one, and the rails and combat-rings band slide away with the screen.
+- **Top notification island** — KitLib notices appear in a short tab hanging from the top border and slide back into it when done; the tab rides the border when the frame retracts.
+- **First-run walkthrough** — KitLib settings open with a welcome card listing the first shortcuts, and the main menu shows a two-step hint that only advances once you actually press the shortcut it teaches.
+- **Module toggles** — A settings page switches the bundled Mod Panel and Dev Tools on or off without unsubscribing from KitLib.
+- **Mod rows** — Swipe a row sideways to enable or disable that mod; rows mark mods that only take effect after a restart and Workshop items that have an update.
+- **Combat rings HUD** — A right-edge ring per metric during a run, with a band that slides in and out with the screen; rings animate to their new value.
+- **Run totals** — Damage, block and card totals accumulate over the whole run, survive saving and reloading, and stay visible on the map screen.
+- **In-game logs and combat panel** — A draggable floating panel carries the log viewer (filter, search, export) and live combat stats (dealt / taken / block / cards, timeline, creature HP and intent) in one place.
 
 ### Changed
 
 - **Single-package install** — Mod Panel and Dev Tools ship back inside KitLib as satellite modules under `lib/<api>/modules/` and are loaded automatically. Subscribe to KitLib only; the standalone KitModPanel and KitDevTools workshop items are deprecated.
+- **Networked room teleport** — In a real multiplayer run, the Room Teleport dev cards now route through the game's authoritative ActionQueue (`ConsoleCmdGameAction "room <Type>"`) instead of calling `EnterRoomDebug` directly, so entering a room syncs on every peer and works from host or client.
 
 ### Removed
 
-- **Card test queue automation** — Removed the automated batched card inject/play test queue and its resource-cost bypass patches. It shared the card browser's panel root in two incompatible modes, which prevented session caching and forced a full grid rebuild on every open. The Test Room entry in the room browser is retained for manual testing with the card browser.
+- **Card test queue automation** — Removed the automated batched card inject/play test queue, its sidebar tab, and its resource-cost bypass patches. It shared the card browser's panel root in two incompatible modes; the card browser now keeps session caching between tabs. The Test Room entry in the room browser is retained for manual testing with the card browser.
+- **Web dev viewer** — The offline browser viewer (HTTP/WS server, Vue frontend) is removed; its logs and combat stats now live in the in-game panel.
+- **AI decision tab** — Removed the web panel's AI decision tab, which never had a working server route.
 - **VariantTypeReflectionBridge** — The Harmony bridge that retrofitted `ReflectionHelper.ModTypes` for stable branches < 0.108.0 is removed. KitLib now requires the game's `AssociateAssemblyWithMod` API (stable ≥ 0.111.0). Players on older stable branches must update their game.
-
-### Changed
-
-- **Networked room teleport** — In a real multiplayer run, the Room Teleport dev cards now route through the game's authoritative ActionQueue (`ConsoleCmdGameAction "room <Type>"`) instead of calling `EnterRoomDebug` directly, so entering a room syncs on every peer and works from host or client.
-
-### Fixed
-
-- **Black screen after Map teleport in multiplayer** — `EnterRoomDebug` on the Map room type does not balance `CombatStateSynchronizer`, so a later teleport re-entered `StartSync` and desynced the client (black screen). Returning to the Map screen via the dev teleport is now refused in multiplayer.
 
 ## [0.43.1] - 2026-09-05
 
