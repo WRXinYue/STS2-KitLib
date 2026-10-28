@@ -1,12 +1,13 @@
 using Godot;
 using KitLib.Host;
 using KitLib.Settings;
+using KitLib.UI;
 
 namespace KitLib.Hotkeys;
 
 /// <summary>
-/// KitLib hotkey dispatch. Primary hook is <see cref="Patches.NInputManagerHotkeyPatch"/> on
-/// official <c>NInputManager</c> (before keycode-only game shortcuts run).
+/// KitLib hotkey dispatch. Runs before official keycode-only shortcuts; the wrap toggle is handled here so
+/// the Core frame and rail stay dismissible even when no product satellite is loaded.
 /// </summary>
 internal static class KitLibHotkeyInput {
     internal static bool TryHandleAll(InputEvent @event, Viewport viewport) {
@@ -19,11 +20,10 @@ internal static class KitLibHotkeyInput {
         if (KitLibModPanelOps.TryHandleOpenModPanelHotkey?.Invoke(key, viewport) == true)
             return true;
 
-        if (DevPanelHotkeys.TryHandle(key, viewport))
+        if (TryHandleWrapToggle(key, viewport))
             return true;
-        if (QuickSlHotkeys.TryHandle(key, viewport))
-            return true;
-        if (DevPerfHotkeys.TryHandle(key, viewport))
+
+        if (KitLibPanelHotkeyOps.TryHandleHotkey?.Invoke(key, viewport) == true)
             return true;
 
         if (ShouldSuppressOfficialModifiedShortcut(key)) {
@@ -32,6 +32,20 @@ internal static class KitLibHotkeyInput {
         }
 
         return false;
+    }
+
+    /// <summary>Retracts or restores the whole wrap — window edge, rail and pushed chrome — in any rail scene.</summary>
+    private static bool TryHandleWrapToggle(InputEventKey key, Viewport viewport) {
+        var settings = SettingsStore.Current;
+        if (!settings.HotkeysEnabled || !settings.HotkeyToggleRail.Matches(key))
+            return false;
+        if (!KitLibScreenFrame.HasWrapHost)
+            return false;
+
+        KitLibScreenFrame.ToggleWrapShown(animated: true);
+        KitLibHotkeySignals.ReportUsed(HotkeyActionId.ToggleRail);
+        viewport.SetInputAsHandled();
+        return true;
     }
 
     /// <summary>

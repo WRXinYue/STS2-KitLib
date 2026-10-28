@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Sidebar toggle without Dev Tools** — The frame and sidebar are drawn by KitLib itself, but the shortcut that retracts them lived in the optional in-game panel module. With that module disabled, or with hotkeys switched off, the new UI could not be dismissed. The shortcut now sits in KitLib and also works when no module is loaded.
+
 ## [0.50.0] - 2026-10-27
 
 ### Added

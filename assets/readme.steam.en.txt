@@ -7,17 +7,38 @@ The layout is modular: KitLib Core loads first; satellite modules can be toggled
 [url=https://sts2-devmod.wrxinyue.org/]Docs[/url] · [url=https://github.com/WRXinYue/STS2-KitLib/releases]Releases[/url] · [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]Steam Workshop[/url] / Nexus
 
 [quote]
-[b]Note:[/b] From KitLib [b]0.40.0[/b], Mod Panel, Dev Tools, and AI are separate mods. Subscribe to each companion you need; KitLib alone no longer includes them.
+[b]Note:[/b] From KitLib [b]0.44.0[/b], Mod Panel and Dev Tools are bundled back into KitLib. Subscribe to KitLib only; it now includes them.
 [/quote]
 
 [h3]Products[/h3]
 
-Install companions as needed:
+One package; the satellite modules load automatically:
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/ModPanel/README.md]KitModPanel[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]Workshop[/url]) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/DevTools/README.md]KitDevTools[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Workshop[/url]) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] — host. Loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
+[*][b]Mod Panel[/b] — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
+[*][b]Dev Tools[/b] — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
+[/list]
+
+[h3]Mod Panel[/h3]
+
+Main-menu mod list and per-mod settings. Complements the official mod manager; it does not replace it.
+
+[list]
+[*]Enable / disable mods (restart to apply; read-only during a run); load status, version, Workshop vs local, install size
+[*]Swipe a row to enable or disable it; rows mark mods that need a restart, duplicate local overrides, and Workshop updates
+[*]Settings pages from KitLib and from any mod that registers them, plus STS2-RitsuLib pages when RitsuLib is loaded
+[*]Open from the main-menu corner, Settings → General → KitLib, or a configurable hotkey. Controller: LB / RB switch pages
+[*]Disable Mod Panel in the game's mod list to turn the Mods UI off completely; CJK uses the game's locale fonts (Wine / Linux included)
+[/list]
+
+[h3]Dev Tools[/h3]
+
+[list]
+[*][b]Title screen (Dev Mode)[/b] — new test / seed / AutoSlay, load a save or a feedback ZIP (without overwriting the live slot), pseudo co-op host, unlock all progress, logs
+[*][b]Replay[/b] — official .mcr and recorded full runs (.replay: room timeline, speed / step, keeps the newest 5)
+[*][b]In-run rail[/b] — card, relic, enemy, power, potion, event and room browsers, plus commands, cheats, presets, enemy intents, hooks, save/load, logs, settings
+[*][b]Other[/b] — combat stats and rings, skip animations, game speed, Harmony analysis, RitsuLib snapshot, performance overlay, MCP bridge for external agents, feedback ZIP, dual-instance LAN helpers
 [/list]
 
 [h3]Host[/h3]
@@ -46,7 +67,7 @@ At compile time, import eng/KitLib.ContentMod.props (KitLib.Abstractions.dll). A
 [h3]Install[/h3]
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required) plus [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required — includes Mod Panel and Dev Tools) from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
 [*][b]Auxiliary tools[/b] (KitLib.Mcp, etc.) — same Releases / Nexus page, per-platform binaries.
 [/list]
 

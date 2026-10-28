@@ -4,6 +4,7 @@ using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.DevPerf;
 using KitLib.Host;
+using KitLib.Hotkeys;
 using KitLib.Interop;
 using KitLib.Multiplayer.Cheat;
 using KitLib.Multiplayer.LanTest;
@@ -62,6 +63,8 @@ public static class ModuleEntry {
 
     static void TryWireDevPanelHotkeys() {
         try {
+            KitLibPanelHotkeyOps.TryHandleHotkey = (keyObj, viewportObj) =>
+                KitLibPanelHotkeys.TryHandleAll((InputEvent)keyObj, (Viewport)viewportObj);
             KitLibHost.NotifyHotkeySettingsChanged = DevPanelUI.RefreshPeekTabHotkeyHint;
         }
         catch (Exception ex) {

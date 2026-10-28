@@ -36,7 +36,14 @@ public class MainFile {
             typeof(CombatActionFlightPatch),
             typeof(MainMenuCornerButtonReadyPatch),
             typeof(MainMenuCornerButtonSubmenuPatch),
-            typeof(MainMenuCornerButtonRefreshPatch)));
+            typeof(MainMenuCornerButtonRefreshPatch),
+#if STS2_STABLE_PROFILE
+            typeof(NInputManagerProcessShortcutKeyInputPatch)
+#else
+            typeof(NInputManagerProcessHotkeyInputPatch),
+            typeof(NInputManagerProcessFkbInputPatch)
+#endif
+            ));
         KitLibStartupAudit.Measure("hostBootstrap", () => {
             KitLibMainMenuCornerButtonRegistry.RequestRefresh = MainMenuCornerButtonHost.RefreshActiveMainMenu;
             KitLibHost.Bootstrap();

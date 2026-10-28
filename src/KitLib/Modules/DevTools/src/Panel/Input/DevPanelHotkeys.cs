@@ -15,17 +15,6 @@ internal static class DevPanelHotkeys {
 
         var settings = SettingsStore.Current;
 
-        // Ctrl+B retracts/restores the whole KitLib wrap — window edge, rail and pushed chrome — in any
-        // scene hosting a rail, the main menu included.
-        if (settings.HotkeyToggleRail.Matches(key)) {
-            if (!KitLibScreenFrame.HasWrapHost)
-                return false;
-            KitLibScreenFrame.ToggleWrapShown(animated: true);
-            KitLibHotkeySignals.ReportUsed(HotkeyActionId.ToggleRail);
-            viewport.SetInputAsHandled();
-            return true;
-        }
-
         if (!DevPanelUI.IsRailAttached)
             return false;
 

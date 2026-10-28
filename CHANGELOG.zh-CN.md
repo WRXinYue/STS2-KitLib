@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **未装开发工具也能收起侧栏** — 边框与侧栏由 KitLib 本体绘制，但负责收起它们的快捷键原本挂在可选的游戏内面板模块里。该模块被禁用、或热键总开关关闭时，新 UI 就无法收起。快捷键现已放回 KitLib 本体，未加载任何模块时同样可用。
+
 ## [0.50.0] - 2026-10-27
 
 ### Added
