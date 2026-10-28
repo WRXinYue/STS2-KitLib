@@ -7,7 +7,7 @@ Layout:
     mod_manifest.json
     mod_image.png
     lib/0.107.1/KitLib.Core.dll, KitLib.Abstractions.dll (facade), compat-target.txt,
-               modules/{KitModPanel.dll, KitLib.Panel.dll, KitLib.Dev.dll}
+               modules/{KitModPanel.dll, KitLib.Hud.dll, KitLib.Dev.dll}
     lib/0.110.1/...
 
 Usage:

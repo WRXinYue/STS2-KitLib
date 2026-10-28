@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using HarmonyLib;
+using KitLib.Host;
 using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes.Screens.MainMenu;
 
@@ -19,13 +20,10 @@ internal static class MainMenuCornerButtonReadyPatch {
         try {
             if (!GodotObject.IsInstanceValid(mainMenu))
                 return;
-            // Screen frame first: it owns the edge margin the rail and chrome are laid out inside.
-            KitLibScreenFrame.EnsureAttached();
-            KitLibScreenFrame.ApplyMainMenuInsets(mainMenu);
-            // Rail next: the corner host hides itself while the rail owns the tool entry points.
-            MainMenuRailHost.EnsureAttached(mainMenu);
+            // Hud chrome first: the frame owns the edge margin the rail and chrome sit inside.
+            KitLibHudOps.AttachMainMenuChrome?.Invoke(mainMenu);
+            // Corner host hides itself while the rail owns the tool entry points.
             MainMenuCornerButtonHost.EnsureAttached(mainMenu);
-            MainMenuTopIslandHost.EnsureAttached(mainMenu);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to attach: {ex.Message}");
@@ -39,9 +37,8 @@ internal static class MainMenuCornerButtonSubmenuPatch {
     [HarmonyPriority(Priority.Last)]
     static void Postfix(NMainMenu __instance) {
         try {
-            MainMenuRailHost.EnsureAttached(__instance);
+            KitLibHudOps.SyncMainMenuChrome?.Invoke(__instance);
             MainMenuCornerButtonHost.SyncVisibility(__instance);
-            MainMenuTopIslandHost.EnsureAttached(__instance);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to sync: {ex.Message}");
@@ -55,9 +52,8 @@ internal static class MainMenuCornerButtonRefreshPatch {
     [HarmonyPriority(Priority.Last)]
     static void Postfix(NMainMenu __instance) {
         try {
-            MainMenuRailHost.EnsureAttached(__instance);
+            KitLibHudOps.SyncMainMenuChrome?.Invoke(__instance);
             MainMenuCornerButtonHost.EnsureAttached(__instance);
-            MainMenuTopIslandHost.EnsureAttached(__instance);
         }
         catch (Exception ex) {
             MainFile.Logger.Warn($"KitLib main-menu corner buttons failed to refresh: {ex.Message}");

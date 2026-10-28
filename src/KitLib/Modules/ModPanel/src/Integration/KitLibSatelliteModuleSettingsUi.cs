@@ -161,9 +161,9 @@ internal static class KitLibSatelliteModuleSettingsUi {
     }
 
     static (string DescKey, string DescFallback) GetDescriptionCopy(string moduleId) {
-        if (string.Equals(moduleId, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase)) {
-            return ("modpanel.kitlib.modules.panel.desc",
-                "In-run dev rail, title-screen Dev Mode, progress protection, and most browsers.");
+        if (string.Equals(moduleId, KitLibModuleIds.Hud, StringComparison.OrdinalIgnoreCase)) {
+            return ("modpanel.kitlib.modules.hud.desc",
+                "Window frame, main-menu rail, in-run dev rail, title-screen Dev Mode, progress protection, and most browsers.");
         }
 
         if (string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase))

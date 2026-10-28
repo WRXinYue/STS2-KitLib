@@ -11,7 +11,7 @@ internal static partial class DevPanelUI {
     /// stays <see cref="LogCollector.LogViewerRootName"/> (rail reveal / SyncLogViewerOpen depend on it).
     /// </summary>
     internal static void ShowLogsOverlay(NGlobalUi globalUi, bool expandLogExport = false) {
-        GD.Print("[KitDevTools] ShowLogsOverlay entered");
+        GD.Print("[KitLib] ShowLogsOverlay entered");
         try {
             // Drop any same-named hidden cached node so it cannot stack with the new panel.
             DiscardOverlayImmediate(globalUi, LogCollector.LogViewerRootName);
@@ -25,7 +25,7 @@ internal static partial class DevPanelUI {
                 fallbackClose: () => DiscardOverlayImmediate(globalUi, LogCollector.LogViewerRootName),
                 contentSeparation: 8,
                 headerTitle: I18N.T("floatingLogCombat.title", "Dev Logs / Combat"));
-            GD.Print("[KitDevTools] ShowLogsOverlay: dual overlay created");
+            GD.Print("[KitLib] ShowLogsOverlay: dual overlay created");
             dual.AttachToScene();
 
             // ── Logs / Combat tab switching ──
@@ -70,15 +70,15 @@ internal static partial class DevPanelUI {
                     globalUi,
                     LogCollector.LogViewerRootName,
                     () => DiscardOverlayImmediate(globalUi, LogCollector.LogViewerRootName)));
-            GD.Print("[KitDevTools] ShowLogsOverlay: LogViewerUI.BuildPanel OK");
+            GD.Print("[KitLib] ShowLogsOverlay: LogViewerUI.BuildPanel OK");
             LogViewerUI.WireMainMenuLogExportExtension(dual.Root, dual.MainPanel, exportBtn, expandLogExport);
 
             // Combat live stats.
             CombatStatsUI.Attach(combatVBox);
-            GD.Print("[KitDevTools] ShowLogsOverlay: CombatStatsUI.Attach OK");
+            GD.Print("[KitLib] ShowLogsOverlay: CombatStatsUI.Attach OK");
         }
         catch (Exception ex) {
-            GD.PrintErr($"[KitDevTools] ShowLogsOverlay THREW: {ex}");
+            GD.PrintErr($"[KitLib] ShowLogsOverlay THREW: {ex}");
         }
     }
 }

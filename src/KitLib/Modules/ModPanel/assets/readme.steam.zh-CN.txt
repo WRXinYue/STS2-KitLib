@@ -11,7 +11,7 @@
 [list]
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] ≥0.40.0（必需）
 [*][b]STS2-RitsuLib[/b]（可选）— 已加载时，各模组向 RitsuLib 注册的设置页会显示在本面板中
-[*][b]KitDevTools[/b]（可选）— Harmony 补丁数量与检查报告；进度保护页
+[*][b]KitLib[/b]（内置）— Harmony 补丁数量与检查报告；进度保护页
 [/list]
 
 在游戏模组列表中禁用 [b]KitModPanel[/b]，即可完全关闭 Mods 界面。

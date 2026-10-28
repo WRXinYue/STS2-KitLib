@@ -10,7 +10,7 @@ namespace KitLib.Patches;
 internal static class ErrorPopupKitLibLogExportPatch {
     [HarmonyPostfix]
     static void Postfix(NErrorPopup __instance) {
-        if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.Panel))
+        if (!KitLibHost.IsModuleLoaded(KitLibModuleIds.Hud))
             return;
 
         ErrorPopupKitLibLogExportUI.TryAttach(__instance);

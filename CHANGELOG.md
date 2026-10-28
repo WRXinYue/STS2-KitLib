@@ -8,9 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **In-game panel renamed to HUD** — The satellite shipped as `KitLib.Panel` (`modules/KitLib.Panel.dll`) is now **`KitLib.Hud`** (`modules/KitLib.Hud.dll`) and lives in `Modules/Hud` instead of `Modules/DevTools`. A stored `KitLib.Panel` toggle is carried over to `KitLib.Hud` automatically.
+
 ### Fixed
 
-- **Sidebar toggle without Dev Tools** — The frame and sidebar are drawn by KitLib itself, but the shortcut that retracts them lived in the optional in-game panel module. With that module disabled, or with hotkeys switched off, the new UI could not be dismissed. The shortcut now sits in KitLib and also works when no module is loaded.
+- **Chrome without modules** — KitLib's window edge, main-menu rail, version stamp, first-run hint and notification island now belong to the HUD module, so they appear only while it is loaded. With the HUD off, KitLib leaves the vanilla screen untouched, even when the Mod Panel is still enabled.
+- **Sidebar toggle follows the HUD** — `Ctrl+B` forwards to the HUD module that owns the frame and rail, so both retract together; with the HUD off the shortcut does nothing instead of leaving orphaned chrome.
 
 ## [0.50.0] - 2026-10-27
 

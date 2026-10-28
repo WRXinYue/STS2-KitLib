@@ -11,7 +11,7 @@ Main-menu mod list and settings for Slay the Spire 2. Complements the official m
 [list]
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] ≥0.40.0 (required)
 [*][b]STS2-RitsuLib[/b] (optional) — when loaded, each mod's Ritsu-registered settings pages appear in this panel
-[*][b]KitDevTools[/b] (optional) — Harmony patch counts and the inspect report; Progress protection page
+[*][b]KitLib[/b] (included) — Harmony patch counts and the inspect report; Progress protection page
 [/list]
 
 Disable [b]KitModPanel[/b] in the game's mod list to turn the Mods UI off completely.

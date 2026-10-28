@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(RepoRoot)eng\KitLib.Mod.Shared.props" />
   <PropertyGroup>
-    <ModId>KitLib.Panel</ModId>
+    <ModId>KitLib.Hud</ModId>
     <KitLibProductId>KitLib</KitLibProductId>
-    <AssemblyName>KitLib.Panel</AssemblyName>
+    <AssemblyName>KitLib.Hud</AssemblyName>
     <RootNamespace>KitLib</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <KitLibSourceDir>src\Panel</KitLibSourceDir>
+    <KitLibSourceDir>src</KitLibSourceDir>
     <GodotExportPreset>BasicExport</GodotExportPreset>
     <RunPckExport>false</RunPckExport>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="KitLib.Dev.csproj" />
+    <ProjectReference Include="..\Dev\KitLib.Dev.csproj" />
   </ItemGroup>
   <Target Name="ShakeAndEmbedIcons" BeforeTargets="AssignTargetPaths">
     <Exec Command="&quot;$(KitLibPython)&quot; &quot;$(RepoRoot)scripts/shake_icons.py&quot;"

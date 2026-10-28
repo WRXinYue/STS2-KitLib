@@ -6,8 +6,8 @@ using KitLib.UI;
 namespace KitLib.Hotkeys;
 
 /// <summary>
-/// KitLib hotkey dispatch. Runs before official keycode-only shortcuts; the wrap toggle is handled here so
-/// the Core frame and rail stay dismissible even when no product satellite is loaded.
+/// KitLib hotkey dispatch. Runs before official keycode-only shortcuts; the wrap toggle is forwarded to
+/// the Hud module, which owns the window frame and rail.
 /// </summary>
 internal static class KitLibHotkeyInput {
     internal static bool TryHandleAll(InputEvent @event, Viewport viewport) {
@@ -39,10 +39,10 @@ internal static class KitLibHotkeyInput {
         var settings = SettingsStore.Current;
         if (!settings.HotkeysEnabled || !settings.HotkeyToggleRail.Matches(key))
             return false;
-        if (!KitLibScreenFrame.HasWrapHost)
+        if (KitLibHudOps.HasWrapHost?.Invoke() != true)
             return false;
 
-        KitLibScreenFrame.ToggleWrapShown(animated: true);
+        KitLibHudOps.ToggleWrap?.Invoke();
         KitLibHotkeySignals.ReportUsed(HotkeyActionId.ToggleRail);
         viewport.SetInputAsHandled();
         return true;

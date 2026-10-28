@@ -304,11 +304,11 @@ JsonObject? CaptureCombatAfterState()
 ::: en
 - [Cards](/api/cards/) — mutate the deck (not UI play)
 - [Cheats & run stats](/api/runtime-cheat/)
-- KitDevTools MCP: `get_game_state`, `combat_action`, `map_action`, `get_selection_state`, `selection_action` wrap this API
+- KitLib.Dev MCP: `get_game_state`, `combat_action`, `map_action`, `get_selection_state`, `selection_action` wrap this API
 :::
 
 ::: zh-CN
 - [卡牌](/api/cards/) — 改牌组（不是点 UI 出牌）
 - [作弊与局内数值](/api/runtime-cheat/)
-- KitDevTools MCP：`get_game_state`、`combat_action`、`map_action`、`get_selection_state`、`selection_action` 封装本 API
+- KitLib.Dev MCP：`get_game_state`、`combat_action`、`map_action`、`get_selection_state`、`selection_action` 封装本 API
 :::

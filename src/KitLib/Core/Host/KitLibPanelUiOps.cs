@@ -2,7 +2,7 @@ using KitLib.Abstractions.Modding;
 
 namespace KitLib.Host;
 
-/// <summary>Panel-owned overlay hooks registered by KitLib.Panel; invoked from satellite tab activators.</summary>
+/// <summary>Panel-owned overlay hooks registered by KitLib.Hud; invoked from satellite tab activators.</summary>
 public static class KitLibPanelUiOps {
     public static Action<object>? ShowCheatsOverlay { get; set; }
     public static Action<object>? ShowSaveLoadOverlay { get; set; }

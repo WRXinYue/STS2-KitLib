@@ -6,13 +6,13 @@
     <AssemblyName>KitLib.Dev</AssemblyName>
     <RootNamespace>KitLib</RootNamespace>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <KitLibSourceDir>src\Dev</KitLibSourceDir>
+    <KitLibSourceDir>src</KitLibSourceDir>
   </PropertyGroup>
   <Import Project="$(RepoRoot)eng\KitLib.SatelliteMod.targets" />
   <Import Project="$(RepoRoot)eng\KitLib.ProductSatellite.Compile.props" />
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>KitLib.Panel</_Parameter1>
+      <_Parameter1>KitLib.Hud</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>

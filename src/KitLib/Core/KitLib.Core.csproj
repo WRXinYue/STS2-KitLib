@@ -47,9 +47,9 @@
   <!--
     The MDI icon tree-shake deliberately does NOT live here, even though shake_icons.py's
     docstring claims a ShakeIcons target in this project. A target here runs too late for
-    its consumers: PrepareForBuild in KitLib.Panel / KitLib.ModPanel is ordered before the
+    its consumers: PrepareForBuild in KitLib.Hud / KitLib.ModPanel is ordered before the
     ResolveReferences that builds this project. Each consumer runs the shaker itself, from
-    a target hooked at AssignTargetPaths — see the comment in KitLib.Panel.csproj.
+    a target hooked at AssignTargetPaths — see the comment in KitLib.Hud.csproj.
   -->
 
 
@@ -81,7 +81,7 @@
       <_Parameter1>KitModPanel</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>KitLib.Panel</_Parameter1>
+      <_Parameter1>KitLib.Hud</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>KitLib.Dev</_Parameter1>

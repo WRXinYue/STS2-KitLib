@@ -62,8 +62,8 @@ MCP_PUBLISH_BIN := $(TOOLS_PUBLISH_DIR)/KitLib.Mcp
 MOD_PROJECTS := src/KitLib/Abstractions/KitLib.Abstractions.csproj \
 	src/KitLib/Core/KitLib.Core.csproj src/KitLib/Loader/KitLib.Loader.csproj \
 	src/KitLib/Modules/ModPanel/KitModPanel.csproj \
-	src/KitLib/Modules/DevTools/KitLib.Dev.csproj \
-	src/KitLib/Modules/DevTools/KitLib.Panel.csproj
+	src/KitLib/Modules/Dev/KitLib.Dev.csproj \
+	src/KitLib/Modules/Hud/KitLib.Hud.csproj
 PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
 STEAM_PRODUCT := $(if $(PRODUCT),$(PRODUCT),KitLib)
 STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,) $(if $(SKIP_BUILD),--skip-build,)
@@ -246,7 +246,7 @@ deploy:
 # Default builds the current profile; make sync VARIANTS=all also builds the
 # other pinned variant so build/*/lib/ holds both (Steam branch switches then
 # just work). ALT_GAME_DIR additionally deploys to a second install (e.g. a
-# separate beta copy). Note: satellites (KitModPanel, KitLib.Panel, KitLib.Dev)
+# separate beta copy). Note: satellites (KitModPanel, KitLib.Hud, KitLib.Dev)
 # follow the last built profile; KitLib.Core ships both variants.
 SYNC_BUILD_TARGET = $(if $(filter all,$(VARIANTS)),build-all-variants,build)
 

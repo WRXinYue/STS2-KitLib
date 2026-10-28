@@ -17,8 +17,8 @@ namespace KitLib.UI;
 /// (<see cref="MainMenuCornerButtonHost"/>) while attached, so each tool keeps a single entry point.
 /// </summary>
 /// <remarks>
-/// Lives in Core rather than in the DevTools satellite so the rail stays available even when the
-/// satellite modules are disabled, and so it never depends on run-only nodes (<c>NGlobalUi</c>).
+/// Lives in the Hud satellite rather than Core so the rail only draws while Hud is enabled,
+/// and so it never depends on run-only nodes (<c>NGlobalUi</c>).
 /// </remarks>
 internal static class MainMenuRailHost {
     internal const string RootNodeName = "KitLibMainMenuRailRoot";

@@ -8,7 +8,7 @@ using MegaCrit.Sts2.Core.Nodes.CommonUi;
 namespace KitLib.Patches;
 
 /// <summary>
-/// Dispatches mod-panel open hotkey when DevMode (<see cref="KitLibModuleIds.Panel" />) is not loaded.
+/// Dispatches mod-panel open hotkey when DevMode (<see cref="KitLibModuleIds.Hud" />) is not loaded.
 /// </summary>
 #if STS2_STABLE_PROFILE
 [HarmonyPatch(typeof(NInputManager), "ProcessShortcutKeyInput")]
@@ -38,7 +38,7 @@ internal static class ModPanelInputManagerProcessFkbInputPatch {
 
 file static class ModPanelInputManagerHotkeyPatchHelper {
     internal static bool TryHandleModPanelHotkey(NInputManager instance, InputEvent inputEvent) {
-        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Panel))
+        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Hud))
             return false;
 
         if (inputEvent is not InputEventKey { Pressed: true, Echo: false } key)

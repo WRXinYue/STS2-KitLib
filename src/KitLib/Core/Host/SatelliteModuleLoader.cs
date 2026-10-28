@@ -23,8 +23,8 @@ internal static class SatelliteModuleLoader {
 
     static readonly ModuleSpec[] LoadOrder = [
         new(ModuleIds.ModPanel, "KitModPanel", "KitLib.ModPanelMod.ModuleEntry", []),
-        new(ModuleIds.Panel, "KitLib.Panel", "KitLib.PanelMod.ModuleEntry", []),
-        new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Panel]),
+        new(ModuleIds.Hud, "KitLib.Hud", "KitLib.Hud.ModuleEntry", []),
+        new(ModuleIds.Dev, "KitLib.Dev", "KitLib.Dev.ModuleEntry", [ModuleIds.Hud]),
     ];
 
     internal static void LoadBundledModules() {

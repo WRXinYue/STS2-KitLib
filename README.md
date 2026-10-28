@@ -18,7 +18,8 @@ One package; the satellite modules load automatically:
 
 - **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** — host. Loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
   - **Mod Panel** — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
-  - **Dev Tools** — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
+  - **HUD** — window frame, main-menu rail, notification island, first-run hint, and the in-run rail.
+  - **Dev Tools** — title-screen Dev Mode, replay, cheats, and multiplayer debug.
 
 ## Mod Panel
 

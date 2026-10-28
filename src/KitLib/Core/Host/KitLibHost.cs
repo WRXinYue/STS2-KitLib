@@ -37,8 +37,8 @@ public static class KitLibHost {
         KitLibStartupAudit.Measure("bundled.userCheat", InitializeBundledHostModules);
         KitLog.Info("KitLib core module announced; loading optional product satellites.");
         SatelliteModuleLoader.LoadBundledModules();
-        if (!ModuleCatalog.IsLoaded(ModuleIds.Panel))
-            KitLog.Warn("Hotkeys require KitLib.Panel — module not loaded (check Settings → satellite profile).");
+        if (!ModuleCatalog.IsLoaded(ModuleIds.Hud))
+            KitLog.Warn("Hotkeys require KitLib.Hud — module not loaded (check Settings → satellite profile).");
         KitLog.Info("KitLib Core host ready.");
     }
 

@@ -3,7 +3,7 @@ using KitLib;
 using KitLib.Abstractions.Host;
 using KitLib.Host;
 
-namespace KitLib.PanelMod;
+namespace KitLib.Hud;
 
 internal static class PanelTabRegistration {
     internal static void RegisterCheatTabs() {
@@ -39,7 +39,7 @@ internal static class PanelTabRegistration {
             Order = order,
             Group = group,
             Kind = kind,
-            OwningModuleId = KitLibModuleIds.Panel,
+            OwningModuleId = KitLibModuleIds.Hud,
             OnActivate = _ => activate(),
         });
 
@@ -60,7 +60,7 @@ internal static class PanelTabRegistration {
             Order = order,
             Group = group,
             Kind = kind,
-            OwningModuleId = KitLibModuleIds.Panel,
+            OwningModuleId = KitLibModuleIds.Hud,
             OnActivate = activate,
         });
 }

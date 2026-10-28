@@ -8,9 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **局内面板改名为 HUD** — 原本以 `KitLib.Panel`（`modules/KitLib.Panel.dll`）发布的卫星模块现更名为 **`KitLib.Hud`**（`modules/KitLib.Hud.dll`），并从 `Modules/DevTools` 移到 `Modules/Hud`。已保存的 `KitLib.Panel` 开关会自动迁移到 `KitLib.Hud`。
+
 ### Fixed
 
-- **未装开发工具也能收起侧栏** — 边框与侧栏由 KitLib 本体绘制，但负责收起它们的快捷键原本挂在可选的游戏内面板模块里。该模块被禁用、或热键总开关关闭时，新 UI 就无法收起。快捷键现已放回 KitLib 本体，未加载任何模块时同样可用。
+- **未加载模块时不画外框** — 窗口外框、主菜单侧栏、版本戳、首启引导与通知岛现由 HUD 模块绘制，只在该模块加载时出现。关闭 HUD 后即使模组面板仍开启，KitLib 也保持原版画面。
+- **侧栏收起跟随 HUD** — `Ctrl+B` 现在转发给持有外框与侧栏的 HUD 模块，两者一起收起；HUD 关闭时该快捷键不再留下孤立外框。
 
 ## [0.50.0] - 2026-10-27
 

@@ -2,7 +2,7 @@ using KitLib.Abstractions.Host;
 namespace KitLib.Abstractions.Host;
 
 /// <summary>
-/// Cheat runtime hooks. Panel UI is owned by KitDevTools; this surface is for patches and APIs.
+/// Cheat runtime hooks. Panel UI is owned by KitLib.Dev; this surface is for patches and APIs.
 /// </summary>
 public static class KitLibCheatApi {
     public static Action<double>? ProcessFrame { get; set; }

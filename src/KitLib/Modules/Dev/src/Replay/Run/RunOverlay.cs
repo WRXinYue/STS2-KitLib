@@ -3,7 +3,7 @@ using MegaCrit.Sts2.Core.Nodes;
 
 namespace KitLib.Replay;
 
-/// <summary>Hooks RunReplays' overlay call sites to the KitDevTools CS bar.</summary>
+/// <summary>Hooks RunReplays' overlay call sites to the KitLib.Dev combat-stats bar.</summary>
 internal static class RunOverlay {
     internal static void InitForRun() {
         if (!ReplayEngine.IsReplayRun)

@@ -17,14 +17,15 @@ using KitLib.UI;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.CommonUi;
 
-namespace KitLib.PanelMod;
+namespace KitLib.Hud;
 
 public static class ModuleEntry {
     public static void Initialize() {
-        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Panel)) return;
+        if (KitLibHost.IsModuleLoaded(KitLibModuleIds.Hud)) return;
 
         SettingsStore.Load();
         WirePanelDelegates();
+        WireHudChromeDelegates();
         DevToolsModSettingsPage.Register();
         DevToolsMainMenuCornerButtonRegistration.Register();
         RegisterRailTabs();
@@ -44,7 +45,7 @@ public static class ModuleEntry {
 
         KitLibHarmony.Apply(
             typeof(ModuleEntry).Assembly,
-            KitLibModuleIds.Panel,
+            KitLibModuleIds.Hud,
             typeof(MainMenuPatch),
             typeof(GlobalUiReadyPatch),
             typeof(ErrorPopupKitLibLogExportPatch),
@@ -57,8 +58,28 @@ public static class ModuleEntry {
             typeof(MpUiDebugMapVotesRefreshPatch),
             typeof(AutoSlayQuitGamePatch));
 
-        KitLibHost.AnnounceModule(KitLibModuleIds.Panel);
-        MainFile.Logger.Info("KitLib.Panel module initialized.");
+        KitLibHost.AnnounceModule(KitLibModuleIds.Hud);
+        MainFile.Logger.Info("KitLib.Hud module initialized.");
+    }
+
+    /// <summary>Hand the window frame, main-menu rail and notification island to Core's call sites.</summary>
+    static void WireHudChromeDelegates() {
+        KitLibHudOps.EnsureScreenFrame = KitLibScreenFrame.EnsureAttached;
+        KitLibHudOps.AttachMainMenuChrome = menu => {
+            KitLibScreenFrame.EnsureAttached();
+            KitLibScreenFrame.ApplyMainMenuInsets(menu);
+            MainMenuRailHost.EnsureAttached(menu);
+            MainMenuTopIslandHost.EnsureAttached(menu);
+        };
+        KitLibHudOps.SyncMainMenuChrome = menu => {
+            MainMenuRailHost.EnsureAttached(menu);
+            MainMenuTopIslandHost.EnsureAttached(menu);
+        };
+        KitLibHudOps.IsRailAttachedTo = MainMenuRailHost.IsAttachedTo;
+        KitLibHudOps.IsRailOnScreen = () => MainMenuRailHost.IsRailOnScreen;
+        KitLibHudOps.SlideRailOutForEntry = MainMenuRailHost.SlideOutForEntry;
+        KitLibHudOps.HasWrapHost = () => KitLibScreenFrame.HasWrapHost;
+        KitLibHudOps.ToggleWrap = () => KitLibScreenFrame.ToggleWrapShown(animated: true);
     }
 
     static void TryWireDevPanelHotkeys() {
@@ -68,7 +89,7 @@ public static class ModuleEntry {
             KitLibHost.NotifyHotkeySettingsChanged = DevPanelUI.RefreshPeekTabHotkeyHint;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"KitLib.Panel: Dev panel hotkeys unavailable ({ex.Message}).");
+            MainFile.Logger.Warn($"KitLib.Hud: Dev panel hotkeys unavailable ({ex.Message}).");
         }
     }
 
@@ -91,7 +112,7 @@ public static class ModuleEntry {
             KitLibPseudoCoopOps.IsDevPanelRailAttached = () => DevPanelUI.IsRailAttached;
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"KitLib.Panel: pseudo-coop rail probe unavailable ({ex.Message}).");
+            MainFile.Logger.Warn($"KitLib.Hud: pseudo-coop rail probe unavailable ({ex.Message}).");
         }
         KitLibPseudoCoopOps.EnsureMultiplayerDevActive = DualInstanceTestBootstrap.EnsureMultiplayerDevActive;
     }
@@ -137,7 +158,7 @@ public static class ModuleEntry {
                 DevPanelUI.ShowSettingsOverlay((NGlobalUi)ui, DevPanelSession.Actions!);
         }
         catch (Exception ex) {
-            MainFile.Logger.Warn($"KitLib.Panel: dev panel UI delegates unavailable ({ex.Message}).");
+            MainFile.Logger.Warn($"KitLib.Hud: dev panel UI delegates unavailable ({ex.Message}).");
         }
     }
 }

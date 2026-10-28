@@ -44,7 +44,7 @@ make init   # detect STS2 + Godot paths, write local.props
 | `make docs` | Valaxy dev server (`docs/`) |
 | `make upload-all` | Release zip + GitHub / Nexus / Steam |
 
-Repo layout (host in `src/`, sibling products in `mods/`): **[Architecture](/kitlib/architecture/)**.
+Repo layout (host and satellite modules under `src/KitLib/`): **[Architecture](/kitlib/architecture/)**.
 :::
 
 ::: zh-CN
@@ -69,7 +69,7 @@ make init
 | `make docs` | Valaxy 开发服务器 |
 | `make upload-all` | 发布 zip + GitHub / Nexus / NuGet / Steam |
 
-仓库布局（宿主在 `src/`，兄弟产品在 `mods/`）：**[架构](/kitlib/architecture/)**。
+仓库布局（宿主与卫星模块都在 `src/KitLib/`）：**[架构](/kitlib/architecture/)**。
 :::
 
 ## Code style (C#){lang="en"}

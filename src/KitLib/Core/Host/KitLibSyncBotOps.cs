@@ -1,6 +1,6 @@
 namespace KitLib.Host;
 
-/// <summary>SyncBot hooks registered by KitDevTools when the harness is loaded.</summary>
+/// <summary>SyncBot hooks registered by KitLib.Dev when the harness is loaded.</summary>
 public static class KitLibSyncBotOps {
     public static Func<bool>? IsEnabled { get; set; }
     public static Action? OnRunEnded { get; set; }

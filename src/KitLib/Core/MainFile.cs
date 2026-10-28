@@ -49,7 +49,7 @@ public class MainFile {
             KitLibHost.Bootstrap();
             KitLibMainMenuCornerButtonRegistry.RequestRefresh?.Invoke();
         });
-        KitLibStartupAudit.Measure("screenFrame", KitLibScreenFrame.EnsureAttached);
+        KitLibStartupAudit.Measure("screenFrame", () => KitLibHudOps.EnsureScreenFrame?.Invoke());
         KitLibStartupAudit.Measure("i18n", I18N.Initialize);
         KitLibModNotificationBridge.Initialize();
         Logger.Info("KitLib Core initialized.");

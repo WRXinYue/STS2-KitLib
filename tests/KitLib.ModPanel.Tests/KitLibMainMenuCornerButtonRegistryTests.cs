@@ -42,13 +42,13 @@ public sealed class KitLibMainMenuCornerButtonRegistryTests {
         KitLibMainMenuCornerButtonRegistry.ClearForTests();
         try {
             KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
-                ModId = "KitDevTools",
+                ModId = "KitLib.Dev",
                 ButtonId = "dev-mode",
                 Tooltip = "Old",
                 OnPressed = _ => { },
             });
             KitLibMainMenuCornerButtonRegistry.Register(new KitLibMainMenuCornerButtonRegistration {
-                ModId = "KitDevTools",
+                ModId = "KitLib.Dev",
                 ButtonId = "dev-mode",
                 Tooltip = "New",
                 OnPressed = _ => { },

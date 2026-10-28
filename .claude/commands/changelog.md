@@ -11,9 +11,9 @@ Steps:
    (On Windows PowerShell, use: `git log "$(git describe --tags --abbrev=0)..HEAD" --oneline`.)
 
 2. Decide which changelog(s) apply:
-   - **KitLib (host):** root `CHANGELOG.md` + `CHANGELOG.zh-CN.md`
-   - **KitModPanel / KitDevTools / KitAI:** `mods/<Product>/CHANGELOG.md` + `CHANGELOG.zh-CN.md`
-   - Skip products that the commits did not affect.
+   - **KitLib (host + satellites):** root `CHANGELOG.md` + `CHANGELOG.zh-CN.md`
+   - Satellite modules (`KitModPanel`, `KitLib.Hud`, `KitLib.Dev`) ship inside KitLib, so they use the same root changelogs
+   - Skip when the commits did not affect shipped behavior
 
 3. Categorize new player-facing changes under `## [Unreleased]`:
    - **Added** — new features visible to the player

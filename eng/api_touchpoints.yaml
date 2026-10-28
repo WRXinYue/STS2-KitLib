@@ -308,7 +308,7 @@ touchpoints:
       stable:
         skip: true
     sources:
-      - src/KitLib/Modules/DevTools/src/Panel/Patches/NInputManagerHotkeyPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/NInputManagerHotkeyPatch.cs
       - src/KitLib/Modules/ModPanel/src/Patches/ModPanelInputManagerHotkeyPatch.cs
 
   - id: NMainMenu.MainMenuButtonFocused

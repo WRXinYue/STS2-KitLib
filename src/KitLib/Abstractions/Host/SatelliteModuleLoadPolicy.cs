@@ -12,8 +12,8 @@ public static class SatelliteModuleLoadPolicy {
 
     public static readonly ModuleInfo[] Modules = [
         new(KitLibModuleIds.ModPanel, AlwaysOn: false, Requires: []),
-        new(KitLibModuleIds.Panel, AlwaysOn: false, Requires: []),
-        new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Panel]),
+        new(KitLibModuleIds.Hud, AlwaysOn: false, Requires: []),
+        new(KitLibModuleIds.Dev, AlwaysOn: false, Requires: [KitLibModuleIds.Hud]),
     ];
 
     static readonly HashSet<string> ToggleableModuleIds = new(
@@ -23,7 +23,7 @@ public static class SatelliteModuleLoadPolicy {
     /// <summary>Whether <paramref name="moduleId"/> is a loadable product satellite DLL.</summary>
     public static bool IsKnownSatellite(string moduleId) => TryGetModule(moduleId, out _);
 
-    /// <summary>Fresh-install defaults: mod panel + in-game panel on for PC; all satellites on for Android (failed loads are skipped quietly).</summary>
+    /// <summary>Fresh-install defaults: mod panel + HUD on for PC; all satellites on for Android (failed loads are skipped quietly).</summary>
     public static IReadOnlyDictionary<string, bool> GetDefaultToggles(bool? mobileDefaults = null) {
         var defaultOn = mobileDefaults ?? OperatingSystem.IsAndroid();
         var toggles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
@@ -33,10 +33,10 @@ public static class SatelliteModuleLoadPolicy {
         return toggles;
     }
 
-    /// <summary>Satellites shipped as core UX (mod panel, in-game panel) start enabled.</summary>
+    /// <summary>Satellites shipped as core UX (mod panel, HUD) start enabled.</summary>
     static bool IsDefaultOn(string moduleId) =>
         string.Equals(moduleId, KitLibModuleIds.ModPanel, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(moduleId, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase);
+        || string.Equals(moduleId, KitLibModuleIds.Hud, StringComparison.OrdinalIgnoreCase);
 
     public static IReadOnlyDictionary<string, bool> ResolveEnabled(IReadOnlyDictionary<string, bool>? userToggles) {
         var source = userToggles is { Count: > 0 }
@@ -71,13 +71,13 @@ public static class SatelliteModuleLoadPolicy {
 
         toggles[moduleId] = enabled;
 
-        if (!enabled && string.Equals(moduleId, KitLibModuleIds.Panel, StringComparison.OrdinalIgnoreCase)) {
+        if (!enabled && string.Equals(moduleId, KitLibModuleIds.Hud, StringComparison.OrdinalIgnoreCase)) {
             toggles[KitLibModuleIds.Dev] = false;
             return;
         }
 
         if (enabled && string.Equals(moduleId, KitLibModuleIds.Dev, StringComparison.OrdinalIgnoreCase))
-            toggles[KitLibModuleIds.Panel] = true;
+            toggles[KitLibModuleIds.Hud] = true;
     }
 
     public static bool IsToggleable(string moduleId) => ToggleableModuleIds.Contains(moduleId);

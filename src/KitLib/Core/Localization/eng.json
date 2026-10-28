@@ -35,7 +35,7 @@
   "modpanel.kitlib.page.general": "General",
   "modpanel.kitlib.page.modules": "Modules",
   "modpanel.kitlib.page.progressGuard": "Progress protection",
-  "modpanel.kitlib.progressGuard.unavailable": "Progress protection requires the KitLib.Panel module.",
+  "modpanel.kitlib.progressGuard.unavailable": "Progress protection requires the KitLib.Hud module.",
   "modpanel.kitlib.page.performance": "Performance",
   "modpanel.kitlib.page.hotkeys": "Hotkeys",
 
@@ -70,7 +70,7 @@
   "modpanel.kitlib.modules.user.desc": "Session logging, crash recovery, and progress helpers.",
   "modpanel.kitlib.modules.modPanel.desc": "This settings UI in the main-menu Mods screen.",
   "modpanel.kitlib.modules.modPanel.disableWarning": "Disabling this removes KitLib's in-game settings screen. Re-enable it by editing mod_data/KitLib/settings.json.",
-  "modpanel.kitlib.modules.panel.desc": "In-run dev rail, title-screen Dev Mode, progress protection, and most browsers.",
+  "modpanel.kitlib.modules.hud.desc": "Window frame, main-menu rail, in-run dev rail, title-screen Dev Mode, progress protection, and most browsers.",
   "modpanel.kitlib.modules.ai.desc": "Rule-based solo autoplay, AI HUD, and multiplayer companion helpers.",
   "modpanel.kitlib.modules.cheat.desc": "Cheat tab and runtime cheat hooks.",
   "modpanel.kitlib.modules.dev.desc": "Hooks, Harmony tools, and MCP bridges.",

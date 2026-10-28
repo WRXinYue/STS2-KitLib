@@ -267,6 +267,7 @@ public static class SettingsStore {
     }
 
     private static void EnsureSatelliteModuleToggles() {
+        MigrateLegacyPanelToggle();
         var defaults = SatelliteModuleLoadPolicy.GetDefaultToggles();
         if (Current.SatelliteModulesEnabled.Count == 0) {
             Current.SatelliteModulesEnabled = new Dictionary<string, bool>(defaults, StringComparer.OrdinalIgnoreCase);
@@ -277,6 +278,14 @@ public static class SettingsStore {
             if (!Current.SatelliteModulesEnabled.ContainsKey(moduleId))
                 Current.SatelliteModulesEnabled[moduleId] = enabled;
         }
+    }
+
+    /// <summary>Carry a stored <c>KitLib.Panel</c> toggle over to its renamed <c>KitLib.Hud</c> module.</summary>
+    private static void MigrateLegacyPanelToggle() {
+        if (!Current.SatelliteModulesEnabled.Remove(KitLibModuleIds.LegacyPanel, out var legacy))
+            return;
+        if (!Current.SatelliteModulesEnabled.ContainsKey(KitLibModuleIds.Hud))
+            Current.SatelliteModulesEnabled[KitLibModuleIds.Hud] = legacy;
     }
 
     private static void ApplyHotkeyDefaults() {

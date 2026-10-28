@@ -3,6 +3,7 @@ using System.Reflection;
 using Godot;
 using HarmonyLib;
 using KitLib.Cheat;
+using KitLib.Host;
 using KitLib.Presets;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
@@ -106,16 +107,16 @@ internal static class EntrySlideGate {
         if (entry == null || _pending)
             return false;
         // Nothing on screen to slide out; the call can proceed at once.
-        if (!UI.MainMenuRailHost.IsRailOnScreen)
+        if (KitLibHudOps.IsRailOnScreen?.Invoke() != true)
             return false;
 
         var tree = host.GetTree();
         if (tree == null)
             return false;
 
-        UI.MainMenuRailHost.SlideOutForEntry();
+        KitLibHudOps.SlideRailOutForEntry?.Invoke();
         _pending = true;
-        tree.CreateTimer(UI.KitLibScreenFrame.AnimationSeconds).Timeout += () => {
+        tree.CreateTimer(KitLibHudOps.WrapAnimationSeconds).Timeout += () => {
             _pending = false;
             try {
                 entry.Invoke(instance, args);

@@ -13,10 +13,10 @@ features:
   text:
     en: >-
       KitLib is a foundation library: declare it in your mod manifest, reference KitLib.Abstractions, and call its APIs.
-      Sibling products (KitModPanel, KitDevTools) add in-game UI. A failed sibling should not break KitLib or mods that depend on it.
+      Satellite modules (KitModPanel, KitLib.Hud, KitLib.Dev) add in-game UI. A failed module should not break KitLib or mods that depend on it.
     zh-CN: >-
       KitLib 是基础库：在清单中声明、引用 KitLib.Abstractions、调用公开 API。
-      兄弟产品（KitModPanel、KitDevTools）提供游戏内 UI。某个兄弟产品异常不应拖垮核心与依赖 KitLib 的其他 mod。
+      卫星模块（KitModPanel、KitLib.Hud、KitLib.Dev）提供游戏内 UI。某个模块异常不应拖垮核心与依赖 KitLib 的其他 mod。
 
   cards:
     - title:
@@ -24,10 +24,10 @@ features:
         zh-CN: 安装
       details:
         en: >-
-          Install from Steam Workshop or Nexus. Add KitModPanel / KitDevTools as needed.
+          Install from Steam Workshop or Nexus. One KitLib package includes the mod panel, HUD, and dev tools.
           See /kitlib/install/
         zh-CN: >-
-          从 Steam 创意工坊或 Nexus 安装。按需加装 KitModPanel / KitDevTools。
+          从 Steam 创意工坊或 Nexus 安装。一个 KitLib 包即包含模组面板、HUD 与开发工具。
           详见 /kitlib/install/
     - title:
         en: Extension API

@@ -6,7 +6,6 @@ public readonly partial struct MdiIcon
     public static readonly MdiIcon Account = new("account");
     public static readonly MdiIcon AnimationPlay = new("animation-play");
     public static readonly MdiIcon BookOpenVariant = new("book-open-variant");
-    public static readonly MdiIcon BullseyeArrow = new("bullseye-arrow");
     public static readonly MdiIcon CalendarStar = new("calendar-star");
     public static readonly MdiIcon Cards = new("cards");
     public static readonly MdiIcon ChartDonut = new("chart-donut");

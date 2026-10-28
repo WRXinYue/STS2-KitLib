@@ -118,7 +118,7 @@ internal static class KitLibNativeModSettingsBootstrap {
             return control;
         return CreateUnavailablePage(
             I18N.T("modpanel.kitlib.progressGuard.unavailable",
-                "Progress protection requires the KitLib.Panel module."));
+                "Progress protection requires the KitLib.Hud module."));
     }
 
     static MegaRichTextLabel CreateUnavailablePage(string message) {

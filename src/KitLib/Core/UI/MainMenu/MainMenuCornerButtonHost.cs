@@ -85,7 +85,7 @@ internal static class MainMenuCornerButtonHost {
 
         // The left rail owns the tool entry points on the main menu, so the corner stack is hidden
         // and the patch-notes slot stays free (there is no icon flying up into it anymore).
-        if (MainMenuRailHost.IsAttachedTo(mainMenu)) {
+        if (KitLibHudOps.IsRailAttachedTo?.Invoke(mainMenu) == true) {
             host.Visible = false;
             SuppressSiblingShortcuts(mainMenu, occupied: false);
             return;

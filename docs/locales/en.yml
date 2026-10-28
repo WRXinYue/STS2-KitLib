@@ -2,7 +2,7 @@ nova:
   sidebar:
     docs: KitLib
     api: API
-    panels: KitDevTools
+    panels: KitLib
     dev: Contributing
 
 nav:

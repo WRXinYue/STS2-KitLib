@@ -209,13 +209,13 @@ internal static class DevPanel {
         KitLibState.ActivePanel = ActivePanel.Logs;
 
         LogCollector.AcknowledgeAlerts();
-        GD.Print($"[KitDevTools] OpenLogs entered expandLogExport={expandLogExport}");
+        GD.Print($"[KitLib] OpenLogs entered expandLogExport={expandLogExport}");
         try {
             DevPanelUI.ShowLogsOverlay(_globalUi, expandLogExport);
-            GD.Print("[KitDevTools] OpenLogs: ShowLogsOverlay returned normally");
+            GD.Print("[KitLib] OpenLogs: ShowLogsOverlay returned normally");
         }
         catch (Exception ex) {
-            GD.PrintErr($"[KitDevTools] OpenLogs: ShowLogsOverlay THREW: {ex}");
+            GD.PrintErr($"[KitLib] OpenLogs: ShowLogsOverlay THREW: {ex}");
         }
         LogCollector.SyncLogViewerOpen(_globalUi);
         DevPanelUI.RefreshRailHintPresentation();

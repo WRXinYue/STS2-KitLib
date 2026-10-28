@@ -43,16 +43,15 @@ public sealed class ModVariantLayoutTests {
     }
 
     [Fact]
-    public void TryResolveSatelliteAssemblyPath_PrefersSiblingVariantMatchingActiveKitLib() {
+    public void TryResolveSatelliteAssemblyPath_PrefersVariantMatchingActiveKitLib() {
         var mods = Path.Combine(Path.GetTempPath(), "kitlib-sat-search-" + Guid.NewGuid().ToString("N"));
         var kitLib = Path.Combine(mods, "KitLib");
-        var kitDev = Path.Combine(mods, "KitDevTools");
         var previous = KitLibHostPaths.ActiveVariantRoot;
         try {
             WriteProductVariant(kitLib, "0.107.1", "KitLib.Core.dll");
             WriteProductVariant(kitLib, "0.110.1", "KitLib.Core.dll");
-            WriteSatelliteVariant(kitDev, "0.107.1", "KitLib.Dev.dll", "stable-dev");
-            WriteSatelliteVariant(kitDev, "0.110.1", "KitLib.Dev.dll", "beta-dev");
+            WriteSatelliteVariant(kitLib, "0.107.1", "KitLib.Dev.dll", "stable-dev");
+            WriteSatelliteVariant(kitLib, "0.110.1", "KitLib.Dev.dll", "beta-dev");
 
             var stableRoot = Path.Combine(kitLib, ModVariantLayout.LibDirectoryName, "0.107.1");
             KitLibHostPaths.SetActiveVariantRoot(stableRoot);
@@ -69,41 +68,35 @@ public sealed class ModVariantLayoutTests {
     }
 
     [Fact]
-    public void TryResolveSatelliteAssemblyPath_finds_named_product_when_KitLib_is_workshop_numeric() {
+    public void TryResolveSatelliteAssemblyPath_finds_modules_inside_workshop_numeric_KitLib() {
         var root = Path.Combine(Path.GetTempPath(), "kitlib-ws-sat-" + Guid.NewGuid().ToString("N"));
         var workshopKitLib = Path.Combine(root, "2868840", "3747619669");
-        var localMods = Path.Combine(root, "install", "mods");
-        var kitDev = Path.Combine(localMods, "KitDevTools");
         var previous = KitLibHostPaths.ActiveVariantRoot;
-        var previousExtra = KitLibHostPaths.AdditionalModsSearchRoots;
         try {
             WriteProductVariant(workshopKitLib, "0.110.1", "KitLib.Core.dll");
-            WriteSatelliteVariant(kitDev, "0.110.1", "KitLib.Dev.dll", "local-dev");
+            WriteSatelliteVariant(workshopKitLib, "0.110.1", "KitLib.Dev.dll", "workshop-dev");
 
             var variantRoot = Path.Combine(workshopKitLib, ModVariantLayout.LibDirectoryName, "0.110.1");
             KitLibHostPaths.SetActiveVariantRoot(variantRoot);
-            KitLibHostPaths.AdditionalModsSearchRoots = [localMods];
 
             var picked = KitLibHostPaths.TryResolveSatelliteAssemblyPath(variantRoot, "KitLib.Dev");
             Assert.NotNull(picked);
-            Assert.Equal("local-dev", File.ReadAllText(picked));
+            Assert.Equal("workshop-dev", File.ReadAllText(picked));
         }
         finally {
             KitLibHostPaths.SetActiveVariantRoot(previous);
-            KitLibHostPaths.AdditionalModsSearchRoots = previousExtra;
             Directory.Delete(root, recursive: true);
         }
     }
 
     [Fact]
-    public void TryResolveSatelliteAssemblyPath_DoesNotLoadMismatchedSiblingVariant() {
+    public void TryResolveSatelliteAssemblyPath_DoesNotLoadMismatchedVariant() {
         var mods = Path.Combine(Path.GetTempPath(), "kitlib-sat-skip-" + Guid.NewGuid().ToString("N"));
         var kitLib = Path.Combine(mods, "KitLib");
-        var kitDev = Path.Combine(mods, "KitDevTools");
         var previous = KitLibHostPaths.ActiveVariantRoot;
         try {
             WriteProductVariant(kitLib, "0.107.1", "KitLib.Core.dll");
-            WriteSatelliteVariant(kitDev, "0.110.1", "KitLib.Dev.dll", "beta-only");
+            WriteSatelliteVariant(kitLib, "0.110.1", "KitLib.Dev.dll", "beta-only");
 
             var stableRoot = Path.Combine(kitLib, ModVariantLayout.LibDirectoryName, "0.107.1");
             KitLibHostPaths.SetActiveVariantRoot(stableRoot);
@@ -152,11 +145,7 @@ public sealed class ModVariantLayoutTests {
             Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveModFolder(modules));
             Assert.Equal(Path.GetFullPath(mods), KitLibHostPaths.ResolveModsRoot(variant));
             Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveSiblingKitLibModDirectory(variant));
-
-            var kitDevTools = Path.Combine(mods, "KitDevTools");
-            WriteVariant(kitDevTools, "0.110.1");
-            var devVariant = Path.Combine(kitDevTools, ModVariantLayout.LibDirectoryName, "0.110.1");
-            Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveSiblingKitLibModDirectory(devVariant));
+            Assert.Equal(Path.GetFullPath(kitLib), KitLibHostPaths.ResolveSiblingKitLibModDirectory(modules));
         }
         finally {
             Directory.Delete(mods, recursive: true);

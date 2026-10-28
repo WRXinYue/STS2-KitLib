@@ -12,12 +12,12 @@ The layout is modular: KitLib Core loads first; satellite modules can be toggled
 
 [b]Products[/b]
 
-Install companions as needed:
+KitLib ships as one package; its satellite modules load automatically:
 
 [list]
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (this host) — loads first, then exposes APIs other mods call from their initializer. Also runs settings, progress protection, theme, and hotkeys.
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/ModPanel/README.md]KitModPanel[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]Workshop[/url]) — main-menu mod list and per-mod settings, including STS2-RitsuLib pages when RitsuLib is present.
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/DevTools/README.md]KitDevTools[/url][/b] ([url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]Workshop[/url]) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
+[*][b]Dev Tools[/b] (satellite module inside KitLib) — title-screen Dev Mode, in-run rail, replay, cheats, and multiplayer debug.
 [/list]
 
 [b]Host[/b]
@@ -46,7 +46,7 @@ At compile time, import [i]eng/KitLib.ContentMod.props[/i] ([i]KitLib.Abstractio
 [b]Install[/b]
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] (required) plus [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus.
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b] from Steam Workshop or the release zip on [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus. The zip includes the mod panel, HUD, and dev tools.
 [*][b]Auxiliary tools[/b] ([i]KitLib.Mcp[/i], etc.) — same Releases / Nexus page, per-platform binaries.
 [/list]
 
@@ -75,12 +75,12 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 
 [b]组成[/b]
 
-按需安装配套产品：
+KitLib 以单个包发布，卫星模块自动加载：
 
 [list]
 [*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]（本仓库宿主）— 先加载，再提供其他 mod 在初始化时调用的 API；同时负责设置、进度保护、主题和快捷键。
 [*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/ModPanel/README.zh-CN.md]KitModPanel[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]创意工坊[/url]）— 主菜单模组列表与各模组设置页；装有 STS2-RitsuLib 时一并显示其设置页。
-[*][b][url=https://github.com/WRXinYue/STS2-KitLib/blob/main/src/KitLib/Modules/DevTools/README.zh-CN.md]KitDevTools[/url][/b]（[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]创意工坊[/url]）— 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
+[*][b]开发工具[/b]（KitLib 内置卫星模块）— 标题画面 Dev Mode、局内侧栏、回放、作弊与联机调试。
 [/list]
 
 [b]宿主[/b]
@@ -109,7 +109,7 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 [b]安装[/b]
 
 [list]
-[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]（必需）以及 [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793495384]KitModPanel[/url][/b] / [b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3793490840]KitDevTools[/url][/b]：Steam 创意工坊，或 [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus 的发布包。
+[*][b][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669]KitLib[/url][/b]：Steam 创意工坊，或 [url=https://github.com/WRXinYue/STS2-KitLib/releases]GitHub Releases[/url] / Nexus 的发布包。包内已包含模组面板、HUD 与开发工具。
 [*][b]辅助工具[/b]（[i]KitLib.Mcp[/i] 等）：同一 Releases / Nexus 页下载对应平台可执行文件。
 [/list]
 

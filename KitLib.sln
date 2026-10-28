@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Abstractions.Facade"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Core", "src\KitLib\Core\KitLib.Core.csproj", "{A0000000-0000-0000-0000-000000000001}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Panel", "src\KitLib\Modules\DevTools\KitLib.Panel.csproj", "{C0000000-0000-0000-0000-000000000011}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Hud", "src\KitLib\Modules\Hud\KitLib.Hud.csproj", "{C0000000-0000-0000-0000-000000000011}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Dev", "src\KitLib\Modules\DevTools\KitLib.Dev.csproj", "{C0000000-0000-0000-0000-000000000014}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Dev", "src\KitLib\Modules\Dev\KitLib.Dev.csproj", "{C0000000-0000-0000-0000-000000000014}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KitLib.Mcp", "tools\KitLib.Mcp\KitLib.Mcp.csproj", "{B0000000-0000-0000-0000-000000000002}"
 EndProject
