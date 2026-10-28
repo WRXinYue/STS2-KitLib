@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-10-28
+
 ### Changed
 
 - **局内面板改名为 HUD** — 原本以 `KitLib.Panel`（`modules/KitLib.Panel.dll`）发布的卫星模块现更名为 **`KitLib.Hud`**（`modules/KitLib.Hud.dll`），并从 `Modules/DevTools` 移到 `Modules/Hud`。已保存的 `KitLib.Panel` 开关会自动迁移到 `KitLib.Hud`。
@@ -24,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **屏幕边框与左侧栏** — 主菜单与对局内的界面现在包在一层细边框里，左侧是磨砂质感的侧栏。`Ctrl+B` 会把侧栏与边框一起收起；侧栏条目随所处界面切换（对局、自定义对局、联机），边框上显示 KitLib 版本。底板与行高亮弹性过渡，对局内侧栏的底板像主菜单侧栏一样收窄，侧栏与战斗统计环带随界面一起滑出。
 - **顶部通知岛** — KitLib 的提示以一条短标签挂在顶部边框上，结束时滑回边框内；边框收起时它也随边框一起上移。
 - **首次使用引导** — 打开 KitLib 设置会先看到列出常用快捷键的欢迎卡；主菜单显示分两段的提示，只有真正按下它讲解的快捷键才会进入下一段。
-- **模块开关** — 设置页可直接开关内置的 Mod Panel 与 Dev Tools，无需取消订阅 KitLib。
+- **模块开关** — 设置页可直接开关内置的 Mod Panel、局内 HUD 与 Dev Tools，无需取消订阅 KitLib。
 - **模组行** — 侧滑可启用或禁用该 mod；需要重启才生效的 mod 与有更新的工坊条目会在行内标出。
 - **战斗统计环** — 对局中在屏幕右缘显示每个指标的圆环，环带随界面切换滑入滑出，读数以动画过渡。
 - **整局统计** — 伤害、格挡与出牌数按整局累计，存档并重新读档后仍然保留，在地图界面中也保持显示。

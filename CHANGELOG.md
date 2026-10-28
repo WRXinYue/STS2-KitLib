@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.51.0] - 2026-10-28
+
 ### Changed
 
 - **In-game panel renamed to HUD** — The satellite shipped as `KitLib.Panel` (`modules/KitLib.Panel.dll`) is now **`KitLib.Hud`** (`modules/KitLib.Hud.dll`) and lives in `Modules/Hud` instead of `Modules/DevTools`. A stored `KitLib.Panel` toggle is carried over to `KitLib.Hud` automatically.
@@ -24,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Screen frame and left rail** — The main menu and the in-run HUD sit inside a thin edge frame with a frosted left rail. `Ctrl+B` retracts the rail and the frame together, entries follow the current surface (run, custom run, multiplayer), and the frame carries KitLib's version. Bands and row highlights spring into place, the in-run rail tapers like the main-menu one, and the rails and combat-rings band slide away with the screen.
 - **Top notification island** — KitLib notices appear in a short tab hanging from the top border and slide back into it when done; the tab rides the border when the frame retracts.
 - **First-run walkthrough** — KitLib settings open with a welcome card listing the first shortcuts, and the main menu shows a two-step hint that only advances once you actually press the shortcut it teaches.
-- **Module toggles** — A settings page switches the bundled Mod Panel and Dev Tools on or off without unsubscribing from KitLib.
+- **Module toggles** — A settings page switches the bundled Mod Panel, in-game HUD and Dev Tools on or off without unsubscribing from KitLib.
 - **Mod rows** — Swipe a row sideways to enable or disable that mod; rows mark mods that only take effect after a restart and Workshop items that have an update.
 - **Combat rings HUD** — A right-edge ring per metric during a run, with a band that slides in and out with the screen; rings animate to their new value.
 - **Run totals** — Damage, block and card totals accumulate over the whole run, survive saving and reloading, and stay visible on the map screen.
