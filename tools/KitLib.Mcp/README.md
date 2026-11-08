@@ -8,8 +8,8 @@ the game runs on.
 
 | Endpoint | Meaning |
 |---|---|
-| `POST http://127.0.0.1:9877/mcp` | MCP Streamable HTTP, **full** tool set (26 tools) |
-| `POST http://127.0.0.1:9877/mcp-core` | Same transport, **Core** tool profile (10 tools: state / combat / map / wait / session / read-text) for token-sensitive clients |
+| `POST http://127.0.0.1:9877/mcp` | MCP Streamable HTTP, **full** tool set (27 tools) |
+| `POST http://127.0.0.1:9877/mcp-core` | Same transport, **Core** tool profile (11 tools: state / combat / map / wait / session / read-text / screenshot) for token-sensitive clients |
 | `GET /health` | Readiness + version / tool counts / uptime (used by `make dev-session`) |
 | `POST /messages` | Legacy JSON-RPC used by the optional stdio proxy below |
 

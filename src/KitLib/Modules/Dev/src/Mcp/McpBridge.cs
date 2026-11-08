@@ -48,6 +48,8 @@ internal static class McpBridge {
         - Call get_map_state once per act for route planning, then map_action select_map_node
           with the returned available.index.
         - Use dev_read_text only for on-screen text; state reads are much cheaper.
+        - Use dev_screenshot only when the answer is visual (layout, art, HUD, tooltips); it returns
+          an image and costs image tokens, so prefer state/text tools and never capture every step.
         - Never poll get_game_state in a loop; every call costs one model round trip.
 
         Launch helpers (dev_launch_game, dev_wait_bridge, dev_stop_game) exist only in the optional
@@ -95,6 +97,7 @@ internal static class McpBridge {
         Tools.Register(new DevSetStatTool());
         Tools.Register(new DevWaitPhaseTool());
         Tools.Register(new DevReadTextTool());
+        Tools.Register(new DevScreenshotTool());
         Tools.Register(new DevCombatTurnTool());
         Tools.Register(new DevBatchTool(Tools));
 

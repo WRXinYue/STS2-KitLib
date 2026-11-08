@@ -123,16 +123,17 @@ public sealed class McpProtocolTests {
 
     [Fact]
     public void CoreProfile_IsSubsetOfCatalog() {
-        Assert.Equal(10, McpToolCatalog.CoreToolNames.Length);
+        Assert.Equal(11, McpToolCatalog.CoreToolNames.Length);
         Assert.True(McpToolCatalog.IsCore("get_game_state"));
         Assert.True(McpToolCatalog.IsCore("dev_combat_turn"));
+        Assert.True(McpToolCatalog.IsCore("dev_screenshot"));
         Assert.False(McpToolCatalog.IsCore("dev_set_cheat"));
         Assert.False(McpToolCatalog.IsCore("dev_list_cards"));
     }
 
     [Fact]
     public void Catalog_MetadataCoversEveryTool() {
-        Assert.Equal(26, McpToolCatalog.MetadataCount);
+        Assert.Equal(27, McpToolCatalog.MetadataCount);
         foreach (var name in McpToolCatalog.CoreToolNames)
             Assert.True(McpToolCatalog.IsCore(name));
     }

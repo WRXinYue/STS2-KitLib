@@ -31,6 +31,7 @@ internal static class McpToolCatalog {
         "get_combat_stats",
         "dev_get_session",
         "dev_read_text",
+        "dev_screenshot",
     ];
 
     private static readonly HashSet<string> CoreTools = new(CoreToolNames, StringComparer.Ordinal);
@@ -80,6 +81,8 @@ internal static class McpToolCatalog {
             SearchHint: "wait phase play_phase not_combat poll"),
         ["dev_read_text"] = new("Read screen text", ReadOnlyHint: true, IdempotentHint: true,
             SearchHint: "read ui text labels hud button captions"),
+        ["dev_screenshot"] = new("Screenshot", ReadOnlyHint: true,
+            SearchHint: "screenshot capture image viewport visual layout art hud tooltip"),
         ["dev_combat_turn"] = new("Play combat turn",
             SearchHint: "combat turn play cards end turn"),
         ["dev_batch"] = new("Batch tool calls",

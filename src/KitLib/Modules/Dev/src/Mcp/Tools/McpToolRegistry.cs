@@ -55,6 +55,11 @@ internal sealed class McpToolRegistry {
             return ErrorResult($"Unknown tool: {name}");
 
         try {
+            // Tools that return MCP content blocks other than a single text block (for example
+            // images) build the whole CallToolResult themselves.
+            if (tool is IMcpResultTool resultTool)
+                return await resultTool.ExecuteResultAsync(args ?? new JsonObject());
+
             var result = await tool.ExecuteAsync(args ?? new JsonObject());
             return SuccessResult(result);
         }
@@ -97,4 +102,10 @@ internal interface IMcpTool {
     string Description { get; }
     string InputSchemaJson { get; }
     Task<JsonNode> ExecuteAsync(JsonObject args);
+}
+
+/// <summary>Tool that builds its own MCP <c>tools/call</c> result, for content blocks such as images
+/// that <see cref="McpToolRegistry.SuccessResult"/> cannot express as a single text block.</summary>
+internal interface IMcpResultTool : IMcpTool {
+    Task<JsonObject> ExecuteResultAsync(JsonObject args);
 }
