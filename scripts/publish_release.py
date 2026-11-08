@@ -51,16 +51,19 @@ def _changelog_section(path: Path, version: str) -> str:
     return "\n".join(out)
 
 
-def _ensure_release_assets(version: str, rid: str) -> list[Path]:
-    assets = github_release_assets(_REPO_ROOT, version, rid)
+def _ensure_release_assets(version: str, rid: str, include_mcp: bool) -> list[Path]:
+    assets = github_release_assets(_REPO_ROOT, version, rid, include_mcp=include_mcp)
     missing = [path for path in assets if not path.is_file()]
     if not missing:
         return assets
 
-    print("Building release assets (zip-full build-tools)...")
+    make_targets = ["zip-full"]
+    if include_mcp:
+        make_targets.append("build-tools")
+    print(f"Building release assets (make {' '.join(make_targets)})...")
     env = {**os.environ, "TOOLS_RID": rid}
     subprocess.run(
-        ["make", "zip-full", "build-tools"],
+        ["make", *make_targets],
         cwd=_REPO_ROOT,
         env=env,
         check=True,
@@ -85,7 +88,12 @@ def main() -> int:
     ap.add_argument(
         "--tools-rid",
         default="",
-        help="Runtime ID for tool zips (default: TOOLS_RID env or host default).",
+        help="Runtime ID for the optional legacy MCP proxy (default: TOOLS_RID env or host default).",
+    )
+    ap.add_argument(
+        "--with-mcp",
+        action="store_true",
+        help="Legacy/optional: also attach the self-contained KitLib.Mcp stdio proxy for this RID.",
     )
     args = ap.parse_args()
 
@@ -111,7 +119,7 @@ def main() -> int:
 
     rid = tools_rid(args.tools_rid)
     try:
-        assets = _ensure_release_assets(version, rid)
+        assets = _ensure_release_assets(version, rid, args.with_mcp)
     except FileNotFoundError as ex:
         print(str(ex), file=sys.stderr)
         return 1

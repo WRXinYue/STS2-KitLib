@@ -71,10 +71,20 @@ def all_product_zip_paths(repo_root: Path) -> list[Path]:
     ]
 
 
-def github_release_assets(repo_root: Path, version: str, rid: str = "") -> list[Path]:
-    """Per-product mod zips plus self-contained MCP executable (not tool zip)."""
-    resolved_rid = tools_rid(rid)
-    return [
-        *all_product_zip_paths(repo_root),
-        mcp_exe_path(repo_root, resolved_rid),
-    ]
+def github_release_assets(
+    repo_root: Path,
+    version: str,
+    rid: str = "",
+    *,
+    include_mcp: bool = False,
+) -> list[Path]:
+    """Per-product mod zips.
+
+    The MCP stdio proxy is legacy/optional: the in-game MCP server speaks Streamable HTTP and needs
+    no executable, so the proxy is not published by default. Pass ``include_mcp=True`` (or set
+    ``INCLUDE_MCP_EXE=1``) to attach its per-RID self-contained executable for stdio-only clients.
+    """
+    assets = list(all_product_zip_paths(repo_root))
+    if include_mcp or os.environ.get("INCLUDE_MCP_EXE", "").strip().lower() in ("1", "true", "yes"):
+        assets.append(mcp_exe_path(repo_root, tools_rid(rid)))
+    return assets

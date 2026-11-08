@@ -23,5 +23,7 @@
     <Compile Include="..\..\src\KitLib\Modules\Hud\src\DevPerf\DevPerfLogRateLimiter.cs" Link="DevPerf\DevPerfLogRateLimiter.cs" />
     <Compile Include="..\..\src\KitLib\Modules\Hud\src\DevPerf\DevPerfTransitionRecord.cs" Link="DevPerf\DevPerfTransitionRecord.cs" />
     <Compile Include="..\..\src\KitLib\Modules\Hud\src\DevPerf\DevPerfTransitionStore.cs" Link="DevPerf\DevPerfTransitionStore.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\Dev\src\Mcp\McpProtocol.cs" Link="Mcp\McpProtocol.cs" />
+    <Compile Include="..\..\src\KitLib\Modules\Dev\src\Mcp\McpToolCatalog.cs" Link="Mcp\McpToolCatalog.cs" />
   </ItemGroup>
 </Project>

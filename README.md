@@ -60,7 +60,7 @@ At compile time, import `eng/KitLib.ContentMod.props` (`KitLib.Abstractions.dll`
 ## Install
 
 - **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)** (required — includes Mod Panel and Dev Tools) from Steam Workshop or the release zip on [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus.
-- **Auxiliary tools** (`KitLib.Mcp`, etc.) — same Releases / Nexus page, per-platform binaries.
+- **MCP**: the in-game MCP server (Dev Tools module) speaks Streamable HTTP at `http://127.0.0.1:9877/mcp` and needs no extra binary. The `KitLib.Mcp` stdio proxy is source-only now — build it locally with `make build-tools` if a client only supports stdio.
 
 ## Acknowledgments
 

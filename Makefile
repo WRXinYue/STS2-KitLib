@@ -97,7 +97,7 @@ help:
 	@echo "  sync         build + deploy KitLib"
 	@echo "  sync PRODUCT=X  deploy one product only"
 	@echo "  sync VARIANTS=all  build stable+beta variants; ALT_GAME_DIR deploys a second install"
-	@echo "  sync-full    sync + deploy tools/ (MCP)"
+	@echo "  sync-full    sync (legacy MCP tools deploy is manual: make deploy-tools)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build        build all bundle projects (auto-cleans stale build servers)"
 	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib)"
@@ -129,17 +129,18 @@ help:
 	@echo "  compile      dotnet build to game mods (no .pck)"
 	@echo "  pck          dotnet publish to game mods + .pck"
 	@echo ""
-	@echo "  compile-tools dotnet build KitLib.Mcp Release (local MCP / Cursor)"
+	@echo "  [legacy MCP stdio proxy — optional, not part of releases]"
+	@echo "  compile-tools dotnet build KitLib.Mcp Release (local stdio proxy / Cursor)"
 	@echo "  build-tools  publish KitLib.Mcp self-contained exe to build/tools/ (TOOLS_RID=$(TOOLS_RID))"
 	@echo "  deploy-tools copy KitLib.Mcp into mods/KitLib/tools/ (build-if-missing)"
 	@echo "  sync-tools   build-tools + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
 	@echo "  [upload]"
-	@echo "  upload-github  mod zip + MCP exe → GitHub Release (alias: publish)"
+	@echo "  upload-github  mod zip → GitHub Release (alias: publish; MCP exe opt-in: publish_release.py --with-mcp)"
 	@echo "  upload-nexus   main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
-	@echo "  upload-nexus-mcp  zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
-	@echo "  upload-all     GitHub + Nexus + MCP + Steam Workshop"
+	@echo "  upload-nexus-mcp  [legacy] zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
+	@echo "  upload-all     GitHub + Nexus + Steam Workshop (MCP proxy excluded)"
 	@echo "  upload-steam   workshop + upload to Steam Workshop (PRODUCT=KitLib; default KitLib)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo "  readme-steam   README*.md -> assets/readme.steam.* (PRODUCT= optional; default all)"
@@ -174,8 +175,10 @@ check: format-check lint-scripts
 test:
 ifeq ($(OS),Windows_NT)
 	@set DOTNET_ROLL_FORWARD=Major&& $(DOTNET) test tests/KitLib.ModPanel.Tests/KitLib.ModPanel.Tests.csproj -c Debug
+	@set DOTNET_ROLL_FORWARD=Major&& $(DOTNET) test tests/KitLib.DevTools.Tests/KitLib.DevTools.Tests.csproj -c Debug
 else
 	DOTNET_ROLL_FORWARD=Major $(DOTNET) test tests/KitLib.ModPanel.Tests/KitLib.ModPanel.Tests.csproj -c Debug
+	DOTNET_ROLL_FORWARD=Major $(DOTNET) test tests/KitLib.DevTools.Tests/KitLib.DevTools.Tests.csproj -c Debug
 endif
 
 hooks-install:
@@ -254,8 +257,8 @@ sync: $(SYNC_BUILD_TARGET)
 	$(PYTHON) scripts/deploy_modules.py $(if $(PRODUCT),--product $(PRODUCT),)
 	$(if $(filter all,$(VARIANTS)),$(if $(ALT_GAME_DIR),$(PYTHON) scripts/deploy_modules.py --game-root "$(ALT_GAME_DIR)",),)
 
+# Legacy alias: the MCP stdio proxy is optional and deployed manually (`make deploy-tools`).
 sync-full: sync
-	$(DEPLOY_TOOLS_BUILD)
 
 sync-full-launch: sync-full launch
 
@@ -315,7 +318,7 @@ nexus upload-nexus:
 nexus-mcp upload-nexus-mcp:
 	$(PYTHON) scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
 
-upload-all: publish nexus nexus-mcp
+upload-all: publish nexus
 	$(STEAM_SYNC)
 	$(STEAM_UPLOAD)
 

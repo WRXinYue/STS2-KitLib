@@ -346,12 +346,12 @@ def main() -> int:
     tool_group.add_argument(
         "--mcp",
         action="store_true",
-        help="Build/package/upload the KitLib.Mcp stdio proxy (make zip-mcp).",
+        help="Legacy/optional: build/package/upload the KitLib.Mcp stdio proxy (make zip-mcp).",
     )
     ap.add_argument(
         "--tools-rid",
         default="",
-        help="Runtime ID for tool zips (default: TOOLS_RID env or host default).",
+        help="Runtime ID for the optional legacy MCP proxy (default: TOOLS_RID env or host default).",
     )
     ap.add_argument(
         "--dry-run",

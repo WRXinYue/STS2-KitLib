@@ -119,6 +119,9 @@ public sealed partial class KitLibSettings {
     /// <summary>Per-module enable flags for toggleable satellites (User/ModPanel are always on).</summary>
     public Dictionary<string, bool> SatelliteModulesEnabled { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>HTTP port for the in-game MCP server (default 9877; <c>KITLIB_MCP_PORT</c> overrides; restart to apply).</summary>
+    public int McpPort { get; set; } = 9877;
+
     /// <summary>Enable in-game keyboard shortcuts for the DevMode sidebar shell.</summary>
     public bool HotkeysEnabled { get; set; } = true;
 }

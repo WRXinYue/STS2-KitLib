@@ -60,7 +60,7 @@ KitLib 同时面向 mod 开发者与普通玩家。开发者可以开测试局�
 ## 安装
 
 - **[KitLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3747619669)**（必需，已包含模组面板与开发工具）：Steam 创意工坊，或 [GitHub Releases](https://github.com/WRXinYue/STS2-KitLib/releases) / Nexus 的发布包。
-- **辅助工具**（`KitLib.Mcp` 等）：同一 Releases / Nexus 页下载对应平台可执行文件。
+- **MCP**：游戏内 MCP 服务随 KitLib（开发工具模块）内置，走 Streamable HTTP（`http://127.0.0.1:9877/mcp`），无需额外可执行文件；`KitLib.Mcp` stdio 代理仅保留源码，仅支持 stdio 的客户端可自行 `make build-tools` 构建。
 
 ## 致谢
 

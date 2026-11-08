@@ -40,11 +40,10 @@ internal sealed class DevHoverTool : IMcpTool {
     public string Name => "dev_hover";
 
     public string Description =>
-        "Hover (focus) a UI element so hover-only behaviour fires. target takes an alias (map_node, "
+        "Focus/hover a UI element so hover-only previews and tooltips fire. target = alias (map_node, "
         + "reward_alternative, rest_option, relic, boss_icon, event_option, potion, card, creature, "
-        + "treasure_relic) or ANY node type name. Use target 'list' to see what is hoverable on screen, "
-        + "'none' to unhover. Omit index to list that target's instances. Pair with dev_read_text to "
-        + "read the panel the hover opens.";
+        + "treasure_relic) or ANY node type name; 'list' shows hoverables, 'none' unhovers; omit index "
+        + "to list instances. Follow with dev_read_text to read the opened panel.";
 
     public string InputSchemaJson => """
     {
