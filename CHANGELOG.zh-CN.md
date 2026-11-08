@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-11-09
+
+### Added
+
+- **游戏内 MCP over HTTP** — 开发工具现在直接在游戏进程内提供 MCP（`http://127.0.0.1:9877/mcp`），Agent 无需再单独运行 `KitLib.Mcp` 可执行文件即可接入；`/mcp-core` 为上下文敏感的客户端提供状态、战斗与地图的基础工具集，端口与 token 均可配置。
+- **Agent 截图工具** — `dev_screenshot` 可把游戏画面以图片（PNG/JPEG）返回，支持按 UI 节点裁剪、隐藏 KitLib 自身的覆盖层，做视觉检查时不再需要外部截图链路。
+
+### Changed
+
+- **MCP 工具元数据** — 工具会声明只读/破坏性提示与检索提示，返回结构化结果，工具级错误以可见错误返回而不是静默失败。
+- **stdio 代理不再随发布提供** — `KitLib.Mcp` 仍保留源码供仅支持 stdio 的客户端自行构建，但不再随 Releases 发布；游戏内 HTTP 服务无需任何平台专用二进制。
+
+### Fixed
+
+- **悬停预览不再残留** — 悬停卡牌、遗物或地图点后再出牌、领奖或选路，预览与 tooltip 不会再留在屏幕上；下一次悬停或点击会正确释放上一次状态。`card` / `map_node` 别名现在能匹配手牌与地图点，地图点会返回可选的 action 索引，悬停结果直接附带可见的 tooltip 文本。感谢 [OLC](https://github.com/BAKAOLC) 反馈。
+- **选牌界面** — 选牌界面打开时，结束回合或继续出牌会被明确拒绝，而不是假成功后状态错乱；回合批次会停在待选择状态并支持随牌自动选择，牌失败后也不再顺手结束回合。感谢 [OLC](https://github.com/BAKAOLC) 反馈。
+
 ## [0.51.0] - 2026-10-28
 
 ### Changed
@@ -163,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **日志查看器与开发者控制台** — KitLib 带 scope 的日志行与官方 STS2 logger 的标签间距一致（`[KitLib] [Scope]`，不再显示为 `[KitLib][Scope]`）。
 
-### 移除
+### Removed
 
 - **内容 mod 日志 API（`KitLibLog` / `ModLog` / `ModLogSettings`）** — 内容 mod 应使用官方 STS2 `MegaCrit.Sts2.Core.Logging.Logger`。KitLib.User 仍会采集所有 logger 输出供游戏内日志查看器与开发者控制台使用。
 - **`KitLibModSettingsUiOps.BuildLogLevelRow`** — 请在 mod 设置中改用 `Logger.SetLogLevelForType`。

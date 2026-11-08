@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.52.0] - 2026-11-09
+
+### Added
+
+- **In-game MCP over HTTP** — Dev Tools now serve MCP from inside the running game (`http://127.0.0.1:9877/mcp`), so agents connect without the separate `KitLib.Mcp` executable. A Core profile at `/mcp-core` exposes the state, combat and map basics for token-sensitive clients, and the port and token are configurable.
+- **Screenshot tool for agents** — `dev_screenshot` returns the game screen as an image (PNG or JPEG), optionally cropped to a UI node and with KitLib's own overlay hidden, so visual checks no longer need an external screenshot path.
+
+### Changed
+
+- **MCP tool metadata** — Tools advertise read-only/destructive hints and search hints, return structured results, and report tool-level failures as visible errors instead of silent failures.
+- **stdio proxy no longer published** — `KitLib.Mcp` stays in the source tree for stdio-only clients but is no longer shipped in releases; the in-game HTTP server needs no per-platform binary.
+
+### Fixed
+
+- **Hover previews no longer stick** — Hovering a card, relic or map point and then acting (playing a card, taking a reward, choosing a map node) no longer leaves the preview and tooltip on screen; the next hover or a click releases the previous one. Hovering now also matches hand cards and map points through the `card` and `map_node` aliases, reports map points with their selectable index, and returns the visible tooltip text. Thanks to [OLC](https://github.com/BAKAOLC) for the report.
+- **Card selection screens** — While a card-selection screen is open, ending the turn or playing another card is refused instead of reporting success and desyncing; turn batches stop at the pending selection (with per-card auto-pick), and a failed card no longer ends the turn. Thanks to [OLC](https://github.com/BAKAOLC) for the report.
+
 ## [0.51.0] - 2026-10-28
 
 ### Changed
