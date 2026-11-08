@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Godot;
@@ -33,7 +34,9 @@ internal sealed class DevCombatTurnTool : IMcpTool {
                     "type": "object",
                     "properties": {
                         "index": { "type": "integer", "description": "Hand index." },
-                        "target": { "type": "integer", "description": "Enemy index, -1 for untargeted." }
+                        "target": { "type": "integer", "description": "Enemy index, -1 for untargeted." },
+                        "selection_card_id": { "type": "string", "description": "If this card opens a selection screen, auto-pick the first option with this card id." },
+                        "selection_index": { "type": "integer", "description": "If this card opens a selection screen, auto-pick this option index." }
                     },
                     "required": ["index"]
                 }
@@ -56,8 +59,22 @@ internal sealed class DevCombatTurnTool : IMcpTool {
         bool endTurn = args["end_turn"]?.GetValue<bool>() ?? true;
         var wait = TimeSpan.FromMilliseconds(timeoutMs);
 
+        // A selection overlay owns input until it is resolved; starting a turn on top of it used to
+        // queue an end turn and burn the whole timeout before failing.
+        if (CardSelectionUi.IsActive()) {
+            return new JsonObject {
+                ["ok"] = false,
+                ["pendingSelection"] = true,
+                ["selectionState"] = KitLibGameOps.SelectionState(),
+                ["message"] = "A card selection screen is open. Resolve it with selection_action before playing a turn.",
+                ["played"] = new JsonArray(),
+                ["endTurn"] = false,
+            };
+        }
+
         var played = new JsonArray();
         bool ok = true;
+        bool pendingSelection = false;
 
         if (args["cards"] is JsonArray cards) {
             RunContext.TryGetRunAndPlayer(out _, out var player);
@@ -96,15 +113,19 @@ internal sealed class DevCombatTurnTool : IMcpTool {
                         ["message"] = "Card is no longer in hand.",
                     });
                     ok = false;
+                    // "Stops after the first failing card" also means no surprise end-turn; the caller
+                    // can still end the turn explicitly after inspecting the failure.
+                    endTurn = false;
                     break;
                 }
 
+                var hint = SelectionHintFrom(card);
                 var result = await KitLibGameOps.Execute(new GameAction {
                     Type = ActionType.PlayCard,
                     TargetIndex = index,
                     SecondaryIndex = target,
                     Reason = "MCP dev_combat_turn",
-                });
+                }, hint);
 
                 played.Add(new JsonObject {
                     ["index"] = index,
@@ -116,6 +137,20 @@ internal sealed class DevCombatTurnTool : IMcpTool {
 
                 if (!result.Success) {
                     ok = false;
+                    if (result.Message == "pending_selection" || CardSelectionUi.IsActive()) {
+                        pendingSelection = true;
+                    }
+                    else {
+                        // Stop the turn on a failed card instead of silently ending it afterwards.
+                        endTurn = false;
+                    }
+                    break;
+                }
+
+                // A successful play can still leave a selection screen open (patched cards); stop instead
+                // of playing the next card on top of the overlay.
+                if (CardSelectionUi.IsActive()) {
+                    pendingSelection = true;
                     break;
                 }
 
@@ -132,6 +167,12 @@ internal sealed class DevCombatTurnTool : IMcpTool {
             ["ok"] = ok,
             ["played"] = played,
         };
+
+        if (pendingSelection || CardSelectionUi.IsActive()) {
+            response["pendingSelection"] = true;
+            response["selectionState"] = KitLibGameOps.SelectionState();
+            endTurn = false;
+        }
 
         if (endTurn && Sts2CombatCompat.IsCombatPlayPhaseActive()) {
             var endResult = await KitLibGameOps.Execute(new GameAction {
@@ -154,6 +195,24 @@ internal sealed class DevCombatTurnTool : IMcpTool {
         response["phase"] = LeanGamePhase.Current().ToString();
         response["waitedMs"] = Time.GetTicksMsec() - started;
         return response;
+    }
+
+    /// <summary>Optional per-card selection auto-pick, mirroring combat_action's selection hint.</summary>
+    private static SelectionHint? SelectionHintFrom(JsonObject card) {
+        var cardId = card["selection_card_id"]?.GetValue<string>()?.Trim();
+        int? selectionIndex = null;
+        if (card.TryGetPropertyValue("selection_index", out var indexNode)
+            && indexNode?.GetValueKind() == JsonValueKind.Number) {
+            selectionIndex = indexNode.GetValue<int>();
+        }
+
+        if (string.IsNullOrWhiteSpace(cardId) && selectionIndex == null)
+            return null;
+
+        return new SelectionHint {
+            CardId = string.IsNullOrWhiteSpace(cardId) ? null : cardId,
+            CardIndex = selectionIndex,
+        };
     }
 
     // EndTurn is queued, so the play phase still reads active for a frame. Wait for the enemy turn to

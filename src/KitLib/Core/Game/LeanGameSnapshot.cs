@@ -110,7 +110,10 @@ internal static class LeanGameSnapshot {
     }
 
     static JsonObject CaptureCombat(Player player, PlayerCombatState combatState) {
-        var isPlayPhase = Sts2CombatCompat.IsCombatPlayPhaseActive();
+        // A selection overlay owns input until it resolves; treating it as a live play phase made bots
+        // act on a blocked turn.
+        var selectionActive = CardSelectionUi.IsActive();
+        var isPlayPhase = Sts2CombatCompat.IsCombatPlayPhaseActive() && !selectionActive;
         var cs = CombatManager.Instance?.DebugOnlyGetState();
         var combat = new JsonObject {
             ["maxEnergy"] = player.MaxEnergy,
@@ -118,7 +121,8 @@ internal static class LeanGameSnapshot {
             ["drawPileCount"] = combatState.DrawPile?.Cards.Count() ?? 0,
             ["discardPileCount"] = combatState.DiscardPile?.Cards.Count() ?? 0,
             ["isPlayPhaseActive"] = isPlayPhase,
-            ["phase"] = isPlayPhase ? "PlayPhase" : "NotPlayPhase",
+            ["selectionActive"] = selectionActive,
+            ["phase"] = selectionActive ? "Selection" : isPlayPhase ? "PlayPhase" : "NotPlayPhase",
             ["playerBlock"] = player.Creature?.Block ?? 0,
             ["turnNumber"] = cs?.RoundNumber ?? 1,
             ["playerPowers"] = player.Creature != null

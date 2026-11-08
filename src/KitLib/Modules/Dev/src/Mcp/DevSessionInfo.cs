@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Godot;
+using KitLib.Game;
 using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Screens.CharacterSelect;
@@ -20,6 +21,8 @@ internal static class DevSessionInfo {
         return new JsonObject {
             ["runActive"] = runActive,
             ["phase"] = ResolvePhase(runActive),
+            ["gamePhase"] = LeanGamePhase.Current().ToString(),
+            ["selectionActive"] = CardSelectionUi.IsActive(),
             ["inDevRun"] = KitLibState.InDevRun,
             ["blockingPrompts"] = prompts,
         };

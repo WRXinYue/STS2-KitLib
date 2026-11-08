@@ -1,8 +1,12 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 using Godot;
+using KitLib.Host;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
 using MegaCrit.Sts2.Core.Nodes.Relics;
 using MegaCrit.Sts2.Core.Nodes.RestSite;
@@ -29,7 +33,9 @@ namespace KitLib.Mcp.Tools;
 /// </para>
 /// <para>
 /// The previously focused node is unfocused first, because hover previews key their tip sets by owner and
-/// several throw on a double-keyed owner. Call with <c>target: "none"</c> to clear without focusing anything.
+/// several throw on a double-keyed owner. Other game-advancing tools call <see cref="ReleaseHover"/> before
+/// they run, so a preview cannot outlive the action that changed the screen. Call with
+/// <c>target: "none"</c> to clear without focusing anything.
 /// </para>
 /// </remarks>
 internal sealed class DevHoverTool : IMcpTool {
@@ -37,13 +43,18 @@ internal sealed class DevHoverTool : IMcpTool {
     // a mouse has one pointer: the game never has two hovered elements either.
     private static Node? _focused;
 
+    private const int TooltipMaxEntries = 12;
+    private const int TooltipMaxChars = 1200;
+
     public string Name => "dev_hover";
 
     public string Description =>
-        "Focus/hover a UI element so hover-only previews and tooltips fire. target = alias (map_node, "
-        + "reward_alternative, rest_option, relic, boss_icon, event_option, potion, card, creature, "
-        + "treasure_relic) or ANY node type name; 'list' shows hoverables, 'none' unhovers; omit index "
-        + "to list instances. Follow with dev_read_text to read the opened panel.";
+        "Focus/hover a UI element so hover-only previews and tooltips fire, and return the visible tip text. "
+        + "target = alias (map_node, reward_alternative, rest_option, relic, boss_icon, event_option, potion, "
+        + "card, creature, treasure_relic), ANY node type name (subclasses match their base type too), 'list' "
+        + "to discover hoverables, or 'none' to unhover. Omit index to list instances; map points include "
+        + "available/availableIndex matching get_game_state. Hover is released automatically before any "
+        + "game-advancing tool, so re-hover before reading a preview again.";
 
     public string InputSchemaJson => """
     {
@@ -68,9 +79,13 @@ internal sealed class DevHoverTool : IMcpTool {
     }
     """;
 
-    public Task<JsonNode> ExecuteAsync(JsonObject args) => Task.FromResult(Run(args));
+    public Task<JsonNode> ExecuteAsync(JsonObject args) => RunAsync(args);
 
-    private static JsonNode Run(JsonObject args) {
+    /// <summary>Release the current hover. Called by game-advancing tools before they mutate the screen so a
+    /// hover preview/tooltip cannot survive the action that invalidates it.</summary>
+    internal static void ReleaseHover() => Unfocus();
+
+    private static async Task<JsonNode> RunAsync(JsonObject args) {
         if (!args.TryGetPropertyValue("target", out var targetNode)
             || targetNode?.GetValueKind() != JsonValueKind.String) {
             return DevCardMcpHelper.Fail("Missing or invalid target.");
@@ -95,9 +110,12 @@ internal sealed class DevHoverTool : IMcpTool {
             return DevCardMcpHelper.Fail(
                 $"Unknown target '{target}'. Pass an alias, a node type name, or 'list' to see what is on screen.");
 
+        // Map points carry their selection index so a caller can hand it straight to map_action.
+        var availableMap = candidates.Any(n => n is NMapPoint) ? BuildAvailableMapIndex() : null;
+
         var listed = new JsonArray();
         foreach (var node in candidates)
-            listed.Add(Describe(node));
+            listed.Add(Describe(node, availableMap));
 
         var index = args.TryGetPropertyValue("index", out var indexNode)
             && indexNode?.GetValueKind() == JsonValueKind.Number
@@ -119,27 +137,102 @@ internal sealed class DevHoverTool : IMcpTool {
 
         _focused = chosen;
 
+        // Let the preview/tooltip render before reading it, so `dev_batch` and single calls see the same text.
+        await WaitFramesAsync(2);
+        var tooltip = CollectTooltipText();
+
         var clicked = false;
         if (args.TryGetPropertyValue("click", out var clickNode)
             && clickNode?.GetValueKind() == JsonValueKind.True) {
-            if (chosen is not NClickableControl clickable)
+            if (chosen is not NClickableControl clickable) {
+                Unfocus();
                 return DevCardMcpHelper.Fail($"{chosen.GetType().Name} is not clickable.");
+            }
 
             // ForceClick is the game's own programmatic press, so the button's real handler runs -- which is
             // what makes a hover preview comparable against actually committing to it.
             clickable.ForceClick();
             clicked = true;
-            _focused = null;   // the node this focused is usually torn down by its own handler
+            await WaitFramesAsync(1);
+
+            // Release hover even when the handler kept the node alive; otherwise the highlight would stick
+            // with no way to clear it because _focused used to be dropped here.
+            if (GodotObject.IsInstanceValid(chosen))
+                Invoke(chosen, "OnUnfocus");
+            _focused = null;
+            tooltip = CollectTooltipText();
         }
 
-        return new JsonObject {
+        var response = new JsonObject {
             ["ok"] = true,
             ["target"] = target,
             ["index"] = index,
-            ["hovered"] = Describe(chosen),
+            ["hovered"] = Describe(chosen, availableMap),
             ["clicked"] = clicked,
             ["count"] = listed.Count,
         };
+        if (tooltip != null)
+            response["tooltip"] = tooltip;
+        return response;
+    }
+
+    private static async Task WaitFramesAsync(int frames) {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return;
+        for (var i = 0; i < frames; i++)
+            await tree.ToSignal(tree, SceneTree.SignalName.ProcessFrame);
+    }
+
+    /// <summary>Visible hover-tip text, so callers do not have to guess dev_read_text targets.</summary>
+    private static JsonArray? CollectTooltipText() {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return null;
+
+        var texts = new JsonArray();
+        CollectTipText(tree.Root, texts);
+        return texts.Count > 0 ? texts : null;
+    }
+
+    private static void CollectTipText(Node node, JsonArray sink) {
+        if (sink.Count >= TooltipMaxEntries)
+            return;
+        if (node is CanvasItem { Visible: false })
+            return;
+
+        var name = node.Name.ToString();
+        var isTipRoot = name.Contains("HoverTip", StringComparison.OrdinalIgnoreCase)
+                        || name.Equals("Tooltip", StringComparison.OrdinalIgnoreCase);
+        if (isTipRoot) {
+            CollectLabelsUnder(node, sink);
+            return;
+        }
+
+        foreach (var child in node.GetChildren())
+            CollectTipText(child, sink);
+    }
+
+    private static void CollectLabelsUnder(Node node, JsonArray sink) {
+        if (sink.Count >= TooltipMaxEntries)
+            return;
+        if (node is CanvasItem { Visible: false })
+            return;
+
+        var text = node switch {
+            Label label => label.Text,
+            RichTextLabel rich => rich.Text,
+            Button button => button.Text,
+            _ => null,
+        };
+        if (!string.IsNullOrWhiteSpace(text)) {
+            var trimmed = text.Trim();
+            sink.Add(new JsonObject {
+                ["name"] = node.Name.ToString(),
+                ["text"] = trimmed.Length > TooltipMaxChars ? trimmed[..TooltipMaxChars] : trimmed,
+            });
+        }
+
+        foreach (var child in node.GetChildren())
+            CollectLabelsUnder(child, sink);
     }
 
     /// <summary>Friendly names for the surfaces asked for most; any other type name works directly.</summary>
@@ -159,8 +252,9 @@ internal sealed class DevHoverTool : IMcpTool {
     /// <remarks>
     /// Resolution is by TYPE NAME rather than a fixed list, because 124 node types implement
     /// <c>OnFocus()</c> and hard-coding a handful means a new surface needs a new build every time.
-    /// The aliases above are shorthand for the common ones; anything else is reachable by naming its
-    /// type, and <c>target: "list"</c> reports what is actually on screen right now.
+    /// Matching walks the base-type chain, so an alias (or type name) naming a base class also finds the
+    /// concrete subclasses the game actually instantiates — e.g. <c>map_node</c> matches NNormalMapPoint,
+    /// and <c>card</c> matches NHandCardHolder and NGridCardHolder.
     /// </remarks>
     private static List<Node>? Collect(string target, Node root) {
         var typeName = Aliases.TryGetValue(target, out var mapped) ? mapped : target;
@@ -174,11 +268,21 @@ internal sealed class DevHoverTool : IMcpTool {
         if (node is CanvasItem { Visible: false })
             return;
 
-        if (string.Equals(node.GetType().Name, typeName, StringComparison.OrdinalIgnoreCase))
+        if (MatchesTypeName(node, typeName))
             found.Add(node);
 
         foreach (var child in node.GetChildren())
             CollectByTypeName(child, typeName, found);
+    }
+
+    private static bool MatchesTypeName(Node node, string typeName) {
+        for (var type = node.GetType(); type != null; type = type.BaseType) {
+            if (string.Equals(type.Name, typeName, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (type == typeof(Node))
+                break;
+        }
+        return false;
     }
 
     /// <summary>
@@ -186,16 +290,13 @@ internal sealed class DevHoverTool : IMcpTool {
     /// "you named something that is not a node type here" (an error worth reporting).
     /// </summary>
     private static bool IsKnownTypeName(Node root, string typeName) =>
-        Aliases.ContainsValue(typeName) || typeName.StartsWith("N", StringComparison.Ordinal);
+        Aliases.ContainsValue(typeName) || typeName.StartsWith("n", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Every focusable type currently on screen, so a caller can discover targets.</summary>
     private static JsonArray ListHoverableTypes(Node root) {
         var counts = new Dictionary<string, int>();
-        CountFocusable(root, counts);
-
-        var reverse = new Dictionary<string, string>();
-        foreach (var pair in Aliases)
-            reverse[pair.Value] = pair.Key;
+        var aliases = new Dictionary<string, string>(StringComparer.Ordinal);
+        CountFocusable(root, counts, aliases);
 
         var arr = new JsonArray();
         foreach (var pair in counts.OrderByDescending(p => p.Value)) {
@@ -203,26 +304,39 @@ internal sealed class DevHoverTool : IMcpTool {
                 ["type"] = pair.Key,
                 ["count"] = pair.Value,
             };
-            if (reverse.TryGetValue(pair.Key, out var alias))
+            if (aliases.TryGetValue(pair.Key, out var alias))
                 entry["alias"] = alias;
             arr.Add(entry);
         }
         return arr;
     }
 
-    private static void CountFocusable(Node node, Dictionary<string, int> counts) {
+    private static void CountFocusable(Node node, Dictionary<string, int> counts, Dictionary<string, string> aliases) {
         if (node is CanvasItem { Visible: false })
             return;
 
         // "Focusable" is exactly what this tool can drive: a type declaring OnFocus somewhere in its
         // chain. Anything listed here is a valid target value.
         if (node is Control && HasMethod(node, "OnFocus")) {
-            var name = node.GetType().Name;
+            var type = node.GetType();
+            var name = type.Name;
             counts[name] = counts.TryGetValue(name, out var n) ? n + 1 : 1;
+            if (!aliases.ContainsKey(name) && AliasForType(type) is { } alias)
+                aliases[name] = alias;
         }
 
         foreach (var child in node.GetChildren())
-            CountFocusable(child, counts);
+            CountFocusable(child, counts, aliases);
+    }
+
+    private static string? AliasForType(Type type) {
+        for (var current = type; current != null && current != typeof(Node); current = current.BaseType) {
+            foreach (var pair in Aliases) {
+                if (string.Equals(current.Name, pair.Value, StringComparison.OrdinalIgnoreCase))
+                    return pair.Key;
+            }
+        }
+        return null;
     }
 
     private static bool HasMethod(Node node, string method) {
@@ -247,18 +361,45 @@ internal sealed class DevHoverTool : IMcpTool {
         return result;
     }
 
-    private static JsonObject Describe(Node node) {
+    /// <summary>Selection index per coordinate, mirroring get_game_state.mapNodes[].index.</summary>
+    private static Dictionary<(int Row, int Col), int>? BuildAvailableMapIndex() {
+        if (KitLibGameOps.Snapshot() is not { } snapshot || snapshot["mapNodes"] is not JsonArray nodes)
+            return null;
+
+        var map = new Dictionary<(int, int), int>();
+        foreach (var entry in nodes) {
+            if (entry is not JsonObject node)
+                continue;
+            var index = node["index"]?.GetValue<int>() ?? -1;
+            var row = node["row"]?.GetValue<int>() ?? -1;
+            var col = node["col"]?.GetValue<int>() ?? -1;
+            if (index >= 0 && row >= 0 && col >= 0)
+                map[(row, col)] = index;
+        }
+        return map;
+    }
+
+    private static JsonObject Describe(Node node, IReadOnlyDictionary<(int Row, int Col), int>? availableMap = null) {
         var described = new JsonObject {
             ["type"] = node.GetType().Name,
             ["name"] = node.Name.ToString(),
         };
 
         // A map point's coordinates and room type are what a caller actually selects on, so surface them
-        // rather than making them guess from scene order.
+        // rather than making them guess from scene order. availableIndex is the same index
+        // map_action select_map_node expects (get_game_state.mapNodes[].index).
         if (node is NMapPoint point) {
-            described["row"] = point.Point.coord.row;
-            described["col"] = point.Point.coord.col;
+            var row = point.Point.coord.row;
+            var col = point.Point.coord.col;
+            described["row"] = row;
+            described["col"] = col;
             described["pointType"] = point.Point.PointType.ToString();
+            if (availableMap != null) {
+                var available = availableMap.TryGetValue((row, col), out var actionIndex);
+                described["available"] = available;
+                if (available)
+                    described["availableIndex"] = actionIndex;
+            }
         }
 
         return described;

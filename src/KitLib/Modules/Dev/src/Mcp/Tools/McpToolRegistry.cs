@@ -9,6 +9,30 @@ namespace KitLib.Mcp.Tools;
 internal sealed class McpToolRegistry {
     private readonly Dictionary<string, IMcpTool> _tools = new();
 
+    // Read-only tools must not release a deliberate hover (a caller may hover, read the tip, or take a
+    // screenshot of the preview). Every other tool advances or mutates the screen, so leaving its hover
+    // focused shows a stale preview that no longer belongs to the current UI.
+    private static readonly HashSet<string> KeepHoverTools = new(StringComparer.Ordinal) {
+        "dev_hover",
+        "dev_screenshot",
+        "dev_batch",
+        "get_game_state",
+        "get_map_state",
+        "get_selection_state",
+        "get_combat_stats",
+        "dev_get_session",
+        "dev_read_text",
+        "dev_list_cards",
+        "dev_list_save_slots",
+        "dev_list_monsters",
+        "dev_list_enemies",
+    };
+
+    private static void ReleaseHoverBefore(string toolName) {
+        if (!KeepHoverTools.Contains(toolName))
+            DevHoverTool.ReleaseHover();
+    }
+
     public int Count => _tools.Count;
 
     public int CoreCount => _tools.Keys.Count(McpToolCatalog.IsCore);
@@ -42,6 +66,7 @@ internal sealed class McpToolRegistry {
         if (!_tools.TryGetValue(name, out var tool))
             return new JsonObject { ["error"] = $"Unknown tool: {name}" };
 
+        ReleaseHoverBefore(name);
         return await tool.ExecuteAsync(args ?? new JsonObject());
     }
 
@@ -54,6 +79,7 @@ internal sealed class McpToolRegistry {
         if (!_tools.TryGetValue(name, out var tool))
             return ErrorResult($"Unknown tool: {name}");
 
+        ReleaseHoverBefore(name);
         try {
             // Tools that return MCP content blocks other than a single text block (for example
             // images) build the whole CallToolResult themselves.

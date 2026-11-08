@@ -47,6 +47,19 @@ internal sealed class CombatActionTool : IMcpTool {
         var cardIndex = args["card_index"]?.GetValue<int>() ?? 0;
         var targetIndex = args["target_index"]?.GetValue<int>() ?? -1;
 
+        // A selection overlay owns the input while it is open. Acting anyway desyncs the bot: end_turn
+        // used to be queued and then fire after the pick, and a second play_card only re-reported the
+        // existing selection. Fail clearly and hand back the selection state to resolve.
+        if (CardSelectionUi.IsActive()) {
+            return new JsonObject {
+                ["success"] = false,
+                ["message"] = "A card selection screen is open. Resolve it with selection_action before any other combat action.",
+                ["pendingSelection"] = true,
+                ["selectionState"] = KitLibGameOps.SelectionState(),
+                ["blockedAction"] = actionStr,
+            };
+        }
+
         SelectionHint? hint = null;
         if (actionStr == "play_card") {
             var cardId = args["selection_card_id"]?.GetValue<string>()?.Trim();

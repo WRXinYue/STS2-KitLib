@@ -50,6 +50,10 @@ internal static class McpBridge {
         - Use dev_read_text only for on-screen text; state reads are much cheaper.
         - Use dev_screenshot only when the answer is visual (layout, art, HUD, tooltips); it returns
           an image and costs image tokens, so prefer state/text tools and never capture every step.
+        - dev_hover returns the visible tip text and is released automatically before any game-advancing
+          tool; re-hover when you need a preview again.
+        - While a card selection screen is open, resolve it with selection_action first: end_turn and
+          play_card report pendingSelection instead of acting.
         - Never poll get_game_state in a loop; every call costs one model round trip.
 
         Launch helpers (dev_launch_game, dev_wait_bridge, dev_stop_game) exist only in the optional

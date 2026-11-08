@@ -69,4 +69,18 @@ To attach it to a GitHub Release anyway, pass `--with-mcp` to `scripts/publish_r
 - `tools/call` returns both `content` (text for the model) and `structuredContent` (same JSON as a
   value); tool-level failures come back as `isError: true` results instead of JSON-RPC errors.
 
+## Hover and selection behaviour
+
+- `dev_hover` matches aliases and type names against the **base-type chain**, so `card` finds
+  `NHandCardHolder` / `NGridCardHolder` and `map_node` finds `NNormalMapPoint` / `NBossMapPoint` /
+  `NAncientMapPoint`. Its result includes the visible `tooltip` entries; map points expose
+  `available` and `availableIndex` matching `get_game_state.mapNodes[].index`.
+- Hover is released automatically before any game-advancing tool (combat, map, selection, inventory),
+  so a preview cannot outlive the action that changed the screen. Re-hover to read a preview again.
+- While a card selection screen is open, `combat_action` and `dev_combat_turn` return
+  `pendingSelection` + `selectionState` instead of acting; resolve it with `selection_action`.
+  `dev_combat_turn` accepts `selection_card_id` / `selection_index` per card to auto-pick in one call.
+- `get_game_state.combat` reports `selectionActive` and sets `isPlayPhaseActive` false while a
+  selection overlay owns input; `dev_get_session` now includes `gamePhase` and `selectionActive`.
+
 `tools/KitLib.Mcp` remains the reference for tool schemas; the in-game server is the source of truth.
