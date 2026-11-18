@@ -2,7 +2,7 @@
 """
 Pre-build icon tree-shaker for DevMode.
 Scans src/**/*.cs for MdiIcon usages, extracts icons from icons/mdi/icons.json,
-writes per-module Icons/mdi-used.json and MdiIcon.Generated.cs (Panel + ModPanel).
+writes per-module Icons/mdi-used.json and MdiIcon.Generated.cs (Hud + ModPanel).
 
 Run:  python scripts/shake_icons.py
 MSBuild: KitLib.Core.csproj ShakeIcons target (python scripts/shake_icons.py).
@@ -175,10 +175,14 @@ def _shake_bundle(repo_root: Path, full_json: Path, relative_dir: str, module_na
 
     tab_icon_labels: dict[str, str] = {}
     if module_name == "KitLib.Hud":
-        # Cheat/User tab icons live in KitLib.Core (*TabRegistration.cs); Panel mods only add their own tabs.
+        # The Hud rail draws every tab icon, so collect the IconKey values of every satellite that
+        # registers a tab with the host, not just Hud's own: Dev (flattened from Modules/DevTools in
+        # 8f414d5) and Core's user tab. Dropping a root here silently tree-shakes that icon out of
+        # the bundle, and the rail then logs "icon not found" on every repaint.
         for tab_root in (
             repo_root / "src" / "KitLib" / "Modules" / "Hud",
-            repo_root / "src" / "KitLib.Core",
+            repo_root / "src" / "KitLib" / "Modules" / "Dev",
+            repo_root / "src" / "KitLib" / "Core",
         ):
             if tab_root.is_dir():
                 tab_icon_labels.update(scan_rail_tab_icon_keys(tab_root))

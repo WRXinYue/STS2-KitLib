@@ -190,7 +190,7 @@ internal static partial class DevPanelUI {
     }
     // ─────────────────────────────────────────────────────────────────────────
     private static Button CreateRailIcon(MdiIcon icon, string tooltip) =>
-        ContextRailWidgets.CreateContextIconButton(icon, tooltip, iconSize: 32, contentMargin: 2);
+        ContextRailWidgets.CreateContextIconButton(icon, tooltip, iconSize: RailIconSize, contentMargin: 2);
     private static Button CreateToggleButton(string text) {
         return new Button {
             Text = text,

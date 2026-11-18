@@ -41,7 +41,13 @@ internal static partial class DevPanelUI {
     internal static void StopLogAlertBlink() => StopLogsButtonAlertBlink();
 
     private static void StopLogsButtonAlertBlink() {
-        _logsAlertBlinkTween?.Kill();
+        // The rail poll timer calls this every 0.1s; only repaint when a blink actually stopped,
+        // otherwise every rail icon is re-resolved ten times a second for nothing.
+        bool wasBlinking = _logsAlertBlinkLevel != null
+                           || (_logsAlertBlinkTween != null && GodotObject.IsInstanceValid(_logsAlertBlinkTween));
+
+        if (_logsAlertBlinkTween != null && GodotObject.IsInstanceValid(_logsAlertBlinkTween))
+            _logsAlertBlinkTween.Kill();
         _logsAlertBlinkTween = null;
         _logsAlertBlinkLevel = null;
 
@@ -49,7 +55,8 @@ internal static partial class DevPanelUI {
         if (btn != null && GodotObject.IsInstanceValid(btn))
             btn.Modulate = Colors.White;
 
-        RefreshRailIconTints();
+        if (wasBlinking)
+            RefreshRailIconTints();
     }
 
     private static bool IsLogAlertBlinking(Button btn)
@@ -73,7 +80,7 @@ internal static partial class DevPanelUI {
 
         _logsAlertBlinkLevel = severity;
         btn.Modulate = Colors.White;
-        btn.Icon = MdiIcon.TextBoxOutline.Texture(20, dim);
+        btn.Icon = MdiIcon.TextBoxOutline.Texture(RailIconSize, dim);
 
         _logsAlertBlinkTween = btn.CreateTween();
         _logsAlertBlinkTween.SetLoops();
@@ -83,7 +90,7 @@ internal static partial class DevPanelUI {
         _logsAlertBlinkTween.TweenMethod(Callable.From((float t) => {
             if (!GodotObject.IsInstanceValid(btn))
                 return;
-            btn.Icon = MdiIcon.TextBoxOutline.Texture(20, dim.Lerp(bright, t));
+            btn.Icon = MdiIcon.TextBoxOutline.Texture(RailIconSize, dim.Lerp(bright, t));
         }), 0f, 1f, halfCycle);
         _logsAlertBlinkTween.Parallel()
             .TweenProperty(btn, "modulate:a", 0.5f, halfCycle);
@@ -91,7 +98,7 @@ internal static partial class DevPanelUI {
         _logsAlertBlinkTween.TweenMethod(Callable.From((float t) => {
             if (!GodotObject.IsInstanceValid(btn))
                 return;
-            btn.Icon = MdiIcon.TextBoxOutline.Texture(20, bright.Lerp(dim, t));
+            btn.Icon = MdiIcon.TextBoxOutline.Texture(RailIconSize, bright.Lerp(dim, t));
         }), 0f, 1f, halfCycle);
         _logsAlertBlinkTween.Parallel()
             .TweenProperty(btn, "modulate:a", 1f, halfCycle);

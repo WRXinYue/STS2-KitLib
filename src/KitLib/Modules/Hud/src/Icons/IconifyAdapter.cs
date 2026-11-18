@@ -13,6 +13,10 @@ namespace KitLib.Icons;
 public static class IconifyAdapter {
     private static readonly Dictionary<string, string> _bodies = new();
     private static readonly Dictionary<(string name, int size, uint color), ImageTexture> _cache = new();
+    // Lookups run from repaint paths (rail tints, tweens), so a name that is not in the bundle would
+    // otherwise log once per frame. Remember the miss and stay quiet after the first report.
+    private static readonly HashSet<string> _missingNames = new();
+    private static readonly HashSet<(string name, int size)> _failedRasterises = new();
     private static int _viewBox = 24;
     private static bool _loaded;
 
@@ -61,13 +65,15 @@ public static class IconifyAdapter {
             return cached;
 
         if (!_bodies.TryGetValue(kebabName, out var svgBody)) {
-            MainFile.Logger.Warn($"IconifyAdapter: icon '{kebabName}' not found.");
+            if (_missingNames.Add(kebabName))
+                MainFile.Logger.Warn($"IconifyAdapter: icon '{kebabName}' not found (reported once).");
             return null;
         }
 
         var engineImg = TryLoadSvgViaEngine(svgBody, _viewBox, size, col);
         if (engineImg == null) {
-            MainFile.Logger.Warn($"IconifyAdapter: SVG rasterise failed for '{kebabName}' (size={size}).");
+            if (_failedRasterises.Add((kebabName, size)))
+                MainFile.Logger.Warn($"IconifyAdapter: SVG rasterise failed for '{kebabName}' (size={size}; reported once).");
             return null;
         }
 

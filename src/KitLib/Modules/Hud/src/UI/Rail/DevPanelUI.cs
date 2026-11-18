@@ -23,6 +23,10 @@ internal static partial class DevPanelUI {
         globalUi != null ? ((Node)globalUi).GetNodeOrNull<Control>(RootName) : null;
     private const float RailW = 52f;
     private const float IconBtnSize = KitLibRailChrome.IconButtonSize;
+    /// <summary>Raster size of a rail glyph inside the 36px row. Every rail paint path (first build,
+    /// tint refresh, log-alert blink) must use this one value: when they disagree the rail renders a
+    /// different glyph size on the first build than after the next tint refresh.</summary>
+    private const int RailIconSize = 20;
     private const float OverlayW = 560f;
     private const int Radius = 14;
 
@@ -160,10 +164,10 @@ internal static partial class DevPanelUI {
     }
 
     static ImageTexture? ResolveRailIconTexture(MdiIcon icon, Color tint) {
-        var tex = icon.Texture(20, tint);
+        var tex = icon.Texture(RailIconSize, tint);
         if (tex != null)
             return tex;
-        return MdiIcon.PuzzleOutline.Texture(20, tint);
+        return MdiIcon.PuzzleOutline.Texture(RailIconSize, tint);
     }
 
     // ── Frosted-glass blur backdrop — shared with the main-menu rail via KitLibRailChrome ──
@@ -277,6 +281,9 @@ internal static partial class DevPanelUI {
             PopulateUtilityRailButtons(globalUi, railVBox, _railButtons);
         }
         WireRailIndicator(railIndicator, _railButtons);
+        // Finish the first build with the same tint pass RebuildRail runs, so the initial rail is not
+        // left showing the factory tint/disabled state until some unrelated repaint happens to fix it.
+        RefreshRailIconTints();
 
         railWrapper.AddChild(railVBox);
         rail.AddChild(railWrapper);
