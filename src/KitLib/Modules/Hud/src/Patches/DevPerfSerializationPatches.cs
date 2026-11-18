@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using HarmonyLib;
 using KitLib.DevPerf;
 using MegaCrit.Sts2.Core.Multiplayer.Serialization;
+using MegaCrit.Sts2.Core.Rooms;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves.Managers;
 
@@ -62,7 +63,7 @@ internal static class DevPerfRunToSavePatch {
     }
 }
 
-[HarmonyPatch(typeof(RunSaveManager), nameof(RunSaveManager.SaveRun))]
+[HarmonyPatch(typeof(RunSaveManager), nameof(RunSaveManager.SaveRun), typeof(AbstractRoom))]
 internal static class DevPerfGameSaveRunPatch {
     const string Key = "SaveRun";
     [ThreadStatic] static Stopwatch? _sw;

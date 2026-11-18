@@ -1,21 +1,19 @@
 <Project>
-  <!--
-    Fallback Sts2Dir when local.props is absent (CI format-check, fresh clones).
-    Version must stay in sync with scripts/lib/sts2_profiles.py (PINNED_VERSION).
-  -->
+  <!-- Keep the pin in sync with scripts/lib/sts2_profiles.py. -->
   <PropertyGroup>
-    <KitLibSts2RefsStableVersion>0.107.1</KitLibSts2RefsStableVersion>
-    <KitLibSts2RefsBetaVersion>0.110.1</KitLibSts2RefsBetaVersion>
+    <KitLibSts2RefsStableVersion>0.111.1</KitLibSts2RefsStableVersion>
+    <KitLibSts2RefsBetaVersion>0.113.1</KitLibSts2RefsBetaVersion>
     <KitLibSts2PinnedVersion Condition="'$(Sts2Profile)' == 'stable'">$(KitLibSts2RefsStableVersion)</KitLibSts2PinnedVersion>
-    <KitLibSts2PinnedVersion Condition="'$(Sts2Profile)' != 'stable'">$(KitLibSts2RefsBetaVersion)</KitLibSts2PinnedVersion>
-    <!-- NetHostGameService(PeerVersionInfo) appears in STS2 v0.111+; older pinned refs use parameterless ctor. -->
-    <Sts2NetHostVersioned Condition="'$(Sts2Profile)' == 'stable' and '$(KitLibSts2RefsStableVersion)' &gt;= '0.111.0'">true</Sts2NetHostVersioned>
-    <Sts2NetHostVersioned Condition="'$(Sts2Profile)' != 'stable' and '$(KitLibSts2RefsBetaVersion)' &gt;= '0.111.0'">true</Sts2NetHostVersioned>
-    <KitLibSts2RefsRoot>$(RepoRoot)eng/sts2-refs/$(Sts2Profile)/$(KitLibSts2PinnedVersion)</KitLibSts2RefsRoot>
+    <KitLibSts2PinnedVersion Condition="'$(Sts2Profile)' == 'beta'">$(KitLibSts2RefsBetaVersion)</KitLibSts2PinnedVersion>
+    <Sts2NetHostVersioned>true</Sts2NetHostVersioned>
+    <KitLibSts2RefsRoot>$(RepoRoot)eng/sts2-refs/$(KitLibSts2PinnedVersion)</KitLibSts2RefsRoot>
     <KitLibSts2RefsDataDir>$(KitLibSts2RefsRoot)/data_sts2_windows_x86_64</KitLibSts2RefsDataDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Sts2Dir)' == '' and Exists('$(KitLibSts2RefsDataDir)/sts2.dll')">
     <Sts2Dir>$(KitLibSts2RefsRoot)</Sts2Dir>
     <Sts2DataDir>$(KitLibSts2RefsDataDir)</Sts2DataDir>
   </PropertyGroup>
+  <Target Name="ValidateSts2Profile" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Sts2Profile)' != 'beta' and '$(Sts2Profile)' != 'stable'" Text="Supported STS2 profiles are stable (v0.111.1) and beta (v0.113.1)." />
+  </Target>
 </Project>

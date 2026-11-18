@@ -34,37 +34,17 @@ public sealed class OpenShopCommand : ReplayCommand {
         return raw == "OpenShop" ? new OpenShopCommand() : null;
     }
 
-    /// <summary>
-    ///     Invokes OnTryPurchaseWrapper on the most-derived type of the entry,
-    ///     filling any extra parameters (e.g. MerchantCardRemovalEntry.cancelable)
-    ///     with their declared default values.
-    /// </summary>
+    /// <summary>Purchase through the game's synchronized merchant entry point.</summary>
     internal static void InvokePurchase(MerchantEntry entry) {
-        var method = entry.GetType()
-                         .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                         .FirstOrDefault(m => m.Name == nameof(MerchantEntry.OnTryPurchaseWrapper)
-                                              && m.DeclaringType == entry.GetType())
-                     ?? entry.GetType().GetMethod(
-                         nameof(MerchantEntry.OnTryPurchaseWrapper),
-                         BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-        if (method == null) {
-            PlayerActionBuffer.LogToDevConsole(
-                $"[ShopReplayPatch] OnTryPurchaseWrapper not found on {entry.GetType().Name}.");
-            return;
-        }
-
-        var args = method.GetParameters()
-            .Select(p => p.HasDefaultValue
-                ? p.DefaultValue
-                : p.ParameterType.IsValueType
-                    ? Activator.CreateInstance(p.ParameterType)
-                    : null)
-            .ToArray();
-
-        var result = method.Invoke(entry, args);
-        if (result is Task task)
-            TaskHelper.RunSafely(task);
+#if STS2_V113_OR_GREATER
+        TaskHelper.RunSafely(MegaCrit.Sts2.Core.Runs.RunManager.Instance.MerchantSynchronizer.PurchaseLocalEntry(entry));
+#else
+        var inventory = ReplayState.ActiveMerchantRoom?.Inventory?.Inventory;
+        var purchase = entry is MerchantCardRemovalEntry removal
+            ? removal.OnTryPurchaseWrapper(inventory)
+            : entry.OnTryPurchaseWrapper(inventory);
+        TaskHelper.RunSafely(purchase);
+#endif
     }
 
     /// <summary>

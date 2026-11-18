@@ -14,6 +14,9 @@ packages/
 local.props
 .env
 
+# Uploader log (ModUploader writes it to its working directory)
+mod-uploader.log
+
 # Python
 **/__pycache__/
 *.py[cod]

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Game version compatibility** — Fixed dev-run startup patches, continuing a run during the sidebar animation, and HUD save-duration tracking. Build and patch registration checks passed against game v0.111.1.
+
 ## [0.52.0] - 2026-11-09
 
 ### Added

@@ -19,15 +19,16 @@ var runtimeDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
 if (!string.IsNullOrEmpty(runtimeDir))
     search.Insert(0, runtimeDir);
 
-var dlls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+// Keep the runtime copy when the game's data dir bundles the same framework DLL.
+var dlls = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 foreach (var dir in search) {
     if (!Directory.Exists(dir))
         continue;
     foreach (var dll in Directory.EnumerateFiles(dir, "*.dll"))
-        dlls.Add(dll);
+        dlls.TryAdd(Path.GetFileName(dll), dll);
 }
 
-var resolver = new PathAssemblyResolver(dlls);
+var resolver = new PathAssemblyResolver(dlls.Values);
 using var mlc = new MetadataLoadContext(resolver, "System.Runtime");
 var asm = mlc.LoadFromAssemblyPath(abstractionsPath);
 var sb = new StringBuilder();

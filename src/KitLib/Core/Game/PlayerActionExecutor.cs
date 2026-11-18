@@ -544,7 +544,12 @@ internal sealed class PlayerActionExecutor {
         if (affordable.Count == 0) return ActionResult.Fail("No affordable items.");
 
         var idx = itemIndex >= 0 && itemIndex < affordable.Count ? itemIndex : 0;
+#if STS2_V113_OR_GREATER
+        if (!await RunManager.Instance.MerchantSynchronizer.PurchaseLocalEntry(affordable[idx].Entry))
+            return ActionResult.Fail("Shop purchase failed.");
+#else
         await affordable[idx].Entry.OnTryPurchaseWrapper(room.Inventory.Inventory);
+#endif
         return ActionResult.Ok($"Purchased item (cost: {affordable[idx].Entry.Cost}).");
     }
 
@@ -558,7 +563,12 @@ internal sealed class PlayerActionExecutor {
 
         if (removalSlot == null) return ActionResult.Fail("Card removal not available or too expensive.");
 
+#if STS2_V113_OR_GREATER
+        if (!await RunManager.Instance.MerchantSynchronizer.PurchaseLocalEntry(removalSlot.Entry))
+            return ActionResult.Fail("Card removal failed or was canceled.");
+#else
         await removalSlot.Entry.OnTryPurchaseWrapper(room.Inventory!.Inventory);
+#endif
         return ActionResult.Ok("Initiated card removal.");
     }
 

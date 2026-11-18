@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy sts2.dll (+ Harmony) from a matching STS2 install into eng/sts2-refs/beta/."""
+"""Copy sts2.dll (+ Harmony) from a matching STS2 install into eng/sts2-refs/<version>/."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from lib.sts2_profiles import (  # noqa: E402
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Capture STS2 compile refs into eng/sts2-refs/<profile>/.")
+    ap = argparse.ArgumentParser(description="Capture STS2 compile refs into eng/sts2-refs/<version>/.")
     ap.add_argument(
         "profile",
         nargs="?",
@@ -39,7 +39,7 @@ def main() -> int:
         "--source",
         type=Path,
         default=None,
-        help="STS2 install root (default: local.props Sts2Dir). release_info.json must match pinned beta.",
+        help="STS2 install root (default: local.props Sts2Dir). release_info.json must match the selected pinned version.",
     )
     args = ap.parse_args()
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run KitLib.ApiCheck against the pinned beta sts2.dll."""
+"""Run KitLib.ApiCheck against all pinned STS2 assemblies."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ if str(_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPT_DIR))
 
 from lib.dotenv import load_dotenv  # noqa: E402
+from verify_sts2_refs import verify_refs  # noqa: E402
 from lib.sts2_profiles import format_profile_paths, pinned_version  # noqa: E402
 
 _API_CHECK_PROJECT = _REPO_ROOT / "tools" / "KitLib.ApiCheck" / "KitLib.ApiCheck.csproj"
@@ -43,7 +44,7 @@ def _run_profile(profile: str, dll: Path, manifest: Path) -> int:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Check API touchpoints against beta sts2.dll")
+    ap = argparse.ArgumentParser(description="Check API touchpoints against all pinned STS2 assemblies")
     ap.add_argument("--repo-root", type=Path, default=_REPO_ROOT)
     ap.add_argument("--manifest", type=Path, default=_MANIFEST)
     args = ap.parse_args()
@@ -55,8 +56,9 @@ def main() -> int:
         return 1
 
     try:
+        verify_refs(args.repo_root)
         dlls = format_profile_paths(args.repo_root)
-    except RuntimeError as ex:
+    except (RuntimeError, OSError, ValueError, KeyError) as ex:
         print(str(ex), file=sys.stderr)
         return 1
 

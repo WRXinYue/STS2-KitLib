@@ -1,4 +1,5 @@
 using HarmonyLib;
+using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Merchant;
 using MegaCrit.Sts2.Core.Nodes.Rooms;
 
@@ -13,7 +14,7 @@ using KitLib.Replay.Commands;
 /// IsPurchasing: suppresses duplicate SyncLocalObtained* recordings in
 ///   BattleRewardPatch while a merchant purchase is in progress.
 ///
-/// PendingLabel: the Buy* string captured in the OnTryPurchaseWrapper prefix,
+/// PendingLabel: the Buy* string captured in the OnTryPurchaseUnsynchronized prefix,
 ///   before ClearAfterPurchase() nulls out the entry's item reference.
 ///   Written by InvokePurchaseCompleted (on success) or cleared by
 ///   InvokePurchaseFailed (on failure).
@@ -26,15 +27,14 @@ internal static class ShopPurchaseState {
 /// <summary>
 /// Recording patches for merchant shop interactions.
 ///
-/// Item details (card title etc.) are read in the OnTryPurchaseWrapper PREFIX
+/// Item details (card title etc.) are read in the OnTryPurchaseUnsynchronized PREFIX
 /// because ClearAfterPurchase() nulls the entry's item reference before
 /// InvokePurchaseCompleted fires.
 ///
 /// InvokePurchaseCompleted prefix writes the captured label and clears state.
 /// InvokePurchaseFailed prefix clears state so the flag never stays stuck.
 ///
-/// MerchantCardRemovalEntry overrides OnTryPurchaseWrapper with an extra
-/// parameter and is therefore given its own prefix patch.
+/// Card removal is recorded at its implementation entry before the card picker opens.
 /// </summary>
 
 // ── Open shop ─────────────────────────────────────────────────────────────────
@@ -55,10 +55,21 @@ public static class ShopOpenRecordPatch {
 
 // ── Capture item label and set flag on purchase start ─────────────────────────
 
+#if STS2_V113_OR_GREATER
+[HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.OnTryPurchaseUnsynchronized))]
+#else
 [HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.OnTryPurchaseWrapper))]
+#endif
 public static class ShopPurchaseStartPatch {
     [HarmonyPrefix]
     public static void Prefix(MerchantEntry __instance) {
+#if STS2_V113_OR_GREATER
+        if (!LocalContext.IsMe(__instance.Player))
+            return;
+#endif
+        if (__instance is MerchantCardRemovalEntry)
+            return;
+
         // Record immediately so the command appears in the log as soon as
         // the player clicks.  If the purchase fails, UndoLast removes it.
         string? label = __instance switch {
@@ -77,14 +88,19 @@ public static class ShopPurchaseStartPatch {
     }
 }
 
+#if STS2_V113_OR_GREATER
+[HarmonyPatch(typeof(MerchantCardRemovalEntry), "OnTryPurchaseInternal")]
+#else
 [HarmonyPatch(typeof(MerchantCardRemovalEntry), nameof(MerchantCardRemovalEntry.OnTryPurchaseWrapper))]
+#endif
 public static class ShopCardRemovalPurchaseStartPatch {
     [HarmonyPrefix]
-    public static void Prefix() {
-        // Record immediately so BuyCardRemoval precedes RemoveCardFromDeck in the
-        // log — the card-removal UI fires CardPileCmd.RemoveFromDeck before
-        // InvokePurchaseCompleted, so recording at completion would invert the order.
-        // PendingLabel is left null so ShopPurchaseCompletedPatch skips re-recording.
+    public static void Prefix(MerchantCardRemovalEntry __instance) {
+#if STS2_V113_OR_GREATER
+        if (!LocalContext.IsMe(__instance.Player))
+            return;
+#endif
+
         PlayerActionBuffer.Record(new BuyCardRemovalCommand().ToString());
         ShopPurchaseState.PendingLabel = null;
         ShopPurchaseState.IsPurchasing = true;
@@ -96,7 +112,12 @@ public static class ShopCardRemovalPurchaseStartPatch {
 [HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.InvokePurchaseCompleted))]
 public static class ShopPurchaseCompletedPatch {
     [HarmonyPrefix]
-    public static void Prefix() {
+    public static void Prefix(MerchantEntry __instance) {
+#if STS2_V113_OR_GREATER
+        if (!LocalContext.IsMe(__instance.Player))
+            return;
+#endif
+
         // Already recorded at purchase start — just clear state.
         ShopPurchaseState.IsPurchasing = false;
         ShopPurchaseState.PendingLabel = null;
@@ -108,7 +129,12 @@ public static class ShopPurchaseCompletedPatch {
 [HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.InvokePurchaseFailed))]
 public static class ShopPurchaseFailedPatch {
     [HarmonyPrefix]
-    public static void Prefix() {
+    public static void Prefix(MerchantEntry __instance) {
+#if STS2_V113_OR_GREATER
+        if (!LocalContext.IsMe(__instance.Player))
+            return;
+#endif
+
         // Purchase failed — undo the speculatively recorded entry.
         if (ShopPurchaseState.PendingLabel != null)
             PlayerActionBuffer.UndoLast();

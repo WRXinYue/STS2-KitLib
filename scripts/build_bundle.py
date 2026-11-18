@@ -19,7 +19,7 @@ from lib.sts2_profiles import resolve_profile_dir  # noqa: E402
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build KitLib mod bundle projects only.")
     ap.add_argument("-c", "--configuration", default="Debug")
-    ap.add_argument("--sts2-profile", choices=tuple(("beta", "stable")), default="beta")
+    ap.add_argument("--sts2-profile", choices=("stable", "beta"), default="beta")
     ap.add_argument("--sts2-dir", default="")
     args = ap.parse_args()
     load_dotenv(_SCRIPT_DIR.parent / ".env")

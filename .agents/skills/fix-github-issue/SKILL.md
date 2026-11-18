@@ -1,4 +1,11 @@
-Please analyze and fix the GitHub issue: $ARGUMENTS.
+---
+name: fix-github-issue
+description: Investigate and fix a specified GitHub issue in KitLib when the user requests the issue-to-pull-request workflow.
+---
+
+Run repository commands from the repository root. Resolve repository file paths relative to that root.
+
+Analyze and fix the GitHub issue identified by the URL or issue number supplied in the user's request.
 
 Follow these steps:
 

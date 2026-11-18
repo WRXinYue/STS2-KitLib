@@ -1,13 +1,13 @@
 <Project>
   <!--
-    Multi-version KitLib builds (stable + beta).
+    KitLib variant bundle baseline.
     Enable with -p:KitLibPersonalCompat=true or make bundle / sync-bundle.
 
-    Targets: stable 0.107.1 + beta 0.110.1 (see scripts/package_bundle.py).
+    Targets: stable 0.111.1 + beta 0.113.1 (see scripts/package_bundle.py).
   -->
   <PropertyGroup>
-    <KitLibPersonalCompatTargets>0.107.1;0.110.1</KitLibPersonalCompatTargets>
-    <KitLibPersonalStableVersion>0.107.1</KitLibPersonalStableVersion>
-    <KitLibPersonalBetaVersion>0.110.1</KitLibPersonalBetaVersion>
+    <KitLibPersonalCompatTargets>0.111.1;0.113.1</KitLibPersonalCompatTargets>
+    <KitLibPersonalStableVersion>0.111.1</KitLibPersonalStableVersion>
+    <KitLibPersonalBetaVersion>0.113.1</KitLibPersonalBetaVersion>
   </PropertyGroup>
 </Project>

@@ -362,6 +362,40 @@ KitLib 仓库用 `make bundle` / `make sync-bundle` / `make zip-release`
 你的创意工坊包只需要自己的目录。
 :::
 
+## Publishing to Steam Workshop{lang="en"}
+
+## 发布到 Steam 创意工坊{lang="zh-CN"}
+
+::: en
+Workshop uploads use the official [STS2 ModUploader](https://github.com/megacrit/sts2-mod-uploader),
+which ships Windows, macOS and Linux builds. One-time setup downloads the build for the
+current machine and records `STS2_MOD_UPLOADER` in `.env`:
+
+```bash
+make setup-steam-uploader
+make upload-steam
+```
+
+Steam must be running and signed in: the uploader talks to Steam's client API, not a web
+endpoint. `make workshop` only stages `build/dist/workshop/`; `make upload-steam` stages and
+uploads. Pass `UPLOADER_VERSION=v0.2.0` / `FORCE=1` to `setup-steam-uploader` when needed.
+:::
+
+::: zh-CN
+创意工坊上传使用官方 [STS2 ModUploader](https://github.com/megacrit/sts2-mod-uploader)，
+它提供 Windows、macOS 和 Linux 构建。首次运行会下载当前系统的构建，并把路径写入 `.env`
+的 `STS2_MOD_UPLOADER`：
+
+```bash
+make setup-steam-uploader
+make upload-steam
+```
+
+上传时需要 Steam 正在运行且已登录：上传器走 Steam 客户端 API，不是网页接口。
+`make workshop` 只准备 `build/dist/workshop/`，`make upload-steam` 会先准备再上传。
+需要时可用 `UPLOADER_VERSION=v0.2.0` / `FORCE=1` 重装。
+:::
+
 ## See also{lang="en"}
 
 ## 相关文档{lang="zh-CN"}

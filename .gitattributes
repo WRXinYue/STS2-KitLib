@@ -1,4 +1,5 @@
-# STS2 compile refs — binary snapshots for dual-profile MSBuild (see eng/sts2-refs/README.md).
+# STS2 managed compile snapshots (see eng/sts2-refs/README.md).
 eng/sts2-refs/**/sts2.dll filter=lfs diff=lfs merge=lfs -text
 eng/sts2-refs/**/sts2.dylib filter=lfs diff=lfs merge=lfs -text
 eng/sts2-refs/**/0Harmony.dll filter=lfs diff=lfs merge=lfs -text
+eng/sts2-refs/**/Steamworks.NET.dll filter=lfs diff=lfs merge=lfs -text

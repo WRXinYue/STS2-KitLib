@@ -14,7 +14,7 @@
   <Import Project="$(RepoRoot)eng/Sts2Refs.props" Condition="Exists('$(RepoRoot)eng/Sts2Refs.props')" />
   <Import Project="$(RepoRoot)eng/KitLib.PersonalCompat.props" Condition="'$(KitLibPersonalCompat)' == 'true' and Exists('$(RepoRoot)eng/KitLib.PersonalCompat.props')" />
   <PropertyGroup>
-    <DefineConstants Condition="'$(Sts2Profile)' == 'stable'">$(DefineConstants);STS2_STABLE_PROFILE</DefineConstants>
+    <DefineConstants Condition="'$(KitLibSts2PinnedVersion)' &gt;= '0.113.1'">$(DefineConstants);STS2_V113_OR_GREATER</DefineConstants>
     <DefineConstants Condition="'$(Sts2NetHostVersioned)' == 'true'">$(DefineConstants);STS2_NET_HOST_VERSIONED</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Sts2Dir)' != ''">

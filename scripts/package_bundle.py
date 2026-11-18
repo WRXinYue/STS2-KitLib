@@ -6,9 +6,9 @@ Layout:
     KitLib.dll
     mod_manifest.json
     mod_image.png
-    lib/0.107.1/KitLib.Core.dll, KitLib.Abstractions.dll (facade), compat-target.txt,
+    lib/0.111.1/KitLib.Core.dll, KitLib.Abstractions.dll (facade), compat-target.txt,
                modules/{KitModPanel.dll, KitLib.Hud.dll, KitLib.Dev.dll}
-    lib/0.110.1/...
+    lib/0.113.1/...
 
 Usage:
   python scripts/package_bundle.py
@@ -306,7 +306,7 @@ def main() -> int:
     ap.add_argument(
         "--targets",
         default="",
-        help="Comma-separated compat targets (default: 0.107.1,0.110.1)",
+        help="Comma-separated compat targets (default: all pinned versions)",
     )
     ap.add_argument(
         "--product",

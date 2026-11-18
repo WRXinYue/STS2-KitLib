@@ -2,8 +2,8 @@
 # profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.
 
 profiles:
-  stable: "0.107.1"
-  beta: "0.110.1"
+  stable: "0.111.1"
+  beta: "0.113.1"
 
 touchpoints:
   - id: ActChangeSynchronizer.OnPlayerReady
@@ -11,7 +11,42 @@ touchpoints:
     member: OnPlayerReady
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopMapVotePatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopMapVotePatch.cs
+
+  - id: ActChangeSynchronizer.SetLocalPlayerReady
+    type: ActChangeSynchronizer
+    member: SetLocalPlayerReady
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ProceedToNextActRecordPatch.cs
+
+  - id: ActModel.ApplyDiscoveryOrderModifications
+    type: ActModel
+    member: ApplyDiscoveryOrderModifications
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
+
+  - id: ActModel.CreateMap
+    type: ActModel
+    member: CreateMap
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
+
+  - id: ActModel.GenerateRooms
+    type: ActModel
+    member: GenerateRooms
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
+
+  - id: ActModel.GetRandomList
+    type: ActModel
+    member: GetRandomList
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
 
   - id: ActModel.PullNextEncounter
     type: ActModel
@@ -19,35 +54,35 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/EnemyOverridePatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
 
   - id: ActionExecutor.AfterActionFinished
     type: ActionExecutor
     member: AfterActionFinished
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/MpAiTeammateActionFlightPatch.cs
+      - src/KitLib/Core/Multiplayer/Play/Patches/CombatActionFlightPatch.cs
 
   - id: ActionQueueSet._actionQueues
     type: ActionQueueSet
     member: _actionQueues
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopActionQueue.cs
+      - src/KitLib/Core/Multiplayer/Play/CombatActionQueue.cs
 
   - id: ActionQueueSynchronizer.EnqueueAction
     type: ActionQueueSynchronizer
     member: EnqueueAction
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopHostEnqueuePatch.cs
+      - src/KitLib/Core/Multiplayer/Play/Patches/HostEnqueuePatch.cs
 
   - id: ActionQueueSynchronizer.RequestEnqueue
     type: ActionQueueSynchronizer
     member: RequestEnqueue
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/MpAiTeammateAfkClientPatch.cs
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopHostEnqueuePatch.cs
+      - src/KitLib/Core/Multiplayer/Play/Patches/HostEnqueuePatch.cs
 
   - id: ArchaicTooth.SetupForPlayer
     type: ArchaicTooth
@@ -61,7 +96,14 @@ touchpoints:
     member: FinalizeLoading
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPerfPreloadPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPerfPreloadPatches.cs
+
+  - id: AutoSlayer.QuitGame
+    type: AutoSlayer
+    member: QuitGame
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/AutoSlayQuitGamePatch.cs
 
   - id: CardFactory.RollForUpgrade
     type: MegaCrit.Sts2.Core.Factories.CardFactory
@@ -70,6 +112,20 @@ touchpoints:
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
 
+  - id: CardModel.EnqueueManualPlay
+    type: CardModel
+    member: EnqueueManualPlay
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/PlayerActionBuffer.cs
+
+  - id: CardModel.TryManualPlay
+    type: CardModel
+    member: TryManualPlay
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/ReplayInputGuardPatch.cs
+
   - id: CardRarityOdds.Roll
     type: CardRarityOdds
     member: Roll
@@ -77,22 +133,54 @@ touchpoints:
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
 
-  - id: CombatManager._playersReadyToBeginEnemyTurn
-    type: CombatManager
-    member: _playersReadyToBeginEnemyTurn
-    kind: field
-    profiles:
-      beta:
-        skip: true
+  - id: CardSelectCmd.FromChooseACardScreen
+    type: CardSelectCmd
+    member: FromChooseACardScreen
+    kind: method
     sources:
-      - src/KitLib/Core/Sts2CombatCompat.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/CardChoiceScreenPatch.cs
+
+  - id: CardSelectCmd.FromDeckForRemoval
+    type: CardSelectCmd
+    member: FromDeckForRemoval
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/DeckRemovalRecordPatch.cs
+
+  - id: CardSelectCmd.FromHandForDiscard
+    type: CardSelectCmd
+    member: FromHandForDiscard
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/HandCardSelectRecordPatch.cs
+
+  - id: CardSelectCmd.FromSimpleGrid
+    type: CardSelectCmd
+    member: FromSimpleGrid
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/SimpleGridCardSelectPatch.cs
+
+  - id: CombatHistory.BlockGained
+    type: CombatHistory
+    member: BlockGained
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Patches/CombatStatsSourcePatch.cs
+
+  - id: CombatHistory.PowerReceived
+    type: CombatHistory
+    member: PowerReceived
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Patches/CombatStatsSourcePatch.cs
 
   - id: CombatManager.Reset
     type: CombatManager
     member: Reset
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/CombatResetIntentOverlayPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/CombatResetIntentOverlayPatch.cs
 
   - id: CombatManager.SetUpCombat
     type: CombatManager
@@ -100,35 +188,61 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/CombatCheckpointPatch.cs
-      - src/KitLib.Modules.Dev/Patches/HookPatches.cs
+      - src/KitLib/Modules/Dev/src/Patches/HookPatches.cs
+
+  - id: CombatManager._playersReadyToBeginEnemyTurn
+    type: CombatManager
+    member: _playersReadyToBeginEnemyTurn
+    kind: field
+    profiles:
+      stable:
+        skip: true
+      beta:
+        skip: true
+    sources:
+      - src/KitLib/Core/Sts2CombatCompat.cs
+
+  - id: CombatManager._turnState
+    type: CombatManager
+    member: _turnState
+    kind: field
+    sources:
+      - src/KitLib/Core/Sts2CombatCompat.cs
 
   - id: CombatStateSynchronizer.CheckSyncCompleted
     type: CombatStateSynchronizer
     member: CheckSyncCompleted
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
 
   - id: CombatStateSynchronizer.StartSync
     type: CombatStateSynchronizer
     member: StartSync
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
 
   - id: CombatStateSynchronizer._syncCompletionSource
     type: CombatStateSynchronizer
     member: _syncCompletionSource
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
 
   - id: CombatStateSynchronizer._syncData
     type: CombatStateSynchronizer
     member: _syncData
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatSyncPatch.cs
+
+  - id: Creature.CurrentHp
+    type: Creature
+    member: CurrentHp
+    kind: property
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
 
   - id: Creature.DamageBlockInternal
     type: Creature
@@ -157,7 +271,14 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
-      - src/KitLib.Modules.Dev/Patches/HookPatches.cs
+      - src/KitLib/Modules/Dev/src/Patches/HookPatches.cs
+
+  - id: Creature.MaxHp
+    type: Creature
+    member: MaxHp
+    kind: property
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
 
   - id: Creature.TakeTurn
     type: Creature
@@ -171,28 +292,43 @@ touchpoints:
     member: ExecuteAction
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatReadyPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatReadyPatch.cs
 
-  - id: EventRoom.CanonicalEvent
-    type: EventRoom
-    member: CanonicalEvent
-    kind: property
+  - id: EventOption.Chosen
+    type: EventOption
+    member: Chosen
+    kind: method
     sources:
-      - src/KitLib.Modules.AI/AI/Sts2/Snapshots/GameSnapshotPhaseCapture.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/EventOptionChosenRecordPatch.cs
+
+  - id: EventSynchronizer.BeginEvent
+    type: EventSynchronizer
+    member: BeginEvent
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/EventOptionReplayPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/StartingBonusReplayPatch.cs
+
+  - id: EventSynchronizer.ChooseLocalOption
+    type: EventSynchronizer
+    member: ChooseLocalOption
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/EventSelectionPatch.cs
 
   - id: Glory.GetUnlockedAncients
     type: Glory
     member: GetUnlockedAncients
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: Hive.GetUnlockedAncients
     type: Hive
     member: GetUnlockedAncients
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: Hook.ShouldAllowFreeTravel
     type: Hook
@@ -213,28 +349,78 @@ touchpoints:
     member: PlayerVotedForMapCoord
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopMapVotePatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopMapVotePatch.cs
 
   - id: MapSelectionSynchronizer._acceptingVotesFromSource
     type: MapSelectionSynchronizer
     member: _acceptingVotesFromSource
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopMapVoteMirror.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMapVoteMirror.cs
 
   - id: MapSelectionSynchronizer._votes
     type: MapSelectionSynchronizer
     member: _votes
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopMapVoteMirror.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMapVoteMirror.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+
+  - id: MerchantCardRemovalEntry.OnTryPurchaseInternal
+    type: MerchantCardRemovalEntry
+    member: OnTryPurchaseInternal
+    kind: method
+    profiles:
+      stable:
+        skip: true
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
+
+  - id: MerchantCardRemovalEntry.OnTryPurchaseWrapper
+    type: MerchantCardRemovalEntry
+    member: OnTryPurchaseWrapper
+    kind: method
+    profiles:
+      beta:
+        skip: true
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
+
+  - id: MerchantEntry.InvokePurchaseCompleted
+    type: MerchantEntry
+    member: InvokePurchaseCompleted
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
+
+  - id: MerchantEntry.InvokePurchaseFailed
+    type: MerchantEntry
+    member: InvokePurchaseFailed
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
+
+  - id: MerchantEntry.OnTryPurchaseUnsynchronized
+    type: MerchantEntry
+    member: OnTryPurchaseUnsynchronized
+    kind: method
+    profiles:
+      stable:
+        skip: true
+    sources:
+      - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
 
   - id: MerchantEntry.OnTryPurchaseWrapper
     type: MerchantEntry
     member: OnTryPurchaseWrapper
     kind: method
+    profiles:
+      beta:
+        skip: true
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
 
   - id: ModManager.GetGameplayRelevantModNameList
     type: ModManager
@@ -248,104 +434,214 @@ touchpoints:
     member: Init
     kind: method
     sources:
-      - src/KitLib.Modules.AI/AI/Sts2/Patches/ModelDbInitPatch.cs
-      - src/KitLib.Modules.Dev/Patches/DevModelDbInitPatch.cs
+      - src/KitLib/Modules/Dev/src/Patches/DevModelDbInitPatch.cs
+
+  - id: NCardGridSelectionScreen.CardsSelected
+    type: NCardGridSelectionScreen
+    member: CardsSelected
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Commands/CardGridScreenCapture.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/DeckCardSelectRecordPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/NDeckUpgradeSelectScreenRecordPatch.cs
+
+  - id: NCardHolder.get_HoverScale
+    type: NCardHolder
+    member: get_HoverScale
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/CardBrowserGridHolderScalePatch.cs
+
+  - id: NCardHolder.get_SmallScale
+    type: NCardHolder
+    member: get_SmallScale
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/CardBrowserGridHolderScalePatch.cs
 
   - id: NCardLibrary.OnSubmenuClosed
     type: NCardLibrary
     member: OnSubmenuClosed
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NCardLibrary.ShowCardDetail
     type: NCardLibrary
     member: ShowCardDetail
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NCardLibraryGrid.GetCardVisibility
     type: NCardLibraryGrid
     member: GetCardVisibility
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NCardLibraryGrid._Ready
     type: NCardLibraryGrid
     member: _Ready
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
-  - id: NCombatRoom.AddCreature
-    type: NCombatRoom
-    member: AddCreature
+  - id: NCardRewardSelectionScreen._Ready
+    type: NCardRewardSelectionScreen
+    member: _Ready
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/CombatSummonSlotCompatPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/CardRewardReplayPatch.cs
+
+  - id: NCharacterSelectScreen.OnEmbarkPressed
+    type: NCharacterSelectScreen
+    member: OnEmbarkPressed
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
+
+  - id: NChooseACardSelectionScreen.CardsSelected
+    type: NChooseACardSelectionScreen
+    member: CardsSelected
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Commands/SelectCardFromScreenCommand.cs
+
+  - id: NChooseARelicSelection._Ready
+    type: NChooseARelicSelection
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/RelicSelectReplayPatch.cs
+
+  - id: NClickableControl.OnReleaseHandler
+    type: NClickableControl
+    member: OnReleaseHandler
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/ReplayInputGuardPatch.cs
+
+  - id: NDeckUpgradeSelectScreen.ShowScreen
+    type: NDeckUpgradeSelectScreen
+    member: ShowScreen
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/UpgradeCardReplayPatch.cs
+
+  - id: NErrorPopup._Ready
+    type: NErrorPopup
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/ErrorPopupKitLibLogExportPatch.cs
+
+  - id: NFakeMerchant.AfterRoomIsLoaded
+    type: NFakeMerchant
+    member: AfterRoomIsLoaded
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/FakeMerchantReplayPatch.cs
+
+  - id: NFakeMerchant.OpenInventory
+    type: NFakeMerchant
+    member: OpenInventory
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/FakeMerchantReplayPatch.cs
+
+  - id: NGame.ReturnToMainMenu
+    type: NGame
+    member: ReturnToMainMenu
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NGame.StartNewSingleplayerRun
-    type: NGame
+    type: MegaCrit.Sts2.Core.Nodes.NGame
     member: StartNewSingleplayerRun
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
 
   - id: NGlobalUi._Ready
     type: NGlobalUi
     member: _Ready
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
+
+  - id: NInputManager.ProcessFkbInput
+    type: NInputManager
+    member: ProcessFkbInput
+    kind: method
+    sources:
+      - src/KitLib/Core/Patches/NInputManagerHotkeyPatch.cs
+      - src/KitLib/Modules/ModPanel/src/Patches/ModPanelInputManagerHotkeyPatch.cs
 
   - id: NInputManager.ProcessHotkeyInput
     type: NInputManager
     member: ProcessHotkeyInput
     kind: method
+    sources:
+      - src/KitLib/Core/Patches/NInputManagerHotkeyPatch.cs
+      - src/KitLib/Modules/ModPanel/src/Patches/ModPanelInputManagerHotkeyPatch.cs
+
+  - id: NInputManager.ProcessShortcutKeyInput
+    type: NInputManager
+    member: ProcessShortcutKeyInput
+    kind: method
     profiles:
       stable:
         skip: true
+      beta:
+        skip: true
     sources:
-      - src/KitLib/Modules/Hud/src/Patches/NInputManagerHotkeyPatch.cs
+      - src/KitLib/Core/Patches/NInputManagerHotkeyPatch.cs
       - src/KitLib/Modules/ModPanel/src/Patches/ModPanelInputManagerHotkeyPatch.cs
 
-  - id: NMainMenu.MainMenuButtonFocused
+  - id: NMainMenu.OnContinueButtonPressedAsync
     type: NMainMenu
-    member: MainMenuButtonFocused
+    member: OnContinueButtonPressedAsync
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/UI/MainMenu/DevMainMenuUI.cs
+      - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
 
-  - id: NMainMenu.MainMenuButtonUnfocused
+  - id: NMainMenu.OnSubmenuStackChanged
     type: NMainMenu
-    member: MainMenuButtonUnfocused
+    member: OnSubmenuStackChanged
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/UI/MainMenu/DevMainMenuUI.cs
+      - src/KitLib/Core/Patches/MainMenuCornerButtonPatch.cs
 
   - id: NMainMenu.RefreshButtons
     type: NMainMenu
     member: RefreshButtons
     kind: method
     sources:
-      - src/KitLib.Modules.ModPanel/Patches/ModMainMenuPatch.cs
-      - src/KitLib.Modules.Panel/Patches/MainMenuPatch.cs
+      - src/KitLib/Core/Patches/MainMenuCornerButtonPatch.cs
+
+  - id: NMainMenu._Ready
+    type: NMainMenu
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Core/Patches/MainMenuCornerButtonPatch.cs
 
   - id: NMainMenuTextButton._locString
     type: NMainMenuTextButton
     member: _locString
     kind: field
     sources:
-      - src/KitLib.Modules.ModPanel/UI/MainMenu/MainMenuTextButtonFactory.cs
+      - src/KitLib/Core/UI/MainMenu/MainMenuTextButtonFactory.cs
 
   - id: NMapPoint.OnFocus
     type: NMapPoint
     member: OnFocus
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/Map/MapPreviewPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/Map/MapPreviewPatch.cs
 
   - id: NMapPoint.OnRelease
     type: NMapPoint
@@ -353,35 +649,51 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/Map/MapPointDevJumpPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/ReplayInputGuardPatch.cs
 
   - id: NMapPoint.OnUnfocus
     type: NMapPoint
     member: OnUnfocus
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/Map/MapPreviewPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/Map/MapPreviewPatch.cs
 
   - id: NMapScreen.Close
     type: NMapScreen
     member: Close
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Patches/Map/MapScreenSessionPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/CombatRingsMapViewPatch.cs
 
   - id: NMapScreen.InitMapPrompt
     type: NMapScreen
     member: InitMapPrompt
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopMapFtuePatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopMapFtuePatch.cs
+
+  - id: NMapScreen.InitMapVotes
+    type: NMapScreen
+    member: InitMapVotes
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+
+  - id: NMapScreen.InitMarker
+    type: NMapScreen
+    member: InitMarker
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
 
   - id: NMapScreen.Open
     type: NMapScreen
     member: Open
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopMapFinishPatch.cs
-      - src/KitLib.Modules.AI/Patches/Map/MapScreenSessionPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopMapFinishPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/CombatRingsMapViewPatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
 
   - id: NMapScreen.RecalculateTravelability
     type: NMapScreen
@@ -391,12 +703,26 @@ touchpoints:
       - src/KitLib/Core/Cheat/Map/MapScreenReflection.cs
       - src/KitLib/Core/Cheat/Patches/Map/MapTravelabilityRewritePatch.cs
 
+  - id: NMapScreen.RefreshAllMapPointVotes
+    type: NMapScreen
+    member: RefreshAllMapPointVotes
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
+
+  - id: NMapScreen.SetTravelEnabled
+    type: NMapScreen
+    member: SetTravelEnabled
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/MapChoiceReplayPatch.cs
+
   - id: NMapScreen._mapPointDictionary
     type: NMapScreen
     member: _mapPointDictionary
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
 
   - id: NMapScreen._paths
     type: NMapScreen
@@ -405,19 +731,55 @@ touchpoints:
     sources:
       - src/KitLib/Core/Cheat/Map/MapScreenReflection.cs
 
+  - id: NMerchantRoom.OpenInventory
+    type: NMerchantRoom
+    member: OpenInventory
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/ShopRecordPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/ShopReplayPatch.cs
+
   - id: NMultiplayerPlayerStateContainer._nodes
     type: NMultiplayerPlayerStateContainer
     member: _nodes
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+
+  - id: NMultiplayerVoteContainer.Initialize
+    type: NMultiplayerVoteContainer
+    member: Initialize
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
 
   - id: NMultiplayerVoteContainer._allPlayers
     type: NMultiplayerVoteContainer
     member: _allPlayers
     kind: field
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+
+  - id: NMultiplayerVoteContainer._iconsAnimatingOut
+    type: NMultiplayerVoteContainer
+    member: _iconsAnimatingOut
+    kind: field
+    sources:
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+
+  - id: NMultiplayerVoteContainer._votes
+    type: NMultiplayerVoteContainer
+    member: _votes
+    kind: field
+    sources:
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/PseudoCoopMultiplayerUiRefresh.cs
+
+  - id: NPlayerHand.SelectCards
+    type: NPlayerHand
+    member: SelectCards
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Commands/SelectHandCardsCommand.cs
 
   - id: NPotionContainer.GrowPotionHolders
     type: NPotionContainer
@@ -433,85 +795,225 @@ touchpoints:
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
 
+  - id: NProceedButton._Ready
+    type: NProceedButton
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/ProceedButtonReplayPatch.cs
+
   - id: NRelicCollection.OnSubmenuClosed
     type: NRelicCollection
     member: OnSubmenuClosed
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NRelicCollectionCategory.LoadRelicNodes
     type: NRelicCollectionCategory
     member: LoadRelicNodes
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NRelicCollectionCategory.LoadRelics
     type: NRelicCollectionCategory
     member: LoadRelics
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: NRelicCollectionCategory.OnRelicEntryPressed
     type: NRelicCollectionCategory
     member: OnRelicEntryPressed
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
+
+  - id: NRestSiteRoom.BeforeExitingRoom
+    type: NRestSiteRoom
+    member: BeforeExitingRoom
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
+
+  - id: NRestSiteRoom._ExitTree
+    type: NRestSiteRoom
+    member: _ExitTree
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
+
+  - id: NRestSiteRoom._Ready
+    type: NRestSiteRoom
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
+
+  - id: NRewardsScreen._Ready
+    type: NRewardsScreen
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/BattleRewardsReplayPatch.cs
 
   - id: NRun._Process
     type: NRun
     member: _Process
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/MpAiTeammatePollPatch.cs
-      - src/KitLib.Modules.AI/Multiplayer/SyncBot/Patches/CombatSyncBotPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/SyncBot/Patches/CombatSyncBotPatch.cs
 
   - id: NRun._Ready
     type: NRun
     member: _Ready
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
-      - src/KitLib/Core/Cheat/Multiplayer/Cheat/Patches/MpCheatLifecyclePatch.cs
-      - src/KitLib.Modules.Panel/Patches/DevPerfTransitionPatches.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPerfTransitionPatches.cs
 
-  - id: NSceneContainer.SetCurrentScene
-    type: NSceneContainer
-    member: SetCurrentScene
+  - id: NSettingsScreen.OnSubmenuOpened
+    type: NSettingsScreen
+    member: OnSubmenuOpened
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
+      - src/KitLib/Modules/ModPanel/src/Patches/ModPanelSettingsScreenPatch.cs
+
+  - id: NTreasureRoom.OpenChest
+    type: NTreasureRoom
+    member: OpenChest
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/TreasureRoomRecordPatch.cs
+
+  - id: NTreasureRoom._ExitTree
+    type: NTreasureRoom
+    member: _ExitTree
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
+
+  - id: NTreasureRoom._Ready
+    type: NTreasureRoom
+    member: _Ready
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/TreasureRoomReplayPatch.cs
+
+  - id: NTreasureRoomRelicCollection.Initialize
+    type: NTreasureRoomRelicCollection
+    member: Initialize
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
+
+  - id: NTreasureRoomRelicCollection.InitializeRelics
+    type: NTreasureRoomRelicCollection
+    member: InitializeRelics
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/TreasureRoomReplayPatch.cs
+
+  - id: NTreasureRoomRelicCollection.RelicPickingFinished
+    type: NTreasureRoomRelicCollection
+    member: RelicPickingFinished
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/MpUiDebugPatches.cs
 
   - id: Overgrowth.GetUnlockedAncients
     type: Overgrowth
     member: GetUnlockedAncients
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: PacketWriter.ResizeBufferIfNecessary
     type: PacketWriter
     member: ResizeBufferIfNecessary
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPerfSerializationPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPerfSerializationPatches.cs
 
-  - id: PlayerChoiceSynchronizer.WaitForRemoteChoice
+  - id: Player.MaxEnergy
+    type: Player
+    member: MaxEnergy
+    kind: property
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerChoiceSynchronizer.SyncLocalChoice
     type: PlayerChoiceSynchronizer
-    member: WaitForRemoteChoice
+    member: SyncLocalChoice
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/SyncBot/Patches/PlayerChoiceSyncBotPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/HandCardSelectRecordPatch.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/SimpleGridCardSelectPatch.cs
+
+  - id: PlayerCmd.GainEnergy
+    type: PlayerCmd
+    member: GainEnergy
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
 
   - id: PlayerCmd.GainGold
-    type: MegaCrit.Sts2.Core.Commands.PlayerCmd
+    type: PlayerCmd
     member: GainGold
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCmd.GainStars
+    type: PlayerCmd
+    member: GainStars
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCmd.LoseEnergy
+    type: PlayerCmd
+    member: LoseEnergy
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCmd.LoseGold
+    type: PlayerCmd
+    member: LoseGold
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCmd.LoseStars
+    type: PlayerCmd
+    member: LoseStars
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCombatState.Energy
+    type: PlayerCombatState
+    member: Energy
+    kind: property
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCombatState.GainEnergy
+    type: PlayerCombatState
+    member: GainEnergy
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCombatState.GainStars
+    type: PlayerCombatState
+    member: GainStars
+    kind: method
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
 
   - id: PlayerCombatState.LoseEnergy
     type: PlayerCombatState
@@ -519,6 +1021,7 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
 
   - id: PlayerCombatState.LoseStars
     type: PlayerCombatState
@@ -526,13 +1029,21 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
+
+  - id: PlayerCombatState.Stars
+    type: PlayerCombatState
+    member: Stars
+    kind: property
+    sources:
+      - src/KitLib/Core/Cheat/Patches/StatLockPatches.cs
 
   - id: PotionModel.OnUseWrapper
     type: PotionModel
     member: OnUseWrapper
     kind: method
     sources:
-      - src/KitLib.Modules.Dev/Patches/HookPatches.cs
+      - src/KitLib/Modules/Dev/src/Patches/HookPatches.cs
 
   - id: PotionRewardOdds.Roll
     type: PotionRewardOdds
@@ -553,24 +1064,47 @@ touchpoints:
     member: ExecuteAction
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatReadyPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopCombatReadyPatch.cs
+
+  - id: RestSiteSynchronizer.BeginRestSite
+    type: RestSiteSynchronizer
+    member: BeginRestSite
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Replay/RestSiteReplayPatch.cs
+
+  - id: RestSiteSynchronizer.ChooseLocalOption
+    type: RestSiteSynchronizer
+    member: ChooseLocalOption
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/RestSiteRecordPatch.cs
+
+  - id: Rng.NextBool
+    type: Rng
+    member: NextBool
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
+
+  - id: RunHistoryUtilities.CreateRunHistoryEntry
+    type: RunHistoryUtilities
+    member: CreateRunHistoryEntry
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/SuppressReplayRunHistoryPatch.cs
 
   - id: RunLobby._connectedPlayerIds
     type: RunLobby
     member: _connectedPlayerIds
     kind: field
     profiles:
+      stable:
+        skip: true
       beta:
         skip: true
     sources:
       - src/KitLib/Core/Multiplayer/Play/PseudoCoopLobbyRoster.cs
-
-  - id: RunManager.ActionQueueSynchronizer
-    type: RunManager
-    member: ActionQueueSynchronizer
-    kind: property
-    sources:
-      - src/KitLib/Core/Sts2RuntimeProfile.cs
 
   - id: RunManager.CreateRoom
     type: RunManager
@@ -584,32 +1118,45 @@ touchpoints:
     member: EnterAct
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
 
   - id: RunManager.EnterMapPointInternal
     type: RunManager
     member: EnterMapPointInternal
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPerfTransitionPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPerfTransitionPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/Map/MapTravelFailureRecoveryPatch.cs
+
+  - id: RunManager.InitializeSavedRun
+    type: RunManager
+    member: InitializeSavedRun
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/RunContinuePatch.cs
 
   - id: RunManager.Launch
     type: RunManager
     member: Launch
     kind: method
     sources:
-      - src/KitLib.Modules.AI/AI/Sts2/Patches/AiPlayRunPatches.cs
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
       - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
-      - src/KitLib.Modules.Panel/Patches/DevPerfTransitionPatches.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopLaunchTracePatch.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPerfTransitionPatches.cs
 
   - id: RunManager.OnEnded
     type: RunManager
     member: OnEnded
     kind: method
     sources:
-      - src/KitLib.Modules.AI/AI/Sts2/Patches/AiPlayRunPatches.cs
       - src/KitLib/Core/Cheat/Multiplayer/Cheat/Patches/MpCheatLifecyclePatch.cs
+
+  - id: RunManager.RollRoomTypeFor
+    type: RunManager
+    member: RollRoomTypeFor
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
 
   - id: RunManager.SetUpNewSingleplayer
     type: MegaCrit.Sts2.Core.Runs.RunManager
@@ -618,7 +1165,7 @@ touchpoints:
     sources:
       - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
 
-  - id: RunManager.SetUpSavedSinglePlayer
+  - id: RunManager.SetUpSavedSingleplayer
     type: RunManager
     member: SetUpSavedSingleplayer
     kind: method
@@ -630,28 +1177,44 @@ touchpoints:
     member: ShouldSave
     kind: property
     sources:
-      - src/KitLib/Core/Cheat/SaveSlotManager.cs
+      - src/KitLib/Modules/Dev/src/Replay/CombatReplayPlayback.cs
+
+  - id: RunManager.State
+    type: RunManager
+    member: State
+    kind: property
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/CombatReplayPlayback.cs
 
   - id: RunManager.ToSave
     type: RunManager
     member: ToSave
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPerfSerializationPatches.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/RunSaveLogger.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPerfSerializationPatches.cs
 
-  - id: RunSaveManager.SaveRun
-    type: RunSaveManager
-    member: SaveRun
+  - id: RunManager.WriteReplay
+    type: RunManager
+    member: WriteReplay
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPerfSerializationPatches.cs
+      - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
 
   - id: RunState.AppendToMapPointHistory
     type: RunState
     member: AppendToMapPointHistory
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/SyncBot/Patches/SyncBotRunLaunchPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/SyncBot/Patches/SyncBotRunLaunchPatch.cs
+
+  - id: RunState.CreateForNewRun
+    type: RunState
+    member: CreateForNewRun
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/EncounterRngTracker.cs
+      - src/KitLib/Modules/Dev/src/Replay/Run/Utils/ForcedSeedPatch.cs
 
   - id: SaveManager.InitProfileId
     type: SaveManager
@@ -680,14 +1243,28 @@ touchpoints:
     member: IsAboutToBeginGame
     kind: method
     sources:
-      - src/KitLib.Modules.AI/Multiplayer/PseudoCoop/Patches/PseudoCoopSoloLobbyPatch.cs
+      - src/KitLib/Modules/Dev/src/Multiplayer/PseudoCoop/Patches/PseudoCoopSoloLobbyPatch.cs
+
+  - id: TaskHelper.RunSafely
+    type: TaskHelper
+    member: RunSafely
+    kind: method
+    sources:
+      - src/KitLib/Modules/Hud/src/Patches/TaskHelperRunSafelyRecoveryPatch.cs
+
+  - id: TreasureRoomRelicSynchronizer.PickRelicLocally
+    type: TreasureRoomRelicSynchronizer
+    member: PickRelicLocally
+    kind: method
+    sources:
+      - src/KitLib/Modules/Dev/src/Replay/Run/Patches/Record/TreasureRoomRecordPatch.cs
 
   - id: Underdocks.GetUnlockedAncients
     type: Underdocks
     member: GetUnlockedAncients
     kind: method
     sources:
-      - src/KitLib.Modules.Panel/Patches/DevPanelPatches.cs
+      - src/KitLib/Modules/Hud/src/Patches/DevPanelPatches.cs
 
   - id: UnknownMapPointOdds.Roll
     type: UnknownMapPointOdds
@@ -695,11 +1272,6 @@ touchpoints:
     kind: method
     sources:
       - src/KitLib/Core/Cheat/Patches/CheatPatches.cs
-
-  - id: dynamic:src/KitLib/Core/Patches/MultiplayerCompatPatch.cs
-    dynamic: true
-    sources:
-      - src/KitLib/Core/Patches/MultiplayerCompatPatch.cs
 
   - id: dynamic:src/KitLib/Core/Cheat/Patches/InstantModeUnlockPatch.cs
     dynamic: true
@@ -715,3 +1287,8 @@ touchpoints:
     dynamic: true
     sources:
       - src/KitLib/Core/Cheat/Patches/RunStartPatch.cs
+
+  - id: dynamic:src/KitLib/Core/Patches/MultiplayerCompatPatch.cs
+    dynamic: true
+    sources:
+      - src/KitLib/Core/Patches/MultiplayerCompatPatch.cs

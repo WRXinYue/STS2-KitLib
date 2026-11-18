@@ -1,0 +1,11 @@
+{
+  "profile": "beta",
+  "version": "0.113.1",
+  "commit": "d09d48e5",
+  "source_data_dir": "data_sts2_macos_arm64",
+  "files": {
+    "sts2.dll": "a671e9efb86a7b80405133105665867b053c787670d475b4347cf5ccc15cb5fb",
+    "0Harmony.dll": "ef1898322c9f5c86dc1b0758b272a9c440823b4a41ca9a0b82a3aa6b3d206387",
+    "Steamworks.NET.dll": "1dac8e6e05d89dc1445cebc6e02744c64cdf063adf42f6d1bb22da287ee7d665"
+  }
+}

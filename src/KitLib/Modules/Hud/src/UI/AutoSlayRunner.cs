@@ -43,7 +43,11 @@ internal static class AutoSlayRunner {
         SuppressQuit = true;
         LastSeed = resolved;
         _instance = new AutoSlayer();
+#if STS2_V113_OR_GREATER
+        _instance.Start(resolved, mode: null);
+#else
         _instance.Start(resolved);
+#endif
         MainFile.Logger.Info($"AutoSlay started from main menu seed={resolved}");
         message = I18N.T("autoslay.started", "Started with seed {0}", resolved);
         return true;

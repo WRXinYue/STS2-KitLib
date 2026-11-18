@@ -1,7 +1,11 @@
 namespace KitLib.SmokeMod.Tests;
 
 internal static class SmokeModPaths {
-    const string StableCompatTarget = "0.107.1";
+    static string Profile => Environment.GetEnvironmentVariable("STS2_PROFILE") ?? "beta";
+
+    static string CompatTarget => System.Xml.Linq.XDocument
+        .Load(Path.Combine(RepoRoot, "eng", "Sts2Refs.props"))
+        .Descendants(Profile == "stable" ? "KitLibSts2RefsStableVersion" : "KitLibSts2RefsBetaVersion").Single().Value;
 
     public static string RepoRoot =>
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
@@ -19,17 +23,7 @@ internal static class SmokeModPaths {
             if (Environment.GetEnvironmentVariable("KITLIB_DLL") is { Length: > 0 } fromEnv)
                 return Path.GetFullPath(fromEnv);
 
-            var root = Path.Combine(RepoRoot, "build", "KitLib");
-            var lib = Path.Combine(root, "lib");
-            if (Directory.Exists(lib)) {
-                foreach (var dir in Directory.EnumerateDirectories(lib)) {
-                    var core = Path.Combine(dir, "KitLib.Core.dll");
-                    if (File.Exists(core))
-                        return core;
-                }
-            }
-
-            return Path.Combine(root, "lib", StableCompatTarget, "KitLib.Core.dll");
+            return Path.Combine(RepoRoot, "build", "KitLib", "lib", CompatTarget, "KitLib.Core.dll");
         }
     }
 
@@ -59,8 +53,7 @@ internal static class SmokeModPaths {
                 RepoRoot,
                 "eng",
                 "sts2-refs",
-                "stable",
-                StableCompatTarget,
+                CompatTarget,
                 "data_sts2_windows_x86_64");
         }
     }

@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **游戏版本兼容性** — 修复开发模式开局补丁、侧栏动画期间继续游戏及 HUD 存档耗时统计的问题，已通过游戏 v0.111.1 的编译与补丁挂载检查。
+
 ## [0.52.0] - 2026-11-09
 
 ### Added

@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Threading.Tasks;
 using Godot;
 using HarmonyLib;
 using KitLib.Cheat;
@@ -16,7 +17,7 @@ using MegaCrit.Sts2.Core.Saves;
 namespace KitLib.Patches;
 
 [HarmonyPatch(typeof(RunManager))]
-public static class RunStartPatch {
+internal static class DevRunDisableSavePatch {
     /// <summary>
     /// Disable save persistence for dev-mode runs.
     /// </summary>
@@ -26,15 +27,17 @@ public static class RunStartPatch {
         ?? AccessTools.Method(typeof(RunManager), "SetUpNewSinglePlayer");
 
     [HarmonyPrefix]
-    public static void DisableSaveForDevRun(ref bool shouldSave) {
+    static void Prefix(ref bool shouldSave) {
         if (KitLibState.InDevRun) {
             shouldSave = false;
             MainFile.Logger.Info("KitLib: Save disabled for dev run.");
         }
     }
+}
 
+[HarmonyPatch(typeof(RunManager), nameof(RunManager.Launch))]
+public static class RunStartPatch {
     [HarmonyPostfix]
-    [HarmonyPatch(nameof(RunManager.Launch))]
     public static void InjectDevContent(RunState __result) {
         if (!KitLibState.InDevRun)
             return;
@@ -101,11 +104,14 @@ internal static class EntrySlideGate {
         AccessTools.Method(typeof(NCharacterSelectScreen), "OnEmbarkPressed");
 
     private static bool _pending;
+    private static bool _invokingDeferredEntry;
 
-    /// <summary>Defer the entry call; false means the caller should just run it now.</summary>
+    /// <summary>Hold the entry until the slide finishes and consume repeated clicks while waiting.</summary>
     internal static bool Defer(Node host, MethodInfo entry, object instance, object[] args) {
-        if (entry == null || _pending)
+        if (entry == null || _invokingDeferredEntry)
             return false;
+        if (_pending)
+            return true;
         // Nothing on screen to slide out; the call can proceed at once.
         if (KitLibHudOps.IsRailOnScreen?.Invoke() != true)
             return false;
@@ -117,12 +123,17 @@ internal static class EntrySlideGate {
         KitLibHudOps.SlideRailOutForEntry?.Invoke();
         _pending = true;
         tree.CreateTimer(KitLibHudOps.WrapAnimationSeconds).Timeout += () => {
-            _pending = false;
+            _invokingDeferredEntry = true;
             try {
-                entry.Invoke(instance, args);
+                if (GodotObject.IsInstanceValid(host) && entry.Invoke(instance, args) is Task task)
+                    TaskHelper.RunSafely(task);
             }
             catch (Exception ex) {
                 MainFile.Logger.Warn($"KitLib entry slide gate: {ex.Message}");
+            }
+            finally {
+                _invokingDeferredEntry = false;
+                _pending = false;
             }
         };
         return true;
@@ -133,8 +144,13 @@ internal static class EntrySlideGate {
 [HarmonyPatch(typeof(NMainMenu), "OnContinueButtonPressedAsync")]
 internal static class ContinueEntryWrapPatch {
     [HarmonyPrefix]
-    static bool Prefix(NMainMenu __instance) =>
-        !EntrySlideGate.Defer(__instance, EntrySlideGate.ContinueAsync, __instance, Array.Empty<object>());
+    static bool Prefix(NMainMenu __instance, ref Task __result) {
+        if (!EntrySlideGate.Defer(__instance, EntrySlideGate.ContinueAsync, __instance, Array.Empty<object>()))
+            return true;
+
+        __result = Task.CompletedTask;
+        return false;
+    }
 }
 
 /// <summary>

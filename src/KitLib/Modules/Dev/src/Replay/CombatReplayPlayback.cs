@@ -12,6 +12,9 @@ using MegaCrit.Sts2.Core.Assets;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Debug;
 using MegaCrit.Sts2.Core.Entities.Multiplayer;
+using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.Saves;
+using MegaCrit.Sts2.Core.Unlocks;
 using MegaCrit.Sts2.Core.GameActions;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
@@ -308,12 +311,19 @@ internal static class CombatReplayPlayback {
         NAudioManager.Instance?.StopMusic();
         TaskHelper.RunSafely(
             NGame.Instance.StartNewSingleplayerRun(
+#if STS2_V113_OR_GREATER
+                Player.CreateForNewRun(character, new UnlockState(SaveManager.Instance.Progress), NetSingleplayerGameService.defaultNetId),
+#else
                 character,
+#endif
                 shouldSave: false,
                 ActModel.GetDefaultList(),
                 [],
                 log.Seed,
                 GameMode.Standard,
+#if STS2_V113_OR_GREATER
+                isCustomGame: false,
+#endif
                 log.Ascension));
         return true;
     }

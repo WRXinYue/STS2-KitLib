@@ -75,7 +75,7 @@ LAUNCH := $(PYTHON) scripts/launch_sts2.py
 LAUNCH_MP_CLIENT_ID ?= 1001
 
 .PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip-full zip-release clean docs docs-build \
-        workshop extract-touchpoints check-api verify capture-sts2-ref \
+        workshop extract-touchpoints check-api verify verify-sts2-refs capture-sts2-ref \
         build-stable build-beta build-profiles build-all-variants bundle sync-bundle \
         launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
         upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
@@ -96,19 +96,20 @@ help:
 	@echo ""
 	@echo "  sync         build + deploy KitLib"
 	@echo "  sync PRODUCT=X  deploy one product only"
-	@echo "  sync VARIANTS=all  build stable+beta variants; ALT_GAME_DIR deploys a second install"
+	@echo "  sync VARIANTS=all  build pinned variants; ALT_GAME_DIR deploys a second install"
 	@echo "  sync-full    sync (legacy MCP tools deploy is manual: make deploy-tools)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build        build all bundle projects (auto-cleans stale build servers)"
 	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib)"
+	@echo "  setup-steam-uploader  download the official ModUploader for this OS (macOS/Linux/Windows)"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against sts2.dll"
 	@echo "  verify       build + check-api (pre-release)"
 	@echo "  check-smoke-mod  build + content-mod smoke fixture + Cecil/ref/load tests"
 	@echo "  deploy-smoke-mod copy smoke mod into game mods/KitLibSmokeMod/ (manual in-game check)"
-	@echo "  capture-sts2-ref  copy sts2.dll into eng/sts2-refs/PROFILE/ (PROFILE=stable|beta)"
-	@echo "  build-stable      compile against stable ref (0.107.1)"
-	@echo "  build-beta        compile against beta ref (0.110.1)"
+	@echo "  capture-sts2-ref  copy sts2.dll into eng/sts2-refs/<version>/"
+	@echo "  build-stable      compile against stable ref (0.111.1)"
+	@echo "  build-beta        compile against beta ref (0.113.1)"
 	@echo "  build-profiles    build-stable then build-beta"
 	@echo "  bundle            multi-API bundle → build/KitLib-release/ (release / Workshop / zip)"
 	@echo "  sync-bundle       bundle + deploy to game mods/KitLib/"
@@ -141,7 +142,7 @@ help:
 	@echo "  upload-nexus   main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
 	@echo "  upload-nexus-mcp  [legacy] zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
 	@echo "  upload-all     GitHub + Nexus + Steam Workshop (MCP proxy excluded)"
-	@echo "  upload-steam   workshop + upload to Steam Workshop (PRODUCT=KitLib; default KitLib)"
+	@echo "  upload-steam   workshop + upload to Steam Workshop (first run: make setup-steam-uploader)"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo "  readme-steam   README*.md -> assets/readme.steam.* (PRODUCT= optional; default all)"
 	@echo "  readme-assets  readme-nexus + readme-steam"
@@ -163,12 +164,14 @@ format:
 	$(UV) run black scripts
 
 format-check:
-	@test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll || (echo "Missing eng/sts2-refs/beta (git lfs pull?). Run: make capture-sts2-ref" >&2; exit 1)
+	$(PYTHON) scripts/verify_sts2_refs.py
 	$(DOTNET) format whitespace KitLib.sln --verify-no-changes
 	$(DOTNET) format style KitLib.sln --verify-no-changes
 
 lint-scripts:
-	$(UV) run flake8 scripts
+	@if command -v uv >/dev/null 2>&1; then uv run flake8 scripts; \
+	elif [ -x .venv/bin/flake8 ]; then .venv/bin/flake8 scripts; \
+	else echo "flake8 not found (install uv or create .venv with flake8)" >&2; exit 1; fi
 
 check: format-check lint-scripts
 
@@ -191,13 +194,16 @@ hooks-run:
 deps:
 	$(DOTNET) restore $(MOD_MAIN)
 
-build:
+build: verify-sts2-refs
 	-$(DOTNET) build-server shutdown
 	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile $(STS2_COMPILE_PROFILE)
 	@echo "KitLib variant bundle for profile $(STS2_COMPILE_PROFILE)"
 
 workshop:
 	$(STEAM_SYNC)
+
+setup-steam-uploader:
+	$(PYTHON) scripts/setup_steam_uploader.py $(if $(UPLOADER_VERSION),--version $(UPLOADER_VERSION),) $(if $(FORCE),--force,) --write-env
 
 build-smoke-mod: build
 	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE)
@@ -212,6 +218,9 @@ endif
 deploy-smoke-mod: build-smoke-mod
 	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE) -p:DeploySmokeMod=true
 
+verify-sts2-refs:
+	$(PYTHON) scripts/verify_sts2_refs.py
+
 check-api:
 	$(PYTHON) scripts/check_api_touchpoints.py
 
@@ -224,15 +233,14 @@ capture-sts2-ref:
 	$(PYTHON) scripts/capture_sts2_ref.py $(or $(PROFILE),beta)
 
 build-stable:
-	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py stable)" -p:Sts2Profile=stable -c Debug
+	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile stable
 
 build-beta:
-	$(DOTNET) build KitLib.sln -p:Sts2Dir="$(shell $(PYTHON) scripts/resolve_sts2_profile_dir.py beta)" -p:Sts2Profile=beta -c Debug
+	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile beta
 
 build-profiles: build-stable build-beta
 
-# Build every product against both pinned refs so build/*/lib/ holds both
-# 0.107.1 (stable) and 0.110.1 (beta) variants; the game picks one at runtime.
+# Build every product against each pinned reference.
 build-all-variants:
 	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile stable
 	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile beta

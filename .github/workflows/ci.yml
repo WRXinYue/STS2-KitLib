@@ -17,12 +17,12 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
-      - name: Verify STS2 ref DLLs (required for dotnet format)
-        run: |
-          test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll
-          test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/0Harmony.dll
+      - name: Verify STS2 reference identities and checksums
+        run: python3 scripts/verify_sts2_refs.py
 
       - name: Write local.props
         run: |
@@ -52,6 +52,14 @@ jobs:
           uv run flake8 scripts
 
   build:
+    name: Build and test (${{ matrix.profile }})
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [stable, beta]
+    env:
+      STS2_PROFILE: ${{ matrix.profile }}
+      STS2_COMPILE_PROFILE: ${{ matrix.profile }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -62,31 +70,42 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: |
+            9.0.x
+            10.0.x
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
-      - name: Verify STS2 ref DLLs
+      - name: Verify STS2 reference identities and checksums
+        run: python3 scripts/verify_sts2_refs.py
+
+      - name: Write matrix reference configuration
         run: |
-          test -f eng/sts2-refs/beta/0.110.1/data_sts2_windows_x86_64/sts2.dll
+          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py ${{ matrix.profile }})"
+          printf '%s\n' \
+            '<Project>' \
+            '  <PropertyGroup>' \
+            "    <Sts2Dir>${STS2_DIR}</Sts2Dir>" \
+            '    <Sts2Profile>${{ matrix.profile }}</Sts2Profile>' \
+            '  </PropertyGroup>' \
+            '</Project>' > local.props
 
       - name: Build
         run: make build
+
+      - name: Verify API touchpoint manifest is current
+        run: |
+          make extract-touchpoints
+          git diff --exit-code -- eng/api_touchpoints.yaml
 
       - name: API touchpoint check
         run: make check-api
 
       - name: Content mod smoke fixture
-        run: |
-          STS2_DIR="$(python3 scripts/resolve_sts2_profile_dir.py)"
-          printf '%s\n' \
-            '<Project>' \
-            '  <PropertyGroup>' \
-            "    <Sts2Dir>${STS2_DIR}</Sts2Dir>" \
-            '    <Sts2Profile>beta</Sts2Profile>' \
-            '  </PropertyGroup>' \
-            '</Project>' > local.props
-          make check-smoke-mod
+        run: make check-smoke-mod
+
+      - name: ModPanel and Dev Tools tests
+        run: make test

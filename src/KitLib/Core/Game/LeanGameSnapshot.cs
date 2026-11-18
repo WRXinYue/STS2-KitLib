@@ -329,7 +329,11 @@ internal static class LeanGameSnapshot {
 
     static void CaptureShopOffers(JsonObject obj, RunState state) {
         if (state.CurrentRoom is not MerchantRoom merchantRoom) return;
+#if STS2_V113_OR_GREATER
+        var inventory = RunManager.Instance.MerchantSynchronizer.GetLocalInventory();
+#else
         var inventory = merchantRoom.GetLocalInventory();
+#endif
         if (inventory == null) return;
 
         var arr = new JsonArray();

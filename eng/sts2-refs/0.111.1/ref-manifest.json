@@ -1,0 +1,11 @@
+{
+  "profile": "stable",
+  "version": "0.111.1",
+  "commit": "cc1f9462",
+  "source_data_dir": "data_sts2_macos_arm64",
+  "files": {
+    "sts2.dll": "0dba5816282c6483d9305032acbe1a9be1e5e31b505421834ef7d1e786c19abf",
+    "0Harmony.dll": "ef1898322c9f5c86dc1b0758b272a9c440823b4a41ca9a0b82a3aa6b3d206387",
+    "Steamworks.NET.dll": "1dac8e6e05d89dc1445cebc6e02744c64cdf063adf42f6d1bb22da287ee7d665"
+  }
+}

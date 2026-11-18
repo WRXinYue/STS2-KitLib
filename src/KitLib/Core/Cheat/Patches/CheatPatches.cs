@@ -141,7 +141,11 @@ public static class GoldMultiplierPatch {
 }
 
 /// <summary>Free shop — bypass gold cost for merchant purchases.</summary>
+#if STS2_V113_OR_GREATER
+[HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.OnTryPurchaseUnsynchronized))]
+#else
 [HarmonyPatch(typeof(MerchantEntry), nameof(MerchantEntry.OnTryPurchaseWrapper))]
+#endif
 public static class FreeShopPatch {
     public static void Prefix(ref bool ignoreCost) {
         if (!MpCheatApplier.FreeShop) return;

@@ -1,3 +1,10 @@
+---
+name: commit
+description: Commit the relevant KitLib working-tree changes when the user requests a commit, using an optional commit-message hint.
+---
+
+Run repository commands from the repository root. Resolve repository file paths relative to that root.
+
 Commit all current changes. Arguments (optional): commit message hint, or leave empty to auto-generate from the diff.
 
 Steps:
@@ -13,7 +20,7 @@ Steps:
    - Prefix: `feat` / `fix` / `refactor` / `chore` / `docs`
    - Keep the description concise and in English
    - Example: `fix: resolve infinite loop on reward screen transition`
-   - If $ARGUMENTS is provided, use it as the basis for the message
+   - If the user provides a commit-message hint, use it as the basis for the message
 
 4. Commit (do NOT push):
    ```

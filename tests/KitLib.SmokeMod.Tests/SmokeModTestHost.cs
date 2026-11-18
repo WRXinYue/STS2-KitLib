@@ -17,11 +17,13 @@ internal static class SmokeModTestHost {
         var initializerAttr = sts2.GetType("MegaCrit.Sts2.Core.Modding.ModInitializerAttribute", throwOnError: true)!;
 
         foreach (var type in smoke.GetTypes()) {
-            var attr = type.GetCustomAttribute(initializerAttr);
+            // Read the initializer name without constructing a game attribute, which
+            // runs the game's module initializer and requires the Godot runtime.
+            var attr = type.CustomAttributes.SingleOrDefault(a => a.AttributeType == initializerAttr);
             if (attr is null)
                 continue;
 
-            var methodName = (string)initializerAttr.GetField("initializerMethod")!.GetValue(attr)!;
+            var methodName = (string)attr.ConstructorArguments[0].Value!;
             var method = type.GetMethod(
                 methodName,
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)

@@ -50,6 +50,12 @@ if str(_SCRIPT_DIR) not in sys.path:
 
 from lib.mod_products import PRODUCTS  # noqa: E402
 from lib.dotenv import load_release_config, upsert_env_key  # noqa: E402
+from lib.mod_uploader_paths import (  # noqa: E402
+    candidate_uploaders,
+    default_install_dir,
+    executable_name,
+    platform_asset,
+)
 from lib.steam_changelog import get_change_note, read_kitlib_version  # noqa: E402
 from lib.steam_readme import STEAM_DESCRIPTION_MAX, steam_readme_paths  # noqa: E402
 
@@ -289,27 +295,61 @@ def sync_workspace(
     return workspace
 
 
-def _uploader_setup_error() -> str | None:
+def _uploader_from_env() -> Path | None:
     raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
     if not raw:
-        return "STS2_MOD_UPLOADER is not set.\n" "  Add it to .env (copy from .env.example), e.g.:\n" "  STS2_MOD_UPLOADER=C:\\tools\\sts2-mod-uploader\\ModUploader.exe"
+        return None
     path = Path(os.path.expandvars(raw)).expanduser()
-    if not path.is_file():
+    if path.is_dir():
+        for name in (executable_name(), "ModUploader.exe", "ModUploader"):
+            candidate = path / name
+            if candidate.is_file():
+                return candidate
+        return None
+    return path if path.is_file() else None
+
+
+def _uploader_setup_error() -> str | None:
+    if _uploader_from_env() is not None:
+        return None
+
+    configured = os.environ.get("STS2_MOD_UPLOADER", "").strip()
+    if configured:
         return (
-            f"STS2_MOD_UPLOADER points to a missing file: {path}\n"
-            "  Download ModUploader-win-x64.zip from:\n"
-            "  https://github.com/megacrit/sts2-mod-uploader/releases/latest\n"
-            "  Extract ModUploader.exe to the path above."
+            f"STS2_MOD_UPLOADER points to a missing uploader: {configured}\n"
+            "  Run: make setup-steam-uploader\n"
+            "  (or point it at the official ModUploader for this OS)"
         )
-    return None
+
+    if candidate_uploaders(_REPO):
+        return None
+
+    expected = default_install_dir() / executable_name()
+    return (
+        f"No ModUploader found for {platform_asset()}.\n"
+        "  The official STS2 ModUploader ships Windows, macOS and Linux builds;\n"
+        "  install the one for this machine once:\n"
+        "    make setup-steam-uploader\n"
+        "  Or download it manually from:\n"
+        "    https://github.com/megacrit/sts2-mod-uploader/releases/latest\n"
+        f"  Expected location: {expected}\n"
+        "  Then set STS2_MOD_UPLOADER in .env (make setup-steam-uploader --write-env does it for you)."
+    )
 
 
 def _resolve_uploader() -> Path:
-    err = _uploader_setup_error()
-    if err:
-        raise RuntimeError(err)
-    raw = os.environ.get("STS2_MOD_UPLOADER", "").strip()
-    return Path(os.path.expandvars(raw)).expanduser().resolve()
+    configured = _uploader_from_env()
+    if configured is not None:
+        uploader = configured.resolve()
+    else:
+        candidates = candidate_uploaders(_REPO)
+        if not candidates:
+            raise RuntimeError(_uploader_setup_error() or "ModUploader not found")
+        uploader = candidates[0].resolve()
+
+    if not sys.platform.startswith("win") and not os.access(uploader, os.X_OK):
+        uploader.chmod(uploader.stat().st_mode | 0o111)
+    return uploader
 
 
 def _persist_workshop_id(mod_id: str, *, product: str = DEFAULT_WORKSHOP_PRODUCT) -> None:
@@ -368,7 +408,19 @@ def upload_workspace(dry_run: bool, *, branch_targeting: bool = False) -> int:
         print("(dry-run — not invoking ModUploader)")
         return 0
 
-    subprocess.run(cmd, cwd=workspace, check=True)
+    # Run from the uploader directory: the Steam API reads steam_appid.txt from
+    # the working directory (the official zip ships it next to ModUploader). The
+    # workspace path above is absolute, so the cwd does not affect it.
+    log_path = uploader.parent / "mod-uploader.log"
+    try:
+        subprocess.run(cmd, cwd=uploader.parent, check=True)
+    except subprocess.CalledProcessError as exc:
+        print(f"\nModUploader failed (exit {exc.returncode}).", file=sys.stderr)
+        if log_path.is_file():
+            print(f"Log: {log_path}", file=sys.stderr)
+            tail = log_path.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-20:]
+            print("\n".join(tail), file=sys.stderr)
+        return exc.returncode or 1
 
     mod_id_file = workspace / "mod_id.txt"
     if mod_id_file.is_file():
@@ -424,7 +476,7 @@ def main() -> int:
         help=argparse.SUPPRESS,
     )
 
-    upload_ap = sub.add_parser("upload", help="Run ModUploader.exe for the workshop workspace")
+    upload_ap = sub.add_parser("upload", help="Run ModUploader for the workshop workspace")
     upload_ap.add_argument("--dry-run", action="store_true", help="Print command only")
     upload_ap.add_argument(
         "--optional",

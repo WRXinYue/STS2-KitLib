@@ -1,4 +1,11 @@
-Bump the version to $ARGUMENTS and release.
+---
+name: release
+description: Prepare a KitLib release when the user requests a version bump and release tag, updating bilingual changelogs and pushing the tag for manual publishing.
+---
+
+Run repository commands from the repository root. Resolve repository file paths relative to that root.
+
+Use the target version supplied in the user's request to bump the version and release.
 
 Steps:
 
@@ -31,3 +38,4 @@ Steps:
    - After tagging, tell the user the tag has been pushed and they can publish whenever ready:
      - `make upload-github VERSION=VERSION` — GitHub Release (mod zips only; the `KitLib.Mcp` stdio proxy is legacy — add `--with-mcp` to `scripts/publish_release.py` only when a stdio-only client needs it)
      - `make upload-all VERSION=VERSION` — GitHub + Nexus + Steam Workshop (MCP proxy excluded)
+     - On macOS/Linux, run `make setup-steam-uploader` once before the first Steam upload (downloads the official ModUploader build for this OS).

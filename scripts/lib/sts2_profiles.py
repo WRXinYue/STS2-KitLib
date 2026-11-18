@@ -1,4 +1,4 @@
-"""Resolve STS2 beta ref roots and sts2.dll paths for compile checks."""
+"""Resolve pinned STS2 reference roots and sts2.dll paths for compile checks."""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ from lib.steam import (
 ProfileName = str  # "stable" | "beta"
 
 _PINNED_VERSIONS: dict[str, str] = {
-    "stable": "0.107.1",
-    "beta": "0.110.1",
+    "stable": "0.111.1",
+    "beta": "0.113.1",
 }
 PINNED_VERSION = _PINNED_VERSIONS["beta"]
 DEFAULT_PROFILE: ProfileName = "beta"
@@ -39,7 +39,7 @@ def variant_profile(compat_target: str) -> ProfileName:
     raise ValueError(f"Unknown personal compat target: {compat_target!r}")
 
 
-_REF_FILES = ("sts2.dll", "sts2.dylib", "0Harmony.dll", "Steamworks.NET.dll")
+_REF_FILES = ("sts2.dll", "0Harmony.dll", "Steamworks.NET.dll")
 
 
 def _read_release_version_file(path: Path) -> str | None:
@@ -59,6 +59,10 @@ def read_release_version(sts2_dir: Path) -> str | None:
         version = _read_release_version_file(root_file)
         if version:
             return version
+
+    resources = sts2_dir / "SlayTheSpire2.app" / "Contents" / "Resources" / "release_info.json"
+    if resources.is_file():
+        return _read_release_version_file(resources)
 
     for data_dir in list_ref_data_dirs(sts2_dir):
         candidate = data_dir / "release_info.json"
@@ -126,7 +130,7 @@ def resolve_compile_profile(
             return inferred
 
     from_props = read_sts2_profile_from_local_props(root)
-    if from_props:
+    if from_props in _PINNED_VERSIONS:
         return from_props  # type: ignore[return-value]
 
     return DEFAULT_PROFILE
@@ -158,7 +162,7 @@ def assert_capture_source_matches_profile(profile: ProfileName, source: Path) ->
         raise RuntimeError(f"No release_info.json under {source}. " "Use a full STS2 install root (with data_sts2_*/sts2.dll), not a source dump folder.")
     normalized = version.lstrip("vV").strip()
     if normalized != pinned:
-        raise RuntimeError(f"Ref capture expects v{pinned}, but {source} reports {version!r}. " "Switch Steam to the public-beta branch or pass --source explicitly.")
+        raise RuntimeError(f"Ref capture expects v{pinned}, but {source} reports {version!r}. " "Switch Steam to the matching game version or pass --source explicitly.")
 
 
 def resolve_capture_source(
@@ -197,10 +201,13 @@ def refs_base(repo_root: Path) -> Path:
 def ref_root(repo_root: Path, profile: ProfileName = DEFAULT_PROFILE) -> Path:
     if profile not in _PINNED_VERSIONS:
         raise ValueError(f"Unknown profile: {profile!r}")
-    return refs_base(repo_root) / profile / pinned_version(profile)
+    return refs_base(repo_root) / pinned_version(profile)
 
 
 def list_ref_data_dirs(game_root: Path) -> list[Path]:
+    resources = game_root / "SlayTheSpire2.app" / "Contents" / "Resources"
+    if resources.is_dir():
+        game_root = resources
     dirs: list[Path] = []
     try:
         for child in sorted(game_root.iterdir()):
@@ -233,23 +240,15 @@ def resolve_profile_dir(profile: ProfileName = DEFAULT_PROFILE, *, repo_root: Pa
 
 
 def resolve_sts2_dll(game_root: Path) -> Path:
-    mac_dylib = game_root / "SlayTheSpire2.app" / "Contents" / "Resources" / "data_sts2_macos_arm64" / "sts2.dylib"
-    if mac_dylib.is_file():
-        return mac_dylib
-
-    mac_dylib_x64 = game_root / "SlayTheSpire2.app" / "Contents" / "Resources" / "data_sts2_macos_x86_64" / "sts2.dylib"
-    if mac_dylib_x64.is_file():
-        return mac_dylib_x64
-
     candidates: list[Path] = []
     for data_dir in list_ref_data_dirs(game_root):
-        for name in ("sts2.dll", "sts2.dylib"):
+        for name in ("sts2.dll",):
             dll = data_dir / name
             if dll.is_file():
                 candidates.append(dll)
 
     if not candidates:
-        raise RuntimeError(f"No sts2.dll/sts2.dylib under {game_root}")
+        raise RuntimeError(f"No managed sts2.dll under {game_root}")
 
     candidates.sort(key=lambda p: (0 if "windows_x86_64" in p.as_posix() else 1, p.name))
     return candidates[0]
@@ -264,27 +263,34 @@ def capture_profile_ref(
     root = repo_root or Path(__file__).resolve().parents[2]
     source = resolve_capture_source(profile, explicit=source_root, repo_root=root)
 
-    dest_root = ref_root(root)
-    copied = 0
-    for data_dir in list_ref_data_dirs(source):
-        rel = data_dir.name
-        dest_dir = dest_root / rel
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        for name in _REF_FILES:
-            src_file = data_dir / name
-            if not src_file.is_file():
-                continue
-            shutil.copy2(src_file, dest_dir / name)
-            copied += 1
-
-    if copied == 0:
-        raise RuntimeError(f"No ref DLLs copied from {source}")
-
+    dest_root = ref_root(root, profile)
+    # Managed game assemblies are portable. Normalize the layout for MSBuild on CI.
+    source_dir = resolve_sts2_dll(source).parent
+    missing = [name for name in _REF_FILES if not (source_dir / name).is_file()]
+    if missing:
+        raise RuntimeError(f"Missing ref assemblies under {source_dir}: {', '.join(missing)}")
+    dest_dir = dest_root / "data_sts2_windows_x86_64"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    for name in _REF_FILES:
+        shutil.copy2(source_dir / name, dest_dir / name)
+    release_path = source / "release_info.json"
+    if not release_path.is_file():
+        release_path = source / "SlayTheSpire2.app" / "Contents" / "Resources" / "release_info.json"
+    release = json.loads(release_path.read_text())
+    (dest_root / "release_info.json").write_text(json.dumps(release, indent=2) + "\n")
+    metadata = {
+        "profile": profile,
+        "version": pinned_version(profile),
+        "commit": release.get("commit"),
+        "source_data_dir": source_dir.name,
+        "files": {name: _file_sha256(dest_dir / name) for name in _REF_FILES},
+    }
+    (dest_root / "ref-manifest.json").write_text(json.dumps(metadata, indent=2) + "\n")
     return dest_root
 
 
 def format_profile_paths(repo_root: Path) -> dict[str, Path]:
-    return {profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root)) for profile in _PINNED_VERSIONS if ref_is_valid(ref_root(repo_root, profile))}
+    return {profile: resolve_sts2_dll(resolve_profile_dir(profile, repo_root=repo_root)) for profile in _PINNED_VERSIONS}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -292,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
 
     from lib.dotenv import load_dotenv
 
-    ap = argparse.ArgumentParser(description="Print STS2 beta ref / install paths.")
+    ap = argparse.ArgumentParser(description="Print pinned STS2 reference / install paths.")
     ap.add_argument(
         "--repo-root",
         type=Path,
@@ -309,7 +315,7 @@ def main(argv: list[str] | None = None) -> int:
     load_dotenv(args.repo_root / ".env")
 
     try:
-        game_root = resolve_profile_dir(repo_root=args.repo_root)
+        game_root = resolve_profile_dir(args.profile, repo_root=args.repo_root)
         if args.game_root_only:
             print(game_root)
             return 0

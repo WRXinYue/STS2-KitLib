@@ -9,6 +9,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from lib.sts2_profiles import _PINNED_VERSIONS
+
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _SCRIPT_DIR.parent
 _SRC_ROOT = _REPO_ROOT / "src"
@@ -108,6 +110,8 @@ def _scan_file(path: Path, class_types: list[str], touchpoints: dict[str, Touchp
         )
         tp.type_name = type_name
         tp.member = member
+        if "MethodType.Setter" in m.group(0) or "MethodType.Getter" in m.group(0):
+            tp.kind = "property"
         tp.sources.add(rel)
 
     for m in _RE_HARMONY_TYPEOF_STRING.finditer(text):
@@ -223,8 +227,7 @@ def _write_manifest(
         "# profiles.*.member overrides are preserved across extract runs — edit for cross-version renames.",
         "",
         "profiles:",
-        f'  stable: "{profile_versions.get("stable", "0.107.1")}"',
-        f'  beta: "{profile_versions.get("beta", "0.110.1")}"',
+        *[f'  {profile}: "{version}"' for profile, version in profile_versions.items()],
         "",
         "touchpoints:",
     ]
@@ -244,10 +247,10 @@ def _write_manifest(
         lines.append(f"    type: {_yaml_quote(tp.type_name)}")
         lines.append(f"    member: {_yaml_quote(tp.member)}")
         lines.append(f"    kind: {tp.kind}")
-        ov = overrides.get(tp.id, {})
+        ov = {profile: value for profile, value in overrides.get(tp.id, {}).items() if profile in _PINNED_VERSIONS}
         if ov:
             lines.append("    profiles:")
-            for profile in ("stable", "beta"):
+            for profile in _PINNED_VERSIONS:
                 if profile not in ov:
                     continue
                 prof = ov[profile]
@@ -285,13 +288,17 @@ def _skip_profile(overrides: dict[str, dict[str, dict[str, str]]], tp_id: str, p
 
 def _ensure_manual_overrides(overrides: dict[str, dict[str, dict[str, str]]]) -> None:
     overrides.pop("CombatManager.IsPlayPhase", None)
-    # 0.107.1 vs 0.110.1: these members exist on one pin only (see Slay the Spire 2/v*).
-    _skip_profile(overrides, "NInputManager.ProcessHotkeyInput", "stable")
-    _skip_profile(overrides, "NInputManager.ProcessFkbInput", "stable")
-    _skip_profile(overrides, "NInputManager.ProcessShortcutKeyInput", "beta")
-    _skip_profile(overrides, "CombatManager._playersReadyToBeginEnemyTurn", "beta")
-    _skip_profile(overrides, "CombatManager._turnState", "stable")
-    _skip_profile(overrides, "RunLobby._connectedPlayerIds", "beta")
+    for tp_id in ("NInputManager.ProcessHotkeyInput", "NInputManager.ProcessFkbInput", "CombatManager._turnState"):
+        overrides.get(tp_id, {}).pop("stable", None)
+    # Legacy branches remain in source but are inactive for the current beta pin.
+    for profile in _PINNED_VERSIONS:
+        _skip_profile(overrides, "NInputManager.ProcessShortcutKeyInput", profile)
+        _skip_profile(overrides, "CombatManager._playersReadyToBeginEnemyTurn", profile)
+        _skip_profile(overrides, "RunLobby._connectedPlayerIds", profile)
+    _skip_profile(overrides, "MerchantEntry.OnTryPurchaseUnsynchronized", "stable")
+    _skip_profile(overrides, "MerchantEntry.OnTryPurchaseWrapper", "beta")
+    _skip_profile(overrides, "MerchantCardRemovalEntry.OnTryPurchaseWrapper", "beta")
+    _skip_profile(overrides, "MerchantCardRemovalEntry.OnTryPurchaseInternal", "stable")
     run = overrides.get("RunManager.SetUpNewSingleplayer")
     if run:
         run.pop("stable", None)
@@ -320,9 +327,7 @@ def main() -> int:
 
     existing = _parse_yaml_simple(args.manifest)
     overrides: dict[str, dict[str, dict[str, str]]] = existing.get("overrides", {})
-    profile_versions = existing.get("profiles") or {}
-    profile_versions.setdefault("stable", "0.107.1")
-    profile_versions.setdefault("beta", "0.110.1")
+    profile_versions = dict(_PINNED_VERSIONS)
 
     touchpoints: dict[str, Touchpoint] = {}
     for cs in sorted(src_root.rglob("*.cs")):
@@ -334,16 +339,9 @@ def main() -> int:
         canonical = touchpoints["RunManager.SetUpNewSingleplayer"]
         canonical.sources.update(stale.sources)
     _ensure_manual_overrides(overrides)
-    stale_saved = touchpoints.pop("RunManager.SetUpSavedSingleplayer", None)
+    stale_saved = touchpoints.pop("RunManager.SetUpSavedSinglePlayer", None)
     if stale_saved:
-        canonical_saved = touchpoints.setdefault(
-            "RunManager.SetUpSavedSinglePlayer",
-            Touchpoint(
-                type_name="RunManager",
-                member="SetUpSavedSingleplayer",
-                kind="method",
-            ),
-        )
+        canonical_saved = touchpoints["RunManager.SetUpSavedSingleplayer"]
         canonical_saved.sources.update(stale_saved.sources)
     _write_manifest(args.manifest, touchpoints, profile_versions, overrides)
     static = sum(1 for t in touchpoints.values() if not t.dynamic)

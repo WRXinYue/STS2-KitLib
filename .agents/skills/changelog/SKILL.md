@@ -1,3 +1,10 @@
+---
+name: changelog
+description: Update KitLib English and Chinese changelogs when the user requests release notes or changelog edits for player-facing changes.
+---
+
+Run repository commands from the repository root. Resolve repository file paths relative to that root.
+
 Update changelogs with recent changes. Arguments (optional): a brief description hint, or leave empty to auto-detect from git log.
 
 **Do not `git commit` changelog edits.** Update the markdown files only; the human bundles changelog with the feature/fix commit (or commits separately). Never run a commit whose sole purpose is documentation/changelog.

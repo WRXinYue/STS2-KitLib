@@ -35,8 +35,6 @@ internal static class PseudoCoopMultiplayerUiRefresh {
     static readonly FieldInfo MapPointDictionaryField =
         AccessTools.Field(typeof(NMapScreen), "_mapPointDictionary")!;
 
-    static readonly FieldInfo? PlayerVoteDictionaryField =
-        AccessTools.Field(typeof(NMapScreen), "<PlayerVoteDictionary>k__BackingField");
 
     static readonly FieldInfo SyncVotesField =
         AccessTools.Field(typeof(MapSelectionSynchronizer), "_votes")!;
@@ -147,8 +145,9 @@ internal static class PseudoCoopMultiplayerUiRefresh {
             TrimSynchronizerVotes(state);
             RunManager.Instance?.MapSelectionSynchronizer?.OnLocationChanged(state.MapLocation);
 
-            if (PlayerVoteDictionaryField?.GetValue(map) is IDictionary playerVotes)
-                playerVotes.Clear();
+#if !STS2_V113_OR_GREATER
+            map.PlayerVoteDictionary.Clear();
+#endif
 
             InitMapVotesMethod?.Invoke(map, null);
 
