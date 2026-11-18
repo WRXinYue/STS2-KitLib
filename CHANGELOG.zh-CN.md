@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.52.1] - 2026-11-19
+
 ### Fixed
 
 - **游戏版本兼容性** — 修复开发模式开局补丁、侧栏动画期间继续游戏及 HUD 存档耗时统计的问题，已通过游戏 v0.111.1 的编译与补丁挂载检查。
+- **敌人意图页签图标** — 开发侧栏的“敌人意图”页签恢复为靶心图标，不再退化成占位拼图；游戏日志也不会再被重复的 “icon not found” 警告刷屏。
 
 ## [0.52.0] - 2026-11-09
 
