@@ -42,7 +42,7 @@ make init   # detect STS2 + Godot paths, write local.props
 | `make sync` / `make sync-full` | Build + deploy products to the game `mods/` folder |
 | `make format` | `dotnet format KitLib.sln` |
 | `make docs` | Valaxy dev server (`docs/`) |
-| `make upload-all` | Release zip + GitHub / Nexus / Steam |
+| `python3 scripts/release_cli.py` | Release publishing: interactive picker, or `status` / `preflight` / `build` / `github` / `nexus` / `steam` / `all` |
 
 Repo layout (host and satellite modules under `src/KitLib/`): **[Architecture](/kitlib/architecture/)**.
 :::
@@ -67,7 +67,7 @@ make init
 | `make sync` / `make sync-full` | 构建并部署到游戏 `mods/` |
 | `make format` | `dotnet format KitLib.sln` |
 | `make docs` | Valaxy 开发服务器 |
-| `make upload-all` | 发布 zip + GitHub / Nexus / NuGet / Steam |
+| `python3 scripts/release_cli.py` | 发布：交互式选择器，或 `status` / `preflight` / `build` / `github` / `nexus` / `steam` / `all` |
 
 仓库布局（宿主与卫星模块都在 `src/KitLib/`）：**[架构](/kitlib/architecture/)**。
 :::

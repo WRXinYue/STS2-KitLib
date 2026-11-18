@@ -317,7 +317,7 @@ def _uploader_setup_error() -> str | None:
     if configured:
         return (
             f"STS2_MOD_UPLOADER points to a missing uploader: {configured}\n"
-            "  Run: make setup-steam-uploader\n"
+            "  Run: python3 scripts/setup_steam_uploader.py --write-env\n"
             "  (or point it at the official ModUploader for this OS)"
         )
 
@@ -329,11 +329,11 @@ def _uploader_setup_error() -> str | None:
         f"No ModUploader found for {platform_asset()}.\n"
         "  The official STS2 ModUploader ships Windows, macOS and Linux builds;\n"
         "  install the one for this machine once:\n"
-        "    make setup-steam-uploader\n"
+        "    python3 scripts/setup_steam_uploader.py --write-env\n"
         "  Or download it manually from:\n"
         "    https://github.com/megacrit/sts2-mod-uploader/releases/latest\n"
         f"  Expected location: {expected}\n"
-        "  Then set STS2_MOD_UPLOADER in .env (make setup-steam-uploader --write-env does it for you)."
+        "  Then set STS2_MOD_UPLOADER in .env (setup_steam_uploader.py --write-env does it for you)."
     )
 
 
@@ -387,7 +387,7 @@ def upload_workspace(dry_run: bool, *, branch_targeting: bool = False) -> int:
     for name in ("workshop.json", "image.png"):
         if not (workspace / name).is_file():
             print(
-                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. Run: make workshop",
+                f"ERROR: missing {workspace.relative_to(_REPO)}/{name}. Run: python3 scripts/publish_steam.py sync",
                 file=sys.stderr,
             )
             return 1
@@ -396,7 +396,7 @@ def upload_workspace(dry_run: bool, *, branch_targeting: bool = False) -> int:
     content = workspace / "content"
     if not content.is_dir() or not any(content.iterdir()):
         print(
-            f"ERROR: {content.relative_to(_REPO)} is empty. Run: make workshop",
+            f"ERROR: {content.relative_to(_REPO)} is empty. Run: python3 scripts/publish_steam.py sync",
             file=sys.stderr,
         )
         return 1

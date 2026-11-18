@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import subprocess
@@ -21,6 +20,11 @@ if str(_SCRIPTS_DIR) not in sys.path:
 from lib.release_assets import (  # noqa: E402
     github_release_assets,
     tools_rid,
+)
+from lib.release_build import (  # noqa: E402
+    ReleaseBuildError,
+    build_mcp_zip,
+    build_mod_zip,
 )
 
 
@@ -57,17 +61,13 @@ def _ensure_release_assets(version: str, rid: str, include_mcp: bool) -> list[Pa
     if not missing:
         return assets
 
-    make_targets = ["zip-full"]
-    if include_mcp:
-        make_targets.append("build-tools")
-    print(f"Building release assets (make {' '.join(make_targets)})...")
-    env = {**os.environ, "TOOLS_RID": rid}
-    subprocess.run(
-        ["make", *make_targets],
-        cwd=_REPO_ROOT,
-        env=env,
-        check=True,
-    )
+    print("Building release assets (package_bundle --zip-all)...")
+    try:
+        build_mod_zip(_REPO_ROOT, version)
+        if include_mcp:
+            build_mcp_zip(_REPO_ROOT, version, rid)
+    except ReleaseBuildError as ex:
+        raise FileNotFoundError(str(ex)) from ex
 
     still_missing = [path for path in assets if not path.is_file()]
     if still_missing:

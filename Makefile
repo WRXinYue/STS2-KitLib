@@ -65,20 +65,14 @@ MOD_PROJECTS := src/KitLib/Abstractions/KitLib.Abstractions.csproj \
 	src/KitLib/Modules/Dev/KitLib.Dev.csproj \
 	src/KitLib/Modules/Hud/KitLib.Hud.csproj
 PACKAGE_BUNDLE := $(PYTHON) scripts/package_bundle.py
-STEAM_PRODUCT := $(if $(PRODUCT),$(PRODUCT),KitLib)
-STEAM_SYNC_FLAGS := $(if $(CHANGE_NOTE),--change-note "$(CHANGE_NOTE)",) $(if $(UNRELEASED),--unreleased,) $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,) $(if $(SKIP_BUILD),--skip-build,)
-STEAM_UPLOAD_FLAGS := $(if $(BRANCH_TARGETING),--branch-targeting,) $(if $(NO_BRANCH_TARGETING),--no-branch-targeting,)
-STEAM_SYNC := $(PYTHON) scripts/publish_steam.py sync --product $(STEAM_PRODUCT) $(STEAM_SYNC_FLAGS)
-STEAM_UPLOAD := $(PYTHON) scripts/publish_steam.py upload --optional $(STEAM_UPLOAD_FLAGS)
-STEAM_UPLOAD_STRICT := $(PYTHON) scripts/publish_steam.py upload $(STEAM_UPLOAD_FLAGS)
 LAUNCH := $(PYTHON) scripts/launch_sts2.py
 LAUNCH_MP_CLIENT_ID ?= 1001
 
-.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck publish nexus upload-all readme-nexus zip-full zip-release clean docs docs-build \
-        workshop extract-touchpoints check-api verify verify-sts2-refs capture-sts2-ref \
+.PHONY: help init icons format format-check lint-scripts check test hooks-install hooks-run deps build build-smoke-mod check-smoke-mod deploy-smoke-mod deploy sync sync-full sync-framework-mods compile pck readme-nexus zip-full zip-release clean docs docs-build \
+        extract-touchpoints check-api verify verify-sts2-refs capture-sts2-ref \
         build-stable build-beta build-profiles build-all-variants bundle sync-bundle \
-        launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp upload-nexus-mcp nexus-mcp \
-        upload-github upload-nexus upload-steam readme-nexus readme-steam readme-assets
+        launch sync-launch sync-full-launch launch-mp launch-mp-host launch-mp-join sync-launch-mp dev-session push-android push-android-wsdx233 compile-tools build-tools deploy-tools sync-tools zip-mcp \
+        readme-nexus readme-steam readme-assets
 
 help:
 	@echo "KitLib — targets"
@@ -100,8 +94,6 @@ help:
 	@echo "  sync-full    sync (legacy MCP tools deploy is manual: make deploy-tools)"
 	@echo "  sync-full-launch  sync-full + launch game"
 	@echo "  build        build all bundle projects (auto-cleans stale build servers)"
-	@echo "  workshop     stage build/dist/workshop/ for Steam Workshop upload (PRODUCT=KitLib)"
-	@echo "  setup-steam-uploader  download the official ModUploader for this OS (macOS/Linux/Windows)"
 	@echo "  extract-touchpoints  scan src/ → eng/api_touchpoints.yaml"
 	@echo "  check-api    reflect KitLib API touchpoints against sts2.dll"
 	@echo "  verify       build + check-api (pre-release)"
@@ -137,12 +129,12 @@ help:
 	@echo "  sync-tools   build-tools + deploy-tools (force copy)"
 	@echo "  zip-mcp      build-tools + package build/KitLib.Mcp-vX.X.X-<rid>.zip (exe only)"
 	@echo ""
-	@echo "  [upload]"
-	@echo "  upload-github  mod zip → GitHub Release (alias: publish; MCP exe opt-in: publish_release.py --with-mcp)"
-	@echo "  upload-nexus   main zip → Nexus (NEXUS_FILE_GROUP_ID; alias: nexus)"
-	@echo "  upload-nexus-mcp  [legacy] zip-mcp + Nexus Optional MCP proxy (NEXUS_FILE_GROUP_ID_MCP; alias: nexus-mcp)"
-	@echo "  upload-all     GitHub + Nexus + Steam Workshop (MCP proxy excluded)"
-	@echo "  upload-steam   workshop + upload to Steam Workshop (first run: make setup-steam-uploader)"
+	@echo "  [release — script CLI, no Make targets]"
+	@echo "  python3 scripts/release_cli.py            interactive GitHub / Nexus / Steam picker"
+	@echo "  python3 scripts/release_cli.py --help     status, preflight, build, github, nexus, steam, all"
+	@echo "  python3 scripts/setup_steam_uploader.py --write-env   one-time ModUploader install"
+	@echo ""
+	@echo "  [readme]"
 	@echo "  readme-nexus   merge READMEs into assets/readme.nexus.txt (Nexus BBCode)"
 	@echo "  readme-steam   README*.md -> assets/readme.steam.* (PRODUCT= optional; default all)"
 	@echo "  readme-assets  readme-nexus + readme-steam"
@@ -198,12 +190,6 @@ build: verify-sts2-refs
 	-$(DOTNET) build-server shutdown
 	$(PYTHON) scripts/build_bundle.py --configuration Debug --sts2-profile $(STS2_COMPILE_PROFILE)
 	@echo "KitLib variant bundle for profile $(STS2_COMPILE_PROFILE)"
-
-workshop:
-	$(STEAM_SYNC)
-
-setup-steam-uploader:
-	$(PYTHON) scripts/setup_steam_uploader.py $(if $(UPLOADER_VERSION),--version $(UPLOADER_VERSION),) $(if $(FORCE),--force,) --write-env
 
 build-smoke-mod: build
 	$(DOTNET) build $(SMOKE_MOD_PROJECT) $(STS2_MSBUILD_PROFILE)
@@ -317,21 +303,9 @@ sync-tools: build-tools
 pck: deps
 	$(DOTNET) publish $(DEPLOY_TO_GAME) $(MOD_MAIN)
 
-publish upload-github:
-	$(PYTHON) scripts/publish_release.py $(if $(VERSION),--version $(VERSION),)
-
-nexus upload-nexus:
-	$(PYTHON) scripts/publish_nexus.py $(if $(VERSION),--version $(VERSION),)
-
-nexus-mcp upload-nexus-mcp:
-	$(PYTHON) scripts/publish_nexus.py --mcp $(if $(VERSION),--version $(VERSION),) $(if $(TOOLS_RID),--tools-rid $(TOOLS_RID),)
-
-upload-all: publish nexus
-	$(STEAM_SYNC)
-	$(STEAM_UPLOAD)
-
-upload-steam: workshop
-	$(STEAM_UPLOAD_STRICT)
+# Release publishing is not a Make target any more — use the script CLI:
+#   python3 scripts/release_cli.py [status|preflight|build|github|nexus|steam|all]
+# No verb on a TTY opens the interactive channel picker. See --help.
 
 readme-nexus:
 	$(PYTHON) scripts/readme_to_nexus.py

@@ -372,13 +372,14 @@ which ships Windows, macOS and Linux builds. One-time setup downloads the build 
 current machine and records `STS2_MOD_UPLOADER` in `.env`:
 
 ```bash
-make setup-steam-uploader
-make upload-steam
+python3 scripts/setup_steam_uploader.py --write-env   # one-time
+python3 scripts/release_cli.py steam
 ```
 
 Steam must be running and signed in: the uploader talks to Steam's client API, not a web
-endpoint. `make workshop` only stages `build/dist/workshop/`; `make upload-steam` stages and
-uploads. Pass `UPLOADER_VERSION=v0.2.0` / `FORCE=1` to `setup-steam-uploader` when needed.
+endpoint. `python3 scripts/publish_steam.py sync` only stages `build/dist/workshop/`;
+`release_cli.py steam` stages and uploads. Pass `--version v0.2.0 --force` to
+`setup_steam_uploader.py` when needed.
 :::
 
 ::: zh-CN
@@ -387,13 +388,14 @@ uploads. Pass `UPLOADER_VERSION=v0.2.0` / `FORCE=1` to `setup-steam-uploader` wh
 的 `STS2_MOD_UPLOADER`：
 
 ```bash
-make setup-steam-uploader
-make upload-steam
+python3 scripts/setup_steam_uploader.py --write-env   # 只需一次
+python3 scripts/release_cli.py steam
 ```
 
 上传时需要 Steam 正在运行且已登录：上传器走 Steam 客户端 API，不是网页接口。
-`make workshop` 只准备 `build/dist/workshop/`，`make upload-steam` 会先准备再上传。
-需要时可用 `UPLOADER_VERSION=v0.2.0` / `FORCE=1` 重装。
+`python3 scripts/publish_steam.py sync` 只准备 `build/dist/workshop/`，
+`release_cli.py steam` 会先准备再上传。
+需要时可用 `setup_steam_uploader.py --version v0.2.0 --force` 重装。
 :::
 
 ## See also{lang="en"}

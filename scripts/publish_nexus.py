@@ -29,6 +29,11 @@ from lib.release_assets import (  # noqa: E402
     mod_zip_path,
     tools_rid,
 )
+from lib.release_build import (  # noqa: E402
+    ReleaseBuildError,
+    build_mcp_zip,
+    build_mod_zip,
+)
 
 
 def _mcp_description_bbcode(tools_rid: str) -> str:
@@ -78,12 +83,6 @@ def _zip_path_for(version: str, *, tool: str | None, tools_rid_value: str) -> Pa
     if tool == "mcp":
         return mcp_zip_path(_REPO_ROOT, version, tools_rid_value)
     return mod_zip_path(_REPO_ROOT, version)
-
-
-def _make_target_for(*, tool: str | None) -> str:
-    if tool == "mcp":
-        return "zip-mcp"
-    return "zip-release"
 
 
 def _tool_env_hint(tool: str) -> tuple[str, str]:
@@ -346,7 +345,7 @@ def main() -> int:
     tool_group.add_argument(
         "--mcp",
         action="store_true",
-        help="Legacy/optional: build/package/upload the KitLib.Mcp stdio proxy (make zip-mcp).",
+        help="Legacy/optional: build/package/upload the KitLib.Mcp stdio proxy.",
     )
     ap.add_argument(
         "--tools-rid",
@@ -399,16 +398,14 @@ def main() -> int:
 
     # ── ensure zip exists ────────────────────────────────────────────────────
     if not zip_path.is_file():
-        make_target = _make_target_for(tool=tool)
-        print(f"Zip not found at {zip_path} - running 'make {make_target}' first...")
-        import subprocess
-
-        env = os.environ.copy()
-        if tool:
-            env["TOOLS_RID"] = tools_rid_value
-        r = subprocess.run(["make", make_target], cwd=_REPO_ROOT, env=env)
-        if r.returncode != 0:
-            print(f"make {make_target} failed.", file=sys.stderr)
+        print(f"Zip not found at {zip_path} - building it first...")
+        try:
+            if tool:
+                build_mcp_zip(_REPO_ROOT, version, tools_rid_value)
+            else:
+                build_mod_zip(_REPO_ROOT, version)
+        except ReleaseBuildError as ex:
+            print(f"ERROR: {ex}", file=sys.stderr)
             return 1
 
     if not zip_path.is_file():

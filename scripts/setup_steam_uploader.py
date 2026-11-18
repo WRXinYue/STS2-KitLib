@@ -11,7 +11,7 @@ Usage:
     python scripts/setup_steam_uploader.py [--version v0.2.0] [--dest DIR]
                                            [--force] [--write-env]
 
-After setup, run ``make upload-steam``. Steam must be running and signed in.
+After setup, run ``python3 scripts/release_cli.py steam``. Steam must be running and signed in.
 """
 
 from __future__ import annotations
@@ -167,7 +167,7 @@ def main() -> int:
             changed = upsert_env_key(_REPO / ".env", "STS2_MOD_UPLOADER", str(executable))
             print(f"Updated .env: STS2_MOD_UPLOADER={executable}" if changed else ".env already up to date")
         print("")
-        print("Next: make upload-steam (Steam must be running and signed in).")
+        print("Next: python3 scripts/release_cli.py steam (Steam must be running and signed in).")
         return 0
     except (RuntimeError, OSError, zipfile.BadZipFile) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

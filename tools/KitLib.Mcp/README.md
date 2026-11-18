@@ -46,7 +46,8 @@ make build-tools TOOLS_RID=win-x64   # or osx-arm64, osx-x64, linux-x64, linux-a
 ```
 
 To attach it to a GitHub Release anyway, pass `--with-mcp` to `scripts/publish_release.py` (or set
-`INCLUDE_MCP_EXE=1`). `make zip-mcp` / `make nexus-mcp` remain as manual channels.
+`INCLUDE_MCP_EXE=1`). `python3 scripts/release_cli.py nexus --with-mcp` publishes it to the Nexus
+MCP channel; `make zip-mcp` still packages it locally.
 
 ## Configuration
 

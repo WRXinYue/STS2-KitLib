@@ -98,8 +98,8 @@ def main() -> int:
     print("  make launch            -- launch via Steam (macOS/Linux) or Sts2Dir exe (Windows)")
     print("  make deploy    -- deploy from build/KitLib/ (after make build)")
     print("  make build     -- artifacts under build/KitLib/ only (no game copy)")
-    print("  make upload-steam  -- Workshop upload (STS2_MOD_UPLOADER in .env)")
-    print("  make upload-all    -- GitHub + Nexus + tools + Steam Workshop")
+    print("  python3 scripts/release_cli.py           -- release picker: GitHub / Nexus / Steam")
+    print("  python3 scripts/release_cli.py --help    -- status, preflight, build, publish verbs")
     return 0
 
 

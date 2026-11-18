@@ -64,6 +64,29 @@ def mcp_exe_path(repo_root: Path, rid: str) -> Path:
     return _tool_publish_dir(repo_root, resolved) / name
 
 
+def mcp_publish_command(repo_root: Path, rid: str = "") -> list[str]:
+    """``dotnet publish`` arguments for the legacy self-contained MCP stdio proxy.
+
+    Mirrors the Makefile's ``build-tools`` target so release scripts never have to shell
+    back through ``make`` to build it.
+    """
+    resolved = tools_rid(rid)
+    return [
+        "dotnet",
+        "publish",
+        "tools/KitLib.Mcp/KitLib.Mcp.csproj",
+        "-c",
+        "Release",
+        "-r",
+        resolved,
+        "--self-contained",
+        "true",
+        "-p:PublishSingleFile=true",
+        "-o",
+        str(_tool_publish_dir(repo_root, resolved)),
+    ]
+
+
 def all_product_zip_paths(repo_root: Path) -> list[Path]:
     return [
         product_zip_path(repo_root, product_id, read_product_version(repo_root, product_id))

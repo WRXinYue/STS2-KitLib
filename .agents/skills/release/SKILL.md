@@ -33,9 +33,12 @@ Steps:
    git push origin vVERSION
    ```
 
-5. **Stop here.** Do NOT run `make publish` or trigger any GitHub Release automatically.
-   - Publishing is a manual step performed by the user.
+5. **Stop here.** Do NOT run `scripts/release_cli.py` publishing verbs or trigger any GitHub Release automatically.
+   - Publishing is a manual step performed by the user; release publishing is a script CLI, not a Make target.
    - After tagging, tell the user the tag has been pushed and they can publish whenever ready:
-     - `make upload-github VERSION=VERSION` — GitHub Release (mod zips only; the `KitLib.Mcp` stdio proxy is legacy — add `--with-mcp` to `scripts/publish_release.py` only when a stdio-only client needs it)
-     - `make upload-all VERSION=VERSION` — GitHub + Nexus + Steam Workshop (MCP proxy excluded)
-     - On macOS/Linux, run `make setup-steam-uploader` once before the first Steam upload (downloads the official ModUploader build for this OS).
+     - `python3 scripts/release_cli.py` — interactive picker (English menu) to select GitHub / Nexus / Steam; it prints the equivalent non-interactive command for each step.
+     - `python3 scripts/release_cli.py github --version VERSION` — GitHub Release (mod zips only; the `KitLib.Mcp` stdio proxy is legacy — add `--with-mcp` only when a stdio-only client needs it).
+     - `python3 scripts/release_cli.py all --version VERSION` — GitHub + Nexus + Steam Workshop (MCP proxy excluded).
+     - `python3 scripts/release_cli.py status` / `preflight --channels github,nexus` — readiness summary, or a preflight that exits non-zero on blockers (gh auth, Nexus key, ModUploader, tag, changelog).
+     - One-time, macOS/Linux/Windows: `python3 scripts/setup_steam_uploader.py --write-env` before the first Steam upload (downloads the official ModUploader build for this OS).
+     - `--dry-run` prints every command without running anything.
